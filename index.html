@@ -1,213 +1,746 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr-CA">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ti-lex-AL v10</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ti-lex-v10 — Agent intelligent québécois</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #000000;
+      --bg-card: #111111;
+      --bg-input: #1a1a1a;
+      --text: #ffffff;
+      --text-secondary: #b0b0b0;
+      --orange: #ff6b00;
+      --orange-light: #ff8c00;
+      --orange-dark: #e55a00;
+      --border: #333333;
+      --error: #ff4444;
+      --success: #00cc66;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Particules dorées/orange */
+    .particles {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .particle {
+      position: absolute; border-radius: 50%;
+      background: rgba(255, 107, 0, 0.15);
+      animation: float 8s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.2; }
+      50% { transform: translateY(-40px) scale(1.3); opacity: 0.5; }
+    }
+
+    /* Container */
+    .container {
+      position: relative; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh; padding: 2rem 1rem;
+    }
+
+    /* Logo */
+    .logo-wrapper {
+      position: relative; margin-bottom: 2rem;
+      animation: fadeIn 1s ease-out;
+    }
+    .logo-halo {
+      position: absolute; inset: -50px;
+      background: radial-gradient(circle, rgba(255,107,0,0.2) 0%, transparent 60%);
+      border-radius: 50%; animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .logo-img {
+      width: 320px; height: auto;
+      max-height: 220px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 30px rgba(255,107,0,0.4));
+      border-radius: 0.5rem;
+    }
+    @media (min-width: 768px) {
+      .logo-img { width: 420px; max-height: 280px; }
+    }
+
+    /* Tagline */
+    .tagline {
+      text-align: center; margin-bottom: 2.5rem;
+      max-width: 500px; animation: fadeInUp 0.8s ease-out 0.3s both;
+    }
+    .tagline h1 {
+      font-size: 2.8rem; font-weight: 800;
+      margin-bottom: 0.5rem; letter-spacing: -0.03em;
+      text-transform: uppercase;
+    }
+    .tagline h1 span {
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .tagline p {
+      font-size: 1.1rem; color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .badges {
+      display: flex; gap: 0.5rem;
+      justify-content: center; flex-wrap: wrap;
+      margin-top: 0.75rem;
+    }
+    .badge {
+      font-size: 0.65rem; padding: 0.25rem 0.6rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 0.25rem; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Boutons ORANGE */
+    .btn-group {
+      display: flex; flex-direction: column; gap: 0.75rem;
+      width: 100%; max-width: 360px;
+      animation: fadeInUp 0.6s ease-out 0.5s both;
+    }
+    .btn {
+      width: 100%; padding: 0.875rem 1.5rem;
+      border-radius: 0.5rem; font-size: 1rem;
+      font-weight: 700; cursor: pointer; border: none;
+      transition: all 0.2s; text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex; align-items: center;
+      justify-content: center; gap: 0.5rem;
+    }
+    .btn:hover { transform: scale(1.03); }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      color: #000; box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--orange-light), #ffaa00);
+      box-shadow: 0 6px 30px rgba(255, 107, 0, 0.6);
+    }
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid var(--orange);
+      color: var(--orange);
+    }
+    .btn-secondary:hover {
+      background: var(--orange); color: #000;
+    }
+    .btn-oauth {
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text); font-size: 0.85rem; padding: 0.75rem;
+      font-weight: 600;
+    }
+    .btn-oauth:hover { border-color: var(--orange); }
+    .btn-oauth svg { width: 18px; height: 18px; }
+
+    .divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 0.5rem 0; color: var(--text-secondary);
+      font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .oauth-row { display: flex; gap: 0.75rem; }
+    .oauth-row .btn { flex: 1; }
+
+    /* Formulaires */
+    .form-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 0.75rem; padding: 2rem;
+      width: 100%; max-width: 380px;
+      animation: fadeInUp 0.4s ease-out;
+    }
+    .form-card h2 {
+      text-align: center; margin-bottom: 1.5rem;
+      font-size: 1.5rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label {
+      display: block; font-size: 0.75rem;
+      color: var(--text-secondary); margin-bottom: 0.375rem;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%; padding: 0.75rem 1rem;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 0.5rem; color: var(--text);
+      font-size: 0.95rem; outline: none;
+      transition: all 0.2s;
+    }
+    .form-group input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
+    }
+    .form-group input::placeholder { color: #555; }
+
+    .alert {
+      padding: 0.75rem 1rem; border-radius: 0.5rem;
+      font-size: 0.875rem; margin-bottom: 1rem;
+      border-left: 3px solid;
+    }
+    .alert-error {
+      background: rgba(255, 68, 68, 0.1);
+      border-color: var(--error); color: #ff7777;
+    }
+    .alert-success {
+      background: rgba(0, 204, 102, 0.1);
+      border-color: var(--success); color: #77dd99;
+    }
+
+    .form-footer {
+      text-align: center; margin-top: 1rem;
+      font-size: 0.875rem; color: var(--text-secondary);
+    }
+    .form-footer button.link {
+      color: var(--orange); background: none; border: none;
+      cursor: pointer; font-weight: 600;
+    }
+    .form-footer button.link:hover { text-decoration: underline; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #000; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      position: fixed; bottom: 1rem; left: 0; right: 0;
+      text-align: center; font-size: 0.65rem;
+      color: #444; z-index: 10;
+    }
+
+    /* Chat Widget */
+    .chat-bubble {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      z-index: 100; display: flex; align-items: flex-end; gap: 0.75rem;
+    }
+    .chat-badges {
+      display: flex; flex-direction: column; align-items: flex-end;
+      gap: 0.5rem; margin-bottom: 0.5rem;
+    }
+    .chat-badge {
+      display: flex; align-items: center; gap: 0.375rem;
+      padding: 0.375rem 0.75rem; border-radius: 9999px;
+      font-size: 0.75rem; animation: fadeIn 0.5s ease-out;
+    }
+    .chat-badge-provider {
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .chat-badge-tilex {
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      border: 1px solid var(--orange); color: #000; font-weight: 700;
+    }
+    .chat-btn {
+      width: 56px; height: 56px; border-radius: 50%; border: none;
+      cursor: pointer; background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      box-shadow: 0 4px 20px rgba(255, 107, 0, 0.5);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s; position: relative;
+    }
+    .chat-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(255, 107, 0, 0.7); }
+    .chat-btn:active { transform: scale(0.95); }
+    .chat-btn svg { width: 28px; height: 28px; color: #000; }
+    .chat-notification {
+      position: absolute; top: -4px; right: -4px;
+      width: 20px; height: 20px; background: #fff;
+      border-radius: 50%; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 900; color: #000;
+      border: 2px solid #000; animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .chat-window {
+      position: fixed; bottom: 5.5rem; right: 1.5rem;
+      width: 380px; max-width: calc(100vw - 3rem);
+      height: 500px; max-height: calc(100vh - 7rem);
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 0.75rem; z-index: 100;
+      display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      animation: chatOpen 0.3s ease-out;
+    }
+    @keyframes chatOpen {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.875rem 1rem; background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-header-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .chat-header-avatar svg { width: 20px; height: 20px; }
+    .online-dot {
+      position: absolute; bottom: 0; right: 0;
+      width: 10px; height: 10px; background: #00cc66;
+      border-radius: 50%; border: 2px solid var(--bg);
+    }
+    .chat-header-info { flex: 1; }
+    .chat-header-info h4 { font-size: 0.875rem; margin: 0; }
+    .chat-header-info p {
+      font-size: 0.7rem; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .chat-header-pulse {
+      width: 6px; height: 6px; background: #00cc66;
+      border-radius: 50%; animation: pulse 2s infinite;
+    }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .chat-message {
+      display: flex; gap: 0.5rem; max-width: 85%;
+    }
+    .chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
+    .chat-message.agent { align-self: flex-start; }
+    .chat-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 0.75rem;
+    }
+    .chat-avatar.user { background: var(--bg-input); }
+    .chat-avatar.agent {
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+    }
+    .chat-bubble-msg {
+      padding: 0.625rem 0.875rem; border-radius: 1rem;
+      font-size: 0.85rem; line-height: 1.5;
+    }
+    .chat-bubble-msg.user {
+      background: var(--orange); color: #000;
+      border-bottom-right-radius: 0.25rem;
+      font-weight: 500;
+    }
+    .chat-bubble-msg.agent {
+      background: var(--bg-card); color: var(--text);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 0.25rem;
+    }
+    .chat-bubble-msg .time {
+      font-size: 0.65rem; opacity: 0.5; margin-top: 0.25rem;
+    }
+    .chat-typing {
+      display: flex; gap: 0.25rem; padding: 0.5rem 0;
+    }
+    .chat-typing-dot {
+      width: 6px; height: 6px; background: var(--orange);
+      border-radius: 50%; animation: typing 1.4s infinite;
+    }
+    .chat-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    .chat-input-area {
+      padding: 0.75rem; background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .chat-input-row { display: flex; gap: 0.5rem; }
+    .chat-input {
+      flex: 1; padding: 0.625rem 0.875rem;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 0.5rem; color: var(--text);
+      font-size: 0.875rem; outline: none;
+    }
+    .chat-input:focus { border-color: var(--orange); }
+    .chat-input::placeholder { color: #555; }
+    .chat-send-btn {
+      width: 36px; height: 36px; border-radius: 0.5rem;
+      border: none; background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      color: #000; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .chat-send-btn:hover { transform: scale(1.05); }
+    .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .chat-send-btn svg { width: 16px; height: 16px; }
+    .chat-footer-text {
+      text-align: center; font-size: 0.6rem;
+      color: #444; margin-top: 0.375rem;
+    }
+
+    .hidden { display: none !important; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+    ::selection {
+      background: rgba(255, 107, 0, 0.3);
+      color: #fff;
+    }
+  </style>
 </head>
-<body data-theme="dark">
+<body>
+  <div class="particles" id="particles"></div>
 
-<!-- ============ MENU LATÉRAL GAUCHE ============ -->
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <button class="hamburger" id="menuToggle" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="brand">
-      <img src="logo.png" alt="ti-lex-AL" class="brand-logo">
-      <span class="brand-name">ti-lex<span class="orange">-AL</span></span>
+  <div class="container" id="main-container">
+    <!-- Logo -->
+    <div class="logo-wrapper">
+      <div class="logo-halo"></div>
+      <img src="logo.png" alt="ti-lex-al v10" class="logo-img" />
     </div>
-  </div>
 
-  <nav class="nav">
-    <button class="nav-item active" data-view="chat">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-      <span class="lbl">Chat</span>
-    </button>
-    <button class="nav-item" data-view="codex">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
-      <span class="lbl">Codex</span>
-    </button>
-    <button class="nav-item nav-secure" data-view="security">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span class="lbl">Sécurité</span>
-      <span class="badge">AL 7.8</span>
-    </button>
-  </nav>
-
-  <!-- Connecteurs -->
-  <div class="connectors">
-    <p class="conn-title">Connexions</p>
-    <button class="conn-btn" data-service="anthropic"><span class="conn-dot"></span>Anthropic</button>
-    <button class="conn-btn" data-service="github"><span class="conn-dot"></span>GitHub</button>
-    <button class="conn-btn" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
-    <button class="conn-btn" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
-    <button class="conn-btn" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
-  </div>
-
-  <!-- PARAMÈTRES TOUT EN BAS -->
-  <button class="nav-item nav-bottom" data-view="settings" id="settingsBtn">
-    <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    <span class="lbl">Paramètres</span>
-  </button>
-</aside>
-
-<div class="overlay" id="overlay"></div>
-
-<!-- ============ ZONE PRINCIPALE ============ -->
-<main class="main">
-
-  <header class="topbar">
-    <button class="hamburger mobile-only" id="menuToggleMobile" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="agent-id">
-      <img src="logo.png" alt="" class="agent-mini-logo">
-      <div>
-        <h1 id="viewTitle">Agent AL</h1>
-        <p class="status"><span class="status-dot"></span>En ligne · ti-lex-AL v10</p>
+    <!-- Tagline -->
+    <div class="tagline">
+      <h1>Votre <span>agent</span> intelligent</h1>
+      <p>Propulsé par ti-lex-al · Québec</p>
+      <div class="badges">
+        <span class="badge">Loi 25</span>
+        <span class="badge">Sécurité intégrée</span>
+        <span class="badge">100% légal</span>
       </div>
     </div>
-    <div class="topbar-right">
-      <button class="pill-toggle" id="reflexionToggle" aria-pressed="true">
-        <span class="pill-knob"></span>
-        <span class="pill-txt">Réflexion</span>
+
+    <!-- VUE ACCUEIL -->
+    <div class="btn-group" id="view-home">
+      <button class="btn btn-secondary" onclick="showLogin()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+        Connexion
       </button>
-    </div>
-  </header>
-
-  <!-- ===== VUE CHAT ===== -->
-  <section class="view view-chat active" id="view-chat">
-    <div class="messages" id="messages">
-      <div class="welcome">
-        <img src="logo.png" alt="ti-lex-AL" class="welcome-logo">
-        <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
-        <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
-        <div class="suggest">
-          <button class="sug">Explique-moi le mode réflexion</button>
-          <button class="sug">Connecte-toi à Supabase</button>
-          <button class="sug">Génère une fonction Edge</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="composer">
-      <div class="composer-inner">
-        <textarea id="input" rows="1" placeholder="Écris à Agent AL…"></textarea>
-        <button class="send" id="send" aria-label="Envoyer">
-          <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      <button class="btn btn-primary" onclick="showRegister()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        Inscription
+      </button>
+      <div class="divider">ou</div>
+      <div class="oauth-row">
+        <button class="btn btn-oauth" onclick="oauthLogin('google')">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button class="btn btn-oauth" onclick="oauthLogin('github')">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
         </button>
       </div>
-      <p class="composer-hint" id="modeHint">Mode réflexion <span class="orange">activé</span></p>
     </div>
-  </section>
 
-  <!-- ===== VUE CODEX ===== -->
-  <section class="view view-codex" id="view-codex">
-    <div class="codex-split">
-      <div class="codex-editor">
-        <div class="codex-bar">
-          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-          <span class="codex-file">main.ts</span>
-          <select id="lang" class="lang-sel">
-            <option>TypeScript</option><option>Python</option><option>SQL</option>
-            <option>JavaScript</option><option>Rust</option>
-          </select>
+    <!-- VUE CONNEXION -->
+    <div class="form-card hidden" id="view-login">
+      <h2>Connexion</h2>
+      <div id="login-error" class="alert alert-error hidden"></div>
+      <div id="login-success" class="alert alert-success hidden"></div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Courriel</label>
+          <input type="email" id="login-email" placeholder="toi@exemple.com" required>
         </div>
-        <textarea id="codeInput" class="code-area" spellcheck="false" placeholder="// Décris ce que tu veux coder, ou colle ton code…"></textarea>
-        <div class="codex-actions">
-          <button class="btn-codex" id="codexRun" data-w="Géné" data-b="rer">Générer</button>
-          <button class="btn-codex ghost" id="codexExplain" data-w="Expli" data-b="quer">Expliquer</button>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
         </div>
-      </div>
-      <div class="codex-output">
-        <div class="codex-bar"><span class="codex-file">Sortie Codex</span></div>
-        <div class="code-out" id="codeOut"><p class="muted">La sortie du Codex apparaîtra ici.</p></div>
+        <button type="submit" class="btn btn-primary" id="login-btn" style="margin-top:0.5rem">
+          Se connecter
+        </button>
+      </form>
+      <div class="form-footer">
+        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showRegister()">Pas de compte? Inscris-toi →</button>
       </div>
     </div>
-  </section>
 
-  <!-- ===== VUE SÉCURITÉ ===== -->
-  <section class="view view-security" id="view-security">
-    <div class="sec-wrap">
-      <div class="sec-head">
-        <img src="logo.png" class="sec-logo" alt="">
-        <div>
-          <h2>Mode Sécurité <span class="orange">AL 7.8</span></h2>
-          <p class="muted">Agent ti-lex-AL · scan & conformité. Une autorisation signée (SOW) est requise avant tout scan.</p>
+    <!-- VUE INSCRIPTION -->
+    <div class="form-card hidden" id="view-register">
+      <h2>Inscription</h2>
+      <div id="register-error" class="alert alert-error hidden"></div>
+      <div id="register-success" class="alert alert-success hidden"></div>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Nom complet</label>
+          <input type="text" id="register-name" placeholder="Alex Marceau" required>
         </div>
-      </div>
-      <div class="sec-grid">
-        <div class="sec-card"><h3>Autorisations</h3><p class="big">0</p><span class="muted">SOW actifs</span></div>
-        <div class="sec-card"><h3>Scans</h3><p class="big">—</p><span class="muted">en attente d'autorisation</span></div>
-        <div class="sec-card"><h3>Findings</h3><p class="big">—</p><span class="muted">aucun</span></div>
-        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">security_authorizations</span></div>
-      </div>
-      <div class="sec-note">
-        <strong>Rappel légal (Art. 342.1 C.cr.) :</strong> tout scan doit reposer sur un mandat autorisé,
-        un programme de bug bounty, ou de la divulgation responsable. Le mode Sécurité bloque les scans
-        tant qu'aucune autorisation valide n'est enregistrée.
+        <div class="form-group">
+          <label>Courriel</label>
+          <input type="email" id="register-email" placeholder="toi@exemple.com" required>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="register-password" placeholder="8 caractères minimum" minlength="8" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="register-btn" style="margin-top:0.5rem">
+          Créer mon compte
+        </button>
+      </form>
+      <div class="form-footer">
+        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showLogin()">Déjà un compte? Connecte-toi →</button>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- ===== VUE PARAMÈTRES ===== -->
-  <section class="view view-settings" id="view-settings">
-    <div class="settings-wrap">
-      <h2>Paramètres</h2>
+  <div class="footer">
+    <p>Produit du Québec · Conforme Loi 25 · ti-lex-al v10</p>
+    <p>Données hébergées à Beauharnois, ca-central-1</p>
+  </div>
 
-      <div class="set-block">
-        <h3>Modèle Claude</h3>
-        <p class="muted">Modèle utilisé par Agent AL.</p>
-        <select id="modelSelect" class="set-input">
-          <option value="claude-opus-4-8">Claude Opus 4.8 (le plus avancé)</option>
-          <option value="claude-opus-4-7">Claude Opus 4.7</option>
-          <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-          <option value="claude-haiku-4-5">Claude Haiku 4.5 (rapide)</option>
-        </select>
+  <!-- Chat Widget -->
+  <div class="chat-bubble" id="chat-bubble">
+    <div class="chat-badges" id="chat-badges"></div>
+    <button class="chat-btn" id="chat-toggle" onclick="toggleChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="chat-window hidden" id="chat-window">
+    <div class="chat-header">
+      <div class="chat-header-avatar">
+        <svg viewBox="0 0 100 100" width="20" height="20"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cg)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg>
+        <span class="online-dot"></span>
       </div>
-
-      <div class="set-block">
-        <h3>Mode réflexion</h3>
-        <p class="muted">Affiche le raisonnement de l'agent en gris avant la réponse.</p>
-        <button class="pill-toggle" id="reflexionToggle2" aria-pressed="true">
-          <span class="pill-knob"></span><span class="pill-txt">Activé</span>
+      <div class="chat-header-info">
+        <h4>ti-lex 7.8</h4>
+        <p><span class="chat-header-pulse"></span> En ligne · Agent de sécurité</p>
+      </div>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Écris un message... (help)" onkeydown="if(event.key==='Enter')sendChatMessage()">
+        <button class="chat-send-btn" id="chat-send" onclick="sendChatMessage()">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
         </button>
       </div>
-
-      <div class="set-block">
-        <h3>Mode jour</h3>
-        <p class="muted">Bascule clair / sombre, comme la plateforme officielle.</p>
-        <button class="pill-toggle" id="themeToggle" aria-pressed="false">
-          <span class="pill-knob"></span><span class="pill-txt">Sombre</span>
-        </button>
-      </div>
-
-      <div class="set-block">
-        <h3>Clé API Anthropic</h3>
-        <p class="muted">Pour le déploiement. <span class="warn">⚠ Ne jamais exposer une vraie clé dans le frontend en production — route via une Edge Function Supabase.</span></p>
-        <input type="password" id="apiKey" class="set-input" placeholder="sk-ant-...">
-        <button class="btn-codex" id="saveKey" data-w="Enregis" data-b="trer">Enregistrer</button>
-      </div>
-
-      <div class="set-block">
-        <h3>Connexions</h3>
-        <div class="set-conns">
-          <button class="conn-btn lg" data-service="github"><span class="conn-dot"></span>GitHub</button>
-          <button class="conn-btn lg" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
-          <button class="conn-btn lg" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
-          <button class="conn-btn lg" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
-        </div>
-      </div>
+      <p class="chat-footer-text">ti-lex 7.8 · Conforme Loi 25 · Données chiffrées</p>
     </div>
-  </section>
+  </div>
 
-</main>
+  <script>
+    const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTY5MTY0MDAsImV4cCI6MjAzMjQ5MjQwMH0.votre_cle_anon';
 
-<script src="app.js"></script>
+    let supabase = null, currentUser = null;
+
+    function initSupabase() {
+      if (window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        checkSession();
+      }
+    }
+
+    async function checkSession() {
+      if (!supabase) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          currentUser = session.user;
+          updateUIBadges();
+          window.location.href = 'app.html';
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function hideAllViews() {
+      document.getElementById('view-home').classList.add('hidden');
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('view-register').classList.add('hidden');
+    }
+    function showHome() { hideAllViews(); document.getElementById('view-home').classList.remove('hidden'); clearErrors(); }
+    function showLogin() { hideAllViews(); document.getElementById('view-login').classList.remove('hidden'); document.getElementById('login-email').focus(); clearErrors(); }
+    function showRegister() { hideAllViews(); document.getElementById('view-register').classList.remove('hidden'); document.getElementById('register-name').focus(); clearErrors(); }
+
+    function clearErrors() {
+      ['login-error','login-success','register-error','register-success'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.classList.add('hidden'); el.textContent = ''; }
+      });
+    }
+    function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
+    function showSuccess(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      if (!supabase) { showError('login-error', 'Supabase non initialisé.'); return; }
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Connexion...';
+      clearErrors();
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: document.getElementById('login-email').value.trim(),
+          password: document.getElementById('login-password').value
+        });
+        if (error) showError('login-error', error.message);
+        else if (data.user) {
+          currentUser = data.user;
+          showSuccess('login-success', 'Connexion réussie! Redirection...');
+          updateUIBadges();
+          setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+        }
+      } catch (err) { showError('login-error', 'Erreur: ' + err.message); }
+      finally { btn.disabled = false; btn.innerHTML = 'Se connecter'; }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      if (!supabase) { showError('register-error', 'Supabase non initialisé.'); return; }
+      const btn = document.getElementById('register-btn');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Inscription...';
+      clearErrors();
+      const password = document.getElementById('register-password').value;
+      if (password.length < 8) {
+        showError('register-error', 'Mot de passe: 8 caractères minimum.');
+        btn.disabled = false; btn.innerHTML = 'Créer mon compte'; return;
+      }
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: document.getElementById('register-email').value.trim(),
+          password,
+          options: { data: { full_name: document.getElementById('register-name').value.trim() },
+            emailRedirectTo: window.location.origin + '/app.html' }
+        });
+        if (error) showError('register-error', error.message);
+        else showSuccess('register-success', 'Compte créé! Vérifie ton courriel.');
+      } catch (err) { showError('register-error', 'Erreur: ' + err.message); }
+      finally { btn.disabled = false; btn.innerHTML = 'Créer mon compte'; }
+    }
+
+    async function oauthLogin(provider) {
+      if (!supabase) { alert('Supabase non initialisé'); return; }
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider, options: { redirectTo: window.location.origin + '/app.html' }
+        });
+        if (error) alert('Erreur: ' + error.message);
+      } catch (err) { alert('Erreur: ' + err.message); }
+    }
+
+    function updateUIBadges() {
+      const badges = document.getElementById('chat-badges');
+      if (!currentUser) { badges.innerHTML = ''; return; }
+      const identities = currentUser.identities || [];
+      let provider = 'supabase', label = 'Email';
+      if (identities.some(i => i.provider === 'google')) { provider = 'google'; label = 'Google'; }
+      if (identities.some(i => i.provider === 'github')) { provider = 'github'; label = 'GitHub'; }
+      badges.innerHTML = `
+        <div class="chat-badge chat-badge-provider">
+          <span>Connecté avec ${label}</span>
+        </div>
+        <div class="chat-badge chat-badge-tilex">
+          <span>ti-lex 7.8</span>
+          <span style="width:6px;height:6px;background:#00cc66;border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 2s infinite"></span>
+        </div>`;
+    }
+
+    let chatOpen = false, chatMessages = [], isTyping = false;
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      const win = document.getElementById('chat-window');
+      const btn = document.getElementById('chat-toggle');
+      if (chatOpen) {
+        win.classList.remove('hidden');
+        btn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+        if (chatMessages.length === 0) addChatMessage('agent', "Salut! Je suis ti-lex 7.8, ton agent de sécurité québécois.\n\nJe peux t'aider à:\n• Créer des SOWs légaux\n• Lancer des scans de sécurité\n• Analyser les vulnérabilités\n• Protéger tes données (Loi 25)\n\nComment puis-je t'aider aujourd'hui?");
+        document.getElementById('chat-input').focus();
+      } else {
+        win.classList.add('hidden');
+        btn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>';
+      }
+    }
+    function addChatMessage(role, content) {
+      const msg = { id: Date.now(), role, content, time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}) };
+      chatMessages.push(msg); renderChatMessages();
+    }
+    function renderChatMessages() {
+      const container = document.getElementById('chat-messages');
+      container.innerHTML = chatMessages.map(msg => `
+        <div class="chat-message ${msg.role}">
+          <div class="chat-avatar ${msg.role}">${msg.role === 'user' ? '&#x1f464;' : '<svg width="16" height="16" viewBox="0 0 100 100"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cb)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg>'}</div>
+          <div class="chat-bubble-msg ${msg.role}"><div style="white-space:pre-wrap">${msg.content}</div><div class="time">${msg.time}</div></div>
+        </div>
+      `).join('');
+      if (isTyping) container.innerHTML += `<div class="chat-message agent"><div class="chat-avatar agent"><svg width="16" height="16" viewBox="0 0 100 100"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cb)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg></div><div class="chat-bubble-msg agent"><div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div></div></div>`;
+      container.scrollTop = container.scrollHeight;
+    }
+    function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text || isTyping) return;
+      addChatMessage('user', text); input.value = '';
+      isTyping = true; renderChatMessages();
+      setTimeout(() => {
+        isTyping = false;
+        const lower = text.toLowerCase();
+        let response = "Je comprends. Pour t'aider mieux, peux-tu préciser?\n\nTu peux dire **help** pour voir les commandes disponibles.";
+        if (lower.includes('sow') || lower.includes('autorisation')) response = "**Créer un SOW**\n\n1. Va dans l'onglet Sécurité → Mes SOWs\n2. Clique **+ Nouveau SOW**\n3. Remplis: titre, client, scope, types de scan autorisés\n4. Fais-le **signer** par le client pour l'activer\n\nSans SOW actif, aucun scan n'est possible (art. 342.1 C.cr.)";
+        else if (lower.includes('scan') || lower.includes('lancer')) response = "**Lancer un scan**\n\n1. Assure-toi d'avoir un **SOW actif**\n2. Va dans le Dashboard → **Scan rapide**\n3. Choisis: cible, type de scan, SOW\n4. Clique **Lancer le scan**";
+        else if (lower.includes('desjardins') || lower.includes('fuite')) response = "**Leçon Desjardins 2019**\n\n• **4.2 millions** de membres affectés\n• Cause: employé malveillant + absence de contrôles\n\n**Notre protection:**\n- Audit trail immuable\n- RLS (chacun ne voit que ses données)\n- SOW obligatoire pour tout scan\n- Chiffrement AES-256\n- Données au Québec (ca-central-1)";
+        else if (lower.includes('loi 25') || lower.includes('conformité')) response = "**Loi 25 (Québec)**\n\nObligations:\n• Consentement explicite\n• Minimisation des données\n• Droits d'accès et de rectification\n• Conservation limitée\n• Notification en cas de fuite (72h)\n\n**Notre conformité:**\n- 100% conforme Loi 25\n- Données en ca-central-1 (Beauharnois)\n- Anonymisation avant API externe\n- Audit trail > 5 ans";
+        else if (lower.includes('help') || lower.includes('aide')) response = "**Commandes disponibles**\n\n• **sow** — Créer/gérer des SOWs\n• **scan** — Lancer un scan de sécurité\n• **desjardins** — Leçon de la fuite 2019\n• **loi 25** — Conformité québécoise\n• **security** — Status de la sécurité\n• **help** — Afficher cette aide";
+        else if (lower.includes('security') || lower.includes('status')) response = "**Status sécurité**\n\n- Chiffrement AES-256\n- Audit trail immuable (hash chain SHA-256)\n- RLS activé (Row Level Security)\n- Données ca-central-1 (Beauharnois, Québec)\n- SOW validation (4 niveaux de protection)\n- Anonymisation avant API externe\n- Conforme Loi 25 + Art. 342.1 C.cr.";
+        addChatMessage('agent', response);
+      }, 1500);
+    }
+
+    function initParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.top = Math.random() * 100 + '%';
+        p.style.width = (Math.random() * 3 + 1) + 'px';
+        p.style.height = p.style.width;
+        p.style.animationDelay = Math.random() * 5 + 's';
+        p.style.animationDuration = (3 + Math.random() * 4) + 's';
+        container.appendChild(p);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initParticles();
+      initSupabase();
+    });
+  </script>
 </body>
 </html>
