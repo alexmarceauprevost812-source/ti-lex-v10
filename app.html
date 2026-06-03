@@ -93,7 +93,20 @@
     </div>
 
     <div class="composer">
+      <div id="attachStrip" class="attach-strip"></div>
       <div class="composer-inner">
+        <div class="plus-wrap">
+          <button class="plus-btn" id="plusBtn" aria-label="Ajouter" title="Ajouter">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <div class="plus-menu hidden" id="plusMenu">
+            <button class="plus-item" data-act="image"><span class="pico">🖼️</span>Image</button>
+            <button class="plus-item" data-act="file"><span class="pico">📎</span>Fichier</button>
+            <button class="plus-item" data-act="zip"><span class="pico">🗜️</span>Fichier ZIP</button>
+            <button class="plus-item" data-act="mic"><span class="pico">🎤</span>Micro (dicter)</button>
+            <button class="plus-item" data-act="web"><span class="pico">🛠️</span>Chercher sur le web</button>
+          </div>
+        </div>
         <textarea id="input" rows="1" placeholder="Écris à Agent AL…"></textarea>
         <button class="send" id="send" aria-label="Envoyer">
           <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
@@ -101,6 +114,9 @@
       </div>
       <p class="composer-hint" id="modeHint">Mode réflexion <span class="orange">activé</span></p>
     </div>
+    <input type="file" id="fileImage" accept="image/*" multiple hidden>
+    <input type="file" id="fileAny" multiple hidden>
+    <input type="file" id="fileZip" accept=".zip,application/zip" hidden>
   </section>
 
   <!-- ===== VUE CODEX ===== -->
@@ -257,11 +273,37 @@
         <button class="btn-codex" id="saveKey" data-w="Enregis" data-b="trer">Enregistrer</button>
       </div>
 
+      <!-- ===== GITHUB ===== -->
       <div class="set-block">
-        <h3>Connexions</h3>
+        <h3>GitHub <span class="conn-state" id="ghState">— non connecté</span></h3>
+        <p class="muted">Connecte ton compte pour accéder à tous tes dépôts et choisir la bonne branche.</p>
+        <input type="password" id="ghToken" class="set-input" placeholder="Personal Access Token (ghp_...)">
+        <div class="set-row">
+          <button class="btn-codex" id="ghConnect" data-w="Connec" data-b="ter">Connecter</button>
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=ti-lex-AL" target="_blank" rel="noopener" class="set-link">Créer un token →</a>
+        </div>
+        <div id="ghRepoZone" class="set-hidden">
+          <label class="set-label">Dépôt</label>
+          <select id="ghRepo" class="set-input"><option value="">— Choisir un dépôt —</option></select>
+          <label class="set-label">Branche</label>
+          <select id="ghBranch" class="set-input"><option value="">— Choisir une branche —</option></select>
+          <div id="ghFiles" class="set-files"></div>
+        </div>
+      </div>
+
+      <!-- ===== SUPABASE ===== -->
+      <div class="set-block">
+        <h3>Supabase <span class="conn-state" id="sbState">— non connecté</span></h3>
+        <p class="muted">Branche ton projet Supabase (URL + clé publishable).</p>
+        <input type="text" id="sbUrl" class="set-input" placeholder="https://xxxx.supabase.co">
+        <input type="password" id="sbKey" class="set-input" placeholder="sb_publishable_... ou anon key">
+        <button class="btn-codex" id="sbConnect" data-w="Connec" data-b="ter">Connecter</button>
+      </div>
+
+      <!-- ===== AUTRES ===== -->
+      <div class="set-block">
+        <h3>Autres connexions</h3>
         <div class="set-conns">
-          <button class="conn-btn lg" data-service="github"><span class="conn-dot"></span>GitHub</button>
-          <button class="conn-btn lg" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
           <button class="conn-btn lg" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
           <button class="conn-btn lg" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
         </div>

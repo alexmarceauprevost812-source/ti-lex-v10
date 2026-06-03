@@ -13,17 +13,29 @@ const state = {
   apiKey: "",
   history: [],
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
+  github: { token: "", repo: "", branch: "" },
+  supabase: { url: "", key: "" },
+  webSearch: false,
 };
 
-/* ---- Persistance locale (clé API Anthropic + modèle) ---- */
+/* pièces jointes en attente d'envoi */
+let attachments = [];
+
+/* ---- Persistance locale (clé API Anthropic + modèle + connexions) ---- */
 const LS_KEY = "tilex-al-apikey";
 const LS_MODEL = "tilex-al-model";
+const LS_GH = "tilex-al-github";
+const LS_SB = "tilex-al-supabase";
 function loadSettings() {
   try {
     const k = localStorage.getItem(LS_KEY);
     const m = localStorage.getItem(LS_MODEL);
     if (k) state.apiKey = k;
     if (m) state.model = m;
+    const gh = JSON.parse(localStorage.getItem(LS_GH) || "null");
+    if (gh && gh.token) { state.github = gh; state.connected.github = true; }
+    const sb = JSON.parse(localStorage.getItem(LS_SB) || "null");
+    if (sb && sb.url) { state.supabase = sb; state.connected.supabase = true; }
   } catch (e) { /* localStorage indisponible */ }
 }
 function apiHeaders() {
@@ -127,13 +139,253 @@ $$(".conn-btn[data-service]").forEach(btn => {
   if (state.connected[btn.dataset.service]) btn.classList.add("connected");
 });
 
+/* ================= CONNEXION GITHUB ================= */
+const GH_API = "https://api.github.com";
+function ghHeaders() {
+  return { Authorization: `Bearer ${state.github.token}`, Accept: "application/vnd.github+json" };
+}
+function setGhState(txt, ok) {
+  const el = $("#ghState");
+  if (el) { el.textContent = txt; el.classList.toggle("ok", !!ok); }
+}
+
+async function ghConnect() {
+  const token = $("#ghToken").value.trim();
+  if (!token) { setGhState("— entre un token", false); return; }
+  state.github.token = token;
+  setGhState("connexion…", false);
+  const btn = $("#ghConnect"); btn.disabled = true;
+  try {
+    const res = await fetch(`${GH_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: ghHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const repos = await res.json();
+    const sel = $("#ghRepo");
+    sel.innerHTML = `<option value="">— Choisir un dépôt (${repos.length}) —</option>` +
+      repos.map(r => `<option value="${r.full_name}">${escapeHtml(r.full_name)}${r.private ? " 🔒" : ""}</option>`).join("");
+    $("#ghRepoZone").classList.add("show");
+    state.connected.github = true;
+    const me = repos[0]?.owner?.login || "";
+    setGhState(`✓ connecté${me ? " · " + me : ""}`, true);
+    persistGithub();
+    $$(`.conn-btn[data-service="github"]`).forEach(b => b.classList.add("connected"));
+    syncCodexProjects();
+    // restaure le dépôt précédent
+    if (state.github.repo) { sel.value = state.github.repo; await ghLoadBranches(state.github.repo); }
+  } catch (err) {
+    setGhState(`✗ ${err.message} (token invalide ?)`, false);
+    state.connected.github = false;
+  } finally { btn.disabled = false; }
+}
+
+async function ghLoadBranches(repo) {
+  if (!repo) return;
+  state.github.repo = repo;
+  const bsel = $("#ghBranch");
+  bsel.innerHTML = `<option value="">chargement…</option>`;
+  try {
+    const res = await fetch(`${GH_API}/repos/${repo}/branches?per_page=100`, { headers: ghHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const branches = await res.json();
+    // détecte la branche par défaut
+    const repoRes = await fetch(`${GH_API}/repos/${repo}`, { headers: ghHeaders() });
+    const def = repoRes.ok ? (await repoRes.json()).default_branch : "main";
+    bsel.innerHTML = branches.map(b =>
+      `<option value="${b.name}"${b.name === def ? " selected" : ""}>${escapeHtml(b.name)}${b.name === def ? " (défaut)" : ""}</option>`
+    ).join("");
+    state.github.branch = bsel.value || def;
+    persistGithub();
+    await ghLoadFiles(repo, state.github.branch);
+  } catch (err) {
+    bsel.innerHTML = `<option value="">erreur: ${err.message}</option>`;
+  }
+}
+
+async function ghLoadFiles(repo, branch) {
+  const box = $("#ghFiles");
+  box.innerHTML = `<p class="muted" style="font-size:.78rem">chargement des fichiers…</p>`;
+  try {
+    const res = await fetch(`${GH_API}/repos/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`, { headers: ghHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const tree = await res.json();
+    const files = (tree.tree || []).filter(t => t.type === "blob");
+    if (!files.length) { box.innerHTML = `<p class="muted" style="font-size:.78rem">aucun fichier</p>`; return; }
+    box.innerHTML = `<p class="muted" style="font-size:.74rem;padding:2px 6px 6px">${files.length} fichier(s) sur <b>${escapeHtml(branch)}</b></p>` +
+      files.slice(0, 300).map(f =>
+        `<div class="set-file-item"><span class="f-ico">${fileIcon(f.path)}</span>${escapeHtml(f.path)}</div>`
+      ).join("");
+  } catch (err) {
+    box.innerHTML = `<p class="muted" style="font-size:.78rem">erreur fichiers: ${err.message}</p>`;
+  }
+}
+
+function fileIcon(path) {
+  const ext = path.split(".").pop().toLowerCase();
+  const map = { ts:"🟦", tsx:"🟦", js:"🟨", jsx:"🟨", css:"🌸", html:"🟧", py:"🐍", sql:"🟩", rs:"🦀", json:"📦", md:"📄", png:"🖼️", jpg:"🖼️", svg:"🖼️", yml:"⚙️", yaml:"⚙️" };
+  return map[ext] || "📄";
+}
+
+function persistGithub() {
+  try { localStorage.setItem(LS_GH, JSON.stringify(state.github)); } catch (_) {}
+}
+
+if ($("#ghConnect")) {
+  $("#ghConnect").onclick = ghConnect;
+  $("#ghRepo").onchange = e => ghLoadBranches(e.target.value);
+  $("#ghBranch").onchange = e => { state.github.branch = e.target.value; persistGithub(); ghLoadFiles(state.github.repo, e.target.value); };
+}
+
+/* ================= CONNEXION SUPABASE ================= */
+function setSbState(txt, ok) {
+  const el = $("#sbState");
+  if (el) { el.textContent = txt; el.classList.toggle("ok", !!ok); }
+}
+async function sbConnect() {
+  const url = $("#sbUrl").value.trim().replace(/\/$/, "");
+  const key = $("#sbKey").value.trim();
+  if (!url || !key) { setSbState("— URL + clé requises", false); return; }
+  setSbState("connexion…", false);
+  const btn = $("#sbConnect"); btn.disabled = true;
+  try {
+    const res = await fetch(`${url}/rest/v1/`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+    if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+    state.supabase = { url, key };
+    state.connected.supabase = true;
+    setSbState("✓ connecté", true);
+    try { localStorage.setItem(LS_SB, JSON.stringify(state.supabase)); } catch (_) {}
+    $$(`.conn-btn[data-service="supabase"]`).forEach(b => b.classList.add("connected"));
+    syncCodexProjects();
+  } catch (err) {
+    setSbState(`✗ ${err.message}`, false);
+    state.connected.supabase = false;
+  } finally { btn.disabled = false; }
+}
+if ($("#sbConnect")) $("#sbConnect").onclick = sbConnect;
+
+/* ================= BOUTON + (pièces jointes / micro / web) ================= */
+const plusBtn = $("#plusBtn"), plusMenu = $("#plusMenu");
+plusBtn.onclick = e => { e.stopPropagation(); plusMenu.classList.toggle("hidden"); plusBtn.classList.toggle("active", !plusMenu.classList.contains("hidden")); };
+document.addEventListener("click", e => {
+  if (!plusMenu.contains(e.target) && e.target !== plusBtn && !plusBtn.contains(e.target)) {
+    plusMenu.classList.add("hidden"); plusBtn.classList.remove("active");
+  }
+});
+function closePlus() { plusMenu.classList.add("hidden"); plusBtn.classList.remove("active"); }
+
+$$(".plus-item").forEach(item => {
+  item.onclick = () => {
+    const act = item.dataset.act;
+    if (act === "image") $("#fileImage").click();
+    else if (act === "file") $("#fileAny").click();
+    else if (act === "zip") $("#fileZip").click();
+    else if (act === "mic") startMic();
+    else if (act === "web") toggleWebSearch(item);
+    if (act !== "web") closePlus();
+  };
+});
+
+function toggleWebSearch(item) {
+  state.webSearch = !state.webSearch;
+  item.classList.toggle("on", state.webSearch);
+  renderAttachStrip();
+  closePlus();
+}
+
+/* ---- Lecture des fichiers ---- */
+function bytesLabel(n) {
+  if (n < 1024) return n + " o";
+  if (n < 1048576) return (n / 1024).toFixed(0) + " Ko";
+  return (n / 1048576).toFixed(1) + " Mo";
+}
+const TEXT_EXT = ["txt","md","js","ts","tsx","jsx","py","sql","json","html","css","yml","yaml","csv","xml","sh","rs","go","java","c","cpp","env"];
+
+function handleImageFiles(files) {
+  [...files].forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(",")[1];
+      attachments.push({ kind: "image", name: f.name, mediaType: f.type || "image/png", base64, dataUrl, size: f.size });
+      renderAttachStrip();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function handleAnyFiles(files) {
+  [...files].forEach(f => {
+    const ext = f.name.split(".").pop().toLowerCase();
+    if (f.type.startsWith("image/")) { handleImageFiles([f]); return; }
+    if (TEXT_EXT.includes(ext) && f.size < 200000) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        attachments.push({ kind: "text", name: f.name, text: reader.result, size: f.size });
+        renderAttachStrip();
+      };
+      reader.readAsText(f);
+    } else {
+      attachments.push({ kind: "binary", name: f.name, size: f.size });
+      renderAttachStrip();
+    }
+  });
+}
+function handleZipFile(files) {
+  [...files].forEach(f => {
+    attachments.push({ kind: "zip", name: f.name, size: f.size });
+    renderAttachStrip();
+  });
+}
+$("#fileImage").onchange = e => { handleImageFiles(e.target.files); e.target.value = ""; };
+$("#fileAny").onchange = e => { handleAnyFiles(e.target.files); e.target.value = ""; };
+$("#fileZip").onchange = e => { handleZipFile(e.target.files); e.target.value = ""; };
+
+function renderAttachStrip() {
+  const strip = $("#attachStrip");
+  if (!strip) return;
+  let html = attachments.map((a, i) => {
+    if (a.kind === "image") {
+      return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span><button class="a-x" data-i="${i}">×</button></div>`;
+    }
+    const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
+    return `<div class="attach-chip"><span class="a-ico">${ico}</span><span class="a-name">${escapeHtml(a.name)} · ${bytesLabel(a.size || 0)}</span><button class="a-x" data-i="${i}">×</button></div>`;
+  }).join("");
+  if (state.webSearch) {
+    html += `<span class="web-pill">🛠️ Recherche web <button class="a-x" data-web="1">×</button></span>`;
+  }
+  strip.innerHTML = html;
+  $$(".attach-chip .a-x", strip).forEach(x => x.onclick = () => { attachments.splice(+x.dataset.i, 1); renderAttachStrip(); });
+  const wx = strip.querySelector('.web-pill .a-x');
+  if (wx) wx.onclick = () => { state.webSearch = false; $$(".plus-item[data-act=web]").forEach(b => b.classList.remove("on")); renderAttachStrip(); };
+}
+
+/* ---- Micro : dictée via Web Speech API ---- */
+let recognition = null, listening = false;
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert("La dictée vocale n'est pas supportée par ce navigateur."); return; }
+  if (listening) { recognition && recognition.stop(); return; }
+  recognition = new SR();
+  recognition.lang = "fr-CA";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  const base = input.value;
+  recognition.onstart = () => { listening = true; plusBtn.classList.add("listening"); };
+  recognition.onend = () => { listening = false; plusBtn.classList.remove("listening"); };
+  recognition.onerror = () => { listening = false; plusBtn.classList.remove("listening"); };
+  recognition.onresult = e => {
+    let txt = "";
+    for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+    input.value = (base ? base + " " : "") + txt;
+    input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 160) + "px";
+  };
+  recognition.start();
+}
+
 /* ================= CHAT CONVERSATIONS ================= */
 let chatConvs = JSON.parse(localStorage.getItem("tilex-chat-convs") || "[]");
 let activeChatConv = -1;
 
 function saveChatConv() {
   if (!state.history.length) return;
-  const title = state.history[0]?.content?.slice(0, 50) || "Sans titre";
+  const title = contentText(state.history[0]?.content).slice(0, 50) || "Sans titre";
   if (activeChatConv >= 0) {
     chatConvs[activeChatConv] = { title, messages: [...state.history], ts: Date.now() };
   } else {
@@ -166,8 +418,12 @@ function rebuildChatFromHistory() {
   const msgs = $("#messages");
   msgs.innerHTML = "";
   state.history.forEach(m => {
-    if (m.role === "user") addUserMsg(m.content);
-    else {
+    if (m.role === "user") {
+      const imgs = Array.isArray(m.content)
+        ? m.content.filter(b => b.type === "image").map(b => ({ kind: "image", name: "image", dataUrl: `data:${b.source.media_type};base64,${b.source.data}` }))
+        : [];
+      addUserMsg(contentText(m.content), imgs);
+    } else {
       const body = buildAssistantMsg();
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       renderAssistant(body, m.content);
@@ -221,17 +477,51 @@ function avatarAL() {
   return wrap;
 }
 
-function addUserMsg(text) {
+function addUserMsg(text, atts) {
   $(".welcome")?.remove();
   const m = document.createElement("div");
   m.className = "msg user";
   m.appendChild(avatarUser());
   const b = document.createElement("div");
   b.className = "msg-body";
-  b.textContent = text;
+  let html = "";
+  if (atts && atts.length) {
+    html += '<div class="attach-strip" style="margin:0 0 8px">' + atts.map(a => {
+      if (a.kind === "image") return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span></div>`;
+      const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
+      return `<div class="attach-chip"><span class="a-ico">${ico}</span><span class="a-name">${escapeHtml(a.name)}</span></div>`;
+    }).join("") + "</div>";
+  }
+  html += `<span>${escapeHtml(text).replace(/\n/g, "<br>")}</span>`;
+  b.innerHTML = html;
   m.appendChild(b);
   messages.appendChild(m);
   messages.scrollTop = messages.scrollHeight;
+}
+
+/* extrait le texte affichable d'un contenu (string ou tableau de blocs) */
+function contentText(c) {
+  if (typeof c === "string") return c;
+  if (Array.isArray(c)) return c.filter(b => b.type === "text").map(b => b.text).join(" ");
+  return "";
+}
+
+/* construit le contenu API : texte + images (vision) + fichiers texte inline */
+function buildUserContent(text, atts) {
+  if (!atts || !atts.length) return text;
+  const blocks = [];
+  let extra = "";
+  atts.forEach(a => {
+    if (a.kind === "image") {
+      blocks.push({ type: "image", source: { type: "base64", media_type: a.mediaType, data: a.base64 } });
+    } else if (a.kind === "text") {
+      extra += `\n\n--- Fichier joint : ${a.name} ---\n${a.text}\n--- fin ${a.name} ---`;
+    } else {
+      extra += `\n\n[Fichier joint : ${a.name} (${a.kind}, ${bytesLabel(a.size || 0)}) — contenu binaire non lu]`;
+    }
+  });
+  blocks.unshift({ type: "text", text: (text || "Analyse les pièces jointes.") + extra });
+  return blocks;
 }
 
 /* détecte les services mentionnés et renvoie les tags HTML logos */
@@ -262,9 +552,14 @@ function buildAssistantMsg() {
 
 async function sendMessage() {
   const text = input.value.trim();
-  if (!text) return;
-  addUserMsg(text);
+  if (!text && !attachments.length) return;
+
+  // snapshot des pièces jointes + recherche web, puis on vide le composer
+  const atts = attachments.slice();
+  const useWeb = state.webSearch;
+  addUserMsg(text, atts);
   input.value = ""; input.style.height = "auto";
+  attachments = []; renderAttachStrip();
 
   const body = buildAssistantMsg();
 
@@ -274,24 +569,33 @@ async function sendMessage() {
     return;
   }
 
-  state.history.push({ role: "user", content: text });
+  // construit le contenu (texte + images + fichiers texte)
+  const apiContent = buildUserContent(text, atts);
+  state.history.push({ role: "user", content: apiContent });
   $("#send").disabled = true;
 
   try {
-    const sys = state.reflexion
+    let sys = state.reflexion
       ? "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire et utile. Avant ta réponse finale, fournis un court raisonnement entre les balises <reflexion></reflexion>, puis la réponse normale après."
       : "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire, utile et directe.";
+    if (state.connected.github && state.github.repo)
+      sys += `\n\nContexte GitHub connecté : dépôt ${state.github.repo}, branche ${state.github.branch}.`;
+    if (state.connected.supabase && state.supabase.url)
+      sys += `\n\nContexte Supabase connecté : projet ${state.supabase.url}.`;
+
+    const reqBody = {
+      model: state.model,
+      max_tokens: useWeb ? 2000 : 1000,
+      system: sys,
+      stream: true,
+      messages: state.history,
+    };
+    if (useWeb) reqBody.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }];
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: apiHeaders(),
-      body: JSON.stringify({
-        model: state.model,
-        max_tokens: 1000,
-        system: sys,
-        stream: true,
-        messages: state.history,
-      }),
+      body: JSON.stringify(reqBody),
     });
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
@@ -624,8 +928,26 @@ function highlightSyntax(code) {
 loadSettings();
 $("#apiKey").value = state.apiKey;
 $("#modelSelect").value = state.model;
+
+// restaure les champs de connexion
+if (state.github.token) $("#ghToken").value = state.github.token;
+if (state.supabase.url) $("#sbUrl").value = state.supabase.url;
+if (state.supabase.key) $("#sbKey").value = state.supabase.key;
+
+// ré-applique l'état "connecté" sur les boutons (après loadSettings)
+Object.keys(state.connected).forEach(s => {
+  if (state.connected[s]) $$(`.conn-btn[data-service="${s}"]`).forEach(b => b.classList.add("connected"));
+});
+if (state.connected.github) { setGhState("✓ connecté", true); }
+if (state.connected.supabase) { setSbState("✓ connecté", true); }
+
 syncReflexion();
 syncCodexProjects();
 renderCodexConvos();
 renderChatConvs();
+renderAttachStrip();
+
+// reconnexion GitHub auto (recharge dépôts + branches)
+if (state.github.token) ghConnect();
+
 console.log("ti-lex-AL v10 prêt.");
