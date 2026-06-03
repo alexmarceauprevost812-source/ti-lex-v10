@@ -127,6 +127,67 @@ $$(".conn-btn").forEach(btn => {
   if (state.connected[btn.dataset.service]) btn.classList.add("connected");
 });
 
+/* ================= CHAT CONVERSATIONS ================= */
+let chatConvs = JSON.parse(localStorage.getItem("tilex-chat-convs") || "[]");
+let activeChatConv = -1;
+
+function saveChatConv() {
+  if (!state.history.length) return;
+  const title = state.history[0]?.content?.slice(0, 50) || "Sans titre";
+  if (activeChatConv >= 0) {
+    chatConvs[activeChatConv] = { title, messages: [...state.history], ts: Date.now() };
+  } else {
+    chatConvs.unshift({ title, messages: [...state.history], ts: Date.now() });
+    activeChatConv = 0;
+  }
+  if (chatConvs.length > 20) chatConvs.length = 20;
+  try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+  renderChatConvs();
+}
+
+function renderChatConvs() {
+  const el = $("#chatConvos");
+  if (!el) return;
+  if (!chatConvs.length) { el.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Aucune</p>'; return; }
+  el.innerHTML = chatConvs.map((c, i) =>
+    `<div class="chat-conv-item" data-idx="${i}">${escapeHtml(c.title)}</div>`
+  ).join("");
+  $$(".chat-conv-item").forEach(item => {
+    item.onclick = () => {
+      const idx = +item.dataset.idx;
+      activeChatConv = idx;
+      state.history = [...chatConvs[idx].messages];
+      rebuildChatFromHistory();
+    };
+  });
+}
+
+function rebuildChatFromHistory() {
+  const msgs = $("#messages");
+  msgs.innerHTML = "";
+  state.history.forEach(m => {
+    if (m.role === "user") addUserMsg(m.content);
+    else {
+      const body = buildAssistantMsg();
+      if (body._msgWrap) body._msgWrap.classList.remove("responding");
+      renderAssistant(body, m.content);
+    }
+  });
+}
+
+if ($("#newChatConv")) {
+  $("#newChatConv").onclick = () => {
+    activeChatConv = -1;
+    state.history = [];
+    const msgs = $("#messages");
+    msgs.innerHTML = `<div class="welcome">
+      <img src="logo.png" alt="ti-lex-AL" class="welcome-logo">
+      <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
+      <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
+    </div>`;
+  };
+}
+
 /* ================= CHAT ================= */
 const input = $("#input");
 const messages = $("#messages");
@@ -143,13 +204,21 @@ $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMes
 
 function avatarUser() {
   const d = document.createElement("div");
-  d.className = "msg-avatar"; d.textContent = "A";
+  d.className = "msg-avatar msg-avatar-user"; d.textContent = "A";
   return d;
 }
 function avatarAL() {
+  const wrap = document.createElement("div");
+  wrap.className = "msg-avatar-wrap";
   const img = document.createElement("img");
   img.className = "msg-avatar"; img.src = "logo.png"; img.alt = "AL";
-  return img;
+  wrap.appendChild(img);
+  const claude = document.createElement("img");
+  claude.className = "claude-badge";
+  claude.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
+  claude.alt = "Claude";
+  wrap.appendChild(claude);
+  return wrap;
 }
 
 function addUserMsg(text) {
@@ -179,7 +248,7 @@ function serviceTags(text) {
 
 function buildAssistantMsg() {
   const m = document.createElement("div");
-  m.className = "msg assistant";
+  m.className = "msg assistant responding";
   m.appendChild(avatarAL());
   const b = document.createElement("div");
   b.className = "msg-body";
@@ -187,6 +256,7 @@ function buildAssistantMsg() {
   m.appendChild(b);
   messages.appendChild(m);
   messages.scrollTop = messages.scrollHeight;
+  b._msgWrap = m;
   return b;
 }
 
@@ -237,8 +307,10 @@ async function sendMessage() {
       }
     });
     body.classList.remove("streaming");
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
+    saveChatConv();
   } catch (err) {
     state.history.pop();
     body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}. Vérifie ta clé API Anthropic dans les Paramètres.</p>`;
@@ -408,9 +480,126 @@ async function runCodex(mode) {
 
 function formatCode(text) {
   return escapeHtml(text)
-    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${c}</pre>`)
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${highlightSyntax(c)}</pre>`)
     .replace(/\n/g, "<br>");
 }
+
+function highlightSyntax(code) {
+  return code
+    .replace(/(\/\/[^\n]*)/g, '<span class="syn-comment">$1</span>')
+    .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|switch|case|break|default|interface|type|extends|implements)\b/g, '<span class="syn-kw">$1</span>')
+    .replace(/\b(string|number|boolean|void|null|undefined|any|true|false|Promise)\b/g, '<span class="syn-type">$1</span>')
+    .replace(/(&quot;[^&]*?&quot;|&#039;[^&]*?&#039;|`[^`]*?`)/g, '<span class="syn-str">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>')
+    .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(');
+}
+
+/* ================= CODEX FILE TABS ================= */
+const FILE_EXT_MAP = { ts:'ts', js:'js', css:'css', html:'html', py:'py', sql:'sql', rs:'rs', json:'json' };
+function getExtClass(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return FILE_EXT_MAP[ext] || 'ts';
+}
+$$(".codex-tab").forEach(tab => {
+  tab.onclick = () => {
+    $$(".codex-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const ext = getExtClass(tab.dataset.file);
+    const langMap = { ts:'TypeScript', js:'JavaScript', css:'CSS', html:'HTML', py:'Python', sql:'SQL', rs:'Rust' };
+    if (langMap[ext]) $("#lang").value = langMap[ext];
+  };
+});
+$("#codexAddTab").onclick = () => {
+  const name = prompt("Nom du fichier (ex: utils.ts)");
+  if (!name) return;
+  const ext = getExtClass(name);
+  const tab = document.createElement("button");
+  tab.className = "codex-tab";
+  tab.dataset.file = name;
+  tab.innerHTML = `<span class="ftab-dot ${ext}"></span>${escapeHtml(name)}`;
+  tab.onclick = () => {
+    $$(".codex-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+  };
+  $("#codexAddTab").before(tab);
+};
+
+/* ================= CODEX CHAT BUBBLE ================= */
+let codexChatOpen = false;
+let codexChatHistory = [];
+
+$("#codexChatBubble").onclick = () => {
+  codexChatOpen = true;
+  $("#codexChatWindow").classList.remove("hidden");
+  $("#codexChatBubble").style.display = "none";
+  if (!codexChatHistory.length) addCodexChatMsg("agent", "Salut! Je suis Agent AL. Demande-moi de l'aide avec ton code.");
+  $("#codexChatInput").focus();
+};
+$("#codexChatClose").onclick = () => {
+  codexChatOpen = false;
+  $("#codexChatWindow").classList.add("hidden");
+  $("#codexChatBubble").style.display = "flex";
+};
+
+function addCodexChatMsg(role, text) {
+  codexChatHistory.push({ role, text });
+  renderCodexChat();
+}
+function renderCodexChat() {
+  const c = $("#codexChatMsgs");
+  c.innerHTML = codexChatHistory.map(m =>
+    `<div class="codex-chat-msg ${m.role}">${escapeHtml(m.text).replace(/\n/g, "<br>")}</div>`
+  ).join("");
+  c.scrollTop = c.scrollHeight;
+}
+
+async function sendCodexChat() {
+  const inp = $("#codexChatInput");
+  const text = inp.value.trim();
+  if (!text) return;
+  addCodexChatMsg("user", text);
+  inp.value = "";
+
+  if (!state.apiKey) {
+    addCodexChatMsg("agent", "Ajoute ta clé API dans Paramètres pour activer le chat.");
+    return;
+  }
+
+  const placeholder = document.createElement("div");
+  placeholder.className = "codex-chat-msg agent";
+  placeholder.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  $("#codexChatMsgs").appendChild(placeholder);
+  $("#codexChatMsgs").scrollTop = $("#codexChatMsgs").scrollHeight;
+
+  try {
+    const codeCtx = $("#codeInput").value.trim();
+    const sysPrompt = `Tu es Agent AL, assistant code de ti-lex-AL v10. Réponds en français québécois, concis et utile.${codeCtx ? "\n\nContexte code de l'utilisateur:\n" + codeCtx.slice(0, 1000) : ""}`;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        model: state.model, max_tokens: 800, stream: true,
+        system: sysPrompt,
+        messages: [{ role: "user", content: text }],
+      }),
+    });
+    if (!res.ok) throw new Error(await apiError(res));
+    let displayed = "";
+    const full = await streamText(res, chunk => {
+      displayed = chunk;
+      placeholder.innerHTML = escapeHtml(chunk).replace(/\n/g, "<br>") + '<span class="caret"></span>';
+      $("#codexChatMsgs").scrollTop = $("#codexChatMsgs").scrollHeight;
+    });
+    placeholder.remove();
+    addCodexChatMsg("agent", full);
+  } catch (err) {
+    placeholder.remove();
+    addCodexChatMsg("agent", "Erreur: " + (err.message || "connexion"));
+  }
+}
+
+$("#codexChatSend").onclick = sendCodexChat;
+$("#codexChatInput").onkeydown = e => { if (e.key === "Enter") sendCodexChat(); };
 
 /* init */
 loadSettings();
@@ -419,4 +608,5 @@ $("#modelSelect").value = state.model;
 syncReflexion();
 syncCodexProjects();
 renderCodexConvos();
+renderChatConvs();
 console.log("ti-lex-AL v10 prêt.");
