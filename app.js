@@ -122,6 +122,7 @@ $$(".conn-btn").forEach(btn => {
     const s = btn.dataset.service;
     state.connected[s] = !state.connected[s];
     $$(`.conn-btn[data-service="${s}"]`).forEach(b => b.classList.toggle("connected", state.connected[s]));
+    syncCodexProjects();
   };
   if (state.connected[btn.dataset.service]) btn.classList.add("connected");
 });
@@ -310,6 +311,63 @@ async function streamText(res, onUpdate) {
   return full;
 }
 
+/* ================= CODEX SIDEBAR ================= */
+const codexSb = $("#codexSidebar");
+const codexConvos = $("#codexConvos");
+let codexHistory = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
+let activeConvIdx = -1;
+
+function toggleCodexSidebar() {
+  codexSb.classList.toggle("closed");
+}
+$("#codexSbToggle").onclick = toggleCodexSidebar;
+$("#codexSbOpenBtn").onclick = toggleCodexSidebar;
+
+function syncCodexProjects() {
+  $$("#codexProjects .codex-sb-project").forEach(p => {
+    const svc = p.dataset.service;
+    const on = state.connected[svc];
+    p.classList.toggle("connected", !!on);
+    p.querySelector(".codex-sb-status").textContent = on ? "connecté" : "—";
+  });
+}
+
+function saveCodexConv(prompt, output) {
+  const entry = { prompt: prompt.slice(0, 60), full: prompt, output, lang: $("#lang").value, ts: Date.now() };
+  codexHistory.unshift(entry);
+  if (codexHistory.length > 30) codexHistory.length = 30;
+  try { localStorage.setItem("tilex-codex-history", JSON.stringify(codexHistory)); } catch (_) {}
+  renderCodexConvos();
+}
+
+function renderCodexConvos() {
+  if (!codexHistory.length) {
+    codexConvos.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucune conversation</p>';
+    return;
+  }
+  codexConvos.innerHTML = codexHistory.map((c, i) =>
+    `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}">${escapeHtml(c.prompt || "Sans titre")}</div>`
+  ).join("");
+  $$(".codex-sb-conv").forEach(el => {
+    el.onclick = () => {
+      const idx = +el.dataset.idx;
+      activeConvIdx = idx;
+      const c = codexHistory[idx];
+      $("#codeInput").value = c.full || c.prompt;
+      $("#lang").value = c.lang || "TypeScript";
+      $("#codeOut").innerHTML = formatCode(c.output || "");
+      renderCodexConvos();
+    };
+  });
+}
+
+$("#codexNewConv").onclick = () => {
+  activeConvIdx = -1;
+  $("#codeInput").value = "";
+  $("#codeOut").innerHTML = '<p class="muted">La sortie du Codex apparaîtra ici.</p>';
+  renderCodexConvos();
+};
+
 /* ================= CODEX ================= */
 $("#codexRun").onclick = () => runCodex("generate");
 $("#codexExplain").onclick = () => runCodex("explain");
@@ -342,6 +400,7 @@ async function runCodex(mode) {
       $("#codeOut").scrollTop = $("#codeOut").scrollHeight;
     });
     $("#codeOut").innerHTML = formatCode(out);
+    saveCodexConv(code, out);
   } catch (err) {
     $("#codeOut").innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
   }
@@ -358,4 +417,6 @@ loadSettings();
 $("#apiKey").value = state.apiKey;
 $("#modelSelect").value = state.model;
 syncReflexion();
+syncCodexProjects();
+renderCodexConvos();
 console.log("ti-lex-AL v10 prêt.");

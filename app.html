@@ -108,25 +108,83 @@
 
   <!-- ===== VUE CODEX ===== -->
   <section class="view view-codex" id="view-codex">
-    <div class="codex-split">
-      <div class="codex-editor">
-        <div class="codex-bar">
-          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-          <span class="codex-file">main.ts</span>
-          <select id="lang" class="lang-sel">
-            <option>TypeScript</option><option>Python</option><option>SQL</option>
-            <option>JavaScript</option><option>Rust</option>
-          </select>
-        </div>
-        <textarea id="codeInput" class="code-area" spellcheck="false" placeholder="// Décris ce que tu veux coder, ou colle ton code…"></textarea>
-        <div class="codex-actions">
-          <button class="btn-codex" id="codexRun" data-w="Géné" data-b="rer">Générer</button>
-          <button class="btn-codex ghost" id="codexExplain" data-w="Expli" data-b="quer">Expliquer</button>
+
+    <!-- Sidebar Codex -->
+    <aside class="codex-sidebar" id="codexSidebar">
+      <div class="codex-sb-top">
+        <button class="codex-sb-toggle" id="codexSbToggle" aria-label="Menu Codex">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+        <span class="codex-sb-title">Codex</span>
+        <button class="codex-sb-new" id="codexNewConv" title="Nouvelle conversation">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+
+      <!-- Projets connectés -->
+      <div class="codex-sb-section">
+        <p class="codex-sb-label">Projets</p>
+        <div class="codex-sb-projects" id="codexProjects">
+          <div class="codex-sb-project" data-service="github">
+            <span class="conn-dot"></span>
+            <span>GitHub</span>
+            <span class="codex-sb-status">--</span>
+          </div>
+          <div class="codex-sb-project" data-service="supabase">
+            <span class="conn-dot"></span>
+            <span>Supabase</span>
+            <span class="codex-sb-status">--</span>
+          </div>
+          <div class="codex-sb-project" data-service="vercel">
+            <span class="conn-dot"></span>
+            <span>Vercel</span>
+            <span class="codex-sb-status">--</span>
+          </div>
         </div>
       </div>
-      <div class="codex-output">
-        <div class="codex-bar"><span class="codex-file">Sortie Codex</span></div>
-        <div class="code-out" id="codeOut"><p class="muted">La sortie du Codex apparaîtra ici.</p></div>
+
+      <!-- Historique conversations -->
+      <div class="codex-sb-section codex-sb-history">
+        <p class="codex-sb-label">Conversations</p>
+        <div class="codex-sb-convos" id="codexConvos">
+          <p class="muted" style="font-size:.78rem;padding:6px 0">Aucune conversation</p>
+        </div>
+      </div>
+
+      <!-- Bouton retour accueil -->
+      <div class="codex-sb-bottom">
+        <a href="index.html" class="codex-sb-back" id="codexBackHome">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <span>Retour à l'accueil</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Contenu principal Codex -->
+    <div class="codex-main" id="codexMain">
+      <div class="codex-split">
+        <div class="codex-editor">
+          <div class="codex-bar">
+            <button class="codex-sb-open-btn" id="codexSbOpenBtn" title="Ouvrir le menu">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="codex-file">main.ts</span>
+            <select id="lang" class="lang-sel">
+              <option>TypeScript</option><option>Python</option><option>SQL</option>
+              <option>JavaScript</option><option>Rust</option>
+            </select>
+          </div>
+          <textarea id="codeInput" class="code-area" spellcheck="false" placeholder="// Décris ce que tu veux coder, ou colle ton code…"></textarea>
+          <div class="codex-actions">
+            <button class="btn-codex" id="codexRun" data-w="Géné" data-b="rer">Générer</button>
+            <button class="btn-codex ghost" id="codexExplain" data-w="Expli" data-b="quer">Expliquer</button>
+          </div>
+        </div>
+        <div class="codex-output">
+          <div class="codex-bar"><span class="codex-file">Sortie Codex</span></div>
+          <div class="code-out" id="codeOut"><p class="muted">La sortie du Codex apparaîtra ici.</p></div>
+        </div>
       </div>
     </div>
   </section>
