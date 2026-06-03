@@ -218,12 +218,15 @@ async function sendMessage() {
         model: state.model,
         max_tokens: 1000,
         system: sys,
+        stream: true,
         messages: state.history,
       }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-    const full = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+    if (!res.ok) throw new Error(await apiError(res));
+    const full = await streamText(res, chunk => {
+      renderAssistant(body, chunk, true);
+      messages.scrollTop = messages.scrollHeight;
+    });
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
   } catch (err) {
@@ -235,10 +238,17 @@ async function sendMessage() {
   }
 }
 
-function renderAssistant(body, full) {
+function renderAssistant(body, full, streaming) {
   let reflex = "", answer = full;
-  const m = full.match(/<reflexion>([\s\S]*?)<\/reflexion>/i);
-  if (m) { reflex = m[1].trim(); answer = full.replace(m[0], "").trim(); }
+  const closed = full.match(/<reflexion>([\s\S]*?)<\/reflexion>/i);
+  if (closed) {
+    reflex = closed[1].trim();
+    answer = full.replace(closed[0], "").trim();
+  } else {
+    // pendant le streaming : la balise de réflexion est ouverte mais pas encore fermée
+    const open = full.match(/<reflexion>([\s\S]*)$/i);
+    if (open) { reflex = open[1].trim(); answer = ""; }
+  }
 
   let html = "";
   if (state.reflexion && reflex) {
@@ -247,13 +257,48 @@ function renderAssistant(body, full) {
       <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2zM9 21h6"/></svg>
       Réflexion</div>${escapeHtml(reflex).replace(/\n/g, "<br>")}</div>`;
   }
-  html += `<div>${escapeHtml(answer).replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>")}</div>`;
-  html += serviceTags(answer);
+  const ans = escapeHtml(answer).replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  const caret = streaming ? '<span class="caret"></span>' : '';
+  html += `<div>${ans}${caret}</div>`;
+  if (!streaming) html += serviceTags(answer);
   body.innerHTML = html;
 }
 
 function escapeHtml(s) {
   return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+/* ---- Streaming SSE : écriture fluide, façon Claude Code ---- */
+async function apiError(res) {
+  try { const e = await res.json(); return e.error?.message || `HTTP ${res.status}`; }
+  catch (_) { return `HTTP ${res.status}`; }
+}
+async function streamText(res, onUpdate) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "", full = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf("\n")) !== -1) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let evt;
+      try { evt = JSON.parse(payload); } catch (_) { continue; }
+      if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+        full += evt.delta.text;
+        onUpdate(full);
+      } else if (evt.type === "error") {
+        throw new Error(evt.error?.message || "Erreur de diffusion");
+      }
+    }
+  }
+  return full;
 }
 
 /* ================= CODEX ================= */
@@ -278,12 +323,15 @@ async function runCodex(mode) {
       body: JSON.stringify({
         model: state.model,
         max_tokens: 1500,
+        stream: true,
         messages: [{ role: "user", content: prompt }],
       }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
-    const out = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+    if (!res.ok) throw new Error(await apiError(res));
+    const out = await streamText(res, chunk => {
+      $("#codeOut").innerHTML = `<div>${escapeHtml(chunk).replace(/\n/g, "<br>")}<span class="caret"></span></div>`;
+      $("#codeOut").scrollTop = $("#codeOut").scrollHeight;
+    });
     $("#codeOut").innerHTML = formatCode(out);
   } catch (err) {
     $("#codeOut").innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
