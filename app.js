@@ -16,6 +16,7 @@ const state = {
   github: { token: "", repo: "", branch: "" },
   supabase: { url: "", key: "" },
   webSearch: false,
+  projectFiles: [],
 };
 
 /* pièces jointes en attente d'envoi */
@@ -180,6 +181,7 @@ async function ghConnect() {
 async function ghLoadBranches(repo) {
   if (!repo) return;
   state.github.repo = repo;
+  state.projectFiles = [];
   const bsel = $("#ghBranch");
   bsel.innerHTML = `<option value="">chargement…</option>`;
   try {
@@ -231,7 +233,102 @@ function persistGithub() {
 if ($("#ghConnect")) {
   $("#ghConnect").onclick = ghConnect;
   $("#ghRepo").onchange = e => ghLoadBranches(e.target.value);
-  $("#ghBranch").onchange = e => { state.github.branch = e.target.value; persistGithub(); ghLoadFiles(state.github.repo, e.target.value); };
+  $("#ghBranch").onchange = e => { state.github.branch = e.target.value; persistGithub(); state.projectFiles = []; ghLoadFiles(state.github.repo, e.target.value); };
+}
+
+/* ================= SCAN / CONTEXTE PROJET ================= */
+const PROJECT_KEY_FILES = ["readme.md","package.json","index.html","app.js","app.html","styles.css","tsconfig.json","next.config.js","vercel.json","main.ts","index.ts","route.ts","page.tsx","layout.tsx","requirements.txt","cargo.toml","go.mod"];
+
+function keyRank(path) {
+  const base = path.toLowerCase().split("/").pop();
+  const i = PROJECT_KEY_FILES.indexOf(base);
+  if (i >= 0) return i;                       // fichiers clés en premier
+  const ext = base.split(".").pop();
+  if (TEXT_EXT.includes(ext)) return 50 + path.split("/").length; // texte, peu profond d'abord
+  return 999;                                 // binaire en dernier
+}
+
+function projectSourceLabel() {
+  const parts = [];
+  if (state.connected.github && state.github.repo) parts.push(`GitHub ${state.github.repo}@${state.github.branch}`);
+  if (studioZipFiles.length) parts.push(`ZIP (${studioZipFiles.length} fichiers)`);
+  return parts.join(" + ") || "aucune";
+}
+
+/* Récupère le contenu des fichiers du projet (GitHub + ZIP), avec cache. */
+async function loadProjectFiles({ maxFiles = 70, maxBytes = 180000, perFile = 24000, force = false } = {}) {
+  if (!force && state.projectFiles && state.projectFiles.length) return state.projectFiles;
+  const files = [];
+  let total = 0;
+
+  // 1) Fichiers ZIP déjà en mémoire
+  for (const z of studioZipFiles) {
+    if (z.content != null) {
+      const slice = z.content.slice(0, perFile);
+      files.push({ path: z.path, content: slice, source: "zip" });
+      total += slice.length;
+    } else {
+      files.push({ path: z.path, content: null, source: "zip" });
+    }
+  }
+
+  // 2) Fichiers GitHub (via l'arbre + blobs)
+  if (state.connected.github && state.github.repo && state.github.token) {
+    try {
+      const res = await fetch(`${GH_API}/repos/${state.github.repo}/git/trees/${encodeURIComponent(state.github.branch)}?recursive=1`, { headers: ghHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        const blobs = (data.tree || []).filter(t => t.type === "blob").sort((a, b) => keyRank(a.path) - keyRank(b.path));
+        let count = 0;
+        for (const blob of blobs) {
+          const ext = blob.path.split(".").pop().toLowerCase();
+          const isText = TEXT_EXT.includes(ext) || PROJECT_KEY_FILES.includes(blob.path.toLowerCase().split("/").pop());
+          if (!isText || count >= maxFiles || total >= maxBytes) {
+            files.push({ path: blob.path, content: null, source: "github", sha: blob.sha });
+            continue;
+          }
+          try {
+            const br = await fetch(`${GH_API}/repos/${state.github.repo}/git/blobs/${blob.sha}`, { headers: ghHeaders() });
+            if (br.ok) {
+              const bd = await br.json();
+              let txt = "";
+              try { txt = decodeURIComponent(escape(atob((bd.content || "").replace(/\n/g, "")))); } catch (_) { txt = ""; }
+              const slice = txt.slice(0, perFile);
+              files.push({ path: blob.path, content: slice, source: "github", sha: blob.sha });
+              total += slice.length; count++;
+            } else {
+              files.push({ path: blob.path, content: null, source: "github", sha: blob.sha });
+            }
+          } catch (_) {
+            files.push({ path: blob.path, content: null, source: "github", sha: blob.sha });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  state.projectFiles = files;
+  return files;
+}
+
+/* Construit le bloc de contexte texte injecté dans les prompts. */
+function projectContextString({ maxBytes = 70000, withContent = true } = {}) {
+  const files = state.projectFiles || [];
+  if (!files.length) return "";
+  const tree = files.map(f => f.path).sort().join("\n");
+  let s = `\n\n=== CONTEXTE DU PROJET CONNECTÉ ===\nSource : ${projectSourceLabel()}\nArborescence (${files.length} fichiers) :\n${tree}\n`;
+  if (withContent) {
+    let total = 0;
+    s += `\nContenu des fichiers (tronqué au besoin) :\n`;
+    for (const f of files) {
+      if (f.content == null || total >= maxBytes) continue;
+      const slice = f.content.slice(0, Math.max(0, maxBytes - total));
+      s += `\n----- ${f.path} -----\n${slice}\n`;
+      total += slice.length;
+    }
+  }
+  s += `\n=== FIN CONTEXTE PROJET ===\n`;
+  return s;
 }
 
 /* ================= CONNEXION SUPABASE ================= */
@@ -364,6 +461,7 @@ async function handleZipFile(files) {
           } catch (_) {}
         }
       }
+      state.projectFiles = [];
       renderAttachStrip();
       refreshStudio();
     } catch (err) {
@@ -628,17 +726,27 @@ async function sendMessage() {
   $("#send").disabled = true;
 
   try {
+    const BASE_BRAIN = "Tu es Agent AL, un assistant IA expert, rigoureux et très intelligent de la plateforme québécoise ti-lex-AL v10. " +
+      "Tu raisonnes en profondeur avant de répondre. Tes réponses sont complètes, précises, structurées et directement actionnables. " +
+      "Quand un projet est connecté (GitHub ou ZIP), tu CONNAIS son code : tu peux l'analyser, repérer des bugs, expliquer l'architecture, " +
+      "proposer des améliorations concrètes et écrire du code production-ready qui s'intègre au projet existant. " +
+      "Tu cites les chemins de fichiers exacts quand c'est pertinent. Tu utilises des blocs ``` pour le code. " +
+      "Tu réponds en français québécois, sans bla-bla inutile.";
     let sys = state.reflexion
-      ? "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire et utile. Avant ta réponse finale, fournis un court raisonnement entre les balises <reflexion></reflexion>, puis la réponse normale après."
-      : "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire, utile et directe.";
-    if (state.connected.github && state.github.repo)
-      sys += `\n\nContexte GitHub connecté : dépôt ${state.github.repo}, branche ${state.github.branch}.`;
+      ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
+      : BASE_BRAIN;
     if (state.connected.supabase && state.supabase.url)
-      sys += `\n\nContexte Supabase connecté : projet ${state.supabase.url}.`;
+      sys += `\n\nSupabase connecté : projet ${state.supabase.url}.`;
+
+    // Injecte le contexte du projet connecté (le rend "intelligent" sur le vrai code)
+    if ((state.connected.github && state.github.repo) || studioZipFiles.length) {
+      try { await loadProjectFiles(); } catch (_) {}
+      sys += projectContextString({ maxBytes: 60000 });
+    }
 
     const reqBody = {
       model: state.model,
-      max_tokens: useWeb ? 2000 : 1000,
+      max_tokens: 4096,
       system: sys,
       stream: true,
       messages: state.history,
@@ -1018,6 +1126,80 @@ async function runCodex() {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
   } finally {
     $("#codexRun").disabled = false;
+    $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
+  }
+}
+
+/* ---- Scan complet du projet (Codex) ---- */
+if ($("#codexScanBtn")) $("#codexScanBtn").onclick = scanProject;
+
+async function scanProject() {
+  const connected = (state.connected.github && state.github.repo) || studioZipFiles.length;
+  if (!connected) {
+    addCodexUserMsg("Scanner le projet");
+    const b = buildCodexAssistantMsg();
+    b.innerHTML = '<p class="muted">Connecte d\'abord un dépôt GitHub (Paramètres) ou uploade un ZIP pour scanner un projet.</p>';
+    if (b._msgWrap) b._msgWrap.classList.remove("responding");
+    return;
+  }
+  if (!state.apiKey) {
+    addCodexUserMsg("Scanner le projet");
+    const b = buildCodexAssistantMsg();
+    b.innerHTML = '<p class="muted">Ajoute ta clé API Anthropic dans les Paramètres.</p>';
+    if (b._msgWrap) b._msgWrap.classList.remove("responding");
+    return;
+  }
+
+  addCodexUserMsg("🔍 Scanner le projet complet");
+  codexChatMsgs.push({ role: "user", text: "🔍 Scanner le projet complet" });
+  const body = buildCodexAssistantMsg();
+  body.innerHTML = '<p class="muted">Lecture des fichiers du projet…</p><div class="typing"><span></span><span></span><span></span></div>';
+
+  const scanBtn = $("#codexScanBtn"); if (scanBtn) scanBtn.disabled = true;
+
+  try {
+    await loadProjectFiles({ maxFiles: 120, maxBytes: 320000, perFile: 30000, force: true });
+    const ctx = projectContextString({ maxBytes: 240000 });
+
+    const prompt = `Tu es le Codex de ti-lex-AL, un architecte logiciel senior. Analyse EN PROFONDEUR ce projet complet et produis un rapport clair, en français, structuré ainsi :
+
+1. **Vue d'ensemble** — à quoi sert le projet, en 2-3 phrases.
+2. **Architecture & technologies** — structure des dossiers, stack, patterns.
+3. **Points forts** — ce qui est bien fait.
+4. **Problèmes & risques** — bugs potentiels, failles, code mort, incohérences (cite les fichiers exacts).
+5. **Améliorations prioritaires** — liste concrète et ordonnée, avec exemples de code si utile.
+
+Sois précis, technique et honnête.
+${ctx}`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        model: state.model,
+        max_tokens: 4096,
+        stream: true,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(await apiError(res));
+    body.classList.add("streaming");
+    const typer = makeTyper(partial => {
+      body.innerHTML = escapeHtml(partial).replace(/\n/g, "<br>") + '<span class="caret"></span>';
+      $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
+    });
+    const full = await streamText(res, chunk => typer.push(chunk));
+    await new Promise(resolve => typer.finish(resolve));
+    body.classList.remove("streaming");
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+    body.innerHTML = formatCode(full);
+    codexChatMsgs.push({ role: "assistant", text: full });
+    saveCodexConv(`Scan projet : ${projectSourceLabel()}`, full);
+  } catch (err) {
+    body.innerHTML = `<p class="muted">Erreur scan : ${escapeHtml(err.message || "connexion")}.</p>`;
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+  } finally {
+    if (scanBtn) scanBtn.disabled = false;
     $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
   }
 }

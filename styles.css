@@ -336,6 +336,14 @@ body.menu-closed #menuToggleMobile{display:flex}
 .codex-sb-project.connected{border-color:var(--orange);color:var(--txt)}
 .codex-sb-project.connected .conn-dot{background:#3ddc84;box-shadow:0 0 8px #3ddc84}
 .codex-sb-status{margin-left:auto;font-size:.7rem;color:var(--txt-dim)}
+.codex-scan-btn{
+  display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:10px;
+  padding:9px 12px;background:rgba(255,102,0,.1);border:1px solid var(--orange);
+  border-radius:9px;color:var(--orange);font-family:var(--font);font-size:.8rem;font-weight:700;
+  cursor:pointer;transition:var(--t);
+}
+.codex-scan-btn:hover{background:rgba(255,102,0,.2);transform:translateY(-1px)}
+.codex-scan-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
 .codex-sb-history{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
 .codex-sb-convos{display:flex;flex-direction:column;gap:3px}
