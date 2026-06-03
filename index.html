@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex-AL v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="dark">
+
+<!-- ============ MENU LATÉRAL GAUCHE ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <button class="hamburger" id="menuToggle" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="brand">
+      <img src="logo.png" alt="ti-lex-AL" class="brand-logo">
+      <span class="brand-name">ti-lex<span class="orange">-AL</span></span>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <button class="nav-item active" data-view="chat">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span class="lbl">Chat</span>
+    </button>
+    <button class="nav-item" data-view="codex">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+      <span class="lbl">Codex</span>
+    </button>
+    <button class="nav-item nav-secure" data-view="security">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span class="lbl">Sécurité</span>
+      <span class="badge">AL 7.8</span>
+    </button>
+  </nav>
+
+  <!-- Connecteurs -->
+  <div class="connectors">
+    <p class="conn-title">Connexions</p>
+    <button class="conn-btn" data-service="anthropic"><span class="conn-dot"></span>Anthropic</button>
+    <button class="conn-btn" data-service="github"><span class="conn-dot"></span>GitHub</button>
+    <button class="conn-btn" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
+    <button class="conn-btn" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
+    <button class="conn-btn" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
+  </div>
+
+  <!-- PARAMÈTRES TOUT EN BAS -->
+  <button class="nav-item nav-bottom" data-view="settings" id="settingsBtn">
+    <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="lbl">Paramètres</span>
+  </button>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- ============ ZONE PRINCIPALE ============ -->
+<main class="main">
+
+  <header class="topbar">
+    <button class="hamburger mobile-only" id="menuToggleMobile" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="agent-id">
+      <img src="logo.png" alt="" class="agent-mini-logo">
+      <div>
+        <h1 id="viewTitle">Agent AL</h1>
+        <p class="status"><span class="status-dot"></span>En ligne · ti-lex-AL v10</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="pill-toggle" id="reflexionToggle" aria-pressed="true">
+        <span class="pill-knob"></span>
+        <span class="pill-txt">Réflexion</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== VUE CHAT ===== -->
+  <section class="view view-chat active" id="view-chat">
+    <div class="messages" id="messages">
+      <div class="welcome">
+        <img src="logo.png" alt="ti-lex-AL" class="welcome-logo">
+        <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
+        <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
+        <div class="suggest">
+          <button class="sug">Explique-moi le mode réflexion</button>
+          <button class="sug">Connecte-toi à Supabase</button>
+          <button class="sug">Génère une fonction Edge</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="input" rows="1" placeholder="Écris à Agent AL…"></textarea>
+        <button class="send" id="send" aria-label="Envoyer">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+      <p class="composer-hint" id="modeHint">Mode réflexion <span class="orange">activé</span></p>
+    </div>
+  </section>
+
+  <!-- ===== VUE CODEX ===== -->
+  <section class="view view-codex" id="view-codex">
+    <div class="codex-split">
+      <div class="codex-editor">
+        <div class="codex-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="codex-file">main.ts</span>
+          <select id="lang" class="lang-sel">
+            <option>TypeScript</option><option>Python</option><option>SQL</option>
+            <option>JavaScript</option><option>Rust</option>
+          </select>
+        </div>
+        <textarea id="codeInput" class="code-area" spellcheck="false" placeholder="// Décris ce que tu veux coder, ou colle ton code…"></textarea>
+        <div class="codex-actions">
+          <button class="btn-codex" id="codexRun" data-w="Géné" data-b="rer">Générer</button>
+          <button class="btn-codex ghost" id="codexExplain" data-w="Expli" data-b="quer">Expliquer</button>
+        </div>
+      </div>
+      <div class="codex-output">
+        <div class="codex-bar"><span class="codex-file">Sortie Codex</span></div>
+        <div class="code-out" id="codeOut"><p class="muted">La sortie du Codex apparaîtra ici.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE SÉCURITÉ ===== -->
+  <section class="view view-security" id="view-security">
+    <div class="sec-wrap">
+      <div class="sec-head">
+        <img src="logo.png" class="sec-logo" alt="">
+        <div>
+          <h2>Mode Sécurité <span class="orange">AL 7.8</span></h2>
+          <p class="muted">Agent ti-lex-AL · scan & conformité. Une autorisation signée (SOW) est requise avant tout scan.</p>
+        </div>
+      </div>
+      <div class="sec-grid">
+        <div class="sec-card"><h3>Autorisations</h3><p class="big">0</p><span class="muted">SOW actifs</span></div>
+        <div class="sec-card"><h3>Scans</h3><p class="big">—</p><span class="muted">en attente d'autorisation</span></div>
+        <div class="sec-card"><h3>Findings</h3><p class="big">—</p><span class="muted">aucun</span></div>
+        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">security_authorizations</span></div>
+      </div>
+      <div class="sec-note">
+        <strong>Rappel légal (Art. 342.1 C.cr.) :</strong> tout scan doit reposer sur un mandat autorisé,
+        un programme de bug bounty, ou de la divulgation responsable. Le mode Sécurité bloque les scans
+        tant qu'aucune autorisation valide n'est enregistrée.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE PARAMÈTRES ===== -->
+  <section class="view view-settings" id="view-settings">
+    <div class="settings-wrap">
+      <h2>Paramètres</h2>
+
+      <div class="set-block">
+        <h3>Modèle Claude</h3>
+        <p class="muted">Modèle utilisé par Agent AL.</p>
+        <select id="modelSelect" class="set-input">
+          <option value="claude-opus-4-8">Claude Opus 4.8 (le plus avancé)</option>
+          <option value="claude-opus-4-7">Claude Opus 4.7</option>
+          <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+          <option value="claude-haiku-4-5">Claude Haiku 4.5 (rapide)</option>
+        </select>
+      </div>
+
+      <div class="set-block">
+        <h3>Mode réflexion</h3>
+        <p class="muted">Affiche le raisonnement de l'agent en gris avant la réponse.</p>
+        <button class="pill-toggle" id="reflexionToggle2" aria-pressed="true">
+          <span class="pill-knob"></span><span class="pill-txt">Activé</span>
+        </button>
+      </div>
+
+      <div class="set-block">
+        <h3>Mode jour</h3>
+        <p class="muted">Bascule clair / sombre, comme la plateforme officielle.</p>
+        <button class="pill-toggle" id="themeToggle" aria-pressed="false">
+          <span class="pill-knob"></span><span class="pill-txt">Sombre</span>
+        </button>
+      </div>
+
+      <div class="set-block">
+        <h3>Clé API Anthropic</h3>
+        <p class="muted">Pour le déploiement. <span class="warn">⚠ Ne jamais exposer une vraie clé dans le frontend en production — route via une Edge Function Supabase.</span></p>
+        <input type="password" id="apiKey" class="set-input" placeholder="sk-ant-...">
+        <button class="btn-codex" id="saveKey" data-w="Enregis" data-b="trer">Enregistrer</button>
+      </div>
+
+      <div class="set-block">
+        <h3>Connexions</h3>
+        <div class="set-conns">
+          <button class="conn-btn lg" data-service="github"><span class="conn-dot"></span>GitHub</button>
+          <button class="conn-btn lg" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
+          <button class="conn-btn lg" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
+          <button class="conn-btn lg" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+/* ============================================================
+   ti-lex-AL v10 — app.js
+   ============================================================ */
+
+const MODEL_DEFAULT = "claude-opus-4-8";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+const state = {
+  reflexion: true,
+  theme: "dark",
+  model: MODEL_DEFAULT,
+  apiKey: "",
+  history: [],
+  connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
+};
+
+/* ---- Logos SVG officiels des services (inline, monochromes adaptés) ---- */
+const SERVICE = {
+  anthropic: { name: "Anthropic", svg: `<svg viewBox="0 0 24 24"><path fill="#ff6600" d="M14.6 3h-3.1L17 21h3.3L14.6 3zm-5.2 0L3.7 21H7l1.1-3.2h5.4L9.4 3zm-.3 11.3l1.8-5.4 1.8 5.4H9.1z"/></svg>` },
+  github:    { name: "GitHub", svg: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>` },
+  supabase:  { name: "Supabase", svg: `<svg viewBox="0 0 24 24"><path fill="#3ecf8e" d="M13.4 22.3c-.6.76-1.83.34-1.84-.63L11.4 8h9.4c1.7 0 2.65 1.96 1.6 3.29L13.4 22.3z"/><path fill="#3ecf8e" opacity=".6" d="M10.6 1.7c.6-.76 1.83-.34 1.84.63l.13 13.67H3.2c-1.7 0-2.65-1.96-1.6-3.29L10.6 1.7z"/></svg>` },
+  vercel:    { name: "Vercel", svg: `<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L22 20H2L12 2z"/></svg>` },
+  gmail:     { name: "Gmail", svg: `<svg viewBox="0 0 24 24"><path fill="#ea4335" d="M12 12.7L2 6.2V18a1 1 0 0 0 1 1h3V9.9l6 4.4 6-4.4V19h3a1 1 0 0 0 1-1V6.2L12 12.7z"/><path fill="#fbbc04" d="M2 6.2v.1L12 12.7 22 6.3v-.1a2 2 0 0 0-3.1-1.7L12 9.2 5.1 4.5A2 2 0 0 0 2 6.2z"/></svg>` },
+};
+
+/* mots-clés -> service détecté pour afficher le logo dans le chat */
+const TRIGGERS = {
+  supabase: ["supabase", "edge function", "rls", "postgres", "migration"],
+  github:   ["github", "git ", "repo", "commit", "pull request", "pr "],
+  vercel:   ["vercel", "déploi", "deploy", "build", "production"],
+  gmail:    ["gmail", "email", "courriel", "mail"],
+  anthropic:["claude", "anthropic", "opus", "sonnet", "haiku"],
+};
+
+/* ================= NAVIGATION / MENU ================= */
+function toggleMenu() {
+  if (window.innerWidth <= 860) {
+    document.body.classList.toggle("menu-open");
+    $("#overlay").classList.toggle("show", document.body.classList.contains("menu-open"));
+  } else {
+    document.body.classList.toggle("menu-closed");
+  }
+}
+$("#menuToggle").onclick = toggleMenu;
+$("#menuToggleMobile").onclick = toggleMenu;
+$("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
+
+const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", settings: "Paramètres" };
+function switchView(v) {
+  $$(".view").forEach(el => el.classList.remove("active"));
+  $(`#view-${v}`).classList.add("active");
+  $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
+  $("#viewTitle").textContent = TITLES[v] || "Agent AL";
+  if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
+}
+$$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
+
+/* ================= TOGGLES ================= */
+function bindReflexion(btn) {
+  btn.onclick = () => {
+    state.reflexion = !state.reflexion;
+    syncReflexion();
+  };
+}
+function syncReflexion() {
+  $$("#reflexionToggle, #reflexionToggle2").forEach(b => {
+    b.setAttribute("aria-pressed", state.reflexion);
+    const t = $(".pill-txt", b);
+    if (b.id === "reflexionToggle2") t.textContent = state.reflexion ? "Activé" : "Désactivé";
+  });
+  $("#modeHint").innerHTML = state.reflexion
+    ? 'Mode réflexion <span class="orange">activé</span>'
+    : 'Mode réflexion <span class="muted">désactivé</span>';
+}
+bindReflexion($("#reflexionToggle"));
+bindReflexion($("#reflexionToggle2"));
+
+$("#themeToggle").onclick = function () {
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  document.body.dataset.theme = state.theme;
+  this.setAttribute("aria-pressed", state.theme === "light");
+  $(".pill-txt", this).textContent = state.theme === "light" ? "Clair" : "Sombre";
+};
+
+$("#modelSelect").onchange = e => { state.model = e.target.value; };
+$("#saveKey").onclick = () => {
+  state.apiKey = $("#apiKey").value.trim();
+  const b = $("#saveKey");
+  b.dataset.w = "Enregis"; b.dataset.b = "tré ✓";
+  setTimeout(() => { b.dataset.w = "Enregis"; b.dataset.b = "trer"; }, 1800);
+};
+
+/* ================= CONNECTEURS ================= */
+$$(".conn-btn").forEach(btn => {
+  btn.onclick = () => {
+    const s = btn.dataset.service;
+    state.connected[s] = !state.connected[s];
+    $$(`.conn-btn[data-service="${s}"]`).forEach(b => b.classList.toggle("connected", state.connected[s]));
+  };
+  if (state.connected[btn.dataset.service]) btn.classList.add("connected");
+});
+
+/* ================= CHAT ================= */
+const input = $("#input");
+const messages = $("#messages");
+
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 160) + "px";
+});
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+$("#send").onclick = sendMessage;
+$$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
+
+function avatarUser() {
+  const d = document.createElement("div");
+  d.className = "msg-avatar"; d.textContent = "A";
+  return d;
+}
+function avatarAL() {
+  const img = document.createElement("img");
+  img.className = "msg-avatar"; img.src = "logo.png"; img.alt = "AL";
+  return img;
+}
+
+function addUserMsg(text) {
+  $(".welcome")?.remove();
+  const m = document.createElement("div");
+  m.className = "msg user";
+  m.appendChild(avatarUser());
+  const b = document.createElement("div");
+  b.className = "msg-body";
+  b.textContent = text;
+  m.appendChild(b);
+  messages.appendChild(m);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+/* détecte les services mentionnés et renvoie les tags HTML logos */
+function serviceTags(text) {
+  const low = text.toLowerCase();
+  const hits = [];
+  for (const [svc, kws] of Object.entries(TRIGGERS)) {
+    if (svc === "anthropic") continue; // l'agent EST anthropic, pas besoin de tag
+    if (kws.some(k => low.includes(k))) hits.push(svc);
+  }
+  if (!hits.length) return "";
+  return hits.map(s => `<span class="service-tag">${SERVICE[s].svg}${SERVICE[s].name}<span class="ok">● connecté</span></span>`).join("");
+}
+
+function buildAssistantMsg() {
+  const m = document.createElement("div");
+  m.className = "msg assistant";
+  m.appendChild(avatarAL());
+  const b = document.createElement("div");
+  b.className = "msg-body";
+  b.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  m.appendChild(b);
+  messages.appendChild(m);
+  messages.scrollTop = messages.scrollHeight;
+  return b;
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  addUserMsg(text);
+  input.value = ""; input.style.height = "auto";
+  state.history.push({ role: "user", content: text });
+
+  const body = buildAssistantMsg();
+  $("#send").disabled = true;
+
+  try {
+    const sys = state.reflexion
+      ? "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire et utile. Avant ta réponse finale, fournis un court raisonnement entre les balises <reflexion></reflexion>, puis la réponse normale après."
+      : "Tu es Agent AL, l'agent IA de la plateforme québécoise ti-lex-AL v10. Réponds en français québécois, de façon claire, utile et directe.";
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: sys,
+        messages: state.history,
+      }),
+    });
+    const data = await res.json();
+    const full = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+    renderAssistant(body, full);
+    state.history.push({ role: "assistant", content: full });
+  } catch (err) {
+    body.innerHTML = `<p class="muted">Erreur de connexion à l'API. En production, route les appels via une Edge Function Supabase.</p>`;
+  } finally {
+    $("#send").disabled = false;
+    messages.scrollTop = messages.scrollHeight;
+  }
+}
+
+function renderAssistant(body, full) {
+  let reflex = "", answer = full;
+  const m = full.match(/<reflexion>([\s\S]*?)<\/reflexion>/i);
+  if (m) { reflex = m[1].trim(); answer = full.replace(m[0], "").trim(); }
+
+  let html = "";
+  if (state.reflexion && reflex) {
+    html += `<div class="reflex-block"><div class="reflex-tag">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2">
+      <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2zM9 21h6"/></svg>
+      Réflexion</div>${escapeHtml(reflex).replace(/\n/g, "<br>")}</div>`;
+  }
+  html += `<div>${escapeHtml(answer).replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>")}</div>`;
+  html += serviceTags(answer);
+  body.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+/* ================= CODEX ================= */
+$("#codexRun").onclick = () => runCodex("generate");
+$("#codexExplain").onclick = () => runCodex("explain");
+
+async function runCodex(mode) {
+  const code = $("#codeInput").value.trim();
+  const lang = $("#lang").value;
+  if (!code) { $("#codeOut").innerHTML = `<p class="muted">Écris d'abord quelque chose dans l'éditeur.</p>`; return; }
+  $("#codeOut").innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+
+  const prompt = mode === "generate"
+    ? `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds uniquement avec le code et de courtes explications.\n\nDemande:\n${code}`
+    : `Tu es le Codex de ti-lex-AL. Explique ce code ${lang} clairement, en français, étape par étape.\n\nCode:\n${code}`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const out = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
+    $("#codeOut").innerHTML = formatCode(out);
+  } catch {
+    $("#codeOut").innerHTML = `<p class="muted">Erreur de connexion au Codex.</p>`;
+  }
+}
+
+function formatCode(text) {
+  return escapeHtml(text)
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${c}</pre>`)
+    .replace(/\n/g, "<br>");
+}
+
+/* init */
+syncReflexion();
+console.log("ti-lex-AL v10 prêt.");
