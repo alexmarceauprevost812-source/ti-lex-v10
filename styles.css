@@ -17,6 +17,7 @@
   --sidebar-w:264px;
   --font:'Sora',system-ui,sans-serif;
   --mono:'JetBrains Mono',monospace;
+  --marker:'Permanent Marker',cursive;
   --t:.32s cubic-bezier(.22,1,.36,1);
 }
 
@@ -62,7 +63,7 @@ body{
 .brand{display:flex;align-items:center;gap:10px;overflow:hidden}
 .brand-logo{width:38px;height:38px;border-radius:9px;object-fit:cover;
   box-shadow:0 0 14px var(--orange-glow)}
-.brand-name{font-weight:800;font-size:1.1rem;letter-spacing:-.5px;white-space:nowrap}
+.brand-name{font-family:var(--marker);font-weight:400;font-size:1.2rem;letter-spacing:.5px;white-space:nowrap}
 
 .nav{display:flex;flex-direction:column;gap:4px}
 .nav-item{
@@ -132,7 +133,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 .agent-id{display:flex;align-items:center;gap:12px}
 .agent-mini-logo{width:42px;height:42px;border-radius:11px;object-fit:cover;
   box-shadow:0 0 16px var(--orange-glow)}
-.agent-id h1{font-size:1.05rem;font-weight:700;letter-spacing:-.3px}
+.agent-id h1{font-family:var(--marker);font-size:1.1rem;font-weight:400;letter-spacing:.3px}
 .status{font-size:.74rem;color:var(--txt-dim);display:flex;align-items:center;gap:6px;margin-top:2px}
 .status-dot{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84;
   animation:pulse 2s infinite}
@@ -162,7 +163,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 .welcome{margin:auto;text-align:center;max-width:520px;animation:fade .6s ease}
 .welcome-logo{width:120px;height:120px;border-radius:24px;object-fit:cover;
   box-shadow:0 0 40px var(--orange-glow);margin-bottom:22px}
-.welcome h2{font-size:1.7rem;font-weight:800;margin-bottom:10px;letter-spacing:-.5px}
+.welcome h2{font-family:var(--marker);font-size:1.8rem;font-weight:400;margin-bottom:10px;letter-spacing:.5px}
 .welcome p{color:var(--txt-dim);margin-bottom:22px;line-height:1.6}
 .suggest{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .sug{padding:9px 16px;background:var(--bg-3);border:1px solid var(--line);
@@ -318,7 +319,7 @@ body.menu-closed #menuToggleMobile{display:flex}
   cursor:pointer;transition:var(--t);flex-shrink:0;
 }
 .codex-sb-toggle:hover,.codex-sb-new:hover,.codex-sb-open-btn:hover{background:var(--line)}
-.codex-sb-title{font-weight:700;font-size:.95rem;flex:1}
+.codex-sb-title{font-family:var(--marker);font-weight:400;font-size:1rem;flex:1;letter-spacing:.3px}
 .codex-sb-new{margin-left:auto}
 
 .codex-sb-section{padding:14px}
@@ -373,7 +374,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 .codex-welcome{margin:auto;text-align:center;max-width:480px;animation:fade .6s ease}
 .codex-welcome-logo{width:90px;height:90px;border-radius:20px;object-fit:cover;
   box-shadow:0 0 30px var(--orange-glow);margin-bottom:18px}
-.codex-welcome h2{font-size:1.5rem;font-weight:800;margin-bottom:8px;letter-spacing:-.4px}
+.codex-welcome h2{font-family:var(--marker);font-size:1.6rem;font-weight:400;margin-bottom:8px;letter-spacing:.5px}
 .codex-welcome p{color:var(--txt-dim);margin-bottom:18px;line-height:1.5}
 .codex-welcome .suggest{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .csug{padding:8px 14px;background:var(--bg-3);border:1px solid var(--line);
@@ -511,7 +512,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 .sec-wrap{flex:1;overflow-y:auto;padding:28px 24px;max-width:900px;margin:0 auto;width:100%}
 .sec-head{display:flex;align-items:center;gap:16px;margin-bottom:26px}
 .sec-logo{width:64px;height:64px;border-radius:16px;object-fit:cover;box-shadow:0 0 24px var(--orange-glow)}
-.sec-head h2{font-size:1.5rem;font-weight:800;margin-bottom:4px}
+.sec-head h2{font-family:var(--marker);font-size:1.5rem;font-weight:400;margin-bottom:4px;letter-spacing:.3px}
 .sec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .sec-card{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;padding:18px}
 .sec-card h3{font-size:.8rem;color:var(--txt-dim);font-weight:600;margin-bottom:8px}
@@ -523,7 +524,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 
 /* ============ PARAMÈTRES ============ */
 .settings-wrap{flex:1;overflow-y:auto;padding:28px 24px;max-width:680px;margin:0 auto;width:100%}
-.settings-wrap h2{font-size:1.5rem;font-weight:800;margin-bottom:24px}
+.settings-wrap h2{font-family:var(--marker);font-size:1.5rem;font-weight:400;margin-bottom:24px;letter-spacing:.3px}
 .set-block{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:20px;margin-bottom:16px}
 .set-block h3{font-size:1rem;font-weight:700;margin-bottom:5px}

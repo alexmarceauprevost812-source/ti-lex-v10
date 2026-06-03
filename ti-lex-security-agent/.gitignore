@@ -1,0 +1,25 @@
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+
+# Dépendances
+/node_modules
+.pnp
+.pnp.js
+
+# Environnement
+.env
+.env.local
+.env*.local
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Build / divers
+/build
+.vercel
+*.tsbuildinfo
+.DS_Store
+*.log
