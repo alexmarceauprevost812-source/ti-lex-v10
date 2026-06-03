@@ -295,17 +295,12 @@ async function sendMessage() {
     });
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
-    let rafPending = false;
-    const full = await streamText(res, chunk => {
-      if (!rafPending) {
-        rafPending = true;
-        requestAnimationFrame(() => {
-          renderAssistant(body, chunk, true);
-          messages.scrollTop = messages.scrollHeight;
-          rafPending = false;
-        });
-      }
+    const typer = makeTyper(partial => {
+      renderAssistant(body, partial, true);
+      messages.scrollTop = messages.scrollHeight;
     });
+    const full = await streamText(res, chunk => typer.push(chunk));
+    await new Promise(resolve => typer.finish(resolve));
     body.classList.remove("streaming");
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
@@ -321,6 +316,8 @@ async function sendMessage() {
 }
 
 function renderAssistant(body, full, streaming) {
+  // pendant la frappe, masque une balise incomplète en fin de texte (ex: "<reflexi")
+  if (streaming) full = full.replace(/<[^>]*$/, "");
   let reflex = "", answer = full;
   const closed = full.match(/<reflexion>([\s\S]*?)<\/reflexion>/i);
   if (closed) {
@@ -383,8 +380,43 @@ async function streamText(res, onUpdate) {
   return full;
 }
 
-/* ================= CODEX SIDEBAR ================= */
-const codexSb = $("#codexSidebar");
+/* ---- Typewriter fluide : révèle le texte caractère par caractère à vitesse
+   régulière, indépendamment des paquets reçus du réseau. Continue d'écrire la
+   suite (2e, 3e ligne…) pendant que le flux arrive. ---- */
+function makeTyper(renderFn) {
+  let target = "", shown = 0, running = false, finished = false, doneCb = null, last = 0;
+  function step(ts) {
+    if (!last) last = ts;
+    const dt = Math.min(ts - last, 100); last = ts;
+    const backlog = target.length - shown;
+    // vitesse de base ~70 car/s, accélère si le flux a beaucoup d'avance
+    let cps = 70;
+    if (backlog > 160) cps = 300;
+    else if (backlog > 80) cps = 160;
+    const add = Math.max(1, Math.round((cps * dt) / 1000));
+    if (shown < target.length) {
+      shown = Math.min(target.length, shown + add);
+      renderFn(target.slice(0, shown));
+    }
+    if (shown >= target.length && finished) {
+      running = false;
+      renderFn(target);
+      if (doneCb) doneCb();
+      return;
+    }
+    requestAnimationFrame(step);
+  }
+  return {
+    push(full) {
+      target = full;
+      if (!running) { running = true; last = 0; requestAnimationFrame(step); }
+    },
+    finish(cb) {
+      finished = true; doneCb = cb;
+      if (!running) { shown = target.length; renderFn(target); if (cb) cb(); }
+    },
+  };
+}
 const codexConvos = $("#codexConvos");
 let codexHistory = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
 let activeConvIdx = -1;
@@ -584,12 +616,12 @@ async function sendCodexChat() {
       }),
     });
     if (!res.ok) throw new Error(await apiError(res));
-    let displayed = "";
-    const full = await streamText(res, chunk => {
-      displayed = chunk;
-      placeholder.innerHTML = escapeHtml(chunk).replace(/\n/g, "<br>") + '<span class="caret"></span>';
+    const typer = makeTyper(partial => {
+      placeholder.innerHTML = escapeHtml(partial).replace(/\n/g, "<br>") + '<span class="caret"></span>';
       $("#codexChatMsgs").scrollTop = $("#codexChatMsgs").scrollHeight;
     });
+    const full = await streamText(res, chunk => typer.push(chunk));
+    await new Promise(resolve => typer.finish(resolve));
     placeholder.remove();
     addCodexChatMsg("agent", full);
   } catch (err) {
