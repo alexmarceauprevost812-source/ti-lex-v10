@@ -113,6 +113,7 @@ body{
   transition:margin var(--t)}
 body.menu-closed .sidebar{transform:translateX(calc(-1 * var(--sidebar-w)))}
 body.menu-closed .main{margin-left:0}
+body.menu-closed #menuToggleMobile{display:flex}
 
 .topbar{
   display:flex;align-items:center;gap:16px;padding:14px 24px;
