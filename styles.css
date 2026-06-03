@@ -198,6 +198,11 @@ body.menu-closed #menuToggleMobile{display:flex}
 .typing span:nth-child(3){animation-delay:.3s}
 @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
 
+/* streaming : texte qui coule sans saccades */
+.msg-body.streaming{min-height:2.2em}
+.msg-body.streaming > div{animation:none}
+.msg.assistant .msg-body{transition:height .08s ease-out}
+
 /* ---- COMPOSER ---- */
 .composer{padding:16px 24px 22px;border-top:1px solid var(--line);background:var(--bg)}
 .composer-inner{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;

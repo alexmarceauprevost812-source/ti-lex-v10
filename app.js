@@ -223,10 +223,19 @@ async function sendMessage() {
       }),
     });
     if (!res.ok) throw new Error(await apiError(res));
+    body.classList.add("streaming");
+    let rafPending = false;
     const full = await streamText(res, chunk => {
-      renderAssistant(body, chunk, true);
-      messages.scrollTop = messages.scrollHeight;
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(() => {
+          renderAssistant(body, chunk, true);
+          messages.scrollTop = messages.scrollHeight;
+          rafPending = false;
+        });
+      }
     });
+    body.classList.remove("streaming");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
   } catch (err) {
