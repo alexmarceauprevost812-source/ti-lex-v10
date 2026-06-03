@@ -15,6 +15,27 @@ const state = {
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
 };
 
+/* ---- Persistance locale (clé API Anthropic + modèle) ---- */
+const LS_KEY = "tilex-al-apikey";
+const LS_MODEL = "tilex-al-model";
+function loadSettings() {
+  try {
+    const k = localStorage.getItem(LS_KEY);
+    const m = localStorage.getItem(LS_MODEL);
+    if (k) state.apiKey = k;
+    if (m) state.model = m;
+  } catch (e) { /* localStorage indisponible */ }
+}
+function apiHeaders() {
+  const h = { "Content-Type": "application/json" };
+  if (state.apiKey) {
+    h["x-api-key"] = state.apiKey;
+    h["anthropic-version"] = "2023-06-01";
+    h["anthropic-dangerous-direct-browser-access"] = "true";
+  }
+  return h;
+}
+
 /* ---- Logos SVG officiels des services (inline, monochromes adaptés) ---- */
 const SERVICE = {
   anthropic: { name: "Anthropic", svg: `<svg viewBox="0 0 24 24"><path fill="#ff6600" d="M14.6 3h-3.1L17 21h3.3L14.6 3zm-5.2 0L3.7 21H7l1.1-3.2h5.4L9.4 3zm-.3 11.3l1.8-5.4 1.8 5.4H9.1z"/></svg>` },
@@ -83,11 +104,15 @@ $("#themeToggle").onclick = function () {
   $(".pill-txt", this).textContent = state.theme === "light" ? "Clair" : "Sombre";
 };
 
-$("#modelSelect").onchange = e => { state.model = e.target.value; };
+$("#modelSelect").onchange = e => {
+  state.model = e.target.value;
+  try { localStorage.setItem(LS_MODEL, state.model); } catch (e) {}
+};
 $("#saveKey").onclick = () => {
   state.apiKey = $("#apiKey").value.trim();
+  try { localStorage.setItem(LS_KEY, state.apiKey); } catch (e) {}
   const b = $("#saveKey");
-  b.dataset.w = "Enregis"; b.dataset.b = "tré ✓";
+  b.dataset.w = "Enregis"; b.dataset.b = state.apiKey ? "tré ✓" : "tré ✗";
   setTimeout(() => { b.dataset.w = "Enregis"; b.dataset.b = "trer"; }, 1800);
 };
 
@@ -169,9 +194,16 @@ async function sendMessage() {
   if (!text) return;
   addUserMsg(text);
   input.value = ""; input.style.height = "auto";
-  state.history.push({ role: "user", content: text });
 
   const body = buildAssistantMsg();
+
+  if (!state.apiKey) {
+    renderAssistant(body, "⚙ Ajoute ta clé API Anthropic dans les Paramètres (icône en bas à gauche) pour activer Agent AL.");
+    messages.scrollTop = messages.scrollHeight;
+    return;
+  }
+
+  state.history.push({ role: "user", content: text });
   $("#send").disabled = true;
 
   try {
@@ -181,20 +213,22 @@ async function sendMessage() {
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: apiHeaders(),
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: state.model,
         max_tokens: 1000,
         system: sys,
         messages: state.history,
       }),
     });
     const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
     const full = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
   } catch (err) {
-    body.innerHTML = `<p class="muted">Erreur de connexion à l'API. En production, route les appels via une Edge Function Supabase.</p>`;
+    state.history.pop();
+    body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}. Vérifie ta clé API Anthropic dans les Paramètres.</p>`;
   } finally {
     $("#send").disabled = false;
     messages.scrollTop = messages.scrollHeight;
@@ -230,6 +264,7 @@ async function runCodex(mode) {
   const code = $("#codeInput").value.trim();
   const lang = $("#lang").value;
   if (!code) { $("#codeOut").innerHTML = `<p class="muted">Écris d'abord quelque chose dans l'éditeur.</p>`; return; }
+  if (!state.apiKey) { $("#codeOut").innerHTML = `<p class="muted">⚙ Ajoute ta clé API Anthropic dans les Paramètres pour utiliser le Codex.</p>`; return; }
   $("#codeOut").innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
 
   const prompt = mode === "generate"
@@ -239,18 +274,19 @@ async function runCodex(mode) {
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: apiHeaders(),
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: state.model,
         max_tokens: 1500,
         messages: [{ role: "user", content: prompt }],
       }),
     });
     const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
     const out = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
     $("#codeOut").innerHTML = formatCode(out);
-  } catch {
-    $("#codeOut").innerHTML = `<p class="muted">Erreur de connexion au Codex.</p>`;
+  } catch (err) {
+    $("#codeOut").innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
   }
 }
 
@@ -261,5 +297,8 @@ function formatCode(text) {
 }
 
 /* init */
+loadSettings();
+$("#apiKey").value = state.apiKey;
+$("#modelSelect").value = state.model;
 syncReflexion();
 console.log("ti-lex-AL v10 prêt.");
