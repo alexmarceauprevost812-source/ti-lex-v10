@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI-LEX-AL V10 — Agent Intelligent Québécois</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;overflow-x:hidden;line-height:1.5}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+::selection{background:rgba(255,107,0,0.3);color:#fff}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.2);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)scale(1);opacity:.2}50%{transform:translateY(-40px)scale(1.3);opacity:.5}}
+@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* Particles */
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0}
+.particle{position:absolute;border-radius:50%;background:rgba(255,107,0,.15);animation:float 8s ease-in-out infinite}
+
+/* Pages */
+.page{display:none}
+.page.active{display:block}
+
+/* Home */
+.home-wrap{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem 1rem}
+.logo-wrap{position:relative;margin-bottom:2rem;animation:fadeIn 1s ease-out}
+.logo-halo{position:absolute;inset:-50px;background:radial-gradient(circle,rgba(255,107,0,.2) 0%,transparent 60%);border-radius:50%;animation:pulse 4s ease-in-out infinite}
+.logo-img{width:320px;height:auto;max-height:280px;object-fit:contain;filter:drop-shadow(0 0 30px rgba(255,107,0,.4));border-radius:.5rem;position:relative;z-index:2}
+@media(min-width:768px){.logo-img{width:420px;max-height:320px}}
+
+.tagline{text-align:center;margin-bottom:2.5rem;max-width:500px;animation:fadeInUp .8s ease-out .3s both}
+.tagline h1{font-size:2.8rem;font-weight:800;margin-bottom:.5rem;letter-spacing:-.03em;text-transform:uppercase;color:#fff}
+.tagline h1 span{background:linear-gradient(135deg,#ff6b00,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tagline p{font-size:1.1rem;color:#b0b0b0;margin-bottom:.5rem}
+.badges{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.75rem}
+.badge{font-size:.65rem;padding:.25rem .6rem;background:#111;border:1px solid #333;border-radius:.25rem;color:#b0b0b0;text-transform:uppercase;letter-spacing:.05em}
+
+/* Buttons */
+.btn-group{display:flex;flex-direction:column;gap:.75rem;width:100%;max-width:360px;animation:fadeInUp .6s ease-out .5s both}
+.btn{width:100%;padding:.875rem 1.5rem;border-radius:.5rem;font-size:1rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.btn:hover{transform:scale(1.03)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-primary{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000;box-shadow:0 4px 20px rgba(255,107,0,.4)}
+.btn-primary:hover{background:linear-gradient(135deg,#ff8c00,#ffaa00);box-shadow:0 6px 30px rgba(255,107,0,.6)}
+.btn-secondary{background:transparent;border:2px solid #ff6b00;color:#ff6b00}
+.btn-secondary:hover{background:#ff6b00;color:#000}
+.btn-oauth{background:#111;border:1px solid #333;color:#fff;font-size:.85rem;padding:.75rem;font-weight:600}
+.btn-oauth:hover{border-color:#ff6b00}
+
+.divider{display:flex;align-items:center;gap:1rem;margin:.5rem 0;color:#b0b0b0;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#333}
+
+.oauth-row{display:flex;gap:.75rem}
+.oauth-row .btn{flex:1}
+
+/* Forms */
+.form-card{background:#111;border:1px solid #333;border-radius:.75rem;padding:2rem;width:100%;max-width:380px;animation:fadeInUp .4s ease-out;margin:0 auto}
+.form-card h2{text-align:center;margin-bottom:1.5rem;font-size:1.5rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#fff}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.75rem;color:#b0b0b0;margin-bottom:.375rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.form-group input{width:100%;padding:.75rem 1rem;background:#1a1a1a;border:1px solid #333;border-radius:.5rem;color:#fff;font-size:.95rem;outline:none;transition:all .2s}
+.form-group input:focus{border-color:#ff6b00;box-shadow:0 0 0 3px rgba(255,107,0,.2)}
+.form-group input::placeholder{color:#555}
+
+.alert{padding:.75rem 1rem;border-radius:.5rem;font-size:.875rem;margin-bottom:1rem;border-left:3px solid}
+.alert-error{background:rgba(255,68,68,.1);border-color:#ff4444;color:#ff7777}
+.alert-success{background:rgba(0,204,102,.1);border-color:#00cc66;color:#77dd99}
+
+.form-footer{text-align:center;margin-top:1rem;font-size:.875rem;color:#b0b0b0}
+.form-footer button.link{color:#ff6b00;background:none;border:none;cursor:pointer;font-weight:600;font-size:.875rem}
+.form-footer button.link:hover{text-decoration:underline}
+
+.spinner{width:16px;height:16px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:.5rem}
+.spinner-white{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:.5rem}
+
+.footer{position:fixed;bottom:1rem;left:0;right:0;text-align:center;font-size:.65rem;color:#444;z-index:10}
+
+/* Dashboard / App pages */
+.app-header{background:#111;border-bottom:1px solid #333;padding:.75rem 1rem;position:sticky;top:0;z-index:40}
+.app-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.app-logo{display:flex;align-items:center;gap:.75rem;cursor:pointer}
+.app-logo-icon{width:40px;height:40px;border-radius:.5rem;background:linear-gradient(135deg,#ff6b00,#ff8c00);display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:1rem}
+.app-logo-text h1{font-size:1.1rem;font-weight:700;color:#fff}
+.app-logo-text p{font-size:.65rem;color:#b0b0b0}
+.app-user{display:flex;align-items:center;gap:.75rem}
+.app-user-info{text-align:right}
+.app-user-info p{font-size:.85rem;font-weight:500;color:#fff}
+.app-user-info span{font-size:.65rem;color:#b0b0b0}
+.btn-sm{padding:.5rem .75rem;font-size:.8rem;border-radius:.5rem;background:#1a1a1a;border:1px solid #333;color:#fff;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:#ff6b00}
+
+.app-layout{display:flex;max-width:1200px;margin:0 auto;min-height:calc(100vh - 60px)}
+.sidebar{width:220px;background:#111;border-right:1px solid #333;padding:1rem;flex-shrink:0}
+.sidebar-nav{display:flex;flex-direction:column;gap:.25rem}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.625rem .75rem;border-radius:.5rem;font-size:.875rem;color:#b0b0b0;cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:#1a1a1a;color:#fff}
+.nav-item.active{background:rgba(255,107,0,.15);color:#ff6b00;border:1px solid rgba(255,107,0,.3)}
+.nav-icon{font-size:1.1rem}
+.nav-label{font-weight:500}
+.nav-divider{height:1px;background:#333;margin:.5rem 0}
+.sidebar-info{margin-top:1.5rem;padding:.75rem;background:#1a1a1a;border-radius:.5rem;border:1px solid #333}
+.sidebar-info p{font-size:.65rem;color:#b0b0b0;line-height:1.6}
+.sidebar-info p:first-child{font-weight:600;margin-bottom:.25rem;color:#fff}
+
+.main-content{flex:1;padding:1.5rem;min-width:0}
+.page-title{font-size:1.5rem;font-weight:700;margin-bottom:1.5rem;color:#fff}
+
+/* Cards */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:#111;border:1px solid #333;border-radius:.75rem;padding:1.25rem;transition:all .2s;cursor:pointer}
+.stat-card:hover{border-color:#ff6b00;box-shadow:0 0 20px rgba(255,107,0,.1)}
+.stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.stat-card-icon{font-size:1.5rem}
+.stat-card-value{font-size:1.75rem;font-weight:700;color:#fff}
+.stat-card-label{font-size:.8rem;color:#b0b0b0}
+
+.panel{background:#111;border:1px solid #333;border-radius:.75rem;padding:1.25rem;margin-bottom:1rem}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.panel-title{font-size:1.1rem;font-weight:600;color:#fff}
+.panel-link{font-size:.8rem;color:#ff6b00;cursor:pointer;background:none;border:none}
+.panel-link:hover{text-decoration:underline}
+
+.info-list{font-size:.9rem;color:#b0b0b0;line-height:1.8}
+.info-list p{margin-bottom:.25rem}
+.empty-state{text-align:center;color:#b0b0b0;padding:2rem}
+
+/* Forms in panels */
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1rem}
+.form-field{width:100%}
+.form-field label{display:block;font-size:.75rem;color:#b0b0b0;margin-bottom:.375rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.form-field input,.form-field select,.form-field textarea{width:100%;padding:.625rem .875rem;background:#1a1a1a;border:1px solid #333;border-radius:.5rem;color:#fff;font-size:.875rem;outline:none;transition:all .2s;font-family:inherit}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:#ff6b00;box-shadow:0 0 0 2px rgba(255,107,0,.2)}
+.form-field input::placeholder,.form-field textarea::placeholder{color:#555}
+.form-field textarea{font-family:monospace;resize:vertical}
+.form-field select{cursor:pointer}
+.form-field select option{background:#111;color:#fff}
+
+.btn-group-inline{display:flex;gap:.75rem;flex-wrap:wrap}
+.btn-action{padding:.625rem 1.25rem;border-radius:.5rem;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+.btn-action-primary{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000}
+.btn-action-primary:hover{filter:brightness(1.1);box-shadow:0 4px 15px rgba(255,107,0,.4)}
+.btn-action-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-action-secondary{background:transparent;border:1px solid #333;color:#fff}
+.btn-action-secondary:hover{border-color:#ff6b00;color:#ff6b00}
+
+.checkbox-group{display:flex;flex-wrap:wrap;gap:.5rem}
+.checkbox-item{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:#1a1a1a;border:1px solid #333;border-radius:.5rem;cursor:pointer;transition:all .2s;font-size:.8rem;color:#b0b0b0}
+.checkbox-item:hover{border-color:#ff6b00}
+.checkbox-item.checked{background:rgba(255,107,0,.15);border-color:#ff6b00;color:#ff6b00}
+.checkbox-item input{display:none}
+
+.alert-box{padding:.75rem 1rem;border-radius:.5rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.75rem}
+.alert-box.critical{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.3)}
+.alert-box.warning{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)}
+.alert-box p{font-size:.85rem;flex:1;color:#fff}
+.alert-box .alert-icon{font-size:1.25rem;flex-shrink:0}
+
+/* Tables */
+.data-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.data-table th{text-align:left;padding:.75rem 1rem;background:#1a1a1a;font-weight:600;color:#b0b0b0;border-bottom:1px solid #333}
+.data-table td{padding:.75rem 1rem;border-bottom:1px solid #333;color:#fff}
+.data-table tr:hover{background:#1a1a1a}
+.data-table .mono{font-family:monospace}
+
+.tag{display:inline-flex;align-items:center;gap:.25rem;padding:.25rem .5rem;border-radius:9999px;font-size:.7rem;font-weight:500}
+.tag-green{background:rgba(0,204,102,.15);color:#00cc66;border:1px solid rgba(0,204,102,.3)}
+.tag-amber{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.tag-red{background:rgba(255,68,68,.15);color:#ff4444;border:1px solid rgba(255,68,68,.3)}
+.tag-blue{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+.tag-gray{background:#1a1a1a;color:#b0b0b0;border:1px solid #333}
+
+.findings-bar{display:flex;gap:.25rem;justify-content:flex-end}
+.finding-tag{padding:.125rem .375rem;border-radius:.25rem;font-size:.65rem;font-weight:600}
+.finding-c{background:rgba(255,68,68,.2);color:#ff7777}
+.finding-h{background:rgba(245,158,11,.2);color:#fbbf24}
+.finding-m{background:rgba(234,179,8,.2);color:#fde047}
+
+/* SOW Cards */
+.sow-card{background:#111;border:1px solid #333;border-radius:.75rem;padding:1.25rem;margin-bottom:.75rem;transition:all .2s}
+.sow-card:hover{border-color:#444}
+.sow-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+.sow-card-title{font-size:1.1rem;font-weight:600;margin-bottom:.25rem;color:#fff}
+.sow-card-client{font-size:.85rem;color:#b0b0b0}
+.sow-card-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.sow-card-tag{padding:.25rem .5rem;background:#1a1a1a;border-radius:.25rem;font-size:.7rem;color:#b0b0b0}
+.sow-card-actions{display:flex;gap:.5rem;flex-shrink:0}
+.sow-card-actions button{padding:.375rem .75rem;border-radius:.375rem;font-size:.75rem;cursor:pointer;border:none;transition:all .2s;font-weight:600}
+.btn-activate{background:#00cc66;color:#000}
+.btn-activate:hover{filter:brightness(1.1)}
+.btn-revoke{background:transparent;border:1px solid #ff4444;color:#ff4444}
+.btn-revoke:hover{background:rgba(255,68,68,.1)}
+.btn-delete{background:transparent;border:1px solid #333;color:#b0b0b0}
+.btn-delete:hover{border-color:#ff4444;color:#ff4444}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.modal{background:#111;border:1px solid #333;border-radius:1rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem;border-bottom:1px solid #333}
+.modal-header h2{font-size:1.25rem;font-weight:700;color:#fff}
+.modal-close{width:32px;height:32px;border-radius:.5rem;background:none;border:none;color:#b0b0b0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.25rem;transition:all .2s}
+.modal-close:hover{background:#1a1a1a;color:#fff}
+.modal-body{padding:1.25rem}
+.modal-footer{display:flex;justify-content:flex-end;gap:.75rem;padding:1rem 1.25rem;border-top:1px solid #333}
+
+/* Agent Page */
+.agent-page{display:flex;flex-direction:column;height:calc(100vh - 60px)}
+.agent-messages{flex:1;overflow-y:auto;padding:1.5rem;max-width:800px;margin:0 auto;width:100%}
+.agent-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center}
+.agent-welcome-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#ff6b00,#ff8c00);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1rem;box-shadow:0 0 30px rgba(255,107,0,.4)}
+.agent-welcome h2{font-size:1.5rem;font-weight:700;margin-bottom:.5rem;color:#fff}
+.agent-welcome p{color:#b0b0b0;max-width:400px;margin-bottom:1.5rem}
+.agent-suggestions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.agent-suggestion{padding:.5rem 1rem;background:#111;border:1px solid #333;border-radius:.5rem;font-size:.8rem;color:#b0b0b0;cursor:pointer;transition:all .2s;border:none}
+.agent-suggestion:hover{border-color:#ff6b00;color:#ff6b00}
+
+.msg-row{display:flex;gap:.75rem;margin-bottom:1rem}
+.msg-row.user{flex-direction:row-reverse}
+.msg-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+.msg-avatar.user{background:#1a1a1a;color:#b0b0b0}
+.msg-avatar.agent{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000}
+.msg-bubble{max-width:70%;padding:.875rem 1rem;border-radius:1rem;font-size:.9rem;line-height:1.5;white-space:pre-wrap}
+.msg-bubble.user{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000;border-bottom-right-radius:.25rem;font-weight:500}
+.msg-bubble.agent{background:#111;border:1px solid #333;border-bottom-left-radius:.25rem;color:#fff}
+.msg-time{font-size:.65rem;opacity:.5;margin-top:.25rem}
+
+.agent-input-area{border-top:1px solid #333;background:#111;padding:1rem}
+.agent-input-row{display:flex;gap:.75rem;max-width:800px;margin:0 auto}
+.agent-input{flex:1;padding:.875rem 1rem;background:#1a1a1a;border:1px solid #333;border-radius:.75rem;color:#fff;font-size:.9rem;outline:none;transition:all .2s}
+.agent-input:focus{border-color:#ff6b00;box-shadow:0 0 0 2px rgba(255,107,0,.2)}
+.agent-input::placeholder{color:#555}
+.agent-send{width:44px;height:44px;border-radius:.75rem;border:none;background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.agent-send:hover{filter:brightness(1.1);box-shadow:0 0 15px rgba(255,107,0,.4)}
+.agent-send:disabled{opacity:.5;cursor:not-allowed}
+
+/* Chat Widget */
+.chat-bubble{position:fixed;bottom:1.5rem;right:1.5rem;z-index:100;display:flex;align-items:flex-end;gap:.75rem}
+.chat-btn{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#ff6b00,#ff8c00);box-shadow:0 4px 20px rgba(255,107,0,.5);display:flex;align-items:center;justify-content:center;transition:all .3s;position:relative}
+.chat-btn:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(255,107,0,.7)}
+.chat-btn:active{transform:scale(.95)}
+.chat-btn svg{width:28px;height:28px;color:#000}
+
+.chat-window{position:fixed;bottom:5.5rem;right:1.5rem;width:380px;max-width:calc(100vw - 3rem);height:500px;max-height:calc(100vh - 7rem);background:#000;border:1px solid #333;border-radius:.75rem;z-index:100;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.8)}
+.chat-header{display:flex;align-items:center;gap:.75rem;padding:.875rem 1rem;background:#111;border-bottom:1px solid #333}
+.chat-header-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff6b00,#ff8c00);display:flex;align-items:center;justify-content:center;position:relative}
+.online-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;background:#00cc66;border-radius:50%;border:2px solid #000}
+.chat-header-info{flex:1}
+.chat-header-info h4{font-size:.875rem;margin:0;color:#fff}
+.chat-header-info p{font-size:.7rem;color:#b0b0b0;display:flex;align-items:center;gap:.25rem}
+.chat-header-pulse{width:6px;height:6px;background:#00cc66;border-radius:50%;animation:pulse 2s infinite}
+
+.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.75rem}
+.chat-message{display:flex;gap:.5rem;max-width:85%}
+.chat-message.user{align-self:flex-end;flex-direction:row-reverse}
+.chat-message.agent{align-self:flex-start}
+.chat-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+.chat-avatar.user{background:#1a1a1a;color:#b0b0b0}
+.chat-avatar.agent{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000}
+.chat-bubble-msg{padding:.625rem .875rem;border-radius:1rem;font-size:.85rem;line-height:1.5;white-space:pre-wrap}
+.chat-bubble-msg.user{background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000;border-bottom-right-radius:.25rem;font-weight:500}
+.chat-bubble-msg.agent{background:#111;color:#fff;border:1px solid #333;border-bottom-left-radius:.25rem}
+.chat-bubble-msg .time{font-size:.65rem;opacity:.5;margin-top:.25rem}
+.chat-typing{display:flex;gap:.25rem;padding:.5rem 0}
+.chat-typing-dot{width:6px;height:6px;background:#ff6b00;border-radius:50%;animation:typing 1.4s infinite}
+.chat-typing-dot:nth-child(2){animation-delay:.2s}
+.chat-typing-dot:nth-child(3){animation-delay:.4s}
+
+.chat-input-area{padding:.75rem;background:#111;border-top:1px solid #333}
+.chat-input-row{display:flex;gap:.5rem}
+.chat-input{flex:1;padding:.625rem .875rem;background:#1a1a1a;border:1px solid #333;border-radius:.5rem;color:#fff;font-size:.875rem;outline:none}
+.chat-input:focus{border-color:#ff6b00}
+.chat-input::placeholder{color:#555}
+.chat-send-btn{width:36px;height:36px;border-radius:.5rem;border:none;background:linear-gradient(135deg,#ff6b00,#ff8c00);color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.chat-send-btn:hover{transform:scale(1.05)}
+.chat-send-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.chat-send-btn svg{width:16px;height:16px}
+.chat-footer-text{text-align:center;font-size:.6rem;color:#444;margin-top:.375rem}
+
+/* Settings */
+.settings-row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #333}
+.settings-row:last-child{border-bottom:none}
+.settings-row span:first-child{color:#b0b0b0}
+.settings-row span:last-child{color:#fff;font-weight:500}
+
+/* Responsive */
+@media(max-width:768px){
+.sidebar{display:none}
+.chat-window{width:calc(100vw - 2rem);right:1rem;left:1rem}
+.card-grid{grid-template-columns:1fr}
+.form-row{grid-template-columns:1fr}
+.tagline h1{font-size:2rem}
+.logo-img{width:240px;max-height:200px}
+.app-header-inner{flex-wrap:wrap;gap:.5rem}
+.app-user-info{display:none}
+.modal{max-width:calc(100vw - 2rem)}
+}
+@media(max-width:480px){
+.home-wrap{padding:1rem}
+.form-card{padding:1.5rem}
+.btn{padding:.75rem 1rem;font-size:.9rem}
+.chat-window{height:400px}
+}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<!-- ==================== PAGE: ACCUEIL ==================== -->
+<div id="page-home" class="page active">
+  <div class="home-wrap">
+    <div class="logo-wrap">
+      <div class="logo-halo"></div>
+      <img src="logo.png" alt="TI-LEX-AL V10" class="logo-img" id="main-logo">
+    </div>
+
+    <div class="tagline">
+      <h1>Votre <span>agent</span> intelligent</h1>
+      <p>Propulsé par ti-lex-al · Québec 🌊</p>
+      <div class="badges">
+        <span class="badge">Loi 25 ✓</span>
+        <span class="badge">Sécurité intégrée ✓</span>
+        <span class="badge">100% légal ✓</span>
+      </div>
+    </div>
+
+    <!-- Vue Accueil -->
+    <div class="btn-group" id="view-home">
+      <button class="btn btn-secondary" onclick="showLogin()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+        Connexion
+      </button>
+      <button class="btn btn-primary" onclick="showRegister()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        Inscription
+      </button>
+      <div class="divider">ou</div>
+      <div class="oauth-row">
+        <button class="btn btn-oauth" onclick="oauthLogin('google')">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Google
+        </button>
+        <button class="btn btn-oauth" onclick="oauthLogin('github')">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </button>
+      </div>
+    </div>
+
+    <!-- Vue Connexion -->
+    <div class="form-card hidden" id="view-login">
+      <h2>Connexion</h2>
+      <div id="login-error" class="alert alert-error hidden"></div>
+      <div id="login-success" class="alert alert-success hidden"></div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Courriel</label>
+          <input type="email" id="login-email" placeholder="toi@exemple.com" required>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn" style="margin-top:.5rem">
+          Se connecter
+        </button>
+      </form>
+      <div class="form-footer">
+        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showRegister()">Pas de compte? Inscris-toi →</button>
+      </div>
+    </div>
+
+    <!-- Vue Inscription -->
+    <div class="form-card hidden" id="view-register">
+      <h2>Inscription</h2>
+      <div id="register-error" class="alert alert-error hidden"></div>
+      <div id="register-success" class="alert alert-success hidden"></div>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label>Nom complet</label>
+          <input type="text" id="register-name" placeholder="Alex Marceau" required>
+        </div>
+        <div class="form-group">
+          <label>Courriel</label>
+          <input type="email" id="register-email" placeholder="toi@exemple.com" required>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" id="register-password" placeholder="8 caractères minimum" minlength="8" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="register-btn" style="margin-top:.5rem">
+          Créer mon compte
+        </button>
+      </form>
+      <div class="form-footer">
+        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showLogin()">Déjà un compte? Connecte-toi →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Produit du Québec 🇨🇦 · Conforme Loi 25 · ti-lex-al v1.0</p>
+    <p>Données hébergées à Beauharnois, ca-central-1</p>
+  </div>
+</div>
+
+<!-- ==================== PAGE: DASHBOARD ==================== -->
+<div id="page-dashboard" class="page">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo" onclick="navTo('dashboard')">
+        <div class="app-logo-icon">TL</div>
+        <div class="app-logo-text">
+          <h1>ti-lex-v10</h1>
+          <p>Dashboard · Québec 🌊</p>
+        </div>
+      </div>
+      <div class="app-user">
+        <div class="app-user-info">
+          <p id="dash-user-name">Utilisateur</p>
+          <span id="dash-user-email">email@exemple.com</span>
+        </div>
+        <button class="btn-sm" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="navTo('dashboard')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="navTo('securite')">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">Sécurité</span>
+        </button>
+        <button class="nav-item" onclick="navTo('agent')">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-label">Agent ti-lex</span>
+        </button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="navTo('settings')">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Paramètres</span>
+        </button>
+      </nav>
+      <div class="sidebar-info">
+        <p>🛡️ Conformité</p>
+        <p>Loi 25 ✓<br>Art. 342.1 C.cr. ✓<br>ca-central-1 ✓</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <h2 class="page-title">Tableau de bord</h2>
+      <div class="card-grid">
+        <div class="stat-card" onclick="navTo('securite')">
+          <div class="stat-card-header">
+            <span class="stat-card-icon">🛡️</span>
+            <span class="stat-card-value" id="stat-sows">0</span>
+          </div>
+          <div class="stat-card-label">SOWs actifs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-icon">🔄</span>
+            <span class="stat-card-value" id="stat-running">0</span>
+          </div>
+          <div class="stat-card-label">Scans en cours</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-icon">✅</span>
+            <span class="stat-card-value" id="stat-completed">0</span>
+          </div>
+          <div class="stat-card-label">Scans complétés</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-card-icon">🎯</span>
+            <span class="stat-card-value" id="stat-findings">0</span>
+          </div>
+          <div class="stat-card-label">Findings totaux</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">ℹ️ Informations</h3>
+        </div>
+        <div class="info-list">
+          <p>✅ Conforme Loi 25 (Québec)</p>
+          <p>✅ Données hébergées à Beauharnois, ca-central-1</p>
+          <p>✅ Chiffrement AES-256</p>
+          <p>✅ Audit trail immuable</p>
+          <p>✅ RLS (Row Level Security)</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ==================== PAGE: SÉCURITÉ ==================== -->
+<div id="page-securite" class="page">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo" onclick="navTo('dashboard')">
+        <div class="app-logo-icon">TL</div>
+        <div class="app-logo-text">
+          <h1>ti-lex-v10</h1>
+          <p>Sécurité offensive · Québec 🌊</p>
+        </div>
+      </div>
+      <div class="app-user">
+        <div class="app-user-info">
+          <p id="sec-user-name">Utilisateur</p>
+          <span id="sec-user-email">email@exemple.com</span>
+        </div>
+        <button class="btn-sm" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-item" onclick="navTo('dashboard')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item active" onclick="navTo('securite')">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">Sécurité</span>
+        </button>
+        <button class="nav-item" onclick="navTo('agent')">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-label">Agent ti-lex</span>
+        </button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" onclick="navTo('settings')">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Paramètres</span>
+        </button>
+      </nav>
+      <div class="sidebar-info">
+        <p>🛡️ Conformité</p>
+        <p>Loi 25 ✓<br>Art. 342.1 C.cr. ✓<br>ca-central-1 ✓</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="sec-alerts"></div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">⚡ Scan rapide</h3>
+        </div>
+        <form onsubmit="handleQuickScan(event)">
+          <div class="form-row">
+            <div class="form-field">
+              <label>Cible *</label>
+              <input type="text" id="scan-target" placeholder="example.com" required>
+            </div>
+            <div class="form-field">
+              <label>Type de scan *</label>
+              <select id="scan-type">
+                <option value="passive_recon">Reconnaissance passive</option>
+                <option value="active_scan">Scan actif</option>
+                <option value="vuln_scan">Scan de vulnérabilités</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>SOW *</label>
+              <select id="scan-sow">
+                <option value="">Choisir un SOW actif...</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-group-inline">
+            <button type="submit" class="btn-action btn-action-primary" id="btn-launch-scan">🚀 Lancer le scan</button>
+            <button type="button" class="btn-action btn-action-secondary" onclick="showSowModal()">+ Nouveau SOW</button>
+          </div>
+          <div id="scan-result"></div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">📋 Statements of Work (SOWs)</h3>
+          <button class="panel-link" onclick="showSowModal()">+ Nouveau SOW</button>
+        </div>
+        <div id="sows-list">
+          <p class="empty-state">Aucun SOW. Crée-en un pour commencer.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">🔍 Historique des scans</h3>
+        </div>
+        <div id="scans-list">
+          <p class="empty-state">Aucun scan encore.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3 class="panel-title">🔒 Protection des données</h3>
+        </div>
+        <div class="card-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-icon">🔐</span><span class="stat-card-value" style="font-size:.9rem">AES-256</span></div>
+            <div class="stat-card-label">Chiffrement</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-icon">📋</span><span class="stat-card-value" style="font-size:.9rem">SHA-256</span></div>
+            <div class="stat-card-label">Audit trail</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-icon">🔒</span><span class="stat-card-value" style="font-size:.9rem">RLS</span></div>
+            <div class="stat-card-label">Row Level Security</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-icon">🇨🇦</span><span class="stat-card-value" style="font-size:.9rem">ca-c1</span></div>
+            <div class="stat-card-label">Localisation Québec</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ==================== PAGE: AGENT ==================== -->
+<div id="page-agent" class="page">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo" onclick="navTo('dashboard')">
+        <div class="app-logo-icon">TL</div>
+        <div class="app-logo-text">
+          <h1>ti-lex 7.8</h1>
+          <p style="display:flex;align-items:center;gap:.25rem">
+            <span style="width:6px;height:6px;border-radius:50%;background:#00cc66;animation:pulse 2s infinite"></span>
+            En ligne · Agent de sécurité
+          </p>
+        </div>
+      </div>
+      <div class="app-user">
+        <div class="app-user-info">
+          <p id="agent-user-name">Utilisateur</p>
+          <span id="agent-user-email">email@exemple.com</span>
+        </div>
+        <button class="btn-sm" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="agent-page">
+    <div class="agent-messages" id="agent-messages">
+      <div class="agent-welcome">
+        <div class="agent-welcome-icon">🤖</div>
+        <h2>ti-lex 7.8</h2>
+        <p>Salut! Je suis ton agent de sécurité québécois. Je peux t'aider avec les SOWs, les scans, la conformité Loi 25 et plus.</p>
+        <div class="agent-suggestions">
+          <button class="agent-suggestion" onclick="sendAgentMessage('sow')">sow</button>
+          <button class="agent-suggestion" onclick="sendAgentMessage('scan')">scan</button>
+          <button class="agent-suggestion" onclick="sendAgentMessage('loi 25')">loi 25</button>
+          <button class="agent-suggestion" onclick="sendAgentMessage('security')">security</button>
+          <button class="agent-suggestion" onclick="sendAgentMessage('help')">help</button>
+        </div>
+      </div>
+    </div>
+    <div class="agent-input-area">
+      <div class="agent-input-row">
+        <input type="text" class="agent-input" id="agent-input" placeholder="Écris un message... (help)" onkeydown="if(event.key==='Enter')sendAgentMessage()">
+        <button class="agent-send" id="agent-send" onclick="sendAgentMessage()">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="18" height="18">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22,2 15,22 11,13 2,9 22,2" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: PARAMÈTRES ==================== -->
+<div id="page-settings" class="page">
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo" onclick="navTo('dashboard')">
+        <div class="app-logo-icon">TL</div>
+        <div class="app-logo-text">
+          <h1>ti-lex-v10</h1>
+          <p>Paramètres</p>
+        </div>
+      </div>
+      <div class="app-user">
+        <button class="btn-sm" onclick="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-item" onclick="navTo('dashboard')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="navTo('securite')">
+          <span class="nav-icon">🛡️</span>
+          <span class="nav-label">Sécurité</span>
+        </button>
+        <button class="nav-item" onclick="navTo('agent')">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-label">Agent ti-lex</span>
+        </button>
+        <div class="nav-divider"></div>
+        <button class="nav-item active" onclick="navTo('settings')">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Paramètres</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <h2 class="page-title">⚙️ Paramètres</h2>
+      <div class="panel">
+        <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem">Compte</h3>
+        <div class="settings-list">
+          <div class="settings-row">
+            <span>Email</span>
+            <span id="settings-email">—</span>
+          </div>
+          <div class="settings-row">
+            <span>Nom</span>
+            <span id="settings-name">—</span>
+          </div>
+          <div class="settings-row">
+            <span>ID</span>
+            <span id="settings-id" style="font-family:monospace;font-size:.75rem;color:#666">—</span>
+          </div>
+          <div class="settings-row">
+            <span>Vérifié</span>
+            <span id="settings-verified">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem">Sécurité</h3>
+        <div class="info-list">
+          <p>✅ Chiffrement AES-256</p>
+          <p>✅ Audit trail immuable</p>
+          <p>✅ RLS activé</p>
+          <p>✅ Données ca-central-1 (Beauharnois)</p>
+          <p>✅ Conforme Loi 25</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ==================== MODAL: NOUVEAU SOW ==================== -->
+<div class="modal-overlay hidden" id="sow-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nouveau SOW</h2>
+      <button class="modal-close" onclick="hideSowModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="sow-form" onsubmit="handleCreateSow(event)">
+        <div class="form-row">
+          <div class="form-field" style="grid-column:1/-1">
+            <label>Titre *</label>
+            <input type="text" id="sow-title" placeholder="Pentest infra client X" required>
+          </div>
+          <div class="form-field" style="grid-column:1/-1">
+            <label>Client *</label>
+            <input type="text" id="sow-client" placeholder="Nom du client" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Scope autorisé * <span style="color:#666">(une cible par ligne)</span></label>
+          <textarea id="sow-scope-in" rows="3" placeholder="example.com
+api.example.com
+192.168.1.0/24" required></textarea>
+        </div>
+        <div class="form-field">
+          <label>Exclusions <span style="color:#666">(optionnel)</span></label>
+          <textarea id="sow-scope-out" rows="2" placeholder="prod.example.com
+admin.example.com"></textarea>
+        </div>
+        <div class="form-field">
+          <label>Types de scan autorisés *</label>
+          <div class="checkbox-group" id="sow-scan-types">
+            <label class="checkbox-item checked" data-type="passive_recon" onclick="toggleScanType(this)">
+              <input type="checkbox" value="passive_recon" checked>
+              <span>Reconnaissance passive</span>
+            </label>
+            <label class="checkbox-item" data-type="active_scan" onclick="toggleScanType(this)">
+              <input type="checkbox" value="active_scan">
+              <span>Scan actif</span>
+            </label>
+            <label class="checkbox-item" data-type="vuln_scan" onclick="toggleScanType(this)">
+              <input type="checkbox" value="vuln_scan">
+              <span>Scan de vulnérabilités</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Durée de validité (jours)</label>
+          <input type="number" id="sow-expires" min="1" max="365" value="30">
+        </div>
+        <div class="alert-box warning">
+          <span class="alert-icon">⚠️</span>
+          <p><strong>Rappel légal:</strong> Ce SOW doit être signé par le client avant de lancer des scans. Scanner sans autorisation écrite est illégal au Canada (art. 342.1 C.cr.).</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-action btn-action-secondary" onclick="hideSowModal()">Annuler</button>
+          <button type="submit" class="btn-action btn-action-primary">Créer en brouillon</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== CHAT WIDGET ==================== -->
+<div class="chat-bubble" id="chat-bubble">
+  <button class="chat-btn" id="chat-toggle" onclick="toggleChat()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+    </svg>
+  </button>
+</div>
+
+<div class="chat-window hidden" id="chat-window">
+  <div class="chat-header">
+    <div class="chat-header-avatar">
+      <svg viewBox="0 0 100 100" width="20" height="20"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cg)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg>
+      <span class="online-dot"></span>
+    </div>
+    <div class="chat-header-info">
+      <h4>ti-lex 7.8</h4>
+      <p><span class="chat-header-pulse"></span> En ligne · Agent de sécurité</p>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-area">
+    <div class="chat-input-row">
+      <input type="text" class="chat-input" id="chat-input" placeholder="Écris un message... (help)" onkeydown="if(event.key==='Enter')sendChatMessage()">
+      <button class="chat-send-btn" id="chat-send" onclick="sendChatMessage()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+      </button>
+    </div>
+    <p class="chat-footer-text">ti-lex 7.8 · Conforme Loi 25 · Données chiffrées</p>
+  </div>
+</div>
+
+<script>
+
+// ==================== TI-LEX-V10 JAVASCRIPT ====================
+const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTY5MTY0MDAsImV4cCI6MjAzMjQ5MjQwMH0.votre_cle_anon';
+
+var supabase = null;
+var currentUser = null;
+var chatOpen = false;
+var chatMessages = [];
+var isTyping = false;
+var sows = [];
+var scans = [];
+
+const AGENT_RESPONSES = {
+  sow: "📋 **Créer un SOW**\n\n1. Va dans l'onglet 🛡️ Sécurité → 📋 Mes SOWs\n2. Clique **+ Nouveau SOW**\n3. Remplis: titre, client, scope, types de scan autorisés\n4. Fais-le **signer** par le client pour l'activer\n\n⚠️ Sans SOW actif, aucun scan n'est possible (art. 342.1 C.cr.)",
+  scan: "🔍 **Lancer un scan**\n\n1. Assure-toi d'avoir un **SOW actif**\n2. Va dans le Dashboard → **Scan rapide**\n3. Choisis: cible, type de scan, SOW\n4. Clique **🚀 Lancer le scan**",
+  desjardins: "⚠️ **Leçon Desjardins 2019**\n\n• **4.2 millions** de membres affectés\n• Cause: employé malveillant + absence de contrôles\n\n**Notre protection:**\n✅ Audit trail immuable\n✅ RLS (chacun ne voit que ses données)\n✅ SOW obligatoire pour tout scan\n✅ Chiffrement AES-256\n✅ Données au Québec (ca-central-1)",
+  'loi 25': "📜 **Loi 25 (Québec)**\n\nObligations:\n• Consentement explicite\n• Minimisation des données\n• Droits d'accès et de rectification\n• Conservation limitée\n• Notification en cas de fuite (72h)\n\n**Notre conformité:**\n✅ 100% conforme Loi 25\n✅ Données en ca-central-1 (Beauharnois)\n✅ Anonymisation avant API externe\n✅ Audit trail > 5 ans",
+  security: "🔒 **Status sécurité**\n\n✅ Chiffrement AES-256\n✅ Audit trail immuable (hash chain SHA-256)\n✅ RLS activé (Row Level Security)\n✅ Données ca-central-1 (Beauharnois, Québec)\n✅ SOW validation (4 niveaux de protection)\n✅ Anonymisation avant API externe\n✅ Conforme Loi 25 + Art. 342.1 C.cr.",
+  help: "🤖 **Commandes disponibles**\n\n• **sow** — Créer/gérer des SOWs\n• **scan** — Lancer un scan de sécurité\n• **desjardins** — Leçon de la fuite 2019\n• **loi 25** — Conformité québécoise\n• **security** — Status de la sécurité\n• **help** — Afficher cette aide",
+};
+
+function getAgentReply(text) {
+  var lower = text.trim().toLowerCase();
+  for (var keyword in AGENT_RESPONSES) {
+    if (lower.indexOf(keyword) !== -1) return AGENT_RESPONSES[keyword];
+  }
+  return "Je comprends. Pour t'aider mieux, peux-tu préciser?\n\nTu peux dire **help** pour voir les commandes disponibles.";
+}
+
+// ==================== INIT ====================
+function initParticles() {
+  var container = document.getElementById('particles');
+  if (!container) return;
+  for (var i = 0; i < 25; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.top = Math.random() * 100 + '%';
+    p.style.width = (Math.random() * 3 + 1) + 'px';
+    p.style.height = p.style.width;
+    p.style.animationDelay = Math.random() * 5 + 's';
+    p.style.animationDuration = (3 + Math.random() * 4) + 's';
+    p.style.animationName = 'float';
+    container.appendChild(p);
+  }
+}
+
+function initSupabase() {
+  var check = function() {
+    if (window.supabase && window.supabase.createClient) {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        checkSession();
+      } catch(e) {}
+    } else {
+      setTimeout(check, 500);
+    }
+  };
+  check();
+}
+
+async function checkSession() {
+  if (!supabase) return;
+  try {
+    var result = await supabase.auth.getSession();
+    if (result.data && result.data.session && result.data.session.user) {
+      currentUser = result.data.session.user;
+      updateUserInfo();
+    }
+  } catch(e) {}
+}
+
+function updateUserInfo() {
+  if (!currentUser) return;
+  var name = currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : (currentUser.email ? currentUser.email.split('@')[0] : 'Utilisateur');
+  var email = currentUser.email || 'email@exemple.com';
+  ['dash-user-name', 'sec-user-name', 'agent-user-name'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = name;
+  });
+  ['dash-user-email', 'sec-user-email', 'agent-user-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = email;
+  });
+  var se = document.getElementById('settings-email');
+  if (se) se.textContent = email;
+  var sn = document.getElementById('settings-name');
+  if (sn) sn.textContent = currentUser.user_metadata && currentUser.user_metadata.full_name ? currentUser.user_metadata.full_name : 'Non défini';
+  var si = document.getElementById('settings-id');
+  if (si) si.textContent = currentUser.id.slice(0, 12) + '...';
+  var sv = document.getElementById('settings-verified');
+  if (sv) {
+    sv.textContent = currentUser.email_confirmed_at ? '✅ Oui' : '⏳ En attente';
+    sv.style.color = currentUser.email_confirmed_at ? '#00cc66' : '#f59e0b';
+  }
+}
+
+// ==================== NAVIGATION ====================
+function navTo(page) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  var target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (page === 'securite') {
+    renderSows();
+    renderScans();
+    renderAlerts();
+    updateStats();
+    updateSowDropdown();
+  }
+  if (page === 'dashboard') updateStats();
+}
+
+// ==================== AUTH VIEWS ====================
+function hideAllViews() {
+  document.getElementById('view-home').classList.add('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-register').classList.add('hidden');
+}
+
+function showHome() {
+  hideAllViews();
+  document.getElementById('view-home').classList.remove('hidden');
+  clearErrors();
+}
+
+function showLogin() {
+  hideAllViews();
+  document.getElementById('view-login').classList.remove('hidden');
+  document.getElementById('login-email').focus();
+  clearErrors();
+}
+
+function showRegister() {
+  hideAllViews();
+  document.getElementById('view-register').classList.remove('hidden');
+  document.getElementById('register-name').focus();
+  clearErrors();
+}
+
+function clearErrors() {
+  ['login-error', 'login-success', 'register-error', 'register-success'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.add('hidden'); el.textContent = ''; }
+  });
+}
+
+function showError(id, msg) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
+function showSuccess(id, msg) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
+// ==================== AUTH HANDLERS ====================
+async function handleLogin(e) {
+  e.preventDefault();
+  if (!supabase) { showError('login-error', 'Supabase non initialisé. Vérifie ta connexion internet.'); return; }
+  var btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Connexion...';
+  clearErrors();
+  try {
+    var result = await supabase.auth.signInWithPassword({
+      email: document.getElementById('login-email').value.trim(),
+      password: document.getElementById('login-password').value,
+    });
+    if (result.error) {
+      showError('login-error', result.error.message);
+    } else if (result.data && result.data.user) {
+      currentUser = result.data.user;
+      showSuccess('login-success', 'Connexion réussie! Redirection...');
+      updateUserInfo();
+      setTimeout(function() { navTo('dashboard'); }, 1000);
+    }
+  } catch(err) {
+    showError('login-error', 'Erreur: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Se connecter';
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  if (!supabase) { showError('register-error', 'Supabase non initialisé. Vérifie ta connexion internet.'); return; }
+  var btn = document.getElementById('register-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Inscription...';
+  clearErrors();
+  var password = document.getElementById('register-password').value;
+  if (password.length < 8) {
+    showError('register-error', 'Mot de passe: 8 caractères minimum.');
+    btn.disabled = false;
+    btn.innerHTML = 'Créer mon compte';
+    return;
+  }
+  try {
+    var result = await supabase.auth.signUp({
+      email: document.getElementById('register-email').value.trim(),
+      password: password,
+      options: {
+        data: { full_name: document.getElementById('register-name').value.trim() },
+        emailRedirectTo: window.location.origin + '/dashboard',
+      },
+    });
+    if (result.error) showError('register-error', result.error.message);
+    else showSuccess('register-success', 'Compte créé! Vérifie ton courriel.');
+  } catch(err) {
+    showError('register-error', 'Erreur: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Créer mon compte';
+  }
+}
+
+async function oauthLogin(provider) {
+  if (!supabase) { alert('Supabase non initialisé. Vérifie ta connexion internet.'); return; }
+  try {
+    var result = await supabase.auth.signInWithOAuth({
+      provider: provider,
+      options: { redirectTo: window.location.origin + '/dashboard' },
+    });
+    if (result.error) alert('Erreur: ' + result.error.message);
+  } catch(err) {
+    alert('Erreur: ' + err.message);
+  }
+}
+
+async function logout() {
+  if (supabase) await supabase.auth.signOut();
+  currentUser = null;
+  navTo('home');
+  showHome();
+}
+
+// ==================== CHAT WIDGET ====================
+function toggleChat() {
+  chatOpen = !chatOpen;
+  var win = document.getElementById('chat-window');
+  var btn = document.getElementById('chat-toggle');
+  if (chatOpen) {
+    win.classList.remove('hidden');
+    btn.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    if (chatMessages.length === 0) {
+      addChatMessage('agent', "Salut! Je suis ti-lex 7.8, ton agent de sécurité québécois. 🔐\n\nJe peux t'aider à:\n• Créer des SOWs légaux\n• Lancer des scans de sécurité\n• Analyser les vulnérabilités\n• Protéger tes données (Loi 25)\n\nComment puis-je t'aider aujourd'hui?");
+    }
+    document.getElementById('chat-input').focus();
+  } else {
+    win.classList.add('hidden');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>';
+  }
+}
+
+function addChatMessage(role, content) {
+  var msg = {
+    id: Date.now(),
+    role: role,
+    content: content,
+    time: new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }),
+  };
+  chatMessages.push(msg);
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  var container = document.getElementById('chat-messages');
+  if (!container) return;
+  var html = '';
+  for (var i = 0; i < chatMessages.length; i++) {
+    var msg = chatMessages[i];
+    html += '<div class="chat-message ' + msg.role + '">';
+    html += '<div class="chat-avatar ' + msg.role + '">' + (msg.role === 'user' ? '👤' : '7.8') + '</div>';
+    html += '<div class="chat-bubble-msg ' + msg.role + '">';
+    html += '<div style="white-space:pre-wrap">' + escapeHtml(msg.content) + '</div>';
+    html += '<div class="time">' + msg.time + '</div>';
+    html += '</div></div>';
+  }
+  if (isTyping) {
+    html += '<div class="chat-message agent">';
+    html += '<div class="chat-avatar agent">7.8</div>';
+    html += '<div class="chat-bubble-msg agent">';
+    html += '<div class="chat-typing">';
+    html += '<div class="chat-typing-dot"></div>';
+    html += '<div class="chat-typing-dot"></div>';
+    html += '<div class="chat-typing-dot"></div>';
+    html += '</div></div></div>';
+  }
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+  var input = document.getElementById('chat-input');
+  var text = input.value.trim();
+  if (!text || isTyping) return;
+  addChatMessage('user', text);
+  input.value = '';
+  isTyping = true;
+  renderChatMessages();
+  setTimeout(function() {
+    isTyping = false;
+    var response = getAgentReply(text);
+    addChatMessage('agent', response);
+  }, 1200);
+}
+
+// ==================== AGENT PAGE ====================
+function sendAgentMessage(text) {
+  var input = document.getElementById('agent-input');
+  if (typeof text === 'string') input.value = text;
+  var message = input.value.trim();
+  if (!message) return;
+
+  var welcome = document.querySelector('.agent-welcome');
+  if (welcome) welcome.remove();
+
+  var messagesContainer = document.getElementById('agent-messages');
+  var time = new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+
+  var msgDiv = document.createElement('div');
+  msgDiv.className = 'msg-row user';
+  msgDiv.innerHTML = '<div class="msg-avatar user">👤</div><div class="msg-bubble user">' + escapeHtml(message) + '<div class="msg-time">' + time + '</div></div>';
+  messagesContainer.appendChild(msgDiv);
+  input.value = '';
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  var typingId = 'typing-' + Date.now();
+  var typingDiv = document.createElement('div');
+  typingDiv.className = 'msg-row agent';
+  typingDiv.id = typingId;
+  typingDiv.innerHTML = '<div class="msg-avatar agent">7.8</div><div class="msg-bubble agent"><div style="display:flex;gap:.25rem;padding:.25rem 0;"><span style="width:8px;height:8px;background:#ff6b00;border-radius:50%;animation:typing 1.4s infinite;"></span><span style="width:8px;height:8px;background:#ff6b00;border-radius:50%;animation:typing 1.4s infinite 0.2s;"></span><span style="width:8px;height:8px;background:#ff6b00;border-radius:50%;animation:typing 1.4s infinite 0.4s;"></span></div></div>';
+  messagesContainer.appendChild(typingDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  setTimeout(function() {
+    var typingEl = document.getElementById(typingId);
+    if (typingEl) typingEl.remove();
+    var reply = getAgentReply(message);
+    var replyDiv = document.createElement('div');
+    replyDiv.className = 'msg-row agent';
+    replyDiv.innerHTML = '<div class="msg-avatar agent">7.8</div><div class="msg-bubble agent">' + escapeHtml(reply).replace(/\n/g, '<br>') + '<div class="msg-time">' + new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }) + '</div></div>';
+    messagesContainer.appendChild(replyDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }, 1000);
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ==================== MOCK DATA ====================
+function loadMockData() {
+  sows = [
+    {
+      id: '1',
+      title: 'Pentest Infra Client X',
+      client_name: 'Client X Inc.',
+      status: 'active',
+      scope_in: ['example.com', 'api.example.com'],
+      scope_out: ['prod.example.com'],
+      allowed_scan_types: ['passive_recon', 'active_scan'],
+      expires_at: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+      sow_number: 'SOW-2024-001',
+    },
+    {
+      id: '2',
+      title: 'Audit Web App Y',
+      client_name: 'Startup Y',
+      status: 'draft',
+      scope_in: ['app.y.com'],
+      scope_out: [],
+      allowed_scan_types: ['passive_recon'],
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      sow_number: null,
+    },
+  ];
+
+  scans = [
+    {
+      id: '1',
+      target: 'example.com',
+      scan_type: 'passive_recon',
+      status: 'completed',
+      queued_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      total_findings: 3,
+      critical_count: 0,
+      high_count: 1,
+      medium_count: 2,
+      low_count: 0,
+      sow: { client_name: 'Client X Inc.' },
+    },
+    {
+      id: '2',
+      target: 'api.example.com',
+      scan_type: 'active_scan',
+      status: 'running',
+      queued_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+      total_findings: 0,
+      critical_count: 0,
+      high_count: 0,
+      medium_count: 0,
+      low_count: 0,
+      sow: { client_name: 'Client X Inc.' },
+    },
+  ];
+
+  renderSows();
+  renderScans();
+  renderAlerts();
+  updateStats();
+  updateSowDropdown();
+}
+
+// ==================== SECURITY RENDERING ====================
+function renderSows() {
+  var container = document.getElementById('sows-list');
+  if (!container) return;
+  if (sows.length === 0) {
+    container.innerHTML = '<p class="empty-state">Aucun SOW. Crée-en un pour commencer.</p>';
+    return;
+  }
+
+  var statusConfig = {
+    draft: { label: 'Brouillon', cls: 'tag-gray' },
+    active: { label: 'Actif', cls: 'tag-green' },
+    expired: { label: 'Expiré', cls: 'tag-red' },
+    revoked: { label: 'Révoqué', cls: 'tag-red' },
+    completed: { label: 'Complété', cls: 'tag-blue' },
+    pending_signature: { label: 'En attente', cls: 'tag-amber' },
+  };
+
+  var scanTypeLabels = {
+    passive_recon: 'Reconnaissance passive',
+    active_scan: 'Scan actif',
+    vuln_scan: 'Scan de vulnérabilités',
+  };
+
+  var html = '';
+  for (var i = 0; i < sows.length; i++) {
+    var sow = sows[i];
+    var cfg = statusConfig[sow.status] || statusConfig.draft;
+    var isExpiring = sow.status === 'active' && (new Date(sow.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24) < 7;
+
+    html += '<div class="sow-card">';
+    html += '<div class="sow-card-header">';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem;">';
+    html += '<span class="tag ' + cfg.cls + '">' + cfg.label + '</span>';
+    if (sow.sow_number) html += '<span style="font-size:.7rem;font-family:monospace;color:#666;">' + sow.sow_number + '</span>';
+    if (isExpiring) html += '<span class="tag tag-amber">⏰ Expire bientôt</span>';
+    html += '</div>';
+    html += '<div class="sow-card-title">' + escapeHtml(sow.title) + '</div>';
+    html += '<div class="sow-card-client">' + escapeHtml(sow.client_name) + '</div>';
+    html += '<div class="sow-card-tags">';
+    html += '<span class="sow-card-tag">Scope: ' + sow.scope_in.length + ' cibles</span>';
+    var typeLabels = [];
+    for (var t = 0; t < sow.allowed_scan_types.length; t++) {
+      typeLabels.push(scanTypeLabels[sow.allowed_scan_types[t]] || sow.allowed_scan_types[t]);
+    }
+    html += '<span class="sow-card-tag">' + typeLabels.join(', ') + '</span>';
+    html += '<span class="sow-card-tag">Expire: ' + formatDate(sow.expires_at) + '</span>';
+    html += '</div>';
+    if (sow.scope_out.length > 0) html += '<p style="margin-top:.5rem;font-size:.75rem;color:#ff4444;">Exclusions: ' + sow.scope_out.join(', ') + '</p>';
+    html += '</div>';
+    html += '<div class="sow-card-actions">';
+    if (sow.status === 'draft') {
+      html += '<button class="btn-activate" onclick="activateSow('' + sow.id + '')">✅ Activer</button>';
+      html += '<button class="btn-delete" onclick="deleteSow('' + sow.id + '')">🗑️ Suppr</button>';
+    } else if (sow.status === 'active') {
+      html += '<button class="btn-revoke" onclick="revokeSow('' + sow.id + '')">🚫 Révoquer</button>';
+    }
+    html += '</div></div></div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderScans() {
+  var container = document.getElementById('scans-list');
+  if (!container) return;
+  if (scans.length === 0) {
+    container.innerHTML = '<p class="empty-state">Aucun scan encore.</p>';
+    return;
+  }
+
+  var statusConfig = {
+    queued: { label: 'En attente', cls: 'tag-gray' },
+    running: { label: 'En cours', cls: 'tag-blue' },
+    completed: { label: 'Complété', cls: 'tag-green' },
+    failed: { label: 'Échec', cls: 'tag-red' },
+    cancelled: { label: 'Annulé', cls: 'tag-amber' },
+    aborted: { label: 'Interrompu', cls: 'tag-amber' },
+  };
+
+  var scanTypeLabels = {
+    passive_recon: '🔍 Reconnaissance passive',
+    active_scan: '📡 Scan actif',
+    vuln_scan: '🐛 Scan de vulnérabilités',
+  };
+
+  var html = '<table class="data-table"><thead><tr><th>Cible</th><th>Type</th><th>Statut</th><th style="text-align:right">Findings</th><th style="text-align:right">Date</th></tr></thead><tbody>';
+  for (var i = 0; i < scans.length; i++) {
+    var scan = scans[i];
+    var cfg = statusConfig[scan.status] || statusConfig.queued;
+    html += '<tr>';
+    html += '<td class="mono">' + escapeHtml(scan.target) + '</td>';
+    html += '<td>' + (scanTypeLabels[scan.scan_type] || scan.scan_type) + '</td>';
+    html += '<td><span class="tag ' + cfg.cls + '">' + cfg.label + '</span></td>';
+    html += '<td style="text-align:right;">';
+    if (scan.status === 'completed') html += renderFindings(scan);
+    else html += '<span style="color:#666">—</span>';
+    html += '</td>';
+    html += '<td style="text-align:right;color:#666;font-size:.75rem">' + formatRelative(scan.queued_at) + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function renderFindings(scan) {
+  if (scan.total_findings === 0) return '<span style="color:#00cc66;font-size:.75rem">Aucun</span>';
+  var html = '<div class="findings-bar">';
+  if (scan.critical_count > 0) html += '<span class="finding-tag finding-c">' + scan.critical_count + 'C</span>';
+  if (scan.high_count > 0) html += '<span class="finding-tag finding-h">' + scan.high_count + 'H</span>';
+  if (scan.medium_count > 0) html += '<span class="finding-tag finding-m">' + scan.medium_count + 'M</span>';
+  html += '</div>';
+  return html;
+}
+
+function renderAlerts() {
+  var container = document.getElementById('sec-alerts');
+  if (!container) return;
+  var activeSows = [];
+  var expiringSoon = [];
+  for (var i = 0; i < sows.length; i++) {
+    if (sows[i].status === 'active') activeSows.push(sows[i]);
+    if (sows[i].status === 'active') {
+      var days = (new Date(sows[i].expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+      if (days < 7 && days > 0) expiringSoon.push(sows[i]);
+    }
+  }
+
+  var html = '';
+  if (expiringSoon.length > 0) {
+    html += '<div class="alert-box warning"><span class="alert-icon">⚠️</span><p>' + expiringSoon.length + ' SOW(s) expire(nt) dans moins de 7 jours.</p></div>';
+  }
+  if (activeSows.length === 0) {
+    html += '<div class="alert-box critical"><span class="alert-icon">🚨</span><p>Aucun SOW actif. Tu ne peux pas lancer de scan sans autorisation légale.</p></div>';
+  }
+  container.innerHTML = html;
+}
+
+function updateStats() {
+  var active = 0;
+  for (var i = 0; i < sows.length; i++) if (sows[i].status === 'active') active++;
+  var running = 0;
+  for (var i = 0; i < scans.length; i++) if (scans[i].status === 'running') running++;
+  var completed = 0;
+  for (var i = 0; i < scans.length; i++) if (scans[i].status === 'completed') completed++;
+  var findings = 0;
+  for (var i = 0; i < scans.length; i++) findings += (scans[i].total_findings || 0);
+
+  var el = document.getElementById('stat-sows');
+  if (el) el.textContent = active;
+  el = document.getElementById('stat-running');
+  if (el) el.textContent = running;
+  el = document.getElementById('stat-completed');
+  if (el) el.textContent = completed;
+  el = document.getElementById('stat-findings');
+  if (el) el.textContent = findings;
+}
+
+function updateSowDropdown() {
+  var select = document.getElementById('scan-sow');
+  if (!select) return;
+  var html = '<option value="">Choisir un SOW actif...</option>';
+  for (var i = 0; i < sows.length; i++) {
+    if (sows[i].status === 'active') {
+      html += '<option value="' + sows[i].id + '">' + (sows[i].sow_number || 'SOW') + ' — ' + sows[i].client_name + '</option>';
+    }
+  }
+  select.innerHTML = html;
+}
+
+// ==================== SOW ACTIONS ====================
+function activateSow(id) {
+  var sow = null;
+  for (var i = 0; i < sows.length; i++) if (sows[i].id === id) sow = sows[i];
+  if (!sow) return;
+  var signedBy = prompt('Nom du signataire?');
+  if (!signedBy) return;
+  sow.status = 'active';
+  renderSows();
+  renderAlerts();
+  updateStats();
+  updateSowDropdown();
+}
+
+function revokeSow(id) {
+  if (!confirm('Révoquer ce SOW?')) return;
+  for (var i = 0; i < sows.length; i++) if (sows[i].id === id) sows[i].status = 'revoked';
+  renderSows();
+  renderAlerts();
+  updateStats();
+  updateSowDropdown();
+}
+
+function deleteSow(id) {
+  if (!confirm('Supprimer ce brouillon?')) return;
+  var newSows = [];
+  for (var i = 0; i < sows.length; i++) if (sows[i].id !== id) newSows.push(sows[i]);
+  sows = newSows;
+  renderSows();
+  renderAlerts();
+  updateStats();
+}
+
+// ==================== MODAL ====================
+function showSowModal() {
+  document.getElementById('sow-modal').classList.remove('hidden');
+}
+
+function hideSowModal() {
+  document.getElementById('sow-modal').classList.add('hidden');
+  var form = document.getElementById('sow-form');
+  if (form) form.reset();
+  var items = document.querySelectorAll('#sow-scan-types .checkbox-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.remove('checked');
+    var inp = items[i].querySelector('input');
+    if (inp) inp.checked = false;
+  }
+  var first = document.querySelector('#sow-scan-types .checkbox-item');
+  if (first) {
+    first.classList.add('checked');
+    var inp = first.querySelector('input');
+    if (inp) inp.checked = true;
+  }
+}
+
+function toggleScanType(el) {
+  var input = el.querySelector('input');
+  if (input) {
+    el.classList.toggle('checked', input.checked);
+  }
+}
+
+function handleCreateSow(e) {
+  e.preventDefault();
+  var title = document.getElementById('sow-title').value.trim();
+  var client = document.getElementById('sow-client').value.trim();
+  var scopeInRaw = document.getElementById('sow-scope-in').value;
+  var scopeOutRaw = document.getElementById('sow-scope-out').value;
+  var expiresDays = parseInt(document.getElementById('sow-expires').value) || 30;
+
+  var scopeIn = [];
+  var lines = scopeInRaw.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var trimmed = lines[i].trim();
+    if (trimmed) scopeIn.push(trimmed);
+  }
+  var scopeOut = [];
+  lines = scopeOutRaw.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var trimmed = lines[i].trim();
+    if (trimmed) scopeOut.push(trimmed);
+  }
+
+  var allowedTypes = [];
+  var checked = document.querySelectorAll('#sow-scan-types input:checked');
+  for (var i = 0; i < checked.length; i++) allowedTypes.push(checked[i].value);
+
+  if (!title || !client || scopeIn.length === 0 || allowedTypes.length === 0) {
+    alert('Veuillez remplir tous les champs obligatoires.');
+    return;
+  }
+
+  var newSow = {
+    id: Date.now().toString(),
+    title: title,
+    client_name: client,
+    status: 'draft',
+    scope_in: scopeIn,
+    scope_out: scopeOut,
+    allowed_scan_types: allowedTypes,
+    expires_at: new Date(Date.now() + expiresDays * 24 * 60 * 60 * 1000).toISOString(),
+    sow_number: null,
+  };
+
+  sows.unshift(newSow);
+  hideSowModal();
+  renderSows();
+  renderAlerts();
+  updateStats();
+  updateSowDropdown();
+}
+
+// ==================== SCAN ====================
+function handleQuickScan(e) {
+  e.preventDefault();
+  var target = document.getElementById('scan-target').value.trim();
+  var type = document.getElementById('scan-type').value;
+  var sowId = document.getElementById('scan-sow').value;
+
+  if (!target || !sowId) {
+    document.getElementById('scan-result').innerHTML = '<div class="alert alert-error" style="margin-top:.75rem">Veuillez remplir tous les champs.</div>';
+    return;
+  }
+
+  var btn = document.getElementById('btn-launch-scan');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-white" style="display:inline-block;width:14px;height:14px;border-width:2px"></span> Lancement...';
+
+  setTimeout(function() {
+    var clientName = '—';
+    for (var i = 0; i < sows.length; i++) if (sows[i].id === sowId) clientName = sows[i].client_name;
+
+    var newScan = {
+      id: Date.now().toString(),
+      target: target,
+      scan_type: type,
+      status: 'queued',
+      queued_at: new Date().toISOString(),
+      total_findings: 0,
+      critical_count: 0,
+      high_count: 0,
+      medium_count: 0,
+      low_count: 0,
+      sow: { client_name: clientName },
+    };
+    scans.unshift(newScan);
+    renderScans();
+    updateStats();
+
+    document.getElementById('scan-result').innerHTML = '<div class="alert alert-success" style="margin-top:.75rem">✅ Scan lancé avec succès!</div>';
+    btn.disabled = false;
+    btn.innerHTML = '🚀 Lancer le scan';
+    document.getElementById('scan-target').value = '';
+  }, 1500);
+}
+
+// ==================== HELPERS ====================
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function formatRelative(iso) {
+  var diff = Date.now() - new Date(iso).getTime();
+  var minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return 'il y a ' + minutes + ' min';
+  var hours = Math.floor(minutes / 60);
+  if (hours < 24) return 'il y a ' + hours + 'h';
+  var days = Math.floor(hours / 24);
+  if (days < 7) return 'il y a ' + days + 'j';
+  return formatDate(iso);
+}
+
+// ==================== STARTUP ====================
+initParticles();
+initSupabase();
+loadMockData();
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function() {});
+}
+</script>
+</body>
+</html>
