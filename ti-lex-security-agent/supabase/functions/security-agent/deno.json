@@ -1,0 +1,5 @@
+# Configuration de l'edge function security-agent
+# À placer dans supabase/functions/security-agent/
+
+verify_jwt = true
+import_map = "./import_map.json"
