@@ -116,8 +116,8 @@ $("#saveKey").onclick = () => {
   setTimeout(() => { b.dataset.w = "Enregis"; b.dataset.b = "trer"; }, 1800);
 };
 
-/* ================= CONNECTEURS ================= */
-$$(".conn-btn").forEach(btn => {
+/* ================= CONNECTEURS (Settings only) ================= */
+$$(".conn-btn[data-service]").forEach(btn => {
   btn.onclick = () => {
     const s = btn.dataset.service;
     state.connected[s] = !state.connected[s];
@@ -418,8 +418,10 @@ function makeTyper(renderFn) {
   };
 }
 const codexConvos = $("#codexConvos");
+const codexSb = $("#codexSidebar");
 let codexHistory = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
 let activeConvIdx = -1;
+let codexChatMsgs = [];
 
 function toggleCodexSidebar() {
   codexSb.classList.toggle("closed");
@@ -436,9 +438,42 @@ function syncCodexProjects() {
   });
 }
 
+function addCodexUserMsg(text) {
+  $(".codex-welcome")?.remove();
+  const m = document.createElement("div");
+  m.className = "codex-msg user";
+  const av = document.createElement("div");
+  av.className = "cmsg-avatar"; av.textContent = "A";
+  m.appendChild(av);
+  const b = document.createElement("div");
+  b.className = "codex-msg-body"; b.textContent = text;
+  m.appendChild(b);
+  $("#codexMessages").appendChild(m);
+  $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
+}
+
+function buildCodexAssistantMsg() {
+  const m = document.createElement("div");
+  m.className = "codex-msg assistant responding";
+  m.appendChild(avatarAL());
+  const b = document.createElement("div");
+  b.className = "codex-msg-body";
+  b.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  m.appendChild(b);
+  $("#codexMessages").appendChild(m);
+  $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
+  b._msgWrap = m;
+  return b;
+}
+
 function saveCodexConv(prompt, output) {
-  const entry = { prompt: prompt.slice(0, 60), full: prompt, output, lang: $("#lang").value, ts: Date.now() };
-  codexHistory.unshift(entry);
+  const entry = { prompt: prompt.slice(0, 60), full: prompt, output, lang: $("#lang").value, msgs: [...codexChatMsgs], ts: Date.now() };
+  if (activeConvIdx >= 0) {
+    codexHistory[activeConvIdx] = entry;
+  } else {
+    codexHistory.unshift(entry);
+    activeConvIdx = 0;
+  }
   if (codexHistory.length > 30) codexHistory.length = 30;
   try { localStorage.setItem("tilex-codex-history", JSON.stringify(codexHistory)); } catch (_) {}
   renderCodexConvos();
@@ -457,35 +492,84 @@ function renderCodexConvos() {
       const idx = +el.dataset.idx;
       activeConvIdx = idx;
       const c = codexHistory[idx];
-      $("#codeInput").value = c.full || c.prompt;
-      $("#lang").value = c.lang || "TypeScript";
-      $("#codeOut").innerHTML = formatCode(c.output || "");
+      codexChatMsgs = c.msgs || [{ role: "user", text: c.full }, { role: "assistant", text: c.output }];
+      rebuildCodexChat();
       renderCodexConvos();
     };
   });
 }
 
+function rebuildCodexChat() {
+  const area = $("#codexMessages");
+  area.innerHTML = "";
+  codexChatMsgs.forEach(m => {
+    if (m.role === "user") {
+      addCodexUserMsg(m.text);
+    } else {
+      const body = buildCodexAssistantMsg();
+      if (body._msgWrap) body._msgWrap.classList.remove("responding");
+      body.innerHTML = formatCode(m.text);
+    }
+  });
+}
+
 $("#codexNewConv").onclick = () => {
   activeConvIdx = -1;
+  codexChatMsgs = [];
   $("#codeInput").value = "";
-  $("#codeOut").innerHTML = '<p class="muted">La sortie du Codex apparaîtra ici.</p>';
+  const area = $("#codexMessages");
+  area.innerHTML = `<div class="codex-welcome">
+    <img src="logo.png" alt="Codex" class="codex-welcome-logo">
+    <h2>Codex <span class="orange">ti-lex-AL</span></h2>
+    <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
+    <div class="suggest">
+      <button class="csug" data-p="Génère une API REST Express avec TypeScript">API REST Express</button>
+      <button class="csug" data-p="Crée un composant React avec hooks">Composant React</button>
+      <button class="csug" data-p="Écris une migration SQL Supabase avec RLS">Migration SQL</button>
+    </div>
+  </div>`;
+  bindCodexSuggestions();
   renderCodexConvos();
 };
 
-/* ================= CODEX ================= */
-$("#codexRun").onclick = () => runCodex("generate");
-$("#codexExplain").onclick = () => runCodex("explain");
+/* ================= CODEX (chat-style) ================= */
+const codexInput = $("#codeInput");
+codexInput.addEventListener("input", () => {
+  codexInput.style.height = "auto";
+  codexInput.style.height = Math.min(codexInput.scrollHeight, 140) + "px";
+});
+codexInput.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runCodex(); }
+});
+$("#codexRun").onclick = () => runCodex();
 
-async function runCodex(mode) {
-  const code = $("#codeInput").value.trim();
+function bindCodexSuggestions() {
+  $$(".csug").forEach(s => s.onclick = () => {
+    codexInput.value = s.dataset.p;
+    runCodex();
+  });
+}
+bindCodexSuggestions();
+
+async function runCodex() {
+  const text = codexInput.value.trim();
   const lang = $("#lang").value;
-  if (!code) { $("#codeOut").innerHTML = `<p class="muted">Écris d'abord quelque chose dans l'éditeur.</p>`; return; }
-  if (!state.apiKey) { $("#codeOut").innerHTML = `<p class="muted">⚙ Ajoute ta clé API Anthropic dans les Paramètres pour utiliser le Codex.</p>`; return; }
-  $("#codeOut").innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  if (!text) return;
+  addCodexUserMsg(text);
+  codexChatMsgs.push({ role: "user", text });
+  codexInput.value = ""; codexInput.style.height = "auto";
 
-  const prompt = mode === "generate"
-    ? `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds uniquement avec le code et de courtes explications.\n\nDemande:\n${code}`
-    : `Tu es le Codex de ti-lex-AL. Explique ce code ${lang} clairement, en français, étape par étape.\n\nCode:\n${code}`;
+  const body = buildCodexAssistantMsg();
+
+  if (!state.apiKey) {
+    body.innerHTML = '<p class="muted">Ajoute ta clé API Anthropic dans les Paramètres pour utiliser le Codex.</p>';
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+    return;
+  }
+
+  $("#codexRun").disabled = true;
+
+  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${text}`;
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -493,20 +577,30 @@ async function runCodex(mode) {
       headers: apiHeaders(),
       body: JSON.stringify({
         model: state.model,
-        max_tokens: 1500,
+        max_tokens: 2000,
         stream: true,
         messages: [{ role: "user", content: prompt }],
       }),
     });
     if (!res.ok) throw new Error(await apiError(res));
-    const out = await streamText(res, chunk => {
-      $("#codeOut").innerHTML = `<div>${escapeHtml(chunk).replace(/\n/g, "<br>")}<span class="caret"></span></div>`;
-      $("#codeOut").scrollTop = $("#codeOut").scrollHeight;
+    body.classList.add("streaming");
+    const typer = makeTyper(partial => {
+      body.innerHTML = escapeHtml(partial).replace(/\n/g, "<br>") + '<span class="caret"></span>';
+      $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
     });
-    $("#codeOut").innerHTML = formatCode(out);
-    saveCodexConv(code, out);
+    const full = await streamText(res, chunk => typer.push(chunk));
+    await new Promise(resolve => typer.finish(resolve));
+    body.classList.remove("streaming");
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+    body.innerHTML = formatCode(full);
+    codexChatMsgs.push({ role: "assistant", text: full });
+    saveCodexConv(text, full);
   } catch (err) {
-    $("#codeOut").innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
+    body.innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+  } finally {
+    $("#codexRun").disabled = false;
+    $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
   }
 }
 
@@ -525,113 +619,6 @@ function highlightSyntax(code) {
     .replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>')
     .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(');
 }
-
-/* ================= CODEX FILE TABS ================= */
-const FILE_EXT_MAP = { ts:'ts', js:'js', css:'css', html:'html', py:'py', sql:'sql', rs:'rs', json:'json' };
-function getExtClass(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  return FILE_EXT_MAP[ext] || 'ts';
-}
-$$(".codex-tab").forEach(tab => {
-  tab.onclick = () => {
-    $$(".codex-tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    const ext = getExtClass(tab.dataset.file);
-    const langMap = { ts:'TypeScript', js:'JavaScript', css:'CSS', html:'HTML', py:'Python', sql:'SQL', rs:'Rust' };
-    if (langMap[ext]) $("#lang").value = langMap[ext];
-  };
-});
-$("#codexAddTab").onclick = () => {
-  const name = prompt("Nom du fichier (ex: utils.ts)");
-  if (!name) return;
-  const ext = getExtClass(name);
-  const tab = document.createElement("button");
-  tab.className = "codex-tab";
-  tab.dataset.file = name;
-  tab.innerHTML = `<span class="ftab-dot ${ext}"></span>${escapeHtml(name)}`;
-  tab.onclick = () => {
-    $$(".codex-tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-  };
-  $("#codexAddTab").before(tab);
-};
-
-/* ================= CODEX CHAT BUBBLE ================= */
-let codexChatOpen = false;
-let codexChatHistory = [];
-
-$("#codexChatBubble").onclick = () => {
-  codexChatOpen = true;
-  $("#codexChatWindow").classList.remove("hidden");
-  $("#codexChatBubble").style.display = "none";
-  if (!codexChatHistory.length) addCodexChatMsg("agent", "Salut! Je suis Agent AL. Demande-moi de l'aide avec ton code.");
-  $("#codexChatInput").focus();
-};
-$("#codexChatClose").onclick = () => {
-  codexChatOpen = false;
-  $("#codexChatWindow").classList.add("hidden");
-  $("#codexChatBubble").style.display = "flex";
-};
-
-function addCodexChatMsg(role, text) {
-  codexChatHistory.push({ role, text });
-  renderCodexChat();
-}
-function renderCodexChat() {
-  const c = $("#codexChatMsgs");
-  c.innerHTML = codexChatHistory.map(m =>
-    `<div class="codex-chat-msg ${m.role}">${escapeHtml(m.text).replace(/\n/g, "<br>")}</div>`
-  ).join("");
-  c.scrollTop = c.scrollHeight;
-}
-
-async function sendCodexChat() {
-  const inp = $("#codexChatInput");
-  const text = inp.value.trim();
-  if (!text) return;
-  addCodexChatMsg("user", text);
-  inp.value = "";
-
-  if (!state.apiKey) {
-    addCodexChatMsg("agent", "Ajoute ta clé API dans Paramètres pour activer le chat.");
-    return;
-  }
-
-  const placeholder = document.createElement("div");
-  placeholder.className = "codex-chat-msg agent";
-  placeholder.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
-  $("#codexChatMsgs").appendChild(placeholder);
-  $("#codexChatMsgs").scrollTop = $("#codexChatMsgs").scrollHeight;
-
-  try {
-    const codeCtx = $("#codeInput").value.trim();
-    const sysPrompt = `Tu es Agent AL, assistant code de ti-lex-AL v10. Réponds en français québécois, concis et utile.${codeCtx ? "\n\nContexte code de l'utilisateur:\n" + codeCtx.slice(0, 1000) : ""}`;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: apiHeaders(),
-      body: JSON.stringify({
-        model: state.model, max_tokens: 800, stream: true,
-        system: sysPrompt,
-        messages: [{ role: "user", content: text }],
-      }),
-    });
-    if (!res.ok) throw new Error(await apiError(res));
-    const typer = makeTyper(partial => {
-      placeholder.innerHTML = escapeHtml(partial).replace(/\n/g, "<br>") + '<span class="caret"></span>';
-      $("#codexChatMsgs").scrollTop = $("#codexChatMsgs").scrollHeight;
-    });
-    const full = await streamText(res, chunk => typer.push(chunk));
-    await new Promise(resolve => typer.finish(resolve));
-    placeholder.remove();
-    addCodexChatMsg("agent", full);
-  } catch (err) {
-    placeholder.remove();
-    addCodexChatMsg("agent", "Erreur: " + (err.message || "connexion"));
-  }
-}
-
-$("#codexChatSend").onclick = sendCodexChat;
-$("#codexChatInput").onkeydown = e => { if (e.key === "Enter") sendCodexChat(); };
 
 /* init */
 loadSettings();

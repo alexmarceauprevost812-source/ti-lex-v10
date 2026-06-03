@@ -46,16 +46,6 @@
     <button class="conn-btn" id="newChatConv" style="border-color:var(--orange);color:var(--orange);justify-content:center;font-weight:700">+ Nouvelle</button>
   </div>
 
-  <!-- Connecteurs -->
-  <div class="connectors">
-    <p class="conn-title">Connexions</p>
-    <button class="conn-btn" data-service="anthropic"><span class="conn-dot"></span>Anthropic</button>
-    <button class="conn-btn" data-service="github"><span class="conn-dot"></span>GitHub</button>
-    <button class="conn-btn" data-service="supabase"><span class="conn-dot"></span>Supabase</button>
-    <button class="conn-btn" data-service="vercel"><span class="conn-dot"></span>Vercel</button>
-    <button class="conn-btn" data-service="gmail"><span class="conn-dot"></span>Gmail</button>
-  </div>
-
   <!-- PARAMÈTRES TOUT EN BAS -->
   <button class="nav-item nav-bottom" data-view="settings" id="settingsBtn">
     <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -167,56 +157,39 @@
       </div>
     </aside>
 
-    <!-- Contenu principal Codex -->
+    <!-- Contenu principal Codex (chat-style) -->
     <div class="codex-main" id="codexMain">
-      <div class="codex-split">
-        <div class="codex-editor">
-          <div class="codex-bar">
-            <button class="codex-sb-open-btn" id="codexSbOpenBtn" title="Ouvrir le menu">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-            </button>
-            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-            <!-- File tabs -->
-            <div class="codex-tabs" id="codexTabs">
-              <button class="codex-tab active" data-file="main.ts"><span class="ftab-dot ts"></span>main.ts</button>
-              <button class="codex-tab" data-file="style.css"><span class="ftab-dot css"></span>style.css</button>
-              <button class="codex-tab" data-file="index.html"><span class="ftab-dot html"></span>index.html</button>
-              <button class="codex-tab-add" id="codexAddTab" title="Ajouter un fichier">+</button>
-            </div>
-            <select id="lang" class="lang-sel">
-              <option>TypeScript</option><option>Python</option><option>SQL</option>
-              <option>JavaScript</option><option>Rust</option><option>HTML</option><option>CSS</option>
-            </select>
+      <button class="codex-sb-open-btn" id="codexSbOpenBtn" title="Ouvrir le menu">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+
+      <!-- Zone messages (code apparaît ici) -->
+      <div class="codex-messages" id="codexMessages">
+        <div class="codex-welcome">
+          <img src="logo.png" alt="Codex" class="codex-welcome-logo">
+          <h2>Codex <span class="orange">ti-lex-AL</span></h2>
+          <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
+          <div class="suggest">
+            <button class="csug" data-p="Génère une API REST Express avec TypeScript">API REST Express</button>
+            <button class="csug" data-p="Crée un composant React avec hooks">Composant React</button>
+            <button class="csug" data-p="Écris une migration SQL Supabase avec RLS">Migration SQL</button>
           </div>
-          <textarea id="codeInput" class="code-area" spellcheck="false" placeholder="// Décris ce que tu veux coder, ou colle ton code…"></textarea>
-          <div class="codex-actions">
-            <button class="btn-codex" id="codexRun" data-w="Géné" data-b="rer">Générer</button>
-            <button class="btn-codex ghost" id="codexExplain" data-w="Expli" data-b="quer">Expliquer</button>
-          </div>
-        </div>
-        <div class="codex-output">
-          <div class="codex-bar"><span class="codex-file">Sortie Codex</span></div>
-          <div class="code-out" id="codeOut"><p class="muted">La sortie du Codex apparaîtra ici.</p></div>
         </div>
       </div>
 
-      <!-- Bulle de chat Codex (bas droite) -->
-      <button class="codex-chat-bubble" id="codexChatBubble" title="Chat Agent AL">
-        <img src="logo.png" alt="AL" class="codex-chat-logo">
-      </button>
-      <div class="codex-chat-window hidden" id="codexChatWindow">
-        <div class="codex-chat-head">
-          <img src="logo.png" alt="" class="codex-chat-avatar">
-          <div><strong>Agent AL</strong><br><span class="muted" style="font-size:.7rem">En ligne</span></div>
-          <button class="codex-chat-close" id="codexChatClose">&times;</button>
-        </div>
-        <div class="codex-chat-msgs" id="codexChatMsgs"></div>
-        <div class="codex-chat-input-wrap">
-          <input type="text" id="codexChatInput" class="codex-chat-input" placeholder="Demande à Agent AL…">
-          <button class="codex-chat-send" id="codexChatSend">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      <!-- Composer en bas -->
+      <div class="codex-composer">
+        <div class="codex-composer-inner">
+          <select id="lang" class="codex-lang-sel">
+            <option>TypeScript</option><option>Python</option><option>SQL</option>
+            <option>JavaScript</option><option>Rust</option><option>HTML</option><option>CSS</option>
+          </select>
+          <textarea id="codeInput" rows="1" placeholder="Décris ce que tu veux coder…"></textarea>
+          <button class="codex-send" id="codexRun" aria-label="Générer">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
           </button>
         </div>
+        <p class="composer-hint">Codex ti-lex-AL · <span class="orange">Génère</span> du code</p>
       </div>
     </div>
   </section>
