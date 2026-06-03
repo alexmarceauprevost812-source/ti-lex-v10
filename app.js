@@ -79,7 +79,7 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
-const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", settings: "Paramètres" };
+const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", studio: "Studio", settings: "Paramètres" };
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
@@ -327,11 +327,50 @@ function handleAnyFiles(files) {
     }
   });
 }
-function handleZipFile(files) {
-  [...files].forEach(f => {
-    attachments.push({ kind: "zip", name: f.name, size: f.size });
-    renderAttachStrip();
-  });
+async function handleZipFile(files) {
+  for (const f of files) {
+    try {
+      const zip = await JSZip.loadAsync(f);
+      const entries = [];
+      let textContent = "";
+      const paths = Object.keys(zip.files).filter(p => !zip.files[p].dir).sort();
+      for (const path of paths) {
+        const ext = path.split(".").pop().toLowerCase();
+        const entry = { path, size: 0 };
+        entries.push(entry);
+        if (TEXT_EXT.includes(ext)) {
+          try {
+            const txt = await zip.files[path].async("string");
+            entry.size = txt.length;
+            if (textContent.length < 150000) {
+              textContent += `\n--- ${path} ---\n${txt}\n`;
+            }
+          } catch (_) {}
+        }
+      }
+      attachments.push({
+        kind: "zip", name: f.name, size: f.size, entries, textContent,
+        fileCount: paths.length
+      });
+      // aussi injecter dans le studioZipFiles pour le Studio
+      studioZipFiles = entries.map(e => ({ path: e.path, content: null }));
+      for (const path of paths) {
+        const ext = path.split(".").pop().toLowerCase();
+        if (TEXT_EXT.includes(ext)) {
+          try {
+            const txt = await zip.files[path].async("string");
+            const item = studioZipFiles.find(z => z.path === path);
+            if (item) item.content = txt;
+          } catch (_) {}
+        }
+      }
+      renderAttachStrip();
+      refreshStudio();
+    } catch (err) {
+      attachments.push({ kind: "zip", name: f.name, size: f.size, entries: [], textContent: "" });
+      renderAttachStrip();
+    }
+  }
 }
 $("#fileImage").onchange = e => { handleImageFiles(e.target.files); e.target.value = ""; };
 $("#fileAny").onchange = e => { handleAnyFiles(e.target.files); e.target.value = ""; };
@@ -463,6 +502,7 @@ function avatarUser() {
   d.className = "msg-avatar msg-avatar-user"; d.textContent = "A";
   return d;
 }
+const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
@@ -470,10 +510,12 @@ function avatarAL() {
   img.className = "msg-avatar"; img.src = "logo.png"; img.alt = "AL";
   wrap.appendChild(img);
   const claude = document.createElement("img");
-  claude.className = "claude-badge";
-  claude.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
-  claude.alt = "Claude";
+  claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
+  const lbl = document.createElement("div");
+  lbl.className = "claude-label";
+  lbl.innerHTML = `<img src="${CLAUDE_LOGO}" alt="">Claude`;
+  wrap.appendChild(lbl);
   return wrap;
 }
 
@@ -488,6 +530,12 @@ function addUserMsg(text, atts) {
   if (atts && atts.length) {
     html += '<div class="attach-strip" style="margin:0 0 8px">' + atts.map(a => {
       if (a.kind === "image") return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span></div>`;
+      if (a.kind === "zip" && a.entries && a.entries.length) {
+        return `<div class="attach-chip" style="max-width:100%;flex-direction:column;align-items:flex-start">
+          <div style="display:flex;align-items:center;gap:6px"><span class="a-ico">🗜️</span><span class="a-name">${escapeHtml(a.name)} · ${a.entries.length} fichiers</span></div>
+          <div class="zip-tree">${a.entries.slice(0, 50).map(e => `<div class="zip-tree-item"><span class="f-ico">${fileIcon(e.path)}</span>${escapeHtml(e.path)}</div>`).join("")}${a.entries.length > 50 ? `<div class="zip-tree-item muted">…et ${a.entries.length - 50} autres</div>` : ""}</div>
+        </div>`;
+      }
       const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
       return `<div class="attach-chip"><span class="a-ico">${ico}</span><span class="a-name">${escapeHtml(a.name)}</span></div>`;
     }).join("") + "</div>";
@@ -516,6 +564,11 @@ function buildUserContent(text, atts) {
       blocks.push({ type: "image", source: { type: "base64", media_type: a.mediaType, data: a.base64 } });
     } else if (a.kind === "text") {
       extra += `\n\n--- Fichier joint : ${a.name} ---\n${a.text}\n--- fin ${a.name} ---`;
+    } else if (a.kind === "zip" && a.textContent) {
+      extra += `\n\n--- ZIP : ${a.name} (${a.fileCount || 0} fichiers) ---`;
+      extra += `\nFichiers: ${(a.entries || []).map(e => e.path).join(", ")}`;
+      extra += a.textContent;
+      extra += `\n--- fin ZIP ${a.name} ---`;
     } else {
       extra += `\n\n[Fichier joint : ${a.name} (${a.kind}, ${bytesLabel(a.size || 0)}) — contenu binaire non lu]`;
     }
@@ -645,6 +698,66 @@ function renderAssistant(body, full, streaming) {
   html += `<div>${ans}${caret}</div>`;
   if (!streaming) html += serviceTags(answer);
   body.innerHTML = html;
+  if (!streaming && answer) addPushButton(body, full);
+}
+
+/* ---- Push code to GitHub ---- */
+async function pushToGithub(content, suggestedName) {
+  if (!state.connected.github || !state.github.token || !state.github.repo) {
+    alert("Connecte ton compte GitHub dans Paramètres d'abord.");
+    return;
+  }
+  const filename = prompt("Nom du fichier à créer/mettre à jour sur GitHub :", suggestedName || "main.ts");
+  if (!filename) return;
+  const commitMsg = prompt("Message de commit :", `Ajout de ${filename} via ti-lex-AL`);
+  if (!commitMsg) return;
+
+  const branch = state.github.branch || "main";
+  const repo = state.github.repo;
+
+  try {
+    // vérifier si le fichier existe déjà (pour obtenir son sha)
+    let sha = null;
+    try {
+      const existing = await fetch(`${GH_API}/repos/${repo}/contents/${encodeURIComponent(filename)}?ref=${encodeURIComponent(branch)}`, { headers: ghHeaders() });
+      if (existing.ok) { sha = (await existing.json()).sha; }
+    } catch (_) {}
+
+    const body = {
+      message: commitMsg,
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch,
+    };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(`${GH_API}/repos/${repo}/contents/${encodeURIComponent(filename)}`, {
+      method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).message || ""}`);
+    alert(`Pushé sur ${repo}/${branch}/${filename}`);
+  } catch (err) {
+    alert(`Erreur push GitHub : ${err.message}`);
+  }
+}
+
+function extractCodeBlocks(text) {
+  const blocks = [];
+  const regex = /```[\w]*\n?([\s\S]*?)```/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) blocks.push(m[1].trim());
+  return blocks.length ? blocks : [text];
+}
+
+function addPushButton(container, fullText) {
+  if (!state.connected.github) return;
+  const codes = extractCodeBlocks(fullText);
+  if (!codes.length) return;
+  const btn = document.createElement("button");
+  btn.className = "push-gh-btn";
+  btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
+  btn.onclick = () => pushToGithub(codes[0]);
+  container.appendChild(btn);
 }
 
 function escapeHtml(s) {
@@ -897,6 +1010,7 @@ async function runCodex() {
     body.classList.remove("streaming");
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = formatCode(full);
+    addPushButton(body, full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
   } catch (err) {
@@ -924,6 +1038,126 @@ function highlightSyntax(code) {
     .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(');
 }
 
+/* ================= STUDIO ================= */
+let studioZipFiles = [];
+let studioGhFiles = [];
+let studioCurrentFile = null;
+
+async function refreshStudio() {
+  const tree = $("#studioTree");
+  const label = $("#studioSrcLabel");
+  if (!tree) return;
+
+  let allFiles = [];
+
+  // GitHub files
+  if (state.connected.github && state.github.repo && state.github.token) {
+    label.textContent = `GitHub: ${state.github.repo} (${state.github.branch})`;
+    try {
+      const res = await fetch(`${GH_API}/repos/${state.github.repo}/git/trees/${encodeURIComponent(state.github.branch)}?recursive=1`, { headers: ghHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        studioGhFiles = (data.tree || []).filter(t => t.type === "blob").map(t => ({
+          path: t.path, source: "github", sha: t.sha
+        }));
+        allFiles.push(...studioGhFiles);
+      }
+    } catch (_) {}
+  }
+
+  // ZIP files
+  if (studioZipFiles.length) {
+    if (!allFiles.length) label.textContent = "Fichiers ZIP uploadés";
+    else label.textContent += " + ZIP";
+    allFiles.push(...studioZipFiles.map(z => ({ path: z.path, source: "zip", content: z.content })));
+  }
+
+  if (!allFiles.length) {
+    tree.innerHTML = '<p class="muted" style="padding:12px;font-size:.8rem">Connecte GitHub ou uploade un ZIP pour voir les fichiers.</p>';
+    return;
+  }
+
+  // Group by folder
+  const folders = {};
+  allFiles.forEach(f => {
+    const parts = f.path.split("/");
+    const folder = parts.length > 1 ? parts.slice(0, -1).join("/") : "/";
+    if (!folders[folder]) folders[folder] = [];
+    folders[folder].push(f);
+  });
+
+  let html = "";
+  for (const [folder, files] of Object.entries(folders).sort()) {
+    html += `<div class="studio-tree-folder">${escapeHtml(folder === "/" ? "racine" : folder)}</div>`;
+    files.forEach(f => {
+      html += `<div class="studio-tree-item" data-path="${escapeHtml(f.path)}" data-src="${f.source}"><span class="f-ico">${fileIcon(f.path)}</span>${escapeHtml(f.path.split("/").pop())}</div>`;
+    });
+  }
+  tree.innerHTML = html;
+
+  $$(".studio-tree-item", tree).forEach(item => {
+    item.onclick = () => loadStudioFile(item.dataset.path, item.dataset.src, allFiles);
+  });
+}
+
+async function loadStudioFile(path, source, allFiles) {
+  const codeArea = $("#studioCode");
+  const pathLabel = $("#studioFilePath");
+  const pushBtn = $("#studioPushGh");
+  studioCurrentFile = { path, source };
+  pathLabel.textContent = path;
+  $$(".studio-tree-item").forEach(i => i.classList.toggle("active", i.dataset.path === path));
+
+  if (source === "zip") {
+    const zf = studioZipFiles.find(z => z.path === path);
+    codeArea.value = zf?.content || "(fichier binaire — contenu non lisible)";
+  } else if (source === "github") {
+    codeArea.value = "chargement…";
+    try {
+      const res = await fetch(`${GH_API}/repos/${state.github.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(state.github.branch)}`, { headers: ghHeaders() });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      codeArea.value = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ""))));
+      studioCurrentFile.sha = data.sha;
+    } catch (err) {
+      codeArea.value = `Erreur : ${err.message}`;
+    }
+  }
+
+  pushBtn.classList.toggle("hidden", !state.connected.github);
+}
+
+if ($("#studioRefresh")) {
+  $("#studioRefresh").onclick = refreshStudio;
+}
+if ($("#studioPushGh")) {
+  $("#studioPushGh").onclick = async () => {
+    if (!studioCurrentFile) return;
+    const content = $("#studioCode").value;
+    const path = studioCurrentFile.path;
+    const commitMsg = prompt("Message de commit :", `Mise à jour de ${path} via ti-lex Studio`);
+    if (!commitMsg) return;
+    const body = {
+      message: commitMsg,
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: state.github.branch,
+    };
+    if (studioCurrentFile.sha) body.sha = studioCurrentFile.sha;
+    try {
+      const res = await fetch(`${GH_API}/repos/${state.github.repo}/contents/${encodeURIComponent(path)}`, {
+        method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).message || ""}`);
+      const data = await res.json();
+      studioCurrentFile.sha = data.content?.sha;
+      alert(`Pushé : ${state.github.repo}/${state.github.branch}/${path}`);
+    } catch (err) {
+      alert(`Erreur push : ${err.message}`);
+    }
+  };
+}
+
 /* init */
 loadSettings();
 $("#apiKey").value = state.apiKey;
@@ -946,6 +1180,7 @@ syncCodexProjects();
 renderCodexConvos();
 renderChatConvs();
 renderAttachStrip();
+refreshStudio();
 
 // reconnexion GitHub auto (recharge dépôts + branches)
 if (state.github.token) ghConnect();
