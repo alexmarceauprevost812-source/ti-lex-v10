@@ -665,10 +665,12 @@ if ($("#newChatConv")) {
     state.history = [];
     const msgs = $("#messages");
     msgs.innerHTML = `<div class="welcome">
-      <img src="logo.png" alt="ti-lex-AL" class="welcome-logo">
+      <div class="welcome-avatar" id="welcomeAvatar"></div>
       <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
       <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
     </div>`;
+    const nwa = $("#welcomeAvatar");
+    if (nwa) nwa.appendChild(createOrangeAvatar(120));
   };
 }
 
@@ -692,12 +694,66 @@ function avatarUser() {
   return d;
 }
 const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
+
+/* ---- Avatar Orange Animé (personnage principal de ti-lex-AL) ---- */
+function createOrangeAvatar(size = 40) {
+  const wrap = document.createElement("div");
+  wrap.className = "al-avatar";
+  wrap.style.width = size + "px";
+  wrap.style.height = size + "px";
+  wrap.innerHTML = `
+    <div class="al-aura"></div>
+    <div class="al-face">
+      <div class="al-shine"></div>
+      <div class="al-brows"><span></span><span></span></div>
+      <div class="al-eyes">
+        <div class="al-eye"><div class="al-pupil al-pupil-l"><div class="al-glint"></div></div><div class="al-lid"></div></div>
+        <div class="al-eye"><div class="al-pupil al-pupil-r"><div class="al-glint"></div></div><div class="al-lid"></div></div>
+      </div>
+      <div class="al-mouth"></div>
+      <div class="al-cheek al-cheek-l"></div>
+      <div class="al-cheek al-cheek-r"></div>
+    </div>
+    <div class="al-particles"><span></span><span></span><span></span></div>`;
+
+  const face = wrap.querySelector(".al-face");
+  const pupils = wrap.querySelectorAll(".al-pupil");
+  const lids = wrap.querySelectorAll(".al-lid");
+  const mouth = wrap.querySelector(".al-mouth");
+
+  // suivi souris pour les yeux
+  const onMouse = (e) => {
+    const r = face.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 12, 2.5);
+    const tx = Math.cos(ang) * dist, ty = Math.sin(ang) * dist;
+    pupils.forEach(p => p.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`);
+  };
+  window.addEventListener("mousemove", onMouse);
+
+  // clignement
+  let blinkTimer = setInterval(() => {
+    lids.forEach(l => l.classList.add("blink"));
+    setTimeout(() => lids.forEach(l => l.classList.remove("blink")), 150);
+  }, 3000 + Math.random() * 2000);
+
+  // API pour contrôler les états
+  wrap._setThinking = (on) => wrap.classList.toggle("thinking", on);
+  wrap._setSpeaking = (on) => wrap.classList.toggle("speaking", on);
+  wrap._destroy = () => {
+    window.removeEventListener("mousemove", onMouse);
+    clearInterval(blinkTimer);
+  };
+
+  return wrap;
+}
+
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  const img = document.createElement("img");
-  img.className = "msg-avatar"; img.src = "logo.png"; img.alt = "AL";
-  wrap.appendChild(img);
+  const av = createOrangeAvatar(38);
+  wrap.appendChild(av);
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
@@ -781,7 +837,10 @@ function serviceTags(text) {
 function buildAssistantMsg() {
   const m = document.createElement("div");
   m.className = "msg assistant responding";
-  m.appendChild(avatarAL());
+  const avatarWrap = avatarAL();
+  m.appendChild(avatarWrap);
+  const av = avatarWrap.querySelector(".al-avatar");
+  if (av) av._setThinking(true);
   const b = document.createElement("div");
   b.className = "msg-body";
   b.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
@@ -789,6 +848,7 @@ function buildAssistantMsg() {
   messages.appendChild(m);
   messages.scrollTop = messages.scrollHeight;
   b._msgWrap = m;
+  b._avatar = av;
   return b;
 }
 
@@ -848,6 +908,7 @@ async function sendMessage() {
 
     const res = await chatFetch(reqBody);
     if (!res.ok) throw new Error(await apiError(res));
+    if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(true); }
     body.classList.add("streaming");
     const typer = makeTyper(partial => {
       renderAssistant(body, partial, true);
@@ -856,12 +917,14 @@ async function sendMessage() {
     const full = await streamText(res, chunk => typer.push(chunk));
     await new Promise(resolve => typer.finish(resolve));
     body.classList.remove("streaming");
+    if (body._avatar) body._avatar._setSpeaking(false);
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
     saveChatConv();
   } catch (err) {
     state.history.pop();
+    if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
     body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}. Vérifie ta clé API Anthropic dans les Paramètres.</p>`;
   } finally {
     $("#send").disabled = false;
@@ -1447,5 +1510,9 @@ refreshStudio();
 
 // reconnexion GitHub auto (recharge dépôts + branches)
 if (state.github.token) ghConnect();
+
+// Avatar animé sur l'écran d'accueil
+const wa = $("#welcomeAvatar");
+if (wa) wa.appendChild(createOrangeAvatar(120));
 
 console.log("ti-lex-AL v10 prêt.");
