@@ -801,6 +801,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 /* ---- Conversation delete buttons ---- */
 .chat-conv-item,.codex-sb-conv{display:flex;align-items:center;gap:4px}
 .chat-conv-item .conv-title,.codex-sb-conv .conv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-date{flex-shrink:0;font-size:.62rem;color:var(--txt-dim);opacity:.6;padding-right:2px}
 .conv-del{
   flex-shrink:0;width:20px;height:20px;border:none;background:transparent;
   color:var(--txt-dim);font-size:1rem;line-height:1;cursor:pointer;
@@ -818,6 +819,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
   margin-bottom:5px;font-size:.82rem;animation:fade .3s ease;
 }
 .memory-text{flex:1;color:var(--txt);line-height:1.4}
+.memory-date{display:block;font-size:.68rem;color:var(--txt-dim);margin-top:2px}
 .memory-del{
   flex-shrink:0;width:22px;height:22px;border:none;background:transparent;
   color:var(--txt-dim);font-size:1.1rem;line-height:1;cursor:pointer;

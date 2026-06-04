@@ -92,6 +92,19 @@ function loadSettings() {
   } catch (e) { /* localStorage indisponible */ }
 }
 
+/* ---- Helpers dates ---- */
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "maintenant";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 14) return `${days}j`;
+  return new Date(ts).toLocaleDateString("fr-CA");
+}
+
 /* ---- Mémoire persistante (faits que l'IA retient entre sessions) ---- */
 let memory = [];
 function loadMemory() {
@@ -117,6 +130,37 @@ function memoryContext() {
     memory.map(m => `- ${m.text}`).join("\n") +
     "\nUtilise ces informations pour personnaliser tes réponses. Si l'utilisateur te dit de retenir quelque chose (\"retiens que…\", \"souviens-toi…\", \"n'oublie pas…\"), réponds OK et je le sauvegarderai.";
 }
+
+function recentConversationsContext() {
+  const FOURTEEN_DAYS = 14 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - FOURTEEN_DAYS;
+  const summaries = [];
+
+  // Chat conversations
+  const chatList = JSON.parse(localStorage.getItem("tilex-chat-convs") || "[]");
+  chatList.forEach(c => {
+    if (!c.ts || c.ts < cutoff) return;
+    const date = new Date(c.ts).toLocaleDateString("fr-CA");
+    const userMsgs = (c.messages || []).filter(m => m.role === "user").map(m => contentText(m.content).slice(0, 80));
+    const aiMsgs = (c.messages || []).filter(m => m.role === "assistant").map(m => contentText(m.content).slice(0, 80));
+    if (userMsgs.length) {
+      summaries.push(`[Chat ${date}] Q: ${userMsgs[0]}${aiMsgs[0] ? " → R: " + aiMsgs[0] : ""}`);
+    }
+  });
+
+  // Codex conversations
+  const codexList = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
+  codexList.forEach(c => {
+    if (!c.ts || c.ts < cutoff) return;
+    const date = new Date(c.ts).toLocaleDateString("fr-CA");
+    const prompt = (c.prompt || c.full || "").slice(0, 80);
+    if (prompt) summaries.push(`[Codex ${date}] ${prompt}`);
+  });
+
+  if (!summaries.length) return "";
+  const ctx = summaries.slice(0, 30).join("\n");
+  return `\n\nRésumé des conversations des 14 derniers jours :\n${ctx}\nTu peux faire référence à ces sujets si l'utilisateur en parle.`;
+}
 function extractMemoryFromResponse(text) {
   const lower = text.toLowerCase();
   if (lower.includes("[mémoire:") || lower.includes("[memoire:")) {
@@ -134,9 +178,10 @@ function renderMemory() {
     el.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucun souvenir enregistré.</p>';
     return;
   }
-  el.innerHTML = memory.map((m, i) =>
-    `<div class="memory-item"><span class="memory-text">${escapeHtml(m.text)}</span><button class="memory-del" data-idx="${i}" title="Supprimer">×</button></div>`
-  ).join("");
+  el.innerHTML = memory.map((m, i) => {
+    const date = m.ts ? new Date(m.ts).toLocaleDateString("fr-CA") : "";
+    return `<div class="memory-item"><span class="memory-text">${escapeHtml(m.text)}${date ? `<span class="memory-date">${date}</span>` : ""}</span><button class="memory-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+  }).join("");
   $$(".memory-del", el).forEach(btn => {
     btn.onclick = (e) => { e.stopPropagation(); removeMemory(+btn.dataset.idx); };
   });
@@ -784,7 +829,7 @@ function saveChatConv() {
     chatConvs.unshift({ title, messages: [...state.history], ts: Date.now() });
     activeChatConv = 0;
   }
-  if (chatConvs.length > 20) chatConvs.length = 20;
+  if (chatConvs.length > 50) chatConvs.length = 50;
   try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
   renderChatConvs();
 }
@@ -793,9 +838,10 @@ function renderChatConvs() {
   const el = $("#chatConvos");
   if (!el) return;
   if (!chatConvs.length) { el.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Aucune</p>'; return; }
-  el.innerHTML = chatConvs.map((c, i) =>
-    `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span><button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`
-  ).join("");
+  el.innerHTML = chatConvs.map((c, i) => {
+    const age = c.ts ? timeAgo(c.ts) : "";
+    return `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+  }).join("");
   $$(".chat-conv-item", el).forEach(item => {
     item.onclick = (e) => {
       if (e.target.classList.contains("conv-del")) return;
@@ -1078,7 +1124,7 @@ async function sendMessage() {
   try {
     const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
     const MEMORY_HINT = " Si l'utilisateur te demande de retenir quelque chose, inclus la balise [mémoire: fait à retenir] dans ta réponse pour que je le sauvegarde.";
-    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + memoryContext();
+    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + memoryContext() + recentConversationsContext();
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -1536,9 +1582,10 @@ function renderCodexConvos() {
     codexConvos.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucune conversation</p>';
     return;
   }
-  codexConvos.innerHTML = codexHistory.map((c, i) =>
-    `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.prompt || "Sans titre")}</span><button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`
-  ).join("");
+  codexConvos.innerHTML = codexHistory.map((c, i) => {
+    const age = c.ts ? timeAgo(c.ts) : "";
+    return `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.prompt || "Sans titre")}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+  }).join("");
   $$(".codex-sb-conv", codexConvos).forEach(el => {
     el.onclick = (e) => {
       if (e.target.classList.contains("conv-del")) return;
