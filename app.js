@@ -887,7 +887,13 @@ function resetChatWelcome() {
     <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
   </div>`;
   const nwa = $("#welcomeAvatar");
-  if (nwa) nwa.appendChild(createOrangeAvatar(120));
+  if (nwa) {
+    const nImg = document.createElement("img");
+    nImg.src = "assets/tilex-logo.png";
+    nImg.alt = "ti-lex-AL";
+    nImg.className = "welcome-logo-img";
+    nwa.appendChild(nImg);
+  }
 }
 
 function rebuildChatFromHistory() {
@@ -986,10 +992,12 @@ function avatarAL() {
   const logo = document.createElement("img");
   logo.className = "msg-avatar al-logo"; logo.src = "logo.png"; logo.alt = "AL";
   wrap.appendChild(logo);
-  // Avatar animé superposé (petit, coin bas-gauche)
-  const av = createOrangeAvatar(22);
-  av.classList.add("al-avatar-mini");
-  wrap.appendChild(av);
+  // Mini mascotte superposée (coin bas-gauche)
+  const mini = document.createElement("img");
+  mini.className = "al-mini-logo";
+  mini.src = "assets/tilex-logo.png";
+  mini.alt = "AL";
+  wrap.appendChild(mini);
   // Badge Claude (coin bas-droite)
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
@@ -2120,9 +2128,15 @@ if (state.github.token) {
   codexGhConnect();
 }
 
-// Avatar animé sur l'écran d'accueil
+// Logo mascotte sur l'écran d'accueil
 const wa = $("#welcomeAvatar");
-if (wa) wa.appendChild(createOrangeAvatar(120));
+if (wa) {
+  const wImg = document.createElement("img");
+  wImg.src = "assets/tilex-logo.png";
+  wImg.alt = "ti-lex-AL";
+  wImg.className = "welcome-logo-img";
+  wa.appendChild(wImg);
+}
 
 /* ================= PWA INSTALL ================= */
 let deferredInstallPrompt = null;
