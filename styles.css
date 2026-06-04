@@ -287,8 +287,8 @@ body.menu-closed #menuToggleMobile{display:flex}
 .agent-picker-btn{
   display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;
   background:var(--bg-3);border:1px solid var(--line);border-radius:10px;
-  cursor:pointer;transition:var(--t);font-family:var(--font);color:var(--txt);
-  font-size:.78rem;font-weight:600;white-space:nowrap;
+  cursor:pointer;transition:var(--t);font-family:var(--marker);color:var(--txt);
+  font-size:.85rem;font-weight:400;white-space:nowrap;letter-spacing:.3px;
 }
 .agent-picker-btn:hover{border-color:var(--orange)}
 .agent-picker-btn.open{border-color:var(--orange);background:var(--bg)}
@@ -313,7 +313,7 @@ body.menu-closed #menuToggleMobile{display:flex}
   justify-content:center;background:var(--bg);font-size:1.1rem;flex-shrink:0;overflow:hidden}
 .agent-pick-icon img{width:100%;height:100%;object-fit:cover;border-radius:8px}
 .agent-pick-info{display:flex;flex-direction:column;gap:1px;min-width:0}
-.agent-pick-name{font-weight:700;font-size:.84rem}
+.agent-pick-name{font-family:var(--marker);font-weight:400;font-size:.9rem;letter-spacing:.3px}
 .agent-pick-desc{font-size:.7rem;color:var(--txt-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.15)}
 
@@ -972,8 +972,8 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
   justify-content:center;background:var(--bg);border-radius:10px;flex-shrink:0}
 .agent-card.active .agent-emoji{background:var(--orange)}
 .agent-emoji img{width:100%;height:100%;object-fit:cover;border-radius:10px}
-.agent-name{font-weight:700;font-size:.95rem;color:var(--txt)}
-.agent-desc{font-size:.8rem;color:var(--txt-dim);line-height:1.45}
+.agent-name{font-family:var(--marker);font-weight:400;font-size:1.05rem;color:var(--txt);letter-spacing:.3px}
+.agent-desc{font-size:.78rem;color:var(--txt-dim);line-height:1.45;font-style:italic}
 .agents-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;
   pointer-events:none;transition:opacity var(--t);z-index:55}
 .agents-overlay.show{opacity:1;pointer-events:auto}
