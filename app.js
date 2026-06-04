@@ -44,6 +44,7 @@ const LS_KEY = "tilex-al-apikey";
 const LS_MODEL = "tilex-al-model";
 const LS_GH = "tilex-al-github";
 const LS_SB = "tilex-al-supabase";
+const LS_MEMORY = "tilex-al-memory";
 function loadSettings() {
   try {
     const k = localStorage.getItem(LS_KEY);
@@ -56,6 +57,57 @@ function loadSettings() {
     if (sb && sb.url) { state.supabase = sb; state.connected.supabase = true; }
   } catch (e) { /* localStorage indisponible */ }
 }
+
+/* ---- Mémoire persistante (faits que l'IA retient entre sessions) ---- */
+let memory = [];
+function loadMemory() {
+  try { memory = JSON.parse(localStorage.getItem(LS_MEMORY) || "[]"); } catch (_) { memory = []; }
+}
+function saveMemory() {
+  try { localStorage.setItem(LS_MEMORY, JSON.stringify(memory)); } catch (_) {}
+  renderMemory();
+}
+function addMemory(fact) {
+  if (!fact || memory.some(m => m.text === fact)) return;
+  memory.push({ text: fact, ts: Date.now() });
+  if (memory.length > 50) memory.shift();
+  saveMemory();
+}
+function removeMemory(idx) {
+  memory.splice(idx, 1);
+  saveMemory();
+}
+function memoryContext() {
+  if (!memory.length) return "";
+  return "\n\nMémoire de l'utilisateur (faits retenus des conversations précédentes) :\n" +
+    memory.map(m => `- ${m.text}`).join("\n") +
+    "\nUtilise ces informations pour personnaliser tes réponses. Si l'utilisateur te dit de retenir quelque chose (\"retiens que…\", \"souviens-toi…\", \"n'oublie pas…\"), réponds OK et je le sauvegarderai.";
+}
+function extractMemoryFromResponse(text) {
+  const lower = text.toLowerCase();
+  if (lower.includes("[mémoire:") || lower.includes("[memoire:")) {
+    const matches = text.match(/\[m[ée]moire:\s*([^\]]+)\]/gi);
+    if (matches) matches.forEach(m => {
+      const fact = m.replace(/\[m[ée]moire:\s*/i, "").replace(/\]$/, "").trim();
+      if (fact) addMemory(fact);
+    });
+  }
+}
+function renderMemory() {
+  const el = $("#memoryList");
+  if (!el) return;
+  if (!memory.length) {
+    el.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucun souvenir enregistré.</p>';
+    return;
+  }
+  el.innerHTML = memory.map((m, i) =>
+    `<div class="memory-item"><span class="memory-text">${escapeHtml(m.text)}</span><button class="memory-del" data-idx="${i}" title="Supprimer">×</button></div>`
+  ).join("");
+  $$(".memory-del", el).forEach(btn => {
+    btn.onclick = (e) => { e.stopPropagation(); removeMemory(+btn.dataset.idx); };
+  });
+}
+
 function apiHeaders() {
   const h = { "Content-Type": "application/json" };
   if (state.apiKey) {
@@ -630,16 +682,45 @@ function renderChatConvs() {
   if (!el) return;
   if (!chatConvs.length) { el.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Aucune</p>'; return; }
   el.innerHTML = chatConvs.map((c, i) =>
-    `<div class="chat-conv-item" data-idx="${i}">${escapeHtml(c.title)}</div>`
+    `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span><button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`
   ).join("");
-  $$(".chat-conv-item").forEach(item => {
-    item.onclick = () => {
+  $$(".chat-conv-item", el).forEach(item => {
+    item.onclick = (e) => {
+      if (e.target.classList.contains("conv-del")) return;
       const idx = +item.dataset.idx;
       activeChatConv = idx;
       state.history = [...chatConvs[idx].messages];
       rebuildChatFromHistory();
+      renderChatConvs();
     };
   });
+  $$(".conv-del", el).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx;
+      chatConvs.splice(idx, 1);
+      if (activeChatConv === idx) {
+        activeChatConv = -1;
+        state.history = [];
+        resetChatWelcome();
+      } else if (activeChatConv > idx) {
+        activeChatConv--;
+      }
+      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+      renderChatConvs();
+    };
+  });
+}
+
+function resetChatWelcome() {
+  const msgs = $("#messages");
+  msgs.innerHTML = `<div class="welcome">
+    <div class="welcome-avatar" id="welcomeAvatar"></div>
+    <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
+    <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
+  </div>`;
+  const nwa = $("#welcomeAvatar");
+  if (nwa) nwa.appendChild(createOrangeAvatar(120));
 }
 
 function rebuildChatFromHistory() {
@@ -663,14 +744,8 @@ if ($("#newChatConv")) {
   $("#newChatConv").onclick = () => {
     activeChatConv = -1;
     state.history = [];
-    const msgs = $("#messages");
-    msgs.innerHTML = `<div class="welcome">
-      <div class="welcome-avatar" id="welcomeAvatar"></div>
-      <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
-      <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
-    </div>`;
-    const nwa = $("#welcomeAvatar");
-    if (nwa) nwa.appendChild(createOrangeAvatar(120));
+    resetChatWelcome();
+    renderChatConvs();
   };
 }
 
@@ -890,7 +965,8 @@ async function sendMessage() {
 
   try {
     const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
-    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT;
+    const MEMORY_HINT = " Si l'utilisateur te demande de retenir quelque chose, inclus la balise [mémoire: fait à retenir] dans ta réponse pour que je le sauvegarde.";
+    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + memoryContext();
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -927,6 +1003,7 @@ async function sendMessage() {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
+    extractMemoryFromResponse(full);
     saveChatConv();
   } catch (err) {
     state.history.pop();
@@ -1347,10 +1424,11 @@ function renderCodexConvos() {
     return;
   }
   codexConvos.innerHTML = codexHistory.map((c, i) =>
-    `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}">${escapeHtml(c.prompt || "Sans titre")}</div>`
+    `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.prompt || "Sans titre")}</span><button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`
   ).join("");
-  $$(".codex-sb-conv").forEach(el => {
-    el.onclick = () => {
+  $$(".codex-sb-conv", codexConvos).forEach(el => {
+    el.onclick = (e) => {
+      if (e.target.classList.contains("conv-del")) return;
       const idx = +el.dataset.idx;
       activeConvIdx = idx;
       const c = codexHistory[idx];
@@ -1359,6 +1437,36 @@ function renderCodexConvos() {
       renderCodexConvos();
     };
   });
+  $$(".conv-del", codexConvos).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx;
+      codexHistory.splice(idx, 1);
+      if (activeConvIdx === idx) {
+        activeConvIdx = -1;
+        codexChatMsgs = [];
+        resetCodexWelcome();
+      } else if (activeConvIdx > idx) {
+        activeConvIdx--;
+      }
+      try { localStorage.setItem("tilex-codex-history", JSON.stringify(codexHistory)); } catch (_) {}
+      renderCodexConvos();
+    };
+  });
+}
+
+function resetCodexWelcome() {
+  const area = $("#codexMessages");
+  area.innerHTML = `<div class="codex-welcome">
+    <img src="logo.png" alt="Codex" class="codex-welcome-logo">
+    <h2>Codex <span class="orange">ti-lex-AL</span></h2>
+    <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
+    <div class="suggest">
+      <button class="csug" data-p="Génère une API REST Express avec TypeScript">API REST Express</button>
+      <button class="csug" data-p="Crée un composant React avec hooks">Composant React</button>
+      <button class="csug" data-p="Écris une migration SQL Supabase avec RLS">Migration SQL</button>
+    </div>
+  </div>`;
 }
 
 function rebuildCodexChat() {
@@ -1824,6 +1932,26 @@ renderCodexConvos();
 renderChatConvs();
 renderAttachStrip();
 refreshStudio();
+loadMemory();
+renderMemory();
+
+// Boutons mémoire
+if ($("#memoryAddBtn")) {
+  $("#memoryAddBtn").onclick = () => {
+    const inp = $("#memoryInput");
+    const val = inp.value.trim();
+    if (!val) return;
+    addMemory(val);
+    inp.value = "";
+  };
+}
+if ($("#memoryClearBtn")) {
+  $("#memoryClearBtn").onclick = () => {
+    if (!confirm("Effacer toute la mémoire d'Agent AL ?")) return;
+    memory = [];
+    saveMemory();
+  };
+}
 
 // reconnexion GitHub auto (recharge dépôts + branches + codex)
 if (state.github.token) {

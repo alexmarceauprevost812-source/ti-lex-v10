@@ -763,6 +763,42 @@ body[data-theme="light"] .studio-code::placeholder{color:#aaa}
 }
 body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-color:#ddd!important;color:#1a1a1a}
 
+/* ---- Conversation delete buttons ---- */
+.chat-conv-item,.codex-sb-conv{display:flex;align-items:center;gap:4px}
+.chat-conv-item .conv-title,.codex-sb-conv .conv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-del{
+  flex-shrink:0;width:20px;height:20px;border:none;background:transparent;
+  color:var(--txt-dim);font-size:1rem;line-height:1;cursor:pointer;
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:var(--t);
+}
+.chat-conv-item:hover .conv-del,.codex-sb-conv:hover .conv-del{opacity:1}
+.conv-del:hover{background:rgba(255,68,68,.15);color:#ff4444}
+.chat-conv-item.active{background:var(--bg-3);color:var(--txt)}
+
+/* ---- Mémoire (Settings) ---- */
+.memory-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  background:var(--bg-3);border:1px solid var(--line);border-radius:9px;
+  margin-bottom:5px;font-size:.82rem;animation:fade .3s ease;
+}
+.memory-text{flex:1;color:var(--txt);line-height:1.4}
+.memory-del{
+  flex-shrink:0;width:22px;height:22px;border:none;background:transparent;
+  color:var(--txt-dim);font-size:1.1rem;line-height:1;cursor:pointer;
+  border-radius:5px;display:flex;align-items:center;justify-content:center;transition:var(--t);
+}
+.memory-del:hover{background:rgba(255,68,68,.15);color:#ff4444}
+.memory-add-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.memory-add-row .set-input{flex:1;margin-bottom:0}
+.memory-add-row .btn-codex{flex-shrink:0;padding:8px 16px}
+.memory-clear-btn{
+  margin-top:10px;padding:8px 14px;background:transparent;border:1px solid #ff4444;
+  border-radius:9px;color:#ff4444;font-family:var(--font);font-size:.78rem;
+  font-weight:600;cursor:pointer;transition:var(--t);width:100%;
+}
+.memory-clear-btn:hover{background:rgba(255,68,68,.1)}
+
 /* ============ RESPONSIVE ============ */
 .mobile-only{display:none}
 @media(max-width:860px){
