@@ -221,17 +221,26 @@ function renderAgents() {
       <span class="agent-desc">${a.desc}</span>
     </button>`).join("");
   $$(".agent-card").forEach(c => c.onclick = () => {
-    state.agent = c.dataset.agent;
-    const a = AGENTS[state.agent];
-    if (a.model) {
-      state.model = a.model;
-      const ms = $("#modelSelect");
-      if (ms) ms.value = a.model;
-    }
-    $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
-    renderAgents(); closeAgents();
+    selectAgent(c.dataset.agent);
+    closeAgents();
   });
 }
+
+function selectAgent(key) {
+  state.agent = key;
+  const a = AGENTS[key];
+  if (a.model) {
+    state.model = a.model;
+    const ms = $("#modelSelect");
+    if (ms) ms.value = a.model;
+  }
+  $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
+  const inp = $("#input");
+  if (inp && !state.imageMode) inp.placeholder = `Écris à ${a.name}…`;
+  renderAgents();
+  renderAgentPicker();
+}
+
 function openAgents(){ $("#agentsPanel").classList.add("open"); $("#agentsOverlay").classList.add("show"); }
 function closeAgents(){ $("#agentsPanel").classList.remove("open"); $("#agentsOverlay").classList.remove("show"); }
 if ($("#agentsToggle")) $("#agentsToggle").onclick = openAgents;
@@ -239,11 +248,71 @@ if ($("#agentsClose")) $("#agentsClose").onclick = closeAgents;
 if ($("#agentsOverlay")) $("#agentsOverlay").onclick = closeAgents;
 renderAgents();
 
+/* ---- Agent picker (dans le composer) ---- */
+function renderAgentPicker() {
+  const btn = $("#agentPickerBtn");
+  const menu = $("#agentPickerMenu");
+  const img = $("#agentPickerImg");
+  const nameEl = $("#agentPickerName");
+  if (!btn || !menu) return;
+  const cur = AGENTS[state.agent];
+  nameEl.textContent = cur.name;
+  if (cur.img) {
+    img.src = cur.img;
+    img.style.display = "";
+    img.nextElementSibling && img.nextElementSibling.classList.contains("agent-picker-emoji") && img.nextElementSibling.remove();
+  } else {
+    img.style.display = "none";
+    if (!btn.querySelector(".agent-picker-emoji")) {
+      const em = document.createElement("span");
+      em.className = "agent-picker-emoji";
+      em.textContent = cur.emoji;
+      btn.insertBefore(em, nameEl);
+    } else {
+      btn.querySelector(".agent-picker-emoji").textContent = cur.emoji;
+    }
+  }
+  menu.innerHTML = Object.entries(AGENTS).map(([key, a]) => `
+    <button class="agent-pick${key === state.agent ? ' active' : ''}" data-agent="${key}">
+      <span class="agent-pick-icon">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
+      <span class="agent-pick-info">
+        <span class="agent-pick-name">${a.name}</span>
+        <span class="agent-pick-desc">${a.desc}</span>
+      </span>
+    </button>`).join("");
+  $$(".agent-pick", menu).forEach(p => {
+    p.onclick = () => {
+      selectAgent(p.dataset.agent);
+      toggleAgentPicker(false);
+    };
+  });
+}
+
+function toggleAgentPicker(forceState) {
+  const btn = $("#agentPickerBtn");
+  const menu = $("#agentPickerMenu");
+  if (!btn || !menu) return;
+  const show = forceState !== undefined ? forceState : menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", !show);
+  btn.classList.toggle("open", show);
+}
+
+if ($("#agentPickerBtn")) {
+  $("#agentPickerBtn").onclick = (e) => { e.stopPropagation(); toggleAgentPicker(); };
+}
+document.addEventListener("click", (e) => {
+  const menu = $("#agentPickerMenu");
+  if (menu && !menu.classList.contains("hidden") && !e.target.closest(".agent-picker-wrap")) {
+    toggleAgentPicker(false);
+  }
+});
+renderAgentPicker();
+
 /* ================= GÉNÉRATION D'IMAGE ================= */
 function toggleImageMode(on) {
   state.imageMode = on ?? !state.imageMode;
   $(".composer").classList.toggle("image-mode", state.imageMode);
-  $("#input").placeholder = state.imageMode ? "Décris l'image à générer…" : "Écris à Agent AL…";
+  $("#input").placeholder = state.imageMode ? "Décris l'image à générer…" : `Écris à ${AGENTS[state.agent].name}…`;
   let banner = $(".image-mode-banner");
   if (state.imageMode && !banner) {
     banner = document.createElement("div");

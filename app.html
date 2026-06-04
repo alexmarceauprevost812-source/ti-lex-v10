@@ -130,7 +130,15 @@
             <button class="plus-item" data-act="web"><span class="pico">🛠️</span>Chercher sur le web</button>
           </div>
         </div>
-        <textarea id="input" rows="1" placeholder="Écris à Agent AL…"></textarea>
+        <textarea id="input" rows="1" placeholder="Écris à ti-lex-AL…"></textarea>
+        <div class="agent-picker-wrap">
+          <button class="agent-picker-btn" id="agentPickerBtn" title="Changer d'agent">
+            <img src="assets/tilex-logo.png" alt="" class="agent-picker-img" id="agentPickerImg">
+            <span class="agent-picker-name" id="agentPickerName">ti-lex-AL</span>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="agent-picker-menu hidden" id="agentPickerMenu"></div>
+        </div>
         <button class="send" id="send" aria-label="Envoyer">
           <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
         </button>
