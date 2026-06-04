@@ -20,7 +20,8 @@ const state = {
 };
 
 /* ---- Edge Function (remplace les appels directs à api.anthropic.com) ---- */
-const AI_PROXY = (window.TILEX_CONFIG ? TILEX_CONFIG.SUPABASE_URL + TILEX_CONFIG.AI_PROXY_PATH : "");
+const _cfg = window.TILEX_CONFIG || {};
+const AI_PROXY = (_cfg.SUPABASE_URL || "https://rnuripmfozlxenryxhdc.supabase.co") + (_cfg.AI_PROXY_PATH || "/functions/v1/ai-proxy");
 
 /* ---- Agents ---- */
 const AGENTS = {
@@ -198,7 +199,7 @@ function apiHeaders() {
 }
 function useProxy() { return !state.apiKey; }
 function proxyToken() {
-  return state.supabase.key || (window.TILEX_CONFIG ? TILEX_CONFIG.SUPABASE_ANON_KEY : "");
+  return state.supabase.key || _cfg.SUPABASE_ANON_KEY || "";
 }
 function chatFetch(bodyObj) {
   if (useProxy()) {

@@ -685,10 +685,12 @@
     let supabase = null, currentUser = null;
 
     function initSupabase() {
-      if (window.supabase && window.TILEX_CONFIG) {
-        supabase = window.supabase.createClient(TILEX_CONFIG.SUPABASE_URL, TILEX_CONFIG.SUPABASE_ANON_KEY);
-        checkSession();
-      }
+      if (!window.supabase) return;
+      const cfg = window.TILEX_CONFIG || {};
+      const url = cfg.SUPABASE_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+      const key = cfg.SUPABASE_ANON_KEY || 'sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm';
+      supabase = window.supabase.createClient(url, key);
+      checkSession();
     }
 
     async function checkSession() {
