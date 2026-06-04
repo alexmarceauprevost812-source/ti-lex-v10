@@ -1163,15 +1163,26 @@ function syncCodexProjects() {
   });
 }
 
-function addCodexUserMsg(text) {
+function addCodexUserMsg(text, atts) {
   $(".codex-welcome")?.remove();
   const m = document.createElement("div");
   m.className = "codex-msg user";
   const av = document.createElement("div");
-  av.className = "cmsg-avatar"; av.textContent = "A";
+  av.className = "cmsg-avatar";
+  av.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>`;
   m.appendChild(av);
   const b = document.createElement("div");
-  b.className = "codex-msg-body"; b.textContent = text;
+  b.className = "codex-msg-body";
+  let html = "";
+  if (atts && atts.length) {
+    html += '<div class="attach-strip" style="margin:0 0 6px">' + atts.map(a => {
+      if (a.kind === "image") return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span></div>`;
+      const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
+      return `<div class="attach-chip"><span class="a-ico">${ico}</span><span class="a-name">${escapeHtml(a.name)}</span></div>`;
+    }).join("") + "</div>";
+  }
+  html += escapeHtml(text).replace(/\n/g, "<br>");
+  b.innerHTML = html;
   m.appendChild(b);
   $("#codexMessages").appendChild(m);
   $("#codexMessages").scrollTop = $("#codexMessages").scrollHeight;
@@ -1259,6 +1270,8 @@ $("#codexNewConv").onclick = () => {
 
 /* ================= CODEX (chat-style) ================= */
 const codexInput = $("#codeInput");
+let codexAttachments = [];
+
 codexInput.addEventListener("input", () => {
   codexInput.style.height = "auto";
   codexInput.style.height = Math.min(codexInput.scrollHeight, 140) + "px";
@@ -1267,6 +1280,110 @@ codexInput.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); runCodex(); }
 });
 $("#codexRun").onclick = () => runCodex();
+
+/* ---- Codex + menu (pièces jointes) ---- */
+const codexPlusBtn = $("#codexPlusBtn"), codexPlusMenu = $("#codexPlusMenu");
+if (codexPlusBtn) {
+  codexPlusBtn.onclick = e => { e.stopPropagation(); codexPlusMenu.classList.toggle("hidden"); codexPlusBtn.classList.toggle("active", !codexPlusMenu.classList.contains("hidden")); };
+  document.addEventListener("click", e => {
+    if (codexPlusMenu && !codexPlusMenu.contains(e.target) && e.target !== codexPlusBtn && !codexPlusBtn.contains(e.target)) {
+      codexPlusMenu.classList.add("hidden"); codexPlusBtn.classList.remove("active");
+    }
+  });
+}
+function closeCodexPlus() { if (codexPlusMenu) { codexPlusMenu.classList.add("hidden"); codexPlusBtn.classList.remove("active"); } }
+
+$$("[data-cact]").forEach(item => {
+  item.onclick = () => {
+    const act = item.dataset.cact;
+    if (act === "image") $("#codexFileImage").click();
+    else if (act === "file") $("#codexFileAny").click();
+    else if (act === "zip") $("#codexFileZip").click();
+    closeCodexPlus();
+  };
+});
+
+function codexHandleImages(files) {
+  [...files].forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      codexAttachments.push({ kind: "image", name: f.name, mediaType: f.type || "image/png", base64: dataUrl.split(",")[1], dataUrl, size: f.size });
+      renderCodexAttachStrip();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function codexHandleFiles(files) {
+  [...files].forEach(f => {
+    if (f.type.startsWith("image/")) { codexHandleImages([f]); return; }
+    const ext = f.name.split(".").pop().toLowerCase();
+    if (TEXT_EXT.includes(ext) && f.size < 200000) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        codexAttachments.push({ kind: "text", name: f.name, text: reader.result, size: f.size });
+        renderCodexAttachStrip();
+      };
+      reader.readAsText(f);
+    } else {
+      codexAttachments.push({ kind: "binary", name: f.name, size: f.size });
+      renderCodexAttachStrip();
+    }
+  });
+}
+async function codexHandleZip(files) {
+  for (const f of files) {
+    try {
+      const zip = await JSZip.loadAsync(f);
+      const entries = [];
+      let textContent = "";
+      const paths = Object.keys(zip.files).filter(p => !zip.files[p].dir).sort();
+      for (const path of paths) {
+        const ext = path.split(".").pop().toLowerCase();
+        entries.push({ path, size: 0 });
+        if (TEXT_EXT.includes(ext) && textContent.length < 150000) {
+          try { textContent += `\n--- ${path} ---\n${await zip.files[path].async("string")}\n`; } catch (_) {}
+        }
+      }
+      codexAttachments.push({ kind: "zip", name: f.name, size: f.size, entries, textContent, fileCount: paths.length });
+      renderCodexAttachStrip();
+    } catch (_) {
+      codexAttachments.push({ kind: "zip", name: f.name, size: f.size, entries: [], textContent: "" });
+      renderCodexAttachStrip();
+    }
+  }
+}
+
+if ($("#codexFileImage")) $("#codexFileImage").onchange = e => { codexHandleImages(e.target.files); e.target.value = ""; };
+if ($("#codexFileAny")) $("#codexFileAny").onchange = e => { codexHandleFiles(e.target.files); e.target.value = ""; };
+if ($("#codexFileZip")) $("#codexFileZip").onchange = e => { codexHandleZip(e.target.files); e.target.value = ""; };
+
+function renderCodexAttachStrip() {
+  const strip = $("#codexAttachStrip");
+  if (!strip) return;
+  strip.innerHTML = codexAttachments.map((a, i) => {
+    if (a.kind === "image") return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span><button class="a-x" data-ci="${i}">×</button></div>`;
+    const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
+    return `<div class="attach-chip"><span class="a-ico">${ico}</span><span class="a-name">${escapeHtml(a.name)} · ${bytesLabel(a.size || 0)}</span><button class="a-x" data-ci="${i}">×</button></div>`;
+  }).join("");
+  strip.querySelectorAll(".a-x").forEach(x => x.onclick = () => { codexAttachments.splice(+x.dataset.ci, 1); renderCodexAttachStrip(); });
+}
+
+function buildCodexContent(text, atts) {
+  if (!atts || !atts.length) return text;
+  let extra = "";
+  atts.forEach(a => {
+    if (a.kind === "text") extra += `\n\n--- Fichier : ${a.name} ---\n${a.text}\n--- fin ---`;
+    else if (a.kind === "zip" && a.textContent) {
+      extra += `\n\n--- ZIP : ${a.name} (${a.fileCount || 0} fichiers) ---`;
+      extra += `\nFichiers: ${(a.entries || []).map(e => e.path).join(", ")}`;
+      extra += a.textContent;
+      extra += `\n--- fin ZIP ---`;
+    } else if (a.kind === "image") extra += `\n\n[Image jointe : ${a.name}]`;
+    else extra += `\n\n[Fichier : ${a.name} (${bytesLabel(a.size || 0)})]`;
+  });
+  return text + extra;
+}
 
 function bindCodexSuggestions() {
   $$(".csug").forEach(s => s.onclick = () => {
@@ -1279,10 +1396,12 @@ bindCodexSuggestions();
 async function runCodex() {
   const text = codexInput.value.trim();
   const lang = $("#lang").value;
-  if (!text) return;
-  addCodexUserMsg(text);
+  const atts = codexAttachments.slice();
+  if (!text && !atts.length) return;
+  addCodexUserMsg(text, atts);
   codexChatMsgs.push({ role: "user", text });
   codexInput.value = ""; codexInput.style.height = "auto";
+  codexAttachments = []; renderCodexAttachStrip();
 
   const body = buildCodexAssistantMsg();
 
@@ -1294,7 +1413,8 @@ async function runCodex() {
 
   $("#codexRun").disabled = true;
 
-  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${text}`;
+  const userContent = buildCodexContent(text || "Analyse les fichiers joints.", atts);
+  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${userContent}`;
 
   try {
     const res = await chatFetch({

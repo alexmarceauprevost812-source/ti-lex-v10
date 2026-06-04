@@ -232,7 +232,18 @@
 
       <!-- Composer en bas -->
       <div class="codex-composer">
+        <div id="codexAttachStrip" class="attach-strip"></div>
         <div class="codex-composer-inner">
+          <div class="plus-wrap">
+            <button class="plus-btn" id="codexPlusBtn" aria-label="Ajouter" title="Ajouter">
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="plus-menu hidden" id="codexPlusMenu">
+              <button class="plus-item" data-cact="image"><span class="pico">🖼️</span>Image</button>
+              <button class="plus-item" data-cact="file"><span class="pico">📎</span>Fichier</button>
+              <button class="plus-item" data-cact="zip"><span class="pico">🗜️</span>Fichier ZIP</button>
+            </div>
+          </div>
           <select id="lang" class="codex-lang-sel">
             <option>TypeScript</option><option>Python</option><option>SQL</option>
             <option>JavaScript</option><option>Rust</option><option>HTML</option><option>CSS</option>
@@ -244,6 +255,9 @@
         </div>
         <p class="composer-hint">Codex ti-lex-AL · <span class="orange">Génère</span> du code</p>
       </div>
+      <input type="file" id="codexFileImage" accept="image/*" multiple hidden>
+      <input type="file" id="codexFileAny" multiple hidden>
+      <input type="file" id="codexFileZip" accept=".zip,application/zip" hidden>
     </div>
   </section>
 

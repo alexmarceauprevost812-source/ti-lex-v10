@@ -449,10 +449,11 @@ body.menu-closed #menuToggleMobile{display:flex}
 
 /* Composer Codex (bas de l'écran) */
 .codex-composer{padding:14px 24px 20px;border-top:1px solid var(--line);background:var(--bg)}
+.codex-composer .attach-strip{max-width:820px;margin:0 auto 10px}
 .codex-composer-inner{
   max-width:820px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;
   background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
-  padding:8px 8px 8px 14px;transition:var(--t);
+  padding:8px 8px 8px 8px;transition:var(--t);
 }
 .codex-composer-inner:focus-within{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-glow)}
 .codex-composer-inner textarea{
