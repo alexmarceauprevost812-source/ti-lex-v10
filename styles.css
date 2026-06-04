@@ -2,6 +2,7 @@
    ti-lex-AL v10 — styles
    Thème: fond noir, écriture blanche, accent orange.
    ============================================================ */
+.hidden{display:none!important}
 :root{
   --bg:#0a0a0a;
   --bg-2:#111111;
