@@ -9,7 +9,7 @@ out/
 dist/
 build/
 
-# Environnement (NE JAMAIS committer les vraies clés)
+# Environnement (NE JAMAIS committer les clés secrètes)
 .env
 .env.*
 !.env.example
