@@ -995,7 +995,7 @@ function renderAssistant(body, full, streaming) {
   });
   // Other code blocks
   ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-    `<pre style="background:#080808;border:1px solid #1e1e1e;border-radius:10px;padding:14px;font-family:var(--mono);font-size:.84rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;margin:8px 0">${code}</pre>`
+    `<pre class="chat-code-block">${code}</pre>`
   );
   ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
 
