@@ -946,28 +946,27 @@ function createOrangeAvatar(size = 40) {
   wrap.style.height = size + "px";
   wrap.innerHTML = `
     <div class="al-aura"></div>
-    <div class="al-eyes-only">
-      <div class="al-eye"><div class="al-pupil al-pupil-l"><div class="al-glint"></div></div><div class="al-lid"></div></div>
-      <div class="al-eye"><div class="al-pupil al-pupil-r"><div class="al-glint"></div></div><div class="al-lid"></div></div>
+    <div class="al-face">
+      <div class="al-eye al-eye-l"></div>
+      <div class="al-eye al-eye-r"></div>
     </div>`;
 
-  const eyes = wrap.querySelector(".al-eyes-only");
-  const pupils = wrap.querySelectorAll(".al-pupil");
-  const lids = wrap.querySelectorAll(".al-lid");
+  const face = wrap.querySelector(".al-face");
+  const eyes = wrap.querySelectorAll(".al-eye");
 
   const onMouse = (e) => {
-    const r = eyes.getBoundingClientRect();
+    const r = face.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
-    const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 12, 2.5);
+    const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 15, 1.5);
     const tx = Math.cos(ang) * dist, ty = Math.sin(ang) * dist;
-    pupils.forEach(p => p.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`);
+    eyes.forEach(p => p.style.transform = `translate(${tx}px, ${ty}px)`);
   };
   window.addEventListener("mousemove", onMouse);
 
   let blinkTimer = setInterval(() => {
-    lids.forEach(l => l.classList.add("blink"));
-    setTimeout(() => lids.forEach(l => l.classList.remove("blink")), 150);
+    eyes.forEach(l => l.classList.add("blink"));
+    setTimeout(() => eyes.forEach(l => l.classList.remove("blink")), 150);
   }, 3000 + Math.random() * 2000);
 
   wrap._setThinking = (on) => wrap.classList.toggle("thinking", on);
