@@ -584,9 +584,9 @@
           <input type="password" id="register-password" placeholder="8 caractères minimum" minlength="8" required>
         </div>
         <div class="form-group" style="margin-top:0.5rem">
-          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.8rem;color:var(--text-secondary);line-height:1.4">
-            <input type="checkbox" id="register-consent" required style="margin-top:3px;accent-color:var(--orange);flex-shrink:0">
-            <span>J'accepte la <a href="#" onclick="showLegalModal('privacy');return false" style="color:var(--orange)">politique de confidentialité</a> et les <a href="#" onclick="showLegalModal('terms');return false" style="color:var(--orange)">conditions d'utilisation</a> conformément à la Loi 25 du Québec.</span>
+          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.75rem;color:var(--text-secondary);line-height:1.4;text-transform:none;letter-spacing:0;font-weight:400;overflow-wrap:break-word;word-break:break-word">
+            <input type="checkbox" id="register-consent" required style="margin-top:3px;accent-color:var(--orange);flex-shrink:0;width:18px;height:18px">
+            <span>J'accepte la <a href="#" onclick="event.stopPropagation();showLegalModal('privacy');return false" style="color:var(--orange)">politique de confidentialité</a> et les <a href="#" onclick="event.stopPropagation();showLegalModal('terms');return false" style="color:var(--orange)">conditions d'utilisation</a> (Loi 25).</span>
           </label>
         </div>
         <button type="submit" class="btn btn-primary" id="register-btn" style="margin-top:0.5rem">
