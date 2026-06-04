@@ -690,7 +690,8 @@ $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMes
 
 function avatarUser() {
   const d = document.createElement("div");
-  d.className = "msg-avatar msg-avatar-user"; d.textContent = "A";
+  d.className = "msg-avatar-user";
+  d.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>`;
   return d;
 }
 const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
@@ -719,9 +720,7 @@ function createOrangeAvatar(size = 40) {
   const face = wrap.querySelector(".al-face");
   const pupils = wrap.querySelectorAll(".al-pupil");
   const lids = wrap.querySelectorAll(".al-lid");
-  const mouth = wrap.querySelector(".al-mouth");
 
-  // suivi souris pour les yeux
   const onMouse = (e) => {
     const r = face.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -732,13 +731,11 @@ function createOrangeAvatar(size = 40) {
   };
   window.addEventListener("mousemove", onMouse);
 
-  // clignement
   let blinkTimer = setInterval(() => {
     lids.forEach(l => l.classList.add("blink"));
     setTimeout(() => lids.forEach(l => l.classList.remove("blink")), 150);
   }, 3000 + Math.random() * 2000);
 
-  // API pour contrôler les états
   wrap._setThinking = (on) => wrap.classList.toggle("thinking", on);
   wrap._setSpeaking = (on) => wrap.classList.toggle("speaking", on);
   wrap._destroy = () => {
@@ -752,11 +749,19 @@ function createOrangeAvatar(size = 40) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  const av = createOrangeAvatar(38);
+  // Logo ti-lex comme avatar principal
+  const logo = document.createElement("img");
+  logo.className = "msg-avatar al-logo"; logo.src = "logo.png"; logo.alt = "AL";
+  wrap.appendChild(logo);
+  // Avatar animé superposé (petit, coin bas-gauche)
+  const av = createOrangeAvatar(22);
+  av.classList.add("al-avatar-mini");
   wrap.appendChild(av);
+  // Badge Claude (coin bas-droite)
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
+  // Label "Propulsé par Claude"
   const lbl = document.createElement("div");
   lbl.className = "claude-label";
   lbl.innerHTML = `<img src="${CLAUDE_LOGO}" alt="">Claude`;

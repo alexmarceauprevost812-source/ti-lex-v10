@@ -174,10 +174,13 @@ body.menu-closed #menuToggleMobile{display:flex}
 
 .msg{display:flex;gap:13px;max-width:760px;animation:fade .35s ease}
 .msg.user{flex-direction:row-reverse;margin-left:auto}
-.msg-avatar{width:36px;height:36px;border-radius:10px;flex-shrink:0;object-fit:cover}
-.msg.assistant .msg-avatar{box-shadow:0 0 14px var(--orange-glow)}
-.msg.user .msg-avatar{background:var(--bg-3);display:flex;align-items:center;
-  justify-content:center;font-weight:700;color:var(--orange);border:1px solid var(--line)}
+.msg-avatar{width:42px;height:42px;border-radius:12px;flex-shrink:0;object-fit:cover}
+.msg.assistant .msg-avatar.al-logo{box-shadow:0 0 16px var(--orange-glow)}
+.msg-avatar-user{width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--bg-3),var(--line));
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
+  color:var(--txt-dim);transition:var(--t)}
+.msg.user .msg-avatar-user svg{stroke:var(--orange)}
 .msg-body{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:13px 17px;line-height:1.6;font-size:.95rem}
 .msg.user .msg-body{background:var(--orange);color:#000;border-color:var(--orange);font-weight:500}
@@ -409,7 +412,7 @@ body.menu-closed #menuToggleMobile{display:flex}
   background:var(--orange);color:#000;border-color:var(--orange);font-weight:500;
 }
 .codex-msg.assistant .codex-msg-body{font-family:var(--mono);font-size:.84rem;line-height:1.65}
-.codex-msg.assistant.responding .msg-avatar-wrap .msg-avatar{
+.codex-msg.assistant.responding .msg-avatar-wrap .al-logo{
   animation:avatarBob 1.2s ease-in-out infinite;
 }
 
@@ -548,19 +551,22 @@ body.menu-closed #menuToggleMobile{display:flex}
 @keyframes al-p3{0%{top:20%;opacity:1;transform:scale(1)}100%{top:-15%;left:85%;opacity:0;transform:scale(.4)}}
 
 /* ---- Claude badge + logo officiel + animations chat principal ---- */
-.msg-avatar-wrap{position:relative;flex-shrink:0}
-.msg-avatar-wrap .msg-avatar{width:36px;height:36px;border-radius:10px;object-fit:cover}
+.msg-avatar-wrap{position:relative;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.msg-avatar-wrap .msg-avatar{width:42px;height:42px;border-radius:12px;object-fit:cover}
+.al-avatar-mini{position:absolute;bottom:-2px;left:-4px;z-index:2}
+.al-avatar-mini .al-aura{display:none}
 .claude-badge{
-  position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;
+  position:absolute;bottom:-2px;right:-4px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--bg);
-  background:#fff;object-fit:contain;
+  background:#fff;object-fit:contain;z-index:2;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
 }
 .claude-label{
-  display:flex;align-items:center;gap:5px;margin-top:3px;
-  font-size:.58rem;color:var(--txt-dim);letter-spacing:.3px;text-align:center;
-  justify-content:center;
+  display:flex;align-items:center;gap:4px;margin-top:4px;
+  font-size:.6rem;color:var(--txt-dim);letter-spacing:.3px;text-align:center;
+  justify-content:center;white-space:nowrap;
 }
-.claude-label img{width:11px;height:11px;border-radius:2px}
+.claude-label img{width:12px;height:12px;border-radius:2px}
 
 /* Push to GitHub button on code blocks */
 .push-gh-btn{
@@ -578,7 +584,7 @@ body.menu-closed #menuToggleMobile{display:flex}
 .zip-tree-item{display:flex;align-items:center;gap:6px;padding:3px 6px;font-size:.78rem;
   font-family:var(--mono);color:var(--txt-dim)}
 .zip-tree-item .f-ico{font-size:.8rem}
-.msg.assistant.responding .msg-avatar-wrap .msg-avatar{
+.msg.assistant.responding .msg-avatar-wrap .al-logo{
   animation:avatarBob 1.2s ease-in-out infinite;
 }
 .msg.assistant.responding .msg-body{
