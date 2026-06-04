@@ -1155,12 +1155,125 @@ $("#codexSbToggle").onclick = toggleCodexSidebar;
 $("#codexSbOpenBtn").onclick = toggleCodexSidebar;
 
 function syncCodexProjects() {
-  $$("#codexProjects .codex-sb-project").forEach(p => {
+  $$("#codexConnect .codex-sb-project").forEach(p => {
     const svc = p.dataset.service;
     const on = state.connected[svc];
     p.classList.toggle("connected", !!on);
-    p.querySelector(".codex-sb-status").textContent = on ? "connecté" : "—";
+    const st = p.querySelector(".codex-sb-status");
+    if (st) st.textContent = on ? "connecté" : "—";
   });
+  syncCodexGh();
+}
+
+/* ---- Codex GitHub quick-connect ---- */
+function syncCodexGh() {
+  const form = $("#codexGhForm");
+  const sels = $("#codexGhSelectors");
+  const status = $("#codexGhStatus");
+  if (!form) return;
+
+  if (state.connected.github && state.github.token) {
+    form.style.display = "none";
+    sels.classList.remove("hidden");
+    if (status) { status.textContent = "connecté"; status.classList.add("ok"); }
+  } else {
+    form.style.display = "";
+    sels.classList.add("hidden");
+    if (status) { status.textContent = "--"; status.classList.remove("ok"); }
+  }
+}
+
+async function codexGhConnect() {
+  const tokenInput = $("#codexGhToken");
+  const token = tokenInput.value.trim() || state.github.token;
+  if (!token) return;
+  const btn = $("#codexGhConnect"); btn.disabled = true;
+  btn.textContent = "Connexion…";
+  try {
+    state.github.token = token;
+    const res = await fetch(`${GH_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: ghHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const repos = await res.json();
+    state.connected.github = true;
+    persistGithub();
+
+    // remplir le select des repos
+    const repoSel = $("#codexGhRepo");
+    repoSel.innerHTML = `<option value="">— Dépôt (${repos.length}) —</option>` +
+      repos.map(r => `<option value="${r.full_name}"${r.full_name === state.github.repo ? " selected" : ""}>${r.full_name}${r.private ? " 🔒" : ""}</option>`).join("");
+
+    // aussi mettre à jour les Paramètres
+    if ($("#ghToken")) $("#ghToken").value = token;
+    setGhState("✓ connecté", true);
+    $$(`.conn-btn[data-service="github"]`).forEach(b => b.classList.add("connected"));
+
+    syncCodexProjects();
+
+    if (state.github.repo) {
+      repoSel.value = state.github.repo;
+      await codexGhLoadBranches(state.github.repo);
+    }
+  } catch (err) {
+    btn.textContent = "Erreur — réessayer";
+    state.connected.github = false;
+  } finally {
+    btn.disabled = false;
+    if (state.connected.github) btn.textContent = "Connecter";
+  }
+}
+
+async function codexGhLoadBranches(repo) {
+  if (!repo) return;
+  state.github.repo = repo;
+  state.projectFiles = [];
+  persistGithub();
+  const bsel = $("#codexGhBranch");
+  const info = $("#codexGhInfo");
+  bsel.innerHTML = `<option value="">chargement…</option>`;
+  try {
+    const res = await fetch(`${GH_API}/repos/${repo}/branches?per_page=100`, { headers: ghHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const branches = await res.json();
+    const repoRes = await fetch(`${GH_API}/repos/${repo}`, { headers: ghHeaders() });
+    const def = repoRes.ok ? (await repoRes.json()).default_branch : "main";
+    const sel = state.github.branch || def;
+    bsel.innerHTML = branches.map(b =>
+      `<option value="${b.name}"${b.name === sel ? " selected" : ""}>${b.name}${b.name === def ? " ★" : ""}</option>`
+    ).join("");
+    state.github.branch = bsel.value || sel;
+    persistGithub();
+
+    // count files
+    const treeRes = await fetch(`${GH_API}/repos/${repo}/git/trees/${encodeURIComponent(state.github.branch)}?recursive=1`, { headers: ghHeaders() });
+    if (treeRes.ok) {
+      const tree = await treeRes.json();
+      const count = (tree.tree || []).filter(t => t.type === "blob").length;
+      if (info) info.innerHTML = `<span class="ok">✓</span> ${count} fichiers sur <b>${state.github.branch}</b>`;
+    }
+
+    // sync Settings page too
+    if ($("#ghRepoZone")) {
+      $("#ghRepoZone").classList.add("show");
+      await ghLoadBranches(repo);
+    }
+  } catch (err) {
+    bsel.innerHTML = `<option value="">erreur</option>`;
+    if (info) info.textContent = err.message;
+  }
+}
+
+if ($("#codexGhConnect")) {
+  $("#codexGhConnect").onclick = codexGhConnect;
+  $("#codexGhRepo").onchange = e => codexGhLoadBranches(e.target.value);
+  $("#codexGhBranch").onchange = e => {
+    state.github.branch = e.target.value;
+    state.projectFiles = [];
+    persistGithub();
+    const info = $("#codexGhInfo");
+    if (info) info.innerHTML = `Branche : <b>${e.target.value}</b>`;
+    // reload file count
+    codexGhLoadBranches(state.github.repo);
+  };
 }
 
 function addCodexUserMsg(text, atts) {
@@ -1685,8 +1798,12 @@ renderChatConvs();
 renderAttachStrip();
 refreshStudio();
 
-// reconnexion GitHub auto (recharge dépôts + branches)
-if (state.github.token) ghConnect();
+// reconnexion GitHub auto (recharge dépôts + branches + codex)
+if (state.github.token) {
+  ghConnect();
+  if ($("#codexGhToken")) $("#codexGhToken").value = state.github.token;
+  codexGhConnect();
+}
 
 // Avatar animé sur l'écran d'accueil
 const wa = $("#welcomeAvatar");

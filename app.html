@@ -167,23 +167,28 @@
         </button>
       </div>
 
-      <!-- Projets connectés -->
+      <!-- Connexion projet -->
       <div class="codex-sb-section">
-        <p class="codex-sb-label">Projets</p>
-        <div class="codex-sb-projects" id="codexProjects">
+        <p class="codex-sb-label">Projet</p>
+        <div class="codex-sb-connect" id="codexConnect">
           <div class="codex-sb-project" data-service="github">
             <span class="conn-dot"></span>
             <span>GitHub</span>
-            <span class="codex-sb-status">--</span>
+            <span class="codex-sb-status" id="codexGhStatus">--</span>
+          </div>
+          <!-- Connexion rapide GitHub -->
+          <div id="codexGhForm" class="codex-gh-form">
+            <input type="password" id="codexGhToken" class="codex-gh-input" placeholder="Token GitHub (ghp_…)">
+            <button class="codex-gh-connect-btn" id="codexGhConnect">Connecter</button>
+          </div>
+          <div id="codexGhSelectors" class="codex-gh-selectors hidden">
+            <select id="codexGhRepo" class="codex-gh-select"><option value="">— Dépôt —</option></select>
+            <select id="codexGhBranch" class="codex-gh-select"><option value="">— Branche —</option></select>
+            <div class="codex-gh-info" id="codexGhInfo"></div>
           </div>
           <div class="codex-sb-project" data-service="supabase">
             <span class="conn-dot"></span>
             <span>Supabase</span>
-            <span class="codex-sb-status">--</span>
-          </div>
-          <div class="codex-sb-project" data-service="vercel">
-            <span class="conn-dot"></span>
-            <span>Vercel</span>
             <span class="codex-sb-status">--</span>
           </div>
         </div>
