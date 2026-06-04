@@ -1316,7 +1316,7 @@ function buildCodexAssistantMsg() {
 }
 
 function saveCodexConv(prompt, output) {
-  const entry = { prompt: prompt.slice(0, 60), full: prompt, output, lang: $("#lang").value, msgs: [...codexChatMsgs], ts: Date.now() };
+  const entry = { prompt: prompt.slice(0, 60), full: prompt, output, msgs: [...codexChatMsgs], ts: Date.now() };
   if (activeConvIdx >= 0) {
     codexHistory[activeConvIdx] = entry;
   } else {
@@ -1508,7 +1508,6 @@ bindCodexSuggestions();
 
 async function runCodex() {
   const text = codexInput.value.trim();
-  const lang = $("#lang").value;
   const atts = codexAttachments.slice();
   if (!text && !atts.length) return;
   addCodexUserMsg(text, atts);
@@ -1527,7 +1526,7 @@ async function runCodex() {
   $("#codexRun").disabled = true;
 
   const userContent = buildCodexContent(text || "Analyse les fichiers joints.", atts);
-  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${userContent}`;
+  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre, commenté et production-ready à partir de cette demande. Détecte automatiquement le langage approprié. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${userContent}`;
 
   try {
     const res = await chatFetch({
