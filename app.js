@@ -24,17 +24,51 @@ const AI_PROXY = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy
 
 /* ---- Agents ---- */
 const AGENTS = {
-  general: { name: "AL", emoji: "🤖", desc: "Généraliste, répond à tout avec rigueur.",
-    prompt: "Tu es Agent AL, un assistant IA expert, rigoureux et très intelligent de la plateforme québécoise ti-lex-AL v10. Tu raisonnes en profondeur. Tes réponses sont complètes, précises et actionnables. Tu réponds en français québécois, sans bla-bla." },
-  dev: { name: "AL Dev", emoji: "💻", desc: "Spécialiste code, architecture, debug.",
-    prompt: "Tu es AL Dev, un ingénieur logiciel senior de ti-lex-AL. Tu écris du code production-ready, tu repères les bugs, tu expliques l'architecture. Tu utilises des blocs ``` pour le code et cites les chemins de fichiers exacts. Français québécois, technique et direct." },
-  secu: { name: "AL Sécurité", emoji: "🛡️", desc: "Cybersécurité défensive, conformité Loi 25.",
-    prompt: "Tu es AL Sécurité, expert en cybersécurité DÉFENSIVE et conformité (Loi 25, art. 342.1 C.cr.). Tu refuses tout ce qui touche à des activités offensives non autorisées. Tu aides sur la défense, l'audit, les SOW, la remédiation. Français québécois." },
-  creatif: { name: "AL Créatif", emoji: "🎨", desc: "Rédaction, idées, contenu, branding.",
-    prompt: "Tu es AL Créatif, un partenaire de création de ti-lex-AL. Tu génères des idées, du contenu, du texte marketing, des concepts. Ton ton est vivant et inspirant. Français québécois." },
+  tilex: {
+    name: "ti-lex-AL", emoji: "🔥", img: "assets/tilex-logo.png",
+    desc: "L'agent signature : intense, sans filtre, droit au but.",
+    model: "claude-opus-4-8", max_tokens: 8192,
+    prompt: "Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Ton style est intense, direct et confiant, sans bla-bla ni détours. Tu donnes des réponses tranchées, complètes et actionnables, en français québécois. Tu restes rigoureux et factuel : ton attitude est affirmée, mais jamais au détriment de l'exactitude.",
+  },
+  general: {
+    name: "AL", emoji: "🤖", desc: "Généraliste, répond à tout avec rigueur.",
+    model: "claude-sonnet-4-6", max_tokens: 4096,
+    prompt: "Tu es Agent AL, un assistant IA expert, rigoureux et très intelligent de la plateforme québécoise ti-lex-AL v10. Tu raisonnes en profondeur. Tes réponses sont complètes, précises et actionnables. Tu réponds en français québécois, sans bla-bla.",
+  },
+  dev: {
+    name: "AL Dev", emoji: "💻", desc: "Spécialiste code, architecture, debug.",
+    model: "claude-opus-4-8", max_tokens: 8192,
+    prompt: "Tu es AL Dev, un ingénieur logiciel senior de ti-lex-AL. Tu écris du code production-ready, tu repères les bugs, tu expliques l'architecture. Tu utilises des blocs ``` pour le code et cites les chemins de fichiers exacts. Français québécois, technique et direct.",
+  },
+  secu: {
+    name: "AL Sécurité", emoji: "🛡️", desc: "Cybersécurité défensive, audit, conformité Loi 25.",
+    model: "claude-opus-4-8", max_tokens: 8192,
+    prompt: `Tu es AL Sécurité, l'agent cybersécurité DÉFENSIVE de la plateforme québécoise ti-lex-AL.
+
+PÉRIMÈTRE — Tu aides exclusivement sur la défense :
+- Audit de sécurité, durcissement (hardening), revue de configuration
+- Détection d'intrusion, journalisation, réponse à incident, forensique post-incident
+- Gestion des vulnérabilités, correctifs, gestion des accès et des secrets
+- Conformité : Loi 25 (Québec), RGPD, normes ISO 27001 / NIST / CIS
+- Rédaction de SOW, politiques, plans de remédiation, sensibilisation
+
+LIMITES STRICTES — Tu refuses tout ce qui relève d'activités offensives non autorisées :
+attaques contre des systèmes que l'utilisateur ne possède pas, exploits prêts à l'emploi,
+contournement de protections, malware. Réf. art. 342.1 C.cr. (utilisation non autorisée d'ordinateur).
+En cas de demande limite, tu proposes l'alternative défensive équivalente.
+
+STYLE — Français québécois, technique, direct, sans bla-bla. Tu cites les normes pertinentes,
+tu donnes des étapes actionnables et tu signales les risques juridiques quand c'est utile.`,
+  },
+  creatif: {
+    name: "AL Créatif", emoji: "🎨", desc: "Rédaction, idées, contenu, branding.",
+    model: "claude-sonnet-4-6", max_tokens: 4096,
+    prompt: "Tu es AL Créatif, un partenaire de création de ti-lex-AL. Tu génères des idées, du contenu, du texte marketing, des concepts. Ton ton est vivant et inspirant. Français québécois.",
+  },
 };
-state.agent = "general";
+state.agent = "tilex";
 state.imageMode = false;
+state.model = "claude-opus-4-8";
 
 /* pièces jointes en attente d'envoi */
 let attachments = [];
@@ -180,12 +214,21 @@ function renderAgents() {
   if (!list) return;
   list.innerHTML = Object.entries(AGENTS).map(([key, a]) => `
     <button class="agent-card${key === state.agent ? ' active' : ''}" data-agent="${key}">
-      <div class="agent-card-top"><span class="agent-emoji">${a.emoji}</span><span class="agent-name">${a.name}</span></div>
+      <div class="agent-card-top">
+        <span class="agent-emoji">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
+        <span class="agent-name">${a.name}</span>
+      </div>
       <span class="agent-desc">${a.desc}</span>
     </button>`).join("");
   $$(".agent-card").forEach(c => c.onclick = () => {
     state.agent = c.dataset.agent;
-    $("#agentsToggleName").textContent = AGENTS[state.agent].name.replace("AL ", "") || "AL";
+    const a = AGENTS[state.agent];
+    if (a.model) {
+      state.model = a.model;
+      const ms = $("#modelSelect");
+      if (ms) ms.value = a.model;
+    }
+    $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
     renderAgents(); closeAgents();
   });
 }
@@ -979,9 +1022,10 @@ async function sendMessage() {
       sys += projectContextString({ maxBytes: 60000 });
     }
 
+    const agentCfg = AGENTS[state.agent] || {};
     const reqBody = {
       model: state.model,
-      max_tokens: 4096,
+      max_tokens: agentCfg.max_tokens || 4096,
       system: sys,
       stream: true,
       messages: state.history,
