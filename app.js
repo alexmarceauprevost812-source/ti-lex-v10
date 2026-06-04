@@ -199,9 +199,11 @@ function apiHeaders() {
 function useProxy() { return !state.apiKey; }
 function chatFetch(bodyObj) {
   if (useProxy()) {
+    const h = { "Content-Type": "application/json" };
+    if (state.supabase.key) h["Authorization"] = `Bearer ${state.supabase.key}`;
     return fetch(AI_PROXY, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: h,
       body: JSON.stringify({ kind: "chat", ...bodyObj }),
     });
   }
@@ -372,8 +374,10 @@ async function generateImage(prompt) {
   addUserMsg("🎨 " + prompt, []);
   const body = buildAssistantMsg();
   try {
+    const ih = { "Content-Type": "application/json" };
+    if (state.supabase.key) ih["Authorization"] = `Bearer ${state.supabase.key}`;
     const res = await fetch(AI_PROXY, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: ih,
       body: JSON.stringify({ kind: "image", prompt, size: "1024x1024" }),
     });
     const data = await res.json();

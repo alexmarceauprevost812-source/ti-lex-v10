@@ -34,4 +34,4 @@ verify_jwt = true
 import_map = "./functions/security-agent/import_map.json"
 
 [functions.ai-proxy]
-verify_jwt = false   # passer à true une fois le token de session branché
+verify_jwt = false   # TODO: passer à true après ajout de Supabase Auth (login/signup)
