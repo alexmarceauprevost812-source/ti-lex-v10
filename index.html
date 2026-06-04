@@ -417,6 +417,45 @@
 
     .hidden { display: none !important; }
 
+    /* Bouton installer PWA */
+    .pwa-install {
+      position: fixed; top: 1rem; right: 1rem; z-index: 200;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.6rem 1rem 0.6rem 0.6rem;
+      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      color: #000; border: none; border-radius: 9999px;
+      font-weight: 800; font-size: 0.85rem; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
+      animation: pwaPulse 3s ease-in-out infinite, fadeIn 0.5s ease-out;
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .pwa-install:hover { transform: scale(1.05); }
+    .pwa-install:active { transform: scale(0.96); }
+    .pwa-install-icon { width: 26px; height: 26px; border-radius: 7px; }
+    @keyframes pwaPulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,0,0.5); }
+      50% { box-shadow: 0 4px 28px rgba(255,107,0,0.9); }
+    }
+
+    /* Modale install */
+    .pwa-modal {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; animation: fadeIn 0.3s ease-out;
+    }
+    .pwa-modal-card {
+      background: var(--bg-card); border: 1px solid var(--orange);
+      border-radius: 1rem; padding: 2rem; max-width: 360px; width: 100%;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .pwa-modal-logo { width: 72px; height: 72px; border-radius: 16px; margin-bottom: 1rem;
+      box-shadow: 0 0 30px rgba(255,107,0,0.4); }
+    .pwa-modal-card h3 { font-size: 1.2rem; margin-bottom: 0.75rem; text-transform: uppercase; }
+    .pwa-modal-card p { color: var(--text-secondary); font-size: 0.9rem;
+      line-height: 1.6; margin-bottom: 1.25rem; white-space: pre-line; text-align: left; }
+    .pwa-modal-card .btn { width: 100%; }
+
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -533,6 +572,22 @@
   <div class="footer">
     <p>Produit du Québec · Conforme Loi 25 · ti-lex-al v10</p>
     <p>Données hébergées à Beauharnois, ca-central-1</p>
+  </div>
+
+  <!-- Bouton INSTALLER L'APP (PWA) -->
+  <button id="pwaInstallBtn" class="pwa-install hidden">
+    <img src="icon-192.png" alt="" class="pwa-install-icon">
+    <span>Installer l'app</span>
+  </button>
+
+  <!-- Modale instructions installation (iOS / fallback) -->
+  <div id="pwaModal" class="pwa-modal hidden">
+    <div class="pwa-modal-card">
+      <img src="icon-192.png" alt="ti-lex-AL" class="pwa-modal-logo">
+      <h3 id="pwaModalTitle">Installer ti-lex-AL</h3>
+      <p id="pwaModalText"></p>
+      <button class="btn btn-primary" onclick="document.getElementById('pwaModal').classList.add('hidden')">Compris</button>
+    </div>
   </div>
 
   <!-- Chat Widget -->
@@ -813,6 +868,67 @@
       setInterval(() => reg.update(), 60 * 60 * 1000);
     });
   }
+  </script>
+
+  <!-- INSTALLATION PWA (Android / Samsung / iOS) -->
+  <script>
+  (function () {
+    const btn = document.getElementById("pwaInstallBtn");
+    const modal = document.getElementById("pwaModal");
+    const modalTitle = document.getElementById("pwaModalTitle");
+    const modalText = document.getElementById("pwaModalText");
+    let deferredPrompt = null;
+
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    const isSamsung = /SamsungBrowser/i.test(ua);
+
+    // Déjà installé → ne rien afficher
+    if (isStandalone) { btn.classList.add("hidden"); return; }
+
+    function showModal(title, text) {
+      modalTitle.textContent = title;
+      modalText.textContent = text;
+      modal.classList.remove("hidden");
+    }
+
+    // Android / Chrome / Edge : capture le prompt natif
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btn.classList.remove("hidden");
+    });
+
+    btn.addEventListener("click", async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === "accepted") btn.classList.add("hidden");
+        deferredPrompt = null;
+        return;
+      }
+      // Pas de prompt natif dispo → instructions manuelles
+      if (isIOS) {
+        showModal("Installer sur iPhone",
+          "1. Appuie sur le bouton Partager (carré avec une flèche)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
+      } else if (isSamsung) {
+        showModal("Installer sur Samsung",
+          "1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »");
+      } else {
+        showModal("Installer ti-lex-AL",
+          "1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil »\n3. Confirme");
+      }
+    });
+
+    // iOS / Samsung : pas de beforeinstallprompt → afficher le bouton quand même
+    if (isIOS || isSamsung) btn.classList.remove("hidden");
+
+    window.addEventListener("appinstalled", () => {
+      btn.classList.add("hidden");
+      deferredPrompt = null;
+    });
+  })();
   </script>
 </body>
 </html>

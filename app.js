@@ -1839,22 +1839,34 @@ if (wa) wa.appendChild(createOrangeAvatar(120));
 /* ================= PWA INSTALL ================= */
 let deferredInstallPrompt = null;
 const installBtn = $("#installBtn");
+const _ua = navigator.userAgent || "";
+const _isIOS = /iPad|iPhone|iPod/.test(_ua);
+const _isSamsung = /SamsungBrowser/i.test(_ua);
+const _isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  if (installBtn) installBtn.classList.remove("hidden");
+  if (installBtn && !_isStandalone) installBtn.classList.remove("hidden");
 });
 
 if (installBtn) {
   installBtn.onclick = async () => {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    if (outcome === "accepted") {
-      installBtn.classList.add("hidden");
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === "accepted") installBtn.classList.add("hidden");
+      deferredInstallPrompt = null;
+      return;
     }
-    deferredInstallPrompt = null;
+    // Pas de prompt natif → instructions manuelles
+    if (_isIOS) {
+      alert("Pour installer ti-lex-AL :\n\n1. Appuie sur le bouton Partager (en bas)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
+    } else if (_isSamsung) {
+      alert("Pour installer ti-lex-AL sur Samsung :\n\n1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »");
+    } else {
+      alert("Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme");
+    }
   };
 }
 
@@ -1863,14 +1875,9 @@ window.addEventListener("appinstalled", () => {
   deferredInstallPrompt = null;
 });
 
-// sur iOS, afficher les instructions manuellement
-if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone) {
-  if (installBtn) {
-    installBtn.classList.remove("hidden");
-    installBtn.onclick = () => {
-      alert("Pour installer ti-lex-AL :\n\n1. Appuie sur le bouton Partager (en bas)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
-    };
-  }
+// iOS / Samsung : pas de beforeinstallprompt → afficher le bouton quand même
+if ((_isIOS || _isSamsung) && !_isStandalone && installBtn) {
+  installBtn.classList.remove("hidden");
 }
 
 console.log("ti-lex-AL v10 prêt.");
