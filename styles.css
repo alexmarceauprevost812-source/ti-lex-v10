@@ -849,7 +849,9 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .agents-toggle:hover{border-color:var(--orange)}
 .agents-toggle svg{stroke:var(--orange)}
 .agents-toggle-name{color:var(--orange)}
-.agents-panel{position:fixed;top:0;right:0;bottom:0;width:320px;background:var(--bg-2);
+.agents-panel{position:fixed;top:0;right:0;bottom:0;width:320px;
+  background:#111;color:#f5f5f5;
+  --bg:#0a0a0a;--bg-2:#111;--bg-3:#171717;--line:#262626;--txt:#f5f5f5;--txt-dim:#a3a3a3;
   border-left:1px solid var(--line);z-index:60;display:flex;flex-direction:column;
   transform:translateX(100%);transition:transform var(--t);box-shadow:-8px 0 40px rgba(0,0,0,.4)}
 .agents-panel.open{transform:translateX(0)}
@@ -869,7 +871,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .agent-emoji{font-size:1.4rem;width:38px;height:38px;display:flex;align-items:center;
   justify-content:center;background:var(--bg);border-radius:10px;flex-shrink:0}
 .agent-card.active .agent-emoji{background:var(--orange)}
-.agent-name{font-weight:700;font-size:.95rem}
+.agent-name{font-weight:700;font-size:.95rem;color:var(--txt)}
 .agent-desc{font-size:.8rem;color:var(--txt-dim);line-height:1.45}
 .agents-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;
   pointer-events:none;transition:opacity var(--t);z-index:55}
