@@ -1572,4 +1572,41 @@ if (state.github.token) ghConnect();
 const wa = $("#welcomeAvatar");
 if (wa) wa.appendChild(createOrangeAvatar(120));
 
+/* ================= PWA INSTALL ================= */
+let deferredInstallPrompt = null;
+const installBtn = $("#installBtn");
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (installBtn) installBtn.classList.remove("hidden");
+});
+
+if (installBtn) {
+  installBtn.onclick = async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === "accepted") {
+      installBtn.classList.add("hidden");
+    }
+    deferredInstallPrompt = null;
+  };
+}
+
+window.addEventListener("appinstalled", () => {
+  if (installBtn) installBtn.classList.add("hidden");
+  deferredInstallPrompt = null;
+});
+
+// sur iOS, afficher les instructions manuellement
+if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone) {
+  if (installBtn) {
+    installBtn.classList.remove("hidden");
+    installBtn.onclick = () => {
+      alert("Pour installer ti-lex-AL :\n\n1. Appuie sur le bouton Partager (en bas)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
+    };
+  }
+}
+
 console.log("ti-lex-AL v10 prêt.");
