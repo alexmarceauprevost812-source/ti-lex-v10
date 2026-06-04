@@ -65,6 +65,21 @@ function apiHeaders() {
   }
   return h;
 }
+function useProxy() { return !state.apiKey; }
+function chatFetch(bodyObj) {
+  if (useProxy()) {
+    return fetch(AI_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "chat", ...bodyObj }),
+    });
+  }
+  return fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: apiHeaders(),
+    body: JSON.stringify(bodyObj),
+  });
+}
 
 /* ---- Logos SVG officiels des services (inline, monochromes adaptés) ---- */
 const SERVICE = {
@@ -797,7 +812,7 @@ async function sendMessage() {
 
   const body = buildAssistantMsg();
 
-  if (!state.apiKey) {
+  if (!state.apiKey && !AI_PROXY) {
     renderAssistant(body, "⚙ Ajoute ta clé API Anthropic dans les Paramètres (icône en bas à gauche) pour activer Agent AL.");
     messages.scrollTop = messages.scrollHeight;
     return;
@@ -831,11 +846,7 @@ async function sendMessage() {
     };
     if (useWeb) reqBody.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }];
 
-    const res = await fetch(AI_PROXY, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind: "chat", ...reqBody }),
-    });
+    const res = await chatFetch(reqBody);
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
     const typer = makeTyper(partial => {
@@ -1164,7 +1175,7 @@ async function runCodex() {
 
   const body = buildCodexAssistantMsg();
 
-  if (!state.apiKey) {
+  if (!state.apiKey && !AI_PROXY) {
     body.innerHTML = '<p class="muted">Ajoute ta clé API Anthropic dans les Paramètres pour utiliser le Codex.</p>';
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     return;
@@ -1175,16 +1186,11 @@ async function runCodex() {
   const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${text}`;
 
   try {
-    const res = await fetch(AI_PROXY, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: "chat",
+    const res = await chatFetch({
         model: state.model,
         max_tokens: 2000,
         stream: true,
         messages: [{ role: "user", content: prompt }],
-      }),
     });
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
@@ -1251,16 +1257,11 @@ async function scanProject() {
 Sois précis, technique et honnête.
 ${ctx}`;
 
-    const res = await fetch(AI_PROXY, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: "chat",
+    const res = await chatFetch({
         model: state.model,
         max_tokens: 4096,
         stream: true,
         messages: [{ role: "user", content: prompt }],
-      }),
     });
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
