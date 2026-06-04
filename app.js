@@ -884,7 +884,8 @@ async function sendMessage() {
   $("#send").disabled = true;
 
   try {
-    const BASE_BRAIN = AGENTS[state.agent].prompt;
+    const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
+    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT;
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -932,8 +933,36 @@ async function sendMessage() {
   }
 }
 
+/* ---- Mermaid init ---- */
+if (typeof mermaid !== "undefined") {
+  mermaid.initialize({ startOnLoad: false, theme: "dark", themeVariables: {
+    primaryColor: "#ff6600", primaryTextColor: "#f5f5f5", primaryBorderColor: "#ff6600",
+    lineColor: "#a3a3a3", secondaryColor: "#171717", tertiaryColor: "#262626",
+    fontFamily: "'Sora',system-ui,sans-serif", fontSize: "13px",
+    noteBkgColor: "#1a1a1a", noteTextColor: "#f5f5f5", noteBorderColor: "#ff6600",
+  }});
+}
+let mermaidCounter = 0;
+
+function renderMermaidBlocks(container) {
+  const placeholders = container.querySelectorAll(".mermaid-pending");
+  if (!placeholders.length || typeof mermaid === "undefined") return;
+  placeholders.forEach(async (el) => {
+    const code = el.getAttribute("data-mermaid");
+    if (!code) return;
+    const id = "mmd-" + (++mermaidCounter);
+    try {
+      const { svg } = await mermaid.render(id, code);
+      el.innerHTML = `<div class="mermaid-label"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>Diagramme</div>${svg}`;
+      el.classList.remove("mermaid-pending");
+    } catch (_) {
+      el.innerHTML = `<pre style="color:var(--txt-dim);font-size:.8rem">${escapeHtml(code)}</pre>`;
+      el.classList.remove("mermaid-pending");
+    }
+  });
+}
+
 function renderAssistant(body, full, streaming) {
-  // pendant la frappe, masque une balise incomplète en fin de texte (ex: "<reflexi")
   if (streaming) full = full.replace(/<[^>]*$/, "");
   let reflex = "", answer = full;
   const closed = full.match(/<reflexion>([\s\S]*?)<\/reflexion>/i);
@@ -941,7 +970,6 @@ function renderAssistant(body, full, streaming) {
     reflex = closed[1].trim();
     answer = full.replace(closed[0], "").trim();
   } else {
-    // pendant le streaming : la balise de réflexion est ouverte mais pas encore fermée
     const open = full.match(/<reflexion>([\s\S]*)$/i);
     if (open) { reflex = open[1].trim(); answer = ""; }
   }
@@ -953,12 +981,27 @@ function renderAssistant(body, full, streaming) {
       <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2zM9 21h6"/></svg>
       Réflexion</div>${escapeHtml(reflex).replace(/\n/g, "<br>")}</div>`;
   }
-  const ans = escapeHtml(answer).replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  let ans = escapeHtml(answer);
+  // Detect ```mermaid blocks and turn them into renderable placeholders
+  ans = ans.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
+    const decoded = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
+    return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  });
+  // Other code blocks
+  ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre style="background:#080808;border:1px solid #1e1e1e;border-radius:10px;padding:14px;font-family:var(--mono);font-size:.84rem;line-height:1.7;overflow-x:auto;white-space:pre-wrap;margin:8px 0">${code}</pre>`
+  );
+  ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
+
   const caret = streaming ? '<span class="caret"></span>' : '';
   html += `<div>${ans}${caret}</div>`;
   if (!streaming) html += serviceTags(answer);
   body.innerHTML = html;
-  if (!streaming && answer) addPushButton(body, full);
+  if (!streaming) {
+    if (answer) addPushButton(body, full);
+    renderMermaidBlocks(body);
+  }
 }
 
 /* ---- Push code to GitHub ---- */
@@ -1266,6 +1309,7 @@ async function runCodex() {
     body.classList.remove("streaming");
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = formatCode(full);
+    renderMermaidBlocks(body);
     addPushButton(body, full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
@@ -1337,6 +1381,7 @@ ${ctx}`;
     body.classList.remove("streaming");
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = formatCode(full);
+    renderMermaidBlocks(body);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(`Scan projet : ${projectSourceLabel()}`, full);
   } catch (err) {
@@ -1349,9 +1394,16 @@ ${ctx}`;
 }
 
 function formatCode(text) {
-  return escapeHtml(text)
-    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${highlightSyntax(c)}</pre>`)
-    .replace(/\n/g, "<br>");
+  let result = escapeHtml(text);
+  result = result.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
+    const decoded = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
+    return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  });
+  result = result.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${highlightSyntax(c)}</pre>`);
+  return result.replace(/\n/g, "<br>");
+}
+function renderCodexMermaid(container) {
+  renderMermaidBlocks(container);
 }
 
 function highlightSyntax(code) {
