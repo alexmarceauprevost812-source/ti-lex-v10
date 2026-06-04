@@ -946,25 +946,17 @@ function createOrangeAvatar(size = 40) {
   wrap.style.height = size + "px";
   wrap.innerHTML = `
     <div class="al-aura"></div>
-    <div class="al-face">
-      <div class="al-shine"></div>
-      <div class="al-brows"><span></span><span></span></div>
-      <div class="al-eyes">
-        <div class="al-eye"><div class="al-pupil al-pupil-l"><div class="al-glint"></div></div><div class="al-lid"></div></div>
-        <div class="al-eye"><div class="al-pupil al-pupil-r"><div class="al-glint"></div></div><div class="al-lid"></div></div>
-      </div>
-      <div class="al-mouth"></div>
-      <div class="al-cheek al-cheek-l"></div>
-      <div class="al-cheek al-cheek-r"></div>
-    </div>
-    <div class="al-particles"><span></span><span></span><span></span></div>`;
+    <div class="al-eyes-only">
+      <div class="al-eye"><div class="al-pupil al-pupil-l"><div class="al-glint"></div></div><div class="al-lid"></div></div>
+      <div class="al-eye"><div class="al-pupil al-pupil-r"><div class="al-glint"></div></div><div class="al-lid"></div></div>
+    </div>`;
 
-  const face = wrap.querySelector(".al-face");
+  const eyes = wrap.querySelector(".al-eyes-only");
   const pupils = wrap.querySelectorAll(".al-pupil");
   const lids = wrap.querySelectorAll(".al-lid");
 
   const onMouse = (e) => {
-    const r = face.getBoundingClientRect();
+    const r = eyes.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
     const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 12, 2.5);
