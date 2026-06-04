@@ -81,6 +81,10 @@
         <span class="pill-knob"></span>
         <span class="pill-txt">Réflexion</span>
       </button>
+      <button class="agents-toggle" id="agentsToggle" aria-label="Choisir un agent" title="Agents">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg>
+        <span class="agents-toggle-name" id="agentsToggleName">AL</span>
+      </button>
     </div>
   </header>
 
@@ -110,6 +114,7 @@
             <button class="plus-item" data-act="image"><span class="pico">🖼️</span>Image</button>
             <button class="plus-item" data-act="file"><span class="pico">📎</span>Fichier</button>
             <button class="plus-item" data-act="zip"><span class="pico">🗜️</span>Fichier ZIP</button>
+            <button class="plus-item" data-act="image-gen"><span class="pico">🎨</span>Générer une image</button>
             <button class="plus-item" data-act="mic"><span class="pico">🎤</span>Micro (dicter)</button>
             <button class="plus-item" data-act="web"><span class="pico">🛠️</span>Chercher sur le web</button>
           </div>
@@ -124,6 +129,16 @@
     <input type="file" id="fileImage" accept="image/*" multiple hidden>
     <input type="file" id="fileAny" multiple hidden>
     <input type="file" id="fileZip" accept=".zip,application/zip" hidden>
+
+    <!-- Panneau de sélection d'agent -->
+    <aside class="agents-panel" id="agentsPanel">
+      <div class="agents-panel-head">
+        <h3>Choisir un agent</h3>
+        <button class="agents-close" id="agentsClose" aria-label="Fermer">×</button>
+      </div>
+      <div class="agents-list" id="agentsList"></div>
+    </aside>
+    <div class="agents-overlay" id="agentsOverlay"></div>
   </section>
 
   <!-- ===== VUE CODEX ===== -->

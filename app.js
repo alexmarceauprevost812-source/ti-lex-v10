@@ -19,6 +19,23 @@ const state = {
   projectFiles: [],
 };
 
+/* ---- Edge Function (remplace les appels directs à api.anthropic.com) ---- */
+const AI_PROXY = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
+
+/* ---- Agents ---- */
+const AGENTS = {
+  general: { name: "AL", emoji: "🤖", desc: "Généraliste, répond à tout avec rigueur.",
+    prompt: "Tu es Agent AL, un assistant IA expert, rigoureux et très intelligent de la plateforme québécoise ti-lex-AL v10. Tu raisonnes en profondeur. Tes réponses sont complètes, précises et actionnables. Tu réponds en français québécois, sans bla-bla." },
+  dev: { name: "AL Dev", emoji: "💻", desc: "Spécialiste code, architecture, debug.",
+    prompt: "Tu es AL Dev, un ingénieur logiciel senior de ti-lex-AL. Tu écris du code production-ready, tu repères les bugs, tu expliques l'architecture. Tu utilises des blocs ``` pour le code et cites les chemins de fichiers exacts. Français québécois, technique et direct." },
+  secu: { name: "AL Sécurité", emoji: "🛡️", desc: "Cybersécurité défensive, conformité Loi 25.",
+    prompt: "Tu es AL Sécurité, expert en cybersécurité DÉFENSIVE et conformité (Loi 25, art. 342.1 C.cr.). Tu refuses tout ce qui touche à des activités offensives non autorisées. Tu aides sur la défense, l'audit, les SOW, la remédiation. Français québécois." },
+  creatif: { name: "AL Créatif", emoji: "🎨", desc: "Rédaction, idées, contenu, branding.",
+    prompt: "Tu es AL Créatif, un partenaire de création de ti-lex-AL. Tu génères des idées, du contenu, du texte marketing, des concepts. Ton ton est vivant et inspirant. Français québécois." },
+};
+state.agent = "general";
+state.imageMode = false;
+
 /* pièces jointes en attente d'envoi */
 let attachments = [];
 
@@ -89,6 +106,64 @@ function switchView(v) {
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
+
+/* ================= SÉLECTEUR D'AGENTS ================= */
+function renderAgents() {
+  const list = $("#agentsList");
+  if (!list) return;
+  list.innerHTML = Object.entries(AGENTS).map(([key, a]) => `
+    <button class="agent-card${key === state.agent ? ' active' : ''}" data-agent="${key}">
+      <div class="agent-card-top"><span class="agent-emoji">${a.emoji}</span><span class="agent-name">${a.name}</span></div>
+      <span class="agent-desc">${a.desc}</span>
+    </button>`).join("");
+  $$(".agent-card").forEach(c => c.onclick = () => {
+    state.agent = c.dataset.agent;
+    $("#agentsToggleName").textContent = AGENTS[state.agent].name.replace("AL ", "") || "AL";
+    renderAgents(); closeAgents();
+  });
+}
+function openAgents(){ $("#agentsPanel").classList.add("open"); $("#agentsOverlay").classList.add("show"); }
+function closeAgents(){ $("#agentsPanel").classList.remove("open"); $("#agentsOverlay").classList.remove("show"); }
+if ($("#agentsToggle")) $("#agentsToggle").onclick = openAgents;
+if ($("#agentsClose")) $("#agentsClose").onclick = closeAgents;
+if ($("#agentsOverlay")) $("#agentsOverlay").onclick = closeAgents;
+renderAgents();
+
+/* ================= GÉNÉRATION D'IMAGE ================= */
+function toggleImageMode(on) {
+  state.imageMode = on ?? !state.imageMode;
+  $(".composer").classList.toggle("image-mode", state.imageMode);
+  $("#input").placeholder = state.imageMode ? "Décris l'image à générer…" : "Écris à Agent AL…";
+  let banner = $(".image-mode-banner");
+  if (state.imageMode && !banner) {
+    banner = document.createElement("div");
+    banner.className = "image-mode-banner";
+    banner.innerHTML = `🎨 Mode image <button id="exitImageMode">×</button>`;
+    $(".composer").insertBefore(banner, $(".composer-inner"));
+    $("#exitImageMode").onclick = () => toggleImageMode(false);
+  } else if (!state.imageMode && banner) { banner.remove(); }
+}
+async function generateImage(prompt) {
+  $(".welcome")?.remove();
+  addUserMsg("🎨 " + prompt, []);
+  const body = buildAssistantMsg();
+  try {
+    const res = await fetch(AI_PROXY, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "image", prompt, size: "1024x1024" }),
+    });
+    const data = await res.json();
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+    if (!res.ok || !data.b64) throw new Error(data.error || "Échec de génération");
+    const src = `data:image/png;base64,${data.b64}`;
+    body.innerHTML = `<div class="gen-image-wrap"><img src="${src}" alt="${escapeHtml(prompt)}">
+      <div class="gen-image-actions"><a href="${src}" download="tilex-image.png">⬇ Télécharger</a></div></div>`;
+  } catch (err) {
+    if (body._msgWrap) body._msgWrap.classList.remove("responding");
+    body.innerHTML = `<p class="muted">Erreur image : ${escapeHtml(err.message)}</p>`;
+  }
+  messages.scrollTop = messages.scrollHeight;
+}
 
 /* ================= TOGGLES ================= */
 function bindReflexion(btn) {
@@ -374,6 +449,7 @@ $$(".plus-item").forEach(item => {
     if (act === "image") $("#fileImage").click();
     else if (act === "file") $("#fileAny").click();
     else if (act === "zip") $("#fileZip").click();
+    else if (act === "image-gen") { toggleImageMode(true); closePlus(); return; }
     else if (act === "mic") startMic();
     else if (act === "web") toggleWebSearch(item);
     if (act !== "web") closePlus();
@@ -705,6 +781,13 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text && !attachments.length) return;
 
+  if (state.imageMode && text) {
+    input.value = ""; input.style.height = "auto";
+    toggleImageMode(false);
+    generateImage(text);
+    return;
+  }
+
   // snapshot des pièces jointes + recherche web, puis on vide le composer
   const atts = attachments.slice();
   const useWeb = state.webSearch;
@@ -726,12 +809,7 @@ async function sendMessage() {
   $("#send").disabled = true;
 
   try {
-    const BASE_BRAIN = "Tu es Agent AL, un assistant IA expert, rigoureux et très intelligent de la plateforme québécoise ti-lex-AL v10. " +
-      "Tu raisonnes en profondeur avant de répondre. Tes réponses sont complètes, précises, structurées et directement actionnables. " +
-      "Quand un projet est connecté (GitHub ou ZIP), tu CONNAIS son code : tu peux l'analyser, repérer des bugs, expliquer l'architecture, " +
-      "proposer des améliorations concrètes et écrire du code production-ready qui s'intègre au projet existant. " +
-      "Tu cites les chemins de fichiers exacts quand c'est pertinent. Tu utilises des blocs ``` pour le code. " +
-      "Tu réponds en français québécois, sans bla-bla inutile.";
+    const BASE_BRAIN = AGENTS[state.agent].prompt;
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -753,10 +831,10 @@ async function sendMessage() {
     };
     if (useWeb) reqBody.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }];
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch(AI_PROXY, {
       method: "POST",
-      headers: apiHeaders(),
-      body: JSON.stringify(reqBody),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "chat", ...reqBody }),
     });
     if (!res.ok) throw new Error(await apiError(res));
     body.classList.add("streaming");
@@ -1097,10 +1175,11 @@ async function runCodex() {
   const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code ${lang} propre, commenté et production-ready à partir de cette demande. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${text}`;
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch(AI_PROXY, {
       method: "POST",
-      headers: apiHeaders(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        kind: "chat",
         model: state.model,
         max_tokens: 2000,
         stream: true,
@@ -1172,10 +1251,11 @@ async function scanProject() {
 Sois précis, technique et honnête.
 ${ctx}`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch(AI_PROXY, {
       method: "POST",
-      headers: apiHeaders(),
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        kind: "chat",
         model: state.model,
         max_tokens: 4096,
         stream: true,
