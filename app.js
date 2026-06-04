@@ -20,7 +20,7 @@ const state = {
 };
 
 /* ---- Edge Function (remplace les appels directs à api.anthropic.com) ---- */
-const AI_PROXY = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
+const AI_PROXY = (window.TILEX_CONFIG ? TILEX_CONFIG.SUPABASE_URL + TILEX_CONFIG.AI_PROXY_PATH : "");
 
 /* ---- Agents ---- */
 const AGENTS = {
@@ -197,10 +197,14 @@ function apiHeaders() {
   return h;
 }
 function useProxy() { return !state.apiKey; }
+function proxyToken() {
+  return state.supabase.key || (window.TILEX_CONFIG ? TILEX_CONFIG.SUPABASE_ANON_KEY : "");
+}
 function chatFetch(bodyObj) {
   if (useProxy()) {
     const h = { "Content-Type": "application/json" };
-    if (state.supabase.key) h["Authorization"] = `Bearer ${state.supabase.key}`;
+    const tk = proxyToken();
+    if (tk) h["Authorization"] = `Bearer ${tk}`;
     return fetch(AI_PROXY, {
       method: "POST",
       headers: h,
@@ -375,7 +379,8 @@ async function generateImage(prompt) {
   const body = buildAssistantMsg();
   try {
     const ih = { "Content-Type": "application/json" };
-    if (state.supabase.key) ih["Authorization"] = `Bearer ${state.supabase.key}`;
+    const itk = proxyToken();
+    if (itk) ih["Authorization"] = `Bearer ${itk}`;
     const res = await fetch(AI_PROXY, {
       method: "POST", headers: ih,
       body: JSON.stringify({ kind: "image", prompt, size: "1024x1024" }),

@@ -15,6 +15,10 @@ build/
 !.env.example
 !.env.local.example
 
+# Config frontend (contient les clés publishable)
+config.js
+!config.example.js
+
 # Supabase
 .branches
 .temp

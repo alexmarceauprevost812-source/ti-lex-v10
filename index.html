@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#ff6600">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -681,14 +682,11 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm';
-
     let supabase = null, currentUser = null;
 
     function initSupabase() {
-      if (window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      if (window.supabase && window.TILEX_CONFIG) {
+        supabase = window.supabase.createClient(TILEX_CONFIG.SUPABASE_URL, TILEX_CONFIG.SUPABASE_ANON_KEY);
         checkSession();
       }
     }
