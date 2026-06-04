@@ -401,6 +401,22 @@
         <button class="btn-codex" id="sbConnect" data-w="Connec" data-b="ter">Connecter</button>
       </div>
 
+      <!-- ===== MES DONNÉES (Loi 25) ===== -->
+      <div class="set-block">
+        <h3>Mes données <span class="badge-loi25">Loi 25</span></h3>
+        <p class="muted">Conformément à la Loi 25 du Québec, vous pouvez consulter, exporter et supprimer vos renseignements personnels.</p>
+        <div class="data-actions">
+          <button class="btn-codex" id="dataExportBtn" data-w="Expor" data-b="ter">Exporter mes données</button>
+          <button class="btn-codex btn-danger" id="dataDeleteBtn" data-w="Suppri" data-b="mer">Supprimer toutes mes données</button>
+          <button class="btn-codex" id="consentWithdrawBtn" data-w="Reti" data-b="rer">Retirer mon consentement</button>
+        </div>
+        <p class="muted" style="margin-top:0.75rem;font-size:0.7rem">
+          Données hébergées à Beauharnois, Québec (ca-central-1).
+          <a href="#" class="set-link" onclick="showLegalModal('privacy');return false">Politique de confidentialité</a> ·
+          <a href="#" class="set-link" onclick="showLegalModal('terms');return false">Conditions d'utilisation</a>
+        </p>
+      </div>
+
       <!-- ===== AUTRES ===== -->
       <div class="set-block">
         <h3>Autres connexions</h3>
@@ -413,6 +429,30 @@
   </section>
 
 </main>
+
+<!-- Bannière consentement Loi 25 -->
+<div id="consentBanner" class="consent-banner hidden">
+  <div class="consent-inner">
+    <p><strong>Protection de vos renseignements personnels</strong></p>
+    <p>ti-lex-AL utilise le stockage local de votre navigateur pour sauvegarder vos préférences, conversations et données de session. Aucun témoin (cookie) tiers n'est utilisé. Vos données sont hébergées au Québec conformément à la <strong>Loi 25</strong>.</p>
+    <div class="consent-actions">
+      <button class="btn-codex consent-accept" onclick="acceptConsent()">J'accepte</button>
+      <button class="btn-codex consent-decline" onclick="declineConsent()">Je refuse</button>
+      <a href="#" class="consent-link" onclick="showLegalModal('privacy');return false">En savoir plus</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modale légale -->
+<div id="legalModal" class="legal-modal hidden">
+  <div class="legal-modal-card">
+    <div class="legal-modal-header">
+      <h3 id="legalModalTitle"></h3>
+      <button class="legal-close" onclick="document.getElementById('legalModal').classList.add('hidden')">&times;</button>
+    </div>
+    <div id="legalModalContent" class="legal-modal-body"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script src="app.js"></script>

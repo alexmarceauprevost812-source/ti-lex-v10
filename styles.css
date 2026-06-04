@@ -836,6 +836,64 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 }
 .memory-clear-btn:hover{background:rgba(255,68,68,.1)}
 
+/* ============ LOI 25 — CONSENTEMENT + LEGAL ============ */
+.consent-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:9999;
+  background:var(--bg-2,#111);border-top:2px solid var(--orange,#ff6b00);
+  padding:18px 20px;box-shadow:0 -8px 30px rgba(0,0,0,.6);
+  animation:slideUpConsent .4s ease-out;
+}
+@keyframes slideUpConsent{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.consent-inner{max-width:700px;margin:0 auto}
+.consent-inner p{font-size:.8rem;color:var(--txt-dim,#aaa);margin-bottom:.4rem;line-height:1.5}
+.consent-inner strong{color:var(--txt,#fff)}
+.consent-actions{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-top:.75rem}
+.consent-accept{background:var(--orange,#ff6b00)!important;color:#000!important}
+.consent-decline{background:transparent!important;border:1px solid #666!important;color:var(--txt,#fff)!important}
+.consent-link{color:var(--orange,#ff6b00);font-size:.8rem;text-decoration:none}
+.consent-link:hover{text-decoration:underline}
+
+.badge-loi25{
+  display:inline-block;padding:2px 8px;font-size:.65rem;font-weight:700;
+  background:var(--orange,#ff6b00);color:#000;border-radius:4px;margin-left:6px;
+  vertical-align:middle;text-transform:uppercase;letter-spacing:.04em;
+}
+.data-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+.btn-danger{border-color:#ff4444!important;color:#ff4444!important;background:transparent!important}
+.btn-danger:hover{background:rgba(255,68,68,.1)!important}
+
+.legal-modal{
+  position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  padding:1.5rem;animation:fadeInLegal .3s ease-out;
+}
+@keyframes fadeInLegal{from{opacity:0}to{opacity:1}}
+.legal-modal-card{
+  background:var(--bg-2,#111);border:1px solid var(--line,#333);
+  border-radius:16px;max-width:640px;width:100%;
+  max-height:85vh;display:flex;flex-direction:column;overflow:hidden;
+}
+.legal-modal-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 24px 16px;border-bottom:1px solid var(--line,#333);
+}
+.legal-modal-header h3{margin:0;font-size:1.1rem;color:var(--txt,#fff)}
+.legal-close{
+  background:none;border:none;color:var(--txt-dim,#aaa);font-size:1.5rem;
+  cursor:pointer;padding:4px 8px;border-radius:8px;transition:var(--t);
+}
+.legal-close:hover{background:rgba(255,255,255,.1);color:var(--txt,#fff)}
+.legal-modal-body{
+  padding:20px 24px 24px;overflow-y:auto;
+  font-size:.82rem;line-height:1.7;color:var(--txt-dim,#aaa);
+}
+.legal-modal-body h4{color:var(--txt,#fff);margin:1.2rem 0 .4rem;font-size:.92rem}
+.legal-modal-body ul{margin:.4rem 0 .8rem 1.2rem}
+.legal-modal-body li{margin-bottom:.3rem}
+.legal-modal-body strong{color:var(--txt,#fff)}
+.legal-modal-body a{color:var(--orange,#ff6b00)}
+
 /* ============ RESPONSIVE ============ */
 .mobile-only{display:none}
 @media(max-width:860px){

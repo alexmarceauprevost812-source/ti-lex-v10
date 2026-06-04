@@ -2172,4 +2172,169 @@ if ((_isIOS || _isSamsung) && !_isStandalone && installBtn) {
   installBtn.classList.remove("hidden");
 }
 
-console.log("ti-lex-AL v10 prêt.");
+/* ================= LOI 25 — CONSENTEMENT + DONNÉES ================= */
+const LEGAL = {
+  privacy: {
+    title: "Politique de confidentialité",
+    content: `
+<p><strong>Dernière mise à jour :</strong> 4 juin 2026</p>
+<p><strong>Responsable :</strong> ti-lex-AL — Québec, Canada</p>
+
+<h4>1. Renseignements collectés</h4>
+<p>ti-lex-AL collecte uniquement les renseignements nécessaires au fonctionnement du service :</p>
+<ul>
+<li><strong>Compte :</strong> courriel, nom, mot de passe (chiffré)</li>
+<li><strong>Utilisation :</strong> conversations IA, préférences, mémoire de l'agent</li>
+<li><strong>Quotas :</strong> compteur d'utilisation journalier (messages, images)</li>
+</ul>
+<p>Aucun témoin (cookie) tiers n'est utilisé. Les données de session sont stockées dans le stockage local de votre navigateur (localStorage).</p>
+
+<h4>2. Finalités du traitement</h4>
+<ul>
+<li>Fournir et améliorer le service d'agent IA</li>
+<li>Authentifier les utilisateurs</li>
+<li>Appliquer les limites d'utilisation</li>
+<li>Assurer la sécurité du service</li>
+</ul>
+
+<h4>3. Hébergement et sécurité</h4>
+<p>Toutes les données sont hébergées au <strong>Québec</strong> (Beauharnois, ca-central-1) via Supabase. Les communications sont chiffrées (TLS 1.3). Les mots de passe sont hachés (bcrypt). L'accès aux données est protégé par Row Level Security (RLS).</p>
+
+<h4>4. Partage avec des tiers</h4>
+<p>Le contenu des conversations est transmis aux API d'intelligence artificielle (Anthropic, OpenAI) pour générer les réponses. <strong>Aucune donnée personnelle identifiable</strong> n'est partagée avec ces fournisseurs au-delà du contenu de la conversation. Aucune donnée n'est vendue à des tiers.</p>
+
+<h4>5. Conservation</h4>
+<p>Les conversations sont conservées dans votre navigateur. Vous pouvez les supprimer à tout moment. Les données de compte sont conservées tant que le compte est actif. Les compteurs d'utilisation sont réinitialisés quotidiennement.</p>
+
+<h4>6. Vos droits (Loi 25)</h4>
+<p>Conformément à la <strong>Loi 25 sur la protection des renseignements personnels</strong> du Québec, vous avez le droit de :</p>
+<ul>
+<li><strong>Accéder</strong> à vos renseignements personnels</li>
+<li><strong>Rectifier</strong> vos renseignements inexacts</li>
+<li><strong>Supprimer</strong> vos renseignements et votre compte</li>
+<li><strong>Retirer</strong> votre consentement à tout moment</li>
+<li><strong>Porter plainte</strong> auprès de la Commission d'accès à l'information du Québec (CAI)</li>
+</ul>
+<p>Pour exercer vos droits, utilisez la section « Mes données » dans les paramètres de l'application.</p>
+
+<h4>7. Incident de confidentialité</h4>
+<p>En cas d'incident impliquant vos renseignements personnels, nous vous aviserons dans les <strong>72 heures</strong> conformément à la Loi 25, et nous aviserons la Commission d'accès à l'information du Québec.</p>
+
+<h4>8. Consentement</h4>
+<p>En utilisant ti-lex-AL, vous consentez à la collecte et au traitement de vos renseignements personnels tels que décrits dans cette politique. Vous pouvez retirer votre consentement à tout moment depuis les paramètres.</p>
+`
+  },
+  terms: {
+    title: "Conditions d'utilisation",
+    content: `
+<p><strong>Dernière mise à jour :</strong> 4 juin 2026</p>
+
+<h4>1. Acceptation</h4>
+<p>En accédant à ti-lex-AL, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service.</p>
+
+<h4>2. Description du service</h4>
+<p>ti-lex-AL est une plateforme d'agent intelligent propulsée par l'intelligence artificielle. Le service inclut : chat IA, génération de code (Codex), analyse de sécurité, génération d'images et un studio de développement.</p>
+
+<h4>3. Utilisation acceptable</h4>
+<p>Vous vous engagez à :</p>
+<ul>
+<li>Ne pas utiliser le service à des fins illégales</li>
+<li>Ne pas tenter de contourner les limites d'utilisation</li>
+<li>Ne pas générer de contenu haineux, violent ou illicite</li>
+<li>Ne pas compromettre la sécurité du service</li>
+<li>Respecter les lois du Québec et du Canada</li>
+</ul>
+
+<h4>4. Limites d'utilisation</h4>
+<p>Le service applique des quotas journaliers : 200 messages et 20 images par jour. Ces limites peuvent être modifiées.</p>
+
+<h4>5. Propriété intellectuelle</h4>
+<p>Le contenu que vous créez via ti-lex-AL vous appartient. Le code source, le design et la marque ti-lex-AL sont protégés par le droit d'auteur.</p>
+
+<h4>6. Limitation de responsabilité</h4>
+<p>Les réponses générées par l'IA sont fournies à titre informatif. ti-lex-AL ne garantit pas l'exactitude, la complétude ou la pertinence des réponses. L'utilisateur est responsable de valider les informations avant de les utiliser.</p>
+
+<h4>7. Droit applicable</h4>
+<p>Les présentes conditions sont régies par les lois du <strong>Québec</strong> et du <strong>Canada</strong>. Tout litige sera soumis aux tribunaux compétents du district judiciaire de Montréal.</p>
+
+<h4>8. Modifications</h4>
+<p>Nous nous réservons le droit de modifier ces conditions. Les modifications prendront effet dès leur publication.</p>
+
+<h4>9. Langue</h4>
+<p>Conformément à la <strong>Charte de la langue française</strong> (Loi 101), les présentes conditions sont rédigées en français. En cas de divergence avec toute version traduite, la version française prévaut.</p>
+`
+  }
+};
+
+function showLegalModal(type) {
+  const doc = LEGAL[type];
+  if (!doc) return;
+  $("#legalModalTitle").textContent = doc.title;
+  $("#legalModalContent").innerHTML = doc.content;
+  $("#legalModal").classList.remove("hidden");
+}
+
+function acceptConsent() {
+  localStorage.setItem("tilex-consent", JSON.stringify({ accepted: true, date: new Date().toISOString() }));
+  $("#consentBanner").classList.add("hidden");
+}
+
+function declineConsent() {
+  localStorage.setItem("tilex-consent", JSON.stringify({ accepted: false, date: new Date().toISOString() }));
+  $("#consentBanner").classList.add("hidden");
+}
+
+function exportMyData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    platform: "ti-lex-AL v10",
+    jurisdiction: "Québec, Canada (Loi 25)",
+    consent: JSON.parse(localStorage.getItem("tilex-consent") || "null"),
+    preferences: { model: state.model, theme: state.theme, agent: state.agent },
+    memory: memory,
+    chatConversations: chatConvs,
+    codexHistory: codexHistory,
+    connections: {
+      github: state.connected.github ? { repo: state.github.repo, branch: state.github.branch } : null,
+      supabase: state.connected.supabase ? { url: state.supabase.url } : null,
+    },
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `tilex-al-donnees-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function deleteAllMyData() {
+  if (!confirm("Supprimer TOUTES vos données locales ?\n\nConversations, mémoire, préférences, connexions — tout sera effacé.\n\nCette action est irréversible.")) return;
+  if (!confirm("Dernière confirmation : voulez-vous vraiment tout supprimer ?")) return;
+  const keys = ["tilex-al-apikey", "tilex-al-model", "tilex-al-github", "tilex-al-supabase",
+    "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history", "tilex-consent"];
+  keys.forEach(k => localStorage.removeItem(k));
+  alert("Toutes vos données locales ont été supprimées.");
+  location.reload();
+}
+
+function withdrawConsent() {
+  if (!confirm("Retirer votre consentement ?\n\nVos données locales seront supprimées et vous serez redirigé vers la page d'accueil.")) return;
+  const keys = ["tilex-al-apikey", "tilex-al-model", "tilex-al-github", "tilex-al-supabase",
+    "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history"];
+  keys.forEach(k => localStorage.removeItem(k));
+  localStorage.setItem("tilex-consent", JSON.stringify({ accepted: false, date: new Date().toISOString() }));
+  window.location.href = "index.html";
+}
+
+// Consent banner on load
+(function() {
+  const consent = JSON.parse(localStorage.getItem("tilex-consent") || "null");
+  if (!consent) $("#consentBanner").classList.remove("hidden");
+})();
+
+// Data management buttons
+if ($("#dataExportBtn")) $("#dataExportBtn").onclick = exportMyData;
+if ($("#dataDeleteBtn")) $("#dataDeleteBtn").onclick = deleteAllMyData;
+if ($("#consentWithdrawBtn")) $("#consentWithdrawBtn").onclick = withdrawConsent;
+
+console.log("ti-lex-AL v10 prêt — conforme Loi 25 du Québec.");
