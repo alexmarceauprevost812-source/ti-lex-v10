@@ -647,9 +647,10 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 }
 .claude-label img{width:12px;height:12px;border-radius:2px}
 
-/* Push to GitHub button on code blocks */
+/* Action buttons on code blocks (Studio + Push) */
+.code-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .push-gh-btn{
-  display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 12px;
+  display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
   background:var(--bg-3);border:1px solid var(--line);border-radius:8px;
   font-family:var(--font);font-size:.74rem;font-weight:600;color:var(--txt-dim);
   cursor:pointer;transition:var(--t);

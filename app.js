@@ -1004,7 +1004,7 @@ function renderAssistant(body, full, streaming) {
   if (!streaming) html += serviceTags(answer);
   body.innerHTML = html;
   if (!streaming) {
-    if (answer) addPushButton(body, full);
+    if (answer) addCodeActions(body, full);
     renderMermaidBlocks(body);
   }
 }
@@ -1051,21 +1051,34 @@ async function pushToGithub(content, suggestedName) {
 
 function extractCodeBlocks(text) {
   const blocks = [];
-  const regex = /```[\w]*\n?([\s\S]*?)```/g;
+  const regex = /```(\w*)\n?([\s\S]*?)```/g;
   let m;
-  while ((m = regex.exec(text)) !== null) blocks.push(m[1].trim());
-  return blocks.length ? blocks : [text];
+  while ((m = regex.exec(text)) !== null) blocks.push({ lang: m[1], code: m[2].trim() });
+  return blocks.length ? blocks : [{ lang: "", code: text }];
 }
 
-function addPushButton(container, fullText) {
-  if (!state.connected.github) return;
-  const codes = extractCodeBlocks(fullText);
-  if (!codes.length) return;
-  const btn = document.createElement("button");
-  btn.className = "push-gh-btn";
-  btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
-  btn.onclick = () => pushToGithub(codes[0]);
-  container.appendChild(btn);
+const LANG_EXT = { javascript: "js", typescript: "ts", python: "py", html: "html", css: "css", sql: "sql", rust: "rs", go: "go", java: "java", json: "json", bash: "sh", sh: "sh", yaml: "yml", xml: "xml", jsx: "jsx", tsx: "tsx" };
+
+function addCodeActions(container, fullText) {
+  const blocks = extractCodeBlocks(fullText);
+  if (!blocks.length || !blocks[0].code) return;
+  const wrap = document.createElement("div");
+  wrap.className = "code-actions";
+  const ext = LANG_EXT[blocks[0].lang.toLowerCase()] || "txt";
+  const name = `snippet.${ext}`;
+  const studioBtn = document.createElement("button");
+  studioBtn.className = "push-gh-btn";
+  studioBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Ouvrir dans le Studio`;
+  studioBtn.onclick = () => openInStudio(blocks[0].code, name);
+  wrap.appendChild(studioBtn);
+  if (state.connected.github) {
+    const ghBtn = document.createElement("button");
+    ghBtn.className = "push-gh-btn";
+    ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
+    ghBtn.onclick = () => pushToGithub(blocks[0].code);
+    wrap.appendChild(ghBtn);
+  }
+  container.appendChild(wrap);
 }
 
 function escapeHtml(s) {
@@ -1358,6 +1371,7 @@ function rebuildCodexChat() {
       const body = buildCodexAssistantMsg();
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       body.innerHTML = formatCode(m.text);
+      addCodeActions(body, m.text);
     }
   });
 }
@@ -1547,7 +1561,7 @@ async function runCodex() {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = formatCode(full);
     renderMermaidBlocks(body);
-    addPushButton(body, full);
+    addCodeActions(body, full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
   } catch (err) {
@@ -1619,6 +1633,7 @@ ${ctx}`;
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = formatCode(full);
     renderMermaidBlocks(body);
+    addCodeActions(body, full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(`Scan projet : ${projectSourceLabel()}`, full);
   } catch (err) {
@@ -1657,6 +1672,19 @@ function highlightSyntax(code) {
 let studioZipFiles = [];
 let studioGhFiles = [];
 let studioCurrentFile = null;
+let studioTempCounter = 0;
+
+function openInStudio(code, suggestedName) {
+  const name = suggestedName || `snippet-${++studioTempCounter}.txt`;
+  const codeArea = $("#studioCode");
+  const pathLabel = $("#studioFilePath");
+  const pushBtn = $("#studioPushGh");
+  codeArea.value = code;
+  pathLabel.textContent = name;
+  studioCurrentFile = { path: name, source: "snippet" };
+  pushBtn.classList.toggle("hidden", !state.connected.github);
+  switchView("studio");
+}
 
 async function refreshStudio() {
   const tree = $("#studioTree");
