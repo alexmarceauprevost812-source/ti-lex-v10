@@ -987,10 +987,12 @@ function createTiLexAvatar(size = 80) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  // Avatar ti-lex animé comme avatar principal
-  const av = createTiLexAvatar(42);
-  av.classList.add("msg-avatar-al");
-  wrap.appendChild(av);
+  // Logo ti-lex-AL comme avatar principal
+  const logo = document.createElement("img");
+  logo.className = "msg-avatar al-logo";
+  logo.src = "assets/tilex-logo.png";
+  logo.alt = "AL";
+  wrap.appendChild(logo);
   // Badge Claude (coin bas-droite)
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
