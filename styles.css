@@ -522,6 +522,8 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
   display:flex;align-items:center;justify-content:center;font-weight:700;
   color:#93c5fd;border:1px solid #3b82f6;font-size:.8rem;flex-shrink:0;
 }
+.codex-user-av.ti-lex-avatar{width:32px;height:32px}
+.codex-user-av .ti-lex-dots{display:none}
 .codex-msg-body{
   background:var(--bg-2);border:1px solid var(--line);border-radius:14px;
   padding:12px 16px;line-height:1.6;font-size:.9rem;min-width:0;
