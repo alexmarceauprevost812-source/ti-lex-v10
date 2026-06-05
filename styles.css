@@ -705,6 +705,40 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 .claude-label img{width:12px;height:12px;border-radius:2px}
 
 /* Action buttons on code blocks (Studio + Push) */
+.code-actions-wrap{margin-top:10px}
+.code-files-list{
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  padding:6px 0;margin-bottom:8px;overflow:hidden;
+}
+.code-files-header{
+  display:flex;align-items:center;gap:6px;padding:6px 12px 4px;
+  font-family:var(--font);font-size:.76rem;font-weight:700;color:var(--orange);
+  border-bottom:1px solid var(--line);margin-bottom:2px;
+}
+.cfl-icon{width:14px;height:14px;fill:none;stroke:var(--orange);stroke-width:2;stroke-linecap:round}
+.code-file-row{
+  display:flex;align-items:center;gap:8px;padding:5px 12px;
+  transition:background .15s;
+}
+.code-file-row:hover{background:var(--bg-2)}
+.code-file-badge{
+  display:inline-block;padding:1px 7px;border-radius:4px;
+  font-family:var(--mono);font-size:.65rem;font-weight:700;
+  background:var(--orange);color:#000;text-transform:uppercase;
+  flex-shrink:0;
+}
+.code-file-path{
+  font-family:var(--mono);font-size:.76rem;color:var(--txt);
+  flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.code-file-acts{display:flex;gap:4px;flex-shrink:0}
+.cfact-btn{
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:6px;background:var(--bg-3);
+  color:var(--txt-dim);cursor:pointer;transition:var(--t);padding:0;
+}
+.cfact-btn:hover{border-color:var(--orange);color:var(--orange)}
+.cfact-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .code-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .push-gh-btn{
   display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
@@ -714,6 +748,16 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 }
 .push-gh-btn:hover{border-color:var(--orange);color:var(--orange)}
 .push-gh-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.push-all-btn{border-color:var(--orange);color:var(--orange);background:rgba(255,165,0,.08)}
+.push-all-btn:hover{background:rgba(255,165,0,.18)}
+.push-ok{border-color:#22c55e;color:#22c55e;background:rgba(34,197,94,.1);pointer-events:none}
+.push-ok svg{stroke:#22c55e}
+.cfact-spin{
+  display:inline-block;width:12px;height:12px;border:2px solid var(--orange);
+  border-top-color:transparent;border-radius:50%;
+  animation:cfSpin .6s linear infinite;
+}
+@keyframes cfSpin{to{transform:rotate(360deg)}}
 
 /* ZIP file tree display in chat */
 .zip-tree{margin:8px 0;background:var(--bg);border:1px solid var(--line);border-radius:10px;
