@@ -1519,9 +1519,8 @@ function addCodexUserMsg(text, atts) {
   $(".codex-welcome")?.remove();
   const m = document.createElement("div");
   m.className = "codex-msg user";
-  const av = document.createElement("div");
-  av.className = "cmsg-avatar";
-  av.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>`;
+  const av = createTiLexAvatar(32);
+  av.classList.add("msg-avatar-user-tl", "codex-user-av");
   m.appendChild(av);
   const b = document.createElement("div");
   b.className = "codex-msg-body";
