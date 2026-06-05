@@ -930,10 +930,10 @@ $("#send").onclick = sendMessage;
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
 function avatarUser() {
-  const d = document.createElement("div");
-  d.className = "msg-avatar-user";
-  d.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>`;
-  return d;
+  const av = createTiLexAvatar(40);
+  av.classList.add("msg-avatar-user-tl");
+  av.dataset.state = "idle";
+  return av;
 }
 const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
 
