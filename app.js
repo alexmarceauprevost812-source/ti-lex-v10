@@ -256,6 +256,7 @@ function switchView(v) {
   $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
   $("#viewTitle").textContent = TITLES[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
+  if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -2137,6 +2138,176 @@ if (wa) {
   wImg.className = "welcome-logo-img";
   wa.appendChild(wImg);
 }
+
+/* ================= SÉCURITÉ — SOW ================= */
+
+async function sowQuery(table, method, body, matchFilter) {
+  const sb = state.supabase.client;
+  if (!sb) return { data: null, error: { message: "Supabase non initialisé" } };
+  let q = sb.from(table);
+  if (method === "select") q = q.select(body || "*");
+  else if (method === "insert") q = q.insert(body);
+  else if (method === "update") q = q.update(body);
+  if (matchFilter) for (const [k, v] of Object.entries(matchFilter)) q = q.eq(k, v);
+  return await q;
+}
+
+async function loadSecurityDashboard() {
+  const userId = state.supabase.client?.auth?.user?.()?.id
+    || (await state.supabase.client?.auth?.getUser?.())?.data?.user?.id;
+  if (!userId) return;
+
+  const { data: sows } = await sowQuery("scan_authorizations", "select", "id,status", { user_id: userId });
+  const activeCount = sows ? sows.filter(s => s.status === "active").length : 0;
+  const el = document.getElementById("sowCount");
+  if (el) el.textContent = activeCount;
+
+  const { data: scans } = await sowQuery("scans", "select", "id,status", { user_id: userId });
+  const scanEl = document.getElementById("scanCount");
+  const scanLbl = document.getElementById("scanLabel");
+  if (scans && scans.length > 0) {
+    if (scanEl) scanEl.textContent = scans.length;
+    if (scanLbl) scanLbl.textContent = "total";
+  } else {
+    if (scanEl) scanEl.textContent = activeCount > 0 ? "0" : "—";
+    if (scanLbl) scanLbl.textContent = activeCount > 0 ? "prêt" : "en attente d'autorisation";
+  }
+
+  const { data: findings } = await sowQuery("scan_findings", "select", "id", {});
+  const fEl = document.getElementById("findingCount");
+  if (fEl) fEl.textContent = findings && findings.length > 0 ? findings.length : "—";
+
+  await loadSowList(userId);
+}
+
+async function loadSowList(userId) {
+  if (!userId) {
+    const u = await state.supabase.client?.auth?.getUser?.();
+    userId = u?.data?.user?.id;
+  }
+  if (!userId) return;
+
+  const { data: sows } = await state.supabase.client
+    .from("scan_authorizations")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  const list = document.getElementById("sowList");
+  if (!list) return;
+
+  if (!sows || sows.length === 0) {
+    list.innerHTML = '<p class="muted" style="font-size:.85rem;padding:8px 0">Aucun SOW. Clique "+ Nouveau SOW" pour créer ta première autorisation.</p>';
+    return;
+  }
+
+  list.innerHTML = sows.map(s => {
+    const scopeIn = Array.isArray(s.scope_in) ? s.scope_in.join(", ") : "";
+    const start = s.starts_at ? new Date(s.starts_at).toLocaleDateString("fr-CA") : "—";
+    const end = s.expires_at ? new Date(s.expires_at).toLocaleDateString("fr-CA") : "—";
+    const actions = s.status === "draft"
+      ? `<button class="sow-btn-activate" onclick="activateSow('${s.id}')">Activer</button>
+         <button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">Supprimer</button>`
+      : s.status === "active"
+      ? `<button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">Révoquer</button>`
+      : "";
+    return `<div class="sow-item">
+      <div class="sow-item-info">
+        <div class="sow-item-title">${escapeHtml(s.title)}</div>
+        <div class="sow-item-client">${escapeHtml(s.client_name)}</div>
+        <div class="sow-item-scope">Scope: ${escapeHtml(scopeIn || "non défini")}</div>
+        <div class="sow-item-dates">${start} → ${end}</div>
+      </div>
+      <span class="sow-badge ${s.status}">${s.status}</span>
+      <div class="sow-item-actions">${actions}</div>
+    </div>`;
+  }).join("");
+}
+
+async function createSow() {
+  const title = document.getElementById("sowTitle")?.value?.trim();
+  const client = document.getElementById("sowClient")?.value?.trim();
+  const scopeInRaw = document.getElementById("sowScopeIn")?.value?.trim();
+  const scopeOutRaw = document.getElementById("sowScopeOut")?.value?.trim();
+  const startDate = document.getElementById("sowStartDate")?.value;
+  const endDate = document.getElementById("sowEndDate")?.value;
+  const notes = document.getElementById("sowNotes")?.value?.trim();
+
+  if (!title || !client || !scopeInRaw || !startDate || !endDate) {
+    alert("Remplis tous les champs obligatoires (*).");
+    return;
+  }
+
+  const checkboxes = document.querySelectorAll("#sowForm .sow-scan-types input:checked");
+  const scanTypes = Array.from(checkboxes).map(c => c.value);
+  if (scanTypes.length === 0) {
+    alert("Sélectionne au moins un type de scan.");
+    return;
+  }
+
+  const userId = (await state.supabase.client?.auth?.getUser?.())?.data?.user?.id;
+  if (!userId) { alert("Connecte-toi d'abord."); return; }
+
+  const scopeIn = scopeInRaw.split(",").map(s => s.trim()).filter(Boolean);
+  const scopeOut = scopeOutRaw ? scopeOutRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
+
+  const { error } = await state.supabase.client.from("scan_authorizations").insert({
+    user_id: userId,
+    title,
+    client_name: client,
+    client_contact_name: document.getElementById("sowContactName")?.value?.trim() || null,
+    client_contact_email: document.getElementById("sowContactEmail")?.value?.trim() || null,
+    scope_in: scopeIn,
+    scope_out: scopeOut,
+    allowed_scan_types: scanTypes,
+    starts_at: new Date(startDate).toISOString(),
+    expires_at: new Date(endDate).toISOString(),
+    notes: notes || null,
+    status: "draft",
+  });
+
+  if (error) {
+    alert("Erreur: " + error.message);
+    return;
+  }
+
+  document.getElementById("sowForm")?.classList.add("hidden");
+  ["sowTitle","sowClient","sowContactName","sowContactEmail","sowScopeIn","sowScopeOut","sowStartDate","sowEndDate","sowNotes"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  await loadSecurityDashboard();
+}
+
+async function activateSow(id) {
+  if (!confirm("Activer ce SOW ? Les scans deviendront possibles pour les cibles listées.")) return;
+  const { error } = await state.supabase.client.from("scan_authorizations")
+    .update({ status: "active", signed_at: new Date().toISOString(), signed_by: "owner" })
+    .eq("id", id);
+  if (error) { alert("Erreur: " + error.message); return; }
+  await loadSecurityDashboard();
+}
+
+async function revokeSow(id) {
+  const action = confirm("Révoquer/supprimer ce SOW ? Les scans associés seront bloqués.") ? "revoked" : null;
+  if (!action) return;
+  const { error } = await state.supabase.client.from("scan_authorizations")
+    .update({ status: "revoked" })
+    .eq("id", id);
+  if (error) { alert("Erreur: " + error.message); return; }
+  await loadSecurityDashboard();
+}
+
+// Wire SOW buttons
+document.getElementById("btnNewSow")?.addEventListener("click", () => {
+  const form = document.getElementById("sowForm");
+  if (form) form.classList.toggle("hidden");
+});
+document.getElementById("btnCancelSow")?.addEventListener("click", () => {
+  document.getElementById("sowForm")?.classList.add("hidden");
+});
+document.getElementById("btnSubmitSow")?.addEventListener("click", createSow);
+document.getElementById("btnRefreshSow")?.addEventListener("click", loadSecurityDashboard);
 
 /* ================= PWA INSTALL ================= */
 let deferredInstallPrompt = null;

@@ -684,6 +684,50 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
   padding:16px 18px;font-size:.88rem;line-height:1.6}
 .sec-note strong{color:var(--orange)}
 
+/* ---- SOW Form & List ---- */
+.btn-outline{background:transparent;border:1px solid var(--orange);color:var(--orange);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.btn-outline:hover{background:rgba(255,102,0,.1)}
+.sow-form{background:var(--bg-2);border:1px solid var(--line);border-radius:14px;
+  padding:20px;margin-bottom:16px}
+.sow-form h3{margin:0 0 16px;color:var(--orange);font-family:var(--marker);font-size:1.1rem}
+.sow-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sow-form-grid .full-width{grid-column:1/-1}
+.sow-form .form-group label{font-size:.78rem;text-transform:none;letter-spacing:0}
+.sow-form .form-group input,.sow-form .form-group textarea{width:100%;padding:8px 10px;
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-size:.85rem}
+.sow-form .form-group input:focus,.sow-form .form-group textarea:focus{border-color:var(--orange);outline:none}
+.sow-scan-types{display:flex;flex-wrap:wrap;gap:8px 16px}
+.sow-check{display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;
+  text-transform:none;letter-spacing:0;font-weight:400}
+.sow-check input{accent-color:var(--orange)}
+.sow-form-actions{display:flex;gap:10px;margin-top:16px}
+
+.sow-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.sow-item{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.sow-item-info{flex:1;min-width:200px}
+.sow-item-title{font-weight:600;font-size:.92rem}
+.sow-item-client{font-size:.78rem;color:var(--txt-dim)}
+.sow-item-scope{font-size:.75rem;color:var(--txt-dim);margin-top:2px}
+.sow-item-dates{font-size:.75rem;color:var(--txt-dim)}
+.sow-badge{padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.sow-badge.draft{background:rgba(255,255,255,.1);color:var(--txt-dim)}
+.sow-badge.active{background:rgba(34,197,94,.15);color:#22c55e}
+.sow-badge.expired{background:rgba(239,68,68,.15);color:#ef4444}
+.sow-badge.revoked{background:rgba(239,68,68,.15);color:#ef4444}
+.sow-item-actions{display:flex;gap:6px}
+.sow-item-actions button{padding:5px 12px;border-radius:6px;font-size:.75rem;cursor:pointer;border:none}
+.sow-btn-activate{background:var(--orange);color:#fff}
+.sow-btn-activate:hover{background:#e06a00}
+.sow-btn-revoke{background:rgba(239,68,68,.15);color:#ef4444}
+.sow-btn-revoke:hover{background:rgba(239,68,68,.25)}
+
+@media(max-width:600px){
+  .sow-form-grid{grid-template-columns:1fr}
+  .sow-item{flex-direction:column;align-items:flex-start}
+}
+
 /* ============ STUDIO ============ */
 .view-studio{flex-direction:row!important}
 .studio-wrap{flex:1;display:flex;overflow:hidden}

@@ -281,11 +281,79 @@
         </div>
       </div>
       <div class="sec-grid">
-        <div class="sec-card"><h3>Autorisations</h3><p class="big">0</p><span class="muted">SOW actifs</span></div>
-        <div class="sec-card"><h3>Scans</h3><p class="big">—</p><span class="muted">en attente d'autorisation</span></div>
-        <div class="sec-card"><h3>Findings</h3><p class="big">—</p><span class="muted">aucun</span></div>
-        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">security_authorizations</span></div>
+        <div class="sec-card"><h3>Autorisations</h3><p class="big" id="sowCount">0</p><span class="muted">SOW actifs</span></div>
+        <div class="sec-card"><h3>Scans</h3><p class="big" id="scanCount">—</p><span class="muted" id="scanLabel">en attente d'autorisation</span></div>
+        <div class="sec-card"><h3>Findings</h3><p class="big" id="findingCount">—</p><span class="muted">aucun</span></div>
+        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">scan_authorizations</span></div>
       </div>
+
+      <!-- Bouton + Nouveau SOW -->
+      <div style="display:flex;gap:10px;margin:18px 0 10px">
+        <button class="btn-orange" id="btnNewSow">+ Nouveau SOW</button>
+        <button class="btn-outline" id="btnRefreshSow">Rafraîchir</button>
+      </div>
+
+      <!-- Formulaire de création SOW -->
+      <div class="sow-form hidden" id="sowForm">
+        <h3>Créer une autorisation (SOW)</h3>
+        <div class="sow-form-grid">
+          <div class="form-group">
+            <label>Titre du mandat *</label>
+            <input type="text" id="sowTitle" placeholder="Ex: Audit sécurité MonSite.ca">
+          </div>
+          <div class="form-group">
+            <label>Nom du client *</label>
+            <input type="text" id="sowClient" placeholder="Ex: Entreprise XYZ Inc.">
+          </div>
+          <div class="form-group">
+            <label>Contact (nom)</label>
+            <input type="text" id="sowContactName" placeholder="Jean Tremblay">
+          </div>
+          <div class="form-group">
+            <label>Contact (courriel)</label>
+            <input type="email" id="sowContactEmail" placeholder="jean@entreprise.ca">
+          </div>
+          <div class="form-group">
+            <label>Cibles autorisées (scope-in) *</label>
+            <input type="text" id="sowScopeIn" placeholder="exemple.ca, 192.168.1.0/24 (séparées par virgule)">
+          </div>
+          <div class="form-group">
+            <label>Cibles exclues (scope-out)</label>
+            <input type="text" id="sowScopeOut" placeholder="prod.exemple.ca (séparées par virgule)">
+          </div>
+          <div class="form-group">
+            <label>Date de début *</label>
+            <input type="date" id="sowStartDate">
+          </div>
+          <div class="form-group">
+            <label>Date d'expiration *</label>
+            <input type="date" id="sowEndDate">
+          </div>
+          <div class="form-group full-width">
+            <label>Types de scan autorisés *</label>
+            <div class="sow-scan-types">
+              <label class="sow-check"><input type="checkbox" value="passive_recon" checked> Recon passive</label>
+              <label class="sow-check"><input type="checkbox" value="vuln_scan" checked> Scan vulnérabilités</label>
+              <label class="sow-check"><input type="checkbox" value="web_scan" checked> Scan web</label>
+              <label class="sow-check"><input type="checkbox" value="config_audit"> Audit config</label>
+              <label class="sow-check"><input type="checkbox" value="dark_web_monitor"> Dark web monitor</label>
+              <label class="sow-check"><input type="checkbox" value="full_audit"> Audit complet</label>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>Notes</label>
+            <textarea id="sowNotes" rows="3" placeholder="Instructions spéciales, restrictions, etc."></textarea>
+          </div>
+        </div>
+        <div class="sow-form-actions">
+          <button class="btn-orange" id="btnSubmitSow">Créer le SOW</button>
+          <button class="btn-outline" id="btnCancelSow">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Liste des SOW -->
+      <div id="sowList" class="sow-list"></div>
+
       <div class="sec-note">
         <strong>Rappel légal (Art. 342.1 C.cr.) :</strong> tout scan doit reposer sur un mandat autorisé,
         un programme de bug bounty, ou de la divulgation responsable. Le mode Sécurité bloque les scans
