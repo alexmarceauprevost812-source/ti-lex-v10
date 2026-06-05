@@ -41,7 +41,6 @@ body[data-theme="light"] .btn-codex::before{color:#000}
 body[data-theme="light"] .hamburger{background:var(--bg-3)}
 body[data-theme="light"] .hamburger span{background:var(--txt)}
 body[data-theme="light"] .msg-avatar-user{background:linear-gradient(135deg,#dbeafe,#93c5fd);border-color:#60a5fa;box-shadow:0 0 10px rgba(37,99,235,.15)}
-body[data-theme="light"] .msg-avatar-user svg{stroke:#2563eb!important}
 body[data-theme="light"] .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6}
 body[data-theme="light"] .sec-note{background:rgba(255,102,0,.05)}
 body[data-theme="light"] .update-banner{background:var(--orange);color:#000}
@@ -238,6 +237,8 @@ body.menu-closed #menuToggleMobile{display:flex}
   border:1px solid #3b82f6;display:flex;align-items:center;justify-content:center;
   color:#93c5fd;transition:var(--t);box-shadow:0 0 12px rgba(37,99,235,.25)}
 .msg.user .msg-avatar-user svg{stroke:#93c5fd}
+.msg-avatar-user-tl.ti-lex-avatar{width:42px;height:42px}
+.msg-avatar-user-tl .ti-lex-dots{display:none}
 .msg-body{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:13px 17px;line-height:1.6;font-size:.95rem}
 .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6;font-weight:500}
