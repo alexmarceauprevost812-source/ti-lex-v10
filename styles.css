@@ -245,6 +245,9 @@ body.menu-closed #menuToggleMobile{display:flex}
 .msg-avatar-user-tl .ti-lex-eye::after{background:#93c5fd}
 .msg-body{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:13px 17px;line-height:1.6;font-size:.95rem}
+.msg.assistant .msg-body{font-family:var(--marker);font-size:1.05rem;font-weight:400;letter-spacing:.3px;line-height:1.7}
+.msg.assistant .msg-body code{font-family:var(--mono)}
+.msg.assistant .msg-body pre{font-family:var(--mono)}
 .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6;font-weight:500}
 .msg-body p{margin-bottom:8px}.msg-body p:last-child{margin-bottom:0}
 .msg-body code{font-family:var(--mono);background:var(--bg);padding:2px 6px;border-radius:5px;font-size:.85em}
