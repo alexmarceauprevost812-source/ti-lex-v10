@@ -1353,10 +1353,10 @@ function makeTyper(renderFn) {
     if (!last) last = ts;
     const dt = Math.min(ts - last, 100); last = ts;
     const backlog = target.length - shown;
-    // vitesse de base ~70 car/s, accélère si le flux a beaucoup d'avance
-    let cps = 70;
-    if (backlog > 160) cps = 300;
-    else if (backlog > 80) cps = 160;
+    // vitesse rapide ~200 car/s, accélère si le flux a beaucoup d'avance
+    let cps = 200;
+    if (backlog > 160) cps = 600;
+    else if (backlog > 80) cps = 400;
     const add = Math.max(1, Math.round((cps * dt) / 1000));
     if (shown < target.length) {
       shown = Math.min(target.length, shown + add);
