@@ -1285,25 +1285,181 @@ function extractCodeBlocks(text) {
 
 const LANG_EXT = { javascript: "js", typescript: "ts", python: "py", html: "html", css: "css", sql: "sql", rust: "rs", go: "go", java: "java", json: "json", bash: "sh", sh: "sh", yaml: "yml", xml: "xml", jsx: "jsx", tsx: "tsx" };
 
-function addCodeActions(container, fullText) {
-  const blocks = extractCodeBlocks(fullText);
-  if (!blocks.length || !blocks[0].code) return;
-  const wrap = document.createElement("div");
-  wrap.className = "code-actions";
-  const ext = LANG_EXT[blocks[0].lang.toLowerCase()] || "txt";
-  const name = `snippet.${ext}`;
-  const studioBtn = document.createElement("button");
-  studioBtn.className = "push-gh-btn";
-  studioBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Ouvrir dans le Studio`;
-  studioBtn.onclick = () => openInStudio(blocks[0].code, name);
-  wrap.appendChild(studioBtn);
-  if (state.connected.github) {
-    const ghBtn = document.createElement("button");
-    ghBtn.className = "push-gh-btn";
-    ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
-    ghBtn.onclick = () => pushToGithub(blocks[0].code);
-    wrap.appendChild(ghBtn);
+function extractCodeFiles(text) {
+  const files = [];
+  const regex = /```(\w*)\n?([\s\S]*?)```/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    const lang = m[1];
+    const code = m[2].trim();
+    if (!code) continue;
+    let filePath = null;
+    const lines = code.split("\n");
+    const firstLine = lines[0].trim();
+    const fileMarker = firstLine.match(/^(?:\/\/|#|--|\/\*)\s*FILE:\s*(.+?)(?:\s*\*\/)?$/i);
+    if (fileMarker) {
+      filePath = fileMarker[1].trim();
+      lines.shift();
+    }
+    if (!filePath) {
+      const beforeBlock = text.substring(0, m.index);
+      const headerMatch = beforeBlock.match(/(?:📄|fichier|file)\s*[:`]?\s*([^\s`*\n]+\.\w{1,6})\s*$/i);
+      if (headerMatch) filePath = headerMatch[1];
+    }
+    if (!filePath) {
+      const ext = LANG_EXT[lang.toLowerCase()] || "txt";
+      filePath = `snippet-${files.length + 1}.${ext}`;
+    }
+    files.push({ path: filePath, lang, code: lines.join("\n").trim() || code, detected: !!fileMarker });
   }
+  return files;
+}
+
+async function pushMultipleToGithub(files, commitMsg) {
+  if (!state.connected.github || !state.github.token || !state.github.repo) {
+    alert("Connecte ton compte GitHub dans Paramètres d'abord.");
+    return false;
+  }
+  const repo = state.github.repo;
+  const branch = state.github.branch || "main";
+
+  try {
+    const refRes = await fetch(`${GH_API}/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`, { headers: ghHeaders() });
+    if (!refRes.ok) throw new Error("Branche introuvable");
+    const refData = await refRes.json();
+    const baseSha = refData.object.sha;
+
+    const blobs = [];
+    for (const f of files) {
+      const blobRes = await fetch(`${GH_API}/repos/${repo}/git/blobs`, {
+        method: "POST", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ content: f.code, encoding: "utf-8" }),
+      });
+      if (!blobRes.ok) throw new Error(`Erreur blob: ${f.path}`);
+      const blobData = await blobRes.json();
+      blobs.push({ path: f.path, mode: "100644", type: "blob", sha: blobData.sha });
+    }
+
+    const treeRes = await fetch(`${GH_API}/repos/${repo}/git/trees`, {
+      method: "POST", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ base_tree: baseSha, tree: blobs }),
+    });
+    if (!treeRes.ok) throw new Error("Erreur création tree");
+    const treeData = await treeRes.json();
+
+    const commitRes = await fetch(`${GH_API}/repos/${repo}/git/commits`, {
+      method: "POST", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ message: commitMsg, tree: treeData.sha, parents: [baseSha] }),
+    });
+    if (!commitRes.ok) throw new Error("Erreur commit");
+    const commitData = await commitRes.json();
+
+    const updateRes = await fetch(`${GH_API}/repos/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+      method: "PATCH", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: commitData.sha }),
+    });
+    if (!updateRes.ok) throw new Error("Erreur mise à jour branche");
+
+    return true;
+  } catch (err) {
+    alert(`Erreur push GitHub : ${err.message}`);
+    return false;
+  }
+}
+
+function addCodeActions(container, fullText) {
+  const codeFiles = extractCodeFiles(fullText);
+  if (!codeFiles.length) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "code-actions-wrap";
+
+  if (codeFiles.length > 0 && codeFiles.some(f => f.detected)) {
+    const fileList = document.createElement("div");
+    fileList.className = "code-files-list";
+    const header = document.createElement("div");
+    header.className = "code-files-header";
+    header.innerHTML = `<svg viewBox="0 0 24 24" class="cfl-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg> <span>${codeFiles.length} fichier${codeFiles.length > 1 ? "s" : ""} détecté${codeFiles.length > 1 ? "s" : ""}</span>`;
+    fileList.appendChild(header);
+
+    codeFiles.forEach((f, i) => {
+      const row = document.createElement("div");
+      row.className = "code-file-row";
+      const badge = document.createElement("span");
+      badge.className = "code-file-badge";
+      badge.textContent = f.lang || "txt";
+      const pathEl = document.createElement("span");
+      pathEl.className = "code-file-path";
+      pathEl.textContent = f.path;
+      row.appendChild(badge);
+      row.appendChild(pathEl);
+
+      const acts = document.createElement("span");
+      acts.className = "code-file-acts";
+      const stBtn = document.createElement("button");
+      stBtn.className = "cfact-btn";
+      stBtn.title = "Ouvrir dans le Studio";
+      stBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`;
+      stBtn.onclick = () => openInStudio(f.code, f.path);
+      acts.appendChild(stBtn);
+
+      if (state.connected.github) {
+        const ghBtn = document.createElement("button");
+        ghBtn.className = "cfact-btn";
+        ghBtn.title = `Push ${f.path}`;
+        ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+        ghBtn.onclick = () => pushToGithub(f.code, f.path);
+        acts.appendChild(ghBtn);
+      }
+      row.appendChild(acts);
+      fileList.appendChild(row);
+    });
+    wrap.appendChild(fileList);
+  }
+
+  const btns = document.createElement("div");
+  btns.className = "code-actions";
+
+  if (codeFiles.length === 1) {
+    const ext = LANG_EXT[codeFiles[0].lang.toLowerCase()] || "txt";
+    const name = codeFiles[0].path || `snippet.${ext}`;
+    const studioBtn = document.createElement("button");
+    studioBtn.className = "push-gh-btn";
+    studioBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Ouvrir dans le Studio`;
+    studioBtn.onclick = () => openInStudio(codeFiles[0].code, name);
+    btns.appendChild(studioBtn);
+  }
+
+  if (state.connected.github) {
+    if (codeFiles.length > 1 && codeFiles.some(f => f.detected)) {
+      const pushAllBtn = document.createElement("button");
+      pushAllBtn.className = "push-gh-btn push-all-btn";
+      pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push ${codeFiles.length} fichiers sur GitHub`;
+      pushAllBtn.onclick = async () => {
+        const commitMsg = prompt("Message de commit :", `Ajout de ${codeFiles.length} fichiers via Codex ti-lex-AL`);
+        if (!commitMsg) return;
+        pushAllBtn.disabled = true;
+        pushAllBtn.innerHTML = `<span class="cfact-spin"></span> Push en cours…`;
+        const ok = await pushMultipleToGithub(codeFiles, commitMsg);
+        if (ok) {
+          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Pushé !`;
+          pushAllBtn.classList.add("push-ok");
+        } else {
+          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Réessayer`;
+          pushAllBtn.disabled = false;
+        }
+      };
+      btns.appendChild(pushAllBtn);
+    } else if (codeFiles.length === 1) {
+      const ghBtn = document.createElement("button");
+      ghBtn.className = "push-gh-btn";
+      ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
+      ghBtn.onclick = () => pushToGithub(codeFiles[0].code, codeFiles[0].path);
+      btns.appendChild(ghBtn);
+    }
+  }
+
+  if (btns.children.length) wrap.appendChild(btns);
   container.appendChild(wrap);
 }
 
@@ -1797,7 +1953,30 @@ async function runCodex() {
   $("#codexRun").disabled = true;
 
   const userContent = buildCodexContent(text || "Analyse les fichiers joints.", atts);
-  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre, commenté et production-ready à partir de cette demande. Détecte automatiquement le langage approprié. Réponds avec le code et de courtes explications en français.\n\nDemande:\n${userContent}`;
+  const ghContext = state.connected.github ? `\nProjet GitHub connecté : ${state.github.repo} (branche: ${state.github.branch})` : "";
+  const prompt = `Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre et production-ready.
+
+RÈGLE IMPORTANTE : Pour chaque bloc de code que tu génères, ajoute TOUJOURS en première ligne un commentaire indiquant le chemin du fichier, au format :
+// FILE: chemin/vers/fichier.ext
+ou pour Python/YAML/Bash :
+# FILE: chemin/vers/fichier.ext
+ou pour SQL :
+-- FILE: chemin/vers/fichier.ext
+
+Exemple :
+\`\`\`typescript
+// FILE: src/utils/helpers.ts
+export function formatDate(d: Date): string {
+  return d.toLocaleDateString("fr-CA");
+}
+\`\`\`
+
+Ceci permet au système de push automatiquement les fichiers au bon endroit sur GitHub. Utilise des chemins logiques et cohérents avec la structure du projet.${ghContext}
+
+Réponds avec le code et de courtes explications en français.
+
+Demande:
+${userContent}`;
 
   try {
     const res = await chatFetch({
