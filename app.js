@@ -888,13 +888,7 @@ function resetChatWelcome() {
     <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
   </div>`;
   const nwa = $("#welcomeAvatar");
-  if (nwa) {
-    const nImg = document.createElement("img");
-    nImg.src = "assets/tilex-logo.png";
-    nImg.alt = "ti-lex-AL";
-    nImg.className = "welcome-logo-img";
-    nwa.appendChild(nImg);
-  }
+  if (nwa) { nwa.innerHTML = ""; nwa.appendChild(createTiLexAvatar(120)); }
 }
 
 function rebuildChatFromHistory() {
@@ -927,9 +921,20 @@ if ($("#newChatConv")) {
 const input = $("#input");
 const messages = $("#messages");
 
+let typingTimeout = null;
 input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 160) + "px";
+  const welcomeAv = document.querySelector(".welcome .ti-lex-avatar");
+  if (welcomeAv && welcomeAv._setState) {
+    if (input.value.trim().length > 0) {
+      welcomeAv._setState("typing");
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => welcomeAv._setState("idle"), 2000);
+    } else {
+      welcomeAv._setState("idle");
+    }
+  }
 });
 input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -945,43 +950,36 @@ function avatarUser() {
 }
 const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
 
-/* ---- Avatar Orange Animé (personnage principal de ti-lex-AL) ---- */
-function createOrangeAvatar(size = 40) {
+/* ---- ti-lex Avatar (personnage principal) ---- */
+function createTiLexAvatar(size = 80) {
+  const scale = size / 80;
   const wrap = document.createElement("div");
-  wrap.className = "al-avatar";
+  wrap.className = "ti-lex-avatar";
+  wrap.dataset.state = "idle";
   wrap.style.width = size + "px";
   wrap.style.height = size + "px";
+  if (scale !== 1) { wrap.style.transform = `scale(${scale})`; wrap.style.transformOrigin = "center center"; }
   wrap.innerHTML = `
-    <div class="al-aura"></div>
-    <div class="al-face">
-      <div class="al-eye al-eye-l"></div>
-      <div class="al-eye al-eye-r"></div>
+    <div class="ti-lex-body">
+      <div class="ti-lex-eyes">
+        <div class="ti-lex-eye"></div>
+        <div class="ti-lex-eye"></div>
+      </div>
+    </div>
+    <div class="ti-lex-dots">
+      <div class="ti-lex-dot"></div>
+      <div class="ti-lex-dot"></div>
+      <div class="ti-lex-dot"></div>
     </div>`;
 
-  const face = wrap.querySelector(".al-face");
-  const eyes = wrap.querySelectorAll(".al-eye");
-
-  const onMouse = (e) => {
-    const r = face.getBoundingClientRect();
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const ang = Math.atan2(e.clientY - cy, e.clientX - cx);
-    const dist = Math.min(Math.hypot(e.clientX - cx, e.clientY - cy) / 15, 1.5);
-    const tx = Math.cos(ang) * dist, ty = Math.sin(ang) * dist;
-    eyes.forEach(p => p.style.transform = `translate(${tx}px, ${ty}px)`);
+  wrap._setState = (s) => {
+    wrap.dataset.state = s;
+    const body = wrap.querySelector(".ti-lex-body");
+    if (body) body.classList.toggle("glow", s === "responding" || s === "waiting");
   };
-  window.addEventListener("mousemove", onMouse);
-
-  let blinkTimer = setInterval(() => {
-    eyes.forEach(l => l.classList.add("blink"));
-    setTimeout(() => eyes.forEach(l => l.classList.remove("blink")), 150);
-  }, 3000 + Math.random() * 2000);
-
-  wrap._setThinking = (on) => wrap.classList.toggle("thinking", on);
-  wrap._setSpeaking = (on) => wrap.classList.toggle("speaking", on);
-  wrap._destroy = () => {
-    window.removeEventListener("mousemove", onMouse);
-    clearInterval(blinkTimer);
-  };
+  wrap._setThinking = (on) => wrap._setState(on ? "waiting" : "idle");
+  wrap._setSpeaking = (on) => wrap._setState(on ? "responding" : "idle");
+  wrap._destroy = () => {};
 
   return wrap;
 }
@@ -993,11 +991,9 @@ function avatarAL() {
   const logo = document.createElement("img");
   logo.className = "msg-avatar al-logo"; logo.src = "logo.png"; logo.alt = "AL";
   wrap.appendChild(logo);
-  // Mini mascotte superposée (coin bas-gauche)
-  const mini = document.createElement("img");
-  mini.className = "al-mini-logo";
-  mini.src = "assets/tilex-logo.png";
-  mini.alt = "AL";
+  // Mini ti-lex avatar animé (coin bas-gauche)
+  const mini = createTiLexAvatar(22);
+  mini.classList.add("al-avatar-mini");
   wrap.appendChild(mini);
   // Badge Claude (coin bas-droite)
   const claude = document.createElement("img");
@@ -1086,8 +1082,8 @@ function buildAssistantMsg() {
   m.className = "msg assistant responding";
   const avatarWrap = avatarAL();
   m.appendChild(avatarWrap);
-  const av = avatarWrap.querySelector(".al-avatar");
-  if (av) av._setThinking(true);
+  const av = avatarWrap.querySelector(".ti-lex-avatar") || avatarWrap.querySelector(".al-avatar");
+  if (av && av._setThinking) av._setThinking(true);
   const b = document.createElement("div");
   b.className = "msg-body";
   b.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
@@ -2129,15 +2125,9 @@ if (state.github.token) {
   codexGhConnect();
 }
 
-// Logo mascotte sur l'écran d'accueil
+// Avatar ti-lex sur l'écran d'accueil
 const wa = $("#welcomeAvatar");
-if (wa) {
-  const wImg = document.createElement("img");
-  wImg.src = "assets/tilex-logo.png";
-  wImg.alt = "ti-lex-AL";
-  wImg.className = "welcome-logo-img";
-  wa.appendChild(wImg);
-}
+if (wa) { wa.innerHTML = ""; wa.appendChild(createTiLexAvatar(120)); }
 
 /* ================= SÉCURITÉ — SOW ================= */
 
