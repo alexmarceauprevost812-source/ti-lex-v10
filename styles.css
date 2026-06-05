@@ -46,7 +46,7 @@ body[data-theme="light"] .msg.user .msg-body{background:linear-gradient(135deg,#
 body[data-theme="light"] .sec-note{background:rgba(255,102,0,.05)}
 body[data-theme="light"] .update-banner{background:var(--orange);color:#000}
 body[data-theme="light"] .update-banner button{background:#fff;color:var(--orange)}
-body[data-theme="light"] .welcome-logo-img{filter:drop-shadow(0 0 12px rgba(232,117,26,.3))}
+body[data-theme="light"] .ti-lex-body{box-shadow:inset -5px -5px 15px rgba(0,0,0,.1),inset 5px 5px 15px rgba(255,255,255,.15),0 4px 15px rgba(255,107,53,.2)}
 
 /* ---- Light: code blocks ---- */
 body[data-theme="light"] .msg-body pre,
@@ -607,18 +607,76 @@ body[data-theme="light"] .view-codex{
 .view-codex textarea::placeholder{color:#5f5f5f}
 body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 
-/* ---- Logo mascotte accueil ---- */
-.welcome-logo-img{width:140px;height:140px;object-fit:contain;
-  filter:drop-shadow(0 0 20px rgba(232,117,26,.5)) drop-shadow(0 0 40px rgba(232,117,26,.2));
-  animation:welcome-logo-float 3s ease-in-out infinite}
-@keyframes welcome-logo-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+/* ============ ti-lex Avatar ============ */
+.ti-lex-avatar{--tl-orange:#FF6B35;--tl-orange-dark:#E85D2E;--tl-orange-light:#FF8C5A;
+  --tl-white:#FFFFFF;--tl-black:#1A1A1A;
+  width:80px;height:80px;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.ti-lex-body{width:87.5%;height:87.5%;background:var(--tl-orange);border-radius:50%;position:relative;
+  box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),
+  0 4px 15px rgba(255,107,53,.3);transition:all .4s cubic-bezier(.4,0,.2,1)}
+.ti-lex-body.glow{box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),
+  0 0 30px rgba(255,107,53,.5),0 0 60px rgba(255,107,53,.2)}
+
+.ti-lex-eyes{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);display:flex;gap:14px}
+.ti-lex-eye{width:12px;height:12px;background:var(--tl-white);border-radius:50%;
+  transition:all .3s cubic-bezier(.4,0,.2,1);position:relative}
+.ti-lex-eye::after{content:'';position:absolute;top:2px;right:2px;width:4px;height:4px;
+  background:var(--tl-orange-light);border-radius:50%;opacity:.6;transition:all .3s ease}
+
+/* Clin d'oeil auto (idle) */
+@keyframes winkRight{0%,88%{height:12px;border-radius:50%;transform:translateY(0)}
+  94%{height:2px;border-radius:1px;transform:translateY(5px)}
+  100%{height:12px;border-radius:50%;transform:translateY(0)}}
+.ti-lex-avatar[data-state="idle"] .ti-lex-eye:last-child{animation:winkRight 7s ease-in-out infinite;animation-delay:3s}
+
+/* Respiration idle */
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.ti-lex-avatar[data-state="idle"] .ti-lex-body{animation:breathe 3s ease-in-out infinite}
+
+/* Yeux noirs (typing + waiting) */
+.ti-lex-avatar[data-state="typing"] .ti-lex-eye,
+.ti-lex-avatar[data-state="waiting"] .ti-lex-eye{background:var(--tl-black);height:4px;border-radius:2px;transform:translateY(4px)}
+.ti-lex-avatar[data-state="typing"] .ti-lex-eye::after,
+.ti-lex-avatar[data-state="waiting"] .ti-lex-eye::after{display:none}
+
+/* Yeux brillants (responding) */
+.ti-lex-avatar[data-state="responding"] .ti-lex-eye{background:var(--tl-white);
+  box-shadow:0 0 10px rgba(255,255,255,.9),0 0 20px rgba(255,255,255,.6),0 0 30px rgba(255,255,255,.3),inset 0 0 5px rgba(255,255,255,.8)}
+.ti-lex-avatar[data-state="responding"] .ti-lex-eye::after{background:var(--tl-white);opacity:.9;width:5px;height:5px}
+
+/* 3 points pensée */
+.ti-lex-dots{position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:30px;height:30px;pointer-events:none}
+.ti-lex-dot{width:6px;height:6px;background:var(--tl-white);border-radius:50%;position:absolute;opacity:0;transition:opacity .3s ease}
+.ti-lex-dot:nth-child(1){left:0;top:18px}
+.ti-lex-dot:nth-child(2){left:10px;top:8px}
+.ti-lex-dot:nth-child(3){left:20px;top:-2px}
+
+@keyframes dotThink1{0%,100%{opacity:.3;transform:scale(1)}33%{opacity:1;transform:scale(1.3)}66%{opacity:.3;transform:scale(1)}}
+@keyframes dotThink2{0%,100%{opacity:.3;transform:scale(1)}33%{opacity:.3;transform:scale(1)}66%{opacity:1;transform:scale(1.3)}}
+@keyframes dotThink3{0%,100%{opacity:1;transform:scale(1.3)}33%{opacity:.3;transform:scale(1)}66%{opacity:.3;transform:scale(1)}}
+.ti-lex-avatar[data-state="waiting"] .ti-lex-dot:nth-child(1){animation:dotThink1 1.2s ease-in-out infinite}
+.ti-lex-avatar[data-state="waiting"] .ti-lex-dot:nth-child(2){animation:dotThink2 1.2s ease-in-out infinite}
+.ti-lex-avatar[data-state="waiting"] .ti-lex-dot:nth-child(3){animation:dotThink3 1.2s ease-in-out infinite}
+.ti-lex-avatar[data-state="typing"] .ti-lex-dot,
+.ti-lex-avatar[data-state="waiting"] .ti-lex-dot{opacity:.8}
+
+/* Pulse glow (responding) */
+@keyframes pulseGlow{0%,100%{box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),0 0 20px rgba(255,255,255,.3)}
+  50%{box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),0 0 40px rgba(255,255,255,.6),0 0 60px rgba(255,107,53,.3)}}
+.ti-lex-avatar[data-state="responding"] .ti-lex-body{animation:pulseGlow 1.5s ease-in-out infinite}
+.ti-lex-avatar[data-state="responding"] .ti-lex-body::before{content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:120%;height:120%;border-radius:50%;
+  border:2px solid rgba(255,255,255,.4);animation:pulseGlow 1.5s ease-in-out infinite}
+
+/* Mini avatar dans les messages */
+.al-avatar-mini.ti-lex-avatar{position:absolute;bottom:-4px;left:-6px;z-index:2;
+  width:22px;height:22px}
+.al-avatar-mini .ti-lex-dots{display:none}
 
 /* ---- Claude badge + logo officiel + animations chat principal ---- */
 .msg-avatar-wrap{position:relative;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
 .msg-avatar-wrap .msg-avatar{width:42px;height:42px;border-radius:12px;object-fit:cover}
-.al-mini-logo{position:absolute;bottom:-4px;left:-6px;width:22px;height:22px;
-  object-fit:contain;z-index:2;
-  filter:drop-shadow(0 0 4px rgba(232,117,26,.6));border-radius:4px}
 .claude-badge{
   position:absolute;bottom:-2px;right:-4px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--bg);

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-17";
+const CACHE_VERSION = "tilex-v10-18";
 const ASSETS = [
   "/",
   "/index.html",
