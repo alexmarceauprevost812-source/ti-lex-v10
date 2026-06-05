@@ -239,6 +239,10 @@ body.menu-closed #menuToggleMobile{display:flex}
 .msg.user .msg-avatar-user svg{stroke:#93c5fd}
 .msg-avatar-user-tl.ti-lex-avatar{width:42px;height:42px}
 .msg-avatar-user-tl .ti-lex-dots{display:none}
+.msg-avatar-user-tl .ti-lex-body{background:#2563eb;
+  box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),
+  0 4px 15px rgba(37,99,235,.3)}
+.msg-avatar-user-tl .ti-lex-eye::after{background:#93c5fd}
 .msg-body{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:13px 17px;line-height:1.6;font-size:.95rem}
 .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6;font-weight:500}
