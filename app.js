@@ -883,13 +883,10 @@ function renderChatConvs() {
 function resetChatWelcome() {
   const msgs = $("#messages");
   msgs.innerHTML = `<div class="welcome">
-    <img src="assets/tilex-logo.png" alt="ti-lex-AL" class="welcome-logo-img">
-    <div class="welcome-avatar" id="welcomeAvatar"></div>
+    <img src="assets/tilex-v10-logo.png" alt="ti-lex-AL v10" class="welcome-logo-img">
     <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
     <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
   </div>`;
-  const nwa = $("#welcomeAvatar");
-  if (nwa) nwa.appendChild(createTiLexAvatar(80));
 }
 
 function rebuildChatFromHistory() {
@@ -922,20 +919,9 @@ if ($("#newChatConv")) {
 const input = $("#input");
 const messages = $("#messages");
 
-let typingTimeout = null;
 input.addEventListener("input", () => {
   input.style.height = "auto";
   input.style.height = Math.min(input.scrollHeight, 160) + "px";
-  const welcomeAv = document.querySelector(".welcome .ti-lex-avatar");
-  if (welcomeAv && welcomeAv._setState) {
-    if (input.value.trim().length > 0) {
-      welcomeAv._setState("typing");
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => welcomeAv._setState("idle"), 2000);
-    } else {
-      welcomeAv._setState("idle");
-    }
-  }
 });
 input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -944,9 +930,10 @@ $("#send").onclick = sendMessage;
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
 function avatarUser() {
-  const av = createTiLexAvatar(38);
-  av.classList.add("msg-avatar-user-tl");
-  return av;
+  const d = document.createElement("div");
+  d.className = "msg-avatar-user";
+  d.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg>`;
+  return d;
 }
 const CLAUDE_LOGO = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Claude_AI_logo.svg/40px-Claude_AI_logo.svg.png";
 
@@ -2122,10 +2109,6 @@ if (state.github.token) {
   if ($("#codexGhToken")) $("#codexGhToken").value = state.github.token;
   codexGhConnect();
 }
-
-// Avatar ti-lex animé sur l'écran d'accueil
-const wa = $("#welcomeAvatar");
-if (wa) wa.appendChild(createTiLexAvatar(80));
 
 /* ================= SÉCURITÉ — SOW ================= */
 
