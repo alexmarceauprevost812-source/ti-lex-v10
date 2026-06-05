@@ -237,7 +237,7 @@ body.menu-closed #menuToggleMobile{display:flex}
   border:1px solid #3b82f6;display:flex;align-items:center;justify-content:center;
   color:#93c5fd;transition:var(--t);box-shadow:0 0 12px rgba(37,99,235,.25)}
 .msg.user .msg-avatar-user svg{stroke:#93c5fd}
-.msg-avatar-user-tl.ti-lex-avatar{width:42px;height:42px}
+.msg-avatar-user-tl.ti-lex-avatar{width:48px;height:48px}
 .msg-avatar-user-tl .ti-lex-dots{display:none}
 .msg-avatar-user-tl .ti-lex-body{background:#2563eb;
   box-shadow:inset -5px -5px 15px rgba(0,0,0,.15),inset 5px 5px 15px rgba(255,255,255,.1),
@@ -515,14 +515,14 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
 /* Messages dans le codex chat */
 .codex-msg{display:flex;gap:12px;max-width:820px;animation:fade .35s ease}
 .codex-msg.user{flex-direction:row-reverse;margin-left:auto}
-.codex-msg .msg-avatar{width:32px;height:32px;border-radius:9px;flex-shrink:0;object-fit:cover}
+.codex-msg .msg-avatar{width:38px;height:38px;border-radius:10px;flex-shrink:0;object-fit:cover}
 .codex-msg.assistant .msg-avatar-wrap .msg-avatar{box-shadow:0 0 12px var(--orange-glow)}
 .codex-msg.user .cmsg-avatar{
   width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#1a3a5c,#2563eb);
   display:flex;align-items:center;justify-content:center;font-weight:700;
   color:#93c5fd;border:1px solid #3b82f6;font-size:.8rem;flex-shrink:0;
 }
-.codex-user-av.ti-lex-avatar{width:32px;height:32px}
+.codex-user-av.ti-lex-avatar{width:38px;height:38px}
 .codex-user-av .ti-lex-dots{display:none}
 .codex-msg-body{
   background:var(--bg-2);border:1px solid var(--line);border-radius:14px;
@@ -690,7 +690,7 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 
 /* ---- Claude badge + logo officiel + animations chat principal ---- */
 .msg-avatar-wrap{position:relative;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
-.msg-avatar-wrap .msg-avatar{width:42px;height:42px;border-radius:12px;object-fit:cover}
+.msg-avatar-wrap .msg-avatar{width:50px;height:50px;border-radius:14px;object-fit:cover}
 .claude-badge{
   position:absolute;bottom:-2px;right:-4px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--bg);
