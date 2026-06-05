@@ -1805,8 +1805,8 @@ function renderProjConvs() {
 
   const key = projKey();
   if (!key) {
-    if (label) label.textContent = "Aucun projet";
-    listEl.innerHTML = '<p class="proj-conv-empty">Connecte un projet GitHub pour stocker tes conversations ici.</p>';
+    if (label) label.textContent = "Aucun projet connecté";
+    listEl.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Connecte GitHub dans le Codex pour voir tes conversations de projet.</p>';
     return;
   }
 
@@ -1815,7 +1815,7 @@ function renderProjConvs() {
 
   const list = projConvs[key] || [];
   if (!list.length) {
-    listEl.innerHTML = '<p class="proj-conv-empty">Aucune conversation pour ce projet. Lance une demande dans le Codex!</p>';
+    listEl.innerHTML = '<p class="proj-conv-empty">Aucune conversation. Utilise le Codex pour commencer!</p>';
     return;
   }
 
@@ -1846,6 +1846,7 @@ function renderProjConvs() {
       const c = list[idx];
       codexChatMsgs = c.msgs || [{ role: "user", text: c.full }, { role: "assistant", text: c.output }];
       activeConvIdx = -1;
+      switchView("codex");
       rebuildCodexChat();
       renderProjConvs();
       renderCodexConvos();

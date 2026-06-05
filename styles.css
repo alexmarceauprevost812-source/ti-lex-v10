@@ -467,44 +467,47 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
 .codex-scan-btn:hover{background:rgba(255,102,0,.2);transform:translateY(-1px)}
 .codex-scan-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* -- Project conversations section -- */
-.codex-sb-proj-convs{border-top:1px solid var(--line);padding-bottom:0!important}
-.codex-sb-proj-header{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
-.codex-sb-proj-header .codex-sb-label{margin-bottom:0}
-.codex-sb-proj-name{
-  font-family:var(--mono);font-size:.68rem;color:var(--orange);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+/* -- Project conversations (main sidebar) -- */
+.proj-convs-section{border-top:1px solid var(--line)!important;margin-top:2px!important;padding-top:10px!important}
+.proj-section-header{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.proj-section-ico{
+  width:14px;height:14px;fill:none;stroke:var(--txt-dim);
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;
 }
-.codex-sb-proj-list{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.proj-section-header .conn-title{margin:0;padding:0}
+.proj-conv-repo-label{
+  display:block;font-family:var(--mono);font-size:.66rem;color:var(--orange);
+  margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.proj-conv-list-wrap{display:flex;flex-direction:column;gap:2px;max-height:220px;overflow-y:auto}
 .proj-conv-item{
-  display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:9px;
-  font-size:.8rem;color:var(--txt-dim);cursor:pointer;transition:var(--t);
-  position:relative;
+  display:flex;align-items:center;gap:5px;padding:6px 8px;border-radius:8px;
+  font-size:.78rem;color:var(--txt-dim);cursor:pointer;transition:var(--t);
 }
 .proj-conv-item:hover{background:var(--bg-3);color:var(--txt)}
 .proj-conv-item.active{background:var(--bg-3);color:var(--txt);border-left:2px solid var(--orange)}
 .proj-conv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .proj-conv-pin{
-  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
   border:none;background:none;color:var(--txt-dim);cursor:pointer;padding:0;
-  opacity:0;transition:opacity .15s;flex-shrink:0;font-size:.7rem;
+  opacity:0;transition:opacity .15s;flex-shrink:0;font-size:.65rem;
 }
 .proj-conv-item:hover .proj-conv-pin,.proj-conv-pin.pinned{opacity:1}
 .proj-conv-pin.pinned{color:var(--orange)}
-.proj-conv-date{font-size:.62rem;color:var(--txt-dim);flex-shrink:0}
+.proj-conv-date{font-size:.6rem;color:var(--txt-dim);flex-shrink:0}
 .proj-conv-del{
-  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
   border:none;background:none;color:var(--txt-dim);cursor:pointer;padding:0;
-  opacity:0;transition:opacity .15s;flex-shrink:0;font-size:.8rem;
+  opacity:0;transition:opacity .15s;flex-shrink:0;font-size:.75rem;
 }
 .proj-conv-item:hover .proj-conv-del{opacity:1}
 .proj-conv-del:hover{color:#ef4444}
 .proj-conv-badge{
-  font-size:.58rem;font-family:var(--mono);background:var(--bg-2);
+  font-size:.55rem;font-family:var(--mono);background:var(--bg-2);
   border:1px solid var(--line);border-radius:4px;padding:0 4px;
   color:var(--txt-dim);flex-shrink:0;
 }
-.proj-conv-empty{font-size:.75rem;color:var(--txt-dim);padding:8px 4px;text-align:center}
+.proj-conv-empty{font-size:.72rem;color:var(--txt-dim);padding:6px 2px;text-align:center}
 .codex-sb-history{flex:1;overflow-y:auto;border-top:1px solid var(--line)}
 .codex-sb-convos{display:flex;flex-direction:column;gap:3px}
 .codex-sb-conv{
