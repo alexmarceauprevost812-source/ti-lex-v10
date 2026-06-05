@@ -883,12 +883,13 @@ function renderChatConvs() {
 function resetChatWelcome() {
   const msgs = $("#messages");
   msgs.innerHTML = `<div class="welcome">
+    <img src="assets/tilex-logo.png" alt="ti-lex-AL" class="welcome-logo-img">
     <div class="welcome-avatar" id="welcomeAvatar"></div>
     <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
     <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
   </div>`;
   const nwa = $("#welcomeAvatar");
-  if (nwa) { nwa.innerHTML = ""; nwa.appendChild(createTiLexAvatar(120)); }
+  if (nwa) nwa.appendChild(createTiLexAvatar(80));
 }
 
 function rebuildChatFromHistory() {
@@ -987,14 +988,10 @@ function createTiLexAvatar(size = 80) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  // Logo ti-lex comme avatar principal
-  const logo = document.createElement("img");
-  logo.className = "msg-avatar al-logo"; logo.src = "logo.png"; logo.alt = "AL";
-  wrap.appendChild(logo);
-  // Mini ti-lex avatar animé (coin bas-gauche)
-  const mini = createTiLexAvatar(22);
-  mini.classList.add("al-avatar-mini");
-  wrap.appendChild(mini);
+  // Avatar ti-lex animé comme avatar principal
+  const av = createTiLexAvatar(42);
+  av.classList.add("msg-avatar-al");
+  wrap.appendChild(av);
   // Badge Claude (coin bas-droite)
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
@@ -2125,9 +2122,9 @@ if (state.github.token) {
   codexGhConnect();
 }
 
-// Avatar ti-lex sur l'écran d'accueil
+// Avatar ti-lex animé sur l'écran d'accueil
 const wa = $("#welcomeAvatar");
-if (wa) { wa.innerHTML = ""; wa.appendChild(createTiLexAvatar(120)); }
+if (wa) wa.appendChild(createTiLexAvatar(80));
 
 /* ================= SÉCURITÉ — SOW ================= */
 
