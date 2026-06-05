@@ -930,7 +930,7 @@ $("#send").onclick = sendMessage;
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
 function avatarUser() {
-  const av = createTiLexAvatar(40);
+  const av = createTiLexAvatar(48);
   av.classList.add("msg-avatar-user-tl");
   av.dataset.state = "idle";
   return av;
@@ -1519,7 +1519,7 @@ function addCodexUserMsg(text, atts) {
   $(".codex-welcome")?.remove();
   const m = document.createElement("div");
   m.className = "codex-msg user";
-  const av = createTiLexAvatar(32);
+  const av = createTiLexAvatar(38);
   av.classList.add("msg-avatar-user-tl", "codex-user-av");
   m.appendChild(av);
   const b = document.createElement("div");
