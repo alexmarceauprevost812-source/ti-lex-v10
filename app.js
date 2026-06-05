@@ -1603,6 +1603,7 @@ async function codexGhConnect() {
     $$(`.conn-btn[data-service="github"]`).forEach(b => b.classList.add("connected"));
 
     syncCodexProjects();
+    renderProjConvs();
 
     if (state.github.repo) {
       repoSel.value = state.github.repo;
@@ -1659,15 +1660,15 @@ async function codexGhLoadBranches(repo) {
 
 if ($("#codexGhConnect")) {
   $("#codexGhConnect").onclick = codexGhConnect;
-  $("#codexGhRepo").onchange = e => codexGhLoadBranches(e.target.value);
+  $("#codexGhRepo").onchange = e => { codexGhLoadBranches(e.target.value); renderProjConvs(); };
   $("#codexGhBranch").onchange = e => {
     state.github.branch = e.target.value;
     state.projectFiles = [];
     persistGithub();
     const info = $("#codexGhInfo");
     if (info) info.innerHTML = `Branche : <b>${e.target.value}</b>`;
-    // reload file count
     codexGhLoadBranches(state.github.repo);
+    renderProjConvs();
   };
 }
 
@@ -1720,6 +1721,10 @@ function saveCodexConv(prompt, output) {
   if (codexHistory.length > 30) codexHistory.length = 30;
   try { localStorage.setItem("tilex-codex-history", JSON.stringify(codexHistory)); } catch (_) {}
   renderCodexConvos();
+
+  if (state.connected.github && state.github.repo) {
+    saveProjConv(entry);
+  }
 }
 
 function renderCodexConvos() {
@@ -1760,6 +1765,129 @@ function renderCodexConvos() {
   });
 }
 
+/* ---- Project Conversations ---- */
+const PROJ_CONVS_KEY = "tilex-proj-convs";
+let projConvs = {};
+let activeProjConvIdx = -1;
+
+function loadProjConvs() {
+  try { projConvs = JSON.parse(localStorage.getItem(PROJ_CONVS_KEY) || "{}"); } catch (_) { projConvs = {}; }
+}
+function persistProjConvs() {
+  try { localStorage.setItem(PROJ_CONVS_KEY, JSON.stringify(projConvs)); } catch (_) {}
+}
+
+function projKey() {
+  if (!state.connected.github || !state.github.repo) return null;
+  return `${state.github.repo}/${state.github.branch || "main"}`;
+}
+
+function saveProjConv(entry) {
+  const key = projKey();
+  if (!key) return;
+  if (!projConvs[key]) projConvs[key] = [];
+  const list = projConvs[key];
+  const existing = list.findIndex(c => c.ts === entry.ts && c.prompt === entry.prompt);
+  if (existing >= 0) {
+    list[existing] = { ...entry, pinned: list[existing].pinned || false };
+  } else {
+    list.unshift({ ...entry, pinned: false });
+  }
+  if (list.length > 50) list.length = 50;
+  persistProjConvs();
+  renderProjConvs();
+}
+
+function renderProjConvs() {
+  const label = $("#projConvLabel");
+  const listEl = $("#projConvList");
+  if (!listEl) return;
+
+  const key = projKey();
+  if (!key) {
+    if (label) label.textContent = "Aucun projet";
+    listEl.innerHTML = '<p class="proj-conv-empty">Connecte un projet GitHub pour stocker tes conversations ici.</p>';
+    return;
+  }
+
+  const repoShort = state.github.repo.split("/").pop();
+  if (label) label.textContent = `${repoShort} · ${state.github.branch || "main"}`;
+
+  const list = projConvs[key] || [];
+  if (!list.length) {
+    listEl.innerHTML = '<p class="proj-conv-empty">Aucune conversation pour ce projet. Lance une demande dans le Codex!</p>';
+    return;
+  }
+
+  const sorted = [...list].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return (b.ts || 0) - (a.ts || 0);
+  });
+
+  listEl.innerHTML = sorted.map((c, i) => {
+    const origIdx = list.indexOf(c);
+    const age = c.ts ? timeAgo(c.ts) : "";
+    const fileCount = countFilesInConv(c);
+    return `<div class="proj-conv-item${origIdx === activeProjConvIdx ? ' active' : ''}" data-pidx="${origIdx}">
+      <button class="proj-conv-pin${c.pinned ? ' pinned' : ''}" data-pidx="${origIdx}" title="${c.pinned ? 'Désépingler' : 'Épingler'}">${c.pinned ? '★' : '☆'}</button>
+      <span class="proj-conv-title">${escapeHtml(c.prompt || "Sans titre")}</span>
+      ${fileCount ? `<span class="proj-conv-badge">${fileCount} fich.</span>` : ""}
+      ${age ? `<span class="proj-conv-date">${age}</span>` : ""}
+      <button class="proj-conv-del" data-pidx="${origIdx}" title="Supprimer">×</button>
+    </div>`;
+  }).join("");
+
+  $$(".proj-conv-item", listEl).forEach(el => {
+    el.onclick = (e) => {
+      if (e.target.classList.contains("proj-conv-del") || e.target.classList.contains("proj-conv-pin")) return;
+      const idx = +el.dataset.pidx;
+      activeProjConvIdx = idx;
+      const c = list[idx];
+      codexChatMsgs = c.msgs || [{ role: "user", text: c.full }, { role: "assistant", text: c.output }];
+      activeConvIdx = -1;
+      rebuildCodexChat();
+      renderProjConvs();
+      renderCodexConvos();
+    };
+  });
+
+  $$(".proj-conv-pin", listEl).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = +btn.dataset.pidx;
+      list[idx].pinned = !list[idx].pinned;
+      persistProjConvs();
+      renderProjConvs();
+    };
+  });
+
+  $$(".proj-conv-del", listEl).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = +btn.dataset.pidx;
+      list.splice(idx, 1);
+      if (activeProjConvIdx === idx) {
+        activeProjConvIdx = -1;
+        codexChatMsgs = [];
+        resetCodexWelcome();
+      } else if (activeProjConvIdx > idx) {
+        activeProjConvIdx--;
+      }
+      persistProjConvs();
+      renderProjConvs();
+    };
+  });
+}
+
+function countFilesInConv(conv) {
+  if (!conv.output) return 0;
+  const matches = conv.output.match(/```\w*\n?\/\/\s*FILE:/gi);
+  return matches ? matches.length : 0;
+}
+
+loadProjConvs();
+
 function resetCodexWelcome() {
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
@@ -1791,6 +1919,7 @@ function rebuildCodexChat() {
 
 $("#codexNewConv").onclick = () => {
   activeConvIdx = -1;
+  activeProjConvIdx = -1;
   codexChatMsgs = [];
   $("#codeInput").value = "";
   const area = $("#codexMessages");
@@ -1806,6 +1935,7 @@ $("#codexNewConv").onclick = () => {
   </div>`;
   bindCodexSuggestions();
   renderCodexConvos();
+  renderProjConvs();
 };
 
 /* ================= CODEX (chat-style) ================= */
@@ -2257,6 +2387,7 @@ if (state.connected.supabase) { setSbState("✓ connecté", true); }
 syncReflexion();
 syncCodexProjects();
 renderCodexConvos();
+renderProjConvs();
 renderChatConvs();
 renderAttachStrip();
 refreshStudio();
