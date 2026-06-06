@@ -523,6 +523,15 @@
       </div>
 
       <div class="set-block">
+        <h3>Langue / Language</h3>
+        <p class="muted">Choisis la langue de l'interface et des réponses de l'agent.</p>
+        <select id="langSelect" class="set-input" aria-label="Choisir la langue" title="Langue">
+          <option value="fr">🇫🇷 Français</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+
+      <div class="set-block">
         <h3>Clé API Anthropic</h3>
         <p class="muted">Pour le déploiement. <span class="warn">⚠ Ne jamais exposer une vraie clé dans le frontend en production — route via une Edge Function Supabase.</span></p>
         <input type="password" id="apiKey" class="set-input" placeholder="sk-ant-...">

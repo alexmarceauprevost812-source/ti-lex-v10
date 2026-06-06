@@ -10,6 +10,7 @@ const state = {
   reflexion: true,
   theme: "dark",
   model: MODEL_DEFAULT,
+  lang: "fr",
   apiKey: "",
   history: [],
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
@@ -79,12 +80,15 @@ const LS_MODEL = "tilex-al-model";
 const LS_GH = "tilex-al-github";
 const LS_SB = "tilex-al-supabase";
 const LS_MEMORY = "tilex-al-memory";
+const LS_LANG = "tilex-al-lang";
 function loadSettings() {
   try {
     const k = localStorage.getItem(LS_KEY);
     const m = localStorage.getItem(LS_MODEL);
+    const lang = localStorage.getItem(LS_LANG);
     if (k) state.apiKey = k;
     if (m) state.model = m;
+    if (lang && (lang === "fr" || lang === "en")) state.lang = lang;
     const gh = JSON.parse(localStorage.getItem(LS_GH) || "null");
     if (gh && gh.token) { state.github = gh; state.connected.github = true; }
     const sb = JSON.parse(localStorage.getItem(LS_SB) || "null");
@@ -249,12 +253,58 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
-const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", studio: "Studio", forfaits: "Forfaits", settings: "Paramètres" };
+const I18N = {
+  fr: {
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", settings: "Paramètres" },
+    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", settings: "Paramètres" },
+    conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
+    placeholder: "Écris ton message…", send: "Envoyer",
+    noProject: "Aucun projet connecté",
+    connectGh: "Connecte GitHub dans le Codex pour voir tes conversations de projet.",
+    installer: "Installer l'app",
+  },
+  en: {
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", settings: "Settings" },
+    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", settings: "Settings" },
+    conversations: "Conversations", projet: "Project", nouvelle: "+ New",
+    placeholder: "Type your message…", send: "Send",
+    noProject: "No project connected",
+    connectGh: "Connect GitHub in the Codex to see your project conversations.",
+    installer: "Install app",
+  }
+};
+
+function t(key) { return I18N[state.lang]?.[key] ?? I18N.fr[key] ?? key; }
+
+function applyLang() {
+  const lang = state.lang;
+  const strings = I18N[lang] || I18N.fr;
+  $$(".nav-item[data-view]").forEach(b => {
+    const lbl = $(".lbl", b);
+    if (lbl && strings.nav[b.dataset.view]) lbl.textContent = strings.nav[b.dataset.view];
+  });
+  const convTitle = $(".conn-title");
+  if (convTitle) convTitle.textContent = strings.conversations;
+  const projTitle = $(".proj-section-header .conn-title");
+  if (projTitle) projTitle.textContent = strings.projet;
+  const newBtn = $("#newChatConv");
+  if (newBtn) newBtn.textContent = strings.nouvelle;
+  const projLabel = $("#projConvLabel");
+  if (projLabel && projLabel.textContent.includes("Aucun") || projLabel?.textContent.includes("No "))
+    projLabel.textContent = strings.noProject;
+  const installBtn = $("#installBtn span");
+  if (installBtn) installBtn.textContent = strings.installer;
+  const input = $("#chatInput");
+  if (input) input.placeholder = strings.placeholder;
+}
+
+const TITLES = I18N.fr.titles;
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
   $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
-  $("#viewTitle").textContent = TITLES[v] || "Agent AL";
+  const titles = I18N[state.lang]?.titles || TITLES;
+  $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
 }
@@ -2377,6 +2427,15 @@ if ($("#studioPushGh")) {
 loadSettings();
 $("#apiKey").value = state.apiKey;
 $("#modelSelect").value = state.model;
+if ($("#langSelect")) {
+  $("#langSelect").value = state.lang;
+  $("#langSelect").onchange = (e) => {
+    state.lang = e.target.value;
+    try { localStorage.setItem(LS_LANG, state.lang); } catch (_) {}
+    applyLang();
+  };
+}
+applyLang();
 
 // restaure les champs de connexion
 if (state.github.token) $("#ghToken").value = state.github.token;
