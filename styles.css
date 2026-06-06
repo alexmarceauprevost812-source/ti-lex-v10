@@ -1173,12 +1173,12 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .agent-card{display:flex;flex-direction:column;gap:6px;padding:14px 16px;
   background:var(--bg-3);border:1px solid var(--line);border-radius:14px;
   cursor:pointer;transition:var(--t);text-align:left}
-.agent-card:hover{border-color:var(--orange);transform:translateY(-2px)}
-.agent-card.active{border-color:var(--orange);box-shadow:0 0 0 3px var(--orange-glow)}
+.agent-card:hover{border-color:#000;transform:translateY(-2px)}
+.agent-card.active{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
 .agent-card-top{display:flex;align-items:center;gap:10px}
 .agent-emoji{font-size:1.4rem;width:38px;height:38px;display:flex;align-items:center;
   justify-content:center;background:var(--bg);border-radius:10px;flex-shrink:0}
-.agent-card.active .agent-emoji{background:var(--orange)}
+.agent-card.active .agent-emoji{background:#000}
 .agent-emoji img{width:100%;height:100%;object-fit:cover;border-radius:10px}
 .agent-name{font-family:var(--marker);font-weight:400;font-size:1.05rem;color:var(--txt);letter-spacing:.3px}
 .agent-desc{font-size:.78rem;color:var(--txt-dim);line-height:1.45;font-style:italic}
