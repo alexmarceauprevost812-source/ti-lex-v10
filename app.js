@@ -1368,10 +1368,93 @@ function renderAssistant(body, full, streaming) {
   if (!streaming) {
     if (answer) addCodeActions(body, full);
     renderMermaidBlocks(body);
+    addTTSButton(body, answer);
   }
 }
 
-/* ---- Push code to GitHub ---- */
+/* ---- Text-to-Speech ---- */
+function getTTSVoice() {
+  const voices = speechSynthesis.getVoices();
+  return voices.find(v => v.lang === "fr-CA") ||
+    voices.find(v => v.lang.startsWith("fr") && v.name.toLowerCase().includes("google")) ||
+    voices.find(v => v.lang.startsWith("fr")) ||
+    voices.find(v => v.lang.startsWith("en") && v.name.toLowerCase().includes("google")) ||
+    voices[0];
+}
+
+function cleanTextForTTS(text) {
+  return text
+    .replace(/<reflexion>[\s\S]*?<\/reflexion>/gi, "")
+    .replace(/```[\s\S]*?```/g, " bloc de code ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[mémoire:[^\]]*\]/g, "")
+    .replace(/[#*_~>|]/g, "")
+    .replace(/https?:\/\/\S+/g, " lien ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function addTTSButton(body, text) {
+  const clean = cleanTextForTTS(text);
+  if (!clean || clean.length < 5) return;
+
+  const bar = document.createElement("div");
+  bar.className = "tts-bar";
+  bar.innerHTML = `
+    <button class="tts-btn" title="Écouter la réponse">
+      <svg class="tts-ico-play" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+      </svg>
+      <svg class="tts-ico-stop hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+      </svg>
+      <span class="tts-label">Écouter</span>
+    </button>`;
+
+  const btn = bar.querySelector(".tts-btn");
+  const playIco = bar.querySelector(".tts-ico-play");
+  const stopIco = bar.querySelector(".tts-ico-stop");
+  const label = bar.querySelector(".tts-label");
+  let utterance = null;
+
+  btn.onclick = () => {
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      playIco.classList.remove("hidden");
+      stopIco.classList.add("hidden");
+      label.textContent = "Écouter";
+      btn.classList.remove("tts-active");
+      return;
+    }
+
+    utterance = new SpeechSynthesisUtterance(clean);
+    utterance.voice = getTTSVoice();
+    utterance.lang = "fr-CA";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+
+    playIco.classList.add("hidden");
+    stopIco.classList.remove("hidden");
+    label.textContent = "Pause";
+    btn.classList.add("tts-active");
+
+    utterance.onend = () => {
+      playIco.classList.remove("hidden");
+      stopIco.classList.add("hidden");
+      label.textContent = "Écouter";
+      btn.classList.remove("tts-active");
+    };
+    utterance.onerror = utterance.onend;
+
+    speechSynthesis.speak(utterance);
+  };
+
+  body.appendChild(bar);
+}
+
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => {};
+}
 async function pushToGithub(content, suggestedName) {
   if (!state.connected.github || !state.github.token || !state.github.repo) {
     alert("Connecte ton compte GitHub dans Paramètres d'abord.");
