@@ -249,7 +249,7 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
-const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", studio: "Studio", settings: "Paramètres" };
+const TITLES = { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", studio: "Studio", forfaits: "Forfaits", settings: "Paramètres" };
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
@@ -2803,5 +2803,88 @@ function withdrawConsent() {
 if ($("#dataExportBtn")) $("#dataExportBtn").onclick = exportMyData;
 if ($("#dataDeleteBtn")) $("#dataDeleteBtn").onclick = deleteAllMyData;
 if ($("#consentWithdrawBtn")) $("#consentWithdrawBtn").onclick = withdrawConsent;
+
+/* ================= FORFAITS / STRIPE ================= */
+const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
+const PRICE_MAP = {
+  starter: "price_starter_monthly",
+  pro: "price_pro_monthly",
+  industrial: "price_industrial_monthly",
+};
+
+function getSupabaseSession() {
+  try {
+    const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.access_token || parsed?.currentSession?.access_token || null;
+  } catch { return null; }
+}
+
+async function subscribeToplan(plan) {
+  const priceId = PRICE_MAP[plan];
+  if (!priceId) return;
+
+  const token = getSupabaseSession();
+  if (!token) {
+    alert("Connecte-toi d'abord pour t'abonner.");
+    return;
+  }
+
+  const btn = $(`.forfait-btn[data-plan="${plan}"]`);
+  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="forfait-spinner"></span> Redirection…`; }
+
+  try {
+    const res = await fetch(`${SUPABASE_FN}/create-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ priceId }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || "Erreur lors de la création du paiement.");
+      if (btn) { btn.disabled = false; btn.textContent = "Réessayer"; }
+    }
+  } catch (err) {
+    alert("Erreur réseau. Réessaie plus tard.");
+    if (btn) { btn.disabled = false; btn.textContent = "Réessayer"; }
+  }
+}
+
+async function manageSubscription() {
+  const token = getSupabaseSession();
+  if (!token) {
+    alert("Connecte-toi d'abord pour gérer ton abonnement.");
+    return;
+  }
+
+  const btn = $("#manageSubscriptionBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Chargement…"; }
+
+  try {
+    const res = await fetch(`${SUPABASE_FN}/create-portal`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data.error || "Erreur lors de l'ouverture du portail.");
+      if (btn) { btn.disabled = false; btn.textContent = "Gérer mon abonnement"; }
+    }
+  } catch (err) {
+    alert("Erreur réseau. Réessaie plus tard.");
+    if (btn) { btn.disabled = false; btn.textContent = "Gérer mon abonnement"; }
+  }
+}
 
 console.log("ti-lex-AL v10 prêt — conforme Loi 25 du Québec.");

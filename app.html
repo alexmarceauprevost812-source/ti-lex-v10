@@ -49,6 +49,10 @@
       <svg viewBox="0 0 24 24" class="ico"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       <span class="lbl">Studio</span>
     </button>
+    <button class="nav-item" data-view="forfaits">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span class="lbl">Forfaits</span>
+    </button>
   </nav>
 
   <!-- Historique conversations chat -->
@@ -408,6 +412,85 @@
           </button>
         </div>
         <textarea class="studio-code" id="studioCode" spellcheck="false" placeholder="Sélectionne un fichier à gauche…"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE FORFAITS ===== -->
+  <section class="view view-forfaits" id="view-forfaits">
+    <div class="forfaits-wrap">
+      <div class="forfaits-header">
+        <h2>Choisis ton forfait <span class="orange">ti-lex-AL</span></h2>
+        <p class="muted">Tous les forfaits incluent l'agent AL, le Codex, le Studio et le mode Sécurité.</p>
+      </div>
+
+      <div class="forfaits-grid">
+        <!-- STARTER -->
+        <div class="forfait-card">
+          <div class="forfait-badge">Starter</div>
+          <div class="forfait-price">
+            <span class="forfait-dollar">28</span>
+            <span class="forfait-devise">$ / mois</span>
+          </div>
+          <p class="forfait-desc">Pour les créateurs et développeurs solo.</p>
+          <ul class="forfait-features">
+            <li>500 messages / jour</li>
+            <li>50 images IA / jour</li>
+            <li>Codex — push GitHub</li>
+            <li>1 projet actif</li>
+            <li>Mode Sécurité (scan basique)</li>
+            <li>Support par chat</li>
+          </ul>
+          <button class="forfait-btn" data-plan="starter" onclick="subscribeToplan('starter')">Commencer</button>
+        </div>
+
+        <!-- PRO -->
+        <div class="forfait-card forfait-popular">
+          <div class="forfait-pop-tag">Populaire</div>
+          <div class="forfait-badge">Pro</div>
+          <div class="forfait-price">
+            <span class="forfait-dollar">78</span>
+            <span class="forfait-devise">$ / mois</span>
+          </div>
+          <p class="forfait-desc">Pour les équipes et les professionnels.</p>
+          <ul class="forfait-features">
+            <li>Messages illimités</li>
+            <li>200 images IA / jour</li>
+            <li>Codex — multi-projets illimités</li>
+            <li>Mode Sécurité complet (SOW + scans)</li>
+            <li>Agents personnalisés (5 max)</li>
+            <li>Mémoire long terme</li>
+            <li>Support prioritaire</li>
+          </ul>
+          <button class="forfait-btn forfait-btn-pop" data-plan="pro" onclick="subscribeToplan('pro')">S'abonner</button>
+        </div>
+
+        <!-- INDUSTRIEL -->
+        <div class="forfait-card forfait-industrial">
+          <div class="forfait-ind-tag">Industriel</div>
+          <div class="forfait-badge">Industriel</div>
+          <div class="forfait-price">
+            <span class="forfait-dollar">140</span>
+            <span class="forfait-devise">$ / mois</span>
+          </div>
+          <p class="forfait-desc">Pour les entreprises et l'usage intensif.</p>
+          <ul class="forfait-features">
+            <li>Tout du forfait Pro</li>
+            <li>Agents illimités</li>
+            <li>API dédiée (rate limit x10)</li>
+            <li>Scans de sécurité avancés</li>
+            <li>Audit trail complet (5 ans)</li>
+            <li>SSO / intégrations entreprise</li>
+            <li>SLA 99.9% + support dédié</li>
+            <li>Déploiement privé possible</li>
+          </ul>
+          <button class="forfait-btn forfait-btn-ind" data-plan="industrial" onclick="subscribeToplan('industrial')">Contacter</button>
+        </div>
+      </div>
+
+      <div class="forfaits-footer">
+        <p class="muted">Tous les prix sont en dollars canadiens (CAD). Taxes en sus. Annulation en tout temps.</p>
+        <button class="forfait-manage-btn" id="manageSubscriptionBtn" onclick="manageSubscription()">Gérer mon abonnement</button>
       </div>
     </div>
   </section>

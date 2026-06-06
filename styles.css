@@ -1162,3 +1162,56 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
   cursor:pointer;text-decoration:none;transition:var(--t)}
 .gen-image-actions a:hover,.gen-image-actions button:hover{border-color:var(--orange);color:var(--orange)}
 @media(max-width:860px){.agents-panel{width:85vw}}
+
+/* ============ FORFAITS ============ */
+.forfaits-wrap{max-width:1000px;margin:0 auto;padding:32px 16px}
+.forfaits-header{text-align:center;margin-bottom:36px}
+.forfaits-header h2{font-family:var(--marker);font-size:1.8rem;color:var(--txt);letter-spacing:.5px}
+.forfaits-header .muted{color:var(--txt-dim);font-size:.88rem;margin-top:8px}
+.forfaits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.forfait-card{position:relative;background:var(--bg-2);border:1px solid var(--line);border-radius:18px;
+  padding:28px 22px;display:flex;flex-direction:column;gap:10px;transition:var(--t)}
+.forfait-card:hover{border-color:var(--orange);transform:translateY(-4px);
+  box-shadow:0 8px 30px rgba(255,102,0,.12)}
+.forfait-popular{border-color:var(--orange);box-shadow:0 0 0 2px var(--orange-glow)}
+.forfait-industrial{border-color:#a855f7;box-shadow:0 0 0 2px rgba(168,85,247,.25)}
+.forfait-industrial:hover{border-color:#c084fc;box-shadow:0 8px 30px rgba(168,85,247,.18)}
+.forfait-pop-tag,.forfait-ind-tag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  padding:3px 14px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.forfait-pop-tag{background:var(--orange);color:#000}
+.forfait-ind-tag{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff}
+.forfait-badge{font-family:var(--marker);font-size:1.25rem;color:var(--txt);margin-top:4px}
+.forfait-price{display:flex;align-items:baseline;gap:4px;margin:4px 0 6px}
+.forfait-dollar{font-size:2.8rem;font-weight:800;color:var(--orange);line-height:1}
+.forfait-industrial .forfait-dollar{color:#a855f7}
+.forfait-devise{font-size:.88rem;color:var(--txt-dim)}
+.forfait-desc{font-size:.82rem;color:var(--txt-dim);line-height:1.4}
+.forfait-features{list-style:none;padding:0;margin:12px 0;display:flex;flex-direction:column;gap:7px;flex:1}
+.forfait-features li{font-size:.82rem;color:var(--txt);padding-left:20px;position:relative;line-height:1.4}
+.forfait-features li::before{content:"✓";position:absolute;left:0;color:var(--orange);font-weight:700;font-size:.78rem}
+.forfait-industrial .forfait-features li::before{color:#a855f7}
+.forfait-btn{width:100%;padding:12px;border:none;border-radius:12px;font-family:var(--font);
+  font-size:.92rem;font-weight:700;cursor:pointer;transition:var(--t);
+  background:var(--bg-3);color:var(--txt);border:1px solid var(--line)}
+.forfait-btn:hover{background:var(--orange);color:#000;border-color:var(--orange)}
+.forfait-btn-pop{background:var(--orange);color:#000;border-color:var(--orange)}
+.forfait-btn-pop:hover{background:var(--orange-soft);border-color:var(--orange-soft);transform:scale(1.02)}
+.forfait-btn-ind{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;border-color:#a855f7}
+.forfait-btn-ind:hover{background:linear-gradient(135deg,#c084fc,#8b5cf6);transform:scale(1.02)}
+.forfait-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.forfaits-footer{text-align:center;margin-top:32px}
+.forfaits-footer .muted{font-size:.78rem;color:var(--txt-dim)}
+.forfait-manage-btn{margin-top:14px;padding:10px 28px;background:none;border:1px solid var(--line);
+  border-radius:12px;font-family:var(--font);font-size:.85rem;font-weight:600;
+  color:var(--txt-dim);cursor:pointer;transition:var(--t)}
+.forfait-manage-btn:hover{border-color:var(--orange);color:var(--orange)}
+.forfait-current{border-color:var(--orange)!important;box-shadow:0 0 0 3px var(--orange-glow)!important}
+.forfait-current .forfait-btn{background:var(--bg-3)!important;color:var(--txt-dim)!important;
+  border-color:var(--line)!important;cursor:default}
+.forfait-current .forfait-btn::after{content:" (actif)"}
+.forfait-spinner{display:inline-block;width:16px;height:16px;border:2px solid transparent;
+  border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:860px){.forfaits-grid{grid-template-columns:1fr;max-width:400px;margin:0 auto}}
+@media(min-width:861px) and (max-width:1100px){.forfaits-grid{grid-template-columns:repeat(2,1fr)}
+  .forfait-card:last-child{grid-column:1/-1;max-width:50%;margin:0 auto}}
