@@ -1005,8 +1005,8 @@ $("#send").onclick = sendMessage;
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
 function avatarUser() {
-  const av = createTiLexAvatar(48);
-  av.classList.add("msg-avatar-user-tl");
+  const av = createAvatarIA(42);
+  av.classList.add("avatar-ia--user");
   av.dataset.state = "idle";
   return av;
 }
