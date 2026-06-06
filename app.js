@@ -253,8 +253,8 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
-/* Auto-blink + particles for static avatars (topbar, security) */
-document.querySelectorAll(".topbar-avatar, .sec-avatar").forEach(av => {
+/* Auto-blink + particles for static avatars (topbar, sidebar, security) */
+document.querySelectorAll(".topbar-avatar, .sidebar-avatar, .sec-avatar").forEach(av => {
   (function bloop() {
     setTimeout(() => {
       av.querySelectorAll(".avatar-ia__eye").forEach(e => {

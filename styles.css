@@ -113,6 +113,10 @@ body{
 .hamburger:hover{background:var(--line)}
 .hamburger span{width:17px;height:2px;background:var(--txt);border-radius:2px;transition:var(--t)}
 .brand{display:flex;align-items:center;gap:10px;overflow:hidden}
+.sidebar-avatar.avatar-ia{width:40px;height:40px;animation:avBreathe 3s ease-in-out infinite}
+.sidebar-avatar .avatar-ia__eye{width:12px;height:12px}
+.sidebar-avatar .avatar-ia__pupil{width:6px;height:6px}
+.sidebar-avatar .avatar-ia__dot{width:2.5px;height:2.5px}
 .brand-logo{width:38px;height:38px;border-radius:9px;object-fit:cover;
   box-shadow:0 0 14px var(--orange-glow)}
 .brand-name{font-family:var(--marker);font-weight:400;font-size:1.2rem;letter-spacing:.5px;white-space:nowrap}
