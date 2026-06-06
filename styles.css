@@ -1291,7 +1291,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 
 /* Grid */
 .fp-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:54px;align-items:stretch;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:stretch;
 }
 .fp-card{
   position:relative;background:var(--fp-bg-2);
@@ -1401,18 +1401,27 @@ li.fp-off{color:rgba(255,255,255,.3)}
 @keyframes fpRiseFeat{to{opacity:1;transform:translateY(-14px) scale(1.035)}}
 @keyframes fpSpin{to{transform:rotate(360deg)}}
 
+/* Desktop: scroll wrapper is transparent */
+.fp-scroll{margin-top:54px}
+
 @media(max-width:880px){
-  .view-forfaits{overflow-x:hidden!important}
-  .fp-wrap{overflow:visible;padding-left:0;padding-right:0}
-  .fp-grid{
-    display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-    gap:16px;margin:54px 0 0;padding:0 20px 20px;scrollbar-width:none;
+  .fp-scroll{
+    overflow-x:scroll;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x mandatory;
+    margin:40px -20px 0;padding:0 16px 16px;
+    scrollbar-width:none;touch-action:pan-x;
   }
-  .fp-grid::-webkit-scrollbar{display:none}
-  .fp-card{min-width:82vw;max-width:82vw;flex-shrink:0;scroll-snap-align:center}
-  .fp-card.fp-feat{transform:none;order:-1}
-  .fp-card.fp-feat.fp-show{animation:fpRise .8s ease .78s forwards}
-  .fp-card.fp-feat:hover{transform:translateY(-6px)}
-  .fp-card:hover{transform:translateY(-6px)}
+  .fp-scroll::-webkit-scrollbar{display:none}
+  .fp-grid{
+    display:flex!important;gap:14px;
+    width:max-content;margin:0;padding:0;
+  }
+  .fp-card{
+    min-width:80vw;max-width:80vw;flex-shrink:0;scroll-snap-align:center;
+    opacity:1!important;transform:none!important;animation:none!important;
+  }
+  .fp-card.fp-feat{order:-1;transform:none!important}
+  .fp-card.fp-feat::before,.fp-card.fp-feat::after{display:none}
+  .fp-card.fp-feat{border:2px solid var(--fp-orange)}
   .fp-header,.fp-toggle,.fp-trust,.fp-faq,.fp-footer{padding-left:20px;padding-right:20px}
 }
