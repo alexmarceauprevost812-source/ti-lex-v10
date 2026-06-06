@@ -1288,7 +1288,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .nav-forfaits.active{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
 
 .view-forfaits{
-  overflow:auto!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
   --fp-bg:#111;--fp-bg-2:#1a1a1a;--fp-bg-3:#222;
   --fp-orange:#f97316;--fp-orange-d:#ea580c;--fp-orange-glow:rgba(249,115,22,.25);
   --fp-green:#22c55e;--fp-green-glow:rgba(34,197,94,.3);
@@ -1489,27 +1489,18 @@ li.fp-off{color:rgba(255,255,255,.3)}
 .fp-scroll{margin-top:54px}
 
 @media(max-width:880px){
-  .fp-wrap{overflow:visible;padding:20px 0 40px}
+  .fp-wrap{padding:16px 14px 40px}
   .fp-page-title{font-size:clamp(1.6rem,5vw,2.4rem);margin-bottom:4px}
   .fp-header{margin-bottom:6px}
   .fp-title{font-size:1.1rem}
   .fp-sub{font-size:.8rem;margin-top:4px}
   .fp-kicker{font-size:.7rem}
-  .fp-scroll{
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-    scroll-snap-type:x mandatory;
-    margin:20px 0 0;padding:0 16px 16px;
-    scrollbar-width:none;
-    touch-action:pan-x!important;
-    -ms-overflow-style:none;
-  }
-  .fp-scroll::-webkit-scrollbar{display:none}
+  .fp-scroll{margin-top:16px}
   .fp-grid{
-    display:flex!important;gap:12px;
-    width:max-content;margin:0;padding:0;
+    display:flex!important;flex-direction:column!important;gap:18px;
   }
   .fp-card{
-    min-width:72vw;max-width:72vw;flex-shrink:0;scroll-snap-align:center;
+    width:100%;max-width:100%;
     opacity:1!important;transform:none!important;animation:none!important;
     padding:18px 16px 16px;border-radius:16px;
   }
@@ -1517,20 +1508,19 @@ li.fp-off{color:rgba(255,255,255,.3)}
   .fp-card.fp-feat::before,.fp-card.fp-feat::after{display:none}
   .fp-card.fp-feat{border:2px solid var(--fp-orange)}
   .fp-tier{font-size:1.1rem}
-  .fp-pitch{font-size:.78rem;min-height:auto;margin-top:4px}
+  .fp-pitch{font-size:.8rem;min-height:auto;margin-top:4px}
   .fp-price-row{margin:10px 0 2px}
   .fp-amt{font-size:2.8rem}
   .fp-cur{font-size:1.4rem}
   .fp-per{font-size:.75rem}
   .fp-billed{font-size:.7rem;margin-bottom:0}
   ul.fp-feats{margin:10px 0 0;gap:6px}
-  ul.fp-feats li{font-size:.78rem;gap:7px}
+  ul.fp-feats li{font-size:.8rem;gap:7px}
   .fp-ck{width:16px;height:16px;font-size:.6rem}
-  .fp-cta{padding:10px;font-size:.82rem;margin-top:12px}
+  .fp-cta{padding:10px;font-size:.85rem;margin-top:12px}
   .fp-badge{font-size:.6rem;padding:4px 12px;top:-10px}
   .fp-toggle{margin-top:8px}
   .fp-toggle-btn{font-size:.78rem;padding:6px 14px}
   .fp-save{font-size:.58rem;padding:2px 7px}
-  .fp-header,.fp-toggle,.fp-trust,.fp-faq,.fp-footer{padding-left:16px;padding-right:16px}
   .fp-trust{font-size:.72rem;gap:8px;flex-wrap:wrap}
 }
