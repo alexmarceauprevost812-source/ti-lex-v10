@@ -253,27 +253,6 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
-/* Auto-blink + particles for static avatars (topbar, sidebar, security) */
-document.querySelectorAll(".topbar-avatar, .sidebar-avatar, .sec-avatar").forEach(av => {
-  (function bloop() {
-    setTimeout(() => {
-      av.querySelectorAll(".avatar-ia__eye").forEach(e => {
-        e.classList.add("av-blink");
-        setTimeout(() => e.classList.remove("av-blink"), 180);
-      });
-      bloop();
-    }, Math.random() * 3000 + 3000);
-  })();
-  setInterval(() => {
-    const p = document.createElement("div");
-    p.className = "avatar-ia__particle";
-    p.style.left = (Math.random() * 70 + 15) + "%";
-    p.style.bottom = "30%";
-    av.appendChild(p);
-    setTimeout(() => p.remove(), 3000);
-  }, 2500);
-});
-
 const I18N = {
   fr: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", settings: "Paramètres" },
@@ -1095,8 +1074,15 @@ function createAvatarIA(size) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  const av = createAvatarIA(56);
-  wrap.appendChild(av);
+  const vid = document.createElement("video");
+  vid.className = "msg-avatar-vid";
+  vid.src = "assets/avatar-ia.mp4";
+  vid.autoplay = true;
+  vid.loop = true;
+  vid.muted = true;
+  vid.playsInline = true;
+  vid.setAttribute("playsinline", "");
+  wrap.appendChild(vid);
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
@@ -1104,7 +1090,6 @@ function avatarAL() {
   lbl.className = "claude-label";
   lbl.innerHTML = `<img src="${CLAUDE_LOGO}" alt="">Claude`;
   wrap.appendChild(lbl);
-  wrap._avatarIA = av;
   return wrap;
 }
 

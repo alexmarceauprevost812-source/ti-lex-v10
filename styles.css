@@ -113,10 +113,11 @@ body{
 .hamburger:hover{background:var(--line)}
 .hamburger span{width:17px;height:2px;background:var(--txt);border-radius:2px;transition:var(--t)}
 .brand{display:flex;align-items:center;gap:10px;overflow:hidden}
-.sidebar-avatar.avatar-ia{width:40px;height:40px;animation:avBreathe 3s ease-in-out infinite}
-.sidebar-avatar .avatar-ia__eye{width:12px;height:12px}
-.sidebar-avatar .avatar-ia__pupil{width:6px;height:6px}
-.sidebar-avatar .avatar-ia__dot{width:2.5px;height:2.5px}
+/* Video avatar — sidebar brand */
+.brand-avatar-vid{width:42px;height:42px;border-radius:50%;object-fit:cover;
+  flex-shrink:0;pointer-events:none;
+  box-shadow:0 0 16px rgba(138,43,226,.4),0 0 32px rgba(138,43,226,.15);
+  border:2px solid rgba(138,43,226,.3)}
 .brand-logo{width:38px;height:38px;border-radius:9px;object-fit:cover;
   box-shadow:0 0 14px var(--orange-glow)}
 .brand-name{font-family:var(--marker);font-weight:400;font-size:1.2rem;letter-spacing:.5px;white-space:nowrap}
@@ -206,15 +207,23 @@ body.menu-closed #menuToggleMobile{display:flex}
 .agent-mini-logo{width:42px;height:42px;border-radius:11px;object-fit:cover;
   box-shadow:0 0 16px var(--orange-glow)}
 
-/* Topbar animated avatar */
-.topbar-avatar.avatar-ia{width:46px;height:46px;animation:avBreathe 3s ease-in-out infinite}
-@keyframes avBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+/* Video avatar — topbar */
+.topbar-avatar-vid{width:46px;height:46px;border-radius:50%;object-fit:cover;
+  flex-shrink:0;pointer-events:none;
+  box-shadow:0 0 18px rgba(138,43,226,.4),0 0 36px rgba(138,43,226,.15);
+  border:2px solid rgba(138,43,226,.3)}
 
-/* Security page animated avatar */
-.sec-avatar.avatar-ia{width:72px;height:72px;animation:avBreathe 3s ease-in-out infinite}
-.sec-avatar .avatar-ia__eye{width:16px;height:16px}
-.sec-avatar .avatar-ia__pupil{width:8px;height:8px}
-.sec-avatar .avatar-ia__dot{width:4px;height:4px}
+/* Video avatar — security page */
+.sec-avatar-vid{width:68px;height:68px;border-radius:50%;object-fit:cover;
+  flex-shrink:0;pointer-events:none;
+  box-shadow:0 0 24px rgba(138,43,226,.4),0 0 48px rgba(138,43,226,.15);
+  border:2px solid rgba(138,43,226,.3)}
+
+/* Video avatar — chat messages */
+.msg-avatar-vid{width:50px;height:50px;border-radius:50%;object-fit:cover;
+  pointer-events:none;background:#000;
+  box-shadow:0 0 16px rgba(138,43,226,.4),0 0 32px rgba(138,43,226,.15);
+  border:2px solid rgba(138,43,226,.3)}
 .agent-id h1{font-family:var(--marker);font-size:1.1rem;font-weight:400;letter-spacing:.3px}
 .status{font-size:.74rem;color:var(--txt-dim);display:flex;align-items:center;gap:6px;margin-top:2px}
 .status-dot{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84;
