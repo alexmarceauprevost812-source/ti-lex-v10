@@ -743,6 +743,8 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 /* ---- Claude badge + logo officiel + animations chat principal ---- */
 .msg-avatar-wrap{position:relative;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
 .msg-avatar-wrap .msg-avatar{width:50px;height:50px;border-radius:14px;object-fit:cover}
+video.al-video{background:#000;object-fit:cover;pointer-events:none}
+.codex-msg video.al-video{width:38px;height:38px;border-radius:10px}
 .claude-badge{
   position:absolute;bottom:-2px;right:-4px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--bg);
