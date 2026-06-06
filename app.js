@@ -2806,11 +2806,6 @@ if ($("#consentWithdrawBtn")) $("#consentWithdrawBtn").onclick = withdrawConsent
 
 /* ================= FORFAITS / STRIPE ================= */
 const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
-const PRICE_MAP = {
-  starter: "price_starter_monthly",
-  pro: "price_pro_monthly",
-  industrial: "price_industrial_monthly",
-};
 
 function getSupabaseSession() {
   try {
@@ -2822,9 +2817,6 @@ function getSupabaseSession() {
 }
 
 async function subscribeToplan(plan) {
-  const priceId = PRICE_MAP[plan];
-  if (!priceId) return;
-
   const token = getSupabaseSession();
   if (!token) {
     alert("Connecte-toi d'abord pour t'abonner.");
@@ -2835,13 +2827,13 @@ async function subscribeToplan(plan) {
   if (btn) { btn.disabled = true; btn.innerHTML = `<span class="forfait-spinner"></span> Redirection…`; }
 
   try {
-    const res = await fetch(`${SUPABASE_FN}/create-checkout`, {
+    const res = await fetch(`${SUPABASE_FN}/create-checkout-session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ priceId }),
+      body: JSON.stringify({ tier: plan }),
     });
     const data = await res.json();
     if (data.url) {
