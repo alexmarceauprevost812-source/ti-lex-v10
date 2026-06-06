@@ -724,6 +724,17 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
 .msg-avatar-al.ti-lex-avatar{width:42px;height:42px}
 .msg-avatar-al .ti-lex-dots{display:none}
 
+/* Welcome video */
+.welcome-video-wrap{
+  width:280px;max-width:90%;margin:0 auto 18px;
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 0 30px rgba(255,107,0,.25),0 0 60px rgba(255,107,0,.1);
+  border:2px solid rgba(255,107,0,.3);
+}
+.welcome-video{
+  width:100%;display:block;border-radius:14px;
+}
+
 /* Logo accueil */
 .welcome-logo-img{width:220px;max-width:80%;object-fit:contain;
   filter:drop-shadow(0 0 20px rgba(232,117,26,.5)) drop-shadow(0 0 40px rgba(232,117,26,.2));
