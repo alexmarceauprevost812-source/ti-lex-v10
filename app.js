@@ -1355,9 +1355,10 @@ function renderAssistant(body, full, streaming) {
     return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
   });
   // Other code blocks
-  ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-    `<pre class="chat-code-block">${code}</pre>`
-  );
+  ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    const langLabel = lang ? `<div class="code-lang">${lang}</div>` : '';
+    return `<pre class="chat-code-block">${langLabel}${highlightSyntax(code)}</pre>`;
+  });
   ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
 
   const caret = streaming ? '<span class="caret"></span>' : '';
@@ -2363,11 +2364,12 @@ function renderCodexMermaid(container) {
 function highlightSyntax(code) {
   return code
     .replace(/(\/\/[^\n]*)/g, '<span class="syn-comment">$1</span>')
-    .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|switch|case|break|default|interface|type|extends|implements)\b/g, '<span class="syn-kw">$1</span>')
-    .replace(/\b(string|number|boolean|void|null|undefined|any|true|false|Promise)\b/g, '<span class="syn-type">$1</span>')
+    .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|switch|case|break|default|interface|type|extends|implements|of|in|do|yield|static|get|set|super)\b/g, '<span class="syn-kw">$1</span>')
+    .replace(/\b(string|number|boolean|void|null|undefined|any|true|false|Promise|Array|Object|Map|Set|console|document|window|process|require|module)\b/g, '<span class="syn-type">$1</span>')
     .replace(/(&quot;[^&]*?&quot;|&#039;[^&]*?&#039;|`[^`]*?`)/g, '<span class="syn-str">$1</span>')
     .replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>')
-    .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(');
+    .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(')
+    .replace(/\.([a-zA-Z_$][\w$]*)/g, '.<span class="syn-fn">$1</span>');
 }
 
 /* ================= STUDIO ================= */
