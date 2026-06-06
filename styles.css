@@ -1402,8 +1402,14 @@ li.fp-off{color:rgba(255,255,255,.3)}
 @keyframes fpSpin{to{transform:rotate(360deg)}}
 
 @media(max-width:880px){
-  .fp-grid{grid-template-columns:1fr;gap:30px;max-width:420px;margin:54px auto 0}
+  .fp-grid{
+    display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    gap:16px;margin:54px -20px 0;padding:0 20px 20px;scrollbar-width:none;
+  }
+  .fp-grid::-webkit-scrollbar{display:none}
+  .fp-card{min-width:85vw;max-width:85vw;flex-shrink:0;scroll-snap-align:center}
   .fp-card.fp-feat{transform:none;order:-1}
   .fp-card.fp-feat.fp-show{animation:fpRise .8s ease .78s forwards}
-  .fp-card.fp-feat:hover{transform:translateY(-10px)}
+  .fp-card.fp-feat:hover{transform:translateY(-6px)}
+  .fp-card:hover{transform:translateY(-6px)}
 }
