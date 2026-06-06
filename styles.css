@@ -1288,7 +1288,7 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .nav-forfaits.active{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
 
 .view-forfaits{
-  overflow-y:auto!important;
+  overflow:auto!important;
   --fp-bg:#111;--fp-bg-2:#1a1a1a;--fp-bg-3:#222;
   --fp-orange:#f97316;--fp-orange-d:#ea580c;--fp-orange-glow:rgba(249,115,22,.25);
   --fp-green:#22c55e;--fp-green-glow:rgba(34,197,94,.3);
@@ -1489,11 +1489,14 @@ li.fp-off{color:rgba(255,255,255,.3)}
 .fp-scroll{margin-top:54px}
 
 @media(max-width:880px){
+  .fp-wrap{overflow:visible;padding-left:0;padding-right:0}
   .fp-scroll{
-    overflow-x:scroll;-webkit-overflow-scrolling:touch;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
     scroll-snap-type:x mandatory;
-    margin:40px -20px 0;padding:0 16px 16px;
-    scrollbar-width:none;touch-action:pan-x;
+    margin:40px 0 0;padding:0 16px 16px;
+    scrollbar-width:none;
+    touch-action:pan-x!important;
+    -ms-overflow-style:none;
   }
   .fp-scroll::-webkit-scrollbar{display:none}
   .fp-grid{
