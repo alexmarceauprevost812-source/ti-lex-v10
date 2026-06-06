@@ -778,6 +778,48 @@ body[data-theme="light"] .view-codex textarea::placeholder{color:#aaa}
   filter:drop-shadow(0 0 20px rgba(232,117,26,.5)) drop-shadow(0 0 40px rgba(232,117,26,.2));
   margin-bottom:12px;border-radius:12px}
 
+/* ---- Avatar IA Animé (Kimi-style) ---- */
+.avatar-ia{position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar-ia__ring{position:absolute;width:100%;height:100%;border:1.5px solid rgba(138,43,226,.25);border-radius:50%;animation:avRing 10s linear infinite}
+.avatar-ia__ring::before{content:'';position:absolute;width:110%;height:110%;border:1px solid rgba(138,43,226,.12);border-radius:50%;top:-5%;left:-5%;animation:avRing 15s linear infinite reverse}
+@keyframes avRing{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.avatar-ia__circle{width:78%;height:78%;background:#0d1117;border-radius:50%;position:relative;
+  box-shadow:0 0 20px rgba(138,43,226,.3),0 0 40px rgba(138,43,226,.1),inset 0 0 15px rgba(138,43,226,.1);
+  animation:avPulse 3s ease-in-out infinite;border:1.5px solid rgba(138,43,226,.3)}
+@keyframes avPulse{0%,100%{box-shadow:0 0 20px rgba(138,43,226,.3),0 0 40px rgba(138,43,226,.1),inset 0 0 15px rgba(138,43,226,.1)}
+  50%{box-shadow:0 0 30px rgba(138,43,226,.5),0 0 60px rgba(138,43,226,.2),inset 0 0 20px rgba(138,43,226,.2)}}
+.avatar-ia__eyes{position:absolute;width:50%;display:flex;justify-content:space-between;align-items:center;z-index:2}
+.avatar-ia__eye{width:14px;height:14px;background:#fff;border-radius:50%;position:relative;overflow:hidden;
+  box-shadow:0 0 6px rgba(255,255,255,.3);transition:transform .15s ease}
+.avatar-ia__eye.av-blink{animation:avBlink .18s ease-in-out}
+@keyframes avBlink{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
+.avatar-ia__pupil{width:7px;height:7px;background:#1a1a2e;border-radius:50%;position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);transition:all .25s ease}
+.avatar-ia__pupil::after{content:'';width:2.5px;height:2.5px;background:rgba(255,255,255,.6);border-radius:50%;position:absolute;top:1px;left:1px}
+.avatar-ia__dots{position:absolute;bottom:18%;display:flex;gap:3px;z-index:2}
+.avatar-ia__dot{width:3px;height:3px;background:rgba(138,43,226,.6);border-radius:50%;animation:avDot 1.4s ease-in-out infinite}
+.avatar-ia__dot:nth-child(2){animation-delay:.2s}
+.avatar-ia__dot:nth-child(3){animation-delay:.4s}
+@keyframes avDot{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-4px);opacity:1}}
+.avatar-ia__particle{position:absolute;width:2px;height:2px;background:rgba(138,43,226,.5);border-radius:50%;pointer-events:none;animation:avFloat 3s ease-out forwards}
+@keyframes avFloat{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-30px) scale(0);opacity:0}}
+
+/* Avatar IA states */
+.avatar-ia[data-state="thinking"] .avatar-ia__pupil{background:#8a2be2;box-shadow:0 0 6px rgba(138,43,226,.8)}
+.avatar-ia[data-state="thinking"] .avatar-ia__dots{display:none}
+.avatar-ia[data-state="processing"] .avatar-ia__pupil{background:#00d4ff;box-shadow:0 0 6px rgba(0,212,255,.8);animation:avPupilPulse .5s ease-in-out infinite}
+.avatar-ia[data-state="processing"] .avatar-ia__dots{display:none}
+@keyframes avPupilPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.25)}}
+.avatar-ia[data-state="responding"] .avatar-ia__circle{box-shadow:0 0 30px rgba(138,43,226,.5),0 0 60px rgba(138,43,226,.25),inset 0 0 20px rgba(138,43,226,.2)}
+.avatar-ia[data-state="responding"] .avatar-ia__pupil{background:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,.8)}
+.avatar-ia[data-state="responding"] .avatar-ia__dots{display:none}
+
+/* Codex variant (smaller) */
+.codex-msg .avatar-ia{width:42px;height:42px}
+.codex-msg .avatar-ia__eye{width:11px;height:11px}
+.codex-msg .avatar-ia__pupil{width:5px;height:5px}
+.codex-msg .avatar-ia__dot{width:2.5px;height:2.5px}
+
 /* ---- Claude badge + logo officiel + animations chat principal ---- */
 .msg-avatar-wrap{position:relative;flex-shrink:0;display:flex;flex-direction:column;align-items:center}
 .msg-avatar-wrap .msg-avatar{width:50px;height:50px;border-radius:14px;object-fit:cover}

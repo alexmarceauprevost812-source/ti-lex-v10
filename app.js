@@ -1025,18 +1025,57 @@ function createTiLexAvatar(size = 80) {
   return wrap;
 }
 
+function createAvatarIA(size) {
+  const av = document.createElement("div");
+  av.className = "avatar-ia";
+  av.dataset.state = "idle";
+  if (size) { av.style.width = size + "px"; av.style.height = size + "px"; }
+  av.innerHTML = `
+    <div class="avatar-ia__ring"></div>
+    <div class="avatar-ia__circle"></div>
+    <div class="avatar-ia__eyes">
+      <div class="avatar-ia__eye"><div class="avatar-ia__pupil"></div></div>
+      <div class="avatar-ia__eye"><div class="avatar-ia__pupil"></div></div>
+    </div>
+    <div class="avatar-ia__dots">
+      <div class="avatar-ia__dot"></div>
+      <div class="avatar-ia__dot"></div>
+      <div class="avatar-ia__dot"></div>
+    </div>`;
+
+  let blinkTimer;
+  function autoBlink() {
+    blinkTimer = setTimeout(() => {
+      av.querySelectorAll(".avatar-ia__eye").forEach(e => {
+        e.classList.add("av-blink");
+        setTimeout(() => e.classList.remove("av-blink"), 180);
+      });
+      autoBlink();
+    }, Math.random() * 3000 + 3000);
+  }
+  autoBlink();
+
+  let partTimer = setInterval(() => {
+    const p = document.createElement("div");
+    p.className = "avatar-ia__particle";
+    p.style.left = (Math.random() * 70 + 15) + "%";
+    p.style.bottom = "30%";
+    av.appendChild(p);
+    setTimeout(() => p.remove(), 3000);
+  }, 2500);
+
+  av._setState = (s) => { av.dataset.state = s; };
+  av._setThinking = (on) => av._setState(on ? "thinking" : "idle");
+  av._setSpeaking = (on) => av._setState(on ? "responding" : "idle");
+  av._destroy = () => { clearTimeout(blinkTimer); clearInterval(partTimer); };
+  return av;
+}
+
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  const vid = document.createElement("video");
-  vid.className = "msg-avatar al-logo al-video";
-  vid.src = "assets/avatar-al.mp4";
-  vid.autoplay = true;
-  vid.loop = true;
-  vid.muted = true;
-  vid.playsInline = true;
-  vid.setAttribute("playsinline", "");
-  wrap.appendChild(vid);
+  const av = createAvatarIA(56);
+  wrap.appendChild(av);
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
@@ -1044,6 +1083,7 @@ function avatarAL() {
   lbl.className = "claude-label";
   lbl.innerHTML = `<img src="${CLAUDE_LOGO}" alt="">Claude`;
   wrap.appendChild(lbl);
+  wrap._avatarIA = av;
   return wrap;
 }
 
@@ -1122,7 +1162,7 @@ function buildAssistantMsg() {
   m.className = "msg assistant responding";
   const avatarWrap = avatarAL();
   m.appendChild(avatarWrap);
-  const av = avatarWrap.querySelector(".ti-lex-avatar") || avatarWrap.querySelector(".al-avatar");
+  const av = avatarWrap._avatarIA || avatarWrap.querySelector(".ti-lex-avatar") || avatarWrap.querySelector(".al-avatar");
   if (av && av._setThinking) av._setThinking(true);
   const b = document.createElement("div");
   b.className = "msg-body";
@@ -2999,5 +3039,16 @@ async function manageSubscription() {
     if (btn) { btn.disabled = false; btn.textContent = "Gérer mon abonnement"; }
   }
 }
+
+document.addEventListener("mousemove", (e) => {
+  document.querySelectorAll(".avatar-ia__eye").forEach(eye => {
+    const r = eye.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const a = Math.atan2(e.clientY - cy, e.clientX - cx);
+    const d = Math.min(3, Math.hypot(e.clientX - cx, e.clientY - cy) / 30);
+    const p = eye.querySelector(".avatar-ia__pupil");
+    if (p) p.style.transform = `translate(calc(-50% + ${Math.cos(a)*d}px), calc(-50% + ${Math.sin(a)*d}px))`;
+  });
+});
 
 console.log("ti-lex-AL v10 prêt — conforme Loi 25 du Québec.");
