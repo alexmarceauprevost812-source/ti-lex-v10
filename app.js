@@ -2703,51 +2703,97 @@ const LEGAL = {
   privacy: {
     title: "Politique de confidentialité",
     content: `
-<p><strong>Dernière mise à jour :</strong> 4 juin 2026</p>
-<p><strong>Responsable :</strong> ti-lex-AL — Québec, Canada</p>
+<p><strong>Dernière mise à jour :</strong> 6 juin 2026 — Version 1.0</p>
+<p><strong>Organisation :</strong> ti-lex inc. — Québec, Canada</p>
+<p style="font-size:.82rem;color:var(--txt-dim)">Conforme à la Loi 25 (2021, c. 25) — Loi sur la protection des renseignements personnels dans le secteur privé (RLRQ, c. P-39.1)</p>
 
-<h4>1. Renseignements collectés</h4>
-<p>ti-lex-AL collecte uniquement les renseignements nécessaires au fonctionnement du service :</p>
+<h4>1. Introduction</h4>
+<p>ti-lex inc. (« ti-lex », « nous », « notre ») s'engage à protéger les renseignements personnels (« RP ») des personnes qui utilisent ses services, conformément à la Loi sur la protection des renseignements personnels dans le secteur privé, telle que modifiée par la Loi 25.</p>
+
+<h4>2. Responsable de la protection des renseignements personnels</h4>
+<p>Conformément à l'article 3.1 de la Loi, ti-lex a désigné un responsable PRP :</p>
+<p><strong>Courriel :</strong> privacy@ti-lex.com<br><strong>Délai de réponse :</strong> 30 jours suivant la réception de votre demande</p>
+
+<h4>3. Renseignements personnels collectés</h4>
+<p><strong>Identification :</strong> nom, courriel professionnel, nom du signataire autorisé, organisation cliente.</p>
+<p><strong>Techniques :</strong> adresses IP cibles autorisées, noms de domaine, configurations réseau, vulnérabilités (CVE).</p>
+<p><strong>Utilisation :</strong> horodatages, historique des scans, rapports générés, conversations IA, mémoire de l'agent.</p>
+<p><strong>Connexion :</strong> identifiants de session, adresse IP, navigateur et appareil.</p>
+<p>Aucun témoin (cookie) tiers n'est utilisé. Les données de session sont dans le stockage local de votre navigateur.</p>
+
+<h4>4. Finalités du traitement</h4>
+<ol>
+<li><strong>Prestation des services</strong> — exécuter les scans autorisés par le SOW</li>
+<li><strong>Analyse par IA</strong> — soumettre les résultats techniques (anonymisés) au modèle Claude pour générer les rapports</li>
+<li><strong>Sécurité et intégrité</strong> — maintenir les journaux d'audit, prévenir les accès non autorisés</li>
+<li><strong>Conformité légale</strong> — respecter nos obligations, conservation des preuves d'autorisation</li>
+<li><strong>Amélioration</strong> — analyser l'utilisation agrégée pour améliorer la plateforme</li>
+<li><strong>Communication</strong> — vous informer de mises à jour relatives à vos scans ou services</li>
+</ol>
+
+<h4>5. Consentement</h4>
+<p>Votre consentement est obtenu de manière <strong>manifeste, libre, éclairée et spécifique</strong> : lors de l'inscription, lors de la signature du SOW, et lors de l'utilisation du service. Vous pouvez retirer votre consentement à tout moment depuis la section « Mes données » dans les paramètres.</p>
+
+<h4>6. Recours à l'intelligence artificielle</h4>
+<p>ti-lex utilise le modèle Claude (Anthropic Inc.) pour analyser les résultats de scans et générer des rapports. Avant toute soumission au modèle :</p>
 <ul>
-<li><strong>Compte :</strong> courriel, nom, mot de passe (chiffré)</li>
-<li><strong>Utilisation :</strong> conversations IA, préférences, mémoire de l'agent</li>
-<li><strong>Quotas :</strong> compteur d'utilisation journalier (messages, images)</li>
+<li>Les noms, courriels et identifiants sont <strong>supprimés</strong></li>
+<li>Les adresses IP et domaines sont remplacés par des <strong>identifiants génériques</strong></li>
+<li>Seules les données techniques nécessaires (CVE, ports, configurations) sont transmises</li>
 </ul>
-<p>Aucun témoin (cookie) tiers n'est utilisé. Les données de session sont stockées dans le stockage local de votre navigateur (localStorage).</p>
+<p>Aucune décision ayant un impact significatif sur vous n'est prise uniquement sur la base d'un traitement automatisé. Anthropic ne conserve pas et n'utilise pas les données API pour entraîner ses modèles (politique zero-retention).</p>
 
-<h4>2. Finalités du traitement</h4>
+<h4>7. Transfert hors Québec (art. 17)</h4>
+<p>Les résultats de scans <strong>anonymisés</strong> sont transmis à Anthropic Inc. (San Francisco, Californie, États-Unis) pour traitement par IA. Ce transfert est conforme à l'article 17 de la Loi. Une EFVP a été réalisée avant ce transfert.</p>
+<p><strong>Mesures de protection :</strong> anonymisation complète, chiffrement TLS 1.3, entente contractuelle (DPA), politique zero-retention Anthropic, minimisation des données.</p>
+<p>Vos RP non anonymisés sont hébergés <strong>exclusivement au Canada</strong> (ca-central-1, Beauharnois, Québec) via Supabase Inc.</p>
+
+<h4>8. Communication à des tiers</h4>
+<p>Nous ne vendons pas vos RP. Communication limitée à :</p>
 <ul>
-<li>Fournir et améliorer le service d'agent IA</li>
-<li>Authentifier les utilisateurs</li>
-<li>Appliquer les limites d'utilisation</li>
-<li>Assurer la sécurité du service</li>
+<li><strong>Anthropic Inc.</strong> (É.-U.) — données techniques anonymisées uniquement</li>
+<li><strong>Supabase Inc.</strong> (Canada) — hébergement infrastructure (données chiffrées au repos)</li>
 </ul>
+<p>Communication sans consentement uniquement lorsque la loi l'exige (ordonnance judiciaire, enquête pénale).</p>
 
-<h4>3. Hébergement et sécurité</h4>
-<p>Toutes les données sont hébergées au <strong>Québec</strong> (Beauharnois, ca-central-1) via Supabase. Les communications sont chiffrées (TLS 1.3). Les mots de passe sont hachés (bcrypt). L'accès aux données est protégé par Row Level Security (RLS).</p>
+<h4>9. Conservation et destruction</h4>
+<table style="width:100%;border-collapse:collapse;font-size:.85rem;margin:10px 0">
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px"><strong>Journaux d'audit</strong></td><td style="padding:6px">5 ans minimum</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px"><strong>Identification client</strong></td><td style="padding:6px">Durée du contrat + 3 ans</td></tr>
+<tr style="border-bottom:1px solid var(--line)"><td style="padding:6px"><strong>Résultats de scans</strong></td><td style="padding:6px">2 ans après le scan</td></tr>
+<tr><td style="padding:6px"><strong>Données de connexion</strong></td><td style="padding:6px">1 an</td></tr>
+</table>
+<p>À expiration, les RP sont détruits de manière sécurisée ou anonymisés pour fins statistiques.</p>
 
-<h4>4. Partage avec des tiers</h4>
-<p>Le contenu des conversations est transmis aux API d'intelligence artificielle (Anthropic, OpenAI) pour générer les réponses. <strong>Aucune donnée personnelle identifiable</strong> n'est partagée avec ces fournisseurs au-delà du contenu de la conversation. Aucune donnée n'est vendue à des tiers.</p>
-
-<h4>5. Conservation</h4>
-<p>Les conversations sont conservées dans votre navigateur. Vous pouvez les supprimer à tout moment. Les données de compte sont conservées tant que le compte est actif. Les compteurs d'utilisation sont réinitialisés quotidiennement.</p>
-
-<h4>6. Vos droits (Loi 25)</h4>
-<p>Conformément à la <strong>Loi 25 sur la protection des renseignements personnels</strong> du Québec, vous avez le droit de :</p>
+<h4>10. Mesures de sécurité</h4>
 <ul>
-<li><strong>Accéder</strong> à vos renseignements personnels</li>
-<li><strong>Rectifier</strong> vos renseignements inexacts</li>
-<li><strong>Supprimer</strong> vos renseignements et votre compte</li>
-<li><strong>Retirer</strong> votre consentement à tout moment</li>
-<li><strong>Porter plainte</strong> auprès de la Commission d'accès à l'information du Québec (CAI)</li>
+<li>Chiffrement au repos (AES-256) et en transit (TLS 1.3)</li>
+<li>Authentification multifacteur pour l'accès administrateur</li>
+<li>Contrôle d'accès basé sur les rôles (RBAC) et Row Level Security (RLS)</li>
+<li>Journal d'audit immutable avec chaîne de hachage SHA-256</li>
+<li>Kill switch pour révocation immédiate des autorisations</li>
+<li>Fenêtre temporelle automatique sur les SOW</li>
 </ul>
-<p>Pour exercer vos droits, utilisez la section « Mes données » dans les paramètres de l'application.</p>
 
-<h4>7. Incident de confidentialité</h4>
-<p>En cas d'incident impliquant vos renseignements personnels, nous vous aviserons dans les <strong>72 heures</strong> conformément à la Loi 25, et nous aviserons la Commission d'accès à l'information du Québec.</p>
+<h4>11. Vos droits (Loi 25)</h4>
+<ul>
+<li><strong>Accès (art. 27)</strong> — demander confirmation de l'existence de RP et en obtenir communication</li>
+<li><strong>Rectification (art. 28)</strong> — demander la correction de RP inexacts</li>
+<li><strong>Portabilité (art. 27.1)</strong> — recevoir vos RP en format structuré (JSON/CSV) ou les transmettre à un tiers</li>
+<li><strong>Retrait du consentement</strong> — retirer votre consentement à tout moment</li>
+<li><strong>Suppression</strong> — demander la suppression de vos RP</li>
+<li><strong>Plainte à la CAI</strong> — www.cai.gouv.qc.ca / 1-888-528-7741</li>
+</ul>
+<p>Pour exercer vos droits : <strong>privacy@ti-lex.com</strong> ou via la section « Mes données » dans les paramètres. Délai de réponse : 30 jours.</p>
 
-<h4>8. Consentement</h4>
-<p>En utilisant ti-lex-AL, vous consentez à la collecte et au traitement de vos renseignements personnels tels que décrits dans cette politique. Vous pouvez retirer votre consentement à tout moment depuis les paramètres.</p>
+<h4>12. Incidents de confidentialité</h4>
+<p>En cas d'incident présentant un risque de préjudice sérieux, ti-lex avise la CAI avec diligence (objectif : 72 heures), avise les personnes concernées, et inscrit l'incident au registre (conservé 5 ans minimum).</p>
+
+<h4>13. Modifications</h4>
+<p>Toute modification substantielle vous sera communiquée au moins 30 jours avant son entrée en vigueur.</p>
+
+<h4>14. Langue</h4>
+<p>Rédigée en français conformément à la Charte de la langue française. En cas de divergence avec toute version traduite, la version française prévaut.</p>
 `
   },
   terms: {
