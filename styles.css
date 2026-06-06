@@ -543,6 +543,11 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
   flex:1;overflow-y:auto;padding:28px 24px;display:flex;flex-direction:column;gap:18px;
 }
 .codex-welcome{margin:auto;text-align:center;max-width:480px;animation:fade .6s ease}
+.codex-welcome-video-wrap{
+  width:160px;margin:0 auto 18px;border-radius:20px;overflow:hidden;
+  box-shadow:0 0 30px var(--orange-glow);border:2px solid rgba(255,107,0,.3);
+}
+.codex-welcome-video{width:100%;display:block;border-radius:18px}
 .codex-welcome-logo{width:90px;height:90px;border-radius:20px;object-fit:cover;
   box-shadow:0 0 30px var(--orange-glow);margin-bottom:18px}
 .codex-welcome h2{font-family:var(--marker);font-size:1.6rem;font-weight:400;margin-bottom:8px;letter-spacing:.5px}

@@ -1897,7 +1897,7 @@ loadProjConvs();
 function resetCodexWelcome() {
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
-    <img src="logo.png" alt="Codex" class="codex-welcome-logo">
+    <div class="codex-welcome-video-wrap"><video class="codex-welcome-video" autoplay muted playsinline loop><source src="assets/avatar-al.mp4" type="video/mp4"></video></div>
     <h2>Codex <span class="orange">ti-lex-AL</span></h2>
     <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
     <div class="suggest">
@@ -1930,7 +1930,7 @@ $("#codexNewConv").onclick = () => {
   $("#codeInput").value = "";
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
-    <img src="logo.png" alt="Codex" class="codex-welcome-logo">
+    <div class="codex-welcome-video-wrap"><video class="codex-welcome-video" autoplay muted playsinline loop><source src="assets/avatar-al.mp4" type="video/mp4"></video></div>
     <h2>Codex <span class="orange">ti-lex-AL</span></h2>
     <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
     <div class="suggest">
