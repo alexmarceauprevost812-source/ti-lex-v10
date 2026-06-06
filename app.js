@@ -978,17 +978,18 @@ function createTiLexAvatar(size = 80) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  // Logo ti-lex-AL comme avatar principal
-  const logo = document.createElement("img");
-  logo.className = "msg-avatar al-logo";
-  logo.src = "assets/tilex-logo.png";
-  logo.alt = "AL";
-  wrap.appendChild(logo);
-  // Badge Claude (coin bas-droite)
+  const vid = document.createElement("video");
+  vid.className = "msg-avatar al-logo al-video";
+  vid.src = "assets/avatar-al.mp4";
+  vid.autoplay = true;
+  vid.loop = true;
+  vid.muted = true;
+  vid.playsInline = true;
+  vid.setAttribute("playsinline", "");
+  wrap.appendChild(vid);
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
-  // Label "Propulsé par Claude"
   const lbl = document.createElement("div");
   lbl.className = "claude-label";
   lbl.innerHTML = `<img src="${CLAUDE_LOGO}" alt="">Claude`;
