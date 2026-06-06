@@ -441,6 +441,22 @@
     }
     .intro-skip:hover { transform: scale(1.08); }
 
+    /* Login animation splash */
+    .login-splash {
+      position: fixed; inset: 0; z-index: 9500;
+      background: #000; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity 0.8s ease-out;
+    }
+    .login-splash.fade-out { opacity: 0; pointer-events: none; }
+    .login-splash video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .login-splash .intro-skip {
+      z-index: 9501;
+    }
+
     /* Bouton installer PWA */
     .pwa-install {
       position: fixed; top: 1rem; right: 1rem; z-index: 200;
@@ -527,6 +543,14 @@
       <source src="assets/intro.mp4" type="video/mp4">
     </video>
     <button class="intro-skip" id="introSkip" onclick="skipIntro()">Passer</button>
+  </div>
+
+  <!-- Login Animation Splash (hidden until login success) -->
+  <div class="login-splash hidden" id="loginSplash">
+    <video id="loginVideo" muted playsinline>
+      <source src="assets/login-animation.mp4" type="video/mp4">
+    </video>
+    <button class="intro-skip" onclick="skipLoginAnim()">Passer</button>
   </div>
 
   <div class="particles" id="particles"></div>
@@ -732,7 +756,7 @@
         if (session?.user) {
           currentUser = session.user;
           updateUIBadges();
-          window.location.href = 'app.html';
+          playLoginAnimation();
         }
       } catch (e) { console.error(e); }
     }
@@ -769,9 +793,9 @@
         if (error) showError('login-error', error.message);
         else if (data.user) {
           currentUser = data.user;
-          showSuccess('login-success', 'Connexion réussie! Redirection...');
+          showSuccess('login-success', 'Connexion réussie!');
           updateUIBadges();
-          setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+          setTimeout(() => { playLoginAnimation(); }, 800);
         }
       } catch (err) { showError('login-error', 'Erreur: ' + err.message); }
       finally { btn.disabled = false; btn.innerHTML = 'Se connecter'; }
@@ -940,6 +964,26 @@
         p.style.animationDuration = (3 + Math.random() * 4) + 's';
         container.appendChild(p);
       }
+    }
+
+    function playLoginAnimation() {
+      const splash = document.getElementById('loginSplash');
+      const video = document.getElementById('loginVideo');
+      splash.classList.remove('hidden');
+      video.currentTime = 0;
+      video.play().catch(() => {});
+      video.addEventListener('ended', skipLoginAnim);
+      video.addEventListener('error', skipLoginAnim);
+      setTimeout(skipLoginAnim, 15000);
+    }
+
+    function skipLoginAnim() {
+      const splash = document.getElementById('loginSplash');
+      const video = document.getElementById('loginVideo');
+      if (splash.classList.contains('fade-out')) return;
+      splash.classList.add('fade-out');
+      video.pause();
+      setTimeout(() => { window.location.href = 'app.html'; }, 800);
     }
 
     function skipIntro() {
