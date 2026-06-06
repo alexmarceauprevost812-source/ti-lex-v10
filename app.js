@@ -432,16 +432,50 @@ async function generateImage(prompt) {
     const ih = { "Content-Type": "application/json" };
     const itk = proxyToken();
     if (itk) ih["Authorization"] = `Bearer ${itk}`;
+
+    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🎨 Amélioration du prompt par Claude…</p>`;
+
+    const enhanceRes = await fetch(AI_PROXY, {
+      method: "POST", headers: ih,
+      body: JSON.stringify({
+        kind: "chat",
+        model: "claude-sonnet-4-6",
+        max_tokens: 400,
+        stream: false,
+        messages: [{ role: "user", content: `Tu es un expert en génération d'images IA. Améliore ce prompt pour générer une image ultra réaliste et détaillée. Réponds UNIQUEMENT avec le prompt amélioré, rien d'autre.\n\nPrompt: ${prompt}` }],
+      }),
+    });
+
+    let enhancedPrompt = prompt;
+    if (enhanceRes.ok) {
+      const enhData = await enhanceRes.json();
+      if (enhData.content?.[0]?.text) {
+        enhancedPrompt = enhData.content[0].text;
+      } else if (typeof enhData === "string") {
+        enhancedPrompt = enhData;
+      }
+    }
+
+    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🖼️ Génération de l'image en cours…</p>`;
+
     const res = await fetch(AI_PROXY, {
       method: "POST", headers: ih,
-      body: JSON.stringify({ kind: "image", prompt, size: "1024x1024" }),
+      body: JSON.stringify({ kind: "image", prompt: enhancedPrompt, size: "1024x1024" }),
     });
     const data = await res.json();
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     if (!res.ok || !data.b64) throw new Error(data.error || "Échec de génération");
     const src = `data:image/png;base64,${data.b64}`;
-    body.innerHTML = `<div class="gen-image-wrap"><img src="${src}" alt="${escapeHtml(prompt)}">
-      <div class="gen-image-actions"><a href="${src}" download="tilex-image.png">⬇ Télécharger</a></div></div>`;
+    body.innerHTML = `<div class="gen-image-wrap">
+      <img src="${src}" alt="${escapeHtml(prompt)}" class="gen-image">
+      <div class="gen-image-info">
+        <p class="gen-image-prompt-label">Prompt amélioré :</p>
+        <p class="gen-image-prompt">${escapeHtml(enhancedPrompt)}</p>
+      </div>
+      <div class="gen-image-actions">
+        <a href="${src}" download="tilex-image.png" class="gen-dl-btn">⬇ Télécharger</a>
+      </div>
+    </div>`;
   } catch (err) {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     body.innerHTML = `<p class="muted">Erreur image : ${escapeHtml(err.message)}</p>`;

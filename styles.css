@@ -1270,8 +1270,18 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 .image-mode-banner button{margin-left:auto;background:none;border:none;
   color:var(--orange);cursor:pointer;font-size:1.1rem;line-height:1}
 .gen-image-wrap{margin-top:6px}
-.gen-image-wrap img{max-width:100%;border-radius:14px;border:1px solid var(--line);display:block}
-.gen-image-actions{display:flex;gap:8px;margin-top:8px}
+.gen-image-wrap img.gen-image{max-width:100%;border-radius:14px;border:1px solid var(--line);display:block;
+  box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.gen-image-info{margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px}
+.gen-image-prompt-label{font-size:.7rem;color:var(--txt-dim);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.gen-image-prompt{font-size:.82rem;color:rgba(255,255,255,.7);line-height:1.45;font-style:italic}
+.gen-image-actions{display:flex;gap:8px;margin-top:10px}
+.gen-dl-btn{display:inline-flex;align-items:center;gap:5px;
+  padding:8px 16px;background:var(--orange);border:none;border-radius:10px;
+  font-family:var(--font);font-size:.82rem;font-weight:700;color:#fff;
+  cursor:pointer;text-decoration:none;transition:var(--t);
+  box-shadow:0 0 16px rgba(249,115,22,.3)}
+.gen-dl-btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
 .gen-image-actions a,.gen-image-actions button{display:inline-flex;align-items:center;gap:5px;
   padding:6px 12px;background:var(--bg-3);border:1px solid var(--line);border-radius:8px;
   font-family:var(--font);font-size:.76rem;font-weight:600;color:var(--txt-dim);
