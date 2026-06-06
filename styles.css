@@ -1402,14 +1402,17 @@ li.fp-off{color:rgba(255,255,255,.3)}
 @keyframes fpSpin{to{transform:rotate(360deg)}}
 
 @media(max-width:880px){
+  .view-forfaits{overflow-x:hidden!important}
+  .fp-wrap{overflow:visible;padding-left:0;padding-right:0}
   .fp-grid{
     display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-    gap:16px;margin:54px -20px 0;padding:0 20px 20px;scrollbar-width:none;
+    gap:16px;margin:54px 0 0;padding:0 20px 20px;scrollbar-width:none;
   }
   .fp-grid::-webkit-scrollbar{display:none}
-  .fp-card{min-width:85vw;max-width:85vw;flex-shrink:0;scroll-snap-align:center}
+  .fp-card{min-width:82vw;max-width:82vw;flex-shrink:0;scroll-snap-align:center}
   .fp-card.fp-feat{transform:none;order:-1}
   .fp-card.fp-feat.fp-show{animation:fpRise .8s ease .78s forwards}
   .fp-card.fp-feat:hover{transform:translateY(-6px)}
   .fp-card:hover{transform:translateY(-6px)}
+  .fp-header,.fp-toggle,.fp-trust,.fp-faq,.fp-footer{padding-left:20px;padding-right:20px}
 }
