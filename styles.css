@@ -1489,26 +1489,48 @@ li.fp-off{color:rgba(255,255,255,.3)}
 .fp-scroll{margin-top:54px}
 
 @media(max-width:880px){
-  .fp-wrap{overflow:visible;padding-left:0;padding-right:0}
+  .fp-wrap{overflow:visible;padding:20px 0 40px}
+  .fp-page-title{font-size:clamp(1.6rem,5vw,2.4rem);margin-bottom:4px}
+  .fp-header{margin-bottom:6px}
+  .fp-title{font-size:1.1rem}
+  .fp-sub{font-size:.8rem;margin-top:4px}
+  .fp-kicker{font-size:.7rem}
   .fp-scroll{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
     scroll-snap-type:x mandatory;
-    margin:40px 0 0;padding:0 16px 16px;
+    margin:20px 0 0;padding:0 16px 16px;
     scrollbar-width:none;
     touch-action:pan-x!important;
     -ms-overflow-style:none;
   }
   .fp-scroll::-webkit-scrollbar{display:none}
   .fp-grid{
-    display:flex!important;gap:14px;
+    display:flex!important;gap:12px;
     width:max-content;margin:0;padding:0;
   }
   .fp-card{
-    min-width:80vw;max-width:80vw;flex-shrink:0;scroll-snap-align:center;
+    min-width:72vw;max-width:72vw;flex-shrink:0;scroll-snap-align:center;
     opacity:1!important;transform:none!important;animation:none!important;
+    padding:18px 16px 16px;border-radius:16px;
   }
   .fp-card.fp-feat{order:-1;transform:none!important}
   .fp-card.fp-feat::before,.fp-card.fp-feat::after{display:none}
   .fp-card.fp-feat{border:2px solid var(--fp-orange)}
-  .fp-header,.fp-toggle,.fp-trust,.fp-faq,.fp-footer{padding-left:20px;padding-right:20px}
+  .fp-tier{font-size:1.1rem}
+  .fp-pitch{font-size:.78rem;min-height:auto;margin-top:4px}
+  .fp-price-row{margin:10px 0 2px}
+  .fp-amt{font-size:2.8rem}
+  .fp-cur{font-size:1.4rem}
+  .fp-per{font-size:.75rem}
+  .fp-billed{font-size:.7rem;margin-bottom:0}
+  ul.fp-feats{margin:10px 0 0;gap:6px}
+  ul.fp-feats li{font-size:.78rem;gap:7px}
+  .fp-ck{width:16px;height:16px;font-size:.6rem}
+  .fp-cta{padding:10px;font-size:.82rem;margin-top:12px}
+  .fp-badge{font-size:.6rem;padding:4px 12px;top:-10px}
+  .fp-toggle{margin-top:8px}
+  .fp-toggle-btn{font-size:.78rem;padding:6px 14px}
+  .fp-save{font-size:.58rem;padding:2px 7px}
+  .fp-header,.fp-toggle,.fp-trust,.fp-faq,.fp-footer{padding-left:16px;padding-right:16px}
+  .fp-trust{font-size:.72rem;gap:8px;flex-wrap:wrap}
 }
