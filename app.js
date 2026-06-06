@@ -2864,6 +2864,31 @@ if ($("#dataDeleteBtn")) $("#dataDeleteBtn").onclick = deleteAllMyData;
 if ($("#consentWithdrawBtn")) $("#consentWithdrawBtn").onclick = withdrawConsent;
 
 /* ================= FORFAITS / STRIPE ================= */
+function fpSetPeriod(period) {
+  const toggle = $("#fpToggle");
+  if (!toggle) return;
+  const btns = toggle.querySelectorAll(".fp-toggle-btn");
+  const glide = $("#fpGlide");
+  btns.forEach(b => b.classList.toggle("on", b.dataset.period === period));
+  if (glide && btns.length === 2) {
+    const first = btns[0], second = btns[1];
+    if (period === "monthly") {
+      glide.style.width = first.offsetWidth + "px";
+      glide.style.transform = "translateX(0)";
+    } else {
+      glide.style.width = second.offsetWidth + "px";
+      glide.style.transform = "translateX(" + first.offsetWidth + "px)";
+    }
+  }
+  $$(".fp-amt").forEach(el => {
+    el.textContent = el.dataset[period] || el.dataset.monthly;
+  });
+  $$(".fp-billed").forEach(el => {
+    el.textContent = el.dataset[period] || " ";
+  });
+}
+requestAnimationFrame(() => { requestAnimationFrame(() => fpSetPeriod("monthly")); });
+
 const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
 
 const PAYMENT_LINKS = {
