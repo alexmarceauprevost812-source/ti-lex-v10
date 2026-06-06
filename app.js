@@ -2807,50 +2807,41 @@ if ($("#consentWithdrawBtn")) $("#consentWithdrawBtn").onclick = withdrawConsent
 /* ================= FORFAITS / STRIPE ================= */
 const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
 
+const PAYMENT_LINKS = {
+  starter:    "https://buy.stripe.com/3cI9AT3Fk3vj2aCaQK53O07",
+  pro:        "https://buy.stripe.com/7sY3cv1xcd5T2aC5wq53O06",
+  industrial: "https://buy.stripe.com/dRmdR94Jo0j7bLc2ke53O05",
+};
+
 function getSupabaseSession() {
   try {
     const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.access_token || parsed?.currentSession?.access_token || null;
+    return JSON.parse(raw);
   } catch { return null; }
 }
 
-async function subscribeToplan(plan) {
-  const token = getSupabaseSession();
-  if (!token) {
+function subscribeToplan(plan) {
+  const session = getSupabaseSession();
+  const user = session?.user;
+  if (!user) {
     alert("Connecte-toi d'abord pour t'abonner.");
     return;
   }
 
-  const btn = $(`.forfait-btn[data-plan="${plan}"]`);
-  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="forfait-spinner"></span> Redirection…`; }
+  const link = PAYMENT_LINKS[plan];
+  if (!link) return;
 
-  try {
-    const res = await fetch(`${SUPABASE_FN}/create-checkout-session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ tier: plan }),
-    });
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert(data.error || "Erreur lors de la création du paiement.");
-      if (btn) { btn.disabled = false; btn.textContent = "Réessayer"; }
-    }
-  } catch (err) {
-    alert("Erreur réseau. Réessaie plus tard.");
-    if (btn) { btn.disabled = false; btn.textContent = "Réessayer"; }
-  }
+  const url = new URL(link);
+  url.searchParams.set("client_reference_id", user.id);
+  if (user.email) url.searchParams.set("prefilled_email", user.email);
+
+  window.location.href = url.toString();
 }
 
 async function manageSubscription() {
-  const token = getSupabaseSession();
-  if (!token) {
+  const session = getSupabaseSession();
+  if (!session?.access_token) {
     alert("Connecte-toi d'abord pour gérer ton abonnement.");
     return;
   }
@@ -2863,7 +2854,7 @@ async function manageSubscription() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
     });
     const data = await res.json();
