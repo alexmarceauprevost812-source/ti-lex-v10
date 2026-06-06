@@ -253,6 +253,27 @@ $("#menuToggle").onclick = toggleMenu;
 $("#menuToggleMobile").onclick = toggleMenu;
 $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); };
 
+/* Auto-blink + particles for static avatars (topbar, security) */
+document.querySelectorAll(".topbar-avatar, .sec-avatar").forEach(av => {
+  (function bloop() {
+    setTimeout(() => {
+      av.querySelectorAll(".avatar-ia__eye").forEach(e => {
+        e.classList.add("av-blink");
+        setTimeout(() => e.classList.remove("av-blink"), 180);
+      });
+      bloop();
+    }, Math.random() * 3000 + 3000);
+  })();
+  setInterval(() => {
+    const p = document.createElement("div");
+    p.className = "avatar-ia__particle";
+    p.style.left = (Math.random() * 70 + 15) + "%";
+    p.style.bottom = "30%";
+    av.appendChild(p);
+    setTimeout(() => p.remove(), 3000);
+  }, 2500);
+});
+
 const I18N = {
   fr: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", settings: "Paramètres" },

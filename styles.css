@@ -201,6 +201,16 @@ body.menu-closed #menuToggleMobile{display:flex}
 .agent-id{display:flex;align-items:center;gap:12px}
 .agent-mini-logo{width:42px;height:42px;border-radius:11px;object-fit:cover;
   box-shadow:0 0 16px var(--orange-glow)}
+
+/* Topbar animated avatar */
+.topbar-avatar.avatar-ia{width:46px;height:46px;animation:avBreathe 3s ease-in-out infinite}
+@keyframes avBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* Security page animated avatar */
+.sec-avatar.avatar-ia{width:72px;height:72px;animation:avBreathe 3s ease-in-out infinite}
+.sec-avatar .avatar-ia__eye{width:16px;height:16px}
+.sec-avatar .avatar-ia__pupil{width:8px;height:8px}
+.sec-avatar .avatar-ia__dot{width:4px;height:4px}
 .agent-id h1{font-family:var(--marker);font-size:1.1rem;font-weight:400;letter-spacing:.3px}
 .status{font-size:.74rem;color:var(--txt-dim);display:flex;align-items:center;gap:6px;margin-top:2px}
 .status-dot{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84;
