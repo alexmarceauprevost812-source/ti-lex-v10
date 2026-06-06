@@ -1179,6 +1179,9 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 @media(max-width:860px){.agents-panel{width:85vw}}
 
 /* ============ FORFAITS ============ */
+.nav-forfaits .ico{stroke:#39ff14}
+.nav-forfaits .lbl{color:#39ff14!important}
+.nav-forfaits.active{border-color:#39ff14;box-shadow:0 0 0 3px rgba(57,255,20,.2)}
 .view-forfaits{overflow-y:auto!important}
 .forfaits-wrap{max-width:1000px;margin:0 auto;padding:32px 16px}
 .forfaits-header{text-align:center;margin-bottom:36px}
