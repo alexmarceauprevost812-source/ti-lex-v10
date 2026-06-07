@@ -3211,6 +3211,153 @@ async function manageSubscription() {
   }
 }
 
+/* ============ AGENT FINANCE ============ */
+const FIN_SYSTEM = `Tu es « Agent Finance », un assistant spécialisé en finances personnelles et en crypto-actifs, conçu au Québec.
+
+RÔLE
+- Tu aides les gens à mieux comprendre et gérer leur argent : budget, épargne, gestion des dettes, fonds d'urgence, comptes enregistrés (CELI, REER, REEE, RAP), bases de la fiscalité, planification de projets (auto, maison, retraite) et notions de cryptomonnaie.
+- Tu donnes de l'INFORMATION ÉDUCATIVE et des cadres de réflexion. Tu n'es pas un planificateur financier agréé : tu ne donnes pas de conseil personnalisé, de recommandation de produit précis, ni de garantie de rendement.
+- Pour toute décision importante ou situation complexe (placements, fiscalité avancée, assurances, succession), tu invites clairement la personne à consulter un professionnel agréé.
+
+CRYPTO
+- Tu expliques de façon neutre et éducative : fonctionnement de la blockchain, Bitcoin, Ethereum, jetons et stablecoins, portefeuilles (chaud/froid), plateformes d'échange et frais.
+- Sécurité d'abord : clés privées, phrase de récupération, hameçonnage, arnaques, autogarde vs garde par une plateforme.
+- Fiscalité au Canada/Québec : l'ARC et Revenu Québec traitent généralement les gains en crypto comme gain en capital ou revenu d'entreprise selon l'activité, et les opérations doivent être déclarées ; rappelle de tenir un registre et de valider avec un comptable.
+- Place dans un portefeuille : tu insistes sur la très grande volatilité et le risque de perte totale, le principe « n'investis que ce que tu peux te permettre de perdre », une taille de position prudente et la diversification.
+- Limites : tu ne recommandes jamais d'acheter ou de vendre un jeton précis, tu ne prédis pas les prix, tu ne fais pas la promotion d'un projet, et tu n'exécutes aucune transaction (tu informes seulement).
+
+STYLE
+- Tu réponds en français clair et accessible, ton chaleureux et concret, adapté au Québec.
+- Tu structures tes réponses : courtes explications, étapes numérotées, listes à puces et exemples chiffrés simples quand c'est utile.
+- Tu poses 1 ou 2 questions de clarification quand il manque de l'info (revenu, objectif, tolérance au risque, échéance), sans submerger la personne.
+- Tu restes prudent et honnête : tu nommes les hypothèses, les risques et les compromis. Tu évites le jargon ou tu l'expliques.
+- Tu n'encourages pas la spéculation et tu réponds de façon concise (vise 4 à 12 lignes, sauf si on te demande plus de détails).
+
+Commence par bien comprendre le besoin, puis donne une réponse utile et actionnable.`;
+
+const finHistory = [];
+let finLoading = false;
+
+function finMiniMark() {
+  return `<svg width="15" height="15" viewBox="0 0 40 40"><polyline points="9,27 17,19 22.5,23 31,12" fill="none" stroke="#ff7a1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="31" cy="12" r="3.2" fill="#ff9d52"/></svg>`;
+}
+
+function finRenderMd(text) {
+  return String(text)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<div class="fin-h3">$1</div>')
+    .replace(/^## (.+)$/gm, '<div class="fin-h2">$1</div>')
+    .replace(/^# (.+)$/gm, '<div class="fin-h1">$1</div>')
+    .replace(/^\s*[-*•]\s+(.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/<\/ul>\s*<ul>/g, '')
+    .replace(/^\s*(\d+)[.)]\s+(.+)$/gm, '<li class="ol-item">$2</li>')
+    .replace(/(<li class="ol-item">.*<\/li>)/gs, '<ol>$1</ol>')
+    .replace(/<\/ol>\s*<ol>/g, '')
+    .replace(/\n{2,}/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function finAddMsg(role, content, error) {
+  const container = $("#finMessages");
+  const welcome = $("#finWelcome");
+  if (welcome) welcome.style.display = "none";
+
+  const wrap = document.createElement("div");
+  wrap.className = `fin-msg-wrap ${role}`;
+
+  if (role === "user") {
+    wrap.innerHTML = `<div class="fin-msg-inner"><div class="fin-bubble-user">${escapeHtml(content)}</div></div>`;
+  } else {
+    wrap.innerHTML = `<div class="fin-msg-inner">
+      <div class="fin-msg-label">${finMiniMark()}<span>Agent Finance</span></div>
+      <div class="fin-bubble-ai${error ? ' error' : ''}">${finRenderMd(content)}</div>
+    </div>`;
+  }
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+  return wrap;
+}
+
+function finShowTyping() {
+  const container = $("#finMessages");
+  const wrap = document.createElement("div");
+  wrap.className = "fin-msg-wrap assistant";
+  wrap.id = "finTyping";
+  wrap.innerHTML = `<div class="fin-msg-inner">
+    <div class="fin-msg-label">${finMiniMark()}<span>Agent Finance</span></div>
+    <div class="fin-bubble-ai"><div class="fin-typing"><span></span><span></span><span></span></div></div>
+  </div>`;
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+function finRemoveTyping() {
+  const t = $("#finTyping");
+  if (t) t.remove();
+}
+
+async function finSend(text) {
+  const input = $("#finInput");
+  const content = (text || input.value).trim();
+  if (!content || finLoading) return;
+  input.value = "";
+  input.style.height = "auto";
+  $("#finSend").disabled = true;
+
+  finAddMsg("user", content);
+  finHistory.push({ role: "user", content });
+  finLoading = true;
+  finShowTyping();
+
+  try {
+    const res = await fetch(AI_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${proxyToken()}` },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2048,
+        system: FIN_SYSTEM,
+        messages: finHistory.filter(m => !m.error).map(m => ({ role: m.role, content: m.content }))
+      })
+    });
+    const data = await res.json();
+    const reply = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+    finRemoveTyping();
+    const msg = reply || "Je n'ai pas reçu de réponse. Peux-tu reformuler ta question ?";
+    finAddMsg("assistant", msg);
+    finHistory.push({ role: "assistant", content: msg });
+  } catch (e) {
+    finRemoveTyping();
+    finAddMsg("assistant", "Oups — la connexion a échoué. Réessaie dans un moment.", true);
+  } finally {
+    finLoading = false;
+    $("#finSend").disabled = !$("#finInput").value.trim();
+  }
+}
+
+(function initFinance() {
+  const input = $("#finInput");
+  const sendBtn = $("#finSend");
+  if (!input || !sendBtn) return;
+
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+    sendBtn.disabled = !input.value.trim() || finLoading;
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); finSend(); }
+  });
+  sendBtn.addEventListener("click", () => finSend());
+
+  document.querySelectorAll(".fin-chip").forEach(btn => {
+    btn.addEventListener("click", () => finSend(btn.dataset.q));
+  });
+})();
+
 document.addEventListener("mousemove", (e) => {
   document.querySelectorAll(".avatar-ia__eye").forEach(eye => {
     const r = eye.getBoundingClientRect();

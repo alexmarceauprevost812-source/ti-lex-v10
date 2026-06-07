@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Baloo+2:wght@400;500;600;700&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Baloo+2:wght@400;500;600;700&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=Teko:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -50,6 +50,10 @@
     <button class="nav-item nav-forfaits" data-view="forfaits">
       <svg viewBox="0 0 24 24" class="ico"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       <span class="lbl"><span class="nav-forfait-text">forfait-</span><span class="nav-dollar">$</span></span>
+    </button>
+    <button class="nav-item nav-finance" data-view="finance">
+      <svg viewBox="0 0 24 24" class="ico"><polyline points="4,18 9,12 13,15 20,7" fill="none"/><circle cx="20" cy="7" r="2"/></svg>
+      <span class="lbl">Finance</span>
     </button>
   </nav>
 
@@ -545,6 +549,55 @@
       <div class="fp-footer">
         <p>Taxes en sus. Annule quand tu veux, sans frais cachés.</p>
         <button class="fp-manage-btn" id="manageSubscriptionBtn" onclick="manageSubscription()">Gérer mon abonnement</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE FINANCE ===== -->
+  <section class="view view-finance" id="view-finance">
+    <div class="fin-container">
+      <header class="fin-header">
+        <svg class="fin-emblem" width="42" height="42" viewBox="0 0 40 40">
+          <defs><linearGradient id="finDisc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1e1e"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient></defs>
+          <circle cx="20" cy="20" r="18.5" fill="url(#finDisc)" stroke="rgba(255,122,26,.5)" stroke-width="1"/>
+          <polyline points="10,26.5 17,19.5 22.5,23 30,12.5" fill="none" stroke="#ff7a1a" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="30" cy="12.5" r="2.6" fill="#ff9d52"/>
+        </svg>
+        <div class="fin-header-text">
+          <div class="fin-title">Agent Finance</div>
+          <div class="fin-subtitle">
+            <span class="fin-status-dot"></span>
+            Finances personnelles &amp; crypto
+            <span class="fin-sep">·</span>
+            <span>Produit du Québec</span>
+          </div>
+        </div>
+        <span class="fin-badge">propulsé par Claude</span>
+      </header>
+
+      <div class="fin-messages fin-scroll" id="finMessages">
+        <div class="fin-welcome" id="finWelcome">
+          <div class="fin-welcome-title">Voir clair dans<br>tes finances.</div>
+          <p class="fin-welcome-sub">Budget, épargne, dettes, CELI, REER — et crypto. Pose une question ou choisis un point de départ : je t'aide à y réfléchir, étape par étape.</p>
+          <div class="fin-suggestions" id="finSuggestions">
+            <button class="fin-chip" data-q="Bâtir un budget 50/30/20">Bâtir un budget 50/30/20</button>
+            <button class="fin-chip" data-q="CELI ou REER : par où commencer ?">CELI ou REER : par où commencer ?</button>
+            <button class="fin-chip" data-q="Comprendre Bitcoin et Ethereum">Comprendre Bitcoin et Ethereum</button>
+            <button class="fin-chip" data-q="Sécuriser mon portefeuille crypto">Sécuriser mon portefeuille crypto</button>
+            <button class="fin-chip" data-q="Impôt sur mes gains crypto au Québec">Impôt sur mes gains crypto au Québec</button>
+            <button class="fin-chip" data-q="Quelle place donner à la crypto ?">Quelle place donner à la crypto ?</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fin-input-area">
+        <div class="fin-input-wrap">
+          <textarea class="fin-input" id="finInput" rows="1" placeholder="Pose ta question sur tes finances…"></textarea>
+          <button class="fin-send" id="finSend" aria-label="Envoyer" disabled>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 12l15-7-5 15-3.5-5L4 12z" stroke="#140d05" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="fin-disclaimer">Information éducative générale — ne remplace pas un conseil financier personnalisé.</div>
       </div>
     </div>
   </section>
