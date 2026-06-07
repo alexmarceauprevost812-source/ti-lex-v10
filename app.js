@@ -11,7 +11,6 @@ const state = {
   theme: "dark",
   model: MODEL_DEFAULT,
   lang: "fr",
-  apiKey: "",
   history: [],
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
   github: { token: "", repo: "", branch: "" },
@@ -74,8 +73,7 @@ state.model = "claude-opus-4-8";
 /* pièces jointes en attente d'envoi */
 let attachments = [];
 
-/* ---- Persistance locale (clé API Anthropic + modèle + connexions) ---- */
-const LS_KEY = "tilex-al-apikey";
+/* ---- Persistance locale (modèle + connexions) ---- */
 const LS_MODEL = "tilex-al-model";
 const LS_GH = "tilex-al-github";
 const LS_SB = "tilex-al-supabase";
@@ -83,10 +81,8 @@ const LS_MEMORY = "tilex-al-memory";
 const LS_LANG = "tilex-al-lang";
 function loadSettings() {
   try {
-    const k = localStorage.getItem(LS_KEY);
     const m = localStorage.getItem(LS_MODEL);
     const lang = localStorage.getItem(LS_LANG);
-    if (k) state.apiKey = k;
     if (m) state.model = m;
     if (lang && (lang === "fr" || lang === "en")) state.lang = lang;
     const gh = JSON.parse(localStorage.getItem(LS_GH) || "null");
@@ -192,15 +188,9 @@ function renderMemory() {
 }
 
 function apiHeaders() {
-  const h = { "Content-Type": "application/json" };
-  if (state.apiKey) {
-    h["x-api-key"] = state.apiKey;
-    h["anthropic-version"] = "2023-06-01";
-    h["anthropic-dangerous-direct-browser-access"] = "true";
-  }
-  return h;
+  return { "Content-Type": "application/json" };
 }
-function useProxy() { return !state.apiKey; }
+function useProxy() { return true; }
 function proxyToken() {
   return state.supabase.key || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
 }
@@ -513,13 +503,6 @@ $("#themeToggle").onclick = function () {
 $("#modelSelect").onchange = e => {
   state.model = e.target.value;
   try { localStorage.setItem(LS_MODEL, state.model); } catch (e) {}
-};
-$("#saveKey").onclick = () => {
-  state.apiKey = $("#apiKey").value.trim();
-  try { localStorage.setItem(LS_KEY, state.apiKey); } catch (e) {}
-  const b = $("#saveKey");
-  b.dataset.w = "Enregis"; b.dataset.b = state.apiKey ? "tré ✓" : "tré ✗";
-  setTimeout(() => { b.dataset.w = "Enregis"; b.dataset.b = "trer"; }, 1800);
 };
 
 /* ================= CONNECTEURS (Settings only) ================= */
@@ -1235,8 +1218,8 @@ async function sendMessage() {
 
   const body = buildAssistantMsg();
 
-  if (!state.apiKey && !AI_PROXY) {
-    renderAssistant(body, "⚙ Ajoute ta clé API Anthropic dans les Paramètres (icône en bas à gauche) pour activer Agent AL.");
+  if (!AI_PROXY) {
+    renderAssistant(body, "⚙ Le proxy AI n'est pas configuré. Contacte l'administrateur.");
     messages.scrollTop = messages.scrollHeight;
     return;
   }
@@ -1292,7 +1275,7 @@ async function sendMessage() {
   } catch (err) {
     state.history.pop();
     if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
-    body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}. Vérifie ta clé API Anthropic dans les Paramètres.</p>`;
+    body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}.</p>`;
   } finally {
     $("#send").disabled = false;
     messages.scrollTop = messages.scrollHeight;
@@ -2365,8 +2348,8 @@ async function runCodex() {
 
   const body = buildCodexAssistantMsg();
 
-  if (!state.apiKey && !AI_PROXY) {
-    body.innerHTML = '<p class="muted">Ajoute ta clé API Anthropic dans les Paramètres pour utiliser le Codex.</p>';
+  if (!AI_PROXY) {
+    body.innerHTML = '<p class="muted">Le proxy AI n\'est pas configuré.</p>';
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     return;
   }
@@ -2439,13 +2422,6 @@ async function scanProject() {
     addCodexUserMsg("Scanner le projet");
     const b = buildCodexAssistantMsg();
     b.innerHTML = '<p class="muted">Connecte d\'abord un dépôt GitHub (Paramètres) ou uploade un ZIP pour scanner un projet.</p>';
-    if (b._msgWrap) b._msgWrap.classList.remove("responding");
-    return;
-  }
-  if (!state.apiKey) {
-    addCodexUserMsg("Scanner le projet");
-    const b = buildCodexAssistantMsg();
-    b.innerHTML = '<p class="muted">Ajoute ta clé API Anthropic dans les Paramètres.</p>';
     if (b._msgWrap) b._msgWrap.classList.remove("responding");
     return;
   }
@@ -2661,7 +2637,6 @@ if ($("#studioPushGh")) {
 
 /* init */
 loadSettings();
-$("#apiKey").value = state.apiKey;
 $("#modelSelect").value = state.model;
 if ($("#langSelect")) {
   $("#langSelect").value = state.lang;
@@ -3118,7 +3093,7 @@ function exportMyData() {
 function deleteAllMyData() {
   if (!confirm("Supprimer TOUTES vos données locales ?\n\nConversations, mémoire, préférences, connexions — tout sera effacé.\n\nCette action est irréversible.")) return;
   if (!confirm("Dernière confirmation : voulez-vous vraiment tout supprimer ?")) return;
-  const keys = ["tilex-al-apikey", "tilex-al-model", "tilex-al-github", "tilex-al-supabase",
+  const keys = ["tilex-al-model", "tilex-al-github", "tilex-al-supabase",
     "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history", "tilex-consent"];
   keys.forEach(k => localStorage.removeItem(k));
   alert("Toutes vos données locales ont été supprimées.");
@@ -3127,7 +3102,7 @@ function deleteAllMyData() {
 
 function withdrawConsent() {
   if (!confirm("Retirer votre consentement ?\n\nVos données locales seront supprimées et vous serez redirigé vers la page d'accueil.")) return;
-  const keys = ["tilex-al-apikey", "tilex-al-model", "tilex-al-github", "tilex-al-supabase",
+  const keys = ["tilex-al-model", "tilex-al-github", "tilex-al-supabase",
     "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history"];
   keys.forEach(k => localStorage.removeItem(k));
   localStorage.setItem("tilex-consent", JSON.stringify({ accepted: false, date: new Date().toISOString() }));
