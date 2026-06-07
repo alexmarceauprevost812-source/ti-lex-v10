@@ -1586,6 +1586,30 @@ async function pushMultipleToGithub(files, commitMsg) {
   }
 }
 
+async function pushToGithubSilent(content, filename) {
+  if (!state.connected.github || !state.github.token || !state.github.repo) return false;
+  const repo = state.github.repo;
+  const branch = state.github.branch || "main";
+  try {
+    let sha = null;
+    try {
+      const existing = await fetch(`${GH_API}/repos/${repo}/contents/${encodeURIComponent(filename)}?ref=${encodeURIComponent(branch)}`, { headers: ghHeaders() });
+      if (existing.ok) sha = (await existing.json()).sha;
+    } catch (_) {}
+    const body = {
+      message: `Deploy ${filename} via ti-lex-AL`,
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch,
+    };
+    if (sha) body.sha = sha;
+    const res = await fetch(`${GH_API}/repos/${repo}/contents/${encodeURIComponent(filename)}`, {
+      method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return res.ok;
+  } catch (_) { return false; }
+}
+
 function addCodeActions(container, fullText) {
   const codeFiles = extractCodeFiles(fullText);
   if (!codeFiles.length) return;
@@ -1669,12 +1693,59 @@ function addCodeActions(container, fullText) {
         }
       };
       btns.appendChild(pushAllBtn);
+
+      const deployBtn = document.createElement("button");
+      deployBtn.className = "push-gh-btn deploy-vercel-btn";
+      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Push + Deploy Vercel`;
+      deployBtn.onclick = async () => {
+        const commitMsg = prompt("Message de commit :", `Deploy ${codeFiles.length} fichiers via ti-lex-AL`);
+        if (!commitMsg) return;
+        deployBtn.disabled = true;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> Push GitHub…`;
+        const ok = await pushMultipleToGithub(codeFiles, commitMsg);
+        if (!ok) {
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Réessayer`;
+          deployBtn.disabled = false;
+          return;
+        }
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> Deploy Vercel…`;
+        deployBtn.classList.add("deploying");
+        setTimeout(() => {
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Déployé !`;
+          deployBtn.classList.remove("deploying");
+          deployBtn.classList.add("push-ok");
+        }, 4000);
+      };
+      btns.appendChild(deployBtn);
+
     } else if (codeFiles.length === 1) {
       const ghBtn = document.createElement("button");
       ghBtn.className = "push-gh-btn";
       ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
       ghBtn.onclick = () => pushToGithub(codeFiles[0].code, codeFiles[0].path);
       btns.appendChild(ghBtn);
+
+      const deployBtn = document.createElement("button");
+      deployBtn.className = "push-gh-btn deploy-vercel-btn";
+      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Push + Deploy Vercel`;
+      deployBtn.onclick = async () => {
+        deployBtn.disabled = true;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> Push GitHub…`;
+        const ok = await pushToGithubSilent(codeFiles[0].code, codeFiles[0].path);
+        if (!ok) {
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Réessayer`;
+          deployBtn.disabled = false;
+          return;
+        }
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> Deploy Vercel…`;
+        deployBtn.classList.add("deploying");
+        setTimeout(() => {
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Déployé !`;
+          deployBtn.classList.remove("deploying");
+          deployBtn.classList.add("push-ok");
+        }, 4000);
+      };
+      btns.appendChild(deployBtn);
     }
   }
 
