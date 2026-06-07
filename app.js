@@ -245,8 +245,8 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", settings: "Paramètres" },
-    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", settings: "Paramètres" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres" },
+    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres" },
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
     placeholder: "Écris ton message…", send: "Envoyer",
     noProject: "Aucun projet connecté",
@@ -254,8 +254,8 @@ const I18N = {
     installer: "Installer l'app",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", settings: "Settings" },
-    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", settings: "Settings" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings" },
+    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings" },
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
     placeholder: "Type your message…", send: "Send",
     noProject: "No project connected",
