@@ -1332,12 +1332,13 @@ body[data-theme="light"] .chat-code-block{background:#f4f4f2!important;border-co
 @media(max-width:860px){.agents-panel{width:85vw}}
 
 /* ============ FORFAITS — Orange & White Theme ============ */
-.nav-forfaits .ico{stroke:#22c55e!important}
-.nav-forfaits .lbl{color:#22c55e!important}
-.nav-forfaits:hover .lbl{color:#22c55e!important}
-.nav-forfaits.active .lbl{color:#22c55e!important}
-.nav-forfaits.active .ico{stroke:#22c55e!important}
-.nav-forfaits.active{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2)}
+.nav-forfaits .ico{stroke:#f5c518!important}
+.nav-forfaits .lbl{color:#f5c518!important}
+.nav-forfaits:hover .lbl{color:#ffd700!important}
+.nav-forfaits.active .lbl{color:#ffd700!important}
+.nav-forfaits.active .ico{stroke:#ffd700!important}
+.nav-forfaits.active{border-color:#ffd700;box-shadow:0 0 0 3px rgba(255,215,0,.2)}
+.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5)}
 
 .view-forfaits{
   overflow-y:auto!important;overflow-x:hidden!important;
