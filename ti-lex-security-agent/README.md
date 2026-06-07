@@ -1,128 +1,137 @@
-# ti-lex Security Agent — Guide de déploiement
+# ti-lex Security Agent — Guide de deploiement
 
-Agent de cybersécurité défensive intégré à la plateforme ti-lex. **100 % légal au Québec**, conforme Loi 25, avec guardrails cryptographiques.
+Agent de cybersecurite defensive integre a la plateforme ti-lex. **100 % legal au Quebec**, conforme Loi 25, avec guardrails cryptographiques.
 
-## 🚨 Pourquoi tu voyais "Modèle ou ressource introuvable"
+## Modeles Claude 2026 supportes
 
-Le code précédent utilisait probablement un vieux nom de modèle Claude (genre `claude-3-opus-20240229` ou `claude-3-5-sonnet-20240620`). Ces modèles n'existent plus depuis longtemps. Ce code utilise les **modèles 2026** :
-
-- `claude-opus-4-7` ⭐ (par défaut — le plus capable)
+- `claude-opus-4-8` (par defaut — le plus capable)
+- `claude-opus-4-7`
 - `claude-opus-4-6`
 - `claude-sonnet-4-6`
 - `claude-haiku-4-5-20251001` (plus rapide / moins cher)
 
-Le code valide le nom du modèle au démarrage et renvoie un message clair si tu en mets un mauvais.
+Le code valide le nom du modele au demarrage et utilise le defaut si la variable est absente ou invalide.
 
-## 📁 Structure des fichiers
+## Structure des fichiers
 
 ```
 ti-lex-security-agent/
 ├── supabase/
 │   ├── functions/security-agent/
-│   │   ├── index.ts                 # Edge function principale
-│   │   └── deno.json                # Config Deno
+│   │   └── index.ts                 # Edge Function (recon passive reelle)
 │   └── migrations/
-│       └── 20260521000000_security_agent.sql  # Schéma BD
+│       └── 20260521000000_security_agent.sql  # Schema BD initial
 ├── app/
-│   ├── agents/security/page.tsx     # UI Next.js
-│   └── api/security-agent/route.ts  # Route API alternative
-└── lib/
-    └── security-agent.ts            # Client TypeScript
+│   ├── layout.tsx                   # Layout Next.js
+│   ├── page.tsx                     # Page d'accueil (redirige vers l'agent)
+│   └── agents/security/page.tsx     # UI de l'agent de securite
+├── lib/
+│   └── security-agent.ts           # Client TypeScript
+└── combat/
+    └── components/CombatUI.tsx
 ```
 
-## 🚀 Déploiement (étape par étape)
+Migrations consolidees (dossier racine `supabase/migrations/`) :
+- `0001_rate_limit.sql` — table ai_usage pour le rate limiting
+- `0002_security_fixes_and_is_admin.sql` — correctifs securite + is_admin()
+- `0003_security_schema_corrected.sql` — schema SOW corrige (normalisation cibles, immutabilite, scellage hash)
+
+## Deploiement
 
 ### 1. Variables d'environnement
 
-Dans **`.env.local`** (Next.js) :
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://rnuripmfozlxenryxhdc.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=ta_clé_anon
-SUPABASE_SERVICE_ROLE_KEY=ta_clé_service_role
-ANTHROPIC_API_KEY=sk-ant-...
-SECURITY_AGENT_MODEL=claude-opus-4-7
-```
-
-Dans les **secrets de l'edge function Supabase** :
+Dans les **secrets de l'Edge Function Supabase** :
 ```bash
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-supabase secrets set SECURITY_AGENT_MODEL=claude-opus-4-7
+supabase secrets set SECURITY_AGENT_MODEL=claude-opus-4-8
 ```
 
-### 2. Appliquer la migration SQL
+Les variables `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY` sont injectees automatiquement par Supabase dans les Edge Functions.
+
+### 2. Appliquer les migrations SQL
 
 ```bash
-# Via Supabase CLI lié au projet rnuripmfozlxenryxhdc
+# Via Supabase CLI lie au projet rnuripmfozlxenryxhdc
 supabase db push
 
 # OU coller directement dans le SQL Editor du dashboard Supabase
 ```
 
-### 3. Déployer l'edge function
+### 3. Deployer l'Edge Function
 
 ```bash
 supabase functions deploy security-agent --project-ref rnuripmfozlxenryxhdc
 ```
 
-### 4. Installer les dépendances Next.js
+### 4. Tester
 
-```bash
-pnpm add @anthropic-ai/sdk @supabase/supabase-js
-```
-
-### 5. Tester
-
-Crée d'abord une autorisation de test (SQL Editor Supabase) :
+Creer une autorisation de test (SQL Editor Supabase) :
 ```sql
 INSERT INTO security_authorizations (
-  user_id, client_name, client_email, client_signatory_name,
+  client_name, client_email, client_signatory_name,
   client_signatory_title, allowed_targets, allowed_techniques,
   valid_from, valid_until, sow_hash
 ) VALUES (
-  auth.uid(),
   'Test Client ti-lex',
   'test@ti-lex.com',
   'Alex Marceau Prevost',
   'CEO',
-  '["scanme.nmap.org", "testphp.vulnweb.com"]'::jsonb,
-  '["passive_recon", "web_scan", "vuln_scan"]'::jsonb,
+  '["scanme.nmap.org"]'::jsonb,
+  '["web_scan", "passive_recon"]'::jsonb,
   NOW(),
   NOW() + INTERVAL '30 days',
-  'test_hash_initial'
+  'initial_client_side_hash_test'
 );
 ```
 
+Note : le `sow_hash` doit commencer par `initial_client_side_hash_` (placeholder). L'Edge Function le remplacera par le SHA-256 final apres le scan. Une fois scelle, il ne peut plus etre modifie.
+
 Puis va sur `/agents/security` et lance un scan.
 
-## 🛡️ Guardrails en place
+## Reconnaissance passive reelle
 
-1. **Allowlist de cibles** : la fonction SQL `verify_scan_authorization` refuse tout scan hors-scope.
-2. **Fenêtre temporelle** : un SOW expire automatiquement.
-3. **Kill switch** : `killAuthorization()` révoque immédiatement.
-4. **Audit log immutable** : hash chain SHA-256, triggers BD qui bloquent UPDATE/DELETE.
-5. **Techniques destructives bloquées par défaut** : DoS, social engineering, exfiltration.
+L'Edge Function collecte des donnees publiques en parallele :
 
-## 🇨🇦 Conformité légale
+| Module | Source | Methode |
+|--------|--------|---------|
+| DNS | Google DNS-over-HTTPS | A, AAAA, MX, TXT, NS |
+| HTTP | GET direct (redirect: manual) | Headers de securite, serveur |
+| robots.txt | GET public | Contenu tronque a 4000 chars |
 
-- ✅ Aucun scan sans SOW signé (art. 342.1 C.cr.)
-- ✅ Audit log conservé > 5 ans (Loi 25)
-- ✅ Données client en région ca-central-1 / Beauharnois
-- ✅ Anonymisation avant envoi à Claude API
-- ⚠️ Anthropic est aux États-Unis : à documenter dans ton EFVP Loi 25
+Aucun scan de ports actif, aucune tentative d'exploitation. Le modele Claude analyse uniquement les preuves collectees et produit un rapport defensif en JSON.
 
-## 🔧 Si tu revois encore "Modèle introuvable"
+## Guardrails en place
 
-Vérifie dans cet ordre :
-1. `SECURITY_AGENT_MODEL` est bien défini dans Supabase secrets ET `.env.local`
-2. Le nom du modèle est exactement un de ceux de la liste `VALID_MODELS`
-3. `ANTHROPIC_API_KEY` est valide et a accès au modèle
-4. Redéploie l'edge function après changement : `supabase functions deploy security-agent`
+1. **Allowlist de cibles** : `verify_scan_authorization()` normalise la cible (schema, port, chemin, casse) et refuse tout scan hors-scope.
+2. **Fenetre temporelle** : un SOW expire automatiquement (`valid_from` / `valid_until`).
+3. **Immutabilite du SOW** : trigger `enforce_sow_immutability` gele tous les termes du mandat apres creation. Le hash est scellable une seule fois (placeholder -> SHA-256 64 hex).
+4. **Suppression bloquee** : trigger `prevent_sealed_sow_delete` empeche la suppression d'un mandat scelle.
+5. **Audit log immutable** : hash chain SHA-256, triggers BD qui bloquent UPDATE/DELETE.
+6. **RLS** : chaque utilisateur voit uniquement ses propres mandats (`insert_own_sow`, `select_own_sow`).
+7. **Hash du rapport** : SHA-256 couvrant mandat + preuves + rapport + horodatage.
 
-## 📞 Prochaines étapes
+## Conformite legale
 
-- Brancher Nuclei + Subfinder réels (remplacer `simulateScanModules`)
-- Ajouter export PDF du rapport (via le skill `pdf`)
-- Connecter au programme YesWeHack du gouvernement du Québec pour le bug bounty
-- Souscrire l'assurance E&O cyber (2-5 M$, ~5 k$/an)
+- Aucun scan sans SOW signe (art. 342.1 C.cr.)
+- Audit log conserve > 5 ans (Loi 25)
+- Donnees client en region ca-central-1 / Beauharnois
+- Anonymisation avant envoi a Claude API
+- Anthropic est aux Etats-Unis : a documenter dans l'EFVP Loi 25
 
-— Produit du Québec 🌊
+## Depannage
+
+Si l'Edge Function retourne une erreur :
+
+1. Verifier que `ANTHROPIC_API_KEY` est defini dans les secrets Supabase
+2. Verifier que `SECURITY_AGENT_MODEL` est un modele valide de la liste ci-dessus
+3. Verifier que la migration `0003_security_schema_corrected.sql` a ete appliquee
+4. Redeployer l'Edge Function : `supabase functions deploy security-agent`
+5. Consulter les logs : `supabase functions logs security-agent`
+
+## Prochaines etapes
+
+- Ajouter export PDF du rapport
+- Connecter au programme bug bounty du gouvernement du Quebec
+- Souscrire l'assurance E&O cyber (2-5 M$)
+
+— Produit du Quebec
