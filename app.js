@@ -11,6 +11,7 @@ const state = {
   theme: "dark",
   model: MODEL_DEFAULT,
   lang: "fr",
+  apiKey: "",
   history: [],
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
   github: { token: "", repo: "", branch: "" },
@@ -79,12 +80,15 @@ const LS_GH = "tilex-al-github";
 const LS_SB = "tilex-al-supabase";
 const LS_MEMORY = "tilex-al-memory";
 const LS_LANG = "tilex-al-lang";
+const LS_API = "tilex-al-apikey";
 function loadSettings() {
   try {
     const m = localStorage.getItem(LS_MODEL);
     const lang = localStorage.getItem(LS_LANG);
+    const ak = localStorage.getItem(LS_API);
     if (m) state.model = m;
     if (lang && (lang === "fr" || lang === "en")) state.lang = lang;
+    if (ak) state.apiKey = ak;
     const gh = JSON.parse(localStorage.getItem(LS_GH) || "null");
     if (gh && gh.token) { state.github = gh; state.connected.github = true; }
     const sb = JSON.parse(localStorage.getItem(LS_SB) || "null");
@@ -102,7 +106,7 @@ function timeAgo(ts) {
   if (hrs < 24) return `${hrs}h`;
   const days = Math.floor(hrs / 24);
   if (days < 14) return `${days}j`;
-  return new Date(ts).toLocaleDateString("fr-CA");
+  return new Date(ts).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
 }
 
 /* ---- Mémoire persistante (faits que l'IA retient entre sessions) ---- */
@@ -140,7 +144,7 @@ function recentConversationsContext() {
   const chatList = JSON.parse(localStorage.getItem("tilex-chat-convs") || "[]");
   chatList.forEach(c => {
     if (!c.ts || c.ts < cutoff) return;
-    const date = new Date(c.ts).toLocaleDateString("fr-CA");
+    const date = new Date(c.ts).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
     const userMsgs = (c.messages || []).filter(m => m.role === "user").map(m => contentText(m.content).slice(0, 80));
     const aiMsgs = (c.messages || []).filter(m => m.role === "assistant").map(m => contentText(m.content).slice(0, 80));
     if (userMsgs.length) {
@@ -152,7 +156,7 @@ function recentConversationsContext() {
   const codexList = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
   codexList.forEach(c => {
     if (!c.ts || c.ts < cutoff) return;
-    const date = new Date(c.ts).toLocaleDateString("fr-CA");
+    const date = new Date(c.ts).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
     const prompt = (c.prompt || c.full || "").slice(0, 80);
     if (prompt) summaries.push(`[Codex ${date}] ${prompt}`);
   });
@@ -175,40 +179,30 @@ function renderMemory() {
   const el = $("#memoryList");
   if (!el) return;
   if (!memory.length) {
-    el.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucun souvenir enregistré.</p>';
+    el.innerHTML = `<p class="muted" style="font-size:.78rem;padding:6px 0">${t("noMemory")}</p>`;
     return;
   }
   el.innerHTML = memory.map((m, i) => {
-    const date = m.ts ? new Date(m.ts).toLocaleDateString("fr-CA") : "";
-    return `<div class="memory-item"><span class="memory-text">${escapeHtml(m.text)}${date ? `<span class="memory-date">${date}</span>` : ""}</span><button class="memory-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+    const date = m.ts ? new Date(m.ts).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA") : "";
+    return `<div class="memory-item"><span class="memory-text">${escapeHtml(m.text)}${date ? `<span class="memory-date">${date}</span>` : ""}</span><button class="memory-del" data-idx="${i}" title="${t("delete_")}">×</button></div>`;
   }).join("");
   $$(".memory-del", el).forEach(btn => {
     btn.onclick = (e) => { e.stopPropagation(); removeMemory(+btn.dataset.idx); };
   });
 }
 
-function apiHeaders() {
-  return { "Content-Type": "application/json" };
-}
-function useProxy() { return true; }
 function proxyToken() {
   return state.supabase.key || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
 }
 function chatFetch(bodyObj) {
-  if (useProxy()) {
-    const h = { "Content-Type": "application/json" };
-    const tk = proxyToken();
-    if (tk) h["Authorization"] = `Bearer ${tk}`;
-    return fetch(AI_PROXY, {
-      method: "POST",
-      headers: h,
-      body: JSON.stringify({ kind: "chat", ...bodyObj }),
-    });
-  }
-  return fetch("https://api.anthropic.com/v1/messages", {
+  const h = { "Content-Type": "application/json" };
+  const tk = proxyToken();
+  if (tk) h["Authorization"] = `Bearer ${tk}`;
+  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+  return fetch(AI_PROXY, {
     method: "POST",
-    headers: apiHeaders(),
-    body: JSON.stringify(bodyObj),
+    headers: h,
+    body: JSON.stringify({ kind: "chat", ...bodyObj }),
   });
 }
 
@@ -252,6 +246,246 @@ const I18N = {
     noProject: "Aucun projet connecté",
     connectGh: "Connecte GitHub dans le Codex pour voir tes conversations de projet.",
     installer: "Installer l'app",
+    online: "En ligne · ti-lex-AL v10",
+    reflexion: "Réflexion",
+    chooseAgent: "Choisir un agent",
+    welcomeTitle: "Bienvenue sur",
+    welcomeSub: "L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.",
+    chip1: "Explique-moi le mode réflexion",
+    chip2: "Connecte-toi à Supabase",
+    chip3: "Génère une fonction Edge",
+    addBtn: "Ajouter",
+    image: "Image", file: "Fichier", zip: "Fichier ZIP", genImg: "Générer une image", micro: "Micro (dicter)", webSearch: "Chercher sur le web",
+    modeReflexOn: 'Mode réflexion <span class="orange">activé</span>',
+    modeReflexOff: 'Mode réflexion <span class="muted">désactivé</span>',
+    codexTitle: "Codex",
+    codexNewConv: "Nouvelle conversation",
+    codexProject: "Projet",
+    codexGitHub: "GitHub",
+    codexTokenPh: "Token GitHub (ghp_…)",
+    codexConnect: "Connecter",
+    codexRepoDefault: "— Dépôt —",
+    codexBranchDefault: "— Branche —",
+    codexScanProject: "Scanner le projet complet",
+    codexConvs: "Conversations",
+    codexNoConv: "Aucune conversation",
+    codexBack: "Retour à l'accueil",
+    codexOpenMenu: "Ouvrir le menu",
+    codexHeading: 'Codex <span class="orange">ti-lex-AL</span>',
+    codexSub: "Décris ce que tu veux coder. Le code apparaîtra dans le chat.",
+    codexChip1: "Génère une API REST Express avec TypeScript",
+    codexChip2: "Crée un composant React avec hooks",
+    codexChip3: "Écris une migration SQL Supabase avec RLS",
+    codexPh: "Décris ce que tu veux coder…",
+    codexGenerate: "Générer",
+    codexHint: 'Codex ti-lex-AL · <span class="orange">Génère</span> du code',
+    secTitle: 'Mode Sécurité <span class="orange">AL 7.8</span>',
+    secSub: "Agent ti-lex-AL · scan & conformité. Une autorisation signée (SOW) est requise avant tout scan.",
+    secAuth: "Autorisations", secSowActive: "SOW actifs",
+    secScans: "Scans", secPending: "en attente d'autorisation",
+    secFindings: "Findings", secNone: "aucun",
+    secRbac: "RBAC",
+    secNewSow: "+ Nouveau SOW", secRefresh: "Rafraîchir",
+    secCreateSow: "Créer une autorisation (SOW)",
+    secMandatTitle: "Titre du mandat *", secMandatTitlePh: "Ex: Audit sécurité MonSite.ca",
+    secClientName: "Nom du client *", secClientNamePh: "Ex: Entreprise XYZ Inc.",
+    secContactName: "Contact (nom)", secContactNamePh: "Jean Tremblay",
+    secContactEmail: "Contact (courriel)", secContactEmailPh: "jean@entreprise.ca",
+    secTargetsIn: "Cibles autorisées (scope-in) *", secTargetsInPh: "exemple.ca, 192.168.1.0/24 (séparées par virgule)",
+    secTargetsOut: "Cibles exclues (scope-out)", secTargetsOutPh: "prod.exemple.ca (séparées par virgule)",
+    secDateStart: "Date de début *", secDateEnd: "Date d'expiration *",
+    secScanTypes: "Types de scan autorisés *",
+    secReconPassive: "Recon passive", secVulnScan: "Scan vulnérabilités", secWebScan: "Scan web",
+    secConfigAudit: "Audit config", secDarkWeb: "Dark web monitor", secFullAudit: "Audit complet",
+    secNotes: "Notes", secNotesPh: "Instructions spéciales, restrictions, etc.",
+    secCreateBtn: "Créer le SOW", secCancel: "Annuler",
+    secLegal: 'Rappel légal : au Canada, tout scan doit reposer sur un mandat autorisé, un programme de <code>bug_bounty</code>, ou de la divulgation responsable. Le mode Sécurité bloque les scans hors-scope grâce à des garde-fous cryptographiques.',
+    studioTitle: "Studio", studioRefresh: "Rafraîchir",
+    studioNoSource: "Aucune source",
+    studioHelp: "Connecte GitHub ou uploade un ZIP pour voir les fichiers.",
+    studioNoFile: "Aucun fichier sélectionné",
+    studioPush: "Push", studioPushPh: "Sélectionne un fichier à gauche…",
+    fpTitle: "Forfaits", fpKicker: "ti-lex-AL v10",
+    fpChoose: 'Choisis ton <span class="fp-title-green">forfait</span>',
+    fpSub: "Chaque forfait te donne accès à l'agent AL, au Codex et au mode Sécurité. La seule différence, c'est jusqu'où tu veux aller.",
+    fpMonthly: "Mensuel", fpAnnual: "Annuel", fpSave: "-20%",
+    fpStarter: "Starter", fpStarterPeriod: "/ mois",
+    fpStarterPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
+    fpStarterCta: "Commencer à 28$/mois", fpStarterBilled: "Facturé 264$/an",
+    fpStarterF1: "500 messages IA par jour", fpStarterF2: "50 images générées par jour",
+    fpStarterF3: "Codex avec push GitHub", fpStarterF4: "1 projet actif à la fois",
+    fpStarterF5: "Mode Sécurité — scan de base", fpStarterF6: "Support par chat 7j/7",
+    fpStarterOff1: "Agents personnalisés", fpStarterOff2: "SSO entreprise",
+    fpProBadge: "Le plus populaire",
+    fpPro: "Pro", fpProPeriod: "/ mois",
+    fpProPitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — zéro limite.",
+    fpProCta: "S'abonner au Pro", fpProBilled: "Facturé 744$/an",
+    fpProF1: "Messages IA illimités", fpProF2: "200 images générées par jour",
+    fpProF3: "Codex multi-projets illimités", fpProF4: "Mode Sécurité complet (SOW + scans)",
+    fpProF5: "Jusqu'à 5 agents personnalisés", fpProF6: "Mémoire longue durée entre sessions",
+    fpProF7: "Support prioritaire en moins de 4h",
+    fpProOff1: "SSO entreprise",
+    fpIndustrialBadge: "Sur mesure",
+    fpIndustrial: "Industriel", fpIndustrialPeriod: "/ mois",
+    fpIndustrialPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
+    fpIndustrialCta: "Contacter l'équipe", fpIndustrialBilled: "Facturé 1 344$/an",
+    fpIndustrialF1: "Tout ce qui est dans le Pro", fpIndustrialF2: "Agents IA illimités",
+    fpIndustrialF3: "API dédiée — rate limit x10", fpIndustrialF4: "Scans de sécurité avancés + rapports",
+    fpIndustrialF5: "Audit trail complet conservé 5 ans", fpIndustrialF6: "SSO et intégrations entreprise",
+    fpIndustrialF7: "SLA 99.9% avec support dédié", fpIndustrialF8: "Option de déploiement privé",
+    fpBadge1: "Paiement sécurisé Stripe", fpBadge2: "Annule quand tu veux", fpBadge3: "Support humain 7j/7", fpBadge4: "Prix en CAD",
+    fpFaq: "Questions fréquentes",
+    fpQ1: "Est-ce que je peux changer de forfait en cours de route?",
+    fpA1: "Oui! Tu peux upgrader ou downgrader à tout moment. Le prorata est automatiquement calculé par Stripe.",
+    fpQ2: "Qu'est-ce qui arrive si j'annule?",
+    fpA2: "Tu gardes l'accès jusqu'à la fin de ta période payée. Aucune pénalité, aucun frais caché.",
+    fpQ3: "C'est quoi la différence entre Pro et Industriel?",
+    fpA3: "Le forfait Industriel offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.",
+    fpQ4: "Les prix sont en dollars canadiens?",
+    fpA4: "Oui, tous les prix sont en CAD. Les taxes applicables sont ajoutées au moment du paiement.",
+    fpFooter: "Taxes en sus. Annule quand tu veux, sans frais cachés.",
+    fpManage: "Gérer mon abonnement",
+    setApiKey: "Clé API Anthropic", setApiKeySub: "Entre ta propre clé pour appeler Claude directement sans passer par le proxy ti-lex.",
+    setApiKeyPh: "sk-ant-api03-…", setApiKeySave: "Enregistrer", setApiKeyClear: "Effacer",
+    setApiKeyOptional: "— optionnel", setApiKeyActive: "✓ active",
+    finNoReply: "Je n'ai pas reçu de réponse. Peux-tu reformuler ta question ?",
+    finConnError: "Oups — la connexion a échoué. Réessaie dans un moment.",
+    finTitle: "Agent Finance",
+    finStatus: "Finances personnelles & crypto",
+    finOrigin: "Produit du Québec",
+    finBadge: "propulsé par Claude",
+    finWelcomeTitle: "Voir clair dans<br>tes finances.",
+    finWelcomeSub: "Budget, épargne, dettes, CELI, REER — et crypto. Pose une question ou choisis un point de départ : je t'aide à y réfléchir, étape par étape.",
+    finChip1: "Bâtir un budget 50/30/20", finChip2: "CELI ou REER : par où commencer ?",
+    finChip3: "Comprendre Bitcoin et Ethereum", finChip4: "Sécuriser mon portefeuille crypto",
+    finChip5: "Impôt sur mes gains crypto au Québec", finChip6: "Quelle place donner à la crypto ?",
+    finPh: "Pose ta question sur tes finances…",
+    finDisclaimer: "Information éducative générale — ne remplace pas un conseil financier personnalisé.",
+    setTitle: "Paramètres",
+    setModel: "Modèle Claude", setModelSub: "Modèle utilisé par Agent AL.",
+    setOpus: "Opus 4.8 — puissant", setSonnet: "Sonnet 4.6 — équilibré", setHaiku: "Haiku 4.5 — rapide",
+    setReflex: "Mode réflexion", setReflexSub: "Affiche le raisonnement de l'agent en gris avant la réponse.",
+    setEnabled: "Activé", setDisabled: "Désactivé",
+    setTheme: "Mode jour", setThemeSub: "Bascule clair / sombre, comme la plateforme officielle.",
+    setLight: "Clair", setDark: "Sombre",
+    setLang: "Langue / Language", setLangSub: "Choisis la langue de l'interface et des réponses de l'agent.",
+    setMemory: "Mémoire", setMemorySub: "Agent AL retient des faits importants entre les sessions. Dis-lui « retiens que… » pour sauvegarder.",
+    setMemoryPh: "Ajouter un souvenir manuellement…", setMemoryAdd: "Ajouter",
+    setMemoryClear: "Effacer toute la mémoire",
+    setGitHub: "GitHub", setGitHubNotConn: "— non connecté",
+    setGitHubSub: "Connecte ton compte pour accéder à tous tes dépôts et choisir la bonne branche.",
+    setGitHubTokenPh: "Personal Access Token (ghp_...)",
+    setGitHubConnect: "Connecter", setGitHubCreateToken: "Créer un token →",
+    setRepo: "Dépôt", setRepoDefault: "— Choisir un dépôt —",
+    setBranch: "Branche", setBranchDefault: "— Choisir une branche —",
+    setSupabase: "Supabase", setSupabaseNotConn: "— non connecté",
+    setSupabaseSub: "Branche ton projet Supabase (URL + clé publishable).",
+    setSupabaseUrlPh: "https://xxxx.supabase.co",
+    setSupabaseKeyPh: "sb_publishable_... ou anon key",
+    setSupabaseConnect: "Connecter",
+    setData: "Mes données", setDataSub: "Conformément à la Loi 25 du Québec, vous pouvez consulter, exporter et supprimer vos renseignements personnels.",
+    setExport: "Exporter mes données", setDelete: "Supprimer toutes mes données", setWithdraw: "Retirer mon consentement",
+    setDataHost: "Données hébergées à Beauharnois, Québec (ca-central-1).",
+    setPrivacy: "Politique de confidentialité", setTerms: "Conditions d'utilisation",
+    setOther: "Autres connexions",
+    consentTitle: "Protection de vos renseignements personnels",
+    consentText: "ti-lex-AL utilise le stockage local de votre navigateur pour sauvegarder vos préférences et conversations. Conformément à la Loi 25 du Québec sur la protection des renseignements personnels, nous vous informons que :",
+    consentAccept: "J'accepte", consentRefuse: "Je refuse", consentMore: "En savoir plus",
+    updateBanner: "Mise à jour disponible",
+    updateRefresh: "Rafraîchir",
+    alertVoice: "La dictée vocale n'est pas supportée par ce navigateur.",
+    alertGhFirst: "Connecte ton compte GitHub dans Paramètres d'abord.",
+    alertGhFilename: "Nom du fichier à créer/mettre à jour sur GitHub :",
+    alertPushed: "Pushé sur",
+    alertPushErr: "Erreur push GitHub :",
+    alertCommitMsg: "Message de commit :",
+    alertCommitDefault: "Mise à jour de",
+    alertFillFields: "Remplis tous les champs obligatoires (*).",
+    alertSelectScan: "Sélectionne au moins un type de scan.",
+    alertLoginFirst: "Connecte-toi d'abord.",
+    alertActivateSow: "Activer ce SOW ? Les scans deviendront possibles pour les cibles listées.",
+    alertRevokeSow: "Révoquer/supprimer ce SOW ? Les scans associés seront bloqués.",
+    alertDeleteAll: "Supprimer TOUTES vos données locales ?\n\nConversations, mémoire, préférences, connexions — tout sera effacé.\n\nCette action est irréversible.",
+    alertDeleteConfirm: "Dernière confirmation : voulez-vous vraiment tout supprimer ?",
+    alertDeleted: "Toutes vos données locales ont été supprimées.",
+    alertWithdraw: "Retirer votre consentement ?\n\nVos données locales seront supprimées et vous serez redirigé vers la page d'accueil.",
+    alertSubscribe: "Connecte-toi d'abord pour t'abonner.",
+    alertManage: "Connecte-toi d'abord pour gérer ton abonnement.",
+    alertClearMemory: "Effacer toute la mémoire d'Agent AL ?",
+    noMemory: "Aucun souvenir enregistré.",
+    connected: "connecté", notConnected: "—",
+    loading: "chargement…", error: "erreur", none: "aucune",
+    pushGitHub: "Push sur GitHub", pushDeploy: "Push + Deploy Vercel",
+    pushing: "Push en cours…", pushed: "Pushé !", retry: "Réessayer",
+    deploying: "Deploy Vercel…", deployed: "Déployé !",
+    listen: "Écouter", listenTitle: "Écouter la réponse", pause: "Pause", delete_: "Supprimer", untitled: "Sans titre",
+    secActivate: "Activer", secRevoke: "Révoquer", secNotDefined: "non défini",
+    files: "fichiers", andMore: "et %n autres",
+    agentTilex: "L'agent signature : intense, sans filtre, droit au but.",
+    agentGeneral: "Généraliste, répond à tout avec rigueur.",
+    agentDev: "Spécialiste code, architecture, debug.",
+    agentSecu: "Cybersécurité défensive, audit, conformité Loi 25.",
+    agentCreatif: "Rédaction, idées, contenu, branding.",
+    diagram: "Diagramme",
+    imageMode: "Mode image",
+    imgPromptEnhance: "Amélioration du prompt par Claude…",
+    imgGenerating: "Génération de l'image en cours…",
+    imgError: "Erreur image :",
+    apiError: "Erreur :",
+    proxyNotConfigured: "Le proxy AI n'est pas configuré.",
+    codexError: "Erreur Codex :",
+    codexConnectFirst: "Connecte d'abord un dépôt GitHub (Paramètres) ou uploade un ZIP pour scanner un projet.",
+    codexReading: "Lecture des fichiers du projet…",
+    scanError: "Erreur scan :",
+    filesDetected: "fichier(s) détecté(s)",
+    openStudio: "Ouvrir dans le Studio",
+    defaultBranch: "(défaut)",
+    connectedMark: "✓ connecté",
+    chooseRepo: "— Choisir un dépôt",
+    filesOn: "fichier(s) sur",
+    noFile: "aucun fichier",
+    noSow: 'Aucun SOW. Clique "+ Nouveau SOW" pour créer ta première autorisation.',
+    ready: "prêt",
+    total: "total",
+    ghEnterToken: "— entre un token",
+    ghConnecting: "connexion…",
+    ghTokenInvalid: "token invalide ?",
+    ghChooseRepo: "— Choisir un dépôt",
+    ghLoadingBranches: "chargement…",
+    ghFilesLoading: "chargement des fichiers…",
+    ghNoFiles: "aucun fichier",
+    ghFilesCount: "fichier(s) sur",
+    ghFilesError: "erreur fichiers:",
+    ghErrorRetry: "Erreur — réessayer",
+    sbRequired: "— URL + clé requises",
+    sbConnecting: "connexion…",
+    writeTo: "Écris à",
+    imgDescPh: "Décris l'image à générer…",
+    imgPromptLabel: "Prompt amélioré :",
+    download: "Télécharger",
+    imgGenFail: "Échec de génération",
+    streamError: "Erreur de diffusion",
+    chatNone: "Aucune",
+    noConvCodex: "Aucune conversation. Utilise le Codex pour commencer!",
+    pushFilesGh: "fichiers sur GitHub",
+    commitMsgDefault: "Ajout de",
+    commitMsgVia: "fichiers via Codex ti-lex-AL",
+    commitMsgDeploy: "fichiers via ti-lex-AL",
+    commitMsgStudio: "Mise à jour de",
+    commitMsgStudioVia: "via ti-lex Studio",
+    pushGhProgress: "Push GitHub…",
+    serviceConnected: "● connecté",
+    studioZipLabel: "Fichiers ZIP uploadés",
+    studioRoot: "racine",
+    studioBinaryFile: "(fichier binaire — contenu non lisible)",
+    studioPushed: "Pushé :",
+    studioPushErr: "Erreur push :",
+    manageLoading: "Chargement…",
+    managePortalErr: "Erreur lors de l'ouverture du portail.",
+    manageNetworkErr: "Erreur réseau. Réessaie plus tard.",
+    installSafari: "Pour installer ti-lex-AL :\n\n1. Appuie sur le bouton Partager (en bas)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »",
+    installSamsung: "Pour installer ti-lex-AL sur Samsung :\n\n1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »",
+    installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings" },
@@ -261,31 +495,470 @@ const I18N = {
     noProject: "No project connected",
     connectGh: "Connect GitHub in the Codex to see your project conversations.",
     installer: "Install app",
+    online: "Online · ti-lex-AL v10",
+    reflexion: "Reflexion",
+    chooseAgent: "Choose an agent",
+    welcomeTitle: "Welcome to",
+    welcomeSub: "The Quebec AI agent. Ask a question, code with the Codex, or connect your services.",
+    chip1: "Explain reflexion mode", chip2: "Connect to Supabase", chip3: "Generate an Edge Function",
+    addBtn: "Add",
+    image: "Image", file: "File", zip: "ZIP File", genImg: "Generate an image", micro: "Microphone (dictate)", webSearch: "Search the web",
+    modeReflexOn: 'Reflexion mode <span class="orange">enabled</span>',
+    modeReflexOff: 'Reflexion mode <span class="muted">disabled</span>',
+    codexTitle: "Codex",
+    codexNewConv: "New conversation",
+    codexProject: "Project",
+    codexGitHub: "GitHub",
+    codexTokenPh: "GitHub Token (ghp_…)",
+    codexConnect: "Connect",
+    codexRepoDefault: "— Repository —",
+    codexBranchDefault: "— Branch —",
+    codexScanProject: "Scan the full project",
+    codexConvs: "Conversations",
+    codexNoConv: "No conversations",
+    codexBack: "Back to home",
+    codexOpenMenu: "Open menu",
+    codexHeading: 'Codex <span class="orange">ti-lex-AL</span>',
+    codexSub: "Describe what you want to code. The code will appear in the chat.",
+    codexChip1: "Generate a REST API with Express + TypeScript",
+    codexChip2: "Create a React component with hooks",
+    codexChip3: "Write a Supabase SQL migration with RLS",
+    codexPh: "Describe what you want to code…",
+    codexGenerate: "Generate",
+    codexHint: 'Codex ti-lex-AL · <span class="orange">Generates</span> code',
+    secTitle: 'Security Mode <span class="orange">AL 7.8</span>',
+    secSub: "ti-lex-AL agent · scan & compliance. A signed authorization (SOW) is required before any scan.",
+    secAuth: "Authorizations", secSowActive: "Active SOWs",
+    secScans: "Scans", secPending: "pending authorization",
+    secFindings: "Findings", secNone: "none",
+    secRbac: "RBAC",
+    secNewSow: "+ New SOW", secRefresh: "Refresh",
+    secCreateSow: "Create an authorization (SOW)",
+    secMandatTitle: "Mandate title *", secMandatTitlePh: "Ex: Security Audit MySite.ca",
+    secClientName: "Client name *", secClientNamePh: "Ex: Company XYZ Inc.",
+    secContactName: "Contact (name)", secContactNamePh: "John Smith",
+    secContactEmail: "Contact (email)", secContactEmailPh: "john@company.ca",
+    secTargetsIn: "Authorized targets (scope-in) *", secTargetsInPh: "example.ca, 192.168.1.0/24 (comma separated)",
+    secTargetsOut: "Excluded targets (scope-out)", secTargetsOutPh: "prod.example.ca (comma separated)",
+    secDateStart: "Start date *", secDateEnd: "Expiration date *",
+    secScanTypes: "Authorized scan types *",
+    secReconPassive: "Passive recon", secVulnScan: "Vulnerability scan", secWebScan: "Web scan",
+    secConfigAudit: "Config audit", secDarkWeb: "Dark web monitor", secFullAudit: "Full audit",
+    secNotes: "Notes", secNotesPh: "Special instructions, restrictions, etc.",
+    secCreateBtn: "Create SOW", secCancel: "Cancel",
+    secLegal: 'Legal notice: in Canada, every scan must rely on a signed mandate, a <code>bug_bounty</code> program, or responsible disclosure. Security Mode blocks out-of-scope scans with cryptographic guardrails.',
+    studioTitle: "Studio", studioRefresh: "Refresh",
+    studioNoSource: "No source",
+    studioHelp: "Connect GitHub or upload a ZIP to view files.",
+    studioNoFile: "No file selected",
+    studioPush: "Push", studioPushPh: "Select a file on the left…",
+    fpTitle: "Plans", fpKicker: "ti-lex-AL v10",
+    fpChoose: 'Choose your <span class="fp-title-green">plan</span>',
+    fpSub: "Every plan gives you access to Agent AL, the Codex and Security Mode. The only difference is how far you want to go.",
+    fpMonthly: "Monthly", fpAnnual: "Annual", fpSave: "-20%",
+    fpStarter: "Starter", fpStarterPeriod: "/ mo",
+    fpStarterPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
+    fpStarterCta: "Start at $28/mo", fpStarterBilled: "Billed $264/yr",
+    fpStarterF1: "500 AI messages per day", fpStarterF2: "50 images generated per day",
+    fpStarterF3: "Codex with GitHub push", fpStarterF4: "1 active project at a time",
+    fpStarterF5: "Security Mode — basic scan", fpStarterF6: "Chat support 7/7",
+    fpStarterOff1: "Custom agents", fpStarterOff2: "Enterprise SSO",
+    fpProBadge: "Most popular",
+    fpPro: "Pro", fpProPeriod: "/ mo",
+    fpProPitch: "For those who build for real. Freelancers, teams, agencies — zero limits.",
+    fpProCta: "Subscribe — Pro", fpProBilled: "Billed $744/yr",
+    fpProF1: "Unlimited AI messages", fpProF2: "200 images generated per day",
+    fpProF3: "Unlimited multi-project Codex", fpProF4: "Full Security Mode (SOW + scans)",
+    fpProF5: "Up to 5 custom agents", fpProF6: "Long-term memory between sessions",
+    fpProF7: "Priority support under 4h",
+    fpProOff1: "Enterprise SSO",
+    fpIndustrialBadge: "Custom",
+    fpIndustrial: "Industrial", fpIndustrialPeriod: "/ mo",
+    fpIndustrialPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
+    fpIndustrialCta: "Contact the team", fpIndustrialBilled: "Billed $1,344/yr",
+    fpIndustrialF1: "Everything in Pro", fpIndustrialF2: "Unlimited AI agents",
+    fpIndustrialF3: "Dedicated API — rate limit x10", fpIndustrialF4: "Advanced security scans + reports",
+    fpIndustrialF5: "Full audit trail kept 5 years", fpIndustrialF6: "SSO and enterprise integrations",
+    fpIndustrialF7: "99.9% SLA with dedicated support", fpIndustrialF8: "Private deployment option",
+    fpBadge1: "Secure Stripe payment", fpBadge2: "Cancel anytime", fpBadge3: "Human support 7/7", fpBadge4: "Prices in CAD",
+    fpFaq: "Frequently asked questions",
+    fpQ1: "Can I change my plan anytime?",
+    fpA1: "Yes! You can upgrade or downgrade at any time. Proration is automatically calculated by Stripe.",
+    fpQ2: "What happens if I cancel?",
+    fpA2: "You keep access until the end of your paid period. No penalty, no hidden fees.",
+    fpQ3: "What's the difference between Pro and Industrial?",
+    fpA3: "The Industrial plan offers unlimited agents, a dedicated API with 10x rate limit, SSO, 5-year audit trail and a 99.9% SLA with dedicated support.",
+    fpQ4: "Are prices in Canadian dollars?",
+    fpA4: "Yes, all prices are in CAD. Applicable taxes are added at checkout.",
+    fpFooter: "Taxes extra. Cancel anytime, no hidden fees.",
+    fpManage: "Manage my subscription",
+    setApiKey: "Anthropic API Key", setApiKeySub: "Enter your own key to call Claude directly without the ti-lex proxy.",
+    setApiKeyPh: "sk-ant-api03-…", setApiKeySave: "Save", setApiKeyClear: "Clear",
+    setApiKeyOptional: "— optional", setApiKeyActive: "✓ active",
+    finNoReply: "I didn't receive a response. Can you rephrase your question?",
+    finConnError: "Oops — connection failed. Try again in a moment.",
+    finTitle: "Agent Finance",
+    finStatus: "Personal finance & crypto",
+    finOrigin: "Made in Quebec",
+    finBadge: "powered by Claude",
+    finWelcomeTitle: "See clearly<br>in your finances.",
+    finWelcomeSub: "Budget, savings, debts, TFSA, RRSP — and crypto. Ask a question or pick a starting point: I'll help you think it through, step by step.",
+    finChip1: "Build a 50/30/20 budget", finChip2: "TFSA or RRSP: where to start?",
+    finChip3: "Understand Bitcoin and Ethereum", finChip4: "Secure my crypto wallet",
+    finChip5: "Tax on my crypto gains in Quebec", finChip6: "How much crypto in my portfolio?",
+    finPh: "Ask your finance question…",
+    finDisclaimer: "General educational information — does not replace personalized financial advice.",
+    setTitle: "Settings",
+    setModel: "Claude Model", setModelSub: "Model used by Agent AL.",
+    setOpus: "Opus 4.8 — powerful", setSonnet: "Sonnet 4.6 — balanced", setHaiku: "Haiku 4.5 — fast",
+    setReflex: "Reflexion mode", setReflexSub: "Shows the agent's reasoning in gray before the answer.",
+    setEnabled: "Enabled", setDisabled: "Disabled",
+    setTheme: "Day mode", setThemeSub: "Toggle light / dark, like the official platform.",
+    setLight: "Light", setDark: "Dark",
+    setLang: "Language / Langue", setLangSub: "Choose the language for the interface and agent responses.",
+    setMemory: "Memory", setMemorySub: "Agent AL remembers important facts between sessions. Tell it 'remember that…' to save.",
+    setMemoryPh: "Add a memory manually…", setMemoryAdd: "Add",
+    setMemoryClear: "Clear all memory",
+    setGitHub: "GitHub", setGitHubNotConn: "— not connected",
+    setGitHubSub: "Connect your account to access all your repos and choose the right branch.",
+    setGitHubTokenPh: "Personal Access Token (ghp_...)",
+    setGitHubConnect: "Connect", setGitHubCreateToken: "Create a token →",
+    setRepo: "Repository", setRepoDefault: "— Choose a repository —",
+    setBranch: "Branch", setBranchDefault: "— Choose a branch —",
+    setSupabase: "Supabase", setSupabaseNotConn: "— not connected",
+    setSupabaseSub: "Connect your Supabase project (URL + publishable key).",
+    setSupabaseUrlPh: "https://xxxx.supabase.co",
+    setSupabaseKeyPh: "sb_publishable_... or anon key",
+    setSupabaseConnect: "Connect",
+    setData: "My data", setDataSub: "In accordance with Quebec's Law 25, you can view, export and delete your personal information.",
+    setExport: "Export my data", setDelete: "Delete all my data", setWithdraw: "Withdraw my consent",
+    setDataHost: "Data hosted in Beauharnois, Quebec (ca-central-1).",
+    setPrivacy: "Privacy policy", setTerms: "Terms of use",
+    setOther: "Other connections",
+    consentTitle: "Protection of your personal information",
+    consentText: "ti-lex-AL uses your browser's local storage to save your preferences and conversations. In accordance with Quebec's Law 25 on the protection of personal information, we inform you that:",
+    consentAccept: "I accept", consentRefuse: "I refuse", consentMore: "Learn more",
+    updateBanner: "Update available",
+    updateRefresh: "Refresh",
+    alertVoice: "Voice dictation is not supported by this browser.",
+    alertGhFirst: "Connect your GitHub account in Settings first.",
+    alertGhFilename: "File name to create/update on GitHub:",
+    alertPushed: "Pushed to",
+    alertPushErr: "GitHub push error:",
+    alertCommitMsg: "Commit message:",
+    alertCommitDefault: "Update of",
+    alertFillFields: "Fill all required fields (*).",
+    alertSelectScan: "Select at least one scan type.",
+    alertLoginFirst: "Log in first.",
+    alertActivateSow: "Activate this SOW? Scans will become possible for the listed targets.",
+    alertRevokeSow: "Revoke/delete this SOW? Associated scans will be blocked.",
+    alertDeleteAll: "Delete ALL your local data?\n\nConversations, memory, preferences, connections — everything will be erased.\n\nThis action is irreversible.",
+    alertDeleteConfirm: "Final confirmation: do you really want to delete everything?",
+    alertDeleted: "All your local data has been deleted.",
+    alertWithdraw: "Withdraw your consent?\n\nYour local data will be deleted and you will be redirected to the home page.",
+    alertSubscribe: "Log in first to subscribe.",
+    alertManage: "Log in first to manage your subscription.",
+    alertClearMemory: "Clear all of Agent AL's memory?",
+    noMemory: "No memories saved.",
+    connected: "connected", notConnected: "—",
+    loading: "loading…", error: "error", none: "none",
+    pushGitHub: "Push to GitHub", pushDeploy: "Push + Deploy Vercel",
+    pushing: "Pushing…", pushed: "Pushed!", retry: "Retry",
+    deploying: "Deploy Vercel…", deployed: "Deployed!",
+    listen: "Listen", listenTitle: "Listen to response", pause: "Pause", delete_: "Delete", untitled: "Untitled",
+    secActivate: "Activate", secRevoke: "Revoke", secNotDefined: "not defined",
+    files: "files", andMore: "and %n more",
+    agentTilex: "The signature agent: intense, unfiltered, straight to the point.",
+    agentGeneral: "Generalist, answers everything with rigor.",
+    agentDev: "Code specialist, architecture, debug.",
+    agentSecu: "Defensive cybersecurity, audit, Law 25 compliance.",
+    agentCreatif: "Writing, ideas, content, branding.",
+    diagram: "Diagram",
+    imageMode: "Image mode",
+    imgPromptEnhance: "Enhancing prompt with Claude…",
+    imgGenerating: "Generating image…",
+    imgError: "Image error:",
+    apiError: "Error:",
+    proxyNotConfigured: "The AI proxy is not configured.",
+    codexError: "Codex error:",
+    codexConnectFirst: "Connect a GitHub repo (Settings) or upload a ZIP to scan a project first.",
+    codexReading: "Reading project files…",
+    scanError: "Scan error:",
+    filesDetected: "file(s) detected",
+    openStudio: "Open in Studio",
+    defaultBranch: "(default)",
+    connectedMark: "✓ connected",
+    chooseRepo: "— Choose a repository",
+    filesOn: "file(s) on",
+    noFile: "no files",
+    noSow: 'No SOW. Click "+ New SOW" to create your first authorization.',
+    ready: "ready",
+    total: "total",
+    ghEnterToken: "— enter a token",
+    ghConnecting: "connecting…",
+    ghTokenInvalid: "invalid token?",
+    ghChooseRepo: "— Choose a repository",
+    ghLoadingBranches: "loading…",
+    ghFilesLoading: "loading files…",
+    ghNoFiles: "no files",
+    ghFilesCount: "file(s) on",
+    ghFilesError: "file error:",
+    ghErrorRetry: "Error — retry",
+    sbRequired: "— URL + key required",
+    sbConnecting: "connecting…",
+    writeTo: "Write to",
+    imgDescPh: "Describe the image to generate…",
+    imgPromptLabel: "Enhanced prompt:",
+    download: "Download",
+    imgGenFail: "Generation failed",
+    streamError: "Streaming error",
+    chatNone: "None",
+    noConvCodex: "No conversations. Use the Codex to get started!",
+    pushFilesGh: "files to GitHub",
+    commitMsgDefault: "Adding",
+    commitMsgVia: "files via Codex ti-lex-AL",
+    commitMsgDeploy: "files via ti-lex-AL",
+    commitMsgStudio: "Update of",
+    commitMsgStudioVia: "via ti-lex Studio",
+    pushGhProgress: "Push GitHub…",
+    serviceConnected: "● connected",
+    studioZipLabel: "Uploaded ZIP files",
+    studioRoot: "root",
+    studioBinaryFile: "(binary file — content not readable)",
+    studioPushed: "Pushed:",
+    studioPushErr: "Push error:",
+    manageLoading: "Loading…",
+    managePortalErr: "Error opening the portal.",
+    manageNetworkErr: "Network error. Try again later.",
+    installSafari: "To install ti-lex-AL:\n\n1. Tap the Share button (at the bottom)\n2. Choose 'Add to Home Screen'\n3. Confirm with 'Add'",
+    installSamsung: "To install ti-lex-AL on Samsung:\n\n1. Tap the ☰ menu (bottom right)\n2. Choose 'Add page to'\n3. Select 'Home screen'\n4. Confirm with 'Add'",
+    installOther: "To install ti-lex-AL:\n\n1. Open your browser's ⋮ menu\n2. Choose 'Install application'\n3. Confirm",
   }
 };
 
 function t(key) { return I18N[state.lang]?.[key] ?? I18N.fr[key] ?? key; }
 
 function applyLang() {
-  const lang = state.lang;
-  const strings = I18N[lang] || I18N.fr;
+  const s = I18N[state.lang] || I18N.fr;
+  document.documentElement.lang = state.lang;
+
+  // === NAV ===
   $$(".nav-item[data-view]").forEach(b => {
-    const lbl = $(".lbl", b);
-    if (lbl && strings.nav[b.dataset.view]) lbl.textContent = strings.nav[b.dataset.view];
+    const v = b.dataset.view;
+    if (v === "forfaits") {
+      const ft = b.querySelector(".nav-forfait-text");
+      if (ft) ft.textContent = state.lang === "en" ? "plan-" : "forfait-";
+    } else {
+      const lbl = $(".lbl", b);
+      if (lbl && s.nav[v]) lbl.textContent = s.nav[v];
+    }
   });
-  const convTitle = $(".conn-title");
-  if (convTitle) convTitle.textContent = strings.conversations;
-  const projTitle = $(".proj-section-header .conn-title");
-  if (projTitle) projTitle.textContent = strings.projet;
-  const newBtn = $("#newChatConv");
-  if (newBtn) newBtn.textContent = strings.nouvelle;
-  const projLabel = $("#projConvLabel");
-  if (projLabel && projLabel.textContent.includes("Aucun") || projLabel?.textContent.includes("No "))
-    projLabel.textContent = strings.noProject;
-  const installBtn = $("#installBtn span");
-  if (installBtn) installBtn.textContent = strings.installer;
-  const input = $("#chatInput");
-  if (input) input.placeholder = strings.placeholder;
+  { const e = $("#settingsBtn .lbl"); if (e) e.textContent = s.nav.settings; }
+
+  // === SIDEBAR ===
+  { const e = $(".connectors > .conn-title"); if (e) e.textContent = s.conversations; }
+  { const e = $(".proj-section-header .conn-title"); if (e) e.textContent = s.projet; }
+  { const e = $("#newChatConv"); if (e) e.textContent = s.nouvelle; }
+  { const e = $("#projConvLabel"); if (e && /Aucun|No /.test(e.textContent)) e.textContent = s.noProject; }
+  { const e = $("#installBtn span"); if (e) e.textContent = s.installer; }
+
+  // === TOPBAR ===
+  { const e = $(".topbar .status"); if (e) e.innerHTML = '<span class="status-dot"></span>' + s.online; }
+  { const e = $("#reflexionToggle .pill-txt"); if (e) e.textContent = s.reflexion; }
+
+  // === CHAT VIEW ===
+  const cw = $("#view-chat .welcome");
+  if (cw) {
+    const h = cw.querySelector("h2"); if (h) h.innerHTML = s.welcomeTitle + ' <span class="orange">ti-lex-AL v10</span>';
+    const p = cw.querySelector("p"); if (p) p.textContent = s.welcomeSub;
+    const sg = cw.querySelectorAll(".sug");
+    if (sg[0]) sg[0].textContent = s.chip1;
+    if (sg[1]) sg[1].textContent = s.chip2;
+    if (sg[2]) sg[2].textContent = s.chip3;
+  }
+  { const e = $("#input"); if (e && !state.imageMode) e.placeholder = s.placeholder; }
+  { const e = $("#plusBtn"); if (e) { e.setAttribute("aria-label", s.addBtn); e.title = s.addBtn; } }
+  const pm = $$("#plusMenu .plus-item");
+  const pmk = ["image", "file", "zip", "genImg", "micro", "webSearch"];
+  pm.forEach((el, i) => { const ico = el.querySelector(".pico"); if (ico && pmk[i]) el.innerHTML = ico.outerHTML + s[pmk[i]]; });
+  syncReflexion();
+  { const e = $(".agents-panel-head h3"); if (e) e.textContent = s.chooseAgent; }
+
+  // === CODEX VIEW ===
+  { const e = $(".codex-sb-title"); if (e) e.textContent = s.codexTitle; }
+  { const e = $("#codexNewConv"); if (e) e.title = s.codexNewConv; }
+  const cxLabels = $$(".codex-sb-label");
+  if (cxLabels[0]) cxLabels[0].textContent = s.codexProject;
+  if (cxLabels[1]) cxLabels[1].textContent = s.codexConvs;
+  { const e = $(".codex-sb-back span"); if (e) e.textContent = s.codexBack; }
+  { const e = $("#codexSbOpenBtn"); if (e) e.title = s.codexOpenMenu; }
+  { const e = $("#codexGhToken"); if (e) e.placeholder = s.codexTokenPh; }
+  { const e = $("#codexScanBtn"); if (e && !e.disabled) { const svg = e.querySelector("svg"); e.innerHTML = (svg ? svg.outerHTML + " " : "") + s.codexScanProject; } }
+  const cwx = $(".codex-welcome");
+  if (cwx) {
+    const h = cwx.querySelector("h2"); if (h) h.innerHTML = s.codexHeading;
+    const p = cwx.querySelector("p"); if (p) p.textContent = s.codexSub;
+  }
+  { const e = $("#codeInput"); if (e) e.placeholder = s.codexPh; }
+  { const e = $(".codex-composer .composer-hint"); if (e) e.innerHTML = s.codexHint; }
+  const cpm = $$("#codexPlusMenu .plus-item");
+  const cpmk = ["image", "file", "zip"];
+  cpm.forEach((el, i) => { const ico = el.querySelector(".pico"); if (ico && cpmk[i]) el.innerHTML = ico.outerHTML + s[cpmk[i]]; });
+
+  // === SECURITY VIEW ===
+  { const e = $(".sec-head h2"); if (e) e.innerHTML = s.secTitle; }
+  { const e = $(".sec-head .muted"); if (e) e.textContent = s.secSub; }
+  const sc = $$(".sec-card");
+  if (sc[0]) { const h = sc[0].querySelector("h3"); if (h) h.textContent = s.secAuth; const sp = sc[0].querySelector(".muted"); if (sp) sp.textContent = s.secSowActive; }
+  if (sc[1]) { const h = sc[1].querySelector("h3"); if (h) h.textContent = s.secScans; }
+  if (sc[2]) { const h = sc[2].querySelector("h3"); if (h) h.textContent = s.secFindings; }
+  if (sc[3]) { const h = sc[3].querySelector("h3"); if (h) h.textContent = s.secRbac; }
+  { const e = $("#btnNewSow"); if (e) e.textContent = s.secNewSow; }
+  { const e = $("#btnRefreshSow"); if (e) e.textContent = s.secRefresh; }
+  { const e = $("#sowForm > h3"); if (e) e.textContent = s.secCreateSow; }
+  [["sowTitle","secMandatTitle","secMandatTitlePh"],["sowClient","secClientName","secClientNamePh"],
+   ["sowContactName","secContactName","secContactNamePh"],["sowContactEmail","secContactEmail","secContactEmailPh"],
+   ["sowScopeIn","secTargetsIn","secTargetsInPh"],["sowScopeOut","secTargetsOut","secTargetsOutPh"],
+   ["sowNotes","secNotes","secNotesPh"]].forEach(([id,lk,pk]) => {
+    const el = document.getElementById(id);
+    if (el) { const lbl = el.closest(".form-group")?.querySelector("label"); if (lbl) lbl.textContent = s[lk]; if (pk) el.placeholder = s[pk]; }
+  });
+  [["sowStartDate","secDateStart"],["sowEndDate","secDateEnd"]].forEach(([id,lk]) => {
+    const el = document.getElementById(id);
+    if (el) { const lbl = el.closest(".form-group")?.querySelector("label"); if (lbl) lbl.textContent = s[lk]; }
+  });
+  { const e = $(".sow-scan-types")?.closest(".form-group")?.querySelector("label"); if (e) e.textContent = s.secScanTypes; }
+  const stc = $$(".sow-check");
+  const stk = ["secReconPassive","secVulnScan","secWebScan","secConfigAudit","secDarkWeb","secFullAudit"];
+  stc.forEach((c, i) => { if (stk[i]) { const nodes = [...c.childNodes]; const last = nodes.filter(n => n.nodeType === 3).pop(); if (last) last.textContent = " " + s[stk[i]]; } });
+  { const e = $("#btnSubmitSow"); if (e) e.textContent = s.secCreateBtn; }
+  { const e = $("#btnCancelSow"); if (e) e.textContent = s.secCancel; }
+
+  // === STUDIO VIEW ===
+  { const e = $(".studio-sb-head h3"); if (e) e.textContent = s.studioTitle; }
+  { const e = $("#studioRefresh"); if (e) e.title = s.studioRefresh; }
+  { const e = $("#studioCode"); if (e && /Sélectionne|Select/.test(e.placeholder)) e.placeholder = s.studioPushPh; }
+
+  // === FORFAITS VIEW ===
+  { const e = $(".fp-page-title"); if (e) { const ds = e.querySelector(".fp-dollar-sign"); e.innerHTML = s.fpTitle + " " + (ds ? ds.outerHTML : '<span class="fp-dollar-sign">$$$</span>'); } }
+  { const e = $(".fp-kicker"); if (e) e.textContent = s.fpKicker; }
+  { const e = $(".fp-title"); if (e) e.innerHTML = s.fpChoose; }
+  { const e = $(".fp-sub"); if (e) e.textContent = s.fpSub; }
+  const fpBtns = $$("#fpToggle .fp-toggle-btn");
+  if (fpBtns[0]) fpBtns[0].textContent = s.fpMonthly;
+  if (fpBtns[1]) fpBtns[1].textContent = s.fpAnnual;
+  { const e = $(".fp-save"); if (e) e.textContent = s.fpSave; }
+  const fpCards = $$(".fp-card");
+  const fpT = [
+    { n:"fpStarter", p:"fpStarterPitch", c:"fpStarterCta", b:"fpStarterBilled", per:"fpStarterPeriod",
+      f:["fpStarterF1","fpStarterF2","fpStarterF3","fpStarterF4","fpStarterF5","fpStarterF6"],
+      o:["fpStarterOff1","fpStarterOff2"] },
+    { n:"fpPro", p:"fpProPitch", c:"fpProCta", b:"fpProBilled", per:"fpProPeriod", badge:"fpProBadge",
+      f:["fpProF1","fpProF2","fpProF3","fpProF4","fpProF5","fpProF6","fpProF7"],
+      o:["fpProOff1"] },
+    { n:"fpIndustrial", p:"fpIndustrialPitch", c:"fpIndustrialCta", b:"fpIndustrialBilled", per:"fpIndustrialPeriod", badge:"fpIndustrialBadge",
+      f:["fpIndustrialF1","fpIndustrialF2","fpIndustrialF3","fpIndustrialF4","fpIndustrialF5","fpIndustrialF6","fpIndustrialF7","fpIndustrialF8"],
+      o:[] },
+  ];
+  fpCards.forEach((card, i) => {
+    const t = fpT[i]; if (!t) return;
+    const tier = card.querySelector(".fp-tier"); if (tier) { const ico = tier.querySelector(".fp-ico"); tier.innerHTML = (ico ? ico.outerHTML + " " : "") + s[t.n]; }
+    if (t.badge) { const b = card.querySelector(".fp-badge"); if (b) b.textContent = s[t.badge]; }
+    const pitch = card.querySelector(".fp-pitch"); if (pitch) pitch.textContent = s[t.p];
+    const per = card.querySelector(".fp-per"); if (per) per.textContent = s[t.per];
+    const billed = card.querySelector(".fp-billed"); if (billed && t.b) billed.dataset.annual = s[t.b];
+    const cta = card.querySelector(".fp-cta"); if (cta) cta.textContent = s[t.c];
+    const feats = card.querySelectorAll(".fp-feats li:not(.fp-off)");
+    t.f.forEach((fk, fi) => { if (feats[fi]) { const ck = feats[fi].querySelector(".fp-ck"); feats[fi].innerHTML = (ck ? ck.outerHTML + " " : "") + s[fk]; } });
+    const offs = card.querySelectorAll(".fp-feats li.fp-off");
+    (t.o || []).forEach((ok, oi) => { if (offs[oi]) { const ck = offs[oi].querySelector(".fp-ck"); offs[oi].innerHTML = (ck ? ck.outerHTML + " " : "") + s[ok]; } });
+  });
+  { const e = $(".fp-faq-title"); if (e) e.textContent = s.fpFaq; }
+  const fpQs = $$(".fp-q");
+  [["fpQ1","fpA1"],["fpQ2","fpA2"],["fpQ3","fpA3"],["fpQ4","fpA4"]].forEach(([qk,ak], i) => {
+    if (!fpQs[i]) return;
+    const btn = fpQs[i].querySelector("button span:first-child"); if (btn) btn.textContent = s[qk];
+    const ans = fpQs[i].querySelector(".fp-ans"); if (ans) ans.textContent = s[ak];
+  });
+  const fpTrust = $$(".fp-trust > span");
+  ["fpBadge1","fpBadge2","fpBadge3","fpBadge4"].forEach((k, i) => {
+    if (fpTrust[i]) { const ico = fpTrust[i].querySelector(".fp-td"); fpTrust[i].innerHTML = (ico ? ico.outerHTML + " " : "") + s[k]; }
+  });
+  { const e = $(".fp-footer p"); if (e) e.textContent = s.fpFooter; }
+  { const e = $("#manageSubscriptionBtn"); if (e && !e.disabled) e.textContent = s.fpManage; }
+  fpSetPeriod($(".fp-toggle-btn.on")?.dataset?.period || "monthly");
+
+  // === FINANCE VIEW ===
+  { const e = $(".fin-title"); if (e) e.textContent = s.finTitle; }
+  { const e = $(".fin-subtitle"); if (e) e.innerHTML = '<span class="fin-status-dot"></span>' + s.finStatus + '<span class="fin-sep">·</span><span>' + s.finOrigin + '</span>'; }
+  { const e = $(".fin-badge"); if (e) e.textContent = s.finBadge; }
+  { const e = $(".fin-welcome-title"); if (e) e.innerHTML = s.finWelcomeTitle; }
+  { const e = $(".fin-welcome-sub"); if (e) e.textContent = s.finWelcomeSub; }
+  const fc = $$(".fin-chip");
+  const fck = ["finChip1","finChip2","finChip3","finChip4","finChip5","finChip6"];
+  fc.forEach((c, i) => { if (fck[i]) { c.textContent = s[fck[i]]; c.dataset.q = s[fck[i]]; } });
+  { const e = $("#finInput"); if (e) e.placeholder = s.finPh; }
+  { const e = $(".fin-disclaimer"); if (e) e.textContent = s.finDisclaimer; }
+
+  // === SETTINGS VIEW ===
+  { const e = $(".settings-wrap > h2"); if (e) e.textContent = s.setTitle; }
+  const sb = $$(".set-block");
+  // API Key (index 0)
+  if (sb[0]) {
+    const h = sb[0].querySelector("h3"); const st = sb[0].querySelector(".conn-state");
+    if (h && st) h.innerHTML = s.setApiKey + " " + st.outerHTML;
+    const p = sb[0].querySelector(".muted"); if (p) p.textContent = s.setApiKeySub;
+    const inp = sb[0].querySelector("input"); if (inp) inp.placeholder = s.setApiKeyPh;
+  }
+  // Model (index 1)
+  if (sb[1]) { const h = sb[1].querySelector("h3"); if (h) h.textContent = s.setModel; const p = sb[1].querySelector(".muted"); if (p) p.textContent = s.setModelSub; }
+  const mo = $$("#modelSelect option");
+  if (mo[0]) mo[0].textContent = s.setOpus;
+  if (mo[1]) mo[1].textContent = s.setSonnet;
+  if (mo[2]) mo[2].textContent = s.setHaiku;
+  // Reflexion (index 2)
+  if (sb[2]) { const h = sb[2].querySelector("h3"); if (h) h.textContent = s.setReflex; const p = sb[2].querySelector(".muted"); if (p) p.textContent = s.setReflexSub; }
+  // Theme (index 3)
+  if (sb[3]) { const h = sb[3].querySelector("h3"); if (h) h.textContent = s.setTheme; const p = sb[3].querySelector(".muted"); if (p) p.textContent = s.setThemeSub; }
+  { const e = $("#themeToggle"); if (e) { const txt = $(".pill-txt", e); if (txt) txt.textContent = state.theme === "light" ? s.setLight : s.setDark; } }
+  // Language (index 4)
+  if (sb[4]) { const h = sb[4].querySelector("h3"); if (h) h.textContent = s.setLang; const p = sb[4].querySelector(".muted"); if (p) p.textContent = s.setLangSub; }
+  // Memory (index 5)
+  if (sb[5]) { const h = sb[5].querySelector("h3"); if (h) h.textContent = s.setMemory; const p = sb[5].querySelector(".muted"); if (p) p.textContent = s.setMemorySub; }
+  { const e = $("#memoryInput"); if (e) e.placeholder = s.setMemoryPh; }
+  { const e = $("#memoryClearBtn"); if (e) e.textContent = s.setMemoryClear; }
+  // GitHub (index 6)
+  if (sb[6]) {
+    const h = sb[6].querySelector("h3"); const ghSt = sb[6].querySelector(".conn-state");
+    if (h && ghSt) h.innerHTML = s.setGitHub + " " + ghSt.outerHTML;
+    const p = sb[6].querySelector(".muted"); if (p) p.textContent = s.setGitHubSub;
+  }
+  { const e = $("#ghToken"); if (e) e.placeholder = s.setGitHubTokenPh; }
+  { const e = $(".set-link[href*='github.com']"); if (e) e.textContent = s.setGitHubCreateToken; }
+  // Supabase (index 7)
+  if (sb[7]) {
+    const h = sb[7].querySelector("h3"); const sbSt = sb[7].querySelector(".conn-state");
+    if (h && sbSt) h.innerHTML = s.setSupabase + " " + sbSt.outerHTML;
+    const p = sb[7].querySelector(".muted"); if (p) p.textContent = s.setSupabaseSub;
+  }
+  { const e = $("#sbUrl"); if (e) e.placeholder = s.setSupabaseUrlPh; }
+  { const e = $("#sbKey"); if (e) e.placeholder = s.setSupabaseKeyPh; }
+  // Data (index 8)
+  if (sb[8]) {
+    const h = sb[8].querySelector("h3"); if (h) { const badge = h.querySelector(".badge-loi25"); h.innerHTML = s.setData + " " + (badge ? badge.outerHTML : '<span class="badge-loi25">Loi 25</span>'); }
+    const p = sb[8].querySelector(".muted:first-of-type"); if (p) p.textContent = s.setDataSub;
+  }
+  // Other (index 9)
+  if (sb[9]) { const h = sb[9].querySelector("h3"); if (h) h.textContent = s.setOther; }
+
+  // === CONSENT BANNER ===
+  const cb = $("#consentBanner");
+  if (cb) {
+    const strong = cb.querySelector("strong"); if (strong) strong.textContent = s.consentTitle;
+    const accept = cb.querySelector(".consent-accept"); if (accept) accept.textContent = s.consentAccept;
+    const decline = cb.querySelector(".consent-decline"); if (decline) decline.textContent = s.consentRefuse;
+    const more = cb.querySelector(".consent-link"); if (more) more.textContent = s.consentMore;
+  }
 }
 
 const TITLES = I18N.fr.titles;
@@ -301,6 +974,8 @@ function switchView(v) {
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
 /* ================= SÉLECTEUR D'AGENTS ================= */
+const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif" };
+function agentDesc(key) { return AGENT_DESC_KEYS[key] ? t(AGENT_DESC_KEYS[key]) : AGENTS[key]?.desc || ""; }
 function renderAgents() {
   const list = $("#agentsList");
   if (!list) return;
@@ -310,7 +985,7 @@ function renderAgents() {
         <span class="agent-emoji">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
         <span class="agent-name">${a.name}</span>
       </div>
-      <span class="agent-desc">${a.desc}</span>
+      <span class="agent-desc">${agentDesc(key)}</span>
     </button>`).join("");
   $$(".agent-card").forEach(c => c.onclick = () => {
     selectAgent(c.dataset.agent);
@@ -328,7 +1003,7 @@ function selectAgent(key) {
   }
   $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
   const inp = $("#input");
-  if (inp && !state.imageMode) inp.placeholder = `Écris à ${a.name}…`;
+  if (inp && !state.imageMode) inp.placeholder = `${t("writeTo")} ${a.name}…`;
   renderAgents();
   renderAgentPicker();
 }
@@ -369,7 +1044,7 @@ function renderAgentPicker() {
       <span class="agent-pick-icon">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
       <span class="agent-pick-info">
         <span class="agent-pick-name">${a.name}</span>
-        <span class="agent-pick-desc">${a.desc}</span>
+        <span class="agent-pick-desc">${agentDesc(key)}</span>
       </span>
     </button>`).join("");
   $$(".agent-pick", menu).forEach(p => {
@@ -404,12 +1079,12 @@ renderAgentPicker();
 function toggleImageMode(on) {
   state.imageMode = on ?? !state.imageMode;
   $(".composer").classList.toggle("image-mode", state.imageMode);
-  $("#input").placeholder = state.imageMode ? "Décris l'image à générer…" : `Écris à ${AGENTS[state.agent].name}…`;
+  $("#input").placeholder = state.imageMode ? t("imgDescPh") : `${t("writeTo")} ${AGENTS[state.agent].name}…`;
   let banner = $(".image-mode-banner");
   if (state.imageMode && !banner) {
     banner = document.createElement("div");
     banner.className = "image-mode-banner";
-    banner.innerHTML = `🎨 Mode image <button id="exitImageMode">×</button>`;
+    banner.innerHTML = `🎨 ${t("imageMode")} <button id="exitImageMode">×</button>`;
     $(".composer").insertBefore(banner, $(".composer-inner"));
     $("#exitImageMode").onclick = () => toggleImageMode(false);
   } else if (!state.imageMode && banner) { banner.remove(); }
@@ -423,7 +1098,7 @@ async function generateImage(prompt) {
     const itk = proxyToken();
     if (itk) ih["Authorization"] = `Bearer ${itk}`;
 
-    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🎨 Amélioration du prompt par Claude…</p>`;
+    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🎨 ${t("imgPromptEnhance")}</p>`;
 
     const enhanceRes = await fetch(AI_PROXY, {
       method: "POST", headers: ih,
@@ -446,7 +1121,7 @@ async function generateImage(prompt) {
       }
     }
 
-    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🖼️ Génération de l'image en cours…</p>`;
+    body.innerHTML = `<div class="typing"><span></span><span></span><span></span></div><p class="muted" style="margin-top:8px;font-size:.82rem">🖼️ ${t("imgGenerating")}</p>`;
 
     const res = await fetch(AI_PROXY, {
       method: "POST", headers: ih,
@@ -454,21 +1129,21 @@ async function generateImage(prompt) {
     });
     const data = await res.json();
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
-    if (!res.ok || !data.b64) throw new Error(data.error || "Échec de génération");
+    if (!res.ok || !data.b64) throw new Error(data.error || t("imgGenFail"));
     const src = `data:image/png;base64,${data.b64}`;
     body.innerHTML = `<div class="gen-image-wrap">
       <img src="${src}" alt="${escapeHtml(prompt)}" class="gen-image">
       <div class="gen-image-info">
-        <p class="gen-image-prompt-label">Prompt amélioré :</p>
+        <p class="gen-image-prompt-label">${t("imgPromptLabel")}</p>
         <p class="gen-image-prompt">${escapeHtml(enhancedPrompt)}</p>
       </div>
       <div class="gen-image-actions">
-        <a href="${src}" download="tilex-image.png" class="gen-dl-btn">⬇ Télécharger</a>
+        <a href="${src}" download="tilex-image.png" class="gen-dl-btn">⬇ ${t("download")}</a>
       </div>
     </div>`;
   } catch (err) {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
-    body.innerHTML = `<p class="muted">Erreur image : ${escapeHtml(err.message)}</p>`;
+    body.innerHTML = `<p class="muted">${t("imgError")} ${escapeHtml(err.message)}</p>`;
   }
   messages.scrollTop = messages.scrollHeight;
 }
@@ -483,12 +1158,10 @@ function bindReflexion(btn) {
 function syncReflexion() {
   $$("#reflexionToggle, #reflexionToggle2").forEach(b => {
     b.setAttribute("aria-pressed", state.reflexion);
-    const t = $(".pill-txt", b);
-    if (b.id === "reflexionToggle2") t.textContent = state.reflexion ? "Activé" : "Désactivé";
+    const txt = $(".pill-txt", b);
+    if (b.id === "reflexionToggle2") txt.textContent = state.reflexion ? t("setEnabled") : t("setDisabled");
   });
-  $("#modeHint").innerHTML = state.reflexion
-    ? 'Mode réflexion <span class="orange">activé</span>'
-    : 'Mode réflexion <span class="muted">désactivé</span>';
+  $("#modeHint").innerHTML = state.reflexion ? t("modeReflexOn") : t("modeReflexOff");
 }
 bindReflexion($("#reflexionToggle"));
 bindReflexion($("#reflexionToggle2"));
@@ -497,7 +1170,7 @@ $("#themeToggle").onclick = function () {
   state.theme = state.theme === "dark" ? "light" : "dark";
   document.body.dataset.theme = state.theme;
   this.setAttribute("aria-pressed", state.theme === "light");
-  $(".pill-txt", this).textContent = state.theme === "light" ? "Clair" : "Sombre";
+  $(".pill-txt", this).textContent = state.theme === "light" ? t("setLight") : t("setDark");
 };
 
 $("#modelSelect").onchange = e => {
@@ -528,28 +1201,28 @@ function setGhState(txt, ok) {
 
 async function ghConnect() {
   const token = $("#ghToken").value.trim();
-  if (!token) { setGhState("— entre un token", false); return; }
+  if (!token) { setGhState(t("ghEnterToken"), false); return; }
   state.github.token = token;
-  setGhState("connexion…", false);
+  setGhState(t("ghConnecting"), false);
   const btn = $("#ghConnect"); btn.disabled = true;
   try {
     const res = await fetch(`${GH_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: ghHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const repos = await res.json();
     const sel = $("#ghRepo");
-    sel.innerHTML = `<option value="">— Choisir un dépôt (${repos.length}) —</option>` +
+    sel.innerHTML = `<option value="">${t("ghChooseRepo")} (${repos.length}) —</option>` +
       repos.map(r => `<option value="${r.full_name}">${escapeHtml(r.full_name)}${r.private ? " 🔒" : ""}</option>`).join("");
     $("#ghRepoZone").classList.add("show");
     state.connected.github = true;
     const me = repos[0]?.owner?.login || "";
-    setGhState(`✓ connecté${me ? " · " + me : ""}`, true);
+    setGhState(`${t("connectedMark")}${me ? " · " + me : ""}`, true);
     persistGithub();
     $$(`.conn-btn[data-service="github"]`).forEach(b => b.classList.add("connected"));
     syncCodexProjects();
     // restaure le dépôt précédent
     if (state.github.repo) { sel.value = state.github.repo; await ghLoadBranches(state.github.repo); }
   } catch (err) {
-    setGhState(`✗ ${err.message} (token invalide ?)`, false);
+    setGhState(`✗ ${err.message} (${t("ghTokenInvalid")})`, false);
     state.connected.github = false;
   } finally { btn.disabled = false; }
 }
@@ -559,40 +1232,39 @@ async function ghLoadBranches(repo) {
   state.github.repo = repo;
   state.projectFiles = [];
   const bsel = $("#ghBranch");
-  bsel.innerHTML = `<option value="">chargement…</option>`;
+  bsel.innerHTML = `<option value="">${t("ghLoadingBranches")}</option>`;
   try {
     const res = await fetch(`${GH_API}/repos/${repo}/branches?per_page=100`, { headers: ghHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const branches = await res.json();
-    // détecte la branche par défaut
     const repoRes = await fetch(`${GH_API}/repos/${repo}`, { headers: ghHeaders() });
     const def = repoRes.ok ? (await repoRes.json()).default_branch : "main";
     bsel.innerHTML = branches.map(b =>
-      `<option value="${b.name}"${b.name === def ? " selected" : ""}>${escapeHtml(b.name)}${b.name === def ? " (défaut)" : ""}</option>`
+      `<option value="${b.name}"${b.name === def ? " selected" : ""}>${escapeHtml(b.name)}${b.name === def ? ` ${t("defaultBranch")}` : ""}</option>`
     ).join("");
     state.github.branch = bsel.value || def;
     persistGithub();
     await ghLoadFiles(repo, state.github.branch);
   } catch (err) {
-    bsel.innerHTML = `<option value="">erreur: ${err.message}</option>`;
+    bsel.innerHTML = `<option value="">${t("error")}: ${err.message}</option>`;
   }
 }
 
 async function ghLoadFiles(repo, branch) {
   const box = $("#ghFiles");
-  box.innerHTML = `<p class="muted" style="font-size:.78rem">chargement des fichiers…</p>`;
+  box.innerHTML = `<p class="muted" style="font-size:.78rem">${t("ghFilesLoading")}</p>`;
   try {
     const res = await fetch(`${GH_API}/repos/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`, { headers: ghHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const tree = await res.json();
     const files = (tree.tree || []).filter(t => t.type === "blob");
-    if (!files.length) { box.innerHTML = `<p class="muted" style="font-size:.78rem">aucun fichier</p>`; return; }
-    box.innerHTML = `<p class="muted" style="font-size:.74rem;padding:2px 6px 6px">${files.length} fichier(s) sur <b>${escapeHtml(branch)}</b></p>` +
+    if (!files.length) { box.innerHTML = `<p class="muted" style="font-size:.78rem">${t("ghNoFiles")}</p>`; return; }
+    box.innerHTML = `<p class="muted" style="font-size:.74rem;padding:2px 6px 6px">${files.length} ${t("ghFilesCount")} <b>${escapeHtml(branch)}</b></p>` +
       files.slice(0, 300).map(f =>
         `<div class="set-file-item"><span class="f-ico">${fileIcon(f.path)}</span>${escapeHtml(f.path)}</div>`
       ).join("");
   } catch (err) {
-    box.innerHTML = `<p class="muted" style="font-size:.78rem">erreur fichiers: ${err.message}</p>`;
+    box.innerHTML = `<p class="muted" style="font-size:.78rem">${t("ghFilesError")} ${err.message}</p>`;
   }
 }
 
@@ -715,15 +1387,15 @@ function setSbState(txt, ok) {
 async function sbConnect() {
   const url = $("#sbUrl").value.trim().replace(/\/$/, "");
   const key = $("#sbKey").value.trim();
-  if (!url || !key) { setSbState("— URL + clé requises", false); return; }
-  setSbState("connexion…", false);
+  if (!url || !key) { setSbState(t("sbRequired"), false); return; }
+  setSbState(t("sbConnecting"), false);
   const btn = $("#sbConnect"); btn.disabled = true;
   try {
     const res = await fetch(`${url}/rest/v1/`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
     if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
     state.supabase = { url, key };
     state.connected.supabase = true;
-    setSbState("✓ connecté", true);
+    setSbState(t("connectedMark"), true);
     try { localStorage.setItem(LS_SB, JSON.stringify(state.supabase)); } catch (_) {}
     $$(`.conn-btn[data-service="supabase"]`).forEach(b => b.classList.add("connected"));
     syncCodexProjects();
@@ -874,10 +1546,10 @@ function renderAttachStrip() {
 let recognition = null, listening = false;
 function startMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { alert("La dictée vocale n'est pas supportée par ce navigateur."); return; }
+  if (!SR) { alert(t("alertVoice")); return; }
   if (listening) { recognition && recognition.stop(); return; }
   recognition = new SR();
-  recognition.lang = "fr-CA";
+  recognition.lang = state.lang === "en" ? "en-CA" : "fr-CA";
   recognition.interimResults = true;
   recognition.continuous = false;
   const base = input.value;
@@ -899,7 +1571,7 @@ let activeChatConv = -1;
 
 function saveChatConv() {
   if (!state.history.length) return;
-  const title = contentText(state.history[0]?.content).slice(0, 50) || "Sans titre";
+  const title = contentText(state.history[0]?.content).slice(0, 50) || t("untitled");
   if (activeChatConv >= 0) {
     chatConvs[activeChatConv] = { title, messages: [...state.history], ts: Date.now() };
   } else {
@@ -914,10 +1586,10 @@ function saveChatConv() {
 function renderChatConvs() {
   const el = $("#chatConvos");
   if (!el) return;
-  if (!chatConvs.length) { el.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Aucune</p>'; return; }
+  if (!chatConvs.length) { el.innerHTML = `<p class="muted" style="font-size:.75rem;padding:4px 0">${t("chatNone")}</p>`; return; }
   el.innerHTML = chatConvs.map((c, i) => {
     const age = c.ts ? timeAgo(c.ts) : "";
-    return `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+    return `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="${t("delete_")}">×</button></div>`;
   }).join("");
   $$(".chat-conv-item", el).forEach(item => {
     item.onclick = (e) => {
@@ -955,8 +1627,8 @@ function resetChatWelcome() {
         <source src="assets/intro.mp4" type="video/mp4">
       </video>
     </div>
-    <h2>Bienvenue sur <span class="orange">ti-lex-AL v10</span></h2>
-    <p>L'agent IA québécois. Pose ta question, code avec le Codex, ou connecte tes services.</p>
+    <h2>${t("welcomeTitle")} <span class="orange">ti-lex-AL v10</span></h2>
+    <p>${t("welcomeSub")}</p>
   </div>`;
 }
 
@@ -1123,8 +1795,8 @@ function addUserMsg(text, atts) {
       if (a.kind === "image") return `<div class="attach-chip"><img src="${a.dataUrl}" alt=""><span class="a-name">${escapeHtml(a.name)}</span></div>`;
       if (a.kind === "zip" && a.entries && a.entries.length) {
         return `<div class="attach-chip" style="max-width:100%;flex-direction:column;align-items:flex-start">
-          <div style="display:flex;align-items:center;gap:6px"><span class="a-ico">🗜️</span><span class="a-name">${escapeHtml(a.name)} · ${a.entries.length} fichiers</span></div>
-          <div class="zip-tree">${a.entries.slice(0, 50).map(e => `<div class="zip-tree-item"><span class="f-ico">${fileIcon(e.path)}</span>${escapeHtml(e.path)}</div>`).join("")}${a.entries.length > 50 ? `<div class="zip-tree-item muted">…et ${a.entries.length - 50} autres</div>` : ""}</div>
+          <div style="display:flex;align-items:center;gap:6px"><span class="a-ico">🗜️</span><span class="a-name">${escapeHtml(a.name)} · ${a.entries.length} ${t("files")}</span></div>
+          <div class="zip-tree">${a.entries.slice(0, 50).map(e => `<div class="zip-tree-item"><span class="f-ico">${fileIcon(e.path)}</span>${escapeHtml(e.path)}</div>`).join("")}${a.entries.length > 50 ? `<div class="zip-tree-item muted">…${t("andMore").replace("%n", a.entries.length - 50)}</div>` : ""}</div>
         </div>`;
       }
       const ico = a.kind === "zip" ? "🗜️" : a.kind === "text" ? "📄" : "📎";
@@ -1177,7 +1849,7 @@ function serviceTags(text) {
     if (kws.some(k => low.includes(k))) hits.push(svc);
   }
   if (!hits.length) return "";
-  return hits.map(s => `<span class="service-tag">${SERVICE[s].svg}${SERVICE[s].name}<span class="ok">● connecté</span></span>`).join("");
+  return hits.map(s => `<span class="service-tag">${SERVICE[s].svg}${SERVICE[s].name}<span class="ok">${t("serviceConnected")}</span></span>`).join("");
 }
 
 function buildAssistantMsg() {
@@ -1219,7 +1891,7 @@ async function sendMessage() {
   const body = buildAssistantMsg();
 
   if (!AI_PROXY) {
-    renderAssistant(body, "⚙ Le proxy AI n'est pas configuré. Contacte l'administrateur.");
+    renderAssistant(body, `⚙ ${t("proxyNotConfigured")}`);
     messages.scrollTop = messages.scrollHeight;
     return;
   }
@@ -1275,7 +1947,7 @@ async function sendMessage() {
   } catch (err) {
     state.history.pop();
     if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
-    body.innerHTML = `<p class="muted">Erreur : ${escapeHtml(err.message || "connexion à l'API")}.</p>`;
+    body.innerHTML = `<p class="muted">${t("apiError")} ${escapeHtml(err.message || "API")}.</p>`;
   } finally {
     $("#send").disabled = false;
     messages.scrollTop = messages.scrollHeight;
@@ -1302,7 +1974,7 @@ function renderMermaidBlocks(container) {
     const id = "mmd-" + (++mermaidCounter);
     try {
       const { svg } = await mermaid.render(id, code);
-      el.innerHTML = `<div class="mermaid-label"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>Diagramme</div>${svg}`;
+      el.innerHTML = `<div class="mermaid-label"><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>${t("diagram")}</div>${svg}`;
       el.classList.remove("mermaid-pending");
     } catch (_) {
       el.innerHTML = `<pre style="color:var(--txt-dim);font-size:.8rem">${escapeHtml(code)}</pre>`;
@@ -1384,14 +2056,14 @@ function addTTSButton(body, text) {
   const bar = document.createElement("div");
   bar.className = "tts-bar";
   bar.innerHTML = `
-    <button class="tts-btn" title="Écouter la réponse">
+    <button class="tts-btn" title="${t("listenTitle")}">
       <svg class="tts-ico-play" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
       </svg>
       <svg class="tts-ico-stop hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
       </svg>
-      <span class="tts-label">Écouter</span>
+      <span class="tts-label">${t("listen")}</span>
     </button>`;
 
   const btn = bar.querySelector(".tts-btn");
@@ -1405,7 +2077,7 @@ function addTTSButton(body, text) {
       speechSynthesis.cancel();
       playIco.classList.remove("hidden");
       stopIco.classList.add("hidden");
-      label.textContent = "Écouter";
+      label.textContent = t("listen");
       btn.classList.remove("tts-active");
       return;
     }
@@ -1418,13 +2090,13 @@ function addTTSButton(body, text) {
 
     playIco.classList.add("hidden");
     stopIco.classList.remove("hidden");
-    label.textContent = "Pause";
+    label.textContent = t("pause");
     btn.classList.add("tts-active");
 
     utterance.onend = () => {
       playIco.classList.remove("hidden");
       stopIco.classList.add("hidden");
-      label.textContent = "Écouter";
+      label.textContent = t("listen");
       btn.classList.remove("tts-active");
     };
     utterance.onerror = utterance.onend;
@@ -1440,12 +2112,12 @@ if (speechSynthesis.onvoiceschanged !== undefined) {
 }
 async function pushToGithub(content, suggestedName) {
   if (!state.connected.github || !state.github.token || !state.github.repo) {
-    alert("Connecte ton compte GitHub dans Paramètres d'abord.");
+    alert(t("alertGhFirst"));
     return;
   }
-  const filename = prompt("Nom du fichier à créer/mettre à jour sur GitHub :", suggestedName || "main.ts");
+  const filename = prompt(t("alertGhFilename"), suggestedName || "main.ts");
   if (!filename) return;
-  const commitMsg = prompt("Message de commit :", `Ajout de ${filename} via ti-lex-AL`);
+  const commitMsg = prompt(t("alertCommitMsg"), `${t("alertCommitDefault")} ${filename} via ti-lex-AL`);
   if (!commitMsg) return;
 
   const branch = state.github.branch || "main";
@@ -1471,9 +2143,9 @@ async function pushToGithub(content, suggestedName) {
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).message || ""}`);
-    alert(`Pushé sur ${repo}/${branch}/${filename}`);
+    alert(`${t("alertPushed")} ${repo}/${branch}/${filename}`);
   } catch (err) {
-    alert(`Erreur push GitHub : ${err.message}`);
+    alert(`${t("alertPushErr")} ${err.message}`);
   }
 }
 
@@ -1519,7 +2191,7 @@ function extractCodeFiles(text) {
 
 async function pushMultipleToGithub(files, commitMsg) {
   if (!state.connected.github || !state.github.token || !state.github.repo) {
-    alert("Connecte ton compte GitHub dans Paramètres d'abord.");
+    alert(t("alertGhFirst"));
     return false;
   }
   const repo = state.github.repo;
@@ -1564,7 +2236,7 @@ async function pushMultipleToGithub(files, commitMsg) {
 
     return true;
   } catch (err) {
-    alert(`Erreur push GitHub : ${err.message}`);
+    alert(`${t("alertPushErr")} ${err.message}`);
     return false;
   }
 }
@@ -1605,7 +2277,7 @@ function addCodeActions(container, fullText) {
     fileList.className = "code-files-list";
     const header = document.createElement("div");
     header.className = "code-files-header";
-    header.innerHTML = `<svg viewBox="0 0 24 24" class="cfl-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg> <span>${codeFiles.length} fichier${codeFiles.length > 1 ? "s" : ""} détecté${codeFiles.length > 1 ? "s" : ""}</span>`;
+    header.innerHTML = `<svg viewBox="0 0 24 24" class="cfl-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg> <span>${codeFiles.length} ${t("filesDetected")}</span>`;
     fileList.appendChild(header);
 
     codeFiles.forEach((f, i) => {
@@ -1624,7 +2296,7 @@ function addCodeActions(container, fullText) {
       acts.className = "code-file-acts";
       const stBtn = document.createElement("button");
       stBtn.className = "cfact-btn";
-      stBtn.title = "Ouvrir dans le Studio";
+      stBtn.title = t("openStudio");
       stBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`;
       stBtn.onclick = () => openInStudio(f.code, f.path);
       acts.appendChild(stBtn);
@@ -1651,7 +2323,7 @@ function addCodeActions(container, fullText) {
     const name = codeFiles[0].path || `snippet.${ext}`;
     const studioBtn = document.createElement("button");
     studioBtn.className = "push-gh-btn";
-    studioBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Ouvrir dans le Studio`;
+    studioBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> ${t("openStudio")}`;
     studioBtn.onclick = () => openInStudio(codeFiles[0].code, name);
     btns.appendChild(studioBtn);
   }
@@ -1660,18 +2332,18 @@ function addCodeActions(container, fullText) {
     if (codeFiles.length > 1 && codeFiles.some(f => f.detected)) {
       const pushAllBtn = document.createElement("button");
       pushAllBtn.className = "push-gh-btn push-all-btn";
-      pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push ${codeFiles.length} fichiers sur GitHub`;
+      pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push ${codeFiles.length} ${t("pushFilesGh")}`;
       pushAllBtn.onclick = async () => {
-        const commitMsg = prompt("Message de commit :", `Ajout de ${codeFiles.length} fichiers via Codex ti-lex-AL`);
+        const commitMsg = prompt(`${t("alertCommitMsg")}`, `${t("commitMsgDefault")} ${codeFiles.length} ${t("commitMsgVia")}`);
         if (!commitMsg) return;
         pushAllBtn.disabled = true;
-        pushAllBtn.innerHTML = `<span class="cfact-spin"></span> Push en cours…`;
+        pushAllBtn.innerHTML = `<span class="cfact-spin"></span> ${t("pushing")}`;
         const ok = await pushMultipleToGithub(codeFiles, commitMsg);
         if (ok) {
-          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Pushé !`;
+          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> ${t("pushed")}`;
           pushAllBtn.classList.add("push-ok");
         } else {
-          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Réessayer`;
+          pushAllBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> ${t("retry")}`;
           pushAllBtn.disabled = false;
         }
       };
@@ -1679,22 +2351,22 @@ function addCodeActions(container, fullText) {
 
       const deployBtn = document.createElement("button");
       deployBtn.className = "push-gh-btn deploy-vercel-btn";
-      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Push + Deploy Vercel`;
+      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> ${t("pushDeploy")}`;
       deployBtn.onclick = async () => {
-        const commitMsg = prompt("Message de commit :", `Deploy ${codeFiles.length} fichiers via ti-lex-AL`);
+        const commitMsg = prompt(`${t("alertCommitMsg")}`, `Deploy ${codeFiles.length} ${t("commitMsgDeploy")}`);
         if (!commitMsg) return;
         deployBtn.disabled = true;
-        deployBtn.innerHTML = `<span class="cfact-spin"></span> Push GitHub…`;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> ${t("pushGhProgress")}`;
         const ok = await pushMultipleToGithub(codeFiles, commitMsg);
         if (!ok) {
-          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Réessayer`;
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> ${t("retry")}`;
           deployBtn.disabled = false;
           return;
         }
-        deployBtn.innerHTML = `<span class="cfact-spin"></span> Deploy Vercel…`;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> ${t("deploying")}`;
         deployBtn.classList.add("deploying");
         setTimeout(() => {
-          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Déployé !`;
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> ${t("deployed")}`;
           deployBtn.classList.remove("deploying");
           deployBtn.classList.add("push-ok");
         }, 4000);
@@ -1704,26 +2376,26 @@ function addCodeActions(container, fullText) {
     } else if (codeFiles.length === 1) {
       const ghBtn = document.createElement("button");
       ghBtn.className = "push-gh-btn";
-      ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> Push sur GitHub`;
+      ghBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg> ${t("pushGitHub")}`;
       ghBtn.onclick = () => pushToGithub(codeFiles[0].code, codeFiles[0].path);
       btns.appendChild(ghBtn);
 
       const deployBtn = document.createElement("button");
       deployBtn.className = "push-gh-btn deploy-vercel-btn";
-      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Push + Deploy Vercel`;
+      deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> ${t("pushDeploy")}`;
       deployBtn.onclick = async () => {
         deployBtn.disabled = true;
-        deployBtn.innerHTML = `<span class="cfact-spin"></span> Push GitHub…`;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> ${t("pushGhProgress")}`;
         const ok = await pushToGithubSilent(codeFiles[0].code, codeFiles[0].path);
         if (!ok) {
-          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> Réessayer`;
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="12 2 22 20 2 20"/></svg> ${t("retry")}`;
           deployBtn.disabled = false;
           return;
         }
-        deployBtn.innerHTML = `<span class="cfact-spin"></span> Deploy Vercel…`;
+        deployBtn.innerHTML = `<span class="cfact-spin"></span> ${t("deploying")}`;
         deployBtn.classList.add("deploying");
         setTimeout(() => {
-          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Déployé !`;
+          deployBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> ${t("deployed")}`;
           deployBtn.classList.remove("deploying");
           deployBtn.classList.add("push-ok");
         }, 4000);
@@ -1766,7 +2438,7 @@ async function streamText(res, onUpdate) {
         full += evt.delta.text;
         onUpdate(full);
       } else if (evt.type === "error") {
-        throw new Error(evt.error?.message || "Erreur de diffusion");
+        throw new Error(evt.error?.message || t("streamError"));
       }
     }
   }
@@ -1828,7 +2500,7 @@ function syncCodexProjects() {
     const on = state.connected[svc];
     p.classList.toggle("connected", !!on);
     const st = p.querySelector(".codex-sb-status");
-    if (st) st.textContent = on ? "connecté" : "—";
+    if (st) st.textContent = on ? t("connected") : t("notConnected");
   });
   syncCodexGh();
 }
@@ -1843,7 +2515,7 @@ function syncCodexGh() {
   if (state.connected.github && state.github.token) {
     form.style.display = "none";
     sels.classList.remove("hidden");
-    if (status) { status.textContent = "connecté"; status.classList.add("ok"); }
+    if (status) { status.textContent = t("connected"); status.classList.add("ok"); }
   } else {
     form.style.display = "";
     sels.classList.add("hidden");
@@ -1856,7 +2528,7 @@ async function codexGhConnect() {
   const token = tokenInput.value.trim() || state.github.token;
   if (!token) return;
   const btn = $("#codexGhConnect"); btn.disabled = true;
-  btn.textContent = "Connexion…";
+  btn.textContent = t("ghConnecting");
   try {
     state.github.token = token;
     const res = await fetch(`${GH_API}/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member`, { headers: ghHeaders() });
@@ -1867,12 +2539,12 @@ async function codexGhConnect() {
 
     // remplir le select des repos
     const repoSel = $("#codexGhRepo");
-    repoSel.innerHTML = `<option value="">— Dépôt (${repos.length}) —</option>` +
+    repoSel.innerHTML = `<option value="">${t("codexRepoDefault")} (${repos.length})</option>` +
       repos.map(r => `<option value="${r.full_name}"${r.full_name === state.github.repo ? " selected" : ""}>${r.full_name}${r.private ? " 🔒" : ""}</option>`).join("");
 
     // aussi mettre à jour les Paramètres
     if ($("#ghToken")) $("#ghToken").value = token;
-    setGhState("✓ connecté", true);
+    setGhState(t("connectedMark"), true);
     $$(`.conn-btn[data-service="github"]`).forEach(b => b.classList.add("connected"));
 
     syncCodexProjects();
@@ -1883,7 +2555,7 @@ async function codexGhConnect() {
       await codexGhLoadBranches(state.github.repo);
     }
   } catch (err) {
-    btn.textContent = "Erreur — réessayer";
+    btn.textContent = t("ghErrorRetry");
     state.connected.github = false;
   } finally {
     btn.disabled = false;
@@ -1898,7 +2570,7 @@ async function codexGhLoadBranches(repo) {
   persistGithub();
   const bsel = $("#codexGhBranch");
   const info = $("#codexGhInfo");
-  bsel.innerHTML = `<option value="">chargement…</option>`;
+  bsel.innerHTML = `<option value="">${t("ghLoadingBranches")}</option>`;
   try {
     const res = await fetch(`${GH_API}/repos/${repo}/branches?per_page=100`, { headers: ghHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1917,7 +2589,7 @@ async function codexGhLoadBranches(repo) {
     if (treeRes.ok) {
       const tree = await treeRes.json();
       const count = (tree.tree || []).filter(t => t.type === "blob").length;
-      if (info) info.innerHTML = `<span class="ok">✓</span> ${count} fichiers sur <b>${state.github.branch}</b>`;
+      if (info) info.innerHTML = `<span class="ok">✓</span> ${count} ${t("ghFilesCount")} <b>${state.github.branch}</b>`;
     }
 
     // sync Settings page too
@@ -1939,7 +2611,7 @@ if ($("#codexGhConnect")) {
     state.projectFiles = [];
     persistGithub();
     const info = $("#codexGhInfo");
-    if (info) info.innerHTML = `Branche : <b>${e.target.value}</b>`;
+    if (info) info.innerHTML = `${t("setBranch")} : <b>${e.target.value}</b>`;
     codexGhLoadBranches(state.github.repo);
     renderProjConvs();
   };
@@ -2002,12 +2674,12 @@ function saveCodexConv(prompt, output) {
 
 function renderCodexConvos() {
   if (!codexHistory.length) {
-    codexConvos.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucune conversation</p>';
+    codexConvos.innerHTML = `<p class="muted" style="font-size:.78rem;padding:6px 0">${t("codexNoConv")}</p>`;
     return;
   }
   codexConvos.innerHTML = codexHistory.map((c, i) => {
     const age = c.ts ? timeAgo(c.ts) : "";
-    return `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.prompt || "Sans titre")}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="Supprimer">×</button></div>`;
+    return `<div class="codex-sb-conv${i === activeConvIdx ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.prompt || t("untitled"))}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="${t("delete_")}">×</button></div>`;
   }).join("");
   $$(".codex-sb-conv", codexConvos).forEach(el => {
     el.onclick = (e) => {
@@ -2078,8 +2750,8 @@ function renderProjConvs() {
 
   const key = projKey();
   if (!key) {
-    if (label) label.textContent = "Aucun projet connecté";
-    listEl.innerHTML = '<p class="muted" style="font-size:.75rem;padding:4px 0">Connecte GitHub dans le Codex pour voir tes conversations de projet.</p>';
+    if (label) label.textContent = t("noProject");
+    listEl.innerHTML = `<p class="muted" style="font-size:.75rem;padding:4px 0">${t("connectGh")}</p>`;
     return;
   }
 
@@ -2088,7 +2760,7 @@ function renderProjConvs() {
 
   const list = projConvs[key] || [];
   if (!list.length) {
-    listEl.innerHTML = '<p class="proj-conv-empty">Aucune conversation. Utilise le Codex pour commencer!</p>';
+    listEl.innerHTML = `<p class="proj-conv-empty">${t("noConvCodex")}</p>`;
     return;
   }
 
@@ -2104,10 +2776,10 @@ function renderProjConvs() {
     const fileCount = countFilesInConv(c);
     return `<div class="proj-conv-item${origIdx === activeProjConvIdx ? ' active' : ''}" data-pidx="${origIdx}">
       <button class="proj-conv-pin${c.pinned ? ' pinned' : ''}" data-pidx="${origIdx}" title="${c.pinned ? 'Désépingler' : 'Épingler'}">${c.pinned ? '★' : '☆'}</button>
-      <span class="proj-conv-title">${escapeHtml(c.prompt || "Sans titre")}</span>
+      <span class="proj-conv-title">${escapeHtml(c.prompt || t("untitled"))}</span>
       ${fileCount ? `<span class="proj-conv-badge">${fileCount} fich.</span>` : ""}
       ${age ? `<span class="proj-conv-date">${age}</span>` : ""}
-      <button class="proj-conv-del" data-pidx="${origIdx}" title="Supprimer">×</button>
+      <button class="proj-conv-del" data-pidx="${origIdx}" title="${t("delete_")}">×</button>
     </div>`;
   }).join("");
 
@@ -2166,12 +2838,12 @@ function resetCodexWelcome() {
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
     <div class="codex-welcome-video-wrap"><video class="codex-welcome-video" autoplay muted playsinline loop><source src="assets/avatar-al.mp4" type="video/mp4"></video></div>
-    <h2>Codex <span class="orange">ti-lex-AL</span></h2>
-    <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
+    <h2>${t("codexHeading")}</h2>
+    <p>${t("codexSub")}</p>
     <div class="suggest">
-      <button class="csug" data-p="Génère une API REST Express avec TypeScript">API REST Express</button>
-      <button class="csug" data-p="Crée un composant React avec hooks">Composant React</button>
-      <button class="csug" data-p="Écris une migration SQL Supabase avec RLS">Migration SQL</button>
+      <button class="csug" data-p="${t("codexChip1")}">API REST Express</button>
+      <button class="csug" data-p="${t("codexChip2")}">React</button>
+      <button class="csug" data-p="${t("codexChip3")}">SQL</button>
     </div>
   </div>`;
 }
@@ -2199,12 +2871,12 @@ $("#codexNewConv").onclick = () => {
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
     <div class="codex-welcome-video-wrap"><video class="codex-welcome-video" autoplay muted playsinline loop><source src="assets/avatar-al.mp4" type="video/mp4"></video></div>
-    <h2>Codex <span class="orange">ti-lex-AL</span></h2>
-    <p>Décris ce que tu veux coder. Le code apparaîtra dans le chat.</p>
+    <h2>${t("codexHeading")}</h2>
+    <p>${t("codexSub")}</p>
     <div class="suggest">
-      <button class="csug" data-p="Génère une API REST Express avec TypeScript">API REST Express</button>
-      <button class="csug" data-p="Crée un composant React avec hooks">Composant React</button>
-      <button class="csug" data-p="Écris une migration SQL Supabase avec RLS">Migration SQL</button>
+      <button class="csug" data-p="${t("codexChip1")}">API REST Express</button>
+      <button class="csug" data-p="${t("codexChip2")}">React</button>
+      <button class="csug" data-p="${t("codexChip3")}">SQL</button>
     </div>
   </div>`;
   bindCodexSuggestions();
@@ -2349,7 +3021,7 @@ async function runCodex() {
   const body = buildCodexAssistantMsg();
 
   if (!AI_PROXY) {
-    body.innerHTML = '<p class="muted">Le proxy AI n\'est pas configuré.</p>';
+    body.innerHTML = `<p class="muted">${t("proxyNotConfigured")}</p>`;
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     return;
   }
@@ -2371,7 +3043,7 @@ Exemple :
 \`\`\`typescript
 // FILE: src/utils/helpers.ts
 export function formatDate(d: Date): string {
-  return d.toLocaleDateString("fr-CA");
+  return d.toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
 }
 \`\`\`
 
@@ -2405,7 +3077,7 @@ ${userContent}`;
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
   } catch (err) {
-    body.innerHTML = `<p class="muted">Erreur Codex : ${escapeHtml(err.message || "connexion")}. Vérifie ta clé API.</p>`;
+    body.innerHTML = `<p class="muted">${t("codexError")} ${escapeHtml(err.message || "connexion")}</p>`;
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
   } finally {
     $("#codexRun").disabled = false;
@@ -2419,17 +3091,17 @@ if ($("#codexScanBtn")) $("#codexScanBtn").onclick = scanProject;
 async function scanProject() {
   const connected = (state.connected.github && state.github.repo) || studioZipFiles.length;
   if (!connected) {
-    addCodexUserMsg("Scanner le projet");
+    addCodexUserMsg(t("codexScanProject"));
     const b = buildCodexAssistantMsg();
-    b.innerHTML = '<p class="muted">Connecte d\'abord un dépôt GitHub (Paramètres) ou uploade un ZIP pour scanner un projet.</p>';
+    b.innerHTML = `<p class="muted">${t("codexConnectFirst")}</p>`;
     if (b._msgWrap) b._msgWrap.classList.remove("responding");
     return;
   }
 
-  addCodexUserMsg("🔍 Scanner le projet complet");
-  codexChatMsgs.push({ role: "user", text: "🔍 Scanner le projet complet" });
+  addCodexUserMsg(`🔍 ${t("codexScanProject")}`);
+  codexChatMsgs.push({ role: "user", text: `🔍 ${t("codexScanProject")}` });
   const body = buildCodexAssistantMsg();
-  body.innerHTML = '<p class="muted">Lecture des fichiers du projet…</p><div class="typing"><span></span><span></span><span></span></div>';
+  body.innerHTML = `<p class="muted">${t("codexReading")}</p><div class="typing"><span></span><span></span><span></span></div>`;
 
   const scanBtn = $("#codexScanBtn"); if (scanBtn) scanBtn.disabled = true;
 
@@ -2470,7 +3142,7 @@ ${ctx}`;
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(`Scan projet : ${projectSourceLabel()}`, full);
   } catch (err) {
-    body.innerHTML = `<p class="muted">Erreur scan : ${escapeHtml(err.message || "connexion")}.</p>`;
+    body.innerHTML = `<p class="muted">${t("scanError")} ${escapeHtml(err.message || "connexion")}</p>`;
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
   } finally {
     if (scanBtn) scanBtn.disabled = false;
@@ -2544,13 +3216,13 @@ async function refreshStudio() {
 
   // ZIP files
   if (studioZipFiles.length) {
-    if (!allFiles.length) label.textContent = "Fichiers ZIP uploadés";
+    if (!allFiles.length) label.textContent = t("studioZipLabel");
     else label.textContent += " + ZIP";
     allFiles.push(...studioZipFiles.map(z => ({ path: z.path, source: "zip", content: z.content })));
   }
 
   if (!allFiles.length) {
-    tree.innerHTML = '<p class="muted" style="padding:12px;font-size:.8rem">Connecte GitHub ou uploade un ZIP pour voir les fichiers.</p>';
+    tree.innerHTML = `<p class="muted" style="padding:12px;font-size:.8rem">${t("studioHelp")}</p>`;
     return;
   }
 
@@ -2565,7 +3237,7 @@ async function refreshStudio() {
 
   let html = "";
   for (const [folder, files] of Object.entries(folders).sort()) {
-    html += `<div class="studio-tree-folder">${escapeHtml(folder === "/" ? "racine" : folder)}</div>`;
+    html += `<div class="studio-tree-folder">${escapeHtml(folder === "/" ? t("studioRoot") : folder)}</div>`;
     files.forEach(f => {
       html += `<div class="studio-tree-item" data-path="${escapeHtml(f.path)}" data-src="${f.source}"><span class="f-ico">${fileIcon(f.path)}</span>${escapeHtml(f.path.split("/").pop())}</div>`;
     });
@@ -2587,9 +3259,9 @@ async function loadStudioFile(path, source, allFiles) {
 
   if (source === "zip") {
     const zf = studioZipFiles.find(z => z.path === path);
-    codeArea.value = zf?.content || "(fichier binaire — contenu non lisible)";
+    codeArea.value = zf?.content || t("studioBinaryFile");
   } else if (source === "github") {
-    codeArea.value = "chargement…";
+    codeArea.value = t("loading");
     try {
       const res = await fetch(`${GH_API}/repos/${state.github.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(state.github.branch)}`, { headers: ghHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -2597,7 +3269,7 @@ async function loadStudioFile(path, source, allFiles) {
       codeArea.value = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ""))));
       studioCurrentFile.sha = data.sha;
     } catch (err) {
-      codeArea.value = `Erreur : ${err.message}`;
+      codeArea.value = `${t("apiError")} ${err.message}`;
     }
   }
 
@@ -2612,7 +3284,7 @@ if ($("#studioPushGh")) {
     if (!studioCurrentFile) return;
     const content = $("#studioCode").value;
     const path = studioCurrentFile.path;
-    const commitMsg = prompt("Message de commit :", `Mise à jour de ${path} via ti-lex Studio`);
+    const commitMsg = prompt(`${t("alertCommitMsg")}`, `${t("commitMsgStudio")} ${path} ${t("commitMsgStudioVia")}`);
     if (!commitMsg) return;
     const body = {
       message: commitMsg,
@@ -2628,9 +3300,9 @@ if ($("#studioPushGh")) {
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.json()).message || ""}`);
       const data = await res.json();
       studioCurrentFile.sha = data.content?.sha;
-      alert(`Pushé : ${state.github.repo}/${state.github.branch}/${path}`);
+      alert(`${t("studioPushed")} ${state.github.repo}/${state.github.branch}/${path}`);
     } catch (err) {
-      alert(`Erreur push : ${err.message}`);
+      alert(`${t("studioPushErr")} ${err.message}`);
     }
   };
 }
@@ -2649,6 +3321,27 @@ if ($("#langSelect")) {
 applyLang();
 
 // restaure les champs de connexion
+if (state.apiKey) {
+  const inp = $("#apiKeyInput"); if (inp) inp.value = state.apiKey;
+  const st = $("#apiKeyState"); if (st) { st.textContent = "✓ active"; st.classList.add("ok"); }
+}
+if ($("#apiKeySave")) {
+  $("#apiKeySave").onclick = () => {
+    const val = $("#apiKeyInput").value.trim();
+    if (!val) return;
+    state.apiKey = val;
+    try { localStorage.setItem(LS_API, val); } catch (_) {}
+    const st = $("#apiKeyState"); if (st) { st.textContent = "✓ active"; st.classList.add("ok"); }
+  };
+}
+if ($("#apiKeyClear")) {
+  $("#apiKeyClear").onclick = () => {
+    state.apiKey = "";
+    try { localStorage.removeItem(LS_API); } catch (_) {}
+    const inp = $("#apiKeyInput"); if (inp) inp.value = "";
+    const st = $("#apiKeyState"); if (st) { st.textContent = "— optionnel"; st.classList.remove("ok"); }
+  };
+}
 if (state.github.token) $("#ghToken").value = state.github.token;
 if (state.supabase.url) $("#sbUrl").value = state.supabase.url;
 if (state.supabase.key) $("#sbKey").value = state.supabase.key;
@@ -2657,8 +3350,8 @@ if (state.supabase.key) $("#sbKey").value = state.supabase.key;
 Object.keys(state.connected).forEach(s => {
   if (state.connected[s]) $$(`.conn-btn[data-service="${s}"]`).forEach(b => b.classList.add("connected"));
 });
-if (state.connected.github) { setGhState("✓ connecté", true); }
-if (state.connected.supabase) { setSbState("✓ connecté", true); }
+if (state.connected.github) { setGhState(t("connectedMark"), true); }
+if (state.connected.supabase) { setSbState(t("connectedMark"), true); }
 
 syncReflexion();
 syncCodexProjects();
@@ -2682,7 +3375,7 @@ if ($("#memoryAddBtn")) {
 }
 if ($("#memoryClearBtn")) {
   $("#memoryClearBtn").onclick = () => {
-    if (!confirm("Effacer toute la mémoire d'Agent AL ?")) return;
+    if (!confirm(t("alertClearMemory"))) return;
     memory = [];
     saveMemory();
   };
@@ -2723,10 +3416,10 @@ async function loadSecurityDashboard() {
   const scanLbl = document.getElementById("scanLabel");
   if (scans && scans.length > 0) {
     if (scanEl) scanEl.textContent = scans.length;
-    if (scanLbl) scanLbl.textContent = "total";
+    if (scanLbl) scanLbl.textContent = t("total");
   } else {
     if (scanEl) scanEl.textContent = activeCount > 0 ? "0" : "—";
-    if (scanLbl) scanLbl.textContent = activeCount > 0 ? "prêt" : "en attente d'autorisation";
+    if (scanLbl) scanLbl.textContent = activeCount > 0 ? t("ready") : t("secPending");
   }
 
   const { data: findings } = await sowQuery("scan_findings", "select", "id", {});
@@ -2753,25 +3446,26 @@ async function loadSowList(userId) {
   if (!list) return;
 
   if (!sows || sows.length === 0) {
-    list.innerHTML = '<p class="muted" style="font-size:.85rem;padding:8px 0">Aucun SOW. Clique "+ Nouveau SOW" pour créer ta première autorisation.</p>';
+    list.innerHTML = `<p class="muted" style="font-size:.85rem;padding:8px 0">${t("noSow")}</p>`;
     return;
   }
 
   list.innerHTML = sows.map(s => {
     const scopeIn = Array.isArray(s.scope_in) ? s.scope_in.join(", ") : "";
-    const start = s.starts_at ? new Date(s.starts_at).toLocaleDateString("fr-CA") : "—";
-    const end = s.expires_at ? new Date(s.expires_at).toLocaleDateString("fr-CA") : "—";
+    const _dl = state.lang === "en" ? "en-CA" : "fr-CA";
+    const start = s.starts_at ? new Date(s.starts_at).toLocaleDateString(_dl) : "—";
+    const end = s.expires_at ? new Date(s.expires_at).toLocaleDateString(_dl) : "—";
     const actions = s.status === "draft"
-      ? `<button class="sow-btn-activate" onclick="activateSow('${s.id}')">Activer</button>
-         <button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">Supprimer</button>`
+      ? `<button class="sow-btn-activate" onclick="activateSow('${s.id}')">${t("secActivate")}</button>
+         <button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">${t("delete_")}</button>`
       : s.status === "active"
-      ? `<button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">Révoquer</button>`
+      ? `<button class="sow-btn-revoke" onclick="revokeSow('${s.id}')">${t("secRevoke")}</button>`
       : "";
     return `<div class="sow-item">
       <div class="sow-item-info">
         <div class="sow-item-title">${escapeHtml(s.title)}</div>
         <div class="sow-item-client">${escapeHtml(s.client_name)}</div>
-        <div class="sow-item-scope">Scope: ${escapeHtml(scopeIn || "non défini")}</div>
+        <div class="sow-item-scope">Scope: ${escapeHtml(scopeIn || t("secNotDefined"))}</div>
         <div class="sow-item-dates">${start} → ${end}</div>
       </div>
       <span class="sow-badge ${s.status}">${s.status}</span>
@@ -2790,19 +3484,19 @@ async function createSow() {
   const notes = document.getElementById("sowNotes")?.value?.trim();
 
   if (!title || !client || !scopeInRaw || !startDate || !endDate) {
-    alert("Remplis tous les champs obligatoires (*).");
+    alert(t("alertFillFields"));
     return;
   }
 
   const checkboxes = document.querySelectorAll("#sowForm .sow-scan-types input:checked");
   const scanTypes = Array.from(checkboxes).map(c => c.value);
   if (scanTypes.length === 0) {
-    alert("Sélectionne au moins un type de scan.");
+    alert(t("alertSelectScan"));
     return;
   }
 
   const userId = (await state.supabase.client?.auth?.getUser?.())?.data?.user?.id;
-  if (!userId) { alert("Connecte-toi d'abord."); return; }
+  if (!userId) { alert(t("alertLoginFirst")); return; }
 
   const scopeIn = scopeInRaw.split(",").map(s => s.trim()).filter(Boolean);
   const scopeOut = scopeOutRaw ? scopeOutRaw.split(",").map(s => s.trim()).filter(Boolean) : [];
@@ -2836,21 +3530,21 @@ async function createSow() {
 }
 
 async function activateSow(id) {
-  if (!confirm("Activer ce SOW ? Les scans deviendront possibles pour les cibles listées.")) return;
+  if (!confirm(t("alertActivateSow"))) return;
   const { error } = await state.supabase.client.from("scan_authorizations")
     .update({ status: "active", signed_at: new Date().toISOString(), signed_by: "owner" })
     .eq("id", id);
-  if (error) { alert("Erreur: " + error.message); return; }
+  if (error) { alert(`${t("apiError")} ${error.message}`); return; }
   await loadSecurityDashboard();
 }
 
 async function revokeSow(id) {
-  const action = confirm("Révoquer/supprimer ce SOW ? Les scans associés seront bloqués.") ? "revoked" : null;
+  const action = confirm(t("alertRevokeSow")) ? "revoked" : null;
   if (!action) return;
   const { error } = await state.supabase.client.from("scan_authorizations")
     .update({ status: "revoked" })
     .eq("id", id);
-  if (error) { alert("Erreur: " + error.message); return; }
+  if (error) { alert(`${t("apiError")} ${error.message}`); return; }
   await loadSecurityDashboard();
 }
 
@@ -2890,11 +3584,11 @@ if (installBtn) {
     }
     // Pas de prompt natif → instructions manuelles
     if (_isIOS) {
-      alert("Pour installer ti-lex-AL :\n\n1. Appuie sur le bouton Partager (en bas)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
+      alert(t("installSafari"));
     } else if (_isSamsung) {
-      alert("Pour installer ti-lex-AL sur Samsung :\n\n1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »");
+      alert(t("installSamsung"));
     } else {
-      alert("Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme");
+      alert(t("installOther"));
     }
   };
 }
@@ -3091,19 +3785,19 @@ function exportMyData() {
 }
 
 function deleteAllMyData() {
-  if (!confirm("Supprimer TOUTES vos données locales ?\n\nConversations, mémoire, préférences, connexions — tout sera effacé.\n\nCette action est irréversible.")) return;
-  if (!confirm("Dernière confirmation : voulez-vous vraiment tout supprimer ?")) return;
+  if (!confirm(t("alertDeleteAll"))) return;
+  if (!confirm(t("alertDeleteConfirm"))) return;
   const keys = ["tilex-al-model", "tilex-al-github", "tilex-al-supabase",
-    "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history", "tilex-consent"];
+    "tilex-al-memory", "tilex-al-apikey", "tilex-chat-convs", "tilex-codex-history", "tilex-consent"];
   keys.forEach(k => localStorage.removeItem(k));
-  alert("Toutes vos données locales ont été supprimées.");
+  alert(t("alertDeleted"));
   location.reload();
 }
 
 function withdrawConsent() {
-  if (!confirm("Retirer votre consentement ?\n\nVos données locales seront supprimées et vous serez redirigé vers la page d'accueil.")) return;
+  if (!confirm(t("alertWithdraw"))) return;
   const keys = ["tilex-al-model", "tilex-al-github", "tilex-al-supabase",
-    "tilex-al-memory", "tilex-chat-convs", "tilex-codex-history"];
+    "tilex-al-memory", "tilex-al-apikey", "tilex-chat-convs", "tilex-codex-history"];
   keys.forEach(k => localStorage.removeItem(k));
   localStorage.setItem("tilex-consent", JSON.stringify({ accepted: false, date: new Date().toISOString() }));
   window.location.href = "index.html";
@@ -3166,7 +3860,7 @@ function subscribeToplan(plan) {
   const session = getSupabaseSession();
   const user = session?.user;
   if (!user) {
-    alert("Connecte-toi d'abord pour t'abonner.");
+    alert(t("alertSubscribe"));
     return;
   }
 
@@ -3183,12 +3877,12 @@ function subscribeToplan(plan) {
 async function manageSubscription() {
   const session = getSupabaseSession();
   if (!session?.access_token) {
-    alert("Connecte-toi d'abord pour gérer ton abonnement.");
+    alert(t("alertManage"));
     return;
   }
 
   const btn = $("#manageSubscriptionBtn");
-  if (btn) { btn.disabled = true; btn.textContent = "Chargement…"; }
+  if (btn) { btn.disabled = true; btn.textContent = t("manageLoading"); }
 
   try {
     const res = await fetch(`${SUPABASE_FN}/create-portal`, {
@@ -3202,12 +3896,12 @@ async function manageSubscription() {
     if (data.url) {
       window.location.href = data.url;
     } else {
-      alert(data.error || "Erreur lors de l'ouverture du portail.");
-      if (btn) { btn.disabled = false; btn.textContent = "Gérer mon abonnement"; }
+      alert(data.error || t("managePortalErr"));
+      if (btn) { btn.disabled = false; btn.textContent = t("fpManage"); }
     }
   } catch (err) {
-    alert("Erreur réseau. Réessaie plus tard.");
-    if (btn) { btn.disabled = false; btn.textContent = "Gérer mon abonnement"; }
+    alert(t("manageNetworkErr"));
+    if (btn) { btn.disabled = false; btn.textContent = t("fpManage"); }
   }
 }
 
@@ -3326,12 +4020,12 @@ async function finSend(text) {
     const data = await res.json();
     const reply = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
     finRemoveTyping();
-    const msg = reply || "Je n'ai pas reçu de réponse. Peux-tu reformuler ta question ?";
+    const msg = reply || t("finNoReply");
     finAddMsg("assistant", msg);
     finHistory.push({ role: "assistant", content: msg });
   } catch (e) {
     finRemoveTyping();
-    finAddMsg("assistant", "Oups — la connexion a échoué. Réessaie dans un moment.", true);
+    finAddMsg("assistant", t("finConnError"), true);
   } finally {
     finLoading = false;
     $("#finSend").disabled = !$("#finInput").value.trim();
