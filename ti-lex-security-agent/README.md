@@ -134,4 +134,7 @@ Si l'Edge Function retourne une erreur :
 - Connecter au programme bug bounty du gouvernement du Quebec
 - Souscrire l'assurance E&O cyber (2-5 M$)
 
-— Produit du Quebec
+---
+
+**Alex Marceau Prevost** — 17 juin 1994 — Quebec, Canada
+Fait au Quebec

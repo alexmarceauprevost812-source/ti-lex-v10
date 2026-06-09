@@ -1,10 +1,11 @@
-# ti-lex-AL v10 🌊
+# ti-lex-AL v10
 
-Plateforme IA québécoise — thème noir, écriture blanche, accents orange.
-Agent **AL** (propulsé par Claude), un **Codex** style éditeur, un mode **Sécurité**
-défensif et des **Paramètres** avec connexions (GitHub, Supabase…).
+Plateforme IA quebecoise — theme noir, ecriture blanche, accents orange.
+Agent **AL** (propulse par Claude), un **Codex** style editeur, un mode **Securite**
+defensif, un **Agent Finance** (finances personnelles & crypto) et des **Parametres** avec connexions (GitHub, Supabase...).
 
-> Produit du Québec · Conçu par Alex Marceau Prevost
+> Concu et developpe par **Alex Marceau Prevost** (17 juin 1994)
+> Fait au Quebec, Canada
 
 ## ✨ Fonctionnalités
 
@@ -44,13 +45,8 @@ npm run dev
 Aucune étape de build : c'est du HTML/CSS/JS pur. Tu peux aussi ouvrir
 `index.html` directement, ou déployer le dossier tel quel sur Vercel.
 
-### Clé API Anthropic
-
-Ouvre l'app → **Paramètres** → colle ta clé `sk-ant-...`.
-La clé est stockée dans le `localStorage` du navigateur pour le dev.
-
-> ⚠️ **Production :** ne jamais exposer une vraie clé API dans le frontend.
-> Route les appels via une Edge Function Supabase (voir le module sécurité).
+Les appels a Claude passent par l'Edge Function Supabase `ai-proxy`.
+Aucune cle API n'est exposee dans le frontend.
 
 ## 🔌 Connexions
 
@@ -77,4 +73,9 @@ Le `vercel.json` configure les en-têtes de sécurité et les routes
 
 ---
 
-🇨🇦 Données en région `ca-central-1`. Conçu pour la conformité **Loi 25**.
+Donnees en region `ca-central-1`. Concu pour la conformite **Loi 25**.
+
+---
+
+**Alex Marceau Prevost** — 17 juin 1994 — Quebec, Canada
+Fait au Quebec
