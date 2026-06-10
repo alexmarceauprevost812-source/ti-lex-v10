@@ -761,6 +761,15 @@ function applyLang() {
         ).join("");
         lbl.classList.add("fin-glow");
       }
+    } else if (v === "codex") {
+      const lbl = $(".lbl", b);
+      if (lbl && s.nav[v]) {
+        const word = s.nav[v];
+        lbl.innerHTML = word.split("").map((ch, i) =>
+          `<span class="cdx-letter cdx-idle" data-idx="${i}">${ch}</span>`
+        ).join("");
+        lbl.classList.add("codex-matrix-lbl");
+      }
     } else {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) lbl.textContent = s.nav[v];
@@ -3486,6 +3495,67 @@ if ($("#langSelect")) {
   };
 }
 applyLang();
+
+// ── Codex Matrix Animation ──
+(function initCodexMatrix() {
+  const MATRIX_CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン日月火水木金土天地人龍鬼神風雷雨雪花星空海山川森光闇力命魂心夢幻影刃剣盾甲冑壱弐参零壹貳參肆伍陸柒捌玖拾";
+  const CYCLE = 10000;
+  const MATRIX_PHASE = 3000;
+  const REVEAL_PHASE = 2000;
+  let cdxTimers = [];
+
+  function getCodexWord() {
+    const s = I18N[state.lang] || I18N.fr;
+    return s.nav?.codex || "Codex";
+  }
+
+  function runCycle() {
+    const letters = $$(".cdx-letter");
+    if (!letters.length) return;
+    const word = getCodexWord();
+
+    cdxTimers.forEach(t => clearTimeout(t));
+    cdxTimers.forEach(t => clearInterval(t));
+    cdxTimers = [];
+
+    letters.forEach((el, i) => {
+      el.className = "cdx-letter cdx-matrix";
+      el.textContent = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+    });
+
+    const matrixIntervals = letters.map((el) => {
+      const iv = setInterval(() => {
+        el.textContent = MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)];
+      }, 80);
+      cdxTimers.push(iv);
+      return iv;
+    });
+
+    letters.forEach((el, i) => {
+      const t = setTimeout(() => {
+        clearInterval(matrixIntervals[i]);
+        el.textContent = word[i] || "";
+        el.className = "cdx-letter cdx-reveal";
+        const t2 = setTimeout(() => { el.className = "cdx-letter cdx-idle"; }, 400);
+        cdxTimers.push(t2);
+      }, MATRIX_PHASE + i * (REVEAL_PHASE / word.length));
+      cdxTimers.push(t);
+    });
+
+    const spotStart = MATRIX_PHASE + REVEAL_PHASE + 300;
+    letters.forEach((el, i) => {
+      const t = setTimeout(() => {
+        el.className = "cdx-letter cdx-spot";
+        const t2 = setTimeout(() => { el.className = "cdx-letter cdx-idle"; }, 600);
+        cdxTimers.push(t2);
+      }, spotStart + i * 700);
+      cdxTimers.push(t);
+    });
+  }
+
+  runCycle();
+  setInterval(runCycle, CYCLE);
+})();
 
 // restaure les champs de connexion
 if (state.apiKey) {

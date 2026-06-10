@@ -1006,6 +1006,40 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
   animation:blink 1.05s steps(1) infinite}
 @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
+/* ── Nav Codex — Matrix effect ── */
+.nav-codex .ico{stroke:#00ff41!important;filter:drop-shadow(0 0 4px rgba(0,255,65,.3));transition:all .3s}
+.nav-codex:hover .ico{stroke:#39ff14!important;filter:drop-shadow(0 0 8px rgba(57,255,20,.5))}
+.nav-codex.active .ico{stroke:#39ff14!important;filter:drop-shadow(0 0 8px rgba(57,255,20,.5))}
+.cdx-letter{
+  display:inline-block;
+  font-weight:700;
+  color:#fff;
+  transition:color .15s,text-shadow .15s;
+  font-family:var(--code-font),monospace;
+}
+.cdx-letter.cdx-matrix{
+  color:#00ff41!important;
+  text-shadow:0 0 8px rgba(0,255,65,.7),0 0 20px rgba(0,255,65,.3);
+  animation:cdxGlitch .08s steps(1) infinite;
+}
+.cdx-letter.cdx-reveal{
+  color:#fff!important;
+  text-shadow:0 0 12px rgba(255,255,255,.8),0 0 25px rgba(0,255,65,.4);
+  transform:scale(1.15);
+}
+.cdx-letter.cdx-idle{
+  color:#ccc!important;
+  text-shadow:none;
+}
+.cdx-letter.cdx-spot{
+  color:#fff!important;
+  text-shadow:0 0 16px rgba(255,255,255,.9),0 0 35px rgba(255,255,255,.4),0 0 6px rgba(0,255,65,.3);
+  transform:scale(1.1);
+}
+@keyframes cdxGlitch{
+  0%{opacity:1}50%{opacity:.7}100%{opacity:1}
+}
+
 /* ── Nav Sécurité colors ── */
 .nav-secure .nav-emoji{font-size:1.2rem;filter:hue-rotate(0deg) saturate(1);transition:filter .4s ease,transform .4s ease}
 .nav-secure .lbl{color:#ff1a1a!important;text-shadow:0 0 8px rgba(255,26,26,.4);transition:color .4s ease,text-shadow .4s ease}
