@@ -3237,15 +3237,30 @@ function highlightSyntax(code) {
 
   function push(cls, text) { tokens.push(cls ? `<span class="syn-${cls}">${text}</span>` : text); }
 
+  function highlightSecrets(text, cls) {
+    const secretPat = /(sk-ant-[a-zA-Z0-9_-]{10,}|sk-proj-[a-zA-Z0-9_-]{10,}|sk-[a-zA-Z0-9_-]{20,}|ghp_[a-zA-Z0-9]{36}|glpat-[a-zA-Z0-9_-]{20,}|eyJ[a-zA-Z0-9_-]{20,}\.eyJ[a-zA-Z0-9_-]+)/g;
+    let result = "";
+    let last = 0;
+    let sm;
+    while ((sm = secretPat.exec(text)) !== null) {
+      if (sm.index > last) result += `<span class="syn-${cls}">${text.slice(last, sm.index)}</span>`;
+      result += `<span class="syn-secret" title="⚠ Clé secrète — ne jamais exposer!">${sm[0]}</span>`;
+      last = secretPat.lastIndex;
+    }
+    if (last === 0) { push(cls, text); return; }
+    if (last < text.length) result += `<span class="syn-${cls}">${text.slice(last)}</span>`;
+    tokens.push(result);
+  }
+
   while (idx < code.length) {
-    // HTML-escaped quotes: &quot; ... &quot; or &#039; ... &#039;
     let m;
+    // HTML-escaped quotes: &quot; ... &quot; or &#039; ... &#039;
     if ((m = code.slice(idx).match(/^(&quot;[\s\S]*?&quot;|&#039;[\s\S]*?&#039;)/))) {
-      push("str", m[0]); idx += m[0].length; continue;
+      highlightSecrets(m[0], "str"); idx += m[0].length; continue;
     }
     // Template literals (backticks)
     if ((m = code.slice(idx).match(/^`[^`]*?`/))) {
-      push("str", m[0]); idx += m[0].length; continue;
+      highlightSecrets(m[0], "str"); idx += m[0].length; continue;
     }
     // Single-line comments // and #
     if ((m = code.slice(idx).match(/^(\/\/[^\n]*|#[^\n]*)/))) {
@@ -3262,6 +3277,22 @@ function highlightSyntax(code) {
     // Decorators / annotations @word
     if ((m = code.slice(idx).match(/^@[a-zA-Z_]\w*/))) {
       push("decorator", m[0]); idx += m[0].length; continue;
+    }
+    // Secret keys & tokens (standalone, not inside strings)
+    if ((m = code.slice(idx).match(/^(sk-ant-[a-zA-Z0-9_-]{10,}|sk-proj-[a-zA-Z0-9_-]{10,}|sk-[a-zA-Z0-9_-]{20,}|ghp_[a-zA-Z0-9]{36}|glpat-[a-zA-Z0-9_-]{20,})/))) {
+      push("secret", m[0]); idx += m[0].length; continue;
+    }
+    // Dangerous variable names (API keys, secrets, passwords)
+    if ((m = code.slice(idx).match(/^\b(API_KEY|SECRET_KEY|PRIVATE_KEY|ACCESS_TOKEN|AUTH_TOKEN|PASSWORD|PASSWD|DB_PASSWORD|MASTER_KEY|ENCRYPTION_KEY|SIGNING_KEY|CLIENT_SECRET|ANTHROPIC_API_KEY|OPENAI_API_KEY|STRIPE_SECRET_KEY|SUPABASE_SERVICE_ROLE_KEY|AWS_SECRET_ACCESS_KEY|GITHUB_TOKEN|NPM_TOKEN|DATABASE_URL|MONGO_URI|REDIS_URL)\b/))) {
+      push("secret", m[0]); idx += m[0].length; continue;
+    }
+    // Environment variables $VAR or ${VAR}
+    if ((m = code.slice(idx).match(/^(\$\{[A-Z_][A-Z0-9_]*\}|\$[A-Z_][A-Z0-9_]*)/))) {
+      push("env", m[0]); idx += m[0].length; continue;
+    }
+    // .env file patterns
+    if ((m = code.slice(idx).match(/^\.env(\.[a-z]+)?\b/))) {
+      push("env", m[0]); idx += m[0].length; continue;
     }
     // Numbers
     if ((m = code.slice(idx).match(/^\b(\d+\.?\d*([eE][+-]?\d+)?)\b/))) {
