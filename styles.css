@@ -106,6 +106,9 @@ body{
   background:var(--bg-2);border-right:1px solid var(--line);
   display:flex;flex-direction:column;padding:18px 14px;z-index:40;
   transition:transform var(--t),background var(--t);
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;scrollbar-color:var(--line) transparent;
 }
 .sidebar-top{display:flex;align-items:center;gap:12px;margin-bottom:26px}
 .hamburger{
@@ -1562,6 +1565,12 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
 .agent-emoji img{width:100%;height:100%;object-fit:cover;border-radius:10px}
 .agent-name{font-family:var(--marker);font-weight:400;font-size:1.05rem;color:var(--txt);letter-spacing:.3px}
 .agent-desc{font-size:.78rem;color:var(--txt-dim);line-height:1.45;font-style:italic}
+.agent-locked{opacity:.45;cursor:not-allowed;position:relative}
+.agent-locked:hover{transform:none;border-color:var(--line)}
+.agent-lock-badge{font-size:.65rem;background:rgba(255,150,0,.15);color:var(--orange);
+  padding:2px 8px;border-radius:6px;margin-left:auto;font-weight:700;white-space:nowrap}
+.agent-pick.agent-locked{opacity:.45;cursor:not-allowed}
+.agent-pick.agent-locked .agent-pick-desc{color:var(--orange)}
 .agents-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;
   pointer-events:none;transition:opacity var(--t);z-index:55}
 .agents-overlay.show{opacity:1;pointer-events:auto}

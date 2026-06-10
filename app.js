@@ -1090,20 +1090,32 @@ $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.d
 /* ================= SÉLECTEUR D'AGENTS ================= */
 const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif" };
 function agentDesc(key) { return AGENT_DESC_KEYS[key] ? t(AGENT_DESC_KEYS[key]) : AGENTS[key]?.desc || ""; }
+function isAgentLocked(key) {
+  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
+  if (plan === "industriel") return false;
+  const a = AGENTS[key];
+  return a?.model?.includes("opus");
+}
 function renderAgents() {
   const list = $("#agentsList");
   if (!list) return;
-  list.innerHTML = Object.entries(AGENTS).map(([key, a]) => `
-    <button class="agent-card${key === state.agent ? ' active' : ''}" data-agent="${key}">
+  list.innerHTML = Object.entries(AGENTS).map(([key, a]) => {
+    const locked = isAgentLocked(key);
+    return `<button class="agent-card${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}"${locked ? ' title="Disponible avec le forfait Industriel"' : ''}>
       <div class="agent-card-top">
         <span class="agent-emoji">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
         <span class="agent-name">${a.name}</span>
+        ${locked ? '<span class="agent-lock-badge">🔒 Industriel</span>' : ''}
       </div>
       <span class="agent-desc">${agentDesc(key)}</span>
-    </button>`).join("");
-  $$(".agent-card").forEach(c => c.onclick = () => {
-    selectAgent(c.dataset.agent);
-    closeAgents();
+    </button>`;
+  }).join("");
+  $$(".agent-card").forEach(c => {
+    if (isAgentLocked(c.dataset.agent)) {
+      c.onclick = () => switchView("forfaits");
+      return;
+    }
+    c.onclick = () => { selectAgent(c.dataset.agent); closeAgents(); };
   });
 }
 
@@ -1153,19 +1165,22 @@ function renderAgentPicker() {
       btn.querySelector(".agent-picker-emoji").textContent = cur.emoji;
     }
   }
-  menu.innerHTML = Object.entries(AGENTS).map(([key, a]) => `
-    <button class="agent-pick${key === state.agent ? ' active' : ''}" data-agent="${key}">
+  menu.innerHTML = Object.entries(AGENTS).map(([key, a]) => {
+    const locked = isAgentLocked(key);
+    return `<button class="agent-pick${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}">
       <span class="agent-pick-icon">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
       <span class="agent-pick-info">
-        <span class="agent-pick-name">${a.name}</span>
-        <span class="agent-pick-desc">${agentDesc(key)}</span>
+        <span class="agent-pick-name">${a.name}${locked ? ' 🔒' : ''}</span>
+        <span class="agent-pick-desc">${locked ? 'Forfait Industriel requis' : agentDesc(key)}</span>
       </span>
-    </button>`).join("");
+    </button>`;
+  }).join("");
   $$(".agent-pick", menu).forEach(p => {
-    p.onclick = () => {
-      selectAgent(p.dataset.agent);
-      toggleAgentPicker(false);
-    };
+    if (isAgentLocked(p.dataset.agent)) {
+      p.onclick = () => { toggleAgentPicker(false); switchView("forfaits"); };
+      return;
+    }
+    p.onclick = () => { selectAgent(p.dataset.agent); toggleAgentPicker(false); };
   });
 }
 
