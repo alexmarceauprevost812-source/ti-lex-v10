@@ -2141,6 +2141,10 @@ li.fp-off{color:rgba(255,255,255,.3)}
 .fp-cta.fp-cta-solid{color:#fff;background:var(--fp-orange);box-shadow:0 0 24px var(--fp-orange-glow)}
 .fp-cta.fp-cta-solid:hover{filter:brightness(1.15);transform:translateY(-2px)}
 ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
+.fp-spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:fpSpin .7s linear infinite;vertical-align:middle}
+@keyframes fpSpin{to{transform:rotate(360deg)}}
+.fp-cta:disabled{opacity:.7;cursor:not-allowed;transform:none!important;filter:none!important}
 .fp-cta:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
 /* Trust strip */

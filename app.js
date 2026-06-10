@@ -4999,6 +4999,34 @@ const PAYMENT_LINKS = {
   industrial: "https://buy.stripe.com/00w3cv3Fke9X5mO0c653O0b",
 };
 
+const SUPABASE_REST = "https://rnuripmfozlxenryxhdc.supabase.co/rest/v1";
+
+let _stripePrices = null;
+async function loadStripePrices() {
+  if (_stripePrices) return _stripePrices;
+  try {
+    const tk = proxyToken();
+    const res = await fetch(
+      `${SUPABASE_REST}/prices?select=id,product_id,products(name)&active=eq.true`,
+      { headers: { apikey: tk, Authorization: `Bearer ${tk}` } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    const map = {};
+    for (const row of rows) {
+      const name = (row.products?.name || "").toLowerCase();
+      if (name.includes("starter")) map.starter = row.id;
+      else if (name.includes("industriel") || name.includes("industrial")) map.industrial = row.id;
+      else if (name.includes("pro")) map.pro = row.id;
+    }
+    _stripePrices = map;
+    return map;
+  } catch (e) {
+    console.error("loadStripePrices:", e);
+    return null;
+  }
+}
+
 function getSupabaseSession() {
   try {
     const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
@@ -5007,7 +5035,7 @@ function getSupabaseSession() {
   } catch { return null; }
 }
 
-function subscribeToplan(plan) {
+async function subscribeToplan(plan) {
   const session = getSupabaseSession();
   const user = session?.user;
   if (!user) {
@@ -5015,14 +5043,50 @@ function subscribeToplan(plan) {
     return;
   }
 
-  const link = PAYMENT_LINKS[plan];
-  if (!link) return;
+  const btn = document.querySelector(`.fp-cta[data-plan="${plan}"]`);
+  const originalText = btn?.textContent;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fp-spinner"></span> Redirection…';
+  }
 
-  const url = new URL(link);
-  url.searchParams.set("client_reference_id", user.id);
-  if (user.email) url.searchParams.set("prefilled_email", user.email);
+  try {
+    const prices = await loadStripePrices();
+    const priceId = prices?.[plan];
 
-  window.location.href = url.toString();
+    if (priceId) {
+      const res = await fetch(`${SUPABASE_FN}/create-checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ priceId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    }
+
+    const link = PAYMENT_LINKS[plan];
+    if (link) {
+      const url = new URL(link);
+      url.searchParams.set("client_reference_id", user.id);
+      if (user.email) url.searchParams.set("prefilled_email", user.email);
+      window.location.href = url.toString();
+    }
+  } catch (e) {
+    console.error("subscribeToplan:", e);
+    const link = PAYMENT_LINKS[plan];
+    if (link) window.location.href = link;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
 }
 
 async function manageSubscription() {
