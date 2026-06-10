@@ -13,7 +13,7 @@ const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
 
 const CORS = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, x-anthropic-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -113,11 +113,14 @@ Deno.serve(async (req) => {
 
     const maxTokens = Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS_CAP);
 
+    const userKey = req.headers.get("x-anthropic-key");
+    const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
+
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
+        "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
