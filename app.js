@@ -4994,7 +4994,7 @@ requestAnimationFrame(() => { requestAnimationFrame(() => fpSetPeriod("monthly")
 const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
 
 const PAYMENT_LINKS = {
-  starter:    "https://buy.stripe.com/3cI9AT3Fk3vj2aCaQK53O07",
+  starter:    "https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",
   pro:        "https://buy.stripe.com/7sY3cv1xcd5T2aC5wq53O06",
   industrial: "https://buy.stripe.com/dRmdR94Jo0j7bLc2ke53O05",
 };
