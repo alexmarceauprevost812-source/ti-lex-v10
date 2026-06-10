@@ -316,19 +316,20 @@ body.menu-closed #menuToggleMobile{display:flex}
 .code-lang{position:absolute;top:8px;right:12px;font-size:.65rem;font-weight:700;
   letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);
   font-family:var(--font)}
-/* TTS Voice Button */
-.tts-bar{margin-top:10px;display:flex;align-items:center}
-.tts-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+/* TTS Voice & Copy Buttons */
+.tts-bar{margin-top:10px;display:flex;align-items:center;gap:8px}
+.tts-btn,.copy-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
   background:#1e1e2e;border:1px solid #2a2a3c;border-radius:20px;
   color:#abb2bf;font-family:var(--code-font);font-size:.76rem;font-weight:600;
   cursor:pointer;transition:all .25s ease}
-.tts-btn:hover{border-color:#61afef;color:#61afef;background:#1a1a2e}
+.tts-btn:hover,.copy-btn:hover{border-color:#61afef;color:#61afef;background:#1a1a2e}
 .tts-btn.tts-active{border-color:#e06c75;color:#e06c75;
   animation:ttsPulse 1.5s ease-in-out infinite}
+.copy-btn.copy-ok{border-color:#3ecf8e;color:#3ecf8e}
 @keyframes ttsPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,108,117,0)}
   50%{box-shadow:0 0 12px 2px rgba(224,108,117,.3)}}
-.tts-btn svg{flex-shrink:0}
-.tts-btn .hidden{display:none}
+.tts-btn svg,.copy-btn svg{flex-shrink:0}
+.tts-btn .hidden,.copy-btn .hidden{display:none}
 
 .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6;font-weight:500}
 .msg-body p{margin-bottom:8px}.msg-body p:last-child{margin-bottom:0}

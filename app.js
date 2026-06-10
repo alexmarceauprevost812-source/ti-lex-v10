@@ -418,7 +418,7 @@ const I18N = {
     pushGitHub: "Push sur GitHub", pushDeploy: "Push + Deploy Vercel",
     pushing: "Push en cours…", pushed: "Pushé !", retry: "Réessayer",
     deploying: "Deploy Vercel…", deployed: "Déployé !",
-    listen: "Écouter", listenTitle: "Écouter la réponse", pause: "Pause", delete_: "Supprimer", untitled: "Sans titre",
+    listen: "Écouter", listenTitle: "Écouter la réponse", pause: "Pause", copy: "Copier", copied: "Copié !", copyTitle: "Copier le texte", delete_: "Supprimer", untitled: "Sans titre",
     secActivate: "Activer", secRevoke: "Révoquer", secNotDefined: "non défini",
     files: "fichiers", andMore: "et %n autres",
     agentTilex: "L'agent signature : intense, sans filtre, droit au but.",
@@ -665,7 +665,7 @@ const I18N = {
     pushGitHub: "Push to GitHub", pushDeploy: "Push + Deploy Vercel",
     pushing: "Pushing…", pushed: "Pushed!", retry: "Retry",
     deploying: "Deploy Vercel…", deployed: "Deployed!",
-    listen: "Listen", listenTitle: "Listen to response", pause: "Pause", delete_: "Delete", untitled: "Untitled",
+    listen: "Listen", listenTitle: "Listen to response", pause: "Pause", copy: "Copy", copied: "Copied!", copyTitle: "Copy text", delete_: "Delete", untitled: "Untitled",
     secActivate: "Activate", secRevoke: "Revoke", secNotDefined: "not defined",
     files: "files", andMore: "and %n more",
     agentTilex: "The signature agent: intense, unfiltered, straight to the point.",
@@ -2050,13 +2050,14 @@ function cleanTextForTTS(text) {
 }
 
 function addTTSButton(body, text) {
+  if (!text || text.length < 2) return;
   const clean = cleanTextForTTS(text);
-  if (!clean || clean.length < 5) return;
+  const showTTS = clean && clean.length >= 5;
 
   const bar = document.createElement("div");
   bar.className = "tts-bar";
   bar.innerHTML = `
-    <button class="tts-btn" title="${t("listenTitle")}">
+    <button class="tts-btn${showTTS ? "" : " hidden"}" title="${t("listenTitle")}">
       <svg class="tts-ico-play" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
       </svg>
@@ -2064,6 +2065,15 @@ function addTTSButton(body, text) {
         <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
       </svg>
       <span class="tts-label">${t("listen")}</span>
+    </button>
+    <button class="copy-btn" title="${t("copyTitle")}">
+      <svg class="copy-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <svg class="copy-ico-ok hidden" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6L9 17l-5-5"/>
+      </svg>
+      <span class="copy-label">${t("copy")}</span>
     </button>`;
 
   const btn = bar.querySelector(".tts-btn");
@@ -2102,6 +2112,44 @@ function addTTSButton(body, text) {
     utterance.onerror = utterance.onend;
 
     speechSynthesis.speak(utterance);
+  };
+
+  const copyBtn = bar.querySelector(".copy-btn");
+  const copyIco = bar.querySelector(".copy-ico");
+  const copyOk = bar.querySelector(".copy-ico-ok");
+  const copyLabel = bar.querySelector(".copy-label");
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      copyIco.classList.add("hidden");
+      copyOk.classList.remove("hidden");
+      copyLabel.textContent = t("copied");
+      copyBtn.classList.add("copy-ok");
+      setTimeout(() => {
+        copyIco.classList.remove("hidden");
+        copyOk.classList.add("hidden");
+        copyLabel.textContent = t("copy");
+        copyBtn.classList.remove("copy-ok");
+      }, 2000);
+    } catch (_) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      copyIco.classList.add("hidden");
+      copyOk.classList.remove("hidden");
+      copyLabel.textContent = t("copied");
+      copyBtn.classList.add("copy-ok");
+      setTimeout(() => {
+        copyIco.classList.remove("hidden");
+        copyOk.classList.add("hidden");
+        copyLabel.textContent = t("copy");
+        copyBtn.classList.remove("copy-ok");
+      }, 2000);
+    }
   };
 
   body.appendChild(bar);

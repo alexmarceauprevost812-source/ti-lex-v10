@@ -1,14 +1,13 @@
 // ti-lex-AL — Proxy IA securise (Anthropic chat + OpenAI images)
-// Cles API cote serveur. Verifie le JWT, valide le body, limite l'usage.
+// Cles API cote serveur. Valide le body, limite l'usage.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
+const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// ⚠ en prod : remplace * par ton domaine exact
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
 
 const CORS = {
@@ -17,7 +16,6 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// ----- Limites -----
 const LIMITS = { chat: 200, image: 20 };
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
@@ -33,15 +31,18 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405);
 
   try {
-    // ---- 1. Auth : verifie le JWT ----
+    // ---- 1. Auth optionnelle ----
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "Token manquant" }, 401);
+    let userId = "anonymous";
 
-    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: userData, error: authErr } = await sb.auth.getUser(token);
-    if (authErr || !userData?.user) return json({ error: "Token invalide" }, 401);
-    const userId = userData.user.id;
+    if (token) {
+      try {
+        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+        const { data: userData } = await sb.auth.getUser(token);
+        if (userData?.user?.id) userId = userData.user.id;
+      } catch (_) {}
+    }
 
     // ---- 2. Parse + valide le body ----
     let body: any;
@@ -50,28 +51,33 @@ Deno.serve(async (req) => {
 
     const kind = body.kind === "image" ? "image" : "chat";
 
-    // ---- 3. Rate limit (lecture + increment atomique) ----
-    const col = kind === "image" ? "image_count" : "chat_count";
-    const { data: usage } = await sb
-      .from("ai_usage")
-      .select(col)
-      .eq("user_id", userId)
-      .eq("day", new Date().toISOString().slice(0, 10))
-      .maybeSingle();
+    // ---- 3. Rate limit (optionnel) ----
+    if (userId !== "anonymous") {
+      try {
+        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+        const col = kind === "image" ? "image_count" : "chat_count";
+        const { data: usage } = await sb
+          .from("ai_usage")
+          .select(col)
+          .eq("user_id", userId)
+          .eq("day", new Date().toISOString().slice(0, 10))
+          .maybeSingle();
 
-    const current = (usage as any)?.[col] ?? 0;
-    if (current >= LIMITS[kind]) {
-      return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
+        const current = (usage as any)?.[col] ?? 0;
+        if (current >= LIMITS[kind]) {
+          return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
+        }
+
+        await sb.from("ai_usage").upsert(
+          {
+            user_id: userId,
+            day: new Date().toISOString().slice(0, 10),
+            [col]: current + 1,
+          },
+          { onConflict: "user_id,day" },
+        );
+      } catch (_) {}
     }
-
-    await sb.from("ai_usage").upsert(
-      {
-        user_id: userId,
-        day: new Date().toISOString().slice(0, 10),
-        [col]: current + 1,
-      },
-      { onConflict: "user_id,day" },
-    );
 
     // ===================== IMAGE =====================
     if (kind === "image") {
@@ -115,6 +121,7 @@ Deno.serve(async (req) => {
 
     const userKey = req.headers.get("x-anthropic-key");
     const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
+    if (!apiKey) return json({ error: "Aucune cle API configuree. Ajoute ta cle Anthropic dans les Parametres ou en secret Supabase." }, 500);
 
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -132,7 +139,14 @@ Deno.serve(async (req) => {
         ...(body.tools ? { tools: body.tools } : {}),
       }),
     });
-    if (!r.ok) return json({ error: "Erreur du modele" }, r.status);
+    if (!r.ok) {
+      try {
+        const errData = await r.json();
+        return json({ error: errData.error?.message || `Erreur Claude (${r.status})` }, r.status);
+      } catch {
+        return json({ error: `Erreur du modele (${r.status})` }, r.status);
+      }
+    }
 
     return new Response(r.body, {
       headers: {
