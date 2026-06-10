@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       user.email ?? "",
     );
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ceauprevost812-3889s-projects.vercel.app";
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
