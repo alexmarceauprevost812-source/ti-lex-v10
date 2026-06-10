@@ -1563,15 +1563,17 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
   z-index:50;
 }
 .proj-fab-mascot{
-  width:80px;height:80px;border-radius:50%;overflow:hidden;
+  width:90px;height:90px;border-radius:50%;overflow:hidden;
   position:relative;margin-bottom:-8px;z-index:51;
-  border:3px solid #333;
-  box-shadow:0 4px 16px rgba(0,0,0,.6);
+  border:3px solid #444;
+  box-shadow:0 4px 20px rgba(230,126,34,.3),0 0 0 2px rgba(230,126,34,.2);
   cursor:pointer;
 }
 .mascot-eyes{
-  position:absolute;top:0;left:0;width:100%;height:100%;
-  object-fit:cover;object-position:center 35%;
+  position:absolute;top:50%;left:50%;
+  width:200%;height:200%;
+  transform:translate(-50%,-42%);
+  object-fit:cover;
   transition:opacity .3s ease;
 }
 .mascot-open{opacity:1;z-index:2}
