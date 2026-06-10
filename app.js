@@ -259,6 +259,7 @@ const I18N = {
     projInstr: "Instructions personnalisées", projInstrPh: "Ajouter des instructions...",
     projRecent: "Conversations récentes", projPrivate: "Privé",
     nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres", account: "Compte" },
+    fpLimited: "Pour une durée limitée",
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
     convAll: "Toutes", convFav: "Favoris", convProj: "Projet",
     convEmpty: "Aucune conversation", convEmptySub: "Commence une nouvelle conversation pour la voir ici.",
@@ -540,6 +541,7 @@ const I18N = {
     projInstr: "Custom instructions", projInstrPh: "Add instructions...",
     projRecent: "Recent conversations", projPrivate: "Private",
     nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings", account: "Account" },
+    fpLimited: "For a limited time",
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
     convAll: "All", convFav: "Favorites", convProj: "Project",
     convEmpty: "No conversations", convEmptySub: "Start a new conversation to see it here.",
@@ -816,6 +818,8 @@ function applyLang() {
         const splitAt = state.lang === "en" ? 2 : 4;
         lbl.innerHTML = `<span class="forf-white">${word.slice(0, splitAt)}</span><span class="forf-badge">${word.slice(splitAt)}</span><span class="forf-sep">-</span><span class="nav-dollar">$</span>`;
       }
+      const ltd = $(".forf-limited", b);
+      if (ltd) ltd.innerHTML = `&#x1F525; ${s.fpLimited || "Pour une durée limitée"}`;
     } else if (v === "finance") {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) {

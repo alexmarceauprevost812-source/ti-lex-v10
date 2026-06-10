@@ -1974,6 +1974,16 @@ textarea.fin-input:focus{outline:none}
 .nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5)}
 .nav-forfaits:hover .forf-badge{background:#ff9d45}
 .nav-forfaits.active .forf-badge{background:#ff9d45}
+.forf-limited{
+  display:block;color:#fff;font-size:11px;font-weight:600;
+  letter-spacing:.03em;margin-top:2px;
+  animation:pulseWhite 2s ease-in-out infinite;
+}
+@keyframes pulseWhite{
+  0%,100%{opacity:1}
+  50%{opacity:.4}
+}
+.nav-forfaits.active .forf-badge{background:#ff9d45}
 
 .view-forfaits{
   overflow-y:auto!important;overflow-x:hidden!important;position:relative;
