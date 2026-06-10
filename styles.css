@@ -1371,12 +1371,51 @@ body[data-theme="light"] .chat-code-block{background:#f6f8fa;color:#1f2328}
 @media(max-width:860px){.agents-panel{width:85vw}}
 
 /* ============ FINANCE — Nav & View ============ */
-.nav-finance .ico{stroke:#d4a017!important;filter:drop-shadow(0 0 4px rgba(212,160,23,.4))}
 .nav-finance .lbl{font-weight:700}
-.nav-finance:hover .ico{stroke:#f5c842!important;filter:drop-shadow(0 0 8px rgba(245,200,66,.6))}
-.nav-finance.active .ico{stroke:#f5c842!important;filter:drop-shadow(0 0 8px rgba(245,200,66,.6))}
 .nav-finance.active{border-color:#d4a017;box-shadow:0 0 0 3px rgba(212,160,23,.25)}
 
+/* ECG heartbeat icon */
+.fin-ecg-svg{width:32px!important;height:18px!important;overflow:visible;filter:drop-shadow(0 0 6px rgba(255,215,0,.5))}
+.fin-ecg-line{
+  stroke:#d4a017;stroke-width:2;
+  stroke-dasharray:120;stroke-dashoffset:120;
+  animation:ecgDraw 2.5s linear infinite;
+}
+.fin-ecg-dot{
+  fill:#ffe066;
+  filter:drop-shadow(0 0 4px rgba(255,224,102,.8));
+  animation:ecgDot 2.5s linear infinite;
+}
+@keyframes ecgDraw{
+  0%{stroke-dashoffset:120;stroke:#d4a017;filter:none}
+  50%{stroke-dashoffset:0;stroke:#ffe066;filter:drop-shadow(0 0 3px rgba(255,224,102,.6))}
+  100%{stroke-dashoffset:-120;stroke:#d4a017;filter:none}
+}
+@keyframes ecgDot{
+  0%{cx:0;opacity:1;fill:#d4a017}
+  8%{cx:8;fill:#d4a017}
+  12%{cx:12;fill:#d4a017}
+  14%{cx:14;cy:6;fill:#ffe066;filter:drop-shadow(0 0 8px rgba(255,224,102,1))}
+  17%{cx:17;cy:22;fill:#ffe066}
+  20%{cx:20;cy:4;fill:#ffd700;filter:drop-shadow(0 0 12px rgba(255,215,0,1))}
+  23%{cx:23;cy:20;fill:#ffe066}
+  26%{cx:26;cy:14;fill:#d4a017;filter:none}
+  50%{cx:30;fill:#d4a017}
+  56%{cx:34;fill:#d4a017}
+  58%{cx:36;cy:6;fill:#ffe066;filter:drop-shadow(0 0 8px rgba(255,224,102,1))}
+  61%{cx:39;cy:22;fill:#ffe066}
+  64%{cx:42;cy:4;fill:#ffd700;filter:drop-shadow(0 0 12px rgba(255,215,0,1))}
+  67%{cx:45;cy:20;fill:#ffe066}
+  70%{cx:48;cy:14;fill:#d4a017;filter:none}
+  86%{cx:52;fill:#d4a017}
+  100%{cx:60;opacity:0;fill:#d4a017}
+}
+.nav-finance:hover .fin-ecg-line{stroke:#ffe066!important}
+.nav-finance:hover .fin-ecg-svg{filter:drop-shadow(0 0 10px rgba(255,215,0,.7))}
+.nav-finance.active .fin-ecg-line{stroke:#ffe066!important}
+.nav-finance.active .fin-ecg-svg{filter:drop-shadow(0 0 10px rgba(255,215,0,.7))}
+
+/* Finance letter spotlight */
 .fin-letter{
   display:inline-block;
   color:#b8860b;
