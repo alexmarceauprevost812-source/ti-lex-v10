@@ -1557,21 +1557,34 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 .proj-card-name{font-size:1rem;font-weight:700;color:#e0e0e0;display:flex;align-items:center;gap:8px}
 .proj-card-name .proj-star{color:#ffd700;font-size:.9rem}
 .proj-card-date{font-size:.72rem;color:#666;font-style:italic;margin-top:2px}
-.proj-new-wrap{
-  margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:0;
+.proj-fab-wrap{
+  position:fixed;bottom:24px;right:24px;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  z-index:50;
 }
-.proj-btn-video{
-  width:180px;height:auto;border-radius:20px 20px 0 0;
-  display:block;pointer-events:none;
-  margin-bottom:-2px;
+.proj-fab-mascot{
+  width:80px;height:80px;border-radius:50%;overflow:hidden;
+  position:relative;margin-bottom:-8px;z-index:51;
+  border:3px solid #333;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);
+  cursor:pointer;
 }
+.mascot-eyes{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;object-position:center 35%;
+  transition:opacity .3s ease;
+}
+.mascot-open{opacity:1;z-index:2}
+.mascot-wink{opacity:0;z-index:1}
+.proj-fab-mascot.winking .mascot-open{opacity:0}
+.proj-fab-mascot.winking .mascot-wink{opacity:1}
 .proj-new-btn{
   display:flex;align-items:center;gap:10px;
-  padding:16px 32px;
+  padding:14px 24px;
   background:var(--orange);color:#fff;border:none;border-radius:50px;
-  font-size:.95rem;font-weight:700;cursor:pointer;
+  font-size:.85rem;font-weight:700;cursor:pointer;
   box-shadow:0 6px 20px rgba(230,126,34,.4);
-  transition:all .2s;z-index:2;position:relative}
+  transition:all .2s;position:relative}
 .proj-new-btn:hover{transform:scale(1.04);box-shadow:0 8px 28px rgba(230,126,34,.5)}
 
 /* Projet detail */

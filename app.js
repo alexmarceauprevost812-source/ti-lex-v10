@@ -2077,14 +2077,32 @@ function renderProjectConvs(proj) {
 // Event handlers
 if ($("#projBackBtn")) $("#projBackBtn").onclick = closeProjectDetail;
 
+function projWink() {
+  const mascot = $("#projFabMascot");
+  if (!mascot) return;
+  mascot.classList.add("winking");
+  setTimeout(() => mascot.classList.remove("winking"), 600);
+  setTimeout(() => {
+    mascot.classList.add("winking");
+    setTimeout(() => mascot.classList.remove("winking"), 400);
+  }, 900);
+}
+
 if ($("#projNewBtn")) {
   $("#projNewBtn").onclick = () => {
-    const name = prompt(t("convRenamePrompt").replace("conversation", "projet"), "");
-    if (name && name.trim()) {
-      createProject(name.trim());
-      renderProjectsList();
-    }
+    projWink();
+    setTimeout(() => {
+      const name = prompt(t("convRenamePrompt").replace("conversation", "projet"), "");
+      if (name && name.trim()) {
+        createProject(name.trim());
+        renderProjectsList();
+      }
+    }, 500);
   };
+}
+
+if ($("#projFabMascot")) {
+  $("#projFabMascot").onclick = () => projWink();
 }
 
 if ($("#projSearch")) {
