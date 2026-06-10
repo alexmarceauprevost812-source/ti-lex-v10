@@ -4124,6 +4124,31 @@ function addPreviewButton(container, fullText) {
   container.appendChild(btn);
 }
 
+/* ============ DEMON EYES (sidebar) ============ */
+(function initDemonEyes() {
+  const wrap = $("#demonEyesWrap");
+  if (!wrap) return;
+
+  function demonBlink() {
+    wrap.classList.add("blinking");
+    setTimeout(() => wrap.classList.remove("blinking"), 150);
+  }
+
+  function demonWink() {
+    wrap.classList.add("winking");
+    setTimeout(() => wrap.classList.remove("winking"), 600);
+    setTimeout(() => {
+      wrap.classList.add("winking");
+      setTimeout(() => wrap.classList.remove("winking"), 400);
+    }, 900);
+  }
+
+  setInterval(demonBlink, 2500);
+  setInterval(demonWink, 5000);
+
+  wrap.onclick = demonWink;
+})();
+
 /* init */
 loadSettings();
 $("#modelSelect").value = state.model;

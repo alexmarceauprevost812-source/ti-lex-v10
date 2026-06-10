@@ -125,6 +125,36 @@ body{
   box-shadow:0 0 14px var(--orange-glow)}
 .brand-name{font-family:var(--marker);font-weight:400;font-size:1.2rem;letter-spacing:.5px;white-space:nowrap}
 
+/* ---- Demon eyes (sidebar top peek) ---- */
+.demon-eyes-wrap{
+  width:100%;height:60px;overflow:hidden;position:relative;
+  margin-bottom:6px;border-radius:10px;cursor:pointer;
+}
+.demon-img{
+  position:absolute;top:0;left:50%;
+  width:260%;
+  transform:translate(-50%,-33%);
+  transition:opacity .15s ease;
+  pointer-events:none;
+  image-rendering:auto;
+}
+.demon-open{opacity:1;z-index:2}
+.demon-wink{opacity:0;z-index:1}
+.demon-eyes-wrap.winking .demon-open{opacity:0}
+.demon-eyes-wrap.winking .demon-wink{opacity:1}
+.demon-blink-lid{
+  position:absolute;inset:0;z-index:3;
+  background:#000;opacity:0;
+  pointer-events:none;
+  transition:opacity .08s ease;
+}
+.demon-eyes-wrap.blinking .demon-blink-lid{opacity:1}
+@keyframes demonGlow{
+  0%,100%{box-shadow:inset 0 0 15px rgba(255,100,0,.15)}
+  50%{box-shadow:inset 0 0 25px rgba(255,100,0,.35),0 0 8px rgba(255,100,0,.2)}
+}
+.demon-eyes-wrap{animation:demonGlow 3s ease-in-out infinite}
+
 .nav{display:flex;flex-direction:column;gap:4px}
 .nav-item{
   display:flex;align-items:center;gap:12px;width:100%;
