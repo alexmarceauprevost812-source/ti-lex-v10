@@ -1976,14 +1976,17 @@ textarea.fin-input:focus{outline:none}
 .nav-forfaits:hover .ico{stroke:#ff9d45!important}
 .nav-forfaits.active .ico{stroke:#ff9d45!important}
 .nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
-.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5);margin-left:2px}
-.abn-anim{color:#fff;font-weight:700;letter-spacing:.3px}
-.abn-letter{display:inline-block;opacity:0;transform:translateY(-12px) scale(.6);filter:blur(3px);
-  animation:abnProject .45s ease-out forwards}
-@keyframes abnProject{
-  0%{opacity:0;transform:translateY(-12px) scale(.6);filter:blur(3px)}
-  60%{opacity:1;transform:translateY(2px) scale(1.05);filter:blur(0)}
-  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5);margin-left:3px}
+.forf-spot{
+  display:inline-block;font-weight:700;letter-spacing:.5px;
+  color:rgba(255,255,255,.18);text-shadow:none;
+  animation:forfSpotlight 3.5s ease-in-out infinite;
+  animation-delay:calc(var(--i) * .35s);
+}
+@keyframes forfSpotlight{
+  0%,100%{color:rgba(255,255,255,.18);text-shadow:none;transform:scale(1)}
+  14%{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.9),0 0 20px rgba(249,115,22,.6);transform:scale(1.12)}
+  28%{color:rgba(255,255,255,.18);text-shadow:none;transform:scale(1)}
 }
 
 .view-forfaits{
