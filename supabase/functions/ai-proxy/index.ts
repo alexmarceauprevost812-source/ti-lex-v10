@@ -30,6 +30,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405);
 
+  // DEBUG temporaire — à retirer en production
+  console.log("KEY présente:", !!ANTHROPIC_KEY);
+  console.log("KEY début:", ANTHROPIC_KEY?.slice(0, 10));
+
   try {
     // ---- 1. Auth optionnelle ----
     const authHeader = req.headers.get("Authorization") || "";
@@ -156,8 +160,17 @@ Deno.serve(async (req) => {
         Connection: "keep-alive",
       },
     });
-  } catch (e) {
-    return json({ error: "Erreur serveur" }, 500);
+  } catch (error: any) {
+    console.error("ERREUR COMPLÈTE:", {
+      status: error.status,
+      message: error.message,
+      type: error.constructor?.name,
+      headers: error.headers,
+    });
+    return json(
+      { error: `HTTP ${error.status ?? 500}: ${error.message ?? "Erreur serveur"}` },
+      error.status ?? 500,
+    );
   }
 });
 
