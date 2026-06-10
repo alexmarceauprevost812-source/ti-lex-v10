@@ -239,7 +239,13 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets" },
+    projTitle: "Projets", projSearch: "Rechercher des projets",
+    projNew: "Nouveau projet", projNewConv: "Nouvelle conversation",
+    projMemo: "Mémoire", projMemoPh: "Décris le contexte du projet...",
+    projFiles: "Connaissances du projet", projAddFile: "+ Ajouter un fichier",
+    projInstr: "Instructions personnalisées", projInstrPh: "Ajouter des instructions...",
+    projRecent: "Conversations récentes", projPrivate: "Privé",
     nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres" },
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
     convAll: "Toutes", convFav: "Favoris", convProj: "Projet",
@@ -495,7 +501,13 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects" },
+    projTitle: "Projects", projSearch: "Search projects",
+    projNew: "New project", projNewConv: "New conversation",
+    projMemo: "Memory", projMemoPh: "Describe the project context...",
+    projFiles: "Project knowledge", projAddFile: "+ Add a file",
+    projInstr: "Custom instructions", projInstrPh: "Add instructions...",
+    projRecent: "Recent conversations", projPrivate: "Private",
     nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings" },
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
     convAll: "All", convFav: "Favorites", convProj: "Project",
@@ -1014,13 +1026,16 @@ const TITLES = I18N.fr.titles;
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
-  $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
+  $$(".nav-item").forEach(b => {
+    const bv = b.dataset.view;
+    b.classList.toggle("active", bv === v || (bv === "chat" && v === "projects"));
+  });
   const titles = I18N[state.lang]?.titles || TITLES;
   $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
   const subNav = $("#chatSubNav");
-  if (subNav) subNav.classList.toggle("open", v === "chat");
+  if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -1793,7 +1808,13 @@ $$(".chat-sub-item").forEach(btn => {
   btn.onclick = () => {
     chatSubFilter = btn.dataset.sub;
     $$(".chat-sub-item").forEach(b => b.classList.toggle("active", b.dataset.sub === chatSubFilter));
-    renderChatConvsFiltered();
+    if (chatSubFilter === "projs") {
+      switchView("projects");
+      renderProjectsList();
+    } else {
+      switchView("chat");
+      renderChatConvsFiltered();
+    }
   };
 });
 
@@ -1898,6 +1919,255 @@ $$(".conv-dd-item").forEach(item => {
 document.addEventListener("click", () => {
   const dd = $("#convDotsDropdown");
   if (dd && !dd.classList.contains("hidden")) dd.classList.add("hidden");
+});
+
+/* ================= PROJETS ================= */
+const PROJ_LS_KEY = "tilex-projects";
+let projects = [];
+let activeProjectId = null;
+
+function loadProjects() {
+  try { projects = JSON.parse(localStorage.getItem(PROJ_LS_KEY) || "[]"); } catch (_) { projects = []; }
+}
+function saveProjects() {
+  try { localStorage.setItem(PROJ_LS_KEY, JSON.stringify(projects)); } catch (_) {}
+}
+loadProjects();
+
+function createProject(name) {
+  const proj = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name || t("convNewChat"),
+    memo: "",
+    instructions: "",
+    files: [],
+    conversations: [],
+    fav: false,
+    ts: Date.now()
+  };
+  projects.unshift(proj);
+  saveProjects();
+  return proj;
+}
+
+function renderProjectsList(query) {
+  const container = $("#projItems");
+  if (!container) return;
+  const q = (query || "").toLowerCase();
+  const filtered = q ? projects.filter(p => p.name.toLowerCase().includes(q)) : projects;
+
+  if (!filtered.length) {
+    container.innerHTML = `<p class="muted" style="font-size:.82rem;padding:16px 0;text-align:center;color:#555">${q ? t("convEmpty") : t("convEmptySub")}</p>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(p => {
+    const age = p.ts ? timeAgo(p.ts) : "";
+    return `<div class="proj-card" data-id="${p.id}">
+      <div>
+        <div class="proj-card-name">${escapeHtml(p.name)}${p.fav ? ' <span class="proj-star">★</span>' : ''}</div>
+        <div class="proj-card-date">${t("convProj")} · ${age ? age : ""}</div>
+      </div>
+    </div>`;
+  }).join("");
+
+  $$(".proj-card", container).forEach(card => {
+    card.onclick = () => openProjectDetail(card.dataset.id);
+  });
+}
+
+function openProjectDetail(id) {
+  const proj = projects.find(p => p.id === id);
+  if (!proj) return;
+  activeProjectId = id;
+
+  $("#projListPage").classList.add("hidden");
+  $("#projDetailPage").classList.remove("hidden");
+  $("#projDetailName").textContent = proj.name;
+  $("#projMemoInput").value = proj.memo || "";
+  $("#projInstructions").value = proj.instructions || "";
+
+  renderProjectFiles(proj);
+  renderProjectConvs(proj);
+}
+
+function closeProjectDetail() {
+  saveCurrentProject();
+  activeProjectId = null;
+  $("#projDetailPage").classList.add("hidden");
+  $("#projListPage").classList.remove("hidden");
+  renderProjectsList();
+}
+
+function saveCurrentProject() {
+  if (!activeProjectId) return;
+  const proj = projects.find(p => p.id === activeProjectId);
+  if (!proj) return;
+  const memoEl = $("#projMemoInput");
+  const instrEl = $("#projInstructions");
+  if (memoEl) proj.memo = memoEl.value;
+  if (instrEl) proj.instructions = instrEl.value;
+  proj.ts = Date.now();
+  saveProjects();
+}
+
+function renderProjectFiles(proj) {
+  const list = $("#projFilesList");
+  if (!list) return;
+  if (!proj.files.length) {
+    list.innerHTML = `<p class="muted" style="font-size:.72rem;color:#555">0 fichier</p>`;
+    return;
+  }
+  list.innerHTML = proj.files.map((f, i) => `
+    <div class="proj-file-item">
+      <span class="proj-file-name">📄 ${escapeHtml(f.name)}</span>
+      <span style="color:#555;font-size:.65rem">${(f.size / 1024).toFixed(1)} KB</span>
+      <button class="proj-file-del" data-idx="${i}" title="${t("convDelete")}">×</button>
+    </div>
+  `).join("");
+  list.innerHTML = `<p style="font-size:.72rem;color:#666;margin:0">${proj.files.length} fichier${proj.files.length > 1 ? 's' : ''}</p>` + list.innerHTML;
+
+  $$(".proj-file-del", list).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      proj.files.splice(+btn.dataset.idx, 1);
+      saveProjects();
+      renderProjectFiles(proj);
+    };
+  });
+}
+
+function renderProjectConvs(proj) {
+  const list = $("#projConvsList");
+  if (!list) return;
+
+  const projConvIdxs = [];
+  chatConvs.forEach((c, i) => {
+    const f = getConvFlags(i);
+    if (f.projectId === proj.id) projConvIdxs.push(i);
+  });
+
+  if (!projConvIdxs.length) {
+    list.innerHTML = `<p class="muted" style="font-size:.78rem;color:#555;padding:8px 0">${t("convEmpty")}</p>`;
+    return;
+  }
+
+  list.innerHTML = projConvIdxs.map(i => {
+    const c = chatConvs[i];
+    const age = c.ts ? timeAgo(c.ts) : "";
+    const f = getConvFlags(i);
+    return `<div class="proj-conv-card" data-idx="${i}">
+      <div class="proj-conv-card-title">${escapeHtml(c.title)}${f.fav ? '<span class="proj-star">★</span>' : ''}</div>
+      <div class="proj-conv-card-date">${age}</div>
+    </div>`;
+  }).join("");
+
+  $$(".proj-conv-card", list).forEach(card => {
+    card.onclick = () => {
+      const idx = +card.dataset.idx;
+      activeChatConv = idx;
+      state.history = [...chatConvs[idx].messages];
+      rebuildChatFromHistory();
+      renderChatConvs();
+      switchView("chat");
+    };
+  });
+}
+
+// Event handlers
+if ($("#projBackBtn")) $("#projBackBtn").onclick = closeProjectDetail;
+
+if ($("#projNewBtn")) {
+  $("#projNewBtn").onclick = () => {
+    const name = prompt(t("convRenamePrompt").replace("conversation", "projet"), "");
+    if (name && name.trim()) {
+      createProject(name.trim());
+      renderProjectsList();
+    }
+  };
+}
+
+if ($("#projSearch")) {
+  $("#projSearch").oninput = () => renderProjectsList($("#projSearch").value);
+}
+
+if ($("#projDetailDots")) {
+  $("#projDetailDots").onclick = (e) => {
+    e.stopPropagation();
+    const menu = $("#projDetailMenu");
+    menu.classList.toggle("hidden");
+  };
+}
+
+$$(".proj-dm-item").forEach(item => {
+  item.onclick = (e) => {
+    e.stopPropagation();
+    $("#projDetailMenu").classList.add("hidden");
+    const proj = projects.find(p => p.id === activeProjectId);
+    if (!proj) return;
+    const act = item.dataset.act;
+    if (act === "rename") {
+      const newName = prompt(t("convRenamePrompt"), proj.name);
+      if (newName && newName.trim()) {
+        proj.name = newName.trim();
+        saveProjects();
+        $("#projDetailName").textContent = proj.name;
+      }
+    } else if (act === "fav") {
+      proj.fav = !proj.fav;
+      saveProjects();
+    } else if (act === "delete") {
+      projects = projects.filter(p => p.id !== activeProjectId);
+      saveProjects();
+      closeProjectDetail();
+    }
+  };
+});
+
+if ($("#projUploadBtn")) {
+  $("#projUploadBtn").onclick = () => $("#projFileInput").click();
+}
+if ($("#projFileInput")) {
+  $("#projFileInput").onchange = (e) => {
+    const proj = projects.find(p => p.id === activeProjectId);
+    if (!proj) return;
+    Array.from(e.target.files).forEach(f => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        proj.files.push({ name: f.name, size: f.size, data: reader.result, ts: Date.now() });
+        saveProjects();
+        renderProjectFiles(proj);
+      };
+      reader.readAsDataURL(f);
+    });
+    e.target.value = "";
+  };
+}
+
+if ($("#projNewConvBtn")) {
+  $("#projNewConvBtn").onclick = () => {
+    activeChatConv = -1;
+    state.history = [];
+    resetChatWelcome();
+    if (activeProjectId) {
+      chatConvs.unshift({ title: t("convNewChat"), messages: [], ts: Date.now() });
+      activeChatConv = 0;
+      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+      setConvFlag(0, "proj", true);
+      setConvFlag(0, "projectId", activeProjectId);
+    }
+    renderChatConvs();
+    switchView("chat");
+  };
+}
+
+// Auto-save memo/instructions on blur
+if ($("#projMemoInput")) $("#projMemoInput").onblur = saveCurrentProject;
+if ($("#projInstructions")) $("#projInstructions").onblur = saveCurrentProject;
+
+document.addEventListener("click", () => {
+  const m = $("#projDetailMenu");
+  if (m && !m.classList.contains("hidden")) m.classList.add("hidden");
 });
 
 /* ================= CHAT ================= */
