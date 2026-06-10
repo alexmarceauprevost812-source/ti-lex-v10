@@ -1893,7 +1893,10 @@ body[data-theme="light"] .proj-file-item{background:#f0f0f0;color:#222}
 .fin-scroll::-webkit-scrollbar-track{background:transparent}
 
 .fin-welcome{max-width:560px;margin:8px auto 0;animation:finUp .5s ease both}
-.fin-welcome-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-style:italic;font-size:27px;line-height:1.25;color:#f3f1ec}
+.fin-welcome-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-style:italic;font-size:27px;line-height:1.25;color:#f3f1ec;min-height:68px}
+.fin-type-line{display:inline;border-right:2px solid transparent}
+.fin-type-line:last-of-type{border-right-color:#ff7a1a;animation:finBlink .6s step-end infinite}
+@keyframes finBlink{0%,100%{border-color:#ff7a1a}50%{border-color:transparent}}
 .fin-welcome-sub{color:#8c8780;font-size:15px;line-height:1.6;margin:14px 0 22px}
 .fin-suggestions{display:flex;flex-wrap:wrap;gap:9px}
 .fin-chip{cursor:pointer;background:linear-gradient(135deg,#ff8a2e,#ee6b12);border:none;color:#140d05;font-weight:600;border-radius:12px;padding:10px 14px;font-size:13.5px;font-family:'Hanken Grotesk',system-ui,sans-serif;text-align:left;box-shadow:0 2px 12px rgba(255,122,26,.18);transition:all .18s ease}

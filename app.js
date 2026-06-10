@@ -992,8 +992,10 @@ function applyLang() {
   { const e = $(".fin-title"); if (e) e.textContent = s.finTitle; }
   { const e = $(".fin-subtitle"); if (e) e.innerHTML = '<span class="fin-status-dot"></span>' + s.finStatus + '<span class="fin-sep">·</span><span>' + s.finOrigin + '</span>'; }
   { const e = $(".fin-badge"); if (e) e.textContent = s.finBadge; }
-  { const e = $(".fin-welcome-title"); if (e) e.innerHTML = s.finWelcomeTitle; }
-  { const e = $(".fin-welcome-sub"); if (e) e.textContent = s.finWelcomeSub; }
+  if (!window._finTyping) {
+    { const e = $(".fin-welcome-title"); if (e) e.innerHTML = s.finWelcomeTitle; }
+    { const e = $(".fin-welcome-sub"); if (e) e.textContent = s.finWelcomeSub; }
+  }
   const fc = $$(".fin-chip");
   const fck = ["finChip1","finChip2","finChip3","finChip4","finChip5","finChip6"];
   fc.forEach((c, i) => { if (fck[i]) { c.textContent = s[fck[i]]; c.dataset.q = s[fck[i]]; } });
@@ -1074,6 +1076,7 @@ function switchView(v) {
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
   if (v === "account" && typeof refreshAccountPage === "function") refreshAccountPage();
+  if (v === "finance") { const w = $("#finWelcome"); if (w && w.style.display !== "none") finTypewriter(); }
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects");
@@ -5100,6 +5103,75 @@ function finRenderMd(text) {
     .replace(/<\/ol>\s*<ol>/g, '')
     .replace(/\n{2,}/g, '<br><br>')
     .replace(/\n/g, '<br>');
+}
+
+/* ---- Finance typewriter ---- */
+let _finTypeTimer = null;
+function finTypewriter() {
+  if (_finTypeTimer) { clearTimeout(_finTypeTimer); _finTypeTimer = null; }
+  window._finTyping = true;
+  const s = I18N[state.lang] || I18N.fr;
+  const titleEl = $("#finTypeTitle");
+  const subEl = $("#finTypeSub");
+  if (!titleEl || !subEl) return;
+  titleEl.innerHTML = "";
+  subEl.textContent = "";
+  subEl.style.opacity = "0";
+
+  const rawTitle = s.finWelcomeTitle || "Voir clair dans<br>tes finances.";
+  const parts = rawTitle.split("<br>");
+  const line1 = parts[0] || "";
+  const line2 = parts[1] || "";
+  const subText = s.finWelcomeSub || "";
+
+  const span1 = document.createElement("span");
+  span1.className = "fin-type-line";
+  const span2 = document.createElement("span");
+  span2.className = "fin-type-line";
+  titleEl.appendChild(span1);
+  titleEl.appendChild(document.createElement("br"));
+  titleEl.appendChild(span2);
+
+  let i1 = 0, i2 = 0, iSub = 0;
+  const half1 = Math.floor(line1.length * 0.5);
+  let line2Started = false, subStarted = false;
+
+  function typeStep() {
+    if (i1 < line1.length) {
+      span1.textContent += line1[i1];
+      i1++;
+      if (i1 >= half1 && !line2Started) line2Started = true;
+    }
+    if (line2Started && i2 < line2.length) {
+      span2.textContent += line2[i2];
+      i2++;
+    }
+    if (i1 >= line1.length && i2 >= line2.length && !subStarted) {
+      subStarted = true;
+      subEl.style.opacity = "1";
+      subEl.style.transition = "opacity .4s";
+    }
+    if (subStarted && iSub < subText.length) {
+      subEl.textContent += subText[iSub];
+      iSub++;
+    }
+
+    if (i1 < line1.length || i2 < line2.length || iSub < subText.length) {
+      let delay;
+      if (iSub > 0) delay = 18;
+      else if (i2 > 0 && i1 >= line1.length) delay = 55;
+      else delay = 50;
+      _finTypeTimer = setTimeout(typeStep, delay);
+    } else {
+      window._finTyping = false;
+      const chips = $("#finSuggestions");
+      if (chips) { chips.style.opacity = "0"; chips.style.transition = "opacity .6s ease"; requestAnimationFrame(() => chips.style.opacity = "1"); }
+    }
+  }
+
+  const chips = $("#finSuggestions");
+  if (chips) chips.style.opacity = "0";
+  _finTypeTimer = setTimeout(typeStep, 400);
 }
 
 function finAddMsg(role, content, error) {
