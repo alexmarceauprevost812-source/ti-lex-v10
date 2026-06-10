@@ -488,6 +488,9 @@ const I18N = {
     commitMsgStudioVia: "via ti-lex Studio",
     pushGhProgress: "Push GitHub…",
     serviceConnected: "● connecté",
+    previewStudio: "Prévisualiser",
+    previewCode: "Voir le code",
+    previewDownload: "Télécharger",
     studioZipLabel: "Fichiers ZIP uploadés",
     studioRoot: "racine",
     studioBinaryFile: "(fichier binaire — contenu non lisible)",
@@ -748,6 +751,9 @@ const I18N = {
     commitMsgStudioVia: "via ti-lex Studio",
     pushGhProgress: "Push GitHub…",
     serviceConnected: "● connected",
+    previewStudio: "Preview",
+    previewCode: "View code",
+    previewDownload: "Download",
     studioZipLabel: "Uploaded ZIP files",
     studioRoot: "root",
     studioBinaryFile: "(binary file — content not readable)",
@@ -1034,6 +1040,7 @@ function switchView(v) {
   $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
+  if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects");
 }
@@ -2420,6 +2427,7 @@ async function sendMessage() {
 
   // snapshot des pièces jointes + recherche web, puis on vide le composer
   const atts = attachments.slice();
+  lastAttachedImages = atts.filter(a => a.kind === "image");
   const useWeb = state.webSearch;
   addUserMsg(text, atts);
   input.value = ""; input.style.height = "auto";
@@ -2441,7 +2449,10 @@ async function sendMessage() {
   try {
     const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
     const MEMORY_HINT = " Si l'utilisateur te demande de retenir quelque chose, inclus la balise [mémoire: fait à retenir] dans ta réponse pour que je le sauvegarde.";
-    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + memoryContext() + recentConversationsContext();
+    const STUDIO_HINT = lastAttachedImages.length
+      ? ` L'utilisateur a joint ${lastAttachedImages.length} image(s). Quand tu génères du HTML avec ces images, utilise {{IMAGE}} pour la première image (ou {{IMAGE_0}}, {{IMAGE_1}}… pour plusieurs). Le Studio remplacera automatiquement ces placeholders par les images réelles en base64. Génère un fichier HTML complet (<!DOCTYPE html>…) dans un bloc \`\`\`html pour qu'il soit prévisualisable dans le Studio.`
+      : "";
+    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + STUDIO_HINT + memoryContext() + recentConversationsContext();
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -2559,6 +2570,7 @@ function renderAssistant(body, full, streaming) {
   body.innerHTML = html;
   if (!streaming) {
     if (answer) addCodeActions(body, full);
+    addPreviewButton(body, full);
     renderMermaidBlocks(body);
     addTTSButton(body, answer);
   }
@@ -3996,6 +4008,120 @@ if ($("#studioPushGh")) {
       alert(`${t("studioPushErr")} ${err.message}`);
     }
   };
+}
+
+/* ============ STUDIO PREVIEW (live HTML preview pane inside chat) ============ */
+let spCurrentHtml = "";
+let spShowCode = false;
+let lastAttachedImages = [];
+
+function openStudioPreview(htmlCode) {
+  spCurrentHtml = htmlCode;
+  const panel = $("#studioPreview");
+  const chatView = $("#view-chat");
+  const frame = $("#spFrame");
+  const source = $("#spSource");
+
+  panel.classList.add("open");
+  chatView.classList.add("studio-open");
+  source.value = htmlCode;
+  spShowCode = false;
+  source.classList.add("hidden");
+  frame.classList.remove("hidden");
+  $("#spCodeToggle").classList.remove("active");
+
+  renderPreviewFrame(htmlCode);
+  setTimeout(() => { messages.scrollTop = messages.scrollHeight; }, 400);
+}
+
+function renderPreviewFrame(html) {
+  const frame = $("#spFrame");
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open();
+  doc.write(html);
+  doc.close();
+}
+
+function closeStudioPreview() {
+  const panel = $("#studioPreview");
+  const chatView = $("#view-chat");
+  panel.classList.remove("open");
+  chatView.classList.remove("studio-open");
+}
+
+if ($("#spClose")) {
+  $("#spClose").onclick = closeStudioPreview;
+}
+
+if ($("#spCodeToggle")) {
+  $("#spCodeToggle").onclick = () => {
+    spShowCode = !spShowCode;
+    $("#spSource").classList.toggle("hidden", !spShowCode);
+    const frame = $("#spFrame");
+    if (spShowCode) {
+      frame.style.display = "none";
+    } else {
+      frame.style.display = "";
+      renderPreviewFrame(spCurrentHtml);
+    }
+    $("#spCodeToggle").classList.toggle("active", spShowCode);
+  };
+}
+
+if ($("#spDownload")) {
+  $("#spDownload").onclick = () => {
+    if (!spCurrentHtml) return;
+    const blob = new Blob([spCurrentHtml], { type: "text/html" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "studio-preview.html";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+}
+
+function injectImagesIntoHtml(html, images) {
+  if (!images || !images.length) return html;
+  let result = html;
+  images.forEach((img, i) => {
+    const placeholder = new RegExp(`\\{\\{IMAGE_${i}\\}\\}|\\{\\{image_${i}\\}\\}|\\{\\{IMAGE\\}\\}`, "g");
+    result = result.replace(placeholder, img.dataUrl);
+  });
+  if (images.length === 1) {
+    result = result.replace(/\{\{IMAGE\}\}/g, images[0].dataUrl);
+  }
+  return result;
+}
+
+function extractHtmlBlock(text) {
+  const htmlFull = text.match(/```html\n([\s\S]*?)```/);
+  if (htmlFull) {
+    const code = htmlFull[1].trim();
+    if (code.includes("<!DOCTYPE") || code.includes("<html") || (code.includes("<head") && code.includes("<body"))) {
+      return code;
+    }
+    if (code.includes("<style") || code.includes("<canvas") || code.includes("<div")) {
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:100vh}</style></head><body>${code}</body></html>`;
+    }
+  }
+  return null;
+}
+
+function addPreviewButton(container, fullText) {
+  const html = extractHtmlBlock(fullText);
+  if (!html) return;
+
+  const existing = container.querySelector(".sp-preview-btn");
+  if (existing) existing.remove();
+
+  const btn = document.createElement("button");
+  btn.className = "sp-preview-btn";
+  btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> ${t("previewStudio")}`;
+  btn.onclick = () => {
+    const enriched = injectImagesIntoHtml(html, lastAttachedImages);
+    openStudioPreview(enriched);
+  };
+  container.appendChild(btn);
 }
 
 /* init */

@@ -213,6 +213,31 @@
       <div class="agents-list" id="agentsList"></div>
     </aside>
     <div class="agents-overlay" id="agentsOverlay"></div>
+
+    <!-- ===== STUDIO PREVIEW (slide-in panel) ===== -->
+    <div class="studio-preview" id="studioPreview">
+      <div class="sp-head">
+        <div class="sp-head-left">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span class="sp-title">Studio</span>
+        </div>
+        <div class="sp-head-right">
+          <button class="sp-btn sp-code-toggle" id="spCodeToggle" title="Voir le code">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </button>
+          <button class="sp-btn sp-download" id="spDownload" title="Télécharger HTML">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="sp-btn sp-close" id="spClose" title="Fermer">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sp-body" id="spBody">
+        <iframe id="spFrame" class="sp-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        <textarea id="spSource" class="sp-source hidden" spellcheck="false" readonly></textarea>
+      </div>
+    </div>
   </section>
 
   <!-- ===== VUE PROJETS ===== -->
