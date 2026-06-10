@@ -1539,9 +1539,14 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 .chat-conv-item.conv-pinned .conv-title::before{content:"📌 ";font-size:.65rem}
 
 /* ============ PROJETS VIEW ============ */
-.view-projects{overflow-y:auto!important}
+.view-projects{overflow-y:auto!important;position:relative}
 .view-projects.active{display:flex!important}
-.proj-list-page,.proj-detail-page{width:100%;max-width:700px;margin:0 auto;padding:28px 20px 100px;display:flex;flex-direction:column;gap:18px}
+.proj-bg-video{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;z-index:0;opacity:.37;
+  pointer-events:none;
+}
+.proj-list-page,.proj-detail-page{width:100%;max-width:700px;margin:0 auto;padding:28px 20px 100px;display:flex;flex-direction:column;gap:18px;position:relative;z-index:1}
 .proj-detail-page.hidden{display:none}
 .proj-list-page.hidden{display:none}
 .proj-page-title{font-size:1.6rem;font-weight:800;color:#fff;margin:0;font-family:var(--code-font)}
@@ -1566,6 +1571,7 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
   box-shadow:0 6px 20px rgba(230,126,34,.4);
   transition:all .2s;z-index:50}
 .proj-new-btn:hover{transform:scale(1.04);box-shadow:0 8px 28px rgba(230,126,34,.5)}
+.proj-new-conv-btn{z-index:50}
 
 /* Projet detail */
 .proj-detail-top{display:flex;align-items:center;justify-content:space-between}
