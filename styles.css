@@ -1471,18 +1471,26 @@ body[data-theme="light"] .chat-code-block{background:#f6f8fa;color:#1f2328}
   display:flex;flex-direction:column;gap:0;
   max-height:0;overflow:hidden;opacity:0;
   transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease,padding .4s ease;
-  padding:0 0 0 28px;
+  padding:0 0 0 22px;
+  margin-left:18px;
+  border-left:1.5px solid #333;
 }
-.chat-sub-nav.open{max-height:140px;opacity:1;padding:4px 0 4px 28px}
+.chat-sub-nav.open{max-height:150px;opacity:1;padding:2px 0 2px 22px}
+.sub-branch{
+  font-family:monospace;font-size:.85rem;color:#444;
+  line-height:1;margin-right:2px;flex-shrink:0;
+  transition:color .3s;
+}
 .chat-sub-item{
-  display:flex;align-items:center;gap:6px;
-  padding:6px 14px;border:none;background:transparent;
+  display:flex;align-items:center;gap:4px;
+  padding:5px 10px;border:none;background:transparent;
   color:#777;font-size:.78rem;font-weight:600;
   cursor:pointer;border-radius:8px;transition:all .2s;text-align:left;
-  border-left:2px solid transparent;
 }
 .chat-sub-item:hover{color:#ccc;background:rgba(255,255,255,.04)}
-.chat-sub-item.active{color:var(--orange);border-left-color:var(--orange);background:rgba(230,126,34,.06)}
+.chat-sub-item:hover .sub-branch{color:#888}
+.chat-sub-item.active{color:var(--orange);background:rgba(230,126,34,.06)}
+.chat-sub-item.active .sub-branch{color:var(--orange)}
 .sub-lbl{display:inline-block}
 
 .sub-spotlight .sub-letter{
@@ -1528,6 +1536,8 @@ body[data-theme="light"] .chat-code-block{background:#f6f8fa;color:#1f2328}
 body[data-theme="light"] .conv-dots-dropdown{background:#fff;border-color:#ddd;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 body[data-theme="light"] .conv-dd-item{color:#444}
 body[data-theme="light"] .conv-dd-item:hover{background:#f0f0f0;color:#222}
+body[data-theme="light"] .chat-sub-nav{border-left-color:#ccc}
+body[data-theme="light"] .sub-branch{color:#bbb}
 body[data-theme="light"] .chat-sub-item{color:#888}
 body[data-theme="light"] .chat-sub-item.active{color:var(--orange);background:rgba(230,126,34,.08)}
 body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.03)}
