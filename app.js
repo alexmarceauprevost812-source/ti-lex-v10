@@ -784,9 +784,6 @@ function applyLang() {
         ).join("");
         lbl.classList.add("codex-matrix-lbl");
       }
-    } else if (v === "conversations") {
-      const lbl = $(".lbl", b);
-      if (lbl) lbl.textContent = s.nav.chat;
     } else {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) lbl.textContent = s.nav[v];
@@ -800,6 +797,19 @@ function applyLang() {
   { const e = $("#newChatConv"); if (e) e.textContent = s.nouvelle; }
   { const e = $("#projConvLabel"); if (e && /Aucun|No /.test(e.textContent)) e.textContent = s.noProject; }
   { const e = $("#installBtn span"); if (e) e.textContent = s.installer; }
+
+  // === SUB-NAV ===
+  const subLabels = { convos: s.conversations, favs: s.convFav, projs: s.convProj || s.projet };
+  $$(".chat-sub-item").forEach(btn => {
+    const sub = btn.dataset.sub;
+    const lbl = $(".sub-lbl", btn);
+    if (lbl && subLabels[sub]) {
+      lbl.dataset.word = subLabels[sub];
+      lbl.innerHTML = subLabels[sub].split("").map((ch, i) =>
+        `<span class="sub-letter" style="--si:${i}">${ch}</span>`
+      ).join("");
+    }
+  });
 
   // === TOPBAR ===
   { const e = $(".topbar .status"); if (e) e.innerHTML = '<span class="status-dot"></span>' + s.online; }
@@ -1004,15 +1014,13 @@ const TITLES = I18N.fr.titles;
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
-  $$(".nav-item").forEach(b => {
-    const match = b.dataset.view === v || (b.dataset.view === "conversations" && v === "chat");
-    b.classList.toggle("active", match);
-  });
+  $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
   const titles = I18N[state.lang]?.titles || TITLES;
   $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
-  if (v === "conversations") renderConvsPage();
+  const subNav = $("#chatSubNav");
+  if (subNav) subNav.classList.toggle("open", v === "chat");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -1627,6 +1635,7 @@ function saveChatConv() {
 }
 
 function renderChatConvs() {
+  if (typeof renderChatConvsFiltered === "function") { renderChatConvsFiltered(); return; }
   const el = $("#chatConvos");
   if (!el) return;
   if (!chatConvs.length) { el.innerHTML = `<p class="muted" style="font-size:.75rem;padding:4px 0">${t("chatNone")}</p>`; return; }
@@ -1634,32 +1643,6 @@ function renderChatConvs() {
     const age = c.ts ? timeAgo(c.ts) : "";
     return `<div class="chat-conv-item${i === activeChatConv ? ' active' : ''}" data-idx="${i}"><span class="conv-title">${escapeHtml(c.title)}</span>${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${i}" title="${t("delete_")}">×</button></div>`;
   }).join("");
-  $$(".chat-conv-item", el).forEach(item => {
-    item.onclick = (e) => {
-      if (e.target.classList.contains("conv-del")) return;
-      const idx = +item.dataset.idx;
-      activeChatConv = idx;
-      state.history = [...chatConvs[idx].messages];
-      rebuildChatFromHistory();
-      renderChatConvs();
-    };
-  });
-  $$(".conv-del", el).forEach(btn => {
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      const idx = +btn.dataset.idx;
-      chatConvs.splice(idx, 1);
-      if (activeChatConv === idx) {
-        activeChatConv = -1;
-        state.history = [];
-        resetChatWelcome();
-      } else if (activeChatConv > idx) {
-        activeChatConv--;
-      }
-      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
-      renderChatConvs();
-    };
-  });
 }
 
 function resetChatWelcome() {
@@ -1701,9 +1684,8 @@ if ($("#newChatConv")) {
   };
 }
 
-/* ================= CONVERSATIONS PAGE ================= */
-let convsFilter = "all";
-let openDotsIdx = -1;
+/* ================= CHAT SUB-NAV + CONVERSATION FLAGS ================= */
+let chatSubFilter = "convos";
 
 function getConvFlags(idx) {
   let flags = {};
@@ -1729,147 +1711,194 @@ function deleteConvFlags(idx) {
   try { localStorage.setItem("tilex-conv-flags", JSON.stringify(newFlags)); } catch (_) {}
 }
 
-function renderConvsPage() {
-  const list = $("#convsList");
-  const empty = $("#convsEmpty");
-  if (!list) return;
+// Sub-nav spotlight animation
+function initSubSpotlight() {
+  $$(".sub-spotlight").forEach(el => {
+    const word = el.dataset.word || el.textContent;
+    el.innerHTML = word.split("").map((ch, i) =>
+      `<span class="sub-letter" style="--si:${i}">${ch}</span>`
+    ).join("");
+  });
 
-  const tabs = $$(".convs-tab");
-  tabs.forEach(tb => tb.classList.toggle("active", tb.dataset.filter === convsFilter));
-  const tabLabels = { all: t("convAll"), fav: t("convFav"), proj: t("convProj") };
-  tabs.forEach(tb => { if (tabLabels[tb.dataset.filter]) tb.textContent = tabLabels[tb.dataset.filter]; });
+  function runSpotlight() {
+    $$(".sub-spotlight").forEach(el => {
+      const letters = $$(".sub-letter", el);
+      letters.forEach((l, i) => {
+        setTimeout(() => {
+          l.classList.add("sub-lit");
+          setTimeout(() => l.classList.remove("sub-lit"), 500);
+        }, i * 180);
+      });
+    });
+  }
+  runSpotlight();
+  setInterval(runSpotlight, 8000);
+}
 
-  const h = $(".convs-title");
-  if (h) h.textContent = t("conversations");
-  const nb = $("#convsNewBtn span");
-  if (nb) nb.textContent = t("convNewChat");
-  const et = $(".convs-empty-title");
-  if (et) et.textContent = t("convEmpty");
-  const es = $(".convs-empty-sub");
-  if (es) es.textContent = t("convEmptySub");
-
-  let filtered = chatConvs.map((c, i) => ({ ...c, _idx: i, _flags: getConvFlags(i) }));
-  if (convsFilter === "fav") filtered = filtered.filter(c => c._flags.fav);
-  if (convsFilter === "proj") filtered = filtered.filter(c => c._flags.proj);
-
-  if (!filtered.length) {
-    list.innerHTML = "";
-    empty.classList.remove("hidden");
+// Filter sidebar convos based on sub-nav
+function renderChatConvsFiltered() {
+  const el = $("#chatConvos");
+  if (!el) return;
+  if (!chatConvs.length) {
+    el.innerHTML = `<p class="muted" style="font-size:.75rem;padding:4px 0">${t("chatNone")}</p>`;
     return;
   }
-  empty.classList.add("hidden");
 
-  list.innerHTML = filtered.map(c => {
+  const items = chatConvs.map((c, i) => ({ ...c, _idx: i, _flags: getConvFlags(i) }));
+  let filtered = items;
+  if (chatSubFilter === "favs") filtered = items.filter(c => c._flags.fav);
+  else if (chatSubFilter === "projs") filtered = items.filter(c => c._flags.proj);
+
+  if (!filtered.length) {
+    const emptyMsg = chatSubFilter === "favs" ? t("convEmpty") + " ★" : chatSubFilter === "projs" ? t("convEmpty") + " 📁" : t("chatNone");
+    el.innerHTML = `<p class="muted" style="font-size:.75rem;padding:4px 0">${emptyMsg}</p>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(c => {
     const age = c.ts ? timeAgo(c.ts) : "";
-    const msgCount = c.messages ? c.messages.length : 0;
-    const isFav = c._flags.fav;
-    const isProj = c._flags.proj;
-    const badges = [];
-    if (isFav) badges.push(`<span class="convs-card-badge badge-fav">★ ${t("convFav")}</span>`);
-    if (isProj) badges.push(`<span class="convs-card-badge badge-proj">${t("convProj")}</span>`);
-    const cardCls = `convs-card${isFav ? ' convs-card-fav' : ''}${isProj ? ' convs-card-proj' : ''}`;
-    return `<div class="${cardCls}" data-idx="${c._idx}">
-      <div class="convs-card-icon">💬</div>
-      <div class="convs-card-body">
-        <div class="convs-card-title">${escapeHtml(c.title)}</div>
-        <div class="convs-card-meta">
-          ${age ? `<span class="convs-card-date">${age}</span>` : ""}
-          <span class="convs-card-msgs">${msgCount} msg</span>
-          ${badges.join("")}
-        </div>
-      </div>
-      <button class="convs-card-dots" data-idx="${c._idx}" title="⋯">⋮
-        <div class="convs-dots-menu" data-idx="${c._idx}">
-          <button class="convs-dots-item" data-act="fav">${isFav ? '★ ' + t("convFavRemove") : '☆ ' + t("convFavAdd")}</button>
-          <button class="convs-dots-item" data-act="proj">${isProj ? t("convFromProject") : t("convToProject")}</button>
-          <button class="convs-dots-item" data-act="rename">✎ ${t("convRename")}</button>
-          <button class="convs-dots-item dots-danger" data-act="delete">✕ ${t("convDelete")}</button>
-        </div>
-      </button>
-    </div>`;
+    const f = c._flags;
+    const cls = `chat-conv-item${c._idx === activeChatConv ? ' active' : ''}${f.fav ? ' conv-fav' : ''}${f.proj ? ' conv-proj' : ''}${f.pinned ? ' conv-pinned' : ''}`;
+    const badges = (f.fav ? '<span class="conv-badge">★</span>' : '') + (f.proj ? '<span class="conv-badge">📁</span>' : '');
+    return `<div class="${cls}" data-idx="${c._idx}"><span class="conv-title">${escapeHtml(c.title)}</span>${badges}${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${c._idx}" title="${t("delete_")}">×</button></div>`;
   }).join("");
 
-  $$(".convs-card", list).forEach(card => {
-    card.onclick = (e) => {
-      if (e.target.closest(".convs-card-dots") || e.target.closest(".convs-dots-menu")) return;
-      closeAllDotsMenus();
-      const idx = +card.dataset.idx;
+  $$(".chat-conv-item", el).forEach(item => {
+    item.onclick = (e) => {
+      if (e.target.classList.contains("conv-del")) return;
+      const idx = +item.dataset.idx;
       activeChatConv = idx;
       state.history = [...chatConvs[idx].messages];
       rebuildChatFromHistory();
-      renderChatConvs();
-      switchView("chat");
+      renderChatConvsFiltered();
+      updateConvDotsState();
     };
   });
-
-  $$(".convs-card-dots", list).forEach(btn => {
+  $$(".conv-del", el).forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
-      const menu = btn.querySelector(".convs-dots-menu");
-      const wasOpen = menu.classList.contains("show");
-      closeAllDotsMenus();
-      if (!wasOpen) menu.classList.add("show");
-    };
-  });
-
-  $$(".convs-dots-item", list).forEach(item => {
-    item.onclick = (e) => {
-      e.stopPropagation();
-      const menu = item.closest(".convs-dots-menu");
-      const idx = +menu.dataset.idx;
-      const act = item.dataset.act;
-      closeAllDotsMenus();
-
-      if (act === "fav") {
-        const cur = getConvFlags(idx);
-        setConvFlag(idx, "fav", !cur.fav);
-        renderConvsPage();
-      } else if (act === "proj") {
-        const cur = getConvFlags(idx);
-        setConvFlag(idx, "proj", !cur.proj);
-        renderConvsPage();
-      } else if (act === "rename") {
-        const newName = prompt(t("convRenamePrompt"), chatConvs[idx].title);
-        if (newName && newName.trim()) {
-          chatConvs[idx].title = newName.trim();
-          try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
-          renderConvsPage();
-          renderChatConvs();
-        }
-      } else if (act === "delete") {
-        chatConvs.splice(idx, 1);
-        deleteConvFlags(idx);
-        if (activeChatConv === idx) { activeChatConv = -1; state.history = []; resetChatWelcome(); }
-        else if (activeChatConv > idx) activeChatConv--;
-        try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
-        renderConvsPage();
-        renderChatConvs();
-      }
+      const idx = +btn.dataset.idx;
+      chatConvs.splice(idx, 1);
+      deleteConvFlags(idx);
+      if (activeChatConv === idx) { activeChatConv = -1; state.history = []; resetChatWelcome(); }
+      else if (activeChatConv > idx) activeChatConv--;
+      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+      renderChatConvsFiltered();
     };
   });
 }
 
-function closeAllDotsMenus() {
-  $$(".convs-dots-menu.show").forEach(m => m.classList.remove("show"));
-}
-document.addEventListener("click", closeAllDotsMenus);
-
-$$(".convs-tab").forEach(tb => {
-  tb.onclick = () => {
-    convsFilter = tb.dataset.filter;
-    renderConvsPage();
+// Sub-nav tab clicks
+$$(".chat-sub-item").forEach(btn => {
+  btn.onclick = () => {
+    chatSubFilter = btn.dataset.sub;
+    $$(".chat-sub-item").forEach(b => b.classList.toggle("active", b.dataset.sub === chatSubFilter));
+    renderChatConvsFiltered();
   };
 });
 
-if ($("#convsNewBtn")) {
-  $("#convsNewBtn").onclick = () => {
-    activeChatConv = -1;
-    state.history = [];
-    resetChatWelcome();
-    renderChatConvs();
-    switchView("chat");
+// Open sub-nav on load if chat is active
+setTimeout(() => {
+  const subNav = $("#chatSubNav");
+  if (subNav) subNav.classList.add("open");
+  initSubSpotlight();
+}, 300);
+
+// 3-dot topbar menu
+function updateConvDotsState() {
+  if (activeChatConv < 0) return;
+  const f = getConvFlags(activeChatConv);
+  const dd = $("#convDotsDropdown");
+  if (!dd) return;
+  $$(".conv-dd-item", dd).forEach(item => {
+    const act = item.dataset.act;
+    const ico = item.querySelector(".conv-dd-ico");
+    const txt = item.querySelector(".conv-dd-txt");
+    if (act === "fav") {
+      item.classList.toggle("conv-dd-active", !!f.fav);
+      if (ico) ico.textContent = f.fav ? "★" : "☆";
+      if (txt) txt.textContent = f.fav ? t("convFavRemove") : t("convFavAdd");
+    } else if (act === "proj") {
+      item.classList.toggle("conv-dd-proj-active", !!f.proj);
+      if (txt) txt.textContent = f.proj ? t("convFromProject") : t("convToProject");
+    } else if (act === "pin") {
+      if (txt) txt.textContent = f.pinned ? t("convFavRemove").replace(/favori/i, "épingle") : "Épingler";
+    } else if (act === "rename") {
+      if (txt) txt.textContent = t("convRename");
+    } else if (act === "save") {
+      if (txt) txt.textContent = "Sauvegarder";
+    } else if (act === "delete") {
+      if (txt) txt.textContent = t("convDelete");
+    }
+  });
+}
+
+if ($("#convDotsBtn")) {
+  $("#convDotsBtn").onclick = (e) => {
+    e.stopPropagation();
+    const dd = $("#convDotsDropdown");
+    dd.classList.toggle("hidden");
+    if (!dd.classList.contains("hidden")) updateConvDotsState();
   };
 }
+
+$$(".conv-dd-item").forEach(item => {
+  item.onclick = (e) => {
+    e.stopPropagation();
+    const act = item.dataset.act;
+    const dd = $("#convDotsDropdown");
+    dd.classList.add("hidden");
+
+    if (activeChatConv < 0 && act !== "delete") return;
+
+    if (act === "fav") {
+      const f = getConvFlags(activeChatConv);
+      setConvFlag(activeChatConv, "fav", !f.fav);
+      renderChatConvsFiltered();
+    } else if (act === "proj") {
+      const f = getConvFlags(activeChatConv);
+      setConvFlag(activeChatConv, "proj", !f.proj);
+      renderChatConvsFiltered();
+    } else if (act === "pin") {
+      const f = getConvFlags(activeChatConv);
+      setConvFlag(activeChatConv, "pinned", !f.pinned);
+      renderChatConvsFiltered();
+    } else if (act === "rename") {
+      const cur = chatConvs[activeChatConv]?.title || "";
+      const newName = prompt(t("convRenamePrompt"), cur);
+      if (newName && newName.trim()) {
+        chatConvs[activeChatConv].title = newName.trim();
+        try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+        renderChatConvsFiltered();
+      }
+    } else if (act === "save") {
+      if (activeChatConv >= 0) {
+        const conv = chatConvs[activeChatConv];
+        const blob = new Blob([JSON.stringify(conv, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (conv.title || "conversation").replace(/[^a-zA-Z0-9_-]/g, "_") + ".json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    } else if (act === "delete") {
+      if (activeChatConv < 0) return;
+      const idx = activeChatConv;
+      chatConvs.splice(idx, 1);
+      deleteConvFlags(idx);
+      activeChatConv = -1;
+      state.history = [];
+      resetChatWelcome();
+      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+      renderChatConvsFiltered();
+    }
+  };
+});
+
+document.addEventListener("click", () => {
+  const dd = $("#convDotsDropdown");
+  if (dd && !dd.classList.contains("hidden")) dd.classList.add("hidden");
+});
 
 /* ================= CHAT ================= */
 const input = $("#input");
@@ -3786,7 +3815,6 @@ syncCodexProjects();
 renderCodexConvos();
 renderProjConvs();
 renderChatConvs();
-renderConvsPage();
 renderAttachStrip();
 refreshStudio();
 loadMemory();

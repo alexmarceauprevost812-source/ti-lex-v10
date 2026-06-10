@@ -1466,70 +1466,77 @@ body[data-theme="light"] .chat-code-block{background:#f6f8fa;color:#1f2328}
 .nav-finance:hover .fin-letter{color:#f5c842!important;text-shadow:0 0 12px rgba(245,200,66,.7)!important}
 .nav-finance.active .fin-letter{color:#ffe066!important;text-shadow:0 0 10px rgba(255,224,102,.5)!important}
 
-/* ============ CONVERSATIONS PAGE ============ */
-.view-convs{overflow-y:auto!important}
-.view-convs.active{display:flex!important}
-.convs-page{width:100%;max-width:700px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:16px}
-.convs-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.convs-title{font-size:1.4rem;font-weight:800;color:#fff;margin:0}
-.convs-new-btn{display:flex;align-items:center;gap:6px;padding:8px 18px;
-  background:var(--orange);color:#fff;border:none;border-radius:10px;
-  font-size:.82rem;font-weight:700;cursor:pointer;transition:all .2s}
-.convs-new-btn:hover{background:#e67e22;transform:scale(1.03)}
-.convs-new-btn svg{flex-shrink:0}
-.convs-tabs{display:flex;gap:4px;background:#1a1a24;border-radius:10px;padding:3px}
-.convs-tab{flex:1;padding:8px 0;border:none;background:transparent;color:#888;
-  font-size:.8rem;font-weight:700;border-radius:8px;cursor:pointer;transition:all .2s;text-align:center}
-.convs-tab.active{background:var(--orange);color:#fff;box-shadow:0 2px 8px rgba(230,126,34,.3)}
-.convs-tab:hover:not(.active){color:#ccc;background:rgba(255,255,255,.05)}
-.convs-list{display:flex;flex-direction:column;gap:6px}
-.convs-card{display:flex;align-items:center;gap:12px;padding:14px 16px;
-  background:#16161e;border:1px solid #2a2a34;border-radius:12px;
-  cursor:pointer;transition:all .2s;position:relative}
-.convs-card:hover{background:#1e1e2a;border-color:#3a3a4a;transform:translateY(-1px)}
-.convs-card.convs-card-fav{border-left:3px solid #ffd700}
-.convs-card.convs-card-proj{border-left:3px solid var(--orange)}
-.convs-card-icon{flex-shrink:0;width:36px;height:36px;border-radius:10px;
-  background:#222230;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.convs-card-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.convs-card-title{font-size:.88rem;font-weight:700;color:#e0e0e0;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.convs-card-meta{display:flex;align-items:center;gap:8px;font-size:.7rem;color:#666}
-.convs-card-date{color:#888}
-.convs-card-badge{padding:1px 6px;border-radius:4px;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
-.convs-card-badge.badge-fav{background:rgba(255,215,0,.15);color:#ffd700}
-.convs-card-badge.badge-proj{background:rgba(230,126,34,.15);color:var(--orange)}
-.convs-card-msgs{color:#777}
-.convs-card-dots{flex-shrink:0;width:28px;height:28px;border-radius:6px;border:none;
-  background:transparent;color:#666;cursor:pointer;display:flex;align-items:center;
-  justify-content:center;font-size:1.1rem;transition:all .15s;position:relative}
-.convs-card-dots:hover{background:#2a2a3a;color:#fff}
-.convs-dots-menu{position:absolute;top:100%;right:0;background:#1e1e2e;border:1px solid #2a2a3c;
-  border-radius:10px;padding:4px;min-width:180px;z-index:200;
-  box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}
-.convs-dots-menu.show{display:block}
-.convs-dots-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;
-  border:none;background:none;color:#ccc;font-size:.78rem;font-weight:600;
-  cursor:pointer;border-radius:7px;transition:background .15s;text-align:left}
-.convs-dots-item:hover{background:#2a2a3a;color:#fff}
-.convs-dots-item.dots-danger{color:#ff4444}
-.convs-dots-item.dots-danger:hover{background:rgba(255,68,68,.1);color:#ff6666}
-.convs-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;padding:60px 20px;text-align:center}
-.convs-empty.hidden{display:none}
-.convs-empty-title{font-size:1rem;font-weight:700;color:#888;margin:0}
-.convs-empty-sub{font-size:.8rem;color:#555;margin:0}
-body[data-theme="light"] .convs-title{color:#1a1a1a}
-body[data-theme="light"] .convs-tabs{background:#eee}
-body[data-theme="light"] .convs-tab{color:#888}
-body[data-theme="light"] .convs-tab.active{background:var(--orange);color:#fff}
-body[data-theme="light"] .convs-card{background:#fff;border-color:#ddd}
-body[data-theme="light"] .convs-card:hover{background:#f8f8f8;border-color:#ccc}
-body[data-theme="light"] .convs-card-icon{background:#f0f0f0}
-body[data-theme="light"] .convs-card-title{color:#222}
-body[data-theme="light"] .convs-dots-menu{background:#fff;border-color:#ddd;box-shadow:0 8px 24px rgba(0,0,0,.15)}
-body[data-theme="light"] .convs-dots-item{color:#444}
-body[data-theme="light"] .convs-dots-item:hover{background:#f0f0f0;color:#222}
+/* ============ CHAT SUB-NAV (Conversations / Favoris / Projet) ============ */
+.chat-sub-nav{
+  display:flex;flex-direction:column;gap:0;
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease,padding .4s ease;
+  padding:0 0 0 28px;
+}
+.chat-sub-nav.open{max-height:140px;opacity:1;padding:4px 0 4px 28px}
+.chat-sub-item{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;border:none;background:transparent;
+  color:#777;font-size:.78rem;font-weight:600;
+  cursor:pointer;border-radius:8px;transition:all .2s;text-align:left;
+  border-left:2px solid transparent;
+}
+.chat-sub-item:hover{color:#ccc;background:rgba(255,255,255,.04)}
+.chat-sub-item.active{color:var(--orange);border-left-color:var(--orange);background:rgba(230,126,34,.06)}
+.sub-lbl{display:inline-block}
+
+.sub-spotlight .sub-letter{
+  display:inline-block;color:inherit;
+  transition:color .2s,text-shadow .2s;
+}
+.sub-spotlight .sub-letter.sub-lit{
+  color:#fff!important;
+  text-shadow:0 0 12px rgba(255,255,255,.8),0 0 30px rgba(230,126,34,.4);
+}
+
+/* ============ TOPBAR — 3 dots menu ============ */
+.conv-actions-wrap{position:relative}
+.conv-dots-btn{
+  width:34px;height:34px;border-radius:8px;border:none;
+  background:transparent;color:#888;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.conv-dots-btn:hover{background:#2a2a3a;color:#fff}
+.conv-dots-dropdown{
+  position:absolute;top:calc(100% + 6px);right:0;
+  background:#1a1a26;border:1px solid #2a2a3c;border-radius:12px;
+  padding:6px;min-width:210px;z-index:300;
+  box-shadow:0 12px 36px rgba(0,0,0,.6);
+  animation:ddFadeIn .15s ease;
+}
+.conv-dots-dropdown.hidden{display:none}
+@keyframes ddFadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.conv-dd-item{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 14px;border:none;background:none;
+  color:#ccc;font-size:.8rem;font-weight:600;
+  cursor:pointer;border-radius:8px;transition:all .15s;text-align:left;
+}
+.conv-dd-item:hover{background:#2a2a3a;color:#fff}
+.conv-dd-ico{font-size:.9rem;width:18px;text-align:center;flex-shrink:0}
+.conv-dd-sep{border:none;border-top:1px solid #2a2a3c;margin:4px 8px}
+.conv-dd-danger{color:#ff4444}
+.conv-dd-danger:hover{background:rgba(255,68,68,.1);color:#ff6666}
+.conv-dd-item.conv-dd-active .conv-dd-ico{color:#ffd700}
+.conv-dd-item.conv-dd-proj-active .conv-dd-ico{color:var(--orange)}
+body[data-theme="light"] .conv-dots-dropdown{background:#fff;border-color:#ddd;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+body[data-theme="light"] .conv-dd-item{color:#444}
+body[data-theme="light"] .conv-dd-item:hover{background:#f0f0f0;color:#222}
+body[data-theme="light"] .chat-sub-item{color:#888}
+body[data-theme="light"] .chat-sub-item.active{color:var(--orange);background:rgba(230,126,34,.08)}
+body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.03)}
+
+/* Sidebar conv items — fav/proj badges */
+.chat-conv-item .conv-badge{font-size:.55rem;margin-left:4px;opacity:.7}
+.chat-conv-item.conv-fav{border-left:2px solid #ffd700;padding-left:8px}
+.chat-conv-item.conv-proj{border-left:2px solid var(--orange);padding-left:8px}
+.chat-conv-item.conv-pinned .conv-title::before{content:"📌 ";font-size:.65rem}
 
 .view-finance{overflow:hidden!important}
 .view-finance.active{display:flex!important}
