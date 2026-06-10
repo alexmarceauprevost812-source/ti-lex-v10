@@ -2077,8 +2077,8 @@ function renderProjectConvs(proj) {
 // Event handlers
 if ($("#projBackBtn")) $("#projBackBtn").onclick = closeProjectDetail;
 
-function projWink() {
-  const mascot = $("#projFabMascot");
+function projWink(sel) {
+  const mascot = $(sel || "#projFabMascot");
   if (!mascot) return;
   mascot.classList.add("winking");
   setTimeout(() => mascot.classList.remove("winking"), 600);
@@ -2162,20 +2162,27 @@ if ($("#projFileInput")) {
   };
 }
 
+if ($("#projConvMascot")) {
+  $("#projConvMascot").onclick = () => projWink("#projConvMascot");
+}
+
 if ($("#projNewConvBtn")) {
   $("#projNewConvBtn").onclick = () => {
-    activeChatConv = -1;
-    state.history = [];
-    resetChatWelcome();
-    if (activeProjectId) {
-      chatConvs.unshift({ title: t("convNewChat"), messages: [], ts: Date.now() });
-      activeChatConv = 0;
-      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
-      setConvFlag(0, "proj", true);
-      setConvFlag(0, "projectId", activeProjectId);
-    }
-    renderChatConvs();
-    switchView("chat");
+    projWink("#projConvMascot");
+    setTimeout(() => {
+      activeChatConv = -1;
+      state.history = [];
+      resetChatWelcome();
+      if (activeProjectId) {
+        chatConvs.unshift({ title: t("convNewChat"), messages: [], ts: Date.now() });
+        activeChatConv = 0;
+        try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+        setConvFlag(0, "proj", true);
+        setConvFlag(0, "projectId", activeProjectId);
+      }
+      renderChatConvs();
+      switchView("chat");
+    }, 500);
   };
 }
 
