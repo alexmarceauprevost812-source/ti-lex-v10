@@ -110,7 +110,8 @@ Deno.serve(async (req) => {
         break;
       }
 
-      case "invoice.payment_succeeded": {
+      case "invoice.payment_succeeded":
+      case "invoice.paid": {
         const inv = event.data.object as Stripe.Invoice;
         const userId = await userIdFromCustomer(inv.customer as string);
         if (userId && inv.amount_paid > 0) {
@@ -123,6 +124,24 @@ Deno.serve(async (req) => {
             status: "completed",
             description: inv.lines?.data?.[0]?.description ?? "Abonnement",
           });
+        }
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const inv = event.data.object as Stripe.Invoice;
+        const userId = await userIdFromCustomer(inv.customer as string);
+        if (userId) {
+          await db.from("payment_history").insert({
+            user_id: userId,
+            amount_cents: inv.amount_due ?? 0,
+            currency: (inv.currency ?? "cad").toUpperCase(),
+            payment_type: "subscription",
+            stripe_payment_id: inv.id,
+            status: "failed",
+            description: "Paiement échoué — " + (inv.lines?.data?.[0]?.description ?? "Abonnement"),
+          });
+          await db.from("profiles").update({ payment_status: "past_due" }).eq("id", userId);
         }
         break;
       }
@@ -242,4 +261,20 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const active = sub.status === "active" || sub.status === "trialing";
   const newPlan = active ? tierToPlan(tier) : "free";
   await db.from("profiles").update({ plan: newPlan }).eq("id", userId);
+
+  await db.from("subscriptions_legacy").upsert({
+    user_id: userId,
+    stripe_subscription_id: sub.id,
+    stripe_customer_id: sub.customer as string,
+    plan: newPlan,
+    status: sub.status,
+    price_id: priceId,
+    current_period_start:
+      toIso((sub as any).current_period_start ?? (item as any)?.current_period_start) ?? now,
+    current_period_end:
+      toIso((sub as any).current_period_end ?? (item as any)?.current_period_end) ?? now,
+    cancel_at_period_end: sub.cancel_at_period_end,
+    canceled_at: toIso(sub.canceled_at),
+    updated_at: now,
+  }, { onConflict: "user_id" });
 }
