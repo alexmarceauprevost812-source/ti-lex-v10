@@ -239,9 +239,16 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations" },
     nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres" },
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
+    convAll: "Toutes", convFav: "Favoris", convProj: "Projet",
+    convEmpty: "Aucune conversation", convEmptySub: "Commence une nouvelle conversation pour la voir ici.",
+    convNewChat: "Nouvelle conversation",
+    convFavAdd: "Ajouter aux favoris", convFavRemove: "Retirer des favoris",
+    convToProject: "Déplacer dans Projet", convFromProject: "Retirer de Projet",
+    convRename: "Renommer", convDelete: "Supprimer",
+    convRenamePrompt: "Nouveau nom de la conversation :",
     placeholder: "Écris ton message…", send: "Envoyer",
     noProject: "Aucun projet connecté",
     connectGh: "Connecte GitHub dans le Codex pour voir tes conversations de projet.",
@@ -488,9 +495,16 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations" },
     nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings" },
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
+    convAll: "All", convFav: "Favorites", convProj: "Project",
+    convEmpty: "No conversations", convEmptySub: "Start a new conversation to see it here.",
+    convNewChat: "New conversation",
+    convFavAdd: "Add to favorites", convFavRemove: "Remove from favorites",
+    convToProject: "Move to Project", convFromProject: "Remove from Project",
+    convRename: "Rename", convDelete: "Delete",
+    convRenamePrompt: "New conversation name:",
     placeholder: "Type your message…", send: "Send",
     noProject: "No project connected",
     connectGh: "Connect GitHub in the Codex to see your project conversations.",
@@ -770,6 +784,9 @@ function applyLang() {
         ).join("");
         lbl.classList.add("codex-matrix-lbl");
       }
+    } else if (v === "conversations") {
+      const lbl = $(".lbl", b);
+      if (lbl) lbl.textContent = s.nav.chat;
     } else {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) lbl.textContent = s.nav[v];
@@ -987,11 +1004,15 @@ const TITLES = I18N.fr.titles;
 function switchView(v) {
   $$(".view").forEach(el => el.classList.remove("active"));
   $(`#view-${v}`).classList.add("active");
-  $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === v));
+  $$(".nav-item").forEach(b => {
+    const match = b.dataset.view === v || (b.dataset.view === "conversations" && v === "chat");
+    b.classList.toggle("active", match);
+  });
   const titles = I18N[state.lang]?.titles || TITLES;
   $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
+  if (v === "conversations") renderConvsPage();
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -1677,6 +1698,176 @@ if ($("#newChatConv")) {
     state.history = [];
     resetChatWelcome();
     renderChatConvs();
+  };
+}
+
+/* ================= CONVERSATIONS PAGE ================= */
+let convsFilter = "all";
+let openDotsIdx = -1;
+
+function getConvFlags(idx) {
+  let flags = {};
+  try { flags = JSON.parse(localStorage.getItem("tilex-conv-flags") || "{}"); } catch (_) {}
+  return flags[idx] || {};
+}
+function setConvFlag(idx, key, val) {
+  let flags = {};
+  try { flags = JSON.parse(localStorage.getItem("tilex-conv-flags") || "{}"); } catch (_) {}
+  if (!flags[idx]) flags[idx] = {};
+  flags[idx][key] = val;
+  try { localStorage.setItem("tilex-conv-flags", JSON.stringify(flags)); } catch (_) {}
+}
+function deleteConvFlags(idx) {
+  let flags = {};
+  try { flags = JSON.parse(localStorage.getItem("tilex-conv-flags") || "{}"); } catch (_) {}
+  const newFlags = {};
+  Object.keys(flags).forEach(k => {
+    const ki = +k;
+    if (ki === idx) return;
+    newFlags[ki > idx ? ki - 1 : ki] = flags[k];
+  });
+  try { localStorage.setItem("tilex-conv-flags", JSON.stringify(newFlags)); } catch (_) {}
+}
+
+function renderConvsPage() {
+  const list = $("#convsList");
+  const empty = $("#convsEmpty");
+  if (!list) return;
+
+  const tabs = $$(".convs-tab");
+  tabs.forEach(tb => tb.classList.toggle("active", tb.dataset.filter === convsFilter));
+  const tabLabels = { all: t("convAll"), fav: t("convFav"), proj: t("convProj") };
+  tabs.forEach(tb => { if (tabLabels[tb.dataset.filter]) tb.textContent = tabLabels[tb.dataset.filter]; });
+
+  const h = $(".convs-title");
+  if (h) h.textContent = t("conversations");
+  const nb = $("#convsNewBtn span");
+  if (nb) nb.textContent = t("convNewChat");
+  const et = $(".convs-empty-title");
+  if (et) et.textContent = t("convEmpty");
+  const es = $(".convs-empty-sub");
+  if (es) es.textContent = t("convEmptySub");
+
+  let filtered = chatConvs.map((c, i) => ({ ...c, _idx: i, _flags: getConvFlags(i) }));
+  if (convsFilter === "fav") filtered = filtered.filter(c => c._flags.fav);
+  if (convsFilter === "proj") filtered = filtered.filter(c => c._flags.proj);
+
+  if (!filtered.length) {
+    list.innerHTML = "";
+    empty.classList.remove("hidden");
+    return;
+  }
+  empty.classList.add("hidden");
+
+  list.innerHTML = filtered.map(c => {
+    const age = c.ts ? timeAgo(c.ts) : "";
+    const msgCount = c.messages ? c.messages.length : 0;
+    const isFav = c._flags.fav;
+    const isProj = c._flags.proj;
+    const badges = [];
+    if (isFav) badges.push(`<span class="convs-card-badge badge-fav">★ ${t("convFav")}</span>`);
+    if (isProj) badges.push(`<span class="convs-card-badge badge-proj">${t("convProj")}</span>`);
+    const cardCls = `convs-card${isFav ? ' convs-card-fav' : ''}${isProj ? ' convs-card-proj' : ''}`;
+    return `<div class="${cardCls}" data-idx="${c._idx}">
+      <div class="convs-card-icon">💬</div>
+      <div class="convs-card-body">
+        <div class="convs-card-title">${escapeHtml(c.title)}</div>
+        <div class="convs-card-meta">
+          ${age ? `<span class="convs-card-date">${age}</span>` : ""}
+          <span class="convs-card-msgs">${msgCount} msg</span>
+          ${badges.join("")}
+        </div>
+      </div>
+      <button class="convs-card-dots" data-idx="${c._idx}" title="⋯">⋮
+        <div class="convs-dots-menu" data-idx="${c._idx}">
+          <button class="convs-dots-item" data-act="fav">${isFav ? '★ ' + t("convFavRemove") : '☆ ' + t("convFavAdd")}</button>
+          <button class="convs-dots-item" data-act="proj">${isProj ? t("convFromProject") : t("convToProject")}</button>
+          <button class="convs-dots-item" data-act="rename">✎ ${t("convRename")}</button>
+          <button class="convs-dots-item dots-danger" data-act="delete">✕ ${t("convDelete")}</button>
+        </div>
+      </button>
+    </div>`;
+  }).join("");
+
+  $$(".convs-card", list).forEach(card => {
+    card.onclick = (e) => {
+      if (e.target.closest(".convs-card-dots") || e.target.closest(".convs-dots-menu")) return;
+      closeAllDotsMenus();
+      const idx = +card.dataset.idx;
+      activeChatConv = idx;
+      state.history = [...chatConvs[idx].messages];
+      rebuildChatFromHistory();
+      renderChatConvs();
+      switchView("chat");
+    };
+  });
+
+  $$(".convs-card-dots", list).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const menu = btn.querySelector(".convs-dots-menu");
+      const wasOpen = menu.classList.contains("show");
+      closeAllDotsMenus();
+      if (!wasOpen) menu.classList.add("show");
+    };
+  });
+
+  $$(".convs-dots-item", list).forEach(item => {
+    item.onclick = (e) => {
+      e.stopPropagation();
+      const menu = item.closest(".convs-dots-menu");
+      const idx = +menu.dataset.idx;
+      const act = item.dataset.act;
+      closeAllDotsMenus();
+
+      if (act === "fav") {
+        const cur = getConvFlags(idx);
+        setConvFlag(idx, "fav", !cur.fav);
+        renderConvsPage();
+      } else if (act === "proj") {
+        const cur = getConvFlags(idx);
+        setConvFlag(idx, "proj", !cur.proj);
+        renderConvsPage();
+      } else if (act === "rename") {
+        const newName = prompt(t("convRenamePrompt"), chatConvs[idx].title);
+        if (newName && newName.trim()) {
+          chatConvs[idx].title = newName.trim();
+          try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+          renderConvsPage();
+          renderChatConvs();
+        }
+      } else if (act === "delete") {
+        chatConvs.splice(idx, 1);
+        deleteConvFlags(idx);
+        if (activeChatConv === idx) { activeChatConv = -1; state.history = []; resetChatWelcome(); }
+        else if (activeChatConv > idx) activeChatConv--;
+        try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+        renderConvsPage();
+        renderChatConvs();
+      }
+    };
+  });
+}
+
+function closeAllDotsMenus() {
+  $$(".convs-dots-menu.show").forEach(m => m.classList.remove("show"));
+}
+document.addEventListener("click", closeAllDotsMenus);
+
+$$(".convs-tab").forEach(tb => {
+  tb.onclick = () => {
+    convsFilter = tb.dataset.filter;
+    renderConvsPage();
+  };
+});
+
+if ($("#convsNewBtn")) {
+  $("#convsNewBtn").onclick = () => {
+    activeChatConv = -1;
+    state.history = [];
+    resetChatWelcome();
+    renderChatConvs();
+    switchView("chat");
   };
 }
 
@@ -3595,6 +3786,7 @@ syncCodexProjects();
 renderCodexConvos();
 renderProjConvs();
 renderChatConvs();
+renderConvsPage();
 renderAttachStrip();
 refreshStudio();
 loadMemory();
