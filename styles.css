@@ -2147,6 +2147,14 @@ ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
 .fp-cta:disabled{opacity:.7;cursor:not-allowed;transform:none!important;filter:none!important}
 .fp-cta:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
+.fp-no-plan-banner{
+  text-align:center;padding:14px 20px;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(249,115,22,.15),rgba(249,115,22,.05));
+  border:1px solid rgba(249,115,22,.3);border-radius:12px;
+  color:var(--fp-orange);font-weight:700;font-size:1.05rem;
+  letter-spacing:.02em;animation:fpRise .6s ease .1s both;
+}
+
 /* Trust strip */
 .fp-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 30px;margin:54px auto 0;
   color:rgba(255,255,255,.5);font-size:.88rem;letter-spacing:.03em}

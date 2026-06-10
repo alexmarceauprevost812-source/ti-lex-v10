@@ -4410,6 +4410,24 @@ if ($("#langSelect")) {
 applyLang();
 loadAcctProfile();
 
+(function checkPlanOnLoad() {
+  const session = getSupabaseSession();
+  if (!session?.user) return;
+  const plan = localStorage.getItem("tilex-plan") || "";
+  if (!plan || plan === "free") {
+    switchView("forfaits");
+    const banner = document.createElement("div");
+    banner.className = "fp-no-plan-banner";
+    banner.textContent = state.lang === "en"
+      ? "Choose a plan to get started"
+      : "Choisis un forfait pour commencer";
+    const wrap = document.querySelector(".fp-wrap");
+    if (wrap && !document.querySelector(".fp-no-plan-banner")) {
+      wrap.prepend(banner);
+    }
+  }
+})();
+
 // ── Codex Matrix Animation ──
 (function initCodexMatrix() {
   const MATRIX_CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン日月火水木金土天地人龍鬼神風雷雨雪花星空海山川森光闇力命魂心夢幻影刃剣盾甲冑壱弐参零壹貳參肆伍陸柒捌玖拾";
