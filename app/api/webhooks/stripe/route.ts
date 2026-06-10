@@ -11,15 +11,19 @@ const db = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-const PRICE_TO_PLAN: Record<string, string> = {
-  [process.env.STRIPE_PRICE_STARTER!]: "starter",
-  [process.env.STRIPE_PRICE_PRO!]: "pro",
-  [process.env.STRIPE_PRICE_INDUSTRIEL!]: "industriel",
-};
-
-function planFromPriceId(priceId: string | null): string {
+async function getPlanFromPriceId(priceId: string | null): Promise<string> {
   if (!priceId) return "free";
-  return PRICE_TO_PLAN[priceId] ?? "free";
+  const { data } = await db
+    .from("prices")
+    .select("product_id, products(name)")
+    .eq("id", priceId)
+    .single();
+
+  const name = (data?.products as any)?.name?.toLowerCase() ?? "";
+  if (name.includes("starter")) return "starter";
+  if (name.includes("pro")) return "pro";
+  if (name.includes("industriel")) return "industriel";
+  return "free";
 }
 
 async function userIdFromCustomer(
@@ -47,7 +51,7 @@ async function handleSubscriptionChange(sub: Stripe.Subscription) {
   const item = sub.items.data[0];
   const priceId = item?.price?.id ?? null;
   const active = sub.status === "active" || sub.status === "trialing";
-  const plan = active ? planFromPriceId(priceId) : "free";
+  const plan = active ? await getPlanFromPriceId(priceId) : "free";
 
   await db.from("profiles").update({ plan }).eq("id", userId);
 
