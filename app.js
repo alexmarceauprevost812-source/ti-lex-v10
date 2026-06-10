@@ -5174,6 +5174,97 @@ function finTypewriter() {
   _finTypeTimer = setTimeout(typeStep, 400);
 }
 
+/* ---- Finance fluid multi-line typewriter ---- */
+function finFluidTyper(bubble, container) {
+  let fullText = "", done = false, raf = 0;
+  const cursors = [];
+  let lastTs = 0;
+
+  function splitLines(text) {
+    const html = finRenderMd(text);
+    const parts = html.split(/<br\s*\/?>|<\/li>|<\/div>/gi).filter(p => p.trim());
+    return parts;
+  }
+
+  function render(ts) {
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(ts - lastTs, 80);
+    lastTs = ts;
+
+    const lines = splitLines(fullText);
+    let anyActive = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      if (!cursors[i]) cursors[i] = { pos: 0, started: false };
+      const c = cursors[i];
+      const raw = lines[i].replace(/<[^>]+>/g, "");
+      const total = raw.length;
+      if (total === 0) { c.pos = 0; c.started = true; continue; }
+
+      const prev = cursors[i - 1];
+      if (i === 0) {
+        c.started = true;
+      } else if (prev && prev.started) {
+        const prevRaw = (lines[i - 1] || "").replace(/<[^>]+>/g, "");
+        const prevTotal = prevRaw.length || 1;
+        if (prev.pos / prevTotal >= 0.5) c.started = true;
+      }
+
+      if (!c.started) continue;
+
+      const backlog = total - c.pos;
+      let cps = 120;
+      if (backlog > 100) cps = 350;
+      else if (backlog > 40) cps = 220;
+      const add = Math.max(1, Math.round((cps * dt) / 1000));
+      c.pos = Math.min(total, c.pos + add);
+      if (c.pos < total) anyActive = true;
+    }
+
+    let output = "";
+    for (let i = 0; i < lines.length; i++) {
+      const c = cursors[i];
+      if (!c || !c.started) break;
+      const raw = lines[i].replace(/<[^>]+>/g, "");
+      const visible = raw.slice(0, c.pos);
+      const tags = lines[i];
+      let built = "", ti = 0, ri = 0;
+      for (let j = 0; j < tags.length && ri <= c.pos; j++) {
+        if (tags[j] === "<") {
+          const end = tags.indexOf(">", j);
+          if (end !== -1) { built += tags.slice(j, end + 1); j = end; continue; }
+        }
+        if (ri < c.pos) { built += tags[j]; ri++; }
+        else break;
+      }
+      const isLast = (i === lines.length - 1) || !cursors[i + 1]?.started;
+      const cursor = isLast && (anyActive || !done) ? '<span class="fin-cursor">|</span>' : "";
+      output += built + cursor;
+      if (i < lines.length - 1) output += "<br>";
+    }
+
+    bubble.innerHTML = output;
+    container.scrollTop = container.scrollHeight;
+
+    if (anyActive || !done) {
+      raf = requestAnimationFrame(render);
+    } else {
+      bubble.innerHTML = finRenderMd(fullText);
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  return {
+    push(text) {
+      fullText = text;
+      if (!raf) { lastTs = 0; raf = requestAnimationFrame(render); }
+    },
+    finish() {
+      done = true;
+    }
+  };
+}
+
 function finAddMsg(role, content, error) {
   const container = $("#finMessages");
   const welcome = $("#finWelcome");
@@ -5251,15 +5342,17 @@ async function finSend(text) {
     }
 
     finRemoveTyping();
-    const wrap = finAddMsg("assistant", "…");
+    const wrap = finAddMsg("assistant", "");
     const bubble = wrap.querySelector(".fin-bubble-ai");
+    const container = $("#finMessages");
+    const typer = finFluidTyper(bubble, container);
 
     const reply = await streamText(res, (partial) => {
-      bubble.innerHTML = finRenderMd(partial);
-      const container = $("#finMessages");
-      container.scrollTop = container.scrollHeight;
+      typer.push(partial);
     });
 
+    typer.finish();
+    await new Promise(r => setTimeout(r, 600));
     bubble.innerHTML = finRenderMd(reply);
     const msg = reply.trim() || t("finNoReply");
     finHistory.push({ role: "assistant", content: msg });
