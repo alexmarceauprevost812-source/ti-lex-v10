@@ -2011,8 +2011,8 @@ function renderAssistant(body, full, streaming) {
   });
   // Other code blocks
   ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const langLabel = lang ? `<div class="code-lang">${lang}</div>` : '';
-    return `<pre class="chat-code-block">${langLabel}${highlightSyntax(code)}</pre>`;
+    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
+    return `<div class="chat-code-wrap"><div class="chat-code-head">${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(code)}</pre></div>`;
   });
   ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
 
@@ -2025,6 +2025,26 @@ function renderAssistant(body, full, streaming) {
     renderMermaidBlocks(body);
     addTTSButton(body, answer);
   }
+}
+
+/* ---- Copy code block ---- */
+function copyCodeBlock(btn) {
+  const wrap = btn.closest(".chat-code-wrap");
+  const pre = wrap?.querySelector("pre");
+  if (!pre) return;
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+  });
+  btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> ${t("copied")}`;
+  btn.classList.add("code-copied");
+  setTimeout(() => {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}`;
+    btn.classList.remove("code-copied");
+  }, 2000);
 }
 
 /* ---- Text-to-Speech ---- */
@@ -3212,14 +3232,69 @@ function renderCodexMermaid(container) {
 }
 
 function highlightSyntax(code) {
-  return code
-    .replace(/(\/\/[^\n]*)/g, '<span class="syn-comment">$1</span>')
-    .replace(/\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|switch|case|break|default|interface|type|extends|implements|of|in|do|yield|static|get|set|super)\b/g, '<span class="syn-kw">$1</span>')
-    .replace(/\b(string|number|boolean|void|null|undefined|any|true|false|Promise|Array|Object|Map|Set|console|document|window|process|require|module)\b/g, '<span class="syn-type">$1</span>')
-    .replace(/(&quot;[^&]*?&quot;|&#039;[^&]*?&#039;|`[^`]*?`)/g, '<span class="syn-str">$1</span>')
-    .replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-num">$1</span>')
-    .replace(/([a-zA-Z_$][\w$]*)\s*\(/g, '<span class="syn-fn">$1</span>(')
-    .replace(/\.([a-zA-Z_$][\w$]*)/g, '.<span class="syn-fn">$1</span>');
+  const tokens = [];
+  let idx = 0;
+
+  function push(cls, text) { tokens.push(cls ? `<span class="syn-${cls}">${text}</span>` : text); }
+
+  while (idx < code.length) {
+    // HTML-escaped quotes: &quot; ... &quot; or &#039; ... &#039;
+    let m;
+    if ((m = code.slice(idx).match(/^(&quot;[\s\S]*?&quot;|&#039;[\s\S]*?&#039;)/))) {
+      push("str", m[0]); idx += m[0].length; continue;
+    }
+    // Template literals (backticks)
+    if ((m = code.slice(idx).match(/^`[^`]*?`/))) {
+      push("str", m[0]); idx += m[0].length; continue;
+    }
+    // Single-line comments // and #
+    if ((m = code.slice(idx).match(/^(\/\/[^\n]*|#[^\n]*)/))) {
+      push("comment", m[0]); idx += m[0].length; continue;
+    }
+    // Multi-line comments /* */
+    if ((m = code.slice(idx).match(/^\/\*[\s\S]*?\*\//))) {
+      push("comment", m[0]); idx += m[0].length; continue;
+    }
+    // HTML/JSX tags
+    if ((m = code.slice(idx).match(/^(&lt;\/?[a-zA-Z][\w.-]*)/))) {
+      push("tag", m[0]); idx += m[0].length; continue;
+    }
+    // Decorators / annotations @word
+    if ((m = code.slice(idx).match(/^@[a-zA-Z_]\w*/))) {
+      push("decorator", m[0]); idx += m[0].length; continue;
+    }
+    // Numbers
+    if ((m = code.slice(idx).match(/^\b(\d+\.?\d*([eE][+-]?\d+)?)\b/))) {
+      push("num", m[0]); idx += m[0].length; continue;
+    }
+    // Keywords (JS/TS/Python/SQL/Rust/Go/Java/C)
+    if ((m = code.slice(idx).match(/^\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|switch|case|break|default|interface|type|extends|implements|of|in|do|yield|static|get|set|super|enum|abstract|private|public|protected|readonly|override|declare|namespace|module|as|is|keyof|infer|satisfies|def|elif|lambda|pass|with|raise|except|finally|self|None|True|False|and|or|not|print|range|len|SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|DELETE|CREATE|TABLE|ALTER|DROP|JOIN|LEFT|RIGHT|INNER|ON|AND|OR|NOT|ORDER|BY|GROUP|HAVING|LIMIT|AS|SET|INDEX|PRIMARY|KEY|FOREIGN|REFERENCES|fn|mut|pub|impl|struct|trait|match|loop|move|ref|use|mod|crate|unsafe|dyn|go|func|package|defer|chan|goroutine|select|map|make|append|nil|fmt|void|int|char|float|double|long|short|unsigned|signed|sizeof|include|define|ifndef|endif|printf|scanf|malloc|free|struct|union|typedef|extern|register|volatile)\b/))) {
+      push("kw", m[0]); idx += m[0].length; continue;
+    }
+    // Built-in types & values
+    if ((m = code.slice(idx).match(/^\b(string|number|boolean|void|null|undefined|any|true|false|Promise|Array|Object|Map|Set|console|document|window|process|require|module|Error|Date|JSON|Math|RegExp|Symbol|BigInt|Buffer|Response|Request|Headers|URL|Deno|str|int|float|bool|list|dict|tuple|set|bytes|Vec|Option|Result|Box|String|i32|i64|u32|u64|f32|f64|usize|isize)\b/))) {
+      push("type", m[0]); idx += m[0].length; continue;
+    }
+    // Function calls: word(
+    if ((m = code.slice(idx).match(/^([a-zA-Z_$][\w$]*)\s*\(/))) {
+      push("fn", m[1]); idx += m[1].length; continue;
+    }
+    // Property/method access: .word
+    if ((m = code.slice(idx).match(/^\.([a-zA-Z_$][\w$]*)/))) {
+      tokens.push("."); push("prop", m[1]); idx += m[0].length; continue;
+    }
+    // Operators
+    if ((m = code.slice(idx).match(/^(===|!==|==|!=|&lt;=|&gt;=|=&gt;|&amp;&amp;|\|\||[+\-*/%=!<>&|^~?:])/))) {
+      push("op", m[0]); idx += m[0].length; continue;
+    }
+    // Brackets
+    if ((m = code.slice(idx).match(/^[{}()\[\]]/))) {
+      push("bracket", m[0]); idx += m[0].length; continue;
+    }
+    // Anything else
+    tokens.push(code[idx]); idx++;
+  }
+  return tokens.join("");
 }
 
 /* ================= STUDIO ================= */
