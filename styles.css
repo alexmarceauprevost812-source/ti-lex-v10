@@ -1740,7 +1740,7 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 /* ============ PROJETS VIEW ============ */
 .view-projects{overflow-y:auto!important;position:relative;background:#000!important}
 .view-projects.active{display:flex!important}
-.proj-list-page,.proj-detail-page{width:100%;max-width:700px;margin:0 auto;padding:28px 20px 40px;display:flex;flex-direction:column;gap:18px;position:relative;flex:1}
+.proj-list-page,.proj-detail-page{width:100%;max-width:700px;margin:0 auto;padding:28px 20px 120px;display:flex;flex-direction:column;gap:18px;position:relative;flex:0 0 auto}
 .proj-detail-page.hidden{display:none}
 .proj-list-page.hidden{display:none}
 .proj-page-title{font-size:1.6rem;font-weight:800;color:#fff;margin:0;font-family:var(--code-font)}
