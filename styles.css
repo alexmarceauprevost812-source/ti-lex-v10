@@ -2099,15 +2099,15 @@ textarea.fin-input:focus{outline:none}
 .fp-badge.fp-badge-ult{background:linear-gradient(90deg,var(--fp-orange),#ffb628);color:#1a1a1a}
 
 .fp-tier{font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem;letter-spacing:.04em;
-  color:#fff;text-transform:uppercase}
+  color:var(--fp-orange);text-transform:uppercase;text-shadow:0 0 12px var(--fp-orange-glow)}
 .fp-ico{margin-right:8px;filter:drop-shadow(0 0 6px var(--fp-orange-glow))}
 .fp-pitch{color:rgba(255,255,255,.55);font-size:.92rem;margin-top:7px;min-height:40px}
 
 .fp-price-row{display:flex;align-items:baseline;gap:4px;margin:22px 0 4px}
-.fp-cur{font-family:'Teko';font-size:2.4rem;font-weight:700;color:var(--fp-green);align-self:flex-start;
-  margin-top:6px;text-shadow:0 0 10px var(--fp-green-glow)}
+.fp-cur{font-family:'Teko';font-size:2.4rem;font-weight:700;color:var(--fp-orange);align-self:flex-start;
+  margin-top:6px;text-shadow:0 0 10px var(--fp-orange-glow)}
 .fp-amt{font-family:'Teko';font-weight:700;font-size:4.6rem;line-height:.8;
-  color:#fff;transition:opacity .25s}
+  color:var(--fp-orange);text-shadow:0 0 14px var(--fp-orange-glow);transition:opacity .25s}
 .fp-per{font-family:var(--font);font-size:.95rem;color:rgba(255,255,255,.45);align-self:flex-end;margin-bottom:10px}
 .fp-billed{font-size:.74rem;color:rgba(255,255,255,.4);letter-spacing:.04em;height:16px;opacity:.85}
 
@@ -2122,12 +2122,13 @@ li.fp-off{color:rgba(255,255,255,.3)}
 .fp-cta{
   margin-top:26px;font-family:'Cinzel',serif;font-weight:700;font-size:1rem;letter-spacing:.06em;
   text-transform:uppercase;cursor:pointer;padding:15px 18px;border-radius:13px;
-  color:#fff;background:transparent;border:2px solid var(--fp-orange);
-  transition:.25s;width:100%;
+  color:#fff;background:var(--fp-orange);border:2px solid var(--fp-orange);
+  box-shadow:0 0 18px var(--fp-orange-glow);transition:.25s;width:100%;
 }
-.fp-cta:hover{color:#fff;background:var(--fp-orange);box-shadow:0 0 24px var(--fp-orange-glow);transform:translateY(-2px)}
+.fp-cta:hover{filter:brightness(1.15);box-shadow:0 0 30px var(--fp-orange-glow);transform:translateY(-2px)}
 .fp-cta.fp-cta-solid{color:#fff;background:var(--fp-orange);box-shadow:0 0 24px var(--fp-orange-glow)}
-.fp-cta.fp-cta-solid:hover{filter:brightness(1.1);transform:translateY(-2px)}
+.fp-cta.fp-cta-solid:hover{filter:brightness(1.15);transform:translateY(-2px)}
+ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
 .fp-cta:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
 /* Trust strip */
