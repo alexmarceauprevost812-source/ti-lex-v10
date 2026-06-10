@@ -65,20 +65,32 @@ Deno.serve(async (req) => {
       .eq("id", user.id)
       .single();
 
+    let customerId: string;
+
+    if (existingCustomer?.stripe_customer_id) {
+      customerId = existingCustomer.stripe_customer_id;
+    } else {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = customer.id;
+
+      await supabaseAdmin.from("customers").upsert({
+        id: user.id,
+        stripe_customer_id: customerId,
+      });
+    }
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
+      customer: customerId,
+      client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html`,
-      client_reference_id: user.id,
       locale: "fr",
     };
-
-    if (existingCustomer?.stripe_customer_id) {
-      sessionParams.customer = existingCustomer.stripe_customer_id;
-    } else {
-      sessionParams.customer_email = user.email;
-    }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
