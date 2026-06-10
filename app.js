@@ -338,7 +338,7 @@ const I18N = {
     fpStarterPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
     fpStarterCta: "Commencer à 28$/mois", fpStarterBilled: "Facturé 264$/an",
     fpStarterF1: "40 messages IA / jour", fpStarterF2: "1 200 messages / mois",
-    fpStarterF3: "50 images générées / jour", fpStarterF4: "3 agents personnalisés",
+    fpStarterF3: "200 images générées / mois", fpStarterF4: "3 agents personnalisés",
     fpStarterF5: "Codex — 3 sessions / jour", fpStarterF6: "Mode Sécurité — scan de base",
     fpStarterF7: "Modèles : Haiku + Sonnet", fpStarterF8: "Support par chat 7j/7",
     fpStarterOff1: "Opus", fpStarterOff2: "SSO entreprise",
@@ -347,7 +347,7 @@ const I18N = {
     fpProPitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.",
     fpProCta: "S'abonner au Pro", fpProBilled: "Facturé 744$/an",
     fpProF1: "120 messages IA / jour", fpProF2: "3 600 messages / mois",
-    fpProF3: "200 images générées / jour", fpProF4: "10 agents personnalisés",
+    fpProF3: "500 images générées / mois", fpProF4: "10 agents personnalisés",
     fpProF5: "Codex multi-projets — 5 projets", fpProF6: "Mode Sécurité complet (SOW + scans)",
     fpProF7: "Modèles : Haiku + Sonnet", fpProF8: "Mémoire longue durée entre sessions",
     fpProF9: "Support prioritaire en moins de 4h",
@@ -357,7 +357,7 @@ const I18N = {
     fpIndustrialPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
     fpIndustrialCta: "Contacter l'équipe", fpIndustrialBilled: "Facturé 1 344$/an",
     fpIndustrialF1: "200 messages IA / jour", fpIndustrialF2: "6 000 messages / mois",
-    fpIndustrialF3: "Images générées illimitées", fpIndustrialF4: "30 agents personnalisés",
+    fpIndustrialF3: "1 000 images générées / mois", fpIndustrialF4: "30 agents personnalisés",
     fpIndustrialF5: "Codex illimité — 20 projets", fpIndustrialF6: "Scans de sécurité avancés + rapports",
     fpIndustrialF7: "Modèles : Haiku + Sonnet + Opus", fpIndustrialF8: "Audit trail complet — 5 ans",
     fpIndustrialF9: "SSO et intégrations entreprise", fpIndustrialF10: "SLA 99.9% avec support dédié",
@@ -617,7 +617,7 @@ const I18N = {
     fpStarterPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
     fpStarterCta: "Start at $28/mo", fpStarterBilled: "Billed $264/yr",
     fpStarterF1: "40 AI messages / day", fpStarterF2: "1,200 messages / month",
-    fpStarterF3: "50 images generated / day", fpStarterF4: "3 custom agents",
+    fpStarterF3: "200 images generated / month", fpStarterF4: "3 custom agents",
     fpStarterF5: "Codex — 3 sessions / day", fpStarterF6: "Security Mode — basic scan",
     fpStarterF7: "Models: Haiku + Sonnet", fpStarterF8: "Chat support 7/7",
     fpStarterOff1: "Opus", fpStarterOff2: "Enterprise SSO",
@@ -626,7 +626,7 @@ const I18N = {
     fpProPitch: "For those who build for real. Freelancers, teams, agencies — healthy margins.",
     fpProCta: "Subscribe — Pro", fpProBilled: "Billed $744/yr",
     fpProF1: "120 AI messages / day", fpProF2: "3,600 messages / month",
-    fpProF3: "200 images generated / day", fpProF4: "10 custom agents",
+    fpProF3: "500 images generated / month", fpProF4: "10 custom agents",
     fpProF5: "Multi-project Codex — 5 projects", fpProF6: "Full Security Mode (SOW + scans)",
     fpProF7: "Models: Haiku + Sonnet", fpProF8: "Long-term memory between sessions",
     fpProF9: "Priority support under 4h",
@@ -636,7 +636,7 @@ const I18N = {
     fpIndustrialPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
     fpIndustrialCta: "Contact the team", fpIndustrialBilled: "Billed $1,344/yr",
     fpIndustrialF1: "200 AI messages / day", fpIndustrialF2: "6,000 messages / month",
-    fpIndustrialF3: "Unlimited images generated", fpIndustrialF4: "30 custom agents",
+    fpIndustrialF3: "1,000 images generated / month", fpIndustrialF4: "30 custom agents",
     fpIndustrialF5: "Unlimited Codex — 20 projects", fpIndustrialF6: "Advanced security scans + reports",
     fpIndustrialF7: "Models: Haiku + Sonnet + Opus", fpIndustrialF8: "Full audit trail — 5 years",
     fpIndustrialF9: "SSO and enterprise integrations", fpIndustrialF10: "99.9% SLA with dedicated support",
@@ -4176,9 +4176,9 @@ function loadAcctProfile() {
 }
 
 const PLAN_DATA = {
-  starter: { name: "Starter", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgDay: 5 },
-  pro:     { name: "Pro",     price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgDay: 15 },
-  industriel: { name: "Industriel", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgDay: 50 },
+  starter: { name: "Starter", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
+  pro:     { name: "Pro",     price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
+  industriel: { name: "Industriel", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
 };
 
 function refreshAccountPage() {
@@ -4209,7 +4209,7 @@ function refreshAccountPage() {
   if ($("#acctDetailModelsLabel")) $("#acctDetailModelsLabel").textContent = s.acctModels;
   if ($("#acctDetailThinkingLabel")) $("#acctDetailThinkingLabel").textContent = s.acctThinking;
   if ($("#acctDetailCodexLabel")) $("#acctDetailCodexLabel").textContent = s.acctCodex;
-  if ($("#acctDetailImgLabel")) $("#acctDetailImgLabel").textContent = (s.acctImgUsed || "Images") + " / " + (state.lang === "en" ? "day" : "jour");
+  if ($("#acctDetailImgLabel")) $("#acctDetailImgLabel").textContent = (s.acctImgUsed || "Images") + " / " + (state.lang === "en" ? "month" : "mois");
 
   loadAcctProfile();
 
@@ -4254,8 +4254,8 @@ function refreshAccountPage() {
     if ($("#acctUsageFill")) $("#acctUsageFill").style.width = "0%";
   }
 
-  const imgLimit = plan ? plan.imgDay : 0;
-  const imgKey = `tilex-img-${new Date().toISOString().slice(0, 10)}`;
+  const imgLimit = plan ? plan.imgMonth : 0;
+  const imgKey = `tilex-img-${new Date().toISOString().slice(0, 7)}`;
   const imgCount = parseInt(localStorage.getItem(imgKey) || "0", 10);
   if (imgLimit) {
     if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount} / ${imgLimit}`;
@@ -4270,7 +4270,7 @@ function refreshAccountPage() {
   if ($("#acctDetailModels")) $("#acctDetailModels").textContent = plan ? plan.models : "—";
   if ($("#acctDetailThinking")) $("#acctDetailThinking").textContent = plan ? plan.thinking : "—";
   if ($("#acctDetailCodex")) $("#acctDetailCodex").textContent = plan ? plan.codexDay + " sessions" : "—";
-  if ($("#acctDetailImg")) $("#acctDetailImg").textContent = plan ? plan.imgDay : "—";
+  if ($("#acctDetailImg")) $("#acctDetailImg").textContent = plan ? plan.imgMonth.toLocaleString() : "—";
 
   let totalStorage = 0;
   try {
@@ -4992,6 +4992,31 @@ function fpSetPeriod(period) {
 requestAnimationFrame(() => { requestAnimationFrame(() => fpSetPeriod("monthly")); });
 
 const SUPABASE_FN = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1";
+
+/* ---- Image generation tracking ---- */
+async function trackImageGenerated() {
+  const monthKey = `tilex-img-${new Date().toISOString().slice(0, 7)}`;
+  const dayKey = `tilex-img-day-${new Date().toISOString().slice(0, 10)}`;
+  localStorage.setItem(monthKey, String((parseInt(localStorage.getItem(monthKey) || "0", 10) + 1)));
+  localStorage.setItem(dayKey, String((parseInt(localStorage.getItem(dayKey) || "0", 10) + 1)));
+
+  const session = getSupabaseSession();
+  if (!session?.access_token) return;
+  try {
+    const tk = proxyToken();
+    await fetch(`${SUPABASE_REST}/rpc/increment_image_usage`, {
+      method: "POST",
+      headers: {
+        apikey: tk,
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+  } catch (e) {
+    console.error("trackImageGenerated:", e);
+  }
+}
 
 const PAYMENT_LINKS = {
   starter:    "https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",
