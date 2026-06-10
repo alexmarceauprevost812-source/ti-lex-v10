@@ -748,6 +748,15 @@ function applyLang() {
     if (v === "forfaits") {
       const ft = b.querySelector(".nav-forfait-text");
       if (ft) ft.textContent = state.lang === "en" ? "plan-" : "forfait-";
+    } else if (v === "finance") {
+      const lbl = $(".lbl", b);
+      if (lbl && s.nav[v]) {
+        const word = s.nav[v];
+        lbl.innerHTML = word.split("").map((ch, i) =>
+          `<span class="fin-letter" style="--i:${i}">${ch}</span>`
+        ).join("");
+        lbl.classList.add("fin-glow");
+      }
     } else {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) lbl.textContent = s.nav[v];
