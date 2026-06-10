@@ -214,9 +214,6 @@
 
   <!-- ===== VUE PROJETS ===== -->
   <section class="view view-projects" id="view-projects">
-    <video class="proj-bg-video" autoplay muted loop playsinline>
-      <source src="assets/proj-bg.mp4" type="video/mp4">
-    </video>
     <!-- Liste des projets -->
     <div class="proj-list-page" id="projListPage">
       <h2 class="proj-page-title">Projets</h2>
@@ -225,10 +222,15 @@
         <input type="text" class="proj-search" id="projSearch" placeholder="Rechercher des projets">
       </div>
       <div class="proj-items" id="projItems"></div>
-      <button class="proj-new-btn" id="projNewBtn">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-        <span>Nouveau projet</span>
-      </button>
+      <div class="proj-new-wrap">
+        <video class="proj-btn-video" autoplay muted loop playsinline>
+          <source src="assets/proj-btn-vid.mp4" type="video/mp4">
+        </video>
+        <button class="proj-new-btn" id="projNewBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Nouveau projet</span>
+        </button>
+      </div>
     </div>
 
     <!-- Vue détaillée d'un projet -->
