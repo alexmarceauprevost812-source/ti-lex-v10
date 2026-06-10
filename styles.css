@@ -1482,13 +1482,17 @@ textarea.fin-input:focus{outline:none}
 }
 
 /* ============ FORFAITS — Orange & White Theme ============ */
-.nav-forfaits .ico{stroke:#00e676!important}
-.nav-forfait-text{color:#00e676!important;font-weight:700}
-.nav-forfaits:hover .nav-forfait-text{color:#69f0ae!important}
-.nav-forfaits.active .nav-forfait-text{color:#69f0ae!important}
-.nav-forfaits.active .ico{stroke:#69f0ae!important}
-.nav-forfaits.active{border-color:#00e676;box-shadow:0 0 0 3px rgba(0,230,118,.2)}
+.nav-forfaits .ico{stroke:var(--orange)!important}
+.nav-forfaits:hover .ico{stroke:#ff9d45!important}
+.nav-forfaits.active .ico{stroke:#ff9d45!important}
+.nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
+.forf-white{color:#fff!important;font-weight:700;letter-spacing:.3px}
+.forf-badge{display:inline-block;background:var(--orange);color:#000!important;font-weight:800;
+  padding:1px 6px;border-radius:5px;letter-spacing:.3px;margin-left:0}
+.forf-sep{color:#fff!important;font-weight:700}
 .nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5)}
+.nav-forfaits:hover .forf-badge{background:#ff9d45}
+.nav-forfaits.active .forf-badge{background:#ff9d45}
 
 .view-forfaits{
   overflow-y:auto!important;overflow-x:hidden!important;

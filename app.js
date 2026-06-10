@@ -746,8 +746,12 @@ function applyLang() {
   $$(".nav-item[data-view]").forEach(b => {
     const v = b.dataset.view;
     if (v === "forfaits") {
-      const ft = b.querySelector(".nav-forfait-text");
-      if (ft) ft.textContent = state.lang === "en" ? "plan-" : "forfait-";
+      const lbl = $(".lbl", b);
+      if (lbl) {
+        const word = state.lang === "en" ? "plan" : "forfait";
+        const splitAt = state.lang === "en" ? 2 : 4;
+        lbl.innerHTML = `<span class="forf-white">${word.slice(0, splitAt)}</span><span class="forf-badge">${word.slice(splitAt)}</span><span class="forf-sep">-</span><span class="nav-dollar">$</span>`;
+      }
     } else if (v === "finance") {
       const lbl = $(".lbl", b);
       if (lbl && s.nav[v]) {
