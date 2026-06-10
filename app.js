@@ -5507,4 +5507,27 @@ document.addEventListener("mousemove", (e) => {
   });
 });
 
+// Sidebar "Abonnement" animated projection — 2 letters at a time, loops
+(function abnAnimLoop() {
+  const el = document.getElementById("abnAnimText");
+  if (!el) return;
+  const word = "Abonnement";
+  const PAIR_DELAY = 220;
+  const PAUSE = 2800;
+
+  function run() {
+    el.innerHTML = "";
+    for (let i = 0; i < word.length; i++) {
+      const sp = document.createElement("span");
+      sp.className = "abn-letter";
+      sp.textContent = word[i];
+      sp.style.animationDelay = Math.floor(i / 2) * PAIR_DELAY + "ms";
+      el.appendChild(sp);
+    }
+    const totalTime = Math.ceil(word.length / 2) * PAIR_DELAY + 450 + PAUSE;
+    setTimeout(run, totalTime);
+  }
+  run();
+})();
+
 console.log("ti-lex-AL v10 prêt — conforme Loi 25 du Québec.");

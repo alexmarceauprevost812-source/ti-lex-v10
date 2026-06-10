@@ -1967,23 +1967,15 @@ textarea.fin-input:focus{outline:none}
 .nav-forfaits:hover .ico{stroke:#ff9d45!important}
 .nav-forfaits.active .ico{stroke:#ff9d45!important}
 .nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
-.forf-white{color:#fff!important;font-weight:700;letter-spacing:.3px}
-.forf-badge{display:inline-block;background:var(--orange);color:#000!important;font-weight:800;
-  padding:1px 6px;border-radius:5px;letter-spacing:.3px;margin-left:0}
-.forf-sep{color:#fff!important;font-weight:700}
-.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5)}
-.nav-forfaits:hover .forf-badge{background:#ff9d45}
-.nav-forfaits.active .forf-badge{background:#ff9d45}
-.forf-limited{
-  display:block;color:#fff;font-size:11px;font-weight:600;
-  letter-spacing:.03em;margin-top:2px;
-  animation:pulseWhite 2s ease-in-out infinite;
+.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5);margin-left:2px}
+.abn-anim{color:#fff;font-weight:700;letter-spacing:.3px}
+.abn-letter{display:inline-block;opacity:0;transform:translateY(-12px) scale(.6);filter:blur(3px);
+  animation:abnProject .45s ease-out forwards}
+@keyframes abnProject{
+  0%{opacity:0;transform:translateY(-12px) scale(.6);filter:blur(3px)}
+  60%{opacity:1;transform:translateY(2px) scale(1.05);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
 }
-@keyframes pulseWhite{
-  0%,100%{opacity:1}
-  50%{opacity:.4}
-}
-.nav-forfaits.active .forf-badge{background:#ff9d45}
 
 .view-forfaits{
   overflow-y:auto!important;overflow-x:hidden!important;position:relative;
