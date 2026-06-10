@@ -4446,23 +4446,6 @@ if ($("#langSelect")) {
 applyLang();
 loadAcctProfile();
 
-(function checkPlanOnLoad() {
-  const session = getSupabaseSession();
-  if (!session?.user) return;
-  const plan = localStorage.getItem("tilex-plan") || "";
-  if (!plan || plan === "free") {
-    switchView("forfaits");
-    const banner = document.createElement("div");
-    banner.className = "fp-no-plan-banner";
-    banner.textContent = state.lang === "en"
-      ? "Choose a plan to get started"
-      : "Choisis un forfait pour commencer";
-    const wrap = document.querySelector(".fp-wrap");
-    if (wrap && !document.querySelector(".fp-no-plan-banner")) {
-      wrap.prepend(banner);
-    }
-  }
-})();
 
 // ── Codex Matrix Animation ──
 (function initCodexMatrix() {
