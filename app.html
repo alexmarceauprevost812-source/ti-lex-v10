@@ -33,13 +33,6 @@
     </div>
   </div>
 
-  <!-- Yeux du démon -->
-  <div class="demon-eyes-wrap" id="demonEyesWrap">
-    <img src="assets/demon-open.jpg" alt="" class="demon-img demon-open">
-    <img src="assets/demon-wink.jpg" alt="" class="demon-img demon-wink">
-    <div class="demon-blink-lid"></div>
-  </div>
-
   <nav class="nav">
     <button class="nav-item active" data-view="chat">
       <svg viewBox="0 0 24 24" class="ico"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -106,7 +99,13 @@
     <span>Installer l'app</span>
   </button>
 
-  <!-- PARAMÈTRES TOUT EN BAS -->
+  <!-- COMPTE -->
+  <button class="nav-item nav-bottom nav-account" data-view="account" id="accountBtn">
+    <svg viewBox="0 0 24 24" class="ico"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="lbl">Compte</span>
+  </button>
+
+  <!-- PARAMÈTRES -->
   <button class="nav-item nav-bottom" data-view="settings" id="settingsBtn">
     <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">Paramètres</span>
@@ -739,6 +738,122 @@
   </section>
 
   <!-- ===== VUE PARAMÈTRES ===== -->
+  <!-- ===== VUE COMPTE ===== -->
+  <section class="view view-account" id="view-account">
+    <div class="account-wrap">
+      <div class="acct-header">
+        <div class="acct-avatar" id="acctAvatar">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="acct-info">
+          <h2 class="acct-name" id="acctName">Utilisateur</h2>
+          <p class="acct-email" id="acctEmail">—</p>
+        </div>
+      </div>
+
+      <!-- Abonnement -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <h3 id="acctSubTitle">Abonnement</h3>
+        </div>
+        <div class="acct-plan-row">
+          <span class="acct-plan-badge" id="acctPlanBadge">Gratuit</span>
+          <span class="acct-plan-status" id="acctPlanStatus">Actif</span>
+        </div>
+        <div class="acct-stat-grid">
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctDaysLeft">—</span>
+            <span class="acct-stat-label" id="acctDaysLabel">Jours restants</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctMsgCount">0</span>
+            <span class="acct-stat-label" id="acctMsgLabel">Messages aujourd'hui</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctMsgLimit">200</span>
+            <span class="acct-stat-label" id="acctMsgLimitLabel">Limite quotidienne</span>
+          </div>
+        </div>
+        <button class="acct-manage-btn" id="acctManageBtn">Gérer mon abonnement</button>
+      </div>
+
+      <!-- Préférences -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09c-.658.003-1.25.396-1.51 1z"/></svg>
+          <h3 id="acctPrefTitle">Préférences</h3>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctLangLabel">Langue</span>
+          <select id="acctLangSelect" class="acct-select">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctThemeLabel">Thème</span>
+          <button class="pill-toggle" id="acctThemeToggle" aria-pressed="false">
+            <span class="pill-knob"></span><span class="pill-txt">Sombre</span>
+          </button>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctModelLabel">Modèle</span>
+          <span class="acct-model-val" id="acctModelVal">Sonnet 4.6</span>
+        </div>
+      </div>
+
+      <!-- Utilisation -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+          <h3 id="acctUsageTitle">Utilisation</h3>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctUsageText">Messages utilisés</span>
+            <span id="acctUsageVal">0 / 200</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctUsageFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctStorageText">Stockage local</span>
+            <span id="acctStorageVal">—</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctStorageFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connexions -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <h3 id="acctConnTitle">Connexions</h3>
+        </div>
+        <div class="acct-conn-row">
+          <span>GitHub</span>
+          <span class="acct-conn-status" id="acctGhStatus">Non connecté</span>
+        </div>
+        <div class="acct-conn-row">
+          <span>Supabase</span>
+          <span class="acct-conn-status" id="acctSbStatus">Non connecté</span>
+        </div>
+        <div class="acct-conn-row">
+          <span>Vercel</span>
+          <span class="acct-conn-status" id="acctVercelStatus">Non connecté</span>
+        </div>
+      </div>
+
+      <!-- Déconnexion -->
+      <button class="acct-logout-btn" id="acctLogoutBtn">Se déconnecter</button>
+    </div>
+  </section>
+
   <section class="view view-settings" id="view-settings">
     <div class="settings-wrap">
       <h2>Paramètres</h2>

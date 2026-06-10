@@ -239,14 +239,21 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets", account: "Mon compte" },
+    acctSub: "Abonnement", acctPlan: "Gratuit", acctPlanPro: "Pro", acctActive: "Actif",
+    acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite quotidienne",
+    acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
+    acctModel: "Modèle", acctUsage: "Utilisation", acctMsgUsed: "Messages utilisés",
+    acctStorage: "Stockage local", acctConns: "Connexions", acctNotConn: "Non connecté",
+    acctConn: "Connecté", acctLogout: "Se déconnecter", acctUser: "Utilisateur",
+    acctInfinite: "∞", acctNav: "Compte",
     projTitle: "Projets", projSearch: "Rechercher des projets",
     projNew: "Nouveau projet", projNewConv: "Nouvelle conversation",
     projMemo: "Mémoire", projMemoPh: "Décris le contexte du projet...",
     projFiles: "Connaissances du projet", projAddFile: "+ Ajouter un fichier",
     projInstr: "Instructions personnalisées", projInstrPh: "Ajouter des instructions...",
     projRecent: "Conversations récentes", projPrivate: "Privé",
-    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres" },
+    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres", account: "Compte" },
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
     convAll: "Toutes", convFav: "Favoris", convProj: "Projet",
     convEmpty: "Aucune conversation", convEmptySub: "Commence une nouvelle conversation pour la voir ici.",
@@ -504,14 +511,21 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects", account: "My Account" },
+    acctSub: "Subscription", acctPlan: "Free", acctPlanPro: "Pro", acctActive: "Active",
+    acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Daily limit",
+    acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
+    acctModel: "Model", acctUsage: "Usage", acctMsgUsed: "Messages used",
+    acctStorage: "Local storage", acctConns: "Connections", acctNotConn: "Not connected",
+    acctConn: "Connected", acctLogout: "Sign out", acctUser: "User",
+    acctInfinite: "∞", acctNav: "Account",
     projTitle: "Projects", projSearch: "Search projects",
     projNew: "New project", projNewConv: "New conversation",
     projMemo: "Memory", projMemoPh: "Describe the project context...",
     projFiles: "Project knowledge", projAddFile: "+ Add a file",
     projInstr: "Custom instructions", projInstrPh: "Add instructions...",
     projRecent: "Recent conversations", projPrivate: "Private",
-    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings" },
+    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings", account: "Account" },
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
     convAll: "All", convFav: "Favorites", convProj: "Project",
     convEmpty: "No conversations", convEmptySub: "Start a new conversation to see it here.",
@@ -808,6 +822,7 @@ function applyLang() {
     }
   });
   { const e = $("#settingsBtn .lbl"); if (e) e.textContent = s.nav.settings; }
+  { const e = $("#accountBtn .lbl"); if (e) e.textContent = s.acctNav || "Compte"; }
 
   // === SIDEBAR ===
   { const e = $(".connectors > .conn-title"); if (e) e.textContent = s.conversations; }
@@ -1040,6 +1055,7 @@ function switchView(v) {
   $("#viewTitle").textContent = titles[v] || "Agent AL";
   if (window.innerWidth <= 860) { document.body.classList.remove("menu-open"); $("#overlay").classList.remove("show"); }
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
+  if (v === "account" && typeof refreshAccountPage === "function") refreshAccountPage();
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects");
@@ -4124,30 +4140,121 @@ function addPreviewButton(container, fullText) {
   container.appendChild(btn);
 }
 
-/* ============ DEMON EYES (sidebar) ============ */
-(function initDemonEyes() {
-  const wrap = $("#demonEyesWrap");
-  if (!wrap) return;
+/* ============ COMPTE (Account page) ============ */
+function refreshAccountPage() {
+  const s = I18N[state.lang] || I18N.fr;
 
-  function demonBlink() {
-    wrap.classList.add("blinking");
-    setTimeout(() => wrap.classList.remove("blinking"), 150);
+  if ($("#acctSubTitle")) $("#acctSubTitle").textContent = s.acctSub;
+  if ($("#acctPrefTitle")) $("#acctPrefTitle").textContent = s.acctPref;
+  if ($("#acctUsageTitle")) $("#acctUsageTitle").textContent = s.acctUsage;
+  if ($("#acctConnTitle")) $("#acctConnTitle").textContent = s.acctConns;
+  if ($("#acctDaysLabel")) $("#acctDaysLabel").textContent = s.acctDaysLeft;
+  if ($("#acctMsgLabel")) $("#acctMsgLabel").textContent = s.acctMsgToday;
+  if ($("#acctMsgLimitLabel")) $("#acctMsgLimitLabel").textContent = s.acctMsgLimit;
+  if ($("#acctManageBtn")) $("#acctManageBtn").textContent = s.acctManage;
+  if ($("#acctLangLabel")) $("#acctLangLabel").textContent = s.acctLang;
+  if ($("#acctThemeLabel")) $("#acctThemeLabel").textContent = s.acctTheme;
+  if ($("#acctModelLabel")) $("#acctModelLabel").textContent = s.acctModel;
+  if ($("#acctUsageText")) $("#acctUsageText").textContent = s.acctMsgUsed;
+  if ($("#acctStorageText")) $("#acctStorageText").textContent = s.acctStorage;
+  if ($("#acctLogoutBtn")) $("#acctLogoutBtn").textContent = s.acctLogout;
+  if ($("#acctPlanStatus")) $("#acctPlanStatus").textContent = s.acctActive;
+  if ($("#acctName")) $("#acctName").textContent = s.acctUser;
+
+  const plan = localStorage.getItem("tilex-plan") || "free";
+  if ($("#acctPlanBadge")) {
+    $("#acctPlanBadge").textContent = plan === "pro" ? s.acctPlanPro : s.acctPlan;
   }
 
-  function demonWink() {
-    wrap.classList.add("winking");
-    setTimeout(() => wrap.classList.remove("winking"), 600);
-    setTimeout(() => {
-      wrap.classList.add("winking");
-      setTimeout(() => wrap.classList.remove("winking"), 400);
-    }, 900);
+  const subEnd = localStorage.getItem("tilex-sub-end");
+  if ($("#acctDaysLeft")) {
+    if (subEnd) {
+      const days = Math.max(0, Math.ceil((new Date(subEnd) - Date.now()) / 86400000));
+      $("#acctDaysLeft").textContent = days;
+    } else {
+      $("#acctDaysLeft").textContent = s.acctInfinite;
+    }
   }
 
-  setInterval(demonBlink, 2500);
-  setInterval(demonWink, 5000);
+  const todayKey = `tilex-msg-${new Date().toISOString().slice(0, 10)}`;
+  const msgCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
+  const limit = plan === "pro" ? 1000 : 200;
+  if ($("#acctMsgCount")) $("#acctMsgCount").textContent = msgCount;
+  if ($("#acctMsgLimit")) $("#acctMsgLimit").textContent = limit;
+  if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount} / ${limit}`;
+  if ($("#acctUsageFill")) $("#acctUsageFill").style.width = Math.min(100, (msgCount / limit) * 100) + "%";
 
-  wrap.onclick = demonWink;
-})();
+  let totalStorage = 0;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      totalStorage += (localStorage.getItem(k) || "").length * 2;
+    }
+  } catch (_) {}
+  const storageMB = (totalStorage / 1048576).toFixed(1);
+  const maxMB = 5;
+  if ($("#acctStorageVal")) $("#acctStorageVal").textContent = `${storageMB} / ${maxMB} Mo`;
+  if ($("#acctStorageFill")) $("#acctStorageFill").style.width = Math.min(100, (parseFloat(storageMB) / maxMB) * 100) + "%";
+
+  const modelNames = { "claude-opus-4-8": "Opus 4.8", "claude-sonnet-4-6": "Sonnet 4.6", "claude-haiku-4-5-20251001": "Haiku 4.5" };
+  if ($("#acctModelVal")) $("#acctModelVal").textContent = modelNames[state.model] || state.model;
+
+  if ($("#acctGhStatus")) {
+    const gh = state.connected.github;
+    $("#acctGhStatus").textContent = gh ? s.acctConn : s.acctNotConn;
+    $("#acctGhStatus").classList.toggle("connected", gh);
+  }
+  if ($("#acctSbStatus")) {
+    const sb = state.connected.supabase;
+    $("#acctSbStatus").textContent = sb ? s.acctConn : s.acctNotConn;
+    $("#acctSbStatus").classList.toggle("connected", sb);
+  }
+  if ($("#acctVercelStatus")) {
+    const vc = state.connected.vercel;
+    $("#acctVercelStatus").textContent = vc ? s.acctConn : s.acctNotConn;
+    $("#acctVercelStatus").classList.toggle("connected", vc);
+  }
+
+  if ($("#acctThemeToggle")) {
+    const isDark = document.body.dataset.theme !== "light";
+    $("#acctThemeToggle").setAttribute("aria-pressed", !isDark);
+    $("#acctThemeToggle").querySelector(".pill-txt").textContent = isDark ? (s.setDark || "Sombre") : (s.setLight || "Clair");
+    if (isDark) $("#acctThemeToggle").classList.remove("active");
+    else $("#acctThemeToggle").classList.add("active");
+  }
+
+  if ($("#acctLangSelect")) $("#acctLangSelect").value = state.lang;
+}
+
+if ($("#acctLangSelect")) {
+  $("#acctLangSelect").onchange = (e) => {
+    state.lang = e.target.value;
+    try { localStorage.setItem(LS_LANG, state.lang); } catch (_) {}
+    applyLang();
+    refreshAccountPage();
+  };
+}
+
+if ($("#acctThemeToggle")) {
+  $("#acctThemeToggle").onclick = () => {
+    const isLight = document.body.dataset.theme === "light";
+    document.body.dataset.theme = isLight ? "dark" : "light";
+    try { localStorage.setItem("tilex-theme", document.body.dataset.theme); } catch (_) {}
+    refreshAccountPage();
+  };
+}
+
+if ($("#acctManageBtn")) {
+  $("#acctManageBtn").onclick = () => switchView("forfaits");
+}
+
+if ($("#acctLogoutBtn")) {
+  $("#acctLogoutBtn").onclick = () => {
+    if (!confirm(state.lang === "en" ? "Clear all data and sign out?" : "Effacer toutes les données et se déconnecter ?")) return;
+    localStorage.clear();
+    location.reload();
+  };
+}
 
 /* init */
 loadSettings();
