@@ -742,12 +742,34 @@
   <section class="view view-account" id="view-account">
     <div class="account-wrap">
       <div class="acct-header">
-        <div class="acct-avatar" id="acctAvatar">
-          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="acct-avatar-wrap">
+          <div class="acct-avatar" id="acctAvatar">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" class="acct-avatar-default" id="acctAvatarDefault"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <img src="" alt="" class="acct-avatar-img hidden" id="acctAvatarImg">
+          </div>
+          <button class="acct-avatar-edit" id="acctAvatarEditBtn" title="Changer la photo">📷</button>
+          <input type="file" id="acctPhotoInput" accept="image/*" hidden>
         </div>
         <div class="acct-info">
           <h2 class="acct-name" id="acctName">Utilisateur</h2>
           <p class="acct-email" id="acctEmail">—</p>
+        </div>
+        <button class="acct-edit-btn" id="acctEditBtn" title="Modifier le profil">✏️</button>
+      </div>
+
+      <!-- Profil éditable (caché par défaut) -->
+      <div class="acct-card acct-edit-card hidden" id="acctEditCard">
+        <div class="acct-card-head">
+          <span style="font-size:1.2rem">✏️</span>
+          <h3 id="acctEditTitle">Modifier le profil</h3>
+        </div>
+        <label class="acct-field-label" id="acctNameLabel">Nom</label>
+        <input type="text" class="acct-field-input" id="acctNameInput" placeholder="Ton nom…">
+        <label class="acct-field-label" id="acctEmailLabel">Courriel</label>
+        <input type="email" class="acct-field-input" id="acctEmailInput" placeholder="ton@courriel.com">
+        <div class="acct-edit-actions">
+          <button class="acct-save-btn" id="acctSaveBtn">Enregistrer</button>
+          <button class="acct-cancel-btn" id="acctCancelEditBtn">Annuler</button>
         </div>
       </div>
 
@@ -758,7 +780,7 @@
           <h3 id="acctSubTitle">Abonnement</h3>
         </div>
         <div class="acct-plan-row">
-          <span class="acct-plan-badge" id="acctPlanBadge">Gratuit</span>
+          <span class="acct-plan-badge" id="acctPlanBadge">—</span>
           <span class="acct-plan-status" id="acctPlanStatus">Actif</span>
         </div>
         <div class="acct-stat-grid">
@@ -771,7 +793,7 @@
             <span class="acct-stat-label" id="acctMsgLabel">Messages aujourd'hui</span>
           </div>
           <div class="acct-stat">
-            <span class="acct-stat-val" id="acctMsgLimit">200</span>
+            <span class="acct-stat-val" id="acctMsgLimit">—</span>
             <span class="acct-stat-label" id="acctMsgLimitLabel">Limite quotidienne</span>
           </div>
         </div>

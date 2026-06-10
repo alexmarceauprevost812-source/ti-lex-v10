@@ -240,13 +240,15 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 const I18N = {
   fr: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets", account: "Mon compte" },
-    acctSub: "Abonnement", acctPlan: "Gratuit", acctPlanPro: "Pro", acctActive: "Actif",
+    acctSub: "Abonnement", acctPlanPro: "Pro", acctActive: "Actif",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite quotidienne",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
     acctModel: "Modèle", acctUsage: "Utilisation", acctMsgUsed: "Messages utilisés",
     acctStorage: "Stockage local", acctConns: "Connexions", acctNotConn: "Non connecté",
     acctConn: "Connecté", acctLogout: "Se déconnecter", acctUser: "Utilisateur",
     acctInfinite: "∞", acctNav: "Compte",
+    acctEditProfile: "Modifier le profil", acctNameLabel: "Nom", acctEmailLabel: "Courriel",
+    acctSave: "Enregistrer", acctCancel: "Annuler",
     projTitle: "Projets", projSearch: "Rechercher des projets",
     projNew: "Nouveau projet", projNewConv: "Nouvelle conversation",
     projMemo: "Mémoire", projMemoPh: "Décris le contexte du projet...",
@@ -512,13 +514,15 @@ const I18N = {
   },
   en: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects", account: "My Account" },
-    acctSub: "Subscription", acctPlan: "Free", acctPlanPro: "Pro", acctActive: "Active",
+    acctSub: "Subscription", acctPlanPro: "Pro", acctActive: "Active",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Daily limit",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
     acctModel: "Model", acctUsage: "Usage", acctMsgUsed: "Messages used",
     acctStorage: "Local storage", acctConns: "Connections", acctNotConn: "Not connected",
     acctConn: "Connected", acctLogout: "Sign out", acctUser: "User",
     acctInfinite: "∞", acctNav: "Account",
+    acctEditProfile: "Edit profile", acctNameLabel: "Name", acctEmailLabel: "Email",
+    acctSave: "Save", acctCancel: "Cancel",
     projTitle: "Projects", projSearch: "Search projects",
     projNew: "New project", projNewConv: "New conversation",
     projMemo: "Memory", projMemoPh: "Describe the project context...",
@@ -4141,6 +4145,19 @@ function addPreviewButton(container, fullText) {
 }
 
 /* ============ COMPTE (Account page) ============ */
+function loadAcctProfile() {
+  const name = localStorage.getItem("tilex-acct-name") || "";
+  const email = localStorage.getItem("tilex-acct-email") || "";
+  const photo = localStorage.getItem("tilex-acct-photo") || "";
+  if (name && $("#acctName")) $("#acctName").textContent = name;
+  if (email && $("#acctEmail")) $("#acctEmail").textContent = email;
+  if (photo && $("#acctAvatarImg")) {
+    $("#acctAvatarImg").src = photo;
+    $("#acctAvatarImg").classList.remove("hidden");
+    $("#acctAvatarDefault").style.display = "none";
+  }
+}
+
 function refreshAccountPage() {
   const s = I18N[state.lang] || I18N.fr;
 
@@ -4159,11 +4176,23 @@ function refreshAccountPage() {
   if ($("#acctStorageText")) $("#acctStorageText").textContent = s.acctStorage;
   if ($("#acctLogoutBtn")) $("#acctLogoutBtn").textContent = s.acctLogout;
   if ($("#acctPlanStatus")) $("#acctPlanStatus").textContent = s.acctActive;
-  if ($("#acctName")) $("#acctName").textContent = s.acctUser;
+  if ($("#acctEditTitle")) $("#acctEditTitle").textContent = s.acctEditProfile || "Modifier le profil";
+  if ($("#acctNameLabel")) $("#acctNameLabel").textContent = s.acctNameLabel || "Nom";
+  if ($("#acctEmailLabel")) $("#acctEmailLabel").textContent = s.acctEmailLabel || "Courriel";
+  if ($("#acctSaveBtn")) $("#acctSaveBtn").textContent = s.acctSave || "Enregistrer";
+  if ($("#acctCancelEditBtn")) $("#acctCancelEditBtn").textContent = s.acctCancel || "Annuler";
 
-  const plan = localStorage.getItem("tilex-plan") || "free";
+  loadAcctProfile();
+
+  const plan = localStorage.getItem("tilex-plan") || "";
   if ($("#acctPlanBadge")) {
-    $("#acctPlanBadge").textContent = plan === "pro" ? s.acctPlanPro : s.acctPlan;
+    if (plan === "pro") {
+      $("#acctPlanBadge").textContent = s.acctPlanPro;
+    } else if (plan) {
+      $("#acctPlanBadge").textContent = plan;
+    } else {
+      $("#acctPlanBadge").textContent = "—";
+    }
   }
 
   const subEnd = localStorage.getItem("tilex-sub-end");
@@ -4172,17 +4201,23 @@ function refreshAccountPage() {
       const days = Math.max(0, Math.ceil((new Date(subEnd) - Date.now()) / 86400000));
       $("#acctDaysLeft").textContent = days;
     } else {
-      $("#acctDaysLeft").textContent = s.acctInfinite;
+      $("#acctDaysLeft").textContent = "—";
     }
   }
 
   const todayKey = `tilex-msg-${new Date().toISOString().slice(0, 10)}`;
   const msgCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
-  const limit = plan === "pro" ? 1000 : 200;
+  const limitStr = localStorage.getItem("tilex-msg-limit");
+  const limit = limitStr ? parseInt(limitStr, 10) : "—";
   if ($("#acctMsgCount")) $("#acctMsgCount").textContent = msgCount;
   if ($("#acctMsgLimit")) $("#acctMsgLimit").textContent = limit;
-  if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount} / ${limit}`;
-  if ($("#acctUsageFill")) $("#acctUsageFill").style.width = Math.min(100, (msgCount / limit) * 100) + "%";
+  if (typeof limit === "number") {
+    if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount} / ${limit}`;
+    if ($("#acctUsageFill")) $("#acctUsageFill").style.width = Math.min(100, (msgCount / limit) * 100) + "%";
+  } else {
+    if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount}`;
+    if ($("#acctUsageFill")) $("#acctUsageFill").style.width = "0%";
+  }
 
   let totalStorage = 0;
   try {
@@ -4224,6 +4259,58 @@ function refreshAccountPage() {
   }
 
   if ($("#acctLangSelect")) $("#acctLangSelect").value = state.lang;
+}
+
+/* Edit profile toggle */
+if ($("#acctEditBtn")) {
+  $("#acctEditBtn").onclick = () => {
+    const card = $("#acctEditCard");
+    card.classList.toggle("hidden");
+    if (!card.classList.contains("hidden")) {
+      $("#acctNameInput").value = localStorage.getItem("tilex-acct-name") || "";
+      $("#acctEmailInput").value = localStorage.getItem("tilex-acct-email") || "";
+      $("#acctNameInput").focus();
+    }
+  };
+}
+
+if ($("#acctCancelEditBtn")) {
+  $("#acctCancelEditBtn").onclick = () => {
+    $("#acctEditCard").classList.add("hidden");
+  };
+}
+
+if ($("#acctSaveBtn")) {
+  $("#acctSaveBtn").onclick = () => {
+    const name = $("#acctNameInput").value.trim();
+    const email = $("#acctEmailInput").value.trim();
+    if (name) localStorage.setItem("tilex-acct-name", name);
+    if (email) localStorage.setItem("tilex-acct-email", email);
+    $("#acctEditCard").classList.add("hidden");
+    refreshAccountPage();
+  };
+}
+
+/* Avatar photo upload */
+if ($("#acctAvatarEditBtn")) {
+  $("#acctAvatarEditBtn").onclick = () => $("#acctPhotoInput").click();
+}
+
+if ($("#acctPhotoInput")) {
+  $("#acctPhotoInput").onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      try { localStorage.setItem("tilex-acct-photo", dataUrl); } catch (_) {}
+      $("#acctAvatarImg").src = dataUrl;
+      $("#acctAvatarImg").classList.remove("hidden");
+      $("#acctAvatarDefault").style.display = "none";
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 }
 
 if ($("#acctLangSelect")) {
@@ -4268,6 +4355,7 @@ if ($("#langSelect")) {
   };
 }
 applyLang();
+loadAcctProfile();
 
 // ── Codex Matrix Animation ──
 (function initCodexMatrix() {
