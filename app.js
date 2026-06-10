@@ -4759,9 +4759,14 @@ async function finSend(text) {
   finShowTyping();
 
   try {
+    const h = { "Content-Type": "application/json" };
+    const tk = proxyToken();
+    if (tk) h["Authorization"] = `Bearer ${tk}`;
+    if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+
     const res = await fetch(AI_PROXY, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${proxyToken()}` },
+      headers: h,
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 2048,
@@ -4769,11 +4774,26 @@ async function finSend(text) {
         messages: finHistory.filter(m => !m.error).map(m => ({ role: m.role, content: m.content }))
       })
     });
-    const data = await res.json();
-    const reply = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+
+    if (!res.ok) {
+      const errMsg = await apiError(res);
+      finRemoveTyping();
+      finAddMsg("assistant", errMsg, true);
+      return;
+    }
+
     finRemoveTyping();
-    const msg = reply || t("finNoReply");
-    finAddMsg("assistant", msg);
+    const wrap = finAddMsg("assistant", "…");
+    const bubble = wrap.querySelector(".fin-bubble-ai");
+
+    const reply = await streamText(res, (partial) => {
+      bubble.innerHTML = finRenderMd(partial);
+      const container = $("#finMessages");
+      container.scrollTop = container.scrollHeight;
+    });
+
+    bubble.innerHTML = finRenderMd(reply);
+    const msg = reply.trim() || t("finNoReply");
     finHistory.push({ role: "assistant", content: msg });
   } catch (e) {
     finRemoveTyping();
