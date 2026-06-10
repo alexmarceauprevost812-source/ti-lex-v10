@@ -1972,7 +1972,7 @@ textarea.fin-input:focus{outline:none}
 
 .view-forfaits{
   overflow-y:auto!important;overflow-x:hidden!important;position:relative;
-  --fp-bg:#0a0a0a;--fp-bg-2:rgba(20,20,20,.92);--fp-bg-3:#222;
+  --fp-bg:#000;--fp-bg-2:rgba(10,10,10,.95);--fp-bg-3:#111;
   --fp-orange:#f97316;--fp-orange-d:#ea580c;--fp-orange-glow:rgba(249,115,22,.25);
   --fp-green:#22c55e;--fp-green-glow:rgba(34,197,94,.3);
   --fp-line:rgba(249,115,22,.25);
@@ -1981,7 +1981,7 @@ textarea.fin-input:focus{outline:none}
 }
 .fp-video-bg{
   position:absolute;top:0;left:0;width:100%;height:100%;
-  object-fit:cover;z-index:0;opacity:.18;pointer-events:none;
+  object-fit:cover;z-index:0;opacity:.12;pointer-events:none;
 }
 .fp-wrap{max-width:1180px;margin:0 auto;padding:46px 20px 70px;position:relative;z-index:1}
 
