@@ -1242,6 +1242,18 @@ body[data-theme="light"] .studio-code::placeholder{color:#aaa}
 }
 .acct-stat-val{display:block;font-size:1.5rem;font-weight:800;color:var(--orange)}
 .acct-stat-label{display:block;font-size:.7rem;color:var(--txt-dim);margin-top:4px}
+.acct-plan-price{font-size:.85rem;font-weight:700;color:var(--orange)}
+.acct-plan-details{
+  margin-bottom:16px;border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;
+}
+.acct-detail-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--line);font-size:.85rem;
+}
+.acct-detail-row:last-child{border-bottom:none}
+.acct-detail-row span:first-child{color:var(--txt-dim);font-weight:500}
+.acct-detail-row span:last-child{font-weight:700;color:var(--txt)}
 .acct-manage-btn{
   width:100%;padding:12px;border:1px solid var(--orange);background:transparent;
   color:var(--orange);border-radius:12px;font-family:var(--font);

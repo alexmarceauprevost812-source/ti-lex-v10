@@ -781,6 +781,7 @@
         </div>
         <div class="acct-plan-row">
           <span class="acct-plan-badge" id="acctPlanBadge">—</span>
+          <span class="acct-plan-price" id="acctPlanPrice"></span>
           <span class="acct-plan-status" id="acctPlanStatus">Actif</span>
         </div>
         <div class="acct-stat-grid">
@@ -794,7 +795,35 @@
           </div>
           <div class="acct-stat">
             <span class="acct-stat-val" id="acctMsgLimit">—</span>
-            <span class="acct-stat-label" id="acctMsgLimitLabel">Limite quotidienne</span>
+            <span class="acct-stat-label" id="acctMsgLimitLabel">Limite / jour</span>
+          </div>
+        </div>
+
+        <!-- Détails du plan -->
+        <div class="acct-plan-details" id="acctPlanDetails">
+          <div class="acct-detail-row">
+            <span id="acctDetailMsgMonthLabel">Messages / mois</span>
+            <span id="acctDetailMsgMonth">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailAgentsLabel">Agents</span>
+            <span id="acctDetailAgents">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailModelsLabel">Modèles</span>
+            <span id="acctDetailModels">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailThinkingLabel">Réflexion</span>
+            <span id="acctDetailThinking">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailCodexLabel">Codex / jour</span>
+            <span id="acctDetailCodex">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailImgLabel">Images / jour</span>
+            <span id="acctDetailImg">—</span>
           </div>
         </div>
         <button class="acct-manage-btn" id="acctManageBtn">Gérer mon abonnement</button>
@@ -834,10 +863,19 @@
         <div class="acct-usage-bar-wrap">
           <div class="acct-usage-label">
             <span id="acctUsageText">Messages utilisés</span>
-            <span id="acctUsageVal">0 / 200</span>
+            <span id="acctUsageVal">0</span>
           </div>
           <div class="acct-usage-track">
             <div class="acct-usage-fill" id="acctUsageFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctImgText">Images générées</span>
+            <span id="acctImgVal">0</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctImgFill" style="width:0%"></div>
           </div>
         </div>
         <div class="acct-usage-bar-wrap">

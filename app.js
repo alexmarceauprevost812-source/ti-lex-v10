@@ -240,12 +240,15 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 const I18N = {
   fr: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets", account: "Mon compte" },
-    acctSub: "Abonnement", acctPlanPro: "Pro", acctActive: "Actif",
-    acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite quotidienne",
+    acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
+    acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
     acctModel: "Modèle", acctUsage: "Utilisation", acctMsgUsed: "Messages utilisés",
+    acctImgUsed: "Images générées",
     acctStorage: "Stockage local", acctConns: "Connexions", acctNotConn: "Non connecté",
     acctConn: "Connecté", acctLogout: "Se déconnecter", acctUser: "Utilisateur",
+    acctMsgMonth: "Messages / mois", acctAgents: "Agents", acctModels: "Modèles",
+    acctCodex: "Codex / jour", acctThinking: "Réflexion",
     acctInfinite: "∞", acctNav: "Compte",
     acctEditProfile: "Modifier le profil", acctNameLabel: "Nom", acctEmailLabel: "Courriel",
     acctSave: "Enregistrer", acctCancel: "Annuler",
@@ -514,11 +517,14 @@ const I18N = {
   },
   en: {
     titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects", account: "My Account" },
-    acctSub: "Subscription", acctPlanPro: "Pro", acctActive: "Active",
-    acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Daily limit",
+    acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
+    acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
     acctModel: "Model", acctUsage: "Usage", acctMsgUsed: "Messages used",
+    acctImgUsed: "Images generated",
     acctStorage: "Local storage", acctConns: "Connections", acctNotConn: "Not connected",
+    acctMsgMonth: "Messages / month", acctAgents: "Agents", acctModels: "Models",
+    acctCodex: "Codex / day", acctThinking: "Thinking",
     acctConn: "Connected", acctLogout: "Sign out", acctUser: "User",
     acctInfinite: "∞", acctNav: "Account",
     acctEditProfile: "Edit profile", acctNameLabel: "Name", acctEmailLabel: "Email",
@@ -4158,6 +4164,12 @@ function loadAcctProfile() {
   }
 }
 
+const PLAN_DATA = {
+  starter: { name: "Starter", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgDay: 5 },
+  pro:     { name: "Pro",     price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgDay: 15 },
+  industriel: { name: "Industriel", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgDay: 50 },
+};
+
 function refreshAccountPage() {
   const s = I18N[state.lang] || I18N.fr;
 
@@ -4173,26 +4185,31 @@ function refreshAccountPage() {
   if ($("#acctThemeLabel")) $("#acctThemeLabel").textContent = s.acctTheme;
   if ($("#acctModelLabel")) $("#acctModelLabel").textContent = s.acctModel;
   if ($("#acctUsageText")) $("#acctUsageText").textContent = s.acctMsgUsed;
+  if ($("#acctImgText")) $("#acctImgText").textContent = s.acctImgUsed;
   if ($("#acctStorageText")) $("#acctStorageText").textContent = s.acctStorage;
   if ($("#acctLogoutBtn")) $("#acctLogoutBtn").textContent = s.acctLogout;
-  if ($("#acctPlanStatus")) $("#acctPlanStatus").textContent = s.acctActive;
   if ($("#acctEditTitle")) $("#acctEditTitle").textContent = s.acctEditProfile || "Modifier le profil";
   if ($("#acctNameLabel")) $("#acctNameLabel").textContent = s.acctNameLabel || "Nom";
   if ($("#acctEmailLabel")) $("#acctEmailLabel").textContent = s.acctEmailLabel || "Courriel";
   if ($("#acctSaveBtn")) $("#acctSaveBtn").textContent = s.acctSave || "Enregistrer";
   if ($("#acctCancelEditBtn")) $("#acctCancelEditBtn").textContent = s.acctCancel || "Annuler";
+  if ($("#acctDetailMsgMonthLabel")) $("#acctDetailMsgMonthLabel").textContent = s.acctMsgMonth;
+  if ($("#acctDetailAgentsLabel")) $("#acctDetailAgentsLabel").textContent = s.acctAgents;
+  if ($("#acctDetailModelsLabel")) $("#acctDetailModelsLabel").textContent = s.acctModels;
+  if ($("#acctDetailThinkingLabel")) $("#acctDetailThinkingLabel").textContent = s.acctThinking;
+  if ($("#acctDetailCodexLabel")) $("#acctDetailCodexLabel").textContent = s.acctCodex;
+  if ($("#acctDetailImgLabel")) $("#acctDetailImgLabel").textContent = (s.acctImgUsed || "Images") + " / " + (state.lang === "en" ? "day" : "jour");
 
   loadAcctProfile();
 
-  const plan = localStorage.getItem("tilex-plan") || "";
+  const planKey = localStorage.getItem("tilex-plan") || "";
+  const plan = PLAN_DATA[planKey] || null;
+
   if ($("#acctPlanBadge")) {
-    if (plan === "pro") {
-      $("#acctPlanBadge").textContent = s.acctPlanPro;
-    } else if (plan) {
-      $("#acctPlanBadge").textContent = plan;
-    } else {
-      $("#acctPlanBadge").textContent = "—";
-    }
+    $("#acctPlanBadge").textContent = plan ? plan.name : (s.acctNoPlan || "—");
+  }
+  if ($("#acctPlanPrice")) {
+    $("#acctPlanPrice").textContent = plan ? plan.price : "";
   }
 
   const subEnd = localStorage.getItem("tilex-sub-end");
@@ -4200,24 +4217,49 @@ function refreshAccountPage() {
     if (subEnd) {
       const days = Math.max(0, Math.ceil((new Date(subEnd) - Date.now()) / 86400000));
       $("#acctDaysLeft").textContent = days;
+      if ($("#acctPlanStatus")) {
+        $("#acctPlanStatus").textContent = days > 0 ? s.acctActive : s.acctExpired;
+        $("#acctPlanStatus").style.color = days > 0 ? "#3ecf8e" : "#e53e3e";
+      }
     } else {
       $("#acctDaysLeft").textContent = "—";
+      if ($("#acctPlanStatus")) {
+        $("#acctPlanStatus").textContent = plan ? s.acctActive : "";
+        $("#acctPlanStatus").style.color = "#3ecf8e";
+      }
     }
   }
 
+  const msgLimit = plan ? plan.msgDay : 0;
   const todayKey = `tilex-msg-${new Date().toISOString().slice(0, 10)}`;
   const msgCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
-  const limitStr = localStorage.getItem("tilex-msg-limit");
-  const limit = limitStr ? parseInt(limitStr, 10) : "—";
   if ($("#acctMsgCount")) $("#acctMsgCount").textContent = msgCount;
-  if ($("#acctMsgLimit")) $("#acctMsgLimit").textContent = limit;
-  if (typeof limit === "number") {
-    if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount} / ${limit}`;
-    if ($("#acctUsageFill")) $("#acctUsageFill").style.width = Math.min(100, (msgCount / limit) * 100) + "%";
+  if ($("#acctMsgLimit")) $("#acctMsgLimit").textContent = plan ? msgLimit : "—";
+  if (plan && msgLimit) {
+    if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount} / ${msgLimit}`;
+    if ($("#acctUsageFill")) $("#acctUsageFill").style.width = Math.min(100, (msgCount / msgLimit) * 100) + "%";
   } else {
     if ($("#acctUsageVal")) $("#acctUsageVal").textContent = `${msgCount}`;
     if ($("#acctUsageFill")) $("#acctUsageFill").style.width = "0%";
   }
+
+  const imgLimit = plan ? plan.imgDay : 0;
+  const imgKey = `tilex-img-${new Date().toISOString().slice(0, 10)}`;
+  const imgCount = parseInt(localStorage.getItem(imgKey) || "0", 10);
+  if (imgLimit) {
+    if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount} / ${imgLimit}`;
+    if ($("#acctImgFill")) $("#acctImgFill").style.width = Math.min(100, (imgCount / imgLimit) * 100) + "%";
+  } else {
+    if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount}`;
+    if ($("#acctImgFill")) $("#acctImgFill").style.width = "0%";
+  }
+
+  if ($("#acctDetailMsgMonth")) $("#acctDetailMsgMonth").textContent = plan ? plan.msgMonth.toLocaleString() : "—";
+  if ($("#acctDetailAgents")) $("#acctDetailAgents").textContent = plan ? plan.agents : "—";
+  if ($("#acctDetailModels")) $("#acctDetailModels").textContent = plan ? plan.models : "—";
+  if ($("#acctDetailThinking")) $("#acctDetailThinking").textContent = plan ? plan.thinking : "—";
+  if ($("#acctDetailCodex")) $("#acctDetailCodex").textContent = plan ? plan.codexDay + " sessions" : "—";
+  if ($("#acctDetailImg")) $("#acctDetailImg").textContent = plan ? plan.imgDay : "—";
 
   let totalStorage = 0;
   try {
