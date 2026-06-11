@@ -1600,6 +1600,83 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
   font-family:var(--font);font-size:.76rem;font-weight:600;color:var(--txt-dim);
   cursor:pointer;text-decoration:none;transition:var(--t)}
 .gen-image-actions a:hover,.gen-image-actions button:hover{border-color:var(--orange);color:var(--orange)}
+.agents-head-actions{display:flex;align-items:center;gap:6px}
+.agents-create-btn{
+  width:32px;height:32px;border-radius:8px;border:1.5px solid var(--orange);
+  background:none;color:var(--orange);font-size:1.2rem;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.agents-create-btn:hover{background:var(--orange);color:#fff}
+
+.agents-form{
+  padding:16px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;
+}
+.agents-form-title{font-family:var(--marker);font-size:1.1rem;letter-spacing:.3px}
+.agents-form-avatar{display:flex;align-items:center;gap:12px}
+.agents-form-photo{
+  width:64px;height:64px;border-radius:14px;background:var(--bg-3);
+  border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:2rem;overflow:hidden;flex-shrink:0;
+}
+.agents-form-photo img{width:100%;height:100%;object-fit:cover}
+.agents-form-photo.has-photo{border:2px solid var(--orange)}
+.agents-form-photo-btn{
+  padding:6px 14px;border-radius:8px;font-size:.78rem;font-weight:600;
+  background:var(--orange);border:none;color:#fff;cursor:pointer;
+  font-family:var(--font);transition:transform .15s;
+}
+.agents-form-photo-btn:hover{transform:scale(1.04)}
+.agents-form-emojis{display:flex;flex-wrap:wrap;gap:5px}
+.agents-form-emoji{
+  width:36px;height:36px;border-radius:8px;border:1px solid var(--line);
+  background:var(--bg-3);font-size:1.3rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.agents-form-emoji:hover{border-color:var(--orange)}
+.agents-form-emoji.active{border-color:var(--orange);background:rgba(255,102,0,.15);box-shadow:0 0 0 2px var(--orange)}
+.agents-form-input{
+  background:var(--bg-3);border:1px solid var(--line);border-radius:10px;
+  padding:10px 14px;color:var(--txt);font-size:.85rem;font-family:var(--font);
+  outline:none;width:100%;box-sizing:border-box;
+}
+.agents-form-input:focus{border-color:var(--orange)}
+.agents-form-input::placeholder{color:var(--txt-dim)}
+.agents-form-textarea{resize:none;min-height:80px}
+.agents-form-caps{display:flex;flex-direction:column;gap:6px}
+.agents-form-cap{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:10px;border:1px solid var(--line);background:var(--bg-3);
+  cursor:pointer;transition:all .15s;
+}
+.agents-form-cap:hover{border-color:var(--txt-dim)}
+.agents-form-cap.active{border-color:var(--orange);background:rgba(255,102,0,.08)}
+.agents-form-cap-label{font-size:.82rem;font-weight:600}
+.agents-form-cap-desc{font-size:.72rem;color:var(--txt-dim)}
+.agents-form-actions{display:flex;gap:8px;margin-top:4px}
+.agents-form-save{
+  flex:1;padding:10px;border-radius:10px;border:none;
+  background:var(--orange);color:#fff;font-weight:700;font-size:.85rem;
+  font-family:var(--font);cursor:pointer;transition:transform .15s;
+}
+.agents-form-save:hover{transform:scale(1.02)}
+.agents-form-save:disabled{opacity:.4;cursor:not-allowed}
+.agents-form-cancel{
+  padding:10px 18px;border-radius:10px;border:1px solid var(--line);
+  background:var(--bg-3);color:var(--txt-dim);font-size:.85rem;
+  font-family:var(--font);cursor:pointer;transition:all .15s;
+}
+.agents-form-cancel:hover{border-color:var(--txt);color:var(--txt)}
+.agent-card .agent-custom-actions{
+  display:flex;gap:4px;margin-left:auto;opacity:0;transition:opacity .2s;
+}
+.agent-card:hover .agent-custom-actions{opacity:1}
+.agent-custom-edit,.agent-custom-del{
+  font-size:.75rem;cursor:pointer;padding:2px 4px;
+  border-radius:4px;transition:background .15s;
+}
+.agent-custom-edit:hover,.agent-custom-del:hover{background:rgba(255,255,255,.12)}
+
 @media(max-width:860px){.agents-panel{width:85vw}}
 
 /* ============ FINANCE — Nav & View ============ */

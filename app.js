@@ -1144,11 +1144,16 @@ function renderAgents() {
   if (!list) return;
   list.innerHTML = Object.entries(AGENTS).map(([key, a]) => {
     const locked = isAgentLocked(key);
+    const isCustom = !!a.custom;
     return `<button class="agent-card${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}"${locked ? ' title="Disponible avec le forfait Industriel"' : ''}>
       <div class="agent-card-top">
-        <span class="agent-emoji">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
+        <span class="agent-emoji">${a.photo ? `<img src="${a.photo}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : (a.img ? `<img src="${a.img}" alt="">` : a.emoji)}</span>
         <span class="agent-name">${a.name}</span>
         ${locked ? '<span class="agent-lock-badge">🔒 Industriel</span>' : ''}
+        ${isCustom ? `<span class="agent-custom-actions">
+          <span class="agent-custom-edit" data-edit="${key}" title="Modifier">✏️</span>
+          <span class="agent-custom-del" data-del="${a.customId}" title="Supprimer">🗑️</span>
+        </span>` : ''}
       </div>
       <span class="agent-desc">${agentDesc(key)}</span>
     </button>`;
@@ -1159,6 +1164,12 @@ function renderAgents() {
       return;
     }
     c.onclick = () => { selectAgent(c.dataset.agent); closeAgents(); };
+  });
+  $$(".agent-custom-edit").forEach(btn => {
+    btn.onclick = (e) => { e.stopPropagation(); showAgentForm(btn.dataset.edit); };
+  });
+  $$(".agent-custom-del").forEach(btn => {
+    btn.onclick = (e) => { e.stopPropagation(); deleteCustomAgent(btn.dataset.del); };
   });
 }
 
@@ -1185,6 +1196,258 @@ function closeAgents(){ $("#agentsPanel").classList.remove("open"); $("#agentsOv
 if ($("#agentsToggle")) $("#agentsToggle").onclick = openAgents;
 if ($("#agentsClose")) $("#agentsClose").onclick = closeAgents;
 if ($("#agentsOverlay")) $("#agentsOverlay").onclick = closeAgents;
+
+/* ================= AGENTS PERSONNALISÉS ================= */
+let customAgents = [];
+const CUSTOM_AGENTS_LS = "tilex-custom-agents";
+const AGENT_EMOJIS = ["🤖","🦫","🦊","🐺","🦉","⚡","🔥","🌲","🛡️","🎩","👾","🧙"];
+const AGENT_CAPS = [
+  { id: "ia", label: "✨ IA Claude", desc: "Répond avec l'intelligence de Claude" },
+  { id: "web", label: "🌐 Recherche web", desc: "Cherche des infos à jour sur le web" },
+  { id: "memoire", label: "🧠 Mémoire", desc: "Se souvient de la conversation" },
+  { id: "supabase", label: "🗄️ Supabase", desc: "Accède à la base de données ti-lex" },
+];
+let agentFormState = { id: null, name: "", emoji: "🤖", photo: null, description: "", system_prompt: "", capabilities: ["ia", "memoire"] };
+
+function customAgentsLocalLoad() {
+  try { customAgents = JSON.parse(localStorage.getItem(CUSTOM_AGENTS_LS) || "[]"); } catch { customAgents = []; }
+}
+function customAgentsLocalSave() {
+  try { localStorage.setItem(CUSTOM_AGENTS_LS, JSON.stringify(customAgents)); } catch (_) {}
+}
+
+async function customAgentsFetch() {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    const res = await fetch(
+      `${SUPABASE_REST}/agents?select=*&order=created_at.asc`,
+      { headers: { apikey: tk, Authorization: `Bearer ${session.access_token}` } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    customAgents = rows;
+    customAgentsLocalSave();
+    registerCustomAgents();
+    renderAgents();
+  } catch (_) {}
+}
+
+async function customAgentSave(agent) {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    await fetch(`${SUPABASE_REST}/agents`, {
+      method: "POST",
+      headers: {
+        apikey: tk, Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=representation",
+      },
+      body: JSON.stringify(agent),
+    });
+  } catch (_) {}
+}
+
+async function customAgentDelete(id) {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    await fetch(`${SUPABASE_REST}/agents?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { apikey: tk, Authorization: `Bearer ${session.access_token}` },
+    });
+  } catch (_) {}
+}
+
+function registerCustomAgents() {
+  customAgents.forEach(a => {
+    const key = "custom_" + a.id;
+    AGENTS[key] = {
+      name: a.name,
+      emoji: a.emoji || "🤖",
+      photo: a.photo || null,
+      desc: a.description || "Agent personnalisé",
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      prompt: a.system_prompt || `Tu es ${a.name}, un agent IA de ti-lex-AL. Réponds en français québécois.`,
+      custom: true,
+      customId: a.id,
+      capabilities: a.capabilities || [],
+    };
+  });
+}
+
+function showAgentForm(editKey) {
+  const form = $("#agentsForm");
+  const list = $("#agentsList");
+  if (!form || !list) return;
+  list.classList.add("hidden");
+  form.classList.remove("hidden");
+  if (editKey) {
+    const a = AGENTS[editKey];
+    const ca = customAgents.find(c => "custom_" + c.id === editKey);
+    agentFormState = {
+      id: ca?.id || null,
+      name: a?.name || "",
+      emoji: a?.emoji || "🤖",
+      photo: a?.photo || ca?.photo || null,
+      description: a?.desc || "",
+      system_prompt: a?.prompt || "",
+      capabilities: a?.capabilities || ca?.capabilities || ["ia", "memoire"],
+    };
+    $("#agentsFormTitle").textContent = "Modifier l'agent";
+    $("#agentsFormSave").textContent = "Enregistrer";
+  } else {
+    agentFormState = { id: null, name: "", emoji: "🤖", photo: null, description: "", system_prompt: "", capabilities: ["ia", "memoire"] };
+    $("#agentsFormTitle").textContent = "Créer un agent";
+    $("#agentsFormSave").textContent = "Créer l'agent";
+  }
+  $("#agentsFormName").value = agentFormState.name;
+  $("#agentsFormDesc").value = agentFormState.description;
+  $("#agentsFormPrompt").value = agentFormState.system_prompt;
+  renderAgentFormPhoto();
+  renderAgentFormEmojis();
+  renderAgentFormCaps();
+}
+
+function hideAgentForm() {
+  const form = $("#agentsForm");
+  const list = $("#agentsList");
+  if (form) form.classList.add("hidden");
+  if (list) list.classList.remove("hidden");
+}
+
+function renderAgentFormPhoto() {
+  const el = $("#agentsFormPhoto");
+  if (!el) return;
+  if (agentFormState.photo) {
+    el.innerHTML = `<img src="${agentFormState.photo}" alt="">`;
+    el.classList.add("has-photo");
+  } else {
+    el.textContent = agentFormState.emoji;
+    el.classList.remove("has-photo");
+  }
+}
+
+function renderAgentFormEmojis() {
+  const el = $("#agentsFormEmojis");
+  if (!el) return;
+  if (agentFormState.photo) { el.innerHTML = ""; return; }
+  el.innerHTML = AGENT_EMOJIS.map(e =>
+    `<button class="agents-form-emoji${agentFormState.emoji === e ? ' active' : ''}" data-emoji="${e}">${e}</button>`
+  ).join("");
+  $$(".agents-form-emoji", el).forEach(btn => {
+    btn.onclick = () => {
+      agentFormState.emoji = btn.dataset.emoji;
+      renderAgentFormEmojis();
+      renderAgentFormPhoto();
+    };
+  });
+}
+
+function renderAgentFormCaps() {
+  const el = $("#agentsFormCaps");
+  if (!el) return;
+  el.innerHTML = AGENT_CAPS.map(c => {
+    const on = agentFormState.capabilities.includes(c.id);
+    return `<div class="agents-form-cap${on ? ' active' : ''}" data-cap="${c.id}">
+      <div><div class="agents-form-cap-label">${c.label}</div><div class="agents-form-cap-desc">${c.desc}</div></div>
+    </div>`;
+  }).join("");
+  $$(".agents-form-cap", el).forEach(btn => {
+    btn.onclick = () => {
+      const cap = btn.dataset.cap;
+      if (agentFormState.capabilities.includes(cap)) {
+        agentFormState.capabilities = agentFormState.capabilities.filter(c => c !== cap);
+      } else {
+        agentFormState.capabilities.push(cap);
+      }
+      renderAgentFormCaps();
+    };
+  });
+}
+
+function handleAgentPhoto(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256; canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      const min = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - min) / 2, (img.height - min) / 2, min, min, 0, 0, 256, 256);
+      agentFormState.photo = canvas.toDataURL("image/jpeg", 0.8);
+      renderAgentFormPhoto();
+      renderAgentFormEmojis();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+}
+
+async function saveCustomAgent() {
+  const name = ($("#agentsFormName")?.value || "").trim();
+  if (!name) return;
+  const desc = ($("#agentsFormDesc")?.value || "").trim();
+  const prompt = ($("#agentsFormPrompt")?.value || "").trim();
+  const now = new Date().toISOString();
+  const agent = {
+    id: agentFormState.id || "ag_" + Date.now(),
+    name,
+    emoji: agentFormState.emoji,
+    photo: agentFormState.photo,
+    description: desc,
+    system_prompt: prompt,
+    capabilities: agentFormState.capabilities,
+    updated_at: now,
+  };
+  if (!agentFormState.id) agent.created_at = now;
+  const idx = customAgents.findIndex(a => a.id === agent.id);
+  if (idx >= 0) {
+    customAgents[idx] = { ...customAgents[idx], ...agent };
+  } else {
+    customAgents.push(agent);
+  }
+  customAgentsLocalSave();
+  registerCustomAgents();
+  hideAgentForm();
+  renderAgents();
+  renderAgentPicker();
+  customAgentSave(agent);
+}
+
+function deleteCustomAgent(customId) {
+  if (!confirm("Supprimer cet agent ?")) return;
+  const key = "custom_" + customId;
+  if (state.agent === key) { selectAgent("general"); }
+  delete AGENTS[key];
+  customAgents = customAgents.filter(a => a.id !== customId);
+  customAgentsLocalSave();
+  renderAgents();
+  renderAgentPicker();
+  customAgentDelete(customId);
+}
+
+(function initCustomAgents() {
+  customAgentsLocalLoad();
+  registerCustomAgents();
+
+  if ($("#agentsCreateBtn")) $("#agentsCreateBtn").onclick = () => showAgentForm(null);
+  if ($("#agentsFormCancel")) $("#agentsFormCancel").onclick = () => hideAgentForm();
+  if ($("#agentsFormSave")) $("#agentsFormSave").onclick = () => saveCustomAgent();
+  if ($("#agentsFormPhotoBtn")) $("#agentsFormPhotoBtn").onclick = () => $("#agentsFormFileInput")?.click();
+  if ($("#agentsFormFileInput")) $("#agentsFormFileInput").onchange = handleAgentPhoto;
+
+  customAgentsFetch();
+})();
+
 renderAgents();
 
 /* ---- Agent picker (dans le composer) ---- */
