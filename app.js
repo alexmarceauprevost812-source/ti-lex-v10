@@ -1133,11 +1133,8 @@ $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.d
 /* ================= SÉLECTEUR D'AGENTS ================= */
 const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif", forfait: "agentForfait", finance: "agentFinance", cerveau: "agentCerveau" };
 function agentDesc(key) { return AGENT_DESC_KEYS[key] ? t(AGENT_DESC_KEYS[key]) : AGENTS[key]?.desc || ""; }
-function isAgentLocked(key) {
-  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
-  if (plan === "industriel") return false;
-  const a = AGENTS[key];
-  return a?.model?.includes("opus");
+function isAgentLocked() {
+  return false;
 }
 function renderAgents() {
   const list = $("#agentsList");
