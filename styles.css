@@ -2425,7 +2425,22 @@ textarea.fin-input:focus{outline:none}
 .nav-forfaits:hover .ico{stroke:#ff9d45!important}
 .nav-forfaits.active .ico{stroke:#ff9d45!important}
 .nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
-.nav-dollar{color:#ffd700;font-weight:800;text-shadow:0 0 8px rgba(255,215,0,.5);margin-left:3px}
+.nav-dollar{
+  display:inline-block;
+  color:#ffd700;font-weight:800;
+  text-shadow:0 0 8px rgba(255,215,0,.5);
+  margin-left:3px;
+  animation:dollarSpin 3s ease-in-out infinite, dollarFloat 2s ease-in-out infinite;
+}
+@keyframes dollarSpin{
+  0%{transform:rotateY(0deg)}
+  30%{transform:rotateY(360deg)}
+  100%{transform:rotateY(360deg)}
+}
+@keyframes dollarFloat{
+  0%,100%{translate:0 0;text-shadow:0 0 8px rgba(255,215,0,.5)}
+  50%{translate:0 -4px;text-shadow:0 4px 12px rgba(255,215,0,.6),0 0 20px rgba(255,215,0,.3)}
+}
 .forf-spot{
   display:inline-block;font-weight:700;letter-spacing:.5px;
   color:rgba(255,255,255,.18);text-shadow:none;
