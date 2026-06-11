@@ -2427,15 +2427,15 @@ textarea.fin-input:focus{outline:none}
 .nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
 .nav-dollar{
   display:inline-block;
-  color:#39ff14;font-weight:800;
-  text-shadow:0 0 8px rgba(57,255,20,.5);
+  color:#ffd700;font-weight:800;
+  text-shadow:0 0 8px rgba(255,215,0,.5);
   margin-left:5px;
   width:22px;height:22px;
   line-height:22px;text-align:center;
   font-size:.8rem;
-  border:2px solid #39ff14;
+  border:2px solid #ffd700;
   border-radius:50%;
-  box-shadow:0 0 8px rgba(57,255,20,.3);
+  box-shadow:0 0 8px rgba(255,215,0,.3);
   animation:dollarSpin 3s ease-in-out infinite, dollarFloat 2s ease-in-out infinite;
 }
 @keyframes dollarSpin{
@@ -2444,8 +2444,8 @@ textarea.fin-input:focus{outline:none}
   100%{transform:rotateY(360deg)}
 }
 @keyframes dollarFloat{
-  0%,100%{translate:0 0;box-shadow:0 0 8px rgba(57,255,20,.3)}
-  50%{translate:0 -4px;box-shadow:0 4px 12px rgba(57,255,20,.4),0 0 20px rgba(57,255,20,.2)}
+  0%,100%{translate:0 0;box-shadow:0 0 8px rgba(255,215,0,.3)}
+  50%{translate:0 -4px;box-shadow:0 4px 12px rgba(255,215,0,.4),0 0 20px rgba(255,215,0,.2)}
 }
 .forf-spot{
   display:inline-block;font-weight:700;letter-spacing:.5px;
