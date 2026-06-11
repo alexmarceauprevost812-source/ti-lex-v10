@@ -201,9 +201,31 @@
     <aside class="agents-panel" id="agentsPanel">
       <div class="agents-panel-head">
         <h3>Choisir un agent</h3>
-        <button class="agents-close" id="agentsClose" aria-label="Fermer">×</button>
+        <div class="agents-head-actions">
+          <button class="agents-create-btn" id="agentsCreateBtn" title="Créer un agent">+</button>
+          <button class="agents-close" id="agentsClose" aria-label="Fermer">×</button>
+        </div>
       </div>
       <div class="agents-list" id="agentsList"></div>
+
+      <!-- Formulaire Créer Agent -->
+      <div class="agents-form hidden" id="agentsForm">
+        <h3 class="agents-form-title" id="agentsFormTitle">Créer un agent</h3>
+        <div class="agents-form-avatar">
+          <div class="agents-form-photo" id="agentsFormPhoto">🤖</div>
+          <button class="agents-form-photo-btn" id="agentsFormPhotoBtn">📷 Photo</button>
+          <input type="file" id="agentsFormFileInput" accept="image/*" hidden>
+        </div>
+        <div class="agents-form-emojis" id="agentsFormEmojis"></div>
+        <input type="text" class="agents-form-input" id="agentsFormName" placeholder="Nom de l'agent *">
+        <input type="text" class="agents-form-input" id="agentsFormDesc" placeholder="Description courte">
+        <textarea class="agents-form-input agents-form-textarea" id="agentsFormPrompt" rows="4" placeholder="Personnalité / instructions…"></textarea>
+        <div class="agents-form-caps" id="agentsFormCaps"></div>
+        <div class="agents-form-actions">
+          <button class="agents-form-save" id="agentsFormSave">Créer l'agent</button>
+          <button class="agents-form-cancel" id="agentsFormCancel">Annuler</button>
+        </div>
+      </div>
     </aside>
     <div class="agents-overlay" id="agentsOverlay"></div>
 
