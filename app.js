@@ -4593,6 +4593,32 @@ if ($("#acctLogoutBtn")) {
 
 /* init */
 loadSettings();
+
+(async function syncPlanFromDB() {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    const res = await fetch(
+      `${SUPABASE_REST}/profiles?select=plan,display_name&id=eq.${session.user.id}`,
+      { headers: { apikey: tk, Authorization: `Bearer ${session.access_token}` } }
+    );
+    if (!res.ok) return;
+    const rows = await res.json();
+    if (rows[0]?.plan) {
+      localStorage.setItem("tilex-plan", rows[0].plan);
+    }
+    if (rows[0]?.display_name && !localStorage.getItem("tilex-acct-name")) {
+      localStorage.setItem("tilex-acct-name", rows[0].display_name);
+    }
+    if (!localStorage.getItem("tilex-acct-email") && session.user.email) {
+      localStorage.setItem("tilex-acct-email", session.user.email);
+    }
+    enforceModelRestrictions();
+    if (typeof refreshAccountPage === "function") refreshAccountPage();
+  } catch (_) {}
+})();
+
 enforceModelRestrictions();
 $("#modelSelect").value = state.model;
 if ($("#langSelect")) {
