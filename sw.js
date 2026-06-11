@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-140";
+const CACHE_VERSION = "tilex-v10-141";
 const ASSETS = [
   "/",
   "/index.html",
@@ -15,6 +15,7 @@ const ASSETS = [
   "/icon-maskable-192.png",
   "/icon-maskable-512.png",
   "/assets/forfaits-bg.mp4",
+  "/assets/creer-agent-icon.mp4",
   "/manifest.json",
 ];
 

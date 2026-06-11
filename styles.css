@@ -1680,7 +1680,16 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
 @media(max-width:860px){.agents-panel{width:85vw}}
 
 /* Créer Agent nav */
-.nav-creer-agent .nav-emoji{font-size:1.1rem}
+.nav-creer-agent .nav-video-ico{
+  width:24px;height:24px;border-radius:6px;
+  object-fit:cover;flex-shrink:0;
+  filter:drop-shadow(0 0 4px rgba(167,139,250,.3));
+  transition:filter .3s,transform .3s;
+}
+.nav-creer-agent:hover .nav-video-ico{
+  filter:drop-shadow(0 0 10px rgba(167,139,250,.7));
+  transform:scale(1.15);
+}
 .nav-creer-agent:hover{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.2)}
 
 /* ============ ANIMATIONS — Thème sombre élégant ============ */
