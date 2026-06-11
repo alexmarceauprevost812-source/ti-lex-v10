@@ -1775,11 +1775,31 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 .convos-card-badge.fav{background:rgba(255,215,0,.12);color:#ffd700}
 .convos-card-badge.proj{background:rgba(249,115,22,.12);color:var(--orange)}
 .convos-empty{text-align:center;color:#555;font-size:.9rem;padding:40px 0}
-.convos-new-btn{display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:14px;background:var(--orange);border:none;color:#000;font-weight:700;
-  font-size:1rem;border-radius:14px;cursor:pointer;transition:all .2s;font-family:var(--font);
-  position:fixed;bottom:28px;right:28px;width:auto;box-shadow:0 4px 20px rgba(249,115,22,.3)}
-.convos-new-btn:hover{background:#ff9d45;transform:translateY(-2px)}
+.convos-fab-wrap{
+  position:fixed;bottom:24px;right:24px;
+  display:flex;flex-direction:column;align-items:center;gap:0;z-index:50;
+}
+.convos-fab-mascot{
+  width:90px;height:90px;border-radius:50%;overflow:hidden;
+  position:relative;margin-bottom:-8px;z-index:51;
+  border:3px solid #444;
+  box-shadow:0 4px 20px rgba(230,126,34,.3),0 0 0 2px rgba(230,126,34,.2);
+  cursor:pointer;
+}
+.convos-fab-mascot .mascot-eyes{
+  position:absolute;top:50%;left:50%;
+  width:200%;height:200%;transform:translate(-50%,-42%);
+  object-fit:cover;transition:opacity .3s ease;
+}
+.convos-fab-mascot .mascot-open{opacity:1;z-index:2}
+.convos-fab-mascot .mascot-wink{opacity:0;z-index:1}
+.convos-fab-mascot.winking .mascot-open{opacity:0}
+.convos-fab-mascot.winking .mascot-wink{opacity:1}
+.convos-new-btn{display:flex;align-items:center;gap:10px;
+  padding:14px 24px;background:var(--orange);color:#fff;border:none;border-radius:50px;
+  font-size:.85rem;font-weight:700;cursor:pointer;font-family:var(--font);
+  box-shadow:0 6px 20px rgba(230,126,34,.4);transition:all .2s;position:relative}
+.convos-new-btn:hover{transform:scale(1.04);box-shadow:0 8px 28px rgba(230,126,34,.5)}
 
 /* Sub-nav staggered entrance */
 .chat-sub-nav.open .chat-sub-item{

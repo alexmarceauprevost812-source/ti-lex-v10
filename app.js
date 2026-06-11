@@ -1925,13 +1925,44 @@ if ($("#convosSearch")) {
 $$(".convos-tab").forEach(tab => {
   tab.onclick = () => renderConvosCenter(tab.dataset.filter);
 });
+function convosMascotWink() {
+  const m = $("#convosMascot");
+  if (!m) return;
+  m.classList.add("winking");
+  setTimeout(() => m.classList.remove("winking"), 600);
+  setTimeout(() => {
+    m.classList.add("winking");
+    setTimeout(() => m.classList.remove("winking"), 400);
+  }, 900);
+}
+
+// Auto-blink every 3-5 seconds
+(function convosMascotAutoBlink() {
+  function blink() {
+    const m = $("#convosMascot");
+    if (m && !m.classList.contains("winking")) {
+      m.classList.add("winking");
+      setTimeout(() => m.classList.remove("winking"), 180);
+    }
+    setTimeout(blink, Math.random() * 3000 + 3000);
+  }
+  setTimeout(blink, 2000);
+})();
+
+if ($("#convosMascot")) {
+  $("#convosMascot").onclick = () => convosMascotWink();
+}
+
 if ($("#convosNewBtn")) {
   $("#convosNewBtn").onclick = () => {
-    activeChatConv = -1;
-    state.history = [];
-    resetChatWelcome();
-    renderChatConvs();
-    switchView("chat");
+    convosMascotWink();
+    setTimeout(() => {
+      activeChatConv = -1;
+      state.history = [];
+      resetChatWelcome();
+      renderChatConvs();
+      switchView("chat");
+    }, 500);
   };
 }
 
