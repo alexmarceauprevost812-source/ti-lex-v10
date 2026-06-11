@@ -1679,6 +1679,10 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
 
 @media(max-width:860px){.agents-panel{width:85vw}}
 
+/* Créer Agent nav */
+.nav-creer-agent .nav-emoji{font-size:1.1rem}
+.nav-creer-agent:hover{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.2)}
+
 /* ============ FINANCE — Nav & View ============ */
 .nav-finance .lbl{font-weight:700}
 .nav-finance.active{border-color:#d4a017;box-shadow:0 0 0 3px rgba(212,160,23,.25)}

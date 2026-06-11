@@ -1444,6 +1444,7 @@ function deleteCustomAgent(customId) {
   if ($("#agentsFormSave")) $("#agentsFormSave").onclick = () => saveCustomAgent();
   if ($("#agentsFormPhotoBtn")) $("#agentsFormPhotoBtn").onclick = () => $("#agentsFormFileInput")?.click();
   if ($("#agentsFormFileInput")) $("#agentsFormFileInput").onchange = handleAgentPhoto;
+  if ($("#navCreerAgent")) $("#navCreerAgent").onclick = () => { openAgents(); showAgentForm(null); };
 
   customAgentsFetch();
 })();
