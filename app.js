@@ -3280,7 +3280,7 @@ function renderAssistant(body, full, streaming) {
     const langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
     return `<div class="chat-code-wrap"><div class="chat-code-head">${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(code)}</pre></div>`;
   });
-  ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, (_, c) => `<code>${highlightSyntax(c)}</code>`);
 
   const caret = streaming ? '<span class="caret"></span>' : '';
   html += `<div>${ans}${caret}</div>`;
@@ -4530,7 +4530,7 @@ function formatCode(text) {
     return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
   });
   result = result.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre>${highlightSyntax(c)}</pre>`);
-  return result.replace(/\n/g, "<br>");
+  return result.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, (_, c) => `<code>${highlightSyntax(c)}</code>`);
 }
 function renderCodexMermaid(container) {
   renderMermaidBlocks(container);

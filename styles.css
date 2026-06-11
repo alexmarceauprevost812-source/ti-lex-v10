@@ -326,6 +326,29 @@ body.menu-closed #menuToggleMobile{display:flex}
 .chat-code-block .syn-bracket{color:#6a6a7a}
 .chat-code-block .syn-secret{color:#ff3b3b;font-weight:700;background:rgba(255,59,59,.12);border-radius:3px;padding:0 3px;border-bottom:2px solid #ff3b3b;text-decoration:none;animation:secretPulse 2s ease-in-out infinite}
 .chat-code-block .syn-env{color:#ffab40;font-weight:600}
+/* Inline code coloration */
+.msg-body code .syn-kw{color:#ff9d45;font-weight:700}
+.msg-body code .syn-str{color:#3ecf8e}
+.msg-body code .syn-fn{color:#82aaff}
+.msg-body code .syn-prop{color:#80cbc4}
+.msg-body code .syn-num{color:#c792ea}
+.msg-body code .syn-type{color:#82aaff}
+.msg-body code .syn-comment{color:#546e7a;font-style:italic}
+.msg-body code .syn-tag{color:#7ee787}
+.msg-body code .syn-decorator{color:#c792ea;font-style:italic}
+.msg-body code .syn-op{color:#89ddff}
+.msg-body code .syn-bracket{color:#6a6a7a}
+.msg-body code .syn-secret{color:#ff3b3b;font-weight:700}
+.msg-body code .syn-env{color:#ffab40;font-weight:600}
+/* Codex inline code coloration */
+.codex-msg-body code .syn-kw{color:#ff9d45;font-weight:700}
+.codex-msg-body code .syn-str{color:#3ecf8e}
+.codex-msg-body code .syn-fn{color:#82aaff}
+.codex-msg-body code .syn-prop{color:#80cbc4}
+.codex-msg-body code .syn-num{color:#c792ea}
+.codex-msg-body code .syn-type{color:#82aaff}
+.codex-msg-body code .syn-comment{color:#546e7a;font-style:italic}
+.codex-msg-body code .syn-op{color:#89ddff}
 @keyframes secretPulse{0%,100%{background:rgba(255,59,59,.08)}50%{background:rgba(255,59,59,.2)}}
 body[data-theme="light"] .chat-code-block .syn-kw{color:#d35400;font-weight:700}
 body[data-theme="light"] .chat-code-block .syn-str{color:#1a8a5a}
