@@ -71,6 +71,10 @@
       <span class="nav-emoji">🤖</span>
       <span class="lbl">Créer Agent</span>
     </button>
+    <button class="nav-item nav-animations" data-view="animations">
+      <span class="nav-emoji">✨</span>
+      <span class="lbl">Animations</span>
+    </button>
     <button class="nav-item nav-secure" data-view="security">
       <span class="nav-emoji">🛡️</span>
       <span class="lbl">Sécurité</span>
@@ -1051,6 +1055,80 @@
 
       <!-- Déconnexion -->
       <button class="acct-logout-btn" id="acctLogoutBtn">Se déconnecter</button>
+    </div>
+  </section>
+
+  <!-- ============ ANIMATIONS ============ -->
+  <section class="view view-animations" id="view-animations">
+    <div class="anim-container">
+      <canvas class="anim-particles" id="animParticles"></canvas>
+
+      <div class="anim-content">
+        <header class="anim-header">
+          <h2 class="anim-title">Animations</h2>
+          <p class="anim-subtitle">Thème sombre élégant · ti-lex-AL</p>
+        </header>
+
+        <!-- Logo animé -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Logo animé</h3>
+          <div class="anim-logo-demo" id="animLogoDemo">
+            <div class="tlx-brain">🧠</div>
+            <div class="anim-logo-letters" id="animLogoLetters"></div>
+            <div class="tlx-gradient-text anim-version">V10</div>
+            <p class="anim-tagline">DEUXIÈME CERVEAU IA · QUÉBEC ⚜️</p>
+          </div>
+          <button class="anim-replay-btn" id="animReplayLogo">↻ Rejouer</button>
+        </div>
+
+        <!-- Badge pulsant -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Badge pulsant</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-badge">PRODUIT DU QUÉBEC ⚜️</span>
+            <span class="tlx-badge">LOI 25</span>
+            <span class="tlx-badge">SÉCURITÉ IA</span>
+          </div>
+        </div>
+
+        <!-- Texte shimmer -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Texte dégradé shimmer</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-gradient-text" style="font-size:clamp(28px,6vw,48px);font-weight:800">ti-lex-AL</span>
+          </div>
+        </div>
+
+        <!-- Bouton CTA -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Bouton CTA doré</h3>
+          <div class="anim-demo-row">
+            <button class="tlx-cta">Commencer maintenant</button>
+          </div>
+        </div>
+
+        <!-- Curseur typewriter -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Curseur machine à écrire</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-typewriter" id="animTypewriter" style="font-size:20px;color:var(--tlx-text);font-family:'Share Tech Mono',monospace"></span>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Loader pulsant</h3>
+          <div class="anim-demo-row">
+            <div class="tlx-loader">🧠</div>
+          </div>
+        </div>
+
+        <!-- Particules or -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Particules dorées interactives</h3>
+          <p class="anim-hint">Bougez votre souris sur le fond pour interagir</p>
+        </div>
+      </div>
     </div>
   </section>
 

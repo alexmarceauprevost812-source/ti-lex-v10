@@ -264,7 +264,7 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cerveau: "Deuxième Cerveau", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cerveau: "Deuxième Cerveau", finance: "Agent Finance", animations: "Animations", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
     acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
@@ -555,7 +555,7 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cerveau: "Second Brain", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cerveau: "Second Brain", finance: "Agent Finance", animations: "Animations", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
     acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
@@ -1450,6 +1450,130 @@ function deleteCustomAgent(customId) {
 })();
 
 renderAgents();
+
+/* ================= ANIMATIONS VIEW — Particules dorées ================= */
+(function initAnimationsView() {
+  let animRaf = null;
+
+  function startParticles() {
+    const canvas = $("#animParticles");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const container = canvas.parentElement;
+    const isMobile = window.innerWidth <= 600;
+    const count = isMobile ? 25 : 50;
+    const mouse = { x: -999, y: -999 };
+
+    function resize() {
+      canvas.width = container.offsetWidth;
+      canvas.height = container.offsetHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    const pts = Array.from({ length: count }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
+      r: Math.random() * 2.2 + 1,
+    }));
+
+    canvas.onmousemove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    canvas.ontouchmove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.touches[0].clientX - rect.left;
+      mouse.y = e.touches[0].clientY - rect.top;
+    };
+    canvas.onmouseleave = () => { mouse.x = -999; mouse.y = -999; };
+
+    function frame() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        const dx = mouse.x - p.x, dy = mouse.y - p.y;
+        const d = Math.hypot(dx, dy);
+        if (d < 140 && d > 0.1) {
+          p.x += (dx / d) * 0.8;
+          p.y += (dy / d) * 0.8;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#d4af37";
+        ctx.fill();
+      }
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+          const d = Math.hypot(dx, dy);
+          if (d < 110) {
+            ctx.beginPath();
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = "#8b7355";
+            ctx.globalAlpha = (1 - d / 110) * 0.35;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+      animRaf = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  function renderLogoLetters() {
+    const el = $("#animLogoLetters");
+    if (!el) return;
+    const letters = "ti-lex".split("");
+    el.innerHTML = letters.map((ch, i) =>
+      `<span class="tlx-letter" style="animation-delay:${i * 0.12}s">${ch}</span>`
+    ).join("");
+  }
+
+  function startTypewriter() {
+    const el = $("#animTypewriter");
+    if (!el) return;
+    const text = "Agent AL réfléchit...";
+    let i = 0;
+    el.textContent = "";
+    function tick() {
+      if (i < text.length) {
+        el.textContent += text[i++];
+        setTimeout(tick, 80);
+      } else {
+        setTimeout(() => { el.textContent = ""; i = 0; tick(); }, 2000);
+      }
+    }
+    tick();
+  }
+
+  function initView() {
+    renderLogoLetters();
+    startParticles();
+    startTypewriter();
+  }
+
+  const replayBtn = $("#animReplayLogo");
+  if (replayBtn) replayBtn.onclick = renderLogoLetters;
+
+  const observer = new MutationObserver(() => {
+    const view = $("#view-animations");
+    if (view && view.classList.contains("active")) {
+      if (!animRaf) initView();
+    } else {
+      if (animRaf) { cancelAnimationFrame(animRaf); animRaf = null; }
+    }
+  });
+  const viewEl = $("#view-animations");
+  if (viewEl) observer.observe(viewEl, { attributes: true, attributeFilter: ["class"] });
+})();
 
 /* ---- Agent picker (dans le composer) ---- */
 function renderAgentPicker() {
