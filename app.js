@@ -67,9 +67,9 @@ tu donnes des étapes actionnables et tu signales les risques juridiques quand c
     prompt: "Tu es AL Créatif, un partenaire de création de ti-lex-AL. Tu génères des idées, du contenu, du texte marketing, des concepts. Ton ton est vivant et inspirant. Français québécois.",
   },
 };
-state.agent = "tilex";
+state.agent = "general";
 state.imageMode = false;
-state.model = "claude-opus-4-8";
+state.model = "claude-sonnet-4-6";
 
 /* pièces jointes en attente d'envoi */
 let attachments = [];
@@ -94,6 +94,13 @@ function loadSettings() {
     const sb = JSON.parse(localStorage.getItem(LS_SB) || "null");
     if (sb && sb.url) { state.supabase = sb; state.connected.supabase = true; }
   } catch (e) { /* localStorage indisponible */ }
+  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
+  if (plan !== "industriel") {
+    if (state.model.includes("opus")) state.model = "claude-sonnet-4-6";
+    if (state.agent === "tilex" || state.agent === "dev" || state.agent === "secu") {
+      state.agent = "general";
+    }
+  }
 }
 
 /* ---- Helpers dates ---- */
@@ -1120,12 +1127,15 @@ function renderAgents() {
 }
 
 function selectAgent(key) {
+  if (isAgentLocked(key)) return;
   state.agent = key;
   const a = AGENTS[key];
   if (a.model) {
-    state.model = a.model;
+    let model = a.model;
+    if (model.includes("opus") && !isOpusAllowed()) model = "claude-sonnet-4-6";
+    state.model = model;
     const ms = $("#modelSelect");
-    if (ms) ms.value = a.model;
+    if (ms) ms.value = model;
   }
   $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
   const inp = $("#input");
@@ -1302,7 +1312,35 @@ $("#themeToggle").onclick = function () {
   $(".pill-txt", this).textContent = state.theme === "light" ? t("setLight") : t("setDark");
 };
 
+function isOpusAllowed() {
+  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
+  return plan === "industriel";
+}
+
+function enforceModelRestrictions() {
+  const sel = $("#modelSelect");
+  if (!sel) return;
+  const opusOpt = sel.querySelector('option[value="claude-opus-4-8"]');
+  if (!opusOpt) return;
+  if (!isOpusAllowed()) {
+    opusOpt.disabled = true;
+    opusOpt.textContent = "Opus 4.8 — Industriel requis 🔒";
+    if (state.model.includes("opus")) {
+      state.model = "claude-sonnet-4-6";
+      sel.value = state.model;
+      try { localStorage.setItem(LS_MODEL, state.model); } catch (_) {}
+    }
+  } else {
+    opusOpt.disabled = false;
+    opusOpt.textContent = t("setOpus") || "Opus 4.8 — puissant";
+  }
+}
+
 $("#modelSelect").onchange = e => {
+  if (e.target.value.includes("opus") && !isOpusAllowed()) {
+    e.target.value = state.model;
+    return;
+  }
   state.model = e.target.value;
   try { localStorage.setItem(LS_MODEL, state.model); } catch (e) {}
 };
@@ -4555,6 +4593,7 @@ if ($("#acctLogoutBtn")) {
 
 /* init */
 loadSettings();
+enforceModelRestrictions();
 $("#modelSelect").value = state.model;
 if ($("#langSelect")) {
   $("#langSelect").value = state.lang;
