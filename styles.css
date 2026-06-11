@@ -1158,9 +1158,34 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
 }
 .studio-push-btn:hover{background:var(--orange-soft);transform:translateY(-1px)}
 .studio-push-btn.hidden{display:none}
-.studio-code{flex:1;padding:18px;font-family:var(--mono);font-size:.86rem;line-height:1.7;
-  background:transparent;border:none;outline:none;resize:none;color:var(--txt);caret-color:var(--orange)}
+.studio-code-wrap{flex:1;position:relative;overflow:hidden;display:flex}
+.studio-code-highlight{
+  position:absolute;inset:0;padding:18px;margin:0;
+  font-family:var(--mono);font-size:.86rem;line-height:1.7;
+  white-space:pre-wrap;word-wrap:break-word;overflow:hidden;
+  pointer-events:none;color:var(--txt);
+}
+.studio-code{flex:1;position:relative;z-index:1;padding:18px;font-family:var(--mono);font-size:.86rem;line-height:1.7;
+  background:transparent;border:none;outline:none;resize:none;
+  color:transparent;caret-color:var(--orange);
+  white-space:pre-wrap;word-wrap:break-word;
+}
+.studio-code::selection{background:rgba(255,106,0,.3);color:transparent}
 .studio-code::placeholder{color:#555}
+/* Couleurs syntaxe Studio */
+.studio-code-highlight .syn-kw{color:#ff9d45;font-weight:700}
+.studio-code-highlight .syn-str{color:#3ecf8e}
+.studio-code-highlight .syn-fn{color:#82aaff}
+.studio-code-highlight .syn-prop{color:#80cbc4}
+.studio-code-highlight .syn-num{color:#ffcc66}
+.studio-code-highlight .syn-type{color:#82aaff}
+.studio-code-highlight .syn-comment{color:#546e7a;font-style:italic}
+.studio-code-highlight .syn-tag{color:#7ee787}
+.studio-code-highlight .syn-decorator{color:#c792ea;font-style:italic}
+.studio-code-highlight .syn-op{color:#89ddff}
+.studio-code-highlight .syn-bracket{color:#9a9aa8}
+.studio-code-highlight .syn-secret{color:#ff3b3b;font-weight:700;background:rgba(255,59,59,.12);border-radius:3px}
+.studio-code-highlight .syn-env{color:#ffab40;font-weight:600}
 
 /* Studio forced dark */
 .view-studio{--bg:#0a0a0a;--bg-2:#0e0e0e;--bg-3:#171717;--line:#242424;--txt:#f5f5f5;--txt-dim:#8a8a8a}

@@ -4578,12 +4578,44 @@ let studioGhFiles = [];
 let studioCurrentFile = null;
 let studioTempCounter = 0;
 
+/* Coloration syntaxique en temps réel dans l'éditeur Studio */
+const STUDIO_HL_MAX = 150_000; // au-delà, pas de coloration (perf)
+let studioHlTimer = null;
+function studioSyncHighlight() {
+  const codeArea = $("#studioCode");
+  const hl = $("#studioCodeHighlight");
+  if (!codeArea || !hl) return;
+  const val = codeArea.value;
+  if (val.length > STUDIO_HL_MAX) {
+    hl.textContent = val;
+  } else {
+    // \n final : le pre doit matcher la hauteur exacte du textarea
+    hl.innerHTML = highlightSyntax(escapeHtml(val)) + (val.endsWith("\n") ? " " : "");
+  }
+  hl.scrollTop = codeArea.scrollTop;
+  hl.scrollLeft = codeArea.scrollLeft;
+}
+function studioHlDebounced() {
+  clearTimeout(studioHlTimer);
+  studioHlTimer = setTimeout(studioSyncHighlight, 60);
+}
+(function initStudioHighlight() {
+  const codeArea = $("#studioCode");
+  if (!codeArea) return;
+  codeArea.addEventListener("input", studioHlDebounced);
+  codeArea.addEventListener("scroll", () => {
+    const hl = $("#studioCodeHighlight");
+    if (hl) { hl.scrollTop = codeArea.scrollTop; hl.scrollLeft = codeArea.scrollLeft; }
+  });
+})();
+
 function openInStudio(code, suggestedName) {
   const name = suggestedName || `snippet-${++studioTempCounter}.txt`;
   const codeArea = $("#studioCode");
   const pathLabel = $("#studioFilePath");
   const pushBtn = $("#studioPushGh");
   codeArea.value = code;
+  studioSyncHighlight();
   pathLabel.textContent = name;
   studioCurrentFile = { path: name, source: "snippet" };
   pushBtn.classList.toggle("hidden", !state.connected.github);
@@ -4670,6 +4702,7 @@ async function loadStudioFile(path, source, allFiles) {
       codeArea.value = `${t("apiError")} ${err.message}`;
     }
   }
+  studioSyncHighlight();
 
   pushBtn.classList.toggle("hidden", !state.connected.github);
 }
