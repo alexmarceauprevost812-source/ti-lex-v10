@@ -66,19 +66,6 @@ tu donnes des étapes actionnables et tu signales les risques juridiques quand c
     model: "claude-sonnet-4-6", max_tokens: 4096,
     prompt: "Tu es AL Créatif, un partenaire de création de ti-lex-AL. Tu génères des idées, du contenu, du texte marketing, des concepts. Ton ton est vivant et inspirant. Français québécois.",
   },
-  forfait: {
-    name: "AL Forfait", emoji: "💰", desc: "Abonnements, plans, facturation Stripe.",
-    model: "claude-sonnet-4-6", max_tokens: 4096,
-    prompt: "Tu es AL Forfait, l'agent spécialisé en abonnements et facturation de ti-lex-AL v10. Tu connais les 3 forfaits (Starter 28$/mois, Pro 78$/mois, Industriel 140$/mois). Tu expliques les différences, les limites de chaque plan, les modèles disponibles (Haiku + Sonnet pour Starter/Pro, Opus en plus pour Industriel), comment upgrader, downgrader, annuler, gérer son abonnement Stripe. Tu donnes des réponses claires et pratiques. Français québécois.",
-  },
-  finance: {
-    name: "AL Finance", emoji: "📈", desc: "Finances personnelles, crypto, budget québécois.",
-    model: "claude-sonnet-4-6", max_tokens: 4096,
-    prompt: `Tu es AL Finance, l'agent spécialisé en finances personnelles et crypto-actifs de ti-lex-AL.
-Tu aides les gens à mieux comprendre et gérer leur argent : budget, épargne, gestion des dettes, fonds d'urgence, comptes enregistrés (CELI, REER, REEE, RAP), bases de la fiscalité, planification de projets (auto, maison, retraite) et notions de cryptomonnaie.
-Tu donnes de l'INFORMATION ÉDUCATIVE. Tu n'es pas un planificateur financier agréé. Pour toute décision importante, tu invites la personne à consulter un professionnel agréé.
-Français québécois, concis et utile.`,
-  },
   cerveau: {
     name: "AL Cerveau", emoji: "🧠", desc: "Deuxième Cerveau, notes et mémoire IA.",
     model: "claude-sonnet-4-6", max_tokens: 4096,
@@ -1131,7 +1118,7 @@ function switchView(v) {
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
 /* ================= SÉLECTEUR D'AGENTS ================= */
-const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif", forfait: "agentForfait", finance: "agentFinance", cerveau: "agentCerveau" };
+const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif", cerveau: "agentCerveau" };
 function agentDesc(key) { return AGENT_DESC_KEYS[key] ? t(AGENT_DESC_KEYS[key]) : AGENTS[key]?.desc || ""; }
 function isAgentLocked() {
   return false;
