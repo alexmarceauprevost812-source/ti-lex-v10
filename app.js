@@ -2375,11 +2375,13 @@ function renderConvosCenter(filter) {
         <div class="convos-card-meta"><span>${age}</span><span>${msgCount} msg</span></div>
       </div>
       <div class="convos-card-badges">${badges}</div>
+      <button class="convos-card-del" data-idx="${c._idx}" title="Supprimer">🗑️</button>
     </div>`;
   }).join("");
 
   $$(".convos-card", list).forEach(card => {
-    card.onclick = () => {
+    card.onclick = (e) => {
+      if (e.target.closest(".convos-card-del")) return;
       const idx = +card.dataset.idx;
       activeChatConv = idx;
       state.history = [...chatConvs[idx].messages];
@@ -2389,6 +2391,19 @@ function renderConvosCenter(filter) {
       switchView("chat");
       chatSubFilter = "convos";
       $$(".chat-sub-item").forEach(b => b.classList.toggle("active", b.dataset.sub === "convos"));
+    };
+  });
+  $$(".convos-card-del", list).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const idx = +btn.dataset.idx;
+      chatConvs.splice(idx, 1);
+      deleteConvFlags(idx);
+      if (activeChatConv === idx) { activeChatConv = -1; state.history = []; resetChatWelcome(); }
+      else if (activeChatConv > idx) activeChatConv--;
+      try { localStorage.setItem("tilex-chat-convs", JSON.stringify(chatConvs)); } catch (_) {}
+      renderChatConvsFiltered();
+      renderConvosCenter(document.querySelector(".convos-tab.active")?.dataset.filter);
     };
   });
 }
