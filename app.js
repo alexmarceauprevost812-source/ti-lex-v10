@@ -246,7 +246,7 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cerveau: "Deuxième Cerveau", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
     acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
@@ -265,7 +265,13 @@ const I18N = {
     projFiles: "Connaissances du projet", projAddFile: "+ Ajouter un fichier",
     projInstr: "Instructions personnalisées", projInstrPh: "Ajouter des instructions...",
     projRecent: "Conversations récentes", projPrivate: "Privé",
-    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", finance: "Finance", settings: "Paramètres", account: "Compte" },
+    nav: { chat: "Chat", codex: "Codex", security: "Sécurité", forfaits: "Forfaits", cerveau: "Cerveau", finance: "Finance", settings: "Paramètres", account: "Compte" },
+    cervSearch: "Rechercher des notes…", cervNewNote: "Nouvelle note", cervNoNotes: "Aucune note",
+    cervNoNotesSub: "Crée ta première note pour commencer.", cervSave: "Enregistrer",
+    cervTagsPh: "Ajouter un tag…", cervTitlePh: "Titre de la note…", cervContentPh: "Écris ta note ici…",
+    cervAiTags: "Tags IA", cervAiSum: "Résumer", cervSummaryLabel: "Résumé IA",
+    cervChatPh: "Pose une question sur tes notes…", cervAllTags: "Tous",
+    cervDelConfirm: "Supprimer cette note ?",
     fpLimited: "Pour une durée limitée",
     conversations: "Conversations", projet: "Projet", nouvelle: "+ Nouvelle",
     convAll: "Toutes", convFav: "Favoris", convProj: "Projet",
@@ -528,7 +534,7 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cerveau: "Second Brain", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
     acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
@@ -547,7 +553,13 @@ const I18N = {
     projFiles: "Project knowledge", projAddFile: "+ Add a file",
     projInstr: "Custom instructions", projInstrPh: "Add instructions...",
     projRecent: "Recent conversations", projPrivate: "Private",
-    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", finance: "Finance", settings: "Settings", account: "Account" },
+    nav: { chat: "Chat", codex: "Codex", security: "Security", forfaits: "Plans", cerveau: "Brain", finance: "Finance", settings: "Settings", account: "Account" },
+    cervSearch: "Search notes…", cervNewNote: "New note", cervNoNotes: "No notes",
+    cervNoNotesSub: "Create your first note to get started.", cervSave: "Save",
+    cervTagsPh: "Add a tag…", cervTitlePh: "Note title…", cervContentPh: "Write your note here…",
+    cervAiTags: "AI Tags", cervAiSum: "Summarize", cervSummaryLabel: "AI Summary",
+    cervChatPh: "Ask a question about your notes…", cervAllTags: "All",
+    cervDelConfirm: "Delete this note?",
     fpLimited: "For a limited time",
     conversations: "Conversations", projet: "Project", nouvelle: "+ New",
     convAll: "All", convFav: "Favorites", convProj: "Project",
@@ -5367,6 +5379,323 @@ async function manageSubscription() {
     if (btn) { btn.disabled = false; btn.textContent = t("fpManage"); }
   }
 }
+
+/* ============ DEUXIÈME CERVEAU ============ */
+const CERV_LS = "tilex-cerveau-notes";
+let cervNotes = [];
+let cervCurrentId = null;
+let cervActiveTag = null;
+let cervChatHistory = [];
+
+function cervLoadNotes() {
+  try { cervNotes = JSON.parse(localStorage.getItem(CERV_LS) || "[]"); } catch { cervNotes = []; }
+}
+function cervSaveNotes() {
+  try { localStorage.setItem(CERV_LS, JSON.stringify(cervNotes)); } catch (_) {}
+}
+
+function cervAllTags() {
+  const set = new Set();
+  cervNotes.forEach(n => (n.tags || []).forEach(t => set.add(t)));
+  return [...set].sort();
+}
+
+function cervRenderTagsBar() {
+  const bar = $("#cervTagsBar");
+  if (!bar) return;
+  const tags = cervAllTags();
+  bar.innerHTML = `<button class="cerv-tag-pill${!cervActiveTag ? ' active' : ''}" data-tag="">${t("cervAllTags")}</button>` +
+    tags.map(tg => `<button class="cerv-tag-pill${cervActiveTag === tg ? ' active' : ''}" data-tag="${escapeHtml(tg)}">${escapeHtml(tg)}</button>`).join("");
+  $$(".cerv-tag-pill", bar).forEach(btn => {
+    btn.onclick = () => { cervActiveTag = btn.dataset.tag || null; cervRenderTagsBar(); cervRenderList(); };
+  });
+}
+
+function cervRenderList() {
+  const list = $("#cervNotesList");
+  if (!list) return;
+  const q = ($("#cervSearch")?.value || "").toLowerCase();
+  let filtered = cervNotes.filter(n => {
+    if (cervActiveTag && !(n.tags || []).includes(cervActiveTag)) return false;
+    if (q && !n.title.toLowerCase().includes(q) && !n.content.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  filtered.sort((a, b) => b.updated - a.updated);
+  if (!filtered.length) {
+    list.innerHTML = `<div class="cerv-empty">
+      <div class="cerv-empty-ico">💡</div>
+      <div class="cerv-empty-title">${t("cervNoNotes")}</div>
+      <div class="cerv-empty-sub">${t("cervNoNotesSub")}</div>
+    </div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(n => {
+    const preview = n.content.slice(0, 120).replace(/\n/g, " ");
+    const date = new Date(n.updated).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
+    return `<div class="cerv-note-card" data-id="${n.id}">
+      <div class="cerv-note-card-title">${escapeHtml(n.title || t("cervNewNote"))}</div>
+      <div class="cerv-note-card-preview">${escapeHtml(preview)}</div>
+      <div class="cerv-note-card-footer">
+        ${(n.tags || []).map(tg => `<span class="cerv-note-card-tag">${escapeHtml(tg)}</span>`).join("")}
+        <span class="cerv-note-card-date">${date}</span>
+      </div>
+    </div>`;
+  }).join("");
+  $$(".cerv-note-card", list).forEach(c => {
+    c.onclick = () => cervOpenEditor(c.dataset.id);
+  });
+}
+
+function cervOpenEditor(id) {
+  const note = id ? cervNotes.find(n => n.id === id) : null;
+  cervCurrentId = note ? note.id : null;
+  const editor = $("#cervEditor");
+  const panel = $("#cervNotesPanel");
+  if (!editor || !panel) return;
+  panel.classList.add("hidden");
+  editor.classList.remove("hidden");
+  $("#cervTitleInput").value = note?.title || "";
+  $("#cervContentInput").value = note?.content || "";
+  cervRenderEditorTags(note?.tags || []);
+  const summaryWrap = $("#cervSummaryWrap");
+  if (note?.summary) {
+    summaryWrap.classList.remove("hidden");
+    $("#cervSummaryText").textContent = note.summary;
+  } else {
+    summaryWrap.classList.add("hidden");
+  }
+}
+
+function cervRenderEditorTags(tags) {
+  const list = $("#cervTagsList");
+  if (!list) return;
+  list.innerHTML = tags.map(tg => `<span class="cerv-tag-chip">${escapeHtml(tg)}<button data-tag="${escapeHtml(tg)}">×</button></span>`).join("");
+  $$(".cerv-tag-chip button", list).forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const updated = cervGetEditorTags().filter(t => t !== btn.dataset.tag);
+      cervRenderEditorTags(updated);
+    };
+  });
+}
+
+function cervGetEditorTags() {
+  return $$(".cerv-tag-chip", $("#cervTagsList")).map(el => el.textContent.replace("×", "").trim());
+}
+
+function cervCloseEditor() {
+  $("#cervEditor")?.classList.add("hidden");
+  $("#cervNotesPanel")?.classList.remove("hidden");
+  cervCurrentId = null;
+  cervRenderTagsBar();
+  cervRenderList();
+}
+
+function cervSaveNote() {
+  const title = ($("#cervTitleInput")?.value || "").trim();
+  const content = ($("#cervContentInput")?.value || "").trim();
+  if (!title && !content) return;
+  const tags = cervGetEditorTags();
+  const summary = $("#cervSummaryText")?.textContent || "";
+  const now = Date.now();
+  if (cervCurrentId) {
+    const idx = cervNotes.findIndex(n => n.id === cervCurrentId);
+    if (idx >= 0) {
+      cervNotes[idx] = { ...cervNotes[idx], title, content, tags, summary, updated: now };
+    }
+  } else {
+    cervNotes.push({ id: crypto.randomUUID(), title, content, tags, summary, created: now, updated: now });
+  }
+  cervSaveNotes();
+  cervCloseEditor();
+}
+
+function cervDeleteNote() {
+  if (!cervCurrentId) return;
+  if (!confirm(t("cervDelConfirm"))) return;
+  cervNotes = cervNotes.filter(n => n.id !== cervCurrentId);
+  cervSaveNotes();
+  cervCloseEditor();
+}
+
+async function cervAiRequest(instruction, noteContent) {
+  const h = { "Content-Type": "application/json" };
+  const tk = proxyToken();
+  if (tk) h["Authorization"] = `Bearer ${tk}`;
+  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+  const res = await fetch(AI_PROXY, {
+    method: "POST",
+    headers: h,
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 512,
+      messages: [{ role: "user", content: `${instruction}\n\n---\n${noteContent}` }]
+    })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return await streamText(res, () => {});
+}
+
+async function cervSuggestTags() {
+  const content = ($("#cervContentInput")?.value || "").trim();
+  const title = ($("#cervTitleInput")?.value || "").trim();
+  if (!content && !title) return;
+  const btn = $("#cervAiTagsBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳"; }
+  try {
+    const raw = await cervAiRequest(
+      "Suggère 3 à 5 tags courts (1-2 mots max) pour cette note. Retourne UNIQUEMENT les tags séparés par des virgules, sans autre texte.",
+      `${title}\n${content}`
+    );
+    const newTags = raw.split(",").map(s => s.trim().toLowerCase()).filter(s => s && s.length < 30);
+    const existing = cervGetEditorTags();
+    const merged = [...new Set([...existing, ...newTags])];
+    cervRenderEditorTags(merged);
+  } catch (e) {
+    console.error("cervSuggestTags:", e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "🏷️ " + t("cervAiTags"); }
+  }
+}
+
+async function cervSummarize() {
+  const content = ($("#cervContentInput")?.value || "").trim();
+  const title = ($("#cervTitleInput")?.value || "").trim();
+  if (!content && !title) return;
+  const btn = $("#cervAiSumBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳"; }
+  try {
+    const summary = await cervAiRequest(
+      "Résume cette note en 2-3 phrases courtes et claires, en français québécois. Retourne UNIQUEMENT le résumé.",
+      `${title}\n${content}`
+    );
+    const wrap = $("#cervSummaryWrap");
+    const txt = $("#cervSummaryText");
+    if (wrap && txt) { wrap.classList.remove("hidden"); txt.textContent = summary.trim(); }
+  } catch (e) {
+    console.error("cervSummarize:", e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "📝 " + t("cervAiSum"); }
+  }
+}
+
+function cervToggleChatPanel() {
+  const chat = $("#cervChat");
+  const btn = $("#cervToggleChat");
+  if (!chat) return;
+  const showing = !chat.classList.contains("hidden");
+  chat.classList.toggle("hidden", showing);
+  btn?.classList.toggle("active", !showing);
+}
+
+function cervAddChatMsg(role, text) {
+  const container = $("#cervChatMessages");
+  if (!container) return;
+  const div = document.createElement("div");
+  div.className = `cerv-chat-msg ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function cervChatSend() {
+  const input = $("#cervChatInput");
+  const msg = (input?.value || "").trim();
+  if (!msg) return;
+  input.value = "";
+  input.style.height = "auto";
+  cervAddChatMsg("user", msg);
+  cervChatHistory.push({ role: "user", content: msg });
+
+  const notesCtx = cervNotes.map(n => `[${n.title}] ${n.content.slice(0, 300)}`).join("\n---\n");
+  const h = { "Content-Type": "application/json" };
+  const tk = proxyToken();
+  if (tk) h["Authorization"] = `Bearer ${tk}`;
+  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+
+  try {
+    const res = await fetch(AI_PROXY, {
+      method: "POST",
+      headers: h,
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        system: `Tu es l'assistant du Deuxième Cerveau de ti-lex-AL. L'utilisateur a les notes suivantes :\n\n${notesCtx}\n\nRéponds en te basant sur ces notes. Français québécois, concis et utile.`,
+        messages: cervChatHistory
+      })
+    });
+    if (!res.ok) {
+      cervAddChatMsg("assistant", "Erreur : " + res.status);
+      return;
+    }
+    const reply = await streamText(res, () => {});
+    cervAddChatMsg("assistant", reply || "…");
+    cervChatHistory.push({ role: "assistant", content: reply });
+  } catch (e) {
+    cervAddChatMsg("assistant", "Erreur de connexion.");
+  }
+}
+
+(function initCerveau() {
+  cervLoadNotes();
+  cervRenderTagsBar();
+  cervRenderList();
+
+  const search = $("#cervSearch");
+  if (search) search.oninput = () => cervRenderList();
+
+  const newBtn = $("#cervNewBtn");
+  if (newBtn) newBtn.onclick = () => cervOpenEditor(null);
+
+  const backBtn = $("#cervBackBtn");
+  if (backBtn) backBtn.onclick = () => cervCloseEditor();
+
+  const saveBtn = $("#cervSaveBtn");
+  if (saveBtn) saveBtn.onclick = () => cervSaveNote();
+
+  const delBtn = $("#cervDelBtn");
+  if (delBtn) delBtn.onclick = () => cervDeleteNote();
+
+  const tagsBtn = $("#cervAiTagsBtn");
+  if (tagsBtn) tagsBtn.onclick = () => cervSuggestTags();
+
+  const sumBtn = $("#cervAiSumBtn");
+  if (sumBtn) sumBtn.onclick = () => cervSummarize();
+
+  const tagInput = $("#cervTagInput");
+  if (tagInput) {
+    tagInput.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === ",") {
+        e.preventDefault();
+        const val = tagInput.value.trim().replace(",", "").toLowerCase();
+        if (val) {
+          const existing = cervGetEditorTags();
+          if (!existing.includes(val)) cervRenderEditorTags([...existing, val]);
+          tagInput.value = "";
+        }
+      }
+    };
+  }
+
+  const toggleChat = $("#cervToggleChat");
+  if (toggleChat) toggleChat.onclick = () => cervToggleChatPanel();
+
+  const chatClose = $("#cervChatClose");
+  if (chatClose) chatClose.onclick = () => cervToggleChatPanel();
+
+  const chatInput = $("#cervChatInput");
+  const chatSend = $("#cervChatSend");
+  if (chatInput) {
+    chatInput.oninput = () => {
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + "px";
+    };
+    chatInput.onkeydown = (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); cervChatSend(); }
+    };
+  }
+  if (chatSend) chatSend.onclick = () => cervChatSend();
+})();
 
 /* ============ AGENT FINANCE ============ */
 const FIN_SYSTEM = `Tu es « Agent Finance », un assistant spécialisé en finances personnelles et en crypto-actifs, conçu au Québec.

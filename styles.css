@@ -2313,3 +2313,237 @@ ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
   .fp-save{font-size:.58rem;padding:2px 7px}
   .fp-trust{font-size:.72rem;gap:8px;flex-wrap:wrap}
 }
+
+/* ============================================================
+   DEUXIÈME CERVEAU
+   ============================================================ */
+.cerv-spot{
+  display:inline-block;color:rgba(255,255,255,.55);
+  animation:cervSpotlight 5s ease-in-out calc(var(--i) * .45s) infinite;
+}
+@keyframes cervSpotlight{
+  0%,100%{color:rgba(255,255,255,.55);text-shadow:none}
+  12%{color:#fff;text-shadow:0 0 8px rgba(255,165,0,.7),0 0 18px rgba(255,102,0,.35)}
+  28%{color:rgba(255,255,255,.55);text-shadow:none}
+}
+.nav-cerveau .ico{width:20px;height:20px}
+
+.cerv-container{
+  display:flex;flex-direction:column;height:100%;
+  background:var(--bg);color:var(--txt);
+}
+.cerv-header{
+  display:flex;align-items:center;gap:14px;
+  padding:18px 24px;border-bottom:1px solid var(--line);
+}
+.cerv-emblem{flex-shrink:0}
+.cerv-header-text{flex:1}
+.cerv-title{font-family:var(--font);font-size:1.15rem;font-weight:700;color:var(--txt)}
+.cerv-subtitle{font-size:.78rem;color:var(--txt-dim);display:flex;align-items:center;gap:6px;margin-top:2px}
+.cerv-status-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+.cerv-sep{opacity:.4}
+.cerv-toggle-chat{
+  background:none;border:1.5px solid var(--line);border-radius:10px;
+  padding:8px;cursor:pointer;color:var(--txt-dim);transition:all .2s;
+}
+.cerv-toggle-chat:hover{border-color:var(--orange);color:var(--orange)}
+.cerv-toggle-chat.active{border-color:var(--orange);color:var(--orange);background:rgba(255,102,0,.1)}
+
+.cerv-body{
+  flex:1;display:flex;overflow:hidden;position:relative;
+}
+
+/* Notes panel */
+.cerv-notes-panel{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  transition:flex .3s ease;
+}
+.cerv-toolbar{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 20px;border-bottom:1px solid var(--line);
+}
+.cerv-search-wrap{
+  flex:1;display:flex;align-items:center;gap:8px;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+  padding:8px 12px;
+}
+.cerv-search{
+  flex:1;background:none;border:none;color:var(--txt);font-size:.85rem;
+  font-family:var(--font);outline:none;
+}
+.cerv-search::placeholder{color:var(--txt-dim)}
+.cerv-new-btn{
+  width:38px;height:38px;border-radius:10px;border:none;
+  background:var(--orange);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;
+}
+.cerv-new-btn:hover{transform:scale(1.08)}
+
+.cerv-tags-bar{
+  display:flex;gap:6px;padding:10px 20px;overflow-x:auto;
+  scrollbar-width:none;border-bottom:1px solid var(--line);
+}
+.cerv-tags-bar::-webkit-scrollbar{display:none}
+.cerv-tag-pill{
+  padding:5px 12px;border-radius:20px;font-size:.75rem;font-weight:600;
+  border:1px solid var(--line);background:var(--bg-2);color:var(--txt-dim);
+  cursor:pointer;white-space:nowrap;transition:all .2s;
+}
+.cerv-tag-pill:hover,.cerv-tag-pill.active{
+  border-color:var(--orange);color:var(--orange);background:rgba(255,102,0,.08);
+}
+
+.cerv-notes-list{
+  flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.cerv-note-card{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;cursor:pointer;transition:all .2s;
+}
+.cerv-note-card:hover{border-color:var(--orange);transform:translateY(-1px)}
+.cerv-note-card-title{font-weight:600;font-size:.92rem;color:var(--txt);margin-bottom:4px}
+.cerv-note-card-preview{font-size:.78rem;color:var(--txt-dim);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.cerv-note-card-footer{
+  display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;
+}
+.cerv-note-card-tag{
+  font-size:.65rem;padding:2px 8px;border-radius:10px;
+  background:rgba(255,102,0,.1);color:var(--orange);font-weight:600;
+}
+.cerv-note-card-date{font-size:.68rem;color:var(--txt-dim);margin-left:auto}
+.cerv-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:60px 20px;text-align:center;color:var(--txt-dim);
+}
+.cerv-empty-ico{font-size:2.4rem;opacity:.5}
+.cerv-empty-title{font-weight:600;font-size:.95rem}
+.cerv-empty-sub{font-size:.8rem}
+
+/* Editor */
+.cerv-editor{
+  flex:1;display:flex;flex-direction:column;padding:16px 20px;overflow-y:auto;gap:12px;
+}
+.cerv-editor-top{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.cerv-back-btn{
+  background:none;border:none;color:var(--txt-dim);cursor:pointer;padding:4px;
+  transition:color .2s;
+}
+.cerv-back-btn:hover{color:var(--orange)}
+.cerv-editor-actions{display:flex;gap:8px}
+.cerv-ai-btn{
+  padding:6px 12px;border-radius:8px;font-size:.78rem;font-weight:600;
+  background:var(--bg-2);border:1px solid var(--line);color:var(--txt);
+  cursor:pointer;transition:all .2s;font-family:var(--font);
+}
+.cerv-ai-btn:hover{border-color:var(--orange);color:var(--orange)}
+.cerv-ai-btn:disabled{opacity:.4;cursor:not-allowed}
+.cerv-del-btn{
+  padding:6px 10px;border-radius:8px;font-size:.78rem;
+  background:none;border:1px solid #e53e3e33;color:#e53e3e;
+  cursor:pointer;transition:all .2s;
+}
+.cerv-del-btn:hover{background:rgba(229,62,62,.1);border-color:#e53e3e}
+.cerv-title-input{
+  font-size:1.3rem;font-weight:700;font-family:var(--font);
+  background:none;border:none;color:var(--txt);outline:none;
+  padding:8px 0;border-bottom:2px solid transparent;
+}
+.cerv-title-input:focus{border-bottom-color:var(--orange)}
+.cerv-title-input::placeholder{color:var(--txt-dim)}
+.cerv-tags-edit{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:4px 0}
+.cerv-tags-list{display:flex;flex-wrap:wrap;gap:5px}
+.cerv-tag-chip{
+  display:flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:12px;font-size:.72rem;font-weight:600;
+  background:rgba(255,102,0,.12);color:var(--orange);
+}
+.cerv-tag-chip button{
+  background:none;border:none;color:var(--orange);cursor:pointer;
+  font-size:.82rem;padding:0;line-height:1;
+}
+.cerv-tag-input{
+  background:none;border:none;color:var(--txt);font-size:.8rem;
+  font-family:var(--font);outline:none;min-width:100px;
+}
+.cerv-tag-input::placeholder{color:var(--txt-dim)}
+.cerv-summary-wrap{
+  background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;
+}
+.cerv-summary-label{font-size:.7rem;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.cerv-summary-text{font-size:.82rem;color:var(--txt-dim);line-height:1.5}
+.cerv-content-input{
+  flex:1;min-height:200px;background:var(--bg-2);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px;color:var(--txt);font-size:.88rem;
+  font-family:var(--font);line-height:1.6;resize:none;outline:none;
+}
+.cerv-content-input:focus{border-color:var(--orange)}
+.cerv-content-input::placeholder{color:var(--txt-dim)}
+.cerv-save-btn{
+  align-self:flex-end;padding:10px 28px;border-radius:10px;border:none;
+  background:var(--orange);color:#fff;font-weight:700;font-size:.88rem;
+  font-family:var(--font);cursor:pointer;transition:transform .15s;
+}
+.cerv-save-btn:hover{transform:scale(1.04)}
+
+/* Chat panel */
+.cerv-chat{
+  width:360px;border-left:1px solid var(--line);display:flex;flex-direction:column;
+  background:var(--bg);flex-shrink:0;
+}
+.cerv-chat-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--line);
+  font-size:.85rem;font-weight:600;
+}
+.cerv-chat-close{
+  background:none;border:none;color:var(--txt-dim);font-size:1.3rem;
+  cursor:pointer;padding:0 4px;
+}
+.cerv-chat-close:hover{color:var(--orange)}
+.cerv-chat-messages{
+  flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+}
+.cerv-chat-msg{
+  max-width:88%;padding:10px 14px;border-radius:14px;font-size:.83rem;line-height:1.5;
+  word-break:break-word;
+}
+.cerv-chat-msg.user{
+  align-self:flex-end;background:var(--orange);color:#fff;border-bottom-right-radius:4px;
+}
+.cerv-chat-msg.assistant{
+  align-self:flex-start;background:var(--bg-2);color:var(--txt);
+  border:1px solid var(--line);border-bottom-left-radius:4px;
+}
+.cerv-chat-input-wrap{
+  display:flex;align-items:flex-end;gap:8px;
+  padding:12px 14px;border-top:1px solid var(--line);
+}
+.cerv-chat-input{
+  flex:1;background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;color:var(--txt);font-size:.83rem;font-family:var(--font);
+  resize:none;outline:none;max-height:120px;
+}
+.cerv-chat-input:focus{border-color:var(--orange)}
+.cerv-chat-input::placeholder{color:var(--txt-dim)}
+.cerv-chat-send{
+  width:36px;height:36px;border-radius:10px;border:none;
+  background:var(--orange);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform .15s;
+}
+.cerv-chat-send:hover{transform:scale(1.08)}
+
+@media(max-width:860px){
+  .cerv-chat{
+    position:absolute;inset:0;width:100%;z-index:10;border-left:none;
+  }
+  .cerv-header{padding:14px 16px}
+  .cerv-toolbar{padding:10px 14px}
+  .cerv-tags-bar{padding:8px 14px}
+  .cerv-notes-list{padding:10px 12px}
+  .cerv-editor{padding:12px 14px}
+}

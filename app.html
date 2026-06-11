@@ -65,6 +65,10 @@
       <svg viewBox="0 0 24 24" class="ico"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       <span class="lbl"><span class="forf-spot" style="--i:0">F</span><span class="forf-spot" style="--i:1">o</span><span class="forf-spot" style="--i:2">r</span><span class="forf-spot" style="--i:3">f</span><span class="forf-spot" style="--i:4">a</span><span class="forf-spot" style="--i:5">i</span><span class="forf-spot" style="--i:6">t</span><span class="nav-dollar">$</span></span>
     </button>
+    <button class="nav-item nav-cerveau" data-view="cerveau">
+      <svg viewBox="0 0 24 24" class="ico"><path d="M12 2a7 7 0 0 0-4.6 12.3c.5.4.8 1 .9 1.7h7.4c.1-.7.4-1.3.9-1.7A7 7 0 0 0 12 2zM9 20h6M10 22h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="lbl"><span class="cerv-spot" style="--i:0">C</span><span class="cerv-spot" style="--i:1">e</span><span class="cerv-spot" style="--i:2">r</span><span class="cerv-spot" style="--i:3">v</span><span class="cerv-spot" style="--i:4">e</span><span class="cerv-spot" style="--i:5">a</span><span class="cerv-spot" style="--i:6">u</span></span>
+    </button>
     <button class="nav-item nav-finance" data-view="finance">
       <svg viewBox="0 0 60 28" class="ico fin-ecg-svg">
         <path class="fin-ecg-line" d="M0,14 L8,14 L12,14 L14,6 L17,22 L20,4 L23,20 L26,14 L30,14 L34,14 L36,6 L39,22 L42,4 L45,20 L48,14 L52,14 L60,14" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -729,6 +733,88 @@
       <div class="fp-footer">
         <p>Taxes en sus. Annule quand tu veux, sans frais cachés.</p>
         <button class="fp-manage-btn" id="manageSubscriptionBtn" onclick="manageSubscription()">Gérer mon abonnement</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE DEUXIÈME CERVEAU ===== -->
+  <section class="view view-cerveau" id="view-cerveau">
+    <div class="cerv-container">
+      <header class="cerv-header">
+        <svg class="cerv-emblem" width="42" height="42" viewBox="0 0 40 40">
+          <defs><linearGradient id="cervDisc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1e1e"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient></defs>
+          <circle cx="20" cy="20" r="18.5" fill="url(#cervDisc)" stroke="rgba(255,122,26,.5)" stroke-width="1"/>
+          <path d="M20 8a9 9 0 0 0-5.8 15.9c.6.5 1 1.3 1.1 2.1h9.4c.1-.8.5-1.6 1.1-2.1A9 9 0 0 0 20 8zM15 28h10M17 31h6" fill="none" stroke="#ff7a1a" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <div class="cerv-header-text">
+          <div class="cerv-title">Deuxième Cerveau</div>
+          <div class="cerv-subtitle">
+            <span class="cerv-status-dot"></span>
+            Notes &amp; IA
+            <span class="cerv-sep">·</span>
+            <span>Agent AL</span>
+          </div>
+        </div>
+        <button class="cerv-toggle-chat" id="cervToggleChat" title="Chat IA">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </button>
+      </header>
+
+      <div class="cerv-body">
+        <!-- PANNEAU NOTES -->
+        <div class="cerv-notes-panel" id="cervNotesPanel">
+          <div class="cerv-toolbar">
+            <div class="cerv-search-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" class="cerv-search" id="cervSearch" placeholder="Rechercher des notes…">
+            </div>
+            <button class="cerv-new-btn" id="cervNewBtn" title="Nouvelle note">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <div class="cerv-tags-bar" id="cervTagsBar"></div>
+          <div class="cerv-notes-list" id="cervNotesList"></div>
+        </div>
+
+        <!-- ÉDITEUR DE NOTE -->
+        <div class="cerv-editor hidden" id="cervEditor">
+          <div class="cerv-editor-top">
+            <button class="cerv-back-btn" id="cervBackBtn">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="cerv-editor-actions">
+              <button class="cerv-ai-btn" id="cervAiTagsBtn" title="Suggestion de tags IA">🏷️ Tags IA</button>
+              <button class="cerv-ai-btn" id="cervAiSumBtn" title="Résumer avec IA">📝 Résumer</button>
+              <button class="cerv-del-btn" id="cervDelBtn" title="Supprimer">🗑️</button>
+            </div>
+          </div>
+          <input type="text" class="cerv-title-input" id="cervTitleInput" placeholder="Titre de la note…">
+          <div class="cerv-tags-edit" id="cervTagsEdit">
+            <div class="cerv-tags-list" id="cervTagsList"></div>
+            <input type="text" class="cerv-tag-input" id="cervTagInput" placeholder="Ajouter un tag…">
+          </div>
+          <div class="cerv-summary-wrap hidden" id="cervSummaryWrap">
+            <div class="cerv-summary-label">Résumé IA</div>
+            <div class="cerv-summary-text" id="cervSummaryText"></div>
+          </div>
+          <textarea class="cerv-content-input" id="cervContentInput" placeholder="Écris ta note ici…"></textarea>
+          <button class="cerv-save-btn" id="cervSaveBtn">Enregistrer</button>
+        </div>
+
+        <!-- CHAT IA CERVEAU -->
+        <div class="cerv-chat hidden" id="cervChat">
+          <div class="cerv-chat-head">
+            <span>Chat — Deuxième Cerveau</span>
+            <button class="cerv-chat-close" id="cervChatClose">×</button>
+          </div>
+          <div class="cerv-chat-messages" id="cervChatMessages"></div>
+          <div class="cerv-chat-input-wrap">
+            <textarea class="cerv-chat-input" id="cervChatInput" rows="1" placeholder="Pose une question sur tes notes…"></textarea>
+            <button class="cerv-chat-send" id="cervChatSend" aria-label="Envoyer">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </section>
