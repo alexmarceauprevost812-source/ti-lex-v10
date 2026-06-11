@@ -239,7 +239,7 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", projects: "Projets", account: "Mon compte" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", finance: "Agent Finance", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
     acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
@@ -521,7 +521,7 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", projects: "Projects", account: "My Account" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", finance: "Agent Finance", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
     acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
@@ -1073,7 +1073,7 @@ function switchView(v) {
   $(`#view-${v}`).classList.add("active");
   $$(".nav-item").forEach(b => {
     const bv = b.dataset.view;
-    b.classList.toggle("active", bv === v || (bv === "chat" && v === "projects"));
+    b.classList.toggle("active", bv === v || (bv === "chat" && (v === "projects" || v === "convos")));
   });
   const titles = I18N[state.lang]?.titles || TITLES;
   $("#viewTitle").textContent = titles[v] || "Agent AL";
@@ -1083,7 +1083,7 @@ function switchView(v) {
   if (v === "finance") { const w = $("#finWelcome"); if (w && w.style.display !== "none") finTypewriter(); }
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
-  if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects");
+  if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -1866,6 +1866,75 @@ function renderChatConvsFiltered() {
   });
 }
 
+/* ---- Conversations center page ---- */
+function renderConvosCenter(filter) {
+  const list = $("#convosListCenter");
+  if (!list) return;
+  const search = ($("#convosSearch")?.value || "").toLowerCase();
+
+  const activeFilter = filter || "all";
+  $$(".convos-tab").forEach(t => t.classList.toggle("active", t.dataset.filter === activeFilter));
+
+  let items = chatConvs.map((c, i) => ({ ...c, _idx: i, _flags: getConvFlags(i) }));
+  if (activeFilter === "favs") items = items.filter(c => c._flags.fav);
+  else if (activeFilter === "projs") items = items.filter(c => c._flags.proj);
+  if (search) items = items.filter(c => c.title.toLowerCase().includes(search));
+
+  if (!items.length) {
+    list.innerHTML = '<p class="convos-empty">Aucune conversation trouvée.</p>';
+    return;
+  }
+
+  list.innerHTML = items.map(c => {
+    const age = c.ts ? timeAgo(c.ts) : "";
+    const f = c._flags;
+    const msgCount = c.msgs ? c.msgs.length : 0;
+    const badges = (f.fav ? '<span class="convos-card-badge fav">★ Favori</span>' : '') +
+                   (f.proj ? '<span class="convos-card-badge proj">📁 Projet</span>' : '');
+    return `<div class="convos-card${c._idx === activeChatConv ? ' active' : ''}" data-idx="${c._idx}">
+      <div class="convos-card-ico">💬</div>
+      <div class="convos-card-info">
+        <div class="convos-card-title">${escapeHtml(c.title)}</div>
+        <div class="convos-card-meta"><span>${age}</span><span>${msgCount} msg</span></div>
+      </div>
+      <div class="convos-card-badges">${badges}</div>
+    </div>`;
+  }).join("");
+
+  $$(".convos-card", list).forEach(card => {
+    card.onclick = () => {
+      const idx = +card.dataset.idx;
+      activeChatConv = idx;
+      state.history = [...chatConvs[idx].messages];
+      rebuildChatFromHistory();
+      renderChatConvsFiltered();
+      updateConvDotsState();
+      switchView("chat");
+      chatSubFilter = "convos";
+      $$(".chat-sub-item").forEach(b => b.classList.toggle("active", b.dataset.sub === "convos"));
+    };
+  });
+}
+
+if ($("#convosSearch")) {
+  $("#convosSearch").oninput = () => {
+    const activeTab = document.querySelector(".convos-tab.active");
+    renderConvosCenter(activeTab?.dataset.filter);
+  };
+}
+$$(".convos-tab").forEach(tab => {
+  tab.onclick = () => renderConvosCenter(tab.dataset.filter);
+});
+if ($("#convosNewBtn")) {
+  $("#convosNewBtn").onclick = () => {
+    activeChatConv = -1;
+    state.history = [];
+    resetChatWelcome();
+    renderChatConvs();
+    switchView("chat");
+  };
+}
+
 // Sub-nav tab clicks
 $$(".chat-sub-item").forEach(btn => {
   btn.onclick = () => {
@@ -1874,6 +1943,12 @@ $$(".chat-sub-item").forEach(btn => {
     if (chatSubFilter === "projs") {
       switchView("projects");
       renderProjectsList();
+    } else if (chatSubFilter === "convos") {
+      switchView("convos");
+      renderConvosCenter();
+    } else if (chatSubFilter === "favs") {
+      switchView("convos");
+      renderConvosCenter("favs");
     } else {
       switchView("chat");
       renderChatConvsFiltered();

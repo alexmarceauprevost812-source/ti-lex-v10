@@ -246,6 +246,27 @@
     </div>
   </section>
 
+  <!-- ===== VUE CONVERSATIONS ===== -->
+  <section class="view view-convos" id="view-convos">
+    <div class="convos-page">
+      <h2 class="convos-page-title">Conversations</h2>
+      <div class="convos-search-wrap">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" class="convos-search" id="convosSearch" placeholder="Rechercher une conversation">
+      </div>
+      <div class="convos-tabs">
+        <button class="convos-tab active" data-filter="all">Toutes</button>
+        <button class="convos-tab" data-filter="favs">★ Favoris</button>
+        <button class="convos-tab" data-filter="projs">📁 Projet</button>
+      </div>
+      <div class="convos-list" id="convosListCenter"></div>
+      <button class="convos-new-btn" id="convosNewBtn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Nouvelle conversation</span>
+      </button>
+    </div>
+  </section>
+
   <!-- ===== VUE PROJETS ===== -->
   <section class="view view-projects" id="view-projects">
     <!-- Liste des projets -->
