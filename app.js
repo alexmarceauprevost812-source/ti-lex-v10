@@ -3067,6 +3067,46 @@ function serviceTags(text) {
   return hits.map(s => `<span class="service-tag">${SERVICE[s].svg}${SERVICE[s].name}<span class="ok">${t("serviceConnected")}</span></span>`).join("");
 }
 
+/* ---- Mode Réflexion (animation pensée) ---- */
+const REFLEXION_ETAPES = [
+  { service: "supabase", texte: "Connexion à Supabase — lecture de tes notes", duree: 2000 },
+  { service: "anthropic", texte: "Agent AL réfléchit", duree: 2400 },
+  { service: "anthropic", texte: "Rédaction de la réponse", duree: Infinity },
+];
+
+function buildReflexionHTML(etape, faites) {
+  const svc = SERVICE[REFLEXION_ETAPES[etape].service] || SERVICE.anthropic;
+  const color = ({ anthropic: "#ff6600", supabase: "#3ecf8e", github: "#e5e7eb", google: "#4285f4" })[REFLEXION_ETAPES[etape].service] || "#ff6600";
+  let badgesHtml = "";
+  if (faites.length) {
+    badgesHtml = '<div class="reflexion-done">' + faites.map(f => {
+      const s = SERVICE[f.service] || SERVICE.anthropic;
+      return `<span class="reflexion-badge">${s.svg}${f.texte}<span class="rfx-ok">✓</span></span>`;
+    }).join("") + "</div>";
+  }
+  return `<div class="reflexion-wrap">${badgesHtml}<div class="reflexion-active"><div class="reflexion-logo-wrap" style="--rfx-color:${color}">${svc.svg}<span class="reflexion-ring" style="--rfx-color:${color}"></span></div><span class="reflexion-text">${REFLEXION_ETAPES[etape].texte}<span class="reflexion-dots" style="--rfx-color:${color}"><span></span><span></span><span></span></span></span></div></div>`;
+}
+
+function startReflexion(body) {
+  let etape = 0;
+  const faites = [];
+  body.innerHTML = buildReflexionHTML(etape, faites);
+  const timers = [];
+  function next() {
+    if (etape >= REFLEXION_ETAPES.length - 1) return;
+    const dur = REFLEXION_ETAPES[etape].duree;
+    if (dur === Infinity) return;
+    timers.push(setTimeout(() => {
+      faites.push(REFLEXION_ETAPES[etape]);
+      etape++;
+      body.innerHTML = buildReflexionHTML(etape, faites);
+      next();
+    }, dur));
+  }
+  next();
+  body._stopReflexion = () => timers.forEach(clearTimeout);
+}
+
 function buildAssistantMsg() {
   const m = document.createElement("div");
   m.className = "msg assistant responding";
@@ -3076,12 +3116,12 @@ function buildAssistantMsg() {
   if (av && av._setThinking) av._setThinking(true);
   const b = document.createElement("div");
   b.className = "msg-body";
-  b.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
   m.appendChild(b);
   messages.appendChild(m);
   messages.scrollTop = messages.scrollHeight;
   b._msgWrap = m;
   b._avatar = av;
+  startReflexion(b);
   return b;
 }
 
@@ -3107,6 +3147,7 @@ async function sendMessage() {
   const body = buildAssistantMsg();
 
   if (!AI_PROXY) {
+    if (body._stopReflexion) body._stopReflexion();
     renderAssistant(body, `⚙ ${t("proxyNotConfigured")}`);
     messages.scrollTop = messages.scrollHeight;
     return;
@@ -3148,6 +3189,7 @@ async function sendMessage() {
 
     const res = await chatFetch(reqBody);
     if (!res.ok) throw new Error(await apiError(res));
+    if (body._stopReflexion) body._stopReflexion();
     if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(true); }
     body.classList.add("streaming");
     const typer = makeTyper(partial => {
@@ -3166,6 +3208,7 @@ async function sendMessage() {
     saveChatConv();
   } catch (err) {
     state.history.pop();
+    if (body._stopReflexion) body._stopReflexion();
     if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
     body.innerHTML = `<p class="muted">${t("apiError")} ${escapeHtml(err.message || "API")}.</p>`;
   } finally {
@@ -6236,8 +6279,11 @@ async function cervChatSend() {
   if (tk) h["Authorization"] = `Bearer ${tk}`;
   if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
 
-  cervAddChatMsg("assistant", "Agent AL réfléchit…");
-  const thinking = $(".cerv-chat-msg.assistant:last-child", $("#cervChatMessages"));
+  const thinkDiv = document.createElement("div");
+  thinkDiv.className = "cerv-chat-msg assistant";
+  const container = $("#cervChatMessages");
+  if (container) { container.appendChild(thinkDiv); container.scrollTop = container.scrollHeight; }
+  startReflexion(thinkDiv);
 
   try {
     const res = await fetch(AI_PROXY, {
@@ -6250,7 +6296,8 @@ async function cervChatSend() {
         messages: cervChatHistory
       })
     });
-    if (thinking) thinking.remove();
+    if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
+    if (thinkDiv.parentNode) thinkDiv.remove();
     if (!res.ok) {
       cervAddChatMsg("assistant", "Erreur : " + res.status);
       return;
@@ -6259,7 +6306,8 @@ async function cervChatSend() {
     cervAddChatMsg("assistant", reply || "…");
     cervChatHistory.push({ role: "assistant", content: reply });
   } catch (e) {
-    if (thinking) thinking.remove();
+    if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
+    if (thinkDiv.parentNode) thinkDiv.remove();
     cervAddChatMsg("assistant", "Erreur de connexion.");
   }
 }
