@@ -20,7 +20,7 @@ const LIMITS = { chat: 200, image: 20 };
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
 const MAX_MESSAGES = 60;
-const MAX_MSG_CHARS = 200_000;
+const MAX_MSG_CHARS = 20_000_000;
 const ALLOWED_MODELS = new Set([
   "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5-20251001",
 ]);
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
     const totalChars = JSON.stringify(body.messages).length;
     if (totalChars > MAX_MSG_CHARS)
-      return json({ error: "Contenu trop volumineux" }, 400);
+      return json({ error: `Contenu trop volumineux (${(totalChars / 1_000_000).toFixed(1)} Mo, max ${(MAX_MSG_CHARS / 1_000_000).toFixed(0)} Mo)` }, 400);
 
     const maxTokens = Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS_CAP);
 

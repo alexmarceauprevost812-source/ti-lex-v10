@@ -2019,13 +2019,42 @@ function bytesLabel(n) {
 }
 const TEXT_EXT = ["txt","md","js","ts","tsx","jsx","py","sql","json","html","css","yml","yaml","csv","xml","sh","rs","go","java","c","cpp","env"];
 
+function mediaTypeFromName(name) {
+  const ext = (name || "").split(".").pop().toLowerCase();
+  return { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" }[ext] || "image/png";
+}
+
+function resizeImageIfNeeded(dataUrl, file, maxBytes = 4.5 * 1024 * 1024) {
+  return new Promise((resolve) => {
+    if (file.size <= maxBytes) { resolve(dataUrl); return; }
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.sqrt(maxBytes / file.size);
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 function handleImageFiles(files) {
   [...files].forEach(f => {
+    if (f.size > 20 * 1024 * 1024) {
+      alert("Image trop grosse (max 20 Mo). Réduis-la avant l'envoi.");
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
+    reader.onload = async () => {
+      const raw = reader.result;
+      const dataUrl = await resizeImageIfNeeded(raw, f);
       const base64 = dataUrl.split(",")[1];
-      attachments.push({ kind: "image", name: f.name, mediaType: f.type || "image/png", base64, dataUrl, size: f.size });
+      const mediaType = dataUrl.startsWith("data:image/jpeg") ? "image/jpeg" : (f.type || mediaTypeFromName(f.name));
+      attachments.push({ kind: "image", name: f.name, mediaType, base64, dataUrl, size: base64.length });
       renderAttachStrip();
     };
     reader.readAsDataURL(f);
@@ -2971,6 +3000,21 @@ function contentText(c) {
   return "";
 }
 
+/* strip images from older history entries to prevent payload bloat */
+function stripOldImagesFromHistory() {
+  for (let i = 0; i < state.history.length - 2; i++) {
+    const m = state.history[i];
+    if (Array.isArray(m.content)) {
+      const hasImage = m.content.some(b => b.type === "image");
+      if (hasImage) {
+        const texts = m.content.filter(b => b.type === "text").map(b => b.text).join(" ");
+        const imgCount = m.content.filter(b => b.type === "image").length;
+        m.content = [{ type: "text", text: (texts + ` [${imgCount} image(s) précédemment]`).trim() }];
+      }
+    }
+  }
+}
+
 /* construit le contenu API : texte + images (vision) + fichiers texte inline */
 function buildUserContent(text, atts) {
   if (!atts || !atts.length) return text;
@@ -3100,6 +3144,7 @@ async function sendMessage() {
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
     state.history.push({ role: "assistant", content: full });
+    stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
     saveChatConv();
   } catch (err) {
@@ -3641,8 +3686,13 @@ function escapeHtml(s) {
 
 /* ---- Streaming SSE : écriture fluide, façon Claude Code ---- */
 async function apiError(res) {
-  try { const e = await res.json(); return e.error?.message || `HTTP ${res.status}`; }
-  catch (_) { return `HTTP ${res.status}`; }
+  try {
+    const e = await res.json();
+    return e.error?.message || (typeof e.error === "string" ? e.error : null) || `HTTP ${res.status}`;
+  } catch (_) {
+    try { const t = await res.text(); return t.slice(0, 300) || `HTTP ${res.status}`; }
+    catch (_2) { return `HTTP ${res.status}`; }
+  }
 }
 async function streamText(res, onUpdate) {
   const reader = res.body.getReader();
