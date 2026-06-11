@@ -1683,14 +1683,56 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
 .nav-creer-agent .nav-video-ico{
   width:24px;height:24px;border-radius:6px;
   object-fit:cover;flex-shrink:0;
-  filter:drop-shadow(0 0 4px rgba(167,139,250,.3));
+  filter:drop-shadow(0 0 4px rgba(255,106,0,.3));
   transition:filter .3s,transform .3s;
 }
 .nav-creer-agent:hover .nav-video-ico{
-  filter:drop-shadow(0 0 10px rgba(167,139,250,.7));
+  filter:drop-shadow(0 0 10px rgba(255,106,0,.7));
   transform:scale(1.15);
 }
-.nav-creer-agent:hover{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.2)}
+.nav-creer-agent:hover{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,.2)}
+
+/* Créer Agent — lettres */
+.ca-lbl{display:flex;align-items:center;gap:0;font-weight:700;letter-spacing:.5px}
+.ca-sp{width:4px}
+.ca-lt{
+  display:inline-block;
+  color:rgba(255,255,255,.55);
+  transition:color .3s,text-shadow .3s;
+  animation:caSpotlight 4s ease-in-out infinite;
+  animation-delay:calc(var(--d) * .35s);
+}
+.ca-lt-box{
+  color:#0a0a0a!important;
+  animation-name:caSpotlightBox;
+}
+
+/* Orange box around "ent" */
+.ca-box{
+  display:inline-flex;
+  background:var(--orange);
+  border:2px solid var(--orange);
+  border-radius:6px;
+  padding:1px 5px;
+  margin-left:1px;
+  box-shadow:0 0 10px rgba(255,106,0,.35);
+  transition:box-shadow .3s;
+}
+.nav-creer-agent:hover .ca-box{
+  box-shadow:0 0 18px rgba(255,106,0,.6);
+}
+
+/* Spotlight sweep — white letters */
+@keyframes caSpotlight{
+  0%,18%,100%{color:rgba(255,255,255,.55);text-shadow:none}
+  8%,12%{color:#ffffff;text-shadow:0 0 8px rgba(255,255,255,.7),0 0 20px rgba(255,255,255,.3)}
+}
+
+/* Spotlight sweep — box letters: black → bright green */
+@keyframes caSpotlightBox{
+  0%,18%,100%{color:#0a0a0a;text-shadow:none}
+  8%,12%{color:#39ff14;text-shadow:0 0 8px rgba(57,255,20,.7),0 0 20px rgba(57,255,20,.3)}
+}
 
 /* ============ ANIMATIONS — Thème sombre élégant ============ */
 :root {
