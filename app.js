@@ -1092,7 +1092,7 @@ function switchView(v) {
   $(`#view-${v}`).classList.add("active");
   $$(".nav-item").forEach(b => {
     const bv = b.dataset.view;
-    b.classList.toggle("active", bv === v || (bv === "chat" && (v === "projects" || v === "convos")));
+    b.classList.toggle("active", bv === v || (bv === "chat" && (v === "projects" || v === "convos" || v === "cerveau")));
   });
   const titles = I18N[state.lang]?.titles || TITLES;
   $("#viewTitle").textContent = titles[v] || "Agent AL";
@@ -1102,7 +1102,7 @@ function switchView(v) {
   if (v === "finance") { const w = $("#finWelcome"); if (w && w.style.display !== "none") finTypewriter(); }
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
-  if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos");
+  if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos" || v === "cerveau");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 
@@ -2030,6 +2030,8 @@ $$(".chat-sub-item").forEach(btn => {
     } else if (chatSubFilter === "favs") {
       switchView("convos");
       renderConvosCenter("favs");
+    } else if (chatSubFilter === "cerveau") {
+      switchView("cerveau");
     } else {
       switchView("chat");
       renderChatConvsFiltered();
