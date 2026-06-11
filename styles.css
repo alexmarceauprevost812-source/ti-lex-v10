@@ -414,17 +414,17 @@ body[data-theme="light"] .chat-code-block .syn-env{color:#c2410c;font-weight:600
   animation:reflexFade .4s ease}
 .reflexion-badge svg{width:13px;height:13px;flex-shrink:0}
 .reflexion-badge .rfx-ok{color:#3ecf8e;margin-left:2px}
-.reflexion-active{display:flex;align-items:center;gap:10px;
-  background:#111118;border:1px solid #222;border-radius:16px 16px 16px 4px;padding:10px 14px}
-.reflexion-logo-wrap{position:relative;width:34px;height:34px;display:flex;align-items:center;
-  justify-content:center;border-radius:10px;background:#0a0a10;border:1px solid #222;flex-shrink:0}
-.reflexion-logo-wrap svg{width:18px;height:18px;animation:reflexPop .45s cubic-bezier(.34,1.56,.64,1)}
-.reflexion-ring{position:absolute;inset:-3px;border-radius:12px;border:1.5px solid var(--rfx-color,#ff6600);
+.reflexion-active{display:flex;align-items:center;gap:8px;
+  background:#111118;border:1px solid #222;border-radius:14px 14px 14px 4px;padding:8px 12px}
+.reflexion-logo-wrap{position:relative;width:22px;height:22px;display:flex;align-items:center;
+  justify-content:center;border-radius:6px;background:#0a0a10;border:1px solid #222;flex-shrink:0}
+.reflexion-logo-wrap svg{width:12px;height:12px;animation:reflexPop .45s cubic-bezier(.34,1.56,.64,1)}
+.reflexion-ring{position:absolute;inset:-2px;border-radius:8px;border:1.5px solid var(--rfx-color,#ff6600);
   animation:reflexPulse 1.4s ease-out infinite;pointer-events:none}
-.reflexion-text{display:flex;align-items:center;gap:5px;font-size:.85rem;color:#ccc;
+.reflexion-text{display:flex;align-items:center;gap:4px;font-size:.78rem;color:#ccc;
   animation:reflexFade .4s ease}
-.reflexion-dots{display:inline-flex;gap:3px}
-.reflexion-dots span{width:5px;height:5px;border-radius:50%;background:var(--rfx-color,#ff6600);
+.reflexion-dots{display:inline-flex;gap:2px}
+.reflexion-dots span{width:4px;height:4px;border-radius:50%;background:var(--rfx-color,#ff6600);
   animation:reflexBounce 1.2s infinite}
 .reflexion-dots span:nth-child(2){animation-delay:.15s}
 .reflexion-dots span:nth-child(3){animation-delay:.3s}
