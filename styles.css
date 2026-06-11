@@ -1694,9 +1694,53 @@ body[data-theme="light"] .sp-source{background:#fff;color:#222}
   --tlx-glow: rgba(212, 175, 55, 0.5);
 }
 
-/* Nav */
-.nav-animations .nav-emoji{font-size:1.1rem}
-.nav-animations:hover,.nav-animations.active{border-color:var(--tlx-accent);box-shadow:0 0 0 3px var(--tlx-glow)}
+/* Nav Animations — gold sparkle */
+.anim-nav-sparkle{
+  font-size:1.2rem;
+  filter:drop-shadow(0 0 4px rgba(212,175,55,.4));
+  transition:filter .3s,transform .3s;
+}
+.nav-animations:hover .anim-nav-sparkle{
+  filter:drop-shadow(0 0 10px rgba(212,175,55,.8));
+  transform:scale(1.2) rotate(12deg);
+}
+.nav-animations.active .anim-nav-sparkle{
+  filter:drop-shadow(0 0 12px rgba(212,175,55,.9));
+  transform:scale(1.25) rotate(15deg);
+  animation:animNavSparkSpin 3s ease-in-out infinite;
+}
+@keyframes animNavSparkSpin{
+  0%,100%{transform:scale(1.25) rotate(15deg)}
+  25%{transform:scale(1.15) rotate(-5deg)}
+  50%{transform:scale(1.3) rotate(20deg)}
+  75%{transform:scale(1.2) rotate(5deg)}
+}
+.anim-nav-letter{
+  display:inline-block;
+  transition:color .3s,text-shadow .3s,transform .3s;
+  color:var(--txt-dim);
+}
+.nav-animations:hover .anim-nav-letter{
+  color:#d4af37;
+  text-shadow:0 0 8px rgba(212,175,55,.5);
+  animation:animNavLetterWave .5s ease calc(var(--i) * .04s) both;
+}
+.nav-animations.active .anim-nav-letter{
+  color:#ffe066;
+  text-shadow:0 0 10px rgba(255,224,102,.5);
+  animation:animNavLetterGlow 2s ease-in-out infinite calc(var(--i) * .12s);
+}
+@keyframes animNavLetterWave{
+  0%{transform:translateY(0)}
+  40%{transform:translateY(-3px)}
+  100%{transform:translateY(0)}
+}
+@keyframes animNavLetterGlow{
+  0%,100%{color:#d4af37;text-shadow:0 0 6px rgba(212,175,55,.3)}
+  50%{color:#ffe066;text-shadow:0 0 14px rgba(255,224,102,.7)}
+}
+.nav-animations:hover{border-color:rgba(212,175,55,.5);box-shadow:0 0 0 3px rgba(212,175,55,.15)}
+.nav-animations.active{border-color:#d4af37;box-shadow:0 0 0 3px rgba(212,175,55,.25);background:rgba(212,175,55,.06)}
 
 /* Logo lettres animées */
 @keyframes tlxLetterIn {
