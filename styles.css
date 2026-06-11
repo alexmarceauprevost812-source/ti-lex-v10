@@ -2427,9 +2427,15 @@ textarea.fin-input:focus{outline:none}
 .nav-forfaits.active{border-color:var(--orange);box-shadow:0 0 0 3px rgba(230,126,34,.2)}
 .nav-dollar{
   display:inline-block;
-  color:#ffd700;font-weight:800;
-  text-shadow:0 0 8px rgba(255,215,0,.5);
-  margin-left:3px;
+  color:#39ff14;font-weight:800;
+  text-shadow:0 0 8px rgba(57,255,20,.5);
+  margin-left:5px;
+  width:22px;height:22px;
+  line-height:22px;text-align:center;
+  font-size:.8rem;
+  border:2px solid #39ff14;
+  border-radius:50%;
+  box-shadow:0 0 8px rgba(57,255,20,.3);
   animation:dollarSpin 3s ease-in-out infinite, dollarFloat 2s ease-in-out infinite;
 }
 @keyframes dollarSpin{
@@ -2438,19 +2444,19 @@ textarea.fin-input:focus{outline:none}
   100%{transform:rotateY(360deg)}
 }
 @keyframes dollarFloat{
-  0%,100%{translate:0 0;text-shadow:0 0 8px rgba(255,215,0,.5)}
-  50%{translate:0 -4px;text-shadow:0 4px 12px rgba(255,215,0,.6),0 0 20px rgba(255,215,0,.3)}
+  0%,100%{translate:0 0;box-shadow:0 0 8px rgba(57,255,20,.3)}
+  50%{translate:0 -4px;box-shadow:0 4px 12px rgba(57,255,20,.4),0 0 20px rgba(57,255,20,.2)}
 }
 .forf-spot{
   display:inline-block;font-weight:700;letter-spacing:.5px;
-  color:rgba(255,255,255,.18);text-shadow:none;
+  color:rgba(57,255,20,.25);text-shadow:none;
   animation:forfSpotlight 3.5s ease-in-out infinite;
   animation-delay:calc(var(--i) * .35s);
 }
 @keyframes forfSpotlight{
-  0%,100%{color:rgba(255,255,255,.18);text-shadow:none;transform:scale(1)}
-  14%{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.9),0 0 20px rgba(249,115,22,.6);transform:scale(1.12)}
-  28%{color:rgba(255,255,255,.18);text-shadow:none;transform:scale(1)}
+  0%,100%{color:rgba(57,255,20,.25);text-shadow:none;transform:scale(1)}
+  14%{color:#39ff14;text-shadow:0 0 8px rgba(57,255,20,.9),0 0 20px rgba(57,255,20,.5);transform:scale(1.12)}
+  28%{color:rgba(57,255,20,.25);text-shadow:none;transform:scale(1)}
 }
 
 .view-forfaits{
