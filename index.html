@@ -8,26 +8,25 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d4af37">
+  <meta name="theme-color" content="#ff6600">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <style>
     :root {
-      --orange:    #d4af37;
-      --orange2:   #8b7355;
-      --red:       #6e4f23;
+      --orange:    #FF6A00;
+      --orange2:   #FF9A3C;
+      --red:       #C0392B;
       --dark:      #0A0A0A;
       --dark2:     #111111;
-      --dark3:     #161616;
-      --border:    rgba(212,175,55,0.30);
-      --text:      #e5e5e5;
-      --muted:     #737373;
+      --dark3:     #1A1A1A;
+      --border:    rgba(255,106,0,0.35);
+      --text:      #F0EDE8;
+      --muted:     #888;
       --radius:    10px;
       --error:     #ff4444;
       --success:   #00cc66;
-      --tlx-glow:  rgba(212,175,55,0.5);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,8 +46,8 @@
     .bg {
       position: fixed; inset: 0; z-index: 0;
       background:
-        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212,175,55,0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,115,85,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(192,57,43,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(255,106,0,0.10) 0%, transparent 60%),
         var(--dark);
       overflow: hidden;
     }
@@ -56,8 +55,8 @@
       content: '';
       position: absolute; inset: 0;
       background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(212,175,55,0.03) 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(212,175,55,0.03) 40px);
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,106,0,0.04) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,106,0,0.04) 40px);
     }
     canvas#sparks {
       position: fixed; inset: 0; z-index: 1; pointer-events: none;
@@ -78,12 +77,8 @@
       border-radius: 16px;
       overflow: hidden;
       background: var(--dark3);
-      box-shadow: 0 0 40px rgba(212,175,55,0.2), 0 0 80px rgba(139,115,85,0.08);
-      animation: logoIn .7s cubic-bezier(.22,1,.36,1) both, logoFloat 4s ease-in-out 1s infinite;
-    }
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      box-shadow: 0 0 40px rgba(192,57,43,0.25), 0 0 80px rgba(255,106,0,0.08);
+      animation: logoIn .7s cubic-bezier(.22,1,.36,1) both;
     }
     .logo-card img {
       width: 100%; display: block;
@@ -93,7 +88,7 @@
       height: 220px;
       font-family: 'Bebas Neue', sans-serif;
       font-size: 52px; letter-spacing: 4px;
-      background: linear-gradient(135deg, #d4af37 0%, #8b7355 50%, #d4af37 100%);
+      background: linear-gradient(135deg, #C0392B 0%, #FF6A00 50%, #FF9A3C 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
@@ -131,26 +126,26 @@
       font-weight: 900;
       font-size: clamp(2.6rem, 9vw, 6.5rem);
       letter-spacing: 0.04em; line-height: 1;
-      background: linear-gradient(180deg, #fff8e7 0%, #e8d9b0 38%, #d4af37 60%, #8b7355 100%);
+      background: linear-gradient(180deg, #fff8e7 0%, #e8d9b0 38%, #b08d4f 60%, #6e4f23 100%);
       -webkit-background-clip: text; background-clip: text;
       color: transparent;
-      filter: drop-shadow(0 0 18px rgba(212,175,55,0.55)) drop-shadow(0 4px 2px rgba(0,0,0,0.9));
+      filter: drop-shadow(0 0 18px rgba(255,122,24,0.55)) drop-shadow(0 4px 2px rgba(0,0,0,0.9));
       animation: tilex-braise 3.2s ease-in-out infinite alternate;
     }
     .tilex-v10 {
-      background: linear-gradient(180deg, #f0d060, #d4af37 55%, #8b7355);
+      background: linear-gradient(180deg, #ffd34d, #ff7a18 55%, #c41010);
       -webkit-background-clip: text; background-clip: text;
       color: transparent;
     }
     @keyframes tilex-braise {
-      from { filter: drop-shadow(0 0 14px rgba(212,175,55,0.4)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
-      to   { filter: drop-shadow(0 0 26px rgba(212,175,55,0.75)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
+      from { filter: drop-shadow(0 0 14px rgba(255,122,24,0.4)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
+      to   { filter: drop-shadow(0 0 26px rgba(255,160,40,0.75)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
     }
     .tilex-filet {
       width: min(420px, 60vw); height: 2px;
       margin: 2.5vh 0 3vh;
-      background: linear-gradient(90deg, transparent, #d4af37, #8b7355, #d4af37, transparent);
-      box-shadow: 0 0 12px rgba(212,175,55,0.5);
+      background: linear-gradient(90deg, transparent, #ff7a18, #c41010, #ff7a18, transparent);
+      box-shadow: 0 0 12px rgba(255,122,24,0.6);
     }
     .tilex-ecriture {
       max-width: 760px; width: 100%; text-align: left;
@@ -158,19 +153,19 @@
     .tilex-ligne {
       font-family: 'Rajdhani', sans-serif;
       font-size: clamp(1.05rem, 2.4vw, 1.5rem);
-      line-height: 1.7; color: #e5e5e5;
+      line-height: 1.7; color: #f3ece1;
       min-height: 1.7em; margin-bottom: 0.4em;
-      text-shadow: 0 0 10px rgba(212,175,55,0.12);
+      text-shadow: 0 0 10px rgba(255,122,24,0.15);
     }
     .tilex-curseur {
       display: inline-block; width: 0.55em; height: 1.1em;
       margin-left: 2px; vertical-align: text-bottom;
-      background: #d4af37; box-shadow: 0 0 10px #d4af37;
+      background: #ff7a18; box-shadow: 0 0 10px #ff7a18;
       animation: tilex-clignote 0.85s steps(1) infinite;
     }
     @keyframes tilex-clignote { 50% { opacity: 0; } }
     .tilex-neuf {
-      color: #f0d060; text-shadow: 0 0 14px #d4af37;
+      color: #ffd34d; text-shadow: 0 0 14px #ff7a18;
       transition: color 0.5s ease, text-shadow 0.5s ease;
     }
     @media (prefers-reduced-motion: reduce) {
@@ -178,44 +173,18 @@
       .tilex-curseur { animation: none; }
     }
 
-    /* ── CTA COMMENCER ────────────────────────────────── */
-    .btn-commencer {
-      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-      padding: 16px 44px;
-      background: linear-gradient(135deg, #d4af37, #8b7355);
-      color: #0a0a0a; font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px; font-weight: 700; letter-spacing: 3px;
-      border-radius: 14px; text-decoration: none;
-      box-shadow: 0 4px 24px rgba(212,175,55,0.45);
-      animation: fadeUp .6s .2s both, ctaGlow 2s ease-in-out 1s infinite;
-      transition: transform .2s, box-shadow .2s;
-      position: relative; z-index: 2;
-    }
-    .btn-commencer:hover {
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 6px 36px rgba(212,175,55,0.7);
-    }
-    .btn-commencer:active { transform: scale(.97); }
-    .btn-commencer svg { stroke: #0a0a0a; }
-
     /* ── BADGES ───────────────────────────────────────── */
     .badges {
       display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
       animation: fadeUp .6s .25s both;
     }
     .badge {
-      display: inline-block;
-      border: 1px solid rgba(212,175,55,0.5);
-      border-radius: 999px; padding: 5px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 14px;
       font-family: 'Share Tech Mono', monospace;
-      font-size: 12px; color: #d4af37;
-      background: rgba(212,175,55,0.06);
+      font-size: 12px; color: var(--orange2);
+      background: rgba(255,106,0,0.07);
       letter-spacing: 1px;
-      animation: badgePulse 2.4s ease-in-out infinite;
-    }
-    @keyframes badgePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.5); }
-      50% { box-shadow: 0 0 20px 2px rgba(212,175,55,0.3); }
     }
 
     /* ── DIVIDER ──────────────────────────────────────── */
@@ -247,29 +216,23 @@
 
     .btn-outline {
       background: transparent;
-      border: 2px solid #d4af37;
-      color: #d4af37;
+      border: 2px solid var(--orange);
+      color: var(--orange);
     }
     .btn-outline:hover {
-      background: rgba(212,175,55,0.08);
-      box-shadow: 0 0 24px rgba(212,175,55,0.25);
+      background: rgba(255,106,0,0.10);
+      box-shadow: 0 0 24px rgba(255,106,0,0.25);
     }
 
     .btn-filled {
-      background: linear-gradient(135deg, #d4af37, #8b7355);
+      background: linear-gradient(135deg, #FF6A00, #FF9A3C);
       color: #0A0A0A;
-      font-weight: 700;
-      box-shadow: 0 4px 20px rgba(212,175,55,0.4);
-      animation: ctaGlow 2s ease-in-out infinite;
+      box-shadow: 0 4px 20px rgba(255,106,0,0.35);
     }
     .btn-filled:hover {
       filter: brightness(1.1);
-      box-shadow: 0 6px 30px rgba(212,175,55,0.6);
-      transform: translateY(-3px) scale(1.02);
-    }
-    @keyframes ctaGlow {
-      0%, 100% { box-shadow: 0 4px 20px rgba(212,175,55,0.4); }
-      50% { box-shadow: 0 4px 36px rgba(212,175,55,0.65); }
+      box-shadow: 0 6px 30px rgba(255,106,0,0.5);
+      transform: translateY(-2px);
     }
 
     /* OAuth buttons */
@@ -283,7 +246,7 @@
       font-family: 'Rajdhani', sans-serif;
       font-weight: 700; font-size: 15px; letter-spacing: 1px;
       cursor: pointer; text-decoration: none;
-      border: 1px solid rgba(212,175,55,0.3);
+      border: 1px solid var(--border);
       background: var(--dark3);
       color: var(--text);
       transition: transform .18s, box-shadow .18s, border-color .18s, background .18s;
@@ -316,14 +279,14 @@
     .email-notice {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 16px;
-      border: 1px solid rgba(212,175,55,0.2);
+      border: 1px solid rgba(255,106,0,0.2);
       border-radius: var(--radius);
-      background: rgba(212,175,55,0.04);
+      background: rgba(255,106,0,0.05);
       font-size: 14px; color: var(--muted);
       animation: fadeUp .6s .6s both;
       width: 100%;
     }
-    .email-notice svg { flex-shrink: 0; color: #d4af37; }
+    .email-notice svg { flex-shrink: 0; color: var(--orange2); }
 
     /* ── STATUS DOT ──────────────────────────────────── */
     .status-bar {
@@ -363,7 +326,7 @@
       border-radius: 16px; padding: 2rem;
       width: 100%; max-width: 480px;
       animation: fadeUp 0.4s ease-out;
-      box-shadow: 0 0 40px rgba(212,175,55,0.1);
+      box-shadow: 0 0 40px rgba(192,57,43,0.15);
     }
     .form-card h2 {
       text-align: center; margin-bottom: 1.5rem;
@@ -515,14 +478,14 @@
       color: #000; border: none; border-radius: 9999px;
       font-family: 'Bebas Neue', sans-serif; font-size: 16px;
       letter-spacing: 1px; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(212,175,55,0.4);
+      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
       animation: pwaPulse 3s ease-in-out infinite;
     }
     .pwa-install:hover { transform: scale(1.05); }
     .pwa-install-icon { width: 26px; height: 26px; border-radius: 7px; }
     @keyframes pwaPulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(212,175,55,0.4); }
-      50% { box-shadow: 0 4px 28px rgba(212,175,55,0.7); }
+      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,0,0.5); }
+      50% { box-shadow: 0 4px 28px rgba(255,107,0,0.9); }
     }
 
     .pwa-modal {
@@ -567,11 +530,11 @@
     .chat-btn {
       width: 56px; height: 56px; border-radius: 50%; border: none;
       cursor: pointer; background: linear-gradient(135deg, var(--orange), var(--orange2));
-      box-shadow: 0 4px 20px rgba(212,175,55,0.4);
+      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
       display: flex; align-items: center; justify-content: center;
       transition: all 0.3s;
     }
-    .chat-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(212,175,55,0.6); }
+    .chat-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(255,107,0,0.7); }
     .chat-btn svg { width: 28px; height: 28px; color: #000; }
 
     .chat-window {
@@ -742,18 +705,11 @@
       </div>
     </section>
 
-    <!-- CTA COMMENCER -->
-    <a href="app.html" class="btn-commencer">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-      COMMENCER
-    </a>
-
     <!-- BADGES -->
     <div class="badges">
       <span class="badge">LOI 25</span>
       <span class="badge">SÉCURITÉ INTÉGRÉE</span>
       <span class="badge">100% LÉGAL</span>
-      <span class="badge">PRODUIT DU QUÉBEC ⚜️</span>
     </div>
 
     <!-- ═══ VUE ACCUEIL ═══ -->
@@ -1197,50 +1153,30 @@
       setTimeout(() => { splash.style.display = 'none'; }, 600);
     }
 
-    /* ── Canvas Particules Or (réseau interactif) ── */
+    /* ── Canvas Sparks ── */
     const canvas = document.getElementById('sparks');
     const ctx = canvas.getContext('2d');
-    let W, H;
-    const mouse = { x: -999, y: -999 };
+    let W, H, particles = [];
     function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
     window.addEventListener('resize', resize); resize();
-    canvas.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
-    canvas.addEventListener('touchmove', function(e) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }, { passive: true });
-    canvas.addEventListener('mouseleave', function() { mouse.x = -999; mouse.y = -999; });
-    canvas.style.pointerEvents = 'auto';
-
-    const COUNT = window.innerWidth < 600 ? 30 : 50;
-    const pts = [];
-    for (let i = 0; i < COUNT; i++) {
-      pts.push({
-        x: Math.random() * W, y: Math.random() * H,
-        vx: (Math.random() - .5) * .6, vy: (Math.random() - .5) * .6,
-        r: Math.random() * 2.2 + 1,
-      });
+    function randomParticle() {
+      return {
+        x: Math.random() * W, y: H + 10,
+        vx: (Math.random() - .5) * .6, vy: -(Math.random() * 1.2 + .4),
+        r: Math.random() * 1.5 + .5, life: 1, decay: Math.random() * .004 + .002,
+        color: Math.random() > .5 ? '#FF6A00' : '#C0392B',
+      };
     }
+    for (let i = 0; i < 60; i++) { const p = randomParticle(); p.y = Math.random() * H; particles.push(p); }
     function frame() {
       ctx.clearRect(0, 0, W, H);
-      for (const p of pts) {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0 || p.x > W) p.vx *= -1;
-        if (p.y < 0 || p.y > H) p.vy *= -1;
-        var dx = mouse.x - p.x, dy = mouse.y - p.y;
-        var d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 140 && d > 0.1) { p.x += (dx / d) * 0.8; p.y += (dy / d) * 0.8; }
+      particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+        if (p.life <= 0 || p.y < -10) { particles[i] = randomParticle(); return; }
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = '#d4af37'; ctx.fill();
-      }
-      for (let i = 0; i < pts.length; i++) {
-        for (let j = i + 1; j < pts.length; j++) {
-          var dx2 = pts[i].x - pts[j].x, dy2 = pts[i].y - pts[j].y;
-          var d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-          if (d2 < 120) {
-            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = '#8b7355'; ctx.globalAlpha = (1 - d2 / 120) * 0.3;
-            ctx.stroke(); ctx.globalAlpha = 1;
-          }
-        }
-      }
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life * .6;
+        ctx.fill(); ctx.globalAlpha = 1;
+      });
       requestAnimationFrame(frame);
     }
     frame();
