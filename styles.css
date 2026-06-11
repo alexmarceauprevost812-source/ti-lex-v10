@@ -2449,14 +2449,14 @@ textarea.fin-input:focus{outline:none}
 }
 .forf-spot{
   display:inline-block;font-weight:700;letter-spacing:.5px;
-  color:rgba(57,255,20,.25);text-shadow:none;
+  color:#39ff14;text-shadow:0 0 6px rgba(57,255,20,.3);
   animation:forfSpotlight 3.5s ease-in-out infinite;
   animation-delay:calc(var(--i) * .35s);
 }
 @keyframes forfSpotlight{
-  0%,100%{color:rgba(57,255,20,.25);text-shadow:none;transform:scale(1)}
-  14%{color:#39ff14;text-shadow:0 0 8px rgba(57,255,20,.9),0 0 20px rgba(57,255,20,.5);transform:scale(1.12)}
-  28%{color:rgba(57,255,20,.25);text-shadow:none;transform:scale(1)}
+  0%,100%{color:#39ff14;text-shadow:0 0 6px rgba(57,255,20,.3);transform:scale(1)}
+  14%{color:#7fff5a;text-shadow:0 0 12px rgba(57,255,20,.9),0 0 24px rgba(57,255,20,.5);transform:scale(1.12)}
+  28%{color:#39ff14;text-shadow:0 0 6px rgba(57,255,20,.3);transform:scale(1)}
 }
 
 .view-forfaits{
