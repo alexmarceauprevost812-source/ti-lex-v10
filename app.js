@@ -2019,45 +2019,47 @@ function bytesLabel(n) {
 }
 const TEXT_EXT = ["txt","md","js","ts","tsx","jsx","py","sql","json","html","css","yml","yaml","csv","xml","sh","rs","go","java","c","cpp","env"];
 
-function mediaTypeFromName(name) {
-  const ext = (name || "").split(".").pop().toLowerCase();
-  return { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp" }[ext] || "image/png";
-}
-
-function resizeImageIfNeeded(dataUrl, file, maxBytes = 4.5 * 1024 * 1024) {
-  return new Promise((resolve) => {
-    if (file.size <= maxBytes) { resolve(dataUrl); return; }
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.sqrt(maxBytes / file.size);
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
+async function compresserImage(file, maxDim = 1568, qualite = 0.85) {
+  const dataUrl = await new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => rej(new Error("Lecture du fichier échouée"));
+    fr.readAsDataURL(file);
   });
+  const img = await new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error("Fichier image invalide"));
+    i.src = dataUrl;
+  });
+  let { width, height } = img;
+  if (width > maxDim || height > maxDim) {
+    const ratio = Math.min(maxDim / width, maxDim / height);
+    width = Math.round(width * ratio);
+    height = Math.round(height * ratio);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
+  const jpegDataUrl = canvas.toDataURL("image/jpeg", qualite);
+  return { base64: jpegDataUrl.split(",")[1], mediaType: "image/jpeg", dataUrl: jpegDataUrl };
 }
 
 function handleImageFiles(files) {
   [...files].forEach(f => {
-    if (f.size > 20 * 1024 * 1024) {
-      alert("Image trop grosse (max 20 Mo). Réduis-la avant l'envoi.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const raw = reader.result;
-      const dataUrl = await resizeImageIfNeeded(raw, f);
-      const base64 = dataUrl.split(",")[1];
-      const mediaType = dataUrl.startsWith("data:image/jpeg") ? "image/jpeg" : (f.type || mediaTypeFromName(f.name));
-      attachments.push({ kind: "image", name: f.name, mediaType, base64, dataUrl, size: base64.length });
-      renderAttachStrip();
-    };
-    reader.readAsDataURL(f);
+    (async () => {
+      try {
+        let result = await compresserImage(f);
+        if (result.base64.length > 4 * 1024 * 1024) {
+          result = await compresserImage(f, 1024, 0.7);
+        }
+        attachments.push({ kind: "image", name: f.name, mediaType: result.mediaType, base64: result.base64, dataUrl: result.dataUrl, size: result.base64.length });
+        renderAttachStrip();
+      } catch (_) {}
+    })();
   });
 }
 function handleAnyFiles(files) {
@@ -4230,13 +4232,14 @@ $$("[data-cact]").forEach(item => {
 
 function codexHandleImages(files) {
   [...files].forEach(f => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
-      codexAttachments.push({ kind: "image", name: f.name, mediaType: f.type || "image/png", base64: dataUrl.split(",")[1], dataUrl, size: f.size });
-      renderCodexAttachStrip();
-    };
-    reader.readAsDataURL(f);
+    (async () => {
+      try {
+        let result = await compresserImage(f);
+        if (result.base64.length > 4 * 1024 * 1024) result = await compresserImage(f, 1024, 0.7);
+        codexAttachments.push({ kind: "image", name: f.name, mediaType: result.mediaType, base64: result.base64, dataUrl: result.dataUrl, size: result.base64.length });
+        renderCodexAttachStrip();
+      } catch (_) {}
+    })();
   });
 }
 function codexHandleFiles(files) {
