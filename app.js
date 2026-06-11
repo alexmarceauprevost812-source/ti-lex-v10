@@ -5386,12 +5386,115 @@ let cervNotes = [];
 let cervCurrentId = null;
 let cervActiveTag = null;
 let cervChatHistory = [];
+let cervSyncing = false;
 
-function cervLoadNotes() {
+function cervLocalLoad() {
   try { cervNotes = JSON.parse(localStorage.getItem(CERV_LS) || "[]"); } catch { cervNotes = []; }
 }
-function cervSaveNotes() {
+function cervLocalSave() {
   try { localStorage.setItem(CERV_LS, JSON.stringify(cervNotes)); } catch (_) {}
+}
+
+async function cervSupaFetch() {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return null;
+  try {
+    const tk = proxyToken();
+    const res = await fetch(
+      `${SUPABASE_REST}/cerveau_notes?select=*&user_id=eq.${session.user.id}&order=created_at.desc`,
+      { headers: { apikey: tk, Authorization: `Bearer ${session.access_token}` } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows.map(r => ({
+      id: r.id,
+      title: r.title || "",
+      content: r.content || "",
+      tags: r.tags || [],
+      summary: r.summary || "",
+      created: new Date(r.created_at).getTime(),
+      updated: new Date(r.updated_at).getTime(),
+    }));
+  } catch { return null; }
+}
+
+async function cervSupaInsert(note) {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return null;
+  try {
+    const tk = proxyToken();
+    const res = await fetch(`${SUPABASE_REST}/cerveau_notes`, {
+      method: "POST",
+      headers: {
+        apikey: tk,
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        id: note.id,
+        user_id: session.user.id,
+        title: note.title,
+        content: note.content,
+        tags: note.tags,
+        summary: note.summary || "",
+      }),
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    return rows[0] || null;
+  } catch { return null; }
+}
+
+async function cervSupaUpdate(note) {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    await fetch(`${SUPABASE_REST}/cerveau_notes?id=eq.${note.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: tk,
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: note.title,
+        content: note.content,
+        tags: note.tags,
+        summary: note.summary || "",
+        updated_at: new Date().toISOString(),
+      }),
+    });
+  } catch (_) {}
+}
+
+async function cervSupaDelete(id) {
+  const session = getSupabaseSession();
+  if (!session?.user?.id) return;
+  try {
+    const tk = proxyToken();
+    await fetch(`${SUPABASE_REST}/cerveau_notes?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: tk,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+  } catch (_) {}
+}
+
+async function cervLoadNotes() {
+  cervLocalLoad();
+  cervRenderTagsBar();
+  cervRenderList();
+  const remote = await cervSupaFetch();
+  if (remote) {
+    cervNotes = remote;
+    cervLocalSave();
+    cervRenderTagsBar();
+    cervRenderList();
+  }
 }
 
 function cervAllTags() {
@@ -5417,26 +5520,28 @@ function cervRenderList() {
   const q = ($("#cervSearch")?.value || "").toLowerCase();
   let filtered = cervNotes.filter(n => {
     if (cervActiveTag && !(n.tags || []).includes(cervActiveTag)) return false;
-    if (q && !n.title.toLowerCase().includes(q) && !n.content.toLowerCase().includes(q)) return false;
+    if (q && !n.title.toLowerCase().includes(q) && !n.content.toLowerCase().includes(q) &&
+        !(n.tags || []).some(tg => tg.includes(q))) return false;
     return true;
   });
   filtered.sort((a, b) => b.updated - a.updated);
   if (!filtered.length) {
     list.innerHTML = `<div class="cerv-empty">
-      <div class="cerv-empty-ico">💡</div>
+      <div class="cerv-empty-ico">🧠</div>
       <div class="cerv-empty-title">${t("cervNoNotes")}</div>
-      <div class="cerv-empty-sub">${t("cervNoNotesSub")}</div>
+      <div class="cerv-empty-sub">${cervNotes.length === 0 ? (state.lang === "en" ? "Your brain is empty… capture your first idea!" : "Ton cerveau est vide… capture ta première idée!") : t("cervNoNotesSub")}</div>
     </div>`;
     return;
   }
   list.innerHTML = filtered.map(n => {
     const preview = n.content.slice(0, 120).replace(/\n/g, " ");
-    const date = new Date(n.updated).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA");
+    const date = new Date(n.updated || n.created).toLocaleDateString(state.lang === "en" ? "en-CA" : "fr-CA", { day: "numeric", month: "short", year: "numeric" });
     return `<div class="cerv-note-card" data-id="${n.id}">
       <div class="cerv-note-card-title">${escapeHtml(n.title || t("cervNewNote"))}</div>
       <div class="cerv-note-card-preview">${escapeHtml(preview)}</div>
+      ${n.summary ? `<div class="cerv-note-card-summary">✨ ${escapeHtml(n.summary)}</div>` : ""}
       <div class="cerv-note-card-footer">
-        ${(n.tags || []).map(tg => `<span class="cerv-note-card-tag">${escapeHtml(tg)}</span>`).join("")}
+        ${(n.tags || []).map(tg => `<span class="cerv-note-card-tag">#${escapeHtml(tg)}</span>`).join("")}
         <span class="cerv-note-card-date">${date}</span>
       </div>
     </div>`;
@@ -5491,30 +5596,40 @@ function cervCloseEditor() {
   cervRenderList();
 }
 
-function cervSaveNote() {
-  const title = ($("#cervTitleInput")?.value || "").trim();
+async function cervSaveNote() {
+  const title = ($("#cervTitleInput")?.value || "").trim() || "Sans titre";
   const content = ($("#cervContentInput")?.value || "").trim();
-  if (!title && !content) return;
+  if (!content) return;
   const tags = cervGetEditorTags();
   const summary = $("#cervSummaryText")?.textContent || "";
   const now = Date.now();
-  if (cervCurrentId) {
-    const idx = cervNotes.findIndex(n => n.id === cervCurrentId);
-    if (idx >= 0) {
-      cervNotes[idx] = { ...cervNotes[idx], title, content, tags, summary, updated: now };
+  const btn = $("#cervSaveBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳"; }
+  try {
+    if (cervCurrentId) {
+      const idx = cervNotes.findIndex(n => n.id === cervCurrentId);
+      if (idx >= 0) {
+        cervNotes[idx] = { ...cervNotes[idx], title, content, tags, summary, updated: now };
+        cervSupaUpdate(cervNotes[idx]);
+      }
+    } else {
+      const note = { id: crypto.randomUUID(), title, content, tags, summary, created: now, updated: now };
+      cervNotes.unshift(note);
+      cervSupaInsert(note);
     }
-  } else {
-    cervNotes.push({ id: crypto.randomUUID(), title, content, tags, summary, created: now, updated: now });
+    cervLocalSave();
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t("cervSave"); }
   }
-  cervSaveNotes();
   cervCloseEditor();
 }
 
-function cervDeleteNote() {
+async function cervDeleteNote() {
   if (!cervCurrentId) return;
   if (!confirm(t("cervDelConfirm"))) return;
+  cervSupaDelete(cervCurrentId);
   cervNotes = cervNotes.filter(n => n.id !== cervCurrentId);
-  cervSaveNotes();
+  cervLocalSave();
   cervCloseEditor();
 }
 
@@ -5569,9 +5684,18 @@ async function cervSummarize() {
       "Résume cette note en 2-3 phrases courtes et claires, en français québécois. Retourne UNIQUEMENT le résumé.",
       `${title}\n${content}`
     );
+    const trimmed = summary.trim();
     const wrap = $("#cervSummaryWrap");
     const txt = $("#cervSummaryText");
-    if (wrap && txt) { wrap.classList.remove("hidden"); txt.textContent = summary.trim(); }
+    if (wrap && txt) { wrap.classList.remove("hidden"); txt.textContent = trimmed; }
+    if (cervCurrentId) {
+      const idx = cervNotes.findIndex(n => n.id === cervCurrentId);
+      if (idx >= 0) {
+        cervNotes[idx].summary = trimmed;
+        cervLocalSave();
+        cervSupaUpdate(cervNotes[idx]);
+      }
+    }
   } catch (e) {
     console.error("cervSummarize:", e);
   } finally {
@@ -5613,6 +5737,9 @@ async function cervChatSend() {
   if (tk) h["Authorization"] = `Bearer ${tk}`;
   if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
 
+  cervAddChatMsg("assistant", "Agent AL réfléchit…");
+  const thinking = $(".cerv-chat-msg.assistant:last-child", $("#cervChatMessages"));
+
   try {
     const res = await fetch(AI_PROXY, {
       method: "POST",
@@ -5620,10 +5747,11 @@ async function cervChatSend() {
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: `Tu es l'assistant du Deuxième Cerveau de ti-lex-AL. L'utilisateur a les notes suivantes :\n\n${notesCtx}\n\nRéponds en te basant sur ces notes. Français québécois, concis et utile.`,
+        system: `Tu es l'assistant du Deuxième Cerveau de ti-lex-AL. L'utilisateur a ${cervNotes.length} note(s) :\n\n${notesCtx}\n\nRéponds en te basant sur ces notes quand pertinent. Français québécois, concis et utile.`,
         messages: cervChatHistory
       })
     });
+    if (thinking) thinking.remove();
     if (!res.ok) {
       cervAddChatMsg("assistant", "Erreur : " + res.status);
       return;
@@ -5632,14 +5760,13 @@ async function cervChatSend() {
     cervAddChatMsg("assistant", reply || "…");
     cervChatHistory.push({ role: "assistant", content: reply });
   } catch (e) {
+    if (thinking) thinking.remove();
     cervAddChatMsg("assistant", "Erreur de connexion.");
   }
 }
 
 (function initCerveau() {
   cervLoadNotes();
-  cervRenderTagsBar();
-  cervRenderList();
 
   const search = $("#cervSearch");
   if (search) search.oninput = () => cervRenderList();
