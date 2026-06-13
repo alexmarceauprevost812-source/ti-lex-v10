@@ -627,21 +627,44 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
 
 /* ---- Codex Fichiers & Deploy ---- */
 .codex-sb-files-section{border-top:1px solid var(--line)}
-.codex-sb-files{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.codex-files-header{display:flex;align-items:center;justify-content:space-between}
+.codex-files-btns{display:flex;gap:3px}
+.codex-file-add-btn{
+  width:24px;height:24px;border:1px solid var(--line);background:var(--bg-3);
+  color:var(--txt-dim);border-radius:6px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:var(--t);
+}
+.codex-file-add-btn:hover{border-color:var(--orange);color:var(--orange)}
+.codex-sb-files{display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto}
+.codex-files-drop{
+  padding:14px 8px;border:1px dashed var(--line);border-radius:8px;
+  text-align:center;font-size:.7rem;color:var(--txt-dim);transition:var(--t);cursor:default;
+}
+.codex-files-drop.drag-over{border-color:var(--orange);color:var(--orange);background:rgba(255,102,0,.04)}
+.codex-files-count{font-size:.68rem;color:var(--txt-dim);margin-top:4px}
 .codex-file-item{
-  display:flex;align-items:center;gap:7px;padding:6px 9px;
-  background:var(--bg-3);border:1px solid var(--line);border-radius:8px;
-  font-size:.78rem;color:var(--txt);cursor:pointer;transition:var(--t);
+  display:flex;align-items:center;gap:6px;padding:5px 8px;
+  background:var(--bg-3);border:1px solid var(--line);border-radius:7px;
+  font-size:.75rem;color:var(--txt);cursor:pointer;transition:var(--t);
 }
 .codex-file-item:hover{border-color:var(--orange)}
 .codex-file-item.active{border-color:var(--orange);background:rgba(255,102,0,.08)}
-.codex-file-icon{flex-shrink:0;font-size:.85rem}
-.codex-file-name{flex:1;font-family:var(--mono);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.codex-file-icon{flex-shrink:0;font-size:.8rem}
+.codex-file-name{flex:1;font-family:var(--mono);font-size:.68rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.codex-file-size{font-size:.58rem;color:var(--txt-dim);flex-shrink:0}
+.codex-file-del{
+  width:16px;height:16px;border:none;background:transparent;color:var(--txt-dim);
+  cursor:pointer;font-size:.7rem;border-radius:3px;flex-shrink:0;transition:var(--t);
+  display:flex;align-items:center;justify-content:center;opacity:0;
+}
+.codex-file-item:hover .codex-file-del{opacity:1}
+.codex-file-del:hover{background:rgba(255,59,59,.15);color:#ff3b3b}
 .codex-file-badge{
-  font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:8px;flex-shrink:0;
+  font-size:.55rem;font-weight:700;padding:1px 4px;border-radius:6px;flex-shrink:0;
 }
 .codex-file-badge.ready{background:rgba(61,220,132,.15);color:#3ddc84}
 .codex-file-badge.modified{background:rgba(255,171,64,.15);color:#ffab40}
+.codex-file-badge.binary{background:rgba(0,217,255,.12);color:#00d9ff}
 .codex-deploy-actions{display:flex;flex-direction:column;gap:5px;margin-top:8px}
 .codex-deploy-btn{
   display:flex;align-items:center;justify-content:center;gap:6px;width:100%;

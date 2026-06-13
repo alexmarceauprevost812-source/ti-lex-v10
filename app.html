@@ -415,21 +415,29 @@
         </div>
       </div>
 
-      <!-- Fichiers extraits du code -->
-      <div class="codex-sb-section codex-sb-files-section">
-        <p class="codex-sb-label">Fichiers</p>
-        <div class="codex-sb-files" id="codexFiles">
-          <p class="muted" style="font-size:.78rem;padding:6px 0">Aucun fichier</p>
+      <!-- Fichiers (illimité, tous formats) -->
+      <div class="codex-sb-section codex-sb-files-section" id="codexFilesSection">
+        <div class="codex-files-header">
+          <p class="codex-sb-label">Fichiers</p>
+          <div class="codex-files-btns">
+            <button class="codex-file-add-btn" id="codexFileAddBtn" title="Ajouter fichiers">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button class="codex-file-add-btn" id="codexFileNewBtn" title="Nouveau fichier">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>
+            </button>
+          </div>
         </div>
+        <input type="file" id="codexFilePickerAll" multiple hidden>
+        <div class="codex-sb-files" id="codexFiles">
+          <div class="codex-files-drop" id="codexFilesDrop">
+            <span>Glisse des fichiers ici</span>
+          </div>
+        </div>
+        <div class="codex-files-count" id="codexFilesCount"></div>
         <div class="codex-deploy-actions" id="codexDeployActions" style="display:none">
-          <button class="codex-deploy-btn" id="codexDeployGh">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            ☢️☢️🤝👾🥸 Deploy
-          </button>
-          <button class="codex-zip-btn" id="codexDownloadZip">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            Telecharger ZIP
-          </button>
+          <button class="codex-deploy-btn" id="codexDeployGh">☢️☢️🤝👾🥸 Deploy</button>
+          <button class="codex-zip-btn" id="codexDownloadZip">Telecharger ZIP</button>
         </div>
         <div class="codex-deploy-status" id="codexDeployStatus"></div>
       </div>
