@@ -4381,6 +4381,7 @@ function bindCodexSuggestions() {
   });
 }
 bindCodexSuggestions();
+cpInit();
 
 async function runCodex() {
   const text = codexInput.value.trim();
@@ -4447,6 +4448,7 @@ ${userContent}`;
     body.innerHTML = formatCode(full);
     renderMermaidBlocks(body);
     addCodeActions(body, full);
+    cpDetectFunctions(full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
   } catch (err) {
@@ -4631,6 +4633,166 @@ function highlightSyntax(code) {
     tokens.push(code[idx]); idx++;
   }
   return tokens.join("");
+}
+
+/* ================= CODEX COLOR PICKER ================= */
+const CP_PRESETS = {
+  default:   { "accent-primary":"#ff6b35","accent-secondary":"#c792ea","accent-tertiary":"#3ecf8e","accent-highlight":"#89ddff","bg-primary":"#0a0a0a","bg-secondary":"#0e0e0e","text-primary":"#f5f5f5" },
+  neon:      { "accent-primary":"#ff00ff","accent-secondary":"#00ff00","accent-tertiary":"#ffff00","accent-highlight":"#00ffff","bg-primary":"#0a0a0a","bg-secondary":"#111111","text-primary":"#ffffff" },
+  sunset:    { "accent-primary":"#ff6b35","accent-secondary":"#ff9500","accent-tertiary":"#ffd700","accent-highlight":"#ff4500","bg-primary":"#1a0a00","bg-secondary":"#1f1008","text-primary":"#ffe0b2" },
+  forest:    { "accent-primary":"#4ade80","accent-secondary":"#22c55e","accent-tertiary":"#84cc16","accent-highlight":"#fbbf24","bg-primary":"#0f1f0f","bg-secondary":"#142814","text-primary":"#dcfce7" },
+  ocean:     { "accent-primary":"#0ea5e9","accent-secondary":"#06b6d4","accent-tertiary":"#10b981","accent-highlight":"#8b5cf6","bg-primary":"#001a33","bg-secondary":"#002040","text-primary":"#cffafe" },
+  synthwave: { "accent-primary":"#ff006e","accent-secondary":"#fb5607","accent-tertiary":"#ffbe0b","accent-highlight":"#8338ec","bg-primary":"#170133","bg-secondary":"#1f0545","text-primary":"#f8d7ff" },
+};
+const CP_MAP = {
+  "accent-primary":  { css:[".codex-msg-body .syn-kw"],  prop:"color" },
+  "accent-secondary":{ css:[".codex-msg-body .syn-fn",".codex-msg-body .syn-decorator"], prop:"color" },
+  "accent-tertiary": { css:[".codex-msg-body .syn-str"], prop:"color" },
+  "accent-highlight":{ css:[".codex-msg-body .syn-op"],  prop:"color" },
+  "bg-primary":      { var:"--bg" },
+  "bg-secondary":    { var:"--bg-2" },
+  "text-primary":    { var:"--txt" },
+};
+let cpStyleEl = null;
+
+function cpInit() {
+  const panel = $("#codexCpanel");
+  const toggle = $("#cpToggleBtn");
+  const close = $("#cpClose");
+  if (!panel) return;
+
+  cpStyleEl = document.createElement("style");
+  cpStyleEl.id = "cpDynStyles";
+  document.head.appendChild(cpStyleEl);
+
+  toggle?.addEventListener("click", () => panel.classList.toggle("closed"));
+  close?.addEventListener("click", () => panel.classList.add("closed"));
+
+  $$(".cp-tab").forEach(t => t.addEventListener("click", () => {
+    $$(".cp-tab").forEach(b => b.classList.remove("active"));
+    t.classList.add("active");
+    const id = t.dataset.cptab;
+    $$(".cp-body").forEach(b => b.classList.remove("active"));
+    (id === "colors" ? $("#cpTabColors") : $("#cpTabStructure"))?.classList.add("active");
+  }));
+
+  $$(".cp-preset").forEach(btn => btn.addEventListener("click", () => {
+    cpApplyPreset(btn.dataset.preset);
+    $$(".cp-preset").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }));
+
+  $$(".cp-color").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const key = inp.dataset.cpkey;
+      const hex = $$(`.cp-hex[data-cpkey="${key}"]`);
+      hex.forEach(h => h.value = inp.value);
+      cpApplyColor(key, inp.value);
+    });
+  });
+
+  $$(".cp-hex").forEach(inp => {
+    inp.addEventListener("input", () => {
+      const v = inp.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        const key = inp.dataset.cpkey;
+        const col = $$(`.cp-color[data-cpkey="${key}"]`);
+        col.forEach(c => c.value = v);
+        cpApplyColor(key, v);
+      }
+    });
+  });
+
+  cpApplyPreset("default");
+  cpLoadSaved();
+}
+
+function cpApplyPreset(name) {
+  const p = CP_PRESETS[name];
+  if (!p) return;
+  Object.entries(p).forEach(([key, val]) => {
+    cpApplyColor(key, val);
+    $$(`.cp-color[data-cpkey="${key}"]`).forEach(c => c.value = val);
+    $$(`.cp-hex[data-cpkey="${key}"]`).forEach(h => h.value = val);
+  });
+  cpUpdatePreviews();
+  cpSave();
+}
+
+function cpApplyColor(key, color) {
+  const codex = $(".view-codex");
+  if (!codex) return;
+  const mapping = CP_MAP[key];
+  if (!mapping) return;
+
+  if (mapping.var) {
+    codex.style.setProperty(mapping.var, color);
+  }
+  if (mapping.css) {
+    cpRebuildSheet();
+  }
+  cpUpdatePreviews();
+  cpSave();
+}
+
+function cpRebuildSheet() {
+  if (!cpStyleEl) return;
+  let rules = "";
+  Object.entries(CP_MAP).forEach(([key, m]) => {
+    if (!m.css) return;
+    const inp = $(`.cp-color[data-cpkey="${key}"]`);
+    if (!inp) return;
+    m.css.forEach(sel => {
+      rules += `.view-codex ${sel}{color:${inp.value}!important}\n`;
+    });
+  });
+  cpStyleEl.textContent = rules;
+}
+
+function cpUpdatePreviews() {
+  $$(".cp-prev-dot").forEach(dot => {
+    const key = dot.dataset.prev;
+    const inp = $(`.cp-color[data-cpkey="${key}"]`);
+    if (inp) dot.style.background = inp.value;
+  });
+}
+
+function cpSave() {
+  const colors = {};
+  $$(".cp-color").forEach(inp => { colors[inp.dataset.cpkey] = inp.value; });
+  try { localStorage.setItem("tilex-codex-colors", JSON.stringify(colors)); } catch {}
+}
+
+function cpLoadSaved() {
+  try {
+    const saved = localStorage.getItem("tilex-codex-colors");
+    if (!saved) return;
+    const colors = JSON.parse(saved);
+    Object.entries(colors).forEach(([key, val]) => {
+      $$(`.cp-color[data-cpkey="${key}"]`).forEach(c => c.value = val);
+      $$(`.cp-hex[data-cpkey="${key}"]`).forEach(h => h.value = val);
+      cpApplyColor(key, val);
+    });
+    const active = $$(".cp-preset.active");
+    active.forEach(b => b.classList.remove("active"));
+  } catch {}
+}
+
+function cpDetectFunctions(code) {
+  const list = $("#cpStructList");
+  if (!list) return;
+  const fns = [];
+  const pat = /(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(|(\w+)\s*\([^)]*\)\s*\{|def\s+(\w+)|fn\s+(\w+)|func\s+(\w+))/g;
+  let m;
+  while ((m = pat.exec(code)) !== null) {
+    const name = m[1]||m[2]||m[3]||m[4]||m[5]||m[6];
+    if (name && !fns.includes(name)) fns.push(name);
+  }
+  if (!fns.length) {
+    list.innerHTML = '<p class="muted" style="font-size:.78rem">Aucune fonction detectee</p>';
+    return;
+  }
+  list.innerHTML = fns.map(f => `<div class="cp-struct-fn">${escapeHtml(f)}()</div>`).join("");
 }
 
 /* ================= STUDIO ================= */
