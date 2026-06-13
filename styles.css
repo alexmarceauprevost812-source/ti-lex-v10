@@ -625,6 +625,47 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
 .codex-scan-btn:hover{background:rgba(255,102,0,.2);transform:translateY(-1px)}
 .codex-scan-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
+/* ---- Codex Fichiers & Deploy ---- */
+.codex-sb-files-section{border-top:1px solid var(--line)}
+.codex-sb-files{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
+.codex-file-item{
+  display:flex;align-items:center;gap:7px;padding:6px 9px;
+  background:var(--bg-3);border:1px solid var(--line);border-radius:8px;
+  font-size:.78rem;color:var(--txt);cursor:pointer;transition:var(--t);
+}
+.codex-file-item:hover{border-color:var(--orange)}
+.codex-file-item.active{border-color:var(--orange);background:rgba(255,102,0,.08)}
+.codex-file-icon{flex-shrink:0;font-size:.85rem}
+.codex-file-name{flex:1;font-family:var(--mono);font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.codex-file-badge{
+  font-size:.58rem;font-weight:700;padding:1px 5px;border-radius:8px;flex-shrink:0;
+}
+.codex-file-badge.ready{background:rgba(61,220,132,.15);color:#3ddc84}
+.codex-file-badge.modified{background:rgba(255,171,64,.15);color:#ffab40}
+.codex-deploy-actions{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.codex-deploy-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
+  padding:8px;background:var(--orange);border:none;border-radius:8px;
+  color:#000;font-family:var(--font);font-size:.78rem;font-weight:700;
+  cursor:pointer;transition:var(--t);
+}
+.codex-deploy-btn:hover{background:var(--orange-soft);transform:translateY(-1px)}
+.codex-deploy-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.codex-deploy-btn svg{stroke:#000}
+.codex-zip-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;width:100%;
+  padding:7px;background:transparent;border:1px solid var(--line);border-radius:8px;
+  color:var(--txt-dim);font-family:var(--font);font-size:.75rem;font-weight:600;
+  cursor:pointer;transition:var(--t);
+}
+.codex-zip-btn:hover{border-color:var(--orange);color:var(--txt)}
+.codex-deploy-status{
+  margin-top:6px;font-size:.72rem;line-height:1.4;color:var(--txt-dim);
+  min-height:0;transition:var(--t);
+}
+.codex-deploy-status .ok{color:#3ddc84}
+.codex-deploy-status .err{color:#ff3b3b}
+
 /* -- Project conversations (main sidebar) -- */
 .proj-convs-section{border-top:1px solid var(--line)!important;margin-top:2px!important;padding-top:10px!important}
 .proj-section-header{display:flex;align-items:center;gap:6px;margin-bottom:2px}

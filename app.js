@@ -4223,6 +4223,7 @@ function resetCodexWelcome() {
 function rebuildCodexChat() {
   const area = $("#codexMessages");
   area.innerHTML = "";
+  Object.keys(cdxFiles).forEach(k => delete cdxFiles[k]);
   codexChatMsgs.forEach(m => {
     if (m.role === "user") {
       addCodexUserMsg(m.text);
@@ -4231,6 +4232,7 @@ function rebuildCodexChat() {
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       body.innerHTML = formatCode(m.text);
       addCodeActions(body, m.text);
+      cdxExtractFiles(m.text);
     }
   });
 }
@@ -4239,6 +4241,8 @@ $("#codexNewConv").onclick = () => {
   activeConvIdx = -1;
   activeProjConvIdx = -1;
   codexChatMsgs = [];
+  Object.keys(cdxFiles).forEach(k => delete cdxFiles[k]);
+  cdxRenderFiles();
   $("#codeInput").value = "";
   const area = $("#codexMessages");
   area.innerHTML = `<div class="codex-welcome">
@@ -4449,6 +4453,7 @@ ${userContent}`;
     renderMermaidBlocks(body);
     addCodeActions(body, full);
     cpDetectFunctions(full);
+    cdxExtractFiles(full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
   } catch (err) {
@@ -4634,6 +4639,234 @@ function highlightSyntax(code) {
   }
   return tokens.join("");
 }
+
+/* ================= CODEX FILE EXTRACTION & DEPLOY ================= */
+const cdxFiles = {};
+const FILE_ICONS = { js:"📄", ts:"📄", jsx:"📄", tsx:"📄", css:"🎨", scss:"🎨", html:"🌐", json:"⚙️", md:"📚", sql:"🗃️", py:"🐍", rs:"🦀", go:"🔵", sh:"🖥️", yml:"📋", yaml:"📋", toml:"📋", txt:"📝" };
+
+function cdxFileIcon(name) {
+  const ext = name.split(".").pop().toLowerCase();
+  return FILE_ICONS[ext] || "📄";
+}
+
+function cdxExtractFiles(raw) {
+  const pat = /```(\w+)?\s*\n?\s*(?:\/\/\s*(\S+\.\w+)|#\s*(\S+\.\w+)|\/\*\s*(\S+\.\w+)\s*\*\/|--\s*(\S+\.\w+))?\n([\s\S]*?)```/g;
+  const namePat = /^(?:\/\/|#|\/\*|\-\-)\s*(?:fichier|file|filename)?\s*:?\s*(\S+\.\w+)/im;
+  let m;
+  while ((m = pat.exec(raw)) !== null) {
+    const lang = m[1] || "";
+    const commentName = m[2] || m[3] || m[4] || m[5];
+    let content = m[6] || "";
+    let fname = commentName;
+
+    if (!fname) {
+      const inner = namePat.exec(content);
+      if (inner) {
+        fname = inner[1];
+        content = content.replace(inner[0], "").trim();
+      }
+    }
+    if (!fname) {
+      const extMap = { javascript:"script.js", js:"script.js", typescript:"script.ts", ts:"script.ts", jsx:"component.jsx", tsx:"component.tsx", css:"styles.css", scss:"styles.scss", html:"index.html", json:"config.json", sql:"migration.sql", python:"main.py", py:"main.py", rust:"main.rs", go:"main.go", bash:"script.sh", sh:"script.sh", markdown:"README.md", md:"README.md", yaml:"config.yml", yml:"config.yml", toml:"config.toml" };
+      fname = extMap[lang.toLowerCase()] || `file.${lang || "txt"}`;
+    }
+
+    if (cdxFiles[fname]) {
+      cdxFiles[fname].content = content.trim();
+      cdxFiles[fname].status = "modified";
+    } else {
+      cdxFiles[fname] = { content: content.trim(), status: "ready", lang };
+    }
+  }
+  cdxRenderFiles();
+}
+
+function cdxRenderFiles() {
+  const container = $("#codexFiles");
+  const actions = $("#codexDeployActions");
+  if (!container) return;
+  const names = Object.keys(cdxFiles);
+  if (!names.length) {
+    container.innerHTML = '<p class="muted" style="font-size:.78rem;padding:6px 0">Aucun fichier</p>';
+    if (actions) actions.style.display = "none";
+    return;
+  }
+  container.innerHTML = names.map(name => {
+    const f = cdxFiles[name];
+    const icon = cdxFileIcon(name);
+    const badge = f.status === "ready" ? '<span class="codex-file-badge ready">OK</span>' : '<span class="codex-file-badge modified">*</span>';
+    return `<div class="codex-file-item" data-fname="${escapeHtml(name)}">
+      <span class="codex-file-icon">${icon}</span>
+      <span class="codex-file-name">${escapeHtml(name)}</span>
+      ${badge}
+    </div>`;
+  }).join("");
+  if (actions) actions.style.display = "";
+
+  container.querySelectorAll(".codex-file-item").forEach(el => {
+    el.onclick = () => {
+      const name = el.dataset.fname;
+      const f = cdxFiles[name];
+      if (!f) return;
+      container.querySelectorAll(".codex-file-item").forEach(e => e.classList.remove("active"));
+      el.classList.add("active");
+      const msgs = $("#codexMessages");
+      if (!msgs) return;
+      const pre = document.createElement("div");
+      pre.className = "codex-msg assistant";
+      pre.innerHTML = `<div class="codex-msg-body"><p style="color:var(--orange);font-weight:700;margin-bottom:6px">${escapeHtml(name)}</p><pre>${highlightSyntax(escapeHtml(f.content))}</pre></div>`;
+      msgs.appendChild(pre);
+      msgs.scrollTop = msgs.scrollHeight;
+    };
+  });
+}
+
+async function cdxDeployGitHub() {
+  const names = Object.keys(cdxFiles);
+  if (!names.length) return;
+  if (!state.connected.github || !state.github.token) {
+    cdxDeployMsg('<span class="err">Connecte GitHub d\'abord</span>');
+    return;
+  }
+  const repo = state.github.repo;
+  const branch = state.github.branch || "main";
+  if (!repo) {
+    cdxDeployMsg('<span class="err">Selectionne un depot</span>');
+    return;
+  }
+  const btn = $("#codexDeployGh");
+  btn.disabled = true;
+  cdxDeployMsg("Preparation...");
+
+  try {
+    const refRes = await fetch(`${GH_API}/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`, { headers: ghHeaders() });
+    if (!refRes.ok) throw new Error(`Branche "${branch}" introuvable`);
+    const refData = await refRes.json();
+    const baseSha = refData.object.sha;
+
+    const commitRes = await fetch(`${GH_API}/repos/${repo}/git/commits/${baseSha}`, { headers: ghHeaders() });
+    const commitData = await commitRes.json();
+    const baseTreeSha = commitData.tree.sha;
+
+    cdxDeployMsg(`Creation des blobs (${names.length} fichiers)...`);
+    const treeItems = [];
+    for (const name of names) {
+      const blobRes = await fetch(`${GH_API}/repos/${repo}/git/blobs`, {
+        method: "POST",
+        headers: { ...ghHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ content: cdxFiles[name].content, encoding: "utf-8" }),
+      });
+      if (!blobRes.ok) throw new Error(`Blob "${name}" echoue`);
+      const blob = await blobRes.json();
+      treeItems.push({ path: name, mode: "100644", type: "blob", sha: blob.sha });
+    }
+
+    cdxDeployMsg("Creation du tree...");
+    const treeRes = await fetch(`${GH_API}/repos/${repo}/git/trees`, {
+      method: "POST",
+      headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems }),
+    });
+    if (!treeRes.ok) throw new Error("Echec creation tree");
+    const tree = await treeRes.json();
+
+    const msg = `Deploiement ti-lex Codex: ${names.join(", ")}`;
+    cdxDeployMsg("Commit...");
+    const newCommitRes = await fetch(`${GH_API}/repos/${repo}/git/commits`, {
+      method: "POST",
+      headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg, tree: tree.sha, parents: [baseSha] }),
+    });
+    if (!newCommitRes.ok) throw new Error("Echec creation commit");
+    const newCommit = await newCommitRes.json();
+
+    const updateRes = await fetch(`${GH_API}/repos/${repo}/git/refs/heads/${encodeURIComponent(branch)}`, {
+      method: "PATCH",
+      headers: { ...ghHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: newCommit.sha }),
+    });
+    if (!updateRes.ok) throw new Error("Echec mise a jour ref");
+
+    names.forEach(n => { cdxFiles[n].status = "ready"; });
+    cdxRenderFiles();
+    cdxDeployMsg(`<span class="ok">Deploiement reussi! ${names.length} fichiers commites sur ${branch}</span>`);
+  } catch (err) {
+    cdxDeployMsg(`<span class="err">Erreur: ${escapeHtml(err.message)}</span>`);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function cdxDownloadZip() {
+  const names = Object.keys(cdxFiles);
+  if (!names.length) return;
+  const parts = [];
+  const enc = new TextEncoder();
+
+  for (const name of names) {
+    const data = enc.encode(cdxFiles[name].content);
+    const nameBytes = enc.encode(name);
+    const header = new Uint8Array(30 + nameBytes.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(8, 0, true);
+    view.setUint32(18, data.length, true);
+    view.setUint32(22, data.length, true);
+    view.setUint16(26, nameBytes.length, true);
+    header.set(nameBytes, 30);
+    parts.push({ header, data, nameBytes, offset: 0 });
+  }
+
+  let offset = 0;
+  parts.forEach(p => { p.offset = offset; offset += p.header.length + p.data.length; });
+  const centralStart = offset;
+
+  const centralParts = [];
+  parts.forEach(p => {
+    const ch = new Uint8Array(46 + p.nameBytes.length);
+    const cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint32(20, p.data.length, true);
+    cv.setUint32(24, p.data.length, true);
+    cv.setUint16(28, p.nameBytes.length, true);
+    cv.setUint32(42, p.offset, true);
+    ch.set(p.nameBytes, 46);
+    centralParts.push(ch);
+    offset += ch.length;
+  });
+
+  const end = new Uint8Array(22);
+  const ev = new DataView(end.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, parts.length, true);
+  ev.setUint16(10, parts.length, true);
+  ev.setUint32(12, offset - centralStart, true);
+  ev.setUint32(16, centralStart, true);
+
+  const all = [];
+  parts.forEach(p => { all.push(p.header); all.push(p.data); });
+  centralParts.forEach(c => all.push(c));
+  all.push(end);
+
+  const blob = new Blob(all, { type: "application/zip" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ti-lex-codex.zip";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function cdxDeployMsg(html) {
+  const el = $("#codexDeployStatus");
+  if (el) el.innerHTML = html;
+}
+
+if ($("#codexDeployGh")) $("#codexDeployGh").onclick = cdxDeployGitHub;
+if ($("#codexDownloadZip")) $("#codexDownloadZip").onclick = cdxDownloadZip;
 
 /* ================= CODEX COLOR PICKER ================= */
 const CP_PRESETS = {
