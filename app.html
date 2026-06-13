@@ -424,7 +424,7 @@
         <div class="codex-deploy-actions" id="codexDeployActions" style="display:none">
           <button class="codex-deploy-btn" id="codexDeployGh">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            Deployer sur GitHub
+            ☢️☢️🤝👾🥸 Deploy
           </button>
           <button class="codex-zip-btn" id="codexDownloadZip">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -498,6 +498,7 @@
       <div class="cp-top">
         <div class="cp-tabs">
           <button class="cp-tab active" data-cptab="colors">Couleurs</button>
+          <button class="cp-tab" data-cptab="images">Images</button>
           <button class="cp-tab" data-cptab="structure">Structure</button>
         </div>
         <button class="cp-close" id="cpClose" title="Fermer">&times;</button>
@@ -556,6 +557,17 @@
             <input type="text" class="cp-hex" data-cpkey="text-primary" maxlength="7" spellcheck="false">
           </label>
         </div>
+      </div>
+
+      <!-- Tab Images -->
+      <div class="cp-body cp-body-images" id="cpTabImages">
+        <div class="cdx-img-drop" id="cdxImgDrop">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Clique ou glisse des images</span>
+        </div>
+        <input type="file" id="cdxImgInput" accept="image/*" multiple hidden>
+        <div class="cdx-img-list" id="cdxImgList"></div>
+        <div class="cdx-img-summary" id="cdxImgSummary"></div>
       </div>
 
       <!-- Tab Structure -->

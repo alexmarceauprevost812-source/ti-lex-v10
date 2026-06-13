@@ -4723,7 +4723,8 @@ function cdxRenderFiles() {
 
 async function cdxDeployGitHub() {
   const names = Object.keys(cdxFiles);
-  if (!names.length) return;
+  const imgNames = Array.from(cdxImages.keys());
+  if (!names.length && !imgNames.length) return;
   if (!state.connected.github || !state.github.token) {
     cdxDeployMsg('<span class="err">Connecte GitHub d\'abord</span>');
     return;
@@ -4736,7 +4737,8 @@ async function cdxDeployGitHub() {
   }
   const btn = $("#codexDeployGh");
   btn.disabled = true;
-  cdxDeployMsg("Preparation...");
+  const total = names.length + imgNames.length;
+  cdxDeployMsg("☢️☢️🤝👾🥸 Preparation...");
 
   try {
     const refRes = await fetch(`${GH_API}/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`, { headers: ghHeaders() });
@@ -4748,8 +4750,9 @@ async function cdxDeployGitHub() {
     const commitData = await commitRes.json();
     const baseTreeSha = commitData.tree.sha;
 
-    cdxDeployMsg(`Creation des blobs (${names.length} fichiers)...`);
+    cdxDeployMsg(`☢️☢️🤝👾🥸 Blobs (${total} fichiers)...`);
     const treeItems = [];
+
     for (const name of names) {
       const blobRes = await fetch(`${GH_API}/repos/${repo}/git/blobs`, {
         method: "POST",
@@ -4761,7 +4764,20 @@ async function cdxDeployGitHub() {
       treeItems.push({ path: name, mode: "100644", type: "blob", sha: blob.sha });
     }
 
-    cdxDeployMsg("Creation du tree...");
+    for (const imgName of imgNames) {
+      const img = cdxImages.get(imgName);
+      const b64 = img.data.split(",")[1];
+      const blobRes = await fetch(`${GH_API}/repos/${repo}/git/blobs`, {
+        method: "POST",
+        headers: { ...ghHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ content: b64, encoding: "base64" }),
+      });
+      if (!blobRes.ok) throw new Error(`Blob image "${imgName}" echoue`);
+      const blob = await blobRes.json();
+      treeItems.push({ path: `images/${imgName}`, mode: "100644", type: "blob", sha: blob.sha });
+    }
+
+    cdxDeployMsg("☢️☢️🤝👾🥸 Tree...");
     const treeRes = await fetch(`${GH_API}/repos/${repo}/git/trees`, {
       method: "POST",
       headers: { ...ghHeaders(), "Content-Type": "application/json" },
@@ -4770,8 +4786,10 @@ async function cdxDeployGitHub() {
     if (!treeRes.ok) throw new Error("Echec creation tree");
     const tree = await treeRes.json();
 
-    const msg = `Deploiement ti-lex Codex: ${names.join(", ")}`;
-    cdxDeployMsg("Commit...");
+    let msg = `☢️☢️🤝👾🥸 Deploy: [${names.join(", ")}]`;
+    if (imgNames.length) msg += ` + Images: [${imgNames.join(", ")}]`;
+
+    cdxDeployMsg("☢️☢️🤝👾🥸 Commit...");
     const newCommitRes = await fetch(`${GH_API}/repos/${repo}/git/commits`, {
       method: "POST",
       headers: { ...ghHeaders(), "Content-Type": "application/json" },
@@ -4789,9 +4807,10 @@ async function cdxDeployGitHub() {
 
     names.forEach(n => { cdxFiles[n].status = "ready"; });
     cdxRenderFiles();
-    cdxDeployMsg(`<span class="ok">Deploiement reussi! ${names.length} fichiers commites sur ${branch}</span>`);
+    const imgTxt = imgNames.length ? ` + ${imgNames.length} image${imgNames.length > 1 ? "s" : ""}` : "";
+    cdxDeployMsg(`<span class="ok">☢️☢️🤝👾🥸 Succes! ${names.length} fichiers${imgTxt} deployes sur ${branch}</span>`);
   } catch (err) {
-    cdxDeployMsg(`<span class="err">Erreur: ${escapeHtml(err.message)}</span>`);
+    cdxDeployMsg(`<span class="err">☢️☢️🤝👾🥸 Erreur: ${escapeHtml(err.message)}</span>`);
   } finally {
     btn.disabled = false;
   }
@@ -4799,13 +4818,34 @@ async function cdxDeployGitHub() {
 
 function cdxDownloadZip() {
   const names = Object.keys(cdxFiles);
-  if (!names.length) return;
+  const imgNames = Array.from(cdxImages.keys());
+  if (!names.length && !imgNames.length) return;
   const parts = [];
   const enc = new TextEncoder();
 
   for (const name of names) {
     const data = enc.encode(cdxFiles[name].content);
     const nameBytes = enc.encode(name);
+    const header = new Uint8Array(30 + nameBytes.length);
+    const view = new DataView(header.buffer);
+    view.setUint32(0, 0x04034b50, true);
+    view.setUint16(4, 20, true);
+    view.setUint16(8, 0, true);
+    view.setUint32(18, data.length, true);
+    view.setUint32(22, data.length, true);
+    view.setUint16(26, nameBytes.length, true);
+    header.set(nameBytes, 30);
+    parts.push({ header, data, nameBytes, offset: 0 });
+  }
+
+  for (const imgName of imgNames) {
+    const img = cdxImages.get(imgName);
+    const b64 = img.data.split(",")[1];
+    const raw = atob(b64);
+    const data = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) data[i] = raw.charCodeAt(i);
+    const path = `images/${imgName}`;
+    const nameBytes = enc.encode(path);
     const header = new Uint8Array(30 + nameBytes.length);
     const view = new DataView(header.buffer);
     view.setUint32(0, 0x04034b50, true);
@@ -4865,6 +4905,79 @@ function cdxDeployMsg(html) {
   if (el) el.innerHTML = html;
 }
 
+/* ---- Codex Image Upload ---- */
+const cdxImages = new Map();
+
+function cdxInitImages() {
+  const drop = $("#cdxImgDrop");
+  const input = $("#cdxImgInput");
+  if (!drop || !input) return;
+
+  drop.addEventListener("click", () => input.click());
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag-over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("drag-over"));
+  drop.addEventListener("drop", e => {
+    e.preventDefault();
+    drop.classList.remove("drag-over");
+    cdxProcessImageFiles(e.dataTransfer.files);
+  });
+  input.addEventListener("change", () => { cdxProcessImageFiles(input.files); input.value = ""; });
+}
+
+function cdxProcessImageFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      cdxImages.set(file.name, { data: reader.result, size: file.size, type: file.type });
+      cdxRenderImages();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function cdxFormatSize(bytes) {
+  if (bytes < 1024) return bytes + "B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + "KB";
+  return (bytes / 1048576).toFixed(1) + "MB";
+}
+
+function cdxRenderImages() {
+  const list = $("#cdxImgList");
+  const summary = $("#cdxImgSummary");
+  if (!list) return;
+  if (!cdxImages.size) {
+    list.innerHTML = "";
+    if (summary) summary.innerHTML = "";
+    return;
+  }
+  let html = "";
+  cdxImages.forEach((img, name) => {
+    html += `<div class="cdx-img-item" data-imgname="${escapeHtml(name)}">
+      <img class="cdx-img-thumb" src="${img.data}" alt="">
+      <div class="cdx-img-info">
+        <div class="cdx-img-name">${escapeHtml(name)}</div>
+        <div class="cdx-img-size">${cdxFormatSize(img.size)}</div>
+      </div>
+      <button class="cdx-img-del" title="Supprimer">&times;</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+  list.querySelectorAll(".cdx-img-del").forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const name = btn.closest(".cdx-img-item").dataset.imgname;
+      cdxImages.delete(name);
+      cdxRenderImages();
+    };
+  });
+  const codeCount = Object.keys(cdxFiles).length;
+  const imgCount = cdxImages.size;
+  if (summary) summary.innerHTML = `${codeCount} fichier${codeCount > 1 ? "s" : ""} code + ${imgCount} image${imgCount > 1 ? "s" : ""} = <b>${codeCount + imgCount}</b> total`;
+}
+
+cdxInitImages();
+
 if ($("#codexDeployGh")) $("#codexDeployGh").onclick = cdxDeployGitHub;
 if ($("#codexDownloadZip")) $("#codexDownloadZip").onclick = cdxDownloadZip;
 
@@ -4901,12 +5014,13 @@ function cpInit() {
   toggle?.addEventListener("click", () => panel.classList.toggle("closed"));
   close?.addEventListener("click", () => panel.classList.add("closed"));
 
+  const tabMap = { colors:"cpTabColors", images:"cpTabImages", structure:"cpTabStructure" };
   $$(".cp-tab").forEach(t => t.addEventListener("click", () => {
     $$(".cp-tab").forEach(b => b.classList.remove("active"));
     t.classList.add("active");
-    const id = t.dataset.cptab;
     $$(".cp-body").forEach(b => b.classList.remove("active"));
-    (id === "colors" ? $("#cpTabColors") : $("#cpTabStructure"))?.classList.add("active");
+    const el = document.getElementById(tabMap[t.dataset.cptab]);
+    if (el) el.classList.add("active");
   }));
 
   $$(".cp-preset").forEach(btn => btn.addEventListener("click", () => {
