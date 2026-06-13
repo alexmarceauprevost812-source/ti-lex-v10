@@ -4772,9 +4772,10 @@ async function cdxDeployGitHub() {
         headers: { ...ghHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ content: b64, encoding: "base64" }),
       });
-      if (!blobRes.ok) throw new Error(`Blob image "${imgName}" echoue`);
+      if (!blobRes.ok) throw new Error(`Blob media "${imgName}" echoue`);
       const blob = await blobRes.json();
-      treeItems.push({ path: `images/${imgName}`, mode: "100644", type: "blob", sha: blob.sha });
+      const folder = img.type.startsWith("video/") ? "videos" : "images";
+      treeItems.push({ path: `${folder}/${imgName}`, mode: "100644", type: "blob", sha: blob.sha });
     }
 
     cdxDeployMsg("☢️☢️🤝👾🥸 Tree...");
@@ -4786,8 +4787,11 @@ async function cdxDeployGitHub() {
     if (!treeRes.ok) throw new Error("Echec creation tree");
     const tree = await treeRes.json();
 
+    const mediaImgs = imgNames.filter(n => !cdxImages.get(n).type.startsWith("video/"));
+    const mediaVids = imgNames.filter(n => cdxImages.get(n).type.startsWith("video/"));
     let msg = `☢️☢️🤝👾🥸 Deploy: [${names.join(", ")}]`;
-    if (imgNames.length) msg += ` + Images: [${imgNames.join(", ")}]`;
+    if (mediaImgs.length) msg += ` + Images: [${mediaImgs.join(", ")}]`;
+    if (mediaVids.length) msg += ` + Videos: [${mediaVids.join(", ")}]`;
 
     cdxDeployMsg("☢️☢️🤝👾🥸 Commit...");
     const newCommitRes = await fetch(`${GH_API}/repos/${repo}/git/commits`, {
@@ -4807,8 +4811,11 @@ async function cdxDeployGitHub() {
 
     names.forEach(n => { cdxFiles[n].status = "ready"; });
     cdxRenderFiles();
-    const imgTxt = imgNames.length ? ` + ${imgNames.length} image${imgNames.length > 1 ? "s" : ""}` : "";
-    cdxDeployMsg(`<span class="ok">☢️☢️🤝👾🥸 Succes! ${names.length} fichiers${imgTxt} deployes sur ${branch}</span>`);
+    const mediaParts = [];
+    if (mediaImgs.length) mediaParts.push(`${mediaImgs.length} image${mediaImgs.length > 1 ? "s" : ""}`);
+    if (mediaVids.length) mediaParts.push(`${mediaVids.length} video${mediaVids.length > 1 ? "s" : ""}`);
+    const mediaTxt = mediaParts.length ? ` + ${mediaParts.join(" + ")}` : "";
+    cdxDeployMsg(`<span class="ok">☢️☢️🤝👾🥸 Succes! ${names.length} fichiers${mediaTxt} deployes sur ${branch}</span>`);
   } catch (err) {
     cdxDeployMsg(`<span class="err">☢️☢️🤝👾🥸 Erreur: ${escapeHtml(err.message)}</span>`);
   } finally {
@@ -4844,7 +4851,8 @@ function cdxDownloadZip() {
     const raw = atob(b64);
     const data = new Uint8Array(raw.length);
     for (let i = 0; i < raw.length; i++) data[i] = raw.charCodeAt(i);
-    const path = `images/${imgName}`;
+    const folder = img.type.startsWith("video/") ? "videos" : "images";
+    const path = `${folder}/${imgName}`;
     const nameBytes = enc.encode(path);
     const header = new Uint8Array(30 + nameBytes.length);
     const view = new DataView(header.buffer);
@@ -4926,7 +4934,7 @@ function cdxInitImages() {
 
 function cdxProcessImageFiles(files) {
   Array.from(files).forEach(file => {
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
     const reader = new FileReader();
     reader.onload = () => {
       cdxImages.set(file.name, { data: reader.result, size: file.size, type: file.type });
@@ -4953,8 +4961,12 @@ function cdxRenderImages() {
   }
   let html = "";
   cdxImages.forEach((img, name) => {
+    const isVideo = img.type.startsWith("video/");
+    const thumb = isVideo
+      ? `<span class="cdx-img-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:.9rem">🎬</span>`
+      : `<img class="cdx-img-thumb" src="${img.data}" alt="">`;
     html += `<div class="cdx-img-item" data-imgname="${escapeHtml(name)}">
-      <img class="cdx-img-thumb" src="${img.data}" alt="">
+      ${thumb}
       <div class="cdx-img-info">
         <div class="cdx-img-name">${escapeHtml(name)}</div>
         <div class="cdx-img-size">${cdxFormatSize(img.size)}</div>
@@ -4972,8 +4984,13 @@ function cdxRenderImages() {
     };
   });
   const codeCount = Object.keys(cdxFiles).length;
-  const imgCount = cdxImages.size;
-  if (summary) summary.innerHTML = `${codeCount} fichier${codeCount > 1 ? "s" : ""} code + ${imgCount} image${imgCount > 1 ? "s" : ""} = <b>${codeCount + imgCount}</b> total`;
+  let imgCount = 0, vidCount = 0;
+  cdxImages.forEach(m => { if (m.type.startsWith("video/")) vidCount++; else imgCount++; });
+  const mediaParts = [];
+  if (imgCount) mediaParts.push(`${imgCount} image${imgCount > 1 ? "s" : ""}`);
+  if (vidCount) mediaParts.push(`${vidCount} video${vidCount > 1 ? "s" : ""}`);
+  const mediaStr = mediaParts.length ? mediaParts.join(" + ") : "0 media";
+  if (summary) summary.innerHTML = `${codeCount} fichier${codeCount > 1 ? "s" : ""} + ${mediaStr} = <b>${codeCount + imgCount + vidCount}</b> total`;
 }
 
 cdxInitImages();
