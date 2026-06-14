@@ -3283,10 +3283,23 @@ function renderAssistant(body, full, streaming) {
     const decoded = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
     return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
   });
-  // Other code blocks
+  // Other code blocks — with filename detection & macOS dots
   ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
-    return `<div class="chat-code-wrap"><div class="chat-code-head">${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(code)}</pre></div>`;
+    var filename = "";
+    var displayCode = code;
+    var firstLine = code.split("\n")[0];
+    var fnMatch = firstLine.match(/^(?:\/\/|#|--)\s*([^\s].*\.(jsx?|tsx?|css|scss|sql|py|sh|json|md|ya?ml|toml|env|html))$/i);
+    if (fnMatch) {
+      filename = fnMatch[1];
+      displayCode = code.slice(firstLine.length).replace(/^\n/, "");
+    } else if (lang) {
+      var defaultNames = {jsx:"Component.jsx",tsx:"Component.tsx",js:"script.js",ts:"index.ts",css:"styles.css",scss:"styles.scss",html:"index.html",sql:"migration.sql",py:"script.py",python:"script.py",bash:"terminal.sh",sh:"script.sh",json:"config.json",yaml:"config.yaml",yml:"config.yml"};
+      filename = defaultNames[lang.toLowerCase()] || "";
+    }
+    var langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
+    var fnLabel = filename ? `<span class="code-filename">${filename}</span>` : '';
+    var dots = '<span class="code-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22d3ee"></span></span>';
+    return `<div class="chat-code-wrap"><div class="chat-code-head">${dots}${fnLabel}${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(displayCode)}</pre></div>`;
   });
   ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, (_, c) => `<code>${highlightSyntax(c)}</code>`);
 
@@ -7435,7 +7448,30 @@ function cervAddChatMsg(role, text) {
   if (!container) return;
   const div = document.createElement("div");
   div.className = `cerv-chat-msg ${role}`;
-  div.textContent = text;
+  if (role === "assistant") {
+    var rendered = escapeHtml(text);
+    rendered = rendered.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+      var filename = "";
+      var displayCode = code;
+      var firstLine = code.split("\n")[0];
+      var fnMatch = firstLine.match(/^(?:\/\/|#|--)\s*([^\s].*\.(jsx?|tsx?|css|scss|sql|py|sh|json|md|ya?ml|toml|env|html))$/i);
+      if (fnMatch) {
+        filename = fnMatch[1];
+        displayCode = code.slice(firstLine.length).replace(/^\n/, "");
+      } else if (lang) {
+        var defaultNames = {jsx:"Component.jsx",tsx:"Component.tsx",js:"script.js",ts:"index.ts",css:"styles.css",html:"index.html",sql:"migration.sql",py:"script.py",bash:"terminal.sh",json:"config.json"};
+        filename = defaultNames[lang.toLowerCase()] || "";
+      }
+      var langLabel = lang ? '<span class="code-lang">' + lang + '</span>' : '';
+      var fnLabel = filename ? '<span class="code-filename">' + filename + '</span>' : '';
+      var dots = '<span class="code-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22d3ee"></span></span>';
+      return '<div class="chat-code-wrap"><div class="chat-code-head">' + dots + fnLabel + langLabel + '<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copier"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier</button></div><pre class="chat-code-block">' + highlightSyntax(displayCode) + '</pre></div>';
+    });
+    rendered = rendered.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, function(_, c) { return "<code>" + highlightSyntax(c) + "</code>"; });
+    div.innerHTML = rendered;
+  } else {
+    div.textContent = text;
+  }
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
@@ -7455,11 +7491,20 @@ async function cervChatSend() {
   if (tk) h["Authorization"] = `Bearer ${tk}`;
   if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
 
+  const container = $("#cervChatMessages");
+  var connDiv = document.createElement("div");
+  connDiv.className = "cerv-conn-badges";
+  connDiv.innerHTML = '<span class="cerv-conn-badge cerv-conn-supa"><span class="cerv-conn-dot" style="background:#3ECF8E"></span>Supabase · Edge Function...</span>';
+  if (container) { container.appendChild(connDiv); container.scrollTop = container.scrollHeight; }
+
   const thinkDiv = document.createElement("div");
   thinkDiv.className = "cerv-chat-msg assistant";
-  const container = $("#cervChatMessages");
   if (container) { container.appendChild(thinkDiv); container.scrollTop = container.scrollHeight; }
   startReflexion(thinkDiv);
+
+  var connT1 = setTimeout(function() {
+    connDiv.innerHTML += '<span class="cerv-conn-badge cerv-conn-anth"><span class="cerv-conn-dot" style="background:#CC785C"></span>Agent AL réfléchit...</span>';
+  }, 350);
 
   try {
     const res = await fetch(AI_PROXY, {
@@ -7472,6 +7517,8 @@ async function cervChatSend() {
         messages: cervChatHistory
       })
     });
+    clearTimeout(connT1);
+    if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
     if (thinkDiv.parentNode) thinkDiv.remove();
     if (!res.ok) {
@@ -7482,6 +7529,8 @@ async function cervChatSend() {
     cervAddChatMsg("assistant", reply || "…");
     cervChatHistory.push({ role: "assistant", content: reply });
   } catch (e) {
+    clearTimeout(connT1);
+    if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
     if (thinkDiv.parentNode) thinkDiv.remove();
     cervAddChatMsg("assistant", "Erreur de connexion.");
