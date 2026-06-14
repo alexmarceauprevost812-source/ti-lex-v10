@@ -6934,7 +6934,7 @@ async function trackImageGenerated() {
 }
 
 const PAYMENT_LINKS = {
-  flux:  "https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",
+  flux:  "https://buy.stripe.com/bJe14ndfUgi5g1scYS53O0d",
   surge: "https://buy.stripe.com/28E9AT0t8aXL3eG5wq53O0a",
   apex:  "https://buy.stripe.com/00w3cv3Fke9X5mO0c653O0b",
 };
