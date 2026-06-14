@@ -2916,7 +2916,7 @@ if (_saveConvoBtn) _saveConvoBtn.onclick = function() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMDc2MTUsImV4cCI6MjA2Mzg4MzYxNX0.2aq83R7bg-sMKFaLTcnU5J7VbcBnbjqTGpL0bOU8x3w",
+      "apikey": proxyToken(),
       "Authorization": "Bearer " + session.access_token,
       "Prefer": "return=minimal"
     },
@@ -3566,7 +3566,7 @@ function addSaveToCerveauBtn(body, answer) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMDc2MTUsImV4cCI6MjA2Mzg4MzYxNX0.2aq83R7bg-sMKFaLTcnU5J7VbcBnbjqTGpL0bOU8x3w",
+        "apikey": proxyToken(),
         "Authorization": "Bearer " + session.access_token,
         "Prefer": "return=minimal"
       },
