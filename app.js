@@ -355,33 +355,30 @@ const I18N = {
     fpSub: "Chaque forfait te donne accès à l'agent AL, au Codex et au mode Sécurité. La seule différence, c'est jusqu'où tu veux aller.",
     fpMonthly: "Mensuel", fpAnnual: "Annuel", fpSave: "-20%",
     fpFlux: "FLUX", fpFluxPeriod: "/ mois",
-    fpFluxPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
-    fpFluxCta: "Commencer à 19$/mois", fpFluxBilled: "Facturé 180$/an",
-    fpFluxF1: "40 messages IA / jour", fpFluxF2: "1 200 messages / mois",
-    fpFluxF3: "200 images générées / mois", fpFluxF4: "3 agents personnalisés",
-    fpFluxF5: "Codex — 3 sessions / jour", fpFluxF6: "Mode Sécurité — scan de base",
-    fpFluxF7: "Modèles : Haiku + Sonnet", fpFluxF8: "Support par chat 7j/7",
-    fpFluxOff1: "Opus", fpFluxOff2: "SSO entreprise",
+    fpFluxPitch: "Pour débuter avec l'IA. Idéal si tu travailles solo.",
+    fpFluxCta: "Commencer avec FLUX →", fpFluxBilled: "Facturé 180$/an",
+    fpFluxF1: "40 messages / fenêtre 12h", fpFluxF2: "Reset minuit + midi",
+    fpFluxF3: "5 agents IA · Sonnet 4.6", fpFluxF4: "2 projets Codex · GitHub",
+    fpFluxF5: "10 sessions Codex", fpFluxF6: "1 GB stockage",
+    fpFluxF7: "Marketplace agents",
+    fpFluxOff1: "Opus", fpFluxOff2: "Publier ses agents",
     fpSurgeBadge: "Le plus populaire",
     fpSurge: "SURGE", fpSurgePeriod: "/ mois",
-    fpSurgePitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.",
-    fpSurgeCta: "S'abonner au SURGE", fpSurgeBilled: "Facturé 372$/an",
-    fpSurgeF1: "120 messages IA / jour", fpSurgeF2: "3 600 messages / mois",
-    fpSurgeF3: "500 images générées / mois", fpSurgeF4: "10 agents personnalisés",
-    fpSurgeF5: "Codex multi-projets — 5 projets", fpSurgeF6: "Mode Sécurité complet (SOW + scans)",
-    fpSurgeF7: "Modèles : Haiku + Sonnet", fpSurgeF8: "Mémoire longue durée entre sessions",
-    fpSurgeF9: "Support prioritaire en moins de 4h",
-    fpSurgeOff1: "Opus", fpSurgeOff2: "SSO entreprise",
+    fpSurgePitch: "Pour les créateurs sérieux. Freelancers, équipes, agences.",
+    fpSurgeCta: "Commencer avec SURGE →", fpSurgeBilled: "Facturé 372$/an",
+    fpSurgeF1: "100 messages / fenêtre 12h", fpSurgeF2: "Reset minuit + midi",
+    fpSurgeF3: "15 agents IA · Sonnet 4.6", fpSurgeF4: "5 projets Codex · Vercel",
+    fpSurgeF5: "50 sessions Codex", fpSurgeF6: "5 GB stockage",
+    fpSurgeF7: "Publier ses agents",
+    fpSurgeOff1: "Opus", fpSurgeOff2: "Support prioritaire",
     fpApexBadge: "Sur mesure",
     fpApex: "APEX", fpApexPeriod: "/ mois",
-    fpApexPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
-    fpApexCta: "Contacter l'équipe", fpApexBilled: "Facturé 756$/an",
-    fpApexF1: "200 messages IA / jour", fpApexF2: "6 000 messages / mois",
-    fpApexF3: "1 000 images générées / mois", fpApexF4: "30 agents personnalisés",
-    fpApexF5: "Codex illimité — 20 projets", fpApexF6: "Scans de sécurité avancés + rapports",
-    fpApexF7: "Modèles : Haiku + Sonnet + Opus", fpApexF8: "Audit trail complet — 5 ans",
-    fpApexF9: "SSO et intégrations entreprise", fpApexF10: "SLA 99.9% avec support dédié",
-    fpApexF11: "Option de déploiement privé",
+    fpApexPitch: "Puissance totale. Agents illimités + Opus 4.8.",
+    fpApexCta: "Commencer avec APEX →", fpApexBilled: "Facturé 756$/an",
+    fpApexF1: "250 messages / fenêtre 12h", fpApexF2: "Reset minuit + midi",
+    fpApexF3: "Agents IA illimités", fpApexF4: "100 messages Opus 4.8",
+    fpApexF5: "20 projets Codex illimités", fpApexF6: "10 GB stockage",
+    fpApexF7: "Support prioritaire",
     fpBadge1: "Paiement sécurisé Stripe", fpBadge2: "Annule quand tu veux", fpBadge3: "Support humain 7j/7", fpBadge4: "Prix en CAD",
     fpFaq: "Questions fréquentes",
     fpQ1: "Est-ce que je peux changer de forfait en cours de route?",
@@ -644,33 +641,30 @@ const I18N = {
     fpSub: "Every plan gives you access to Agent AL, the Codex and Security Mode. The only difference is how far you want to go.",
     fpMonthly: "Monthly", fpAnnual: "Annual", fpSave: "-20%",
     fpFlux: "FLUX", fpFluxPeriod: "/ mo",
-    fpFluxPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
-    fpFluxCta: "Start at $19/mo", fpFluxBilled: "Billed $180/yr",
-    fpFluxF1: "40 AI messages / day", fpFluxF2: "1,200 messages / month",
-    fpFluxF3: "200 images generated / month", fpFluxF4: "3 custom agents",
-    fpFluxF5: "Codex — 3 sessions / day", fpFluxF6: "Security Mode — basic scan",
-    fpFluxF7: "Models: Haiku + Sonnet", fpFluxF8: "Chat support 7/7",
-    fpFluxOff1: "Opus", fpFluxOff2: "Enterprise SSO",
+    fpFluxPitch: "Get started with AI. Ideal for solo work.",
+    fpFluxCta: "Start with FLUX →", fpFluxBilled: "Billed $180/yr",
+    fpFluxF1: "40 messages / 12h window", fpFluxF2: "Reset midnight + noon",
+    fpFluxF3: "5 AI agents · Sonnet 4.6", fpFluxF4: "2 Codex projects · GitHub",
+    fpFluxF5: "10 Codex sessions", fpFluxF6: "1 GB storage",
+    fpFluxF7: "Agent marketplace",
+    fpFluxOff1: "Opus", fpFluxOff2: "Publish agents",
     fpSurgeBadge: "Most popular",
     fpSurge: "SURGE", fpSurgePeriod: "/ mo",
-    fpSurgePitch: "For those who build for real. Freelancers, teams, agencies — healthy margins.",
-    fpSurgeCta: "Subscribe — SURGE", fpSurgeBilled: "Billed $372/yr",
-    fpSurgeF1: "120 AI messages / day", fpSurgeF2: "3,600 messages / month",
-    fpSurgeF3: "500 images generated / month", fpSurgeF4: "10 custom agents",
-    fpSurgeF5: "Multi-project Codex — 5 projects", fpSurgeF6: "Full Security Mode (SOW + scans)",
-    fpSurgeF7: "Models: Haiku + Sonnet", fpSurgeF8: "Long-term memory between sessions",
-    fpSurgeF9: "Priority support under 4h",
-    fpSurgeOff1: "Opus", fpSurgeOff2: "Enterprise SSO",
+    fpSurgePitch: "For serious creators. Freelancers, teams, agencies.",
+    fpSurgeCta: "Start with SURGE →", fpSurgeBilled: "Billed $372/yr",
+    fpSurgeF1: "100 messages / 12h window", fpSurgeF2: "Reset midnight + noon",
+    fpSurgeF3: "15 AI agents · Sonnet 4.6", fpSurgeF4: "5 Codex projects · Vercel",
+    fpSurgeF5: "50 Codex sessions", fpSurgeF6: "5 GB storage",
+    fpSurgeF7: "Publish your agents",
+    fpSurgeOff1: "Opus", fpSurgeOff2: "Priority support",
     fpApexBadge: "Custom",
     fpApex: "APEX", fpApexPeriod: "/ mo",
-    fpApexPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
-    fpApexCta: "Contact the team", fpApexBilled: "Billed $756/yr",
-    fpApexF1: "200 AI messages / day", fpApexF2: "6,000 messages / month",
-    fpApexF3: "1,000 images generated / month", fpApexF4: "30 custom agents",
-    fpApexF5: "Unlimited Codex — 20 projects", fpApexF6: "Advanced security scans + reports",
-    fpApexF7: "Models: Haiku + Sonnet + Opus", fpApexF8: "Full audit trail — 5 years",
-    fpApexF9: "SSO and enterprise integrations", fpApexF10: "99.9% SLA with dedicated support",
-    fpApexF11: "Private deployment option",
+    fpApexPitch: "Total power. Unlimited agents + Opus 4.8.",
+    fpApexCta: "Start with APEX →", fpApexBilled: "Billed $756/yr",
+    fpApexF1: "250 messages / 12h window", fpApexF2: "Reset midnight + noon",
+    fpApexF3: "Unlimited AI agents", fpApexF4: "100 Opus 4.8 messages",
+    fpApexF5: "20 unlimited Codex projects", fpApexF6: "10 GB storage",
+    fpApexF7: "Priority support",
     fpBadge1: "Secure Stripe payment", fpBadge2: "Cancel anytime", fpBadge3: "Human support 7/7", fpBadge4: "Prices in CAD",
     fpFaq: "Frequently asked questions",
     fpQ1: "Can I change my plan anytime?",
@@ -986,13 +980,13 @@ function applyLang() {
   const fpCards = $$(".fp-card");
   const fpT = [
     { n:"fpFlux", p:"fpFluxPitch", c:"fpFluxCta", b:"fpFluxBilled", per:"fpFluxPeriod",
-      f:["fpFluxF1","fpFluxF2","fpFluxF3","fpFluxF4","fpFluxF5","fpFluxF6","fpFluxF7","fpFluxF8"],
+      f:["fpFluxF1","fpFluxF2","fpFluxF3","fpFluxF4","fpFluxF5","fpFluxF6","fpFluxF7"],
       o:["fpFluxOff1","fpFluxOff2"] },
     { n:"fpSurge", p:"fpSurgePitch", c:"fpSurgeCta", b:"fpSurgeBilled", per:"fpSurgePeriod", badge:"fpSurgeBadge",
-      f:["fpSurgeF1","fpSurgeF2","fpSurgeF3","fpSurgeF4","fpSurgeF5","fpSurgeF6","fpSurgeF7","fpSurgeF8","fpSurgeF9"],
+      f:["fpSurgeF1","fpSurgeF2","fpSurgeF3","fpSurgeF4","fpSurgeF5","fpSurgeF6","fpSurgeF7"],
       o:["fpSurgeOff1","fpSurgeOff2"] },
     { n:"fpApex", p:"fpApexPitch", c:"fpApexCta", b:"fpApexBilled", per:"fpApexPeriod", badge:"fpApexBadge",
-      f:["fpApexF1","fpApexF2","fpApexF3","fpApexF4","fpApexF5","fpApexF6","fpApexF7","fpApexF8","fpApexF9","fpApexF10","fpApexF11"],
+      f:["fpApexF1","fpApexF2","fpApexF3","fpApexF4","fpApexF5","fpApexF6","fpApexF7"],
       o:[] },
   ];
   fpCards.forEach((card, i) => {
@@ -5670,9 +5664,9 @@ function loadAcctProfile() {
 }
 
 const PLAN_DATA = {
-  flux: { name: "FLUX", price: "$19 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
-  surge: { name: "SURGE", price: "$39 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
-  apex:  { name: "APEX", price: "$79 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
+  flux: { name: "FLUX", price: "$19 CAD/mois", msgWindow: 40, agents: 5, models: "Sonnet 4.6", codexProjects: 2, codexSessions: 10, storage: "1 GB" },
+  surge: { name: "SURGE", price: "$39 CAD/mois", msgWindow: 100, agents: 15, models: "Sonnet 4.6", codexProjects: 5, codexSessions: 50, storage: "5 GB" },
+  apex:  { name: "APEX", price: "$79 CAD/mois", msgWindow: 250, agents: -1, models: "Sonnet 4.6 + Opus 4.8", opusMessages: 100, codexProjects: 20, codexSessions: -1, storage: "10 GB" },
 };
 
 function refreshAccountPage() {
@@ -7007,23 +7001,36 @@ async function subscribeToplan(plan) {
   }
 
   try {
-    const prices = await loadStripePrices();
-    const priceId = prices?.[plan];
+    const priceId = STRIPE_PRICE_IDS[plan];
+    if (!priceId) {
+      alert("Plan invalide: " + plan);
+      return;
+    }
 
-    if (priceId) {
-      const res = await fetch(`${SUPABASE_FN}/create-checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
+    const token = session.access_token;
+    if (!token) {
+      alert(t("alertSubscribe"));
+      return;
+    }
+
+    const res = await fetch(`${SUPABASE_FN}/create-checkout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ priceId }),
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+
+    if (data.error) {
+      console.error("create-checkout error:", data.error);
     }
 
     const link = PAYMENT_LINKS[plan];
@@ -7032,11 +7039,17 @@ async function subscribeToplan(plan) {
       url.searchParams.set("client_reference_id", user.id);
       if (user.email) url.searchParams.set("prefilled_email", user.email);
       window.location.href = url.toString();
+    } else {
+      alert("Erreur de paiement. Réessaie dans un moment.");
     }
   } catch (e) {
     console.error("subscribeToplan:", e);
     const link = PAYMENT_LINKS[plan];
-    if (link) window.location.href = link;
+    if (link) {
+      window.location.href = link;
+    } else {
+      alert("Erreur de connexion. Réessaie dans un moment.");
+    }
   } finally {
     if (btn) {
       btn.disabled = false;
