@@ -220,10 +220,12 @@ function proxyToken() {
   return state.supabase.key || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
 }
 var _chatAbort = null;
+var _chatTimeoutId = null;
 function chatFetch(bodyObj) {
   if (_chatAbort) _chatAbort.abort();
+  if (_chatTimeoutId) clearTimeout(_chatTimeoutId);
   _chatAbort = new AbortController();
-  var timeoutId = setTimeout(function() { _chatAbort.abort(); }, 30000);
+  _chatTimeoutId = setTimeout(function() { if (_chatAbort) _chatAbort.abort(); }, 30000);
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
@@ -233,8 +235,8 @@ function chatFetch(bodyObj) {
     headers: h,
     body: JSON.stringify({ kind: "chat", ...bodyObj }),
     signal: _chatAbort.signal,
-  }).then(function(res) { clearTimeout(timeoutId); return res; }, function(err) {
-    clearTimeout(timeoutId);
+  }).then(function(res) { return res; }, function(err) {
+    clearTimeout(_chatTimeoutId); _chatTimeoutId = null;
     if (err.name === "AbortError") throw new Error("Délai dépassé (30s) — réessaie.");
     throw err;
   });
@@ -3289,6 +3291,7 @@ async function sendMessage() {
   } finally {
     $("#send").disabled = false;
     if (cancelBtn) cancelBtn.classList.add("hidden");
+    if (_chatTimeoutId) { clearTimeout(_chatTimeoutId); _chatTimeoutId = null; }
     _chatAbort = null;
     messages.scrollTop = messages.scrollHeight;
   }
@@ -4096,26 +4099,34 @@ async function streamText(res, onUpdate) {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "", full = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let nl;
-    while ((nl = buffer.indexOf("\n")) !== -1) {
-      const line = buffer.slice(0, nl).trim();
-      buffer = buffer.slice(nl + 1);
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      let evt;
-      try { evt = JSON.parse(payload); } catch (_) { continue; }
-      if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-        full += evt.delta.text;
-        onUpdate(full);
-      } else if (evt.type === "error") {
-        throw new Error(evt.error?.message || t("streamError"));
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let evt;
+        try { evt = JSON.parse(payload); } catch (_) { continue; }
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+          full += evt.delta.text;
+          onUpdate(full);
+        } else if (evt.type === "error") {
+          throw new Error(evt.error?.message || t("streamError"));
+        }
       }
     }
+  } catch (e) {
+    if (e.name === "AbortError") {
+      if (full) return full;
+      throw new Error("Délai dépassé — réessaie.");
+    }
+    throw e;
   }
   return full;
 }
