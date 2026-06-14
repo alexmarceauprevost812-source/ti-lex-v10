@@ -219,7 +219,11 @@ function renderMemory() {
 function proxyToken() {
   return state.supabase.key || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
 }
+var _chatAbort = null;
 function chatFetch(bodyObj) {
+  if (_chatAbort) _chatAbort.abort();
+  _chatAbort = new AbortController();
+  var timeoutId = setTimeout(function() { _chatAbort.abort(); }, 30000);
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
@@ -228,6 +232,11 @@ function chatFetch(bodyObj) {
     method: "POST",
     headers: h,
     body: JSON.stringify({ kind: "chat", ...bodyObj }),
+    signal: _chatAbort.signal,
+  }).then(function(res) { clearTimeout(timeoutId); return res; }, function(err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") throw new Error("Délai dépassé (30s) — réessaie.");
+    throw err;
   });
 }
 
@@ -2879,6 +2888,10 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 $("#send").onclick = sendMessage;
+var _cancelBtn = $("#chatCancelBtn");
+if (_cancelBtn) _cancelBtn.onclick = function() {
+  if (_chatAbort) _chatAbort.abort();
+};
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
 function avatarUser() {
@@ -3168,6 +3181,8 @@ async function sendMessage() {
   const apiContent = buildUserContent(text, atts);
   state.history.push({ role: "user", content: apiContent });
   $("#send").disabled = true;
+  var cancelBtn = $("#chatCancelBtn");
+  if (cancelBtn) cancelBtn.classList.remove("hidden");
 
   try {
     const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
@@ -3224,6 +3239,8 @@ async function sendMessage() {
     body.innerHTML = `<p class="muted">${t("apiError")} ${escapeHtml(err.message || "API")}.</p>`;
   } finally {
     $("#send").disabled = false;
+    if (cancelBtn) cancelBtn.classList.add("hidden");
+    _chatAbort = null;
     messages.scrollTop = messages.scrollHeight;
   }
 }
@@ -7506,10 +7523,14 @@ async function cervChatSend() {
     connDiv.innerHTML += '<span class="cerv-conn-badge cerv-conn-anth"><span class="cerv-conn-dot" style="background:#CC785C"></span>Agent AL réfléchit...</span>';
   }, 350);
 
+  var cervAbort = new AbortController();
+  var cervTimeout = setTimeout(function() { cervAbort.abort(); }, 25000);
+
   try {
     const res = await fetch(AI_PROXY, {
       method: "POST",
       headers: h,
+      signal: cervAbort.signal,
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
@@ -7517,6 +7538,7 @@ async function cervChatSend() {
         messages: cervChatHistory
       })
     });
+    clearTimeout(cervTimeout);
     clearTimeout(connT1);
     if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
@@ -7529,11 +7551,13 @@ async function cervChatSend() {
     cervAddChatMsg("assistant", reply || "…");
     cervChatHistory.push({ role: "assistant", content: reply });
   } catch (e) {
+    clearTimeout(cervTimeout);
     clearTimeout(connT1);
     if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
     if (thinkDiv.parentNode) thinkDiv.remove();
-    cervAddChatMsg("assistant", "Erreur de connexion.");
+    var errMsg = e.name === "AbortError" ? "Délai dépassé (25s) — réessaie." : "Erreur de connexion.";
+    cervAddChatMsg("assistant", errMsg);
   }
 }
 

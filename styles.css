@@ -490,6 +490,10 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
 .send:hover{background:var(--orange-soft);transform:scale(1.05)}
 .send:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .send svg{width:20px;height:20px;fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chat-cancel-btn{width:42px;height:42px;border:1px solid rgba(239,68,68,.3);border-radius:13px;
+  background:rgba(239,68,68,.08);color:#ef4444;font-size:16px;font-weight:700;
+  cursor:pointer;flex-shrink:0;transition:var(--t)}
+.chat-cancel-btn:hover{background:rgba(239,68,68,.15);border-color:#ef4444}
 .composer-hint{text-align:center;font-size:.74rem;color:var(--txt-dim);margin-top:9px}
 
 /* ---- Bouton + (ajouter image/fichier/zip/micro/web) ---- */
