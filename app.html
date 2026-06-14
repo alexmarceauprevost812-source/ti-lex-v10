@@ -500,9 +500,25 @@
       <input type="file" id="codexFileAny" multiple hidden>
       <input type="file" id="codexFileZip" accept=".zip,application/zip" hidden>
     </div>
-  </section>
 
-  <!-- ===== VUE SÉCURITÉ ===== -->
+    <!-- Modale Code Reflection -->
+    <div class="cdx-reflect-overlay" id="cdxReflectOverlay">
+      <div class="cdx-reflect-modal">
+        <div class="cdx-reflect-header">
+          <div>
+            <h2 class="cdx-reflect-title">Code Reflection</h2>
+            <p class="cdx-reflect-sub">Contexte complet et explication étape par étape</p>
+          </div>
+          <button class="cdx-reflect-close" id="cdxReflectClose" aria-label="Fermer">✕</button>
+        </div>
+        <div class="cdx-reflect-body" id="cdxReflectBody"></div>
+        <div class="cdx-reflect-footer">
+          <button class="cdx-reflect-btn cdx-reflect-btn-primary" id="cdxReflectCopyAll">⎘ Copier tout le code</button>
+          <button class="cdx-reflect-btn cdx-reflect-btn-secondary" id="cdxReflectCloseBtn">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </section>
   <section class="view view-security" id="view-security">
     <div class="sec-wrap">
       <div class="sec-head">

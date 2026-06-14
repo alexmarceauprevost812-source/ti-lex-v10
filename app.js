@@ -3288,6 +3288,7 @@ function renderAssistant(body, full, streaming) {
   body.innerHTML = html;
   if (!streaming) {
     if (answer) addCodeActions(body, full);
+    if (answer) cdxTryReflection(body, full);
     addPreviewButton(body, full);
     renderMermaidBlocks(body);
     addTTSButton(body, answer);
@@ -3742,6 +3743,122 @@ function addCodeActions(container, fullText) {
   if (btns.children.length) wrap.appendChild(btns);
   container.appendChild(wrap);
 }
+
+/* ---- Code Reflection ---- */
+function cdxTryReflection(body, fullText) {
+  const jsonMatch = fullText.match(/```json\s*\n([\s\S]*?)\n```/);
+  if (!jsonMatch) return;
+  let data;
+  try { data = JSON.parse(jsonMatch[1]); } catch { return; }
+  if (!data.reflectionSteps || !Array.isArray(data.reflectionSteps) || !data.code) return;
+
+  const preview = document.createElement("div");
+  preview.className = "cdx-reflect-preview";
+  preview.innerHTML =
+    `<div class="cdx-reflect-preview-head">` +
+      `<span class="cdx-reflect-preview-title">💡 ${escapeHtml(data.title || "Code Reflection")}</span>` +
+      `<div class="cdx-reflect-preview-actions">` +
+        `<button class="cdx-reflect-act" data-act="copy" title="Copier">⎘</button>` +
+        `<button class="cdx-reflect-act" data-act="expand" title="Voir la réflexion">↗</button>` +
+      `</div>` +
+    `</div>` +
+    `<pre class="cdx-reflect-preview-code"><code>${escapeHtml(data.code)}</code></pre>` +
+    `<div class="cdx-reflect-preview-hint">Cliquer pour voir la réflexion complète</div>`;
+
+  preview.querySelector('[data-act="copy"]').onclick = function(e) {
+    e.stopPropagation();
+    navigator.clipboard.writeText(data.code);
+    this.textContent = "✓";
+    setTimeout(() => { this.textContent = "⎘"; }, 2000);
+  };
+  const openReflect = () => cdxOpenReflection(data);
+  preview.querySelector('[data-act="expand"]').onclick = function(e) { e.stopPropagation(); openReflect(); };
+  preview.onclick = openReflect;
+
+  body.appendChild(preview);
+}
+
+function cdxOpenReflection(data) {
+  const overlay = $("#cdxReflectOverlay");
+  const body = $("#cdxReflectBody");
+  let html = "";
+
+  if (data.reflectionSteps.length) {
+    html += '<div class="cdx-reflect-section">';
+    data.reflectionSteps.forEach(function(step) {
+      html +=
+        '<div class="cdx-reflect-step">' +
+          '<h3 class="cdx-reflect-step-title">Étape ' + step.stepNumber + ' : ' + escapeHtml(step.title) + '</h3>' +
+          '<pre class="cdx-reflect-step-code"><code>' + escapeHtml(step.code) + '</code></pre>' +
+          '<p class="cdx-reflect-step-desc">' + escapeHtml(step.description) + '</p>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (data.whatItDoes) {
+    html +=
+      '<div class="cdx-reflect-section">' +
+        '<h3 class="cdx-reflect-section-title">🔍 Ce que fait ce code</h3>' +
+        '<p class="cdx-reflect-section-text">' + escapeHtml(data.whatItDoes) + '</p>' +
+      '</div>';
+  }
+
+  if (data.useCases && data.useCases.length) {
+    html +=
+      '<div class="cdx-reflect-section">' +
+        '<h3 class="cdx-reflect-section-title">🎯 Cas d\'utilisation</h3>' +
+        '<ul class="cdx-reflect-list">' +
+        data.useCases.map(function(u) { return '<li>' + escapeHtml(u) + '</li>'; }).join('') +
+        '</ul>' +
+      '</div>';
+  }
+
+  if (data.warnings && data.warnings.length) {
+    html +=
+      '<div class="cdx-reflect-section cdx-reflect-warnings">' +
+        '<h3 class="cdx-reflect-section-title">⚠ Notes importantes</h3>' +
+        '<ul class="cdx-reflect-list">' +
+        data.warnings.map(function(w) { return '<li>' + escapeHtml(w) + '</li>'; }).join('') +
+        '</ul>' +
+      '</div>';
+  }
+
+  if (data.nextSteps && data.nextSteps.length) {
+    html +=
+      '<div class="cdx-reflect-section">' +
+        '<h3 class="cdx-reflect-section-title">→ Prochaines étapes</h3>' +
+        '<ul class="cdx-reflect-list arrows">' +
+        data.nextSteps.map(function(s) { return '<li>' + escapeHtml(s) + '</li>'; }).join('') +
+        '</ul>' +
+      '</div>';
+  }
+
+  body.innerHTML = html;
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+
+  overlay._reflectData = data;
+}
+
+(function initReflectionModal() {
+  const overlay = $("#cdxReflectOverlay");
+  if (!overlay) return;
+  const closeModal = () => { overlay.classList.remove("open"); document.body.style.overflow = ""; };
+  $("#cdxReflectClose").onclick = closeModal;
+  $("#cdxReflectCloseBtn").onclick = closeModal;
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(); };
+  document.addEventListener("keydown", function(e) { if (e.key === "Escape" && overlay.classList.contains("open")) closeModal(); });
+  $("#cdxReflectCopyAll").onclick = function() {
+    const data = overlay._reflectData;
+    if (!data) return;
+    const allCode = data.reflectionSteps.map(function(s) { return s.code; }).join("\n\n");
+    navigator.clipboard.writeText(allCode);
+    this.textContent = "✓ Copié !";
+    var btn = this;
+    setTimeout(function() { btn.textContent = "⎘ Copier tout le code"; }, 2000);
+  };
+})();
 
 function escapeHtml(s) {
   return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
@@ -4234,6 +4351,7 @@ function rebuildCodexChat() {
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       body.innerHTML = formatCode(m.text);
       addCodeActions(body, m.text);
+      cdxTryReflection(body, m.text);
       cdxExtractFiles(m.text);
     }
   });
@@ -4453,6 +4571,7 @@ ${userContent}`;
     body.innerHTML = formatCode(full);
     renderMermaidBlocks(body);
     addCodeActions(body, full);
+    cdxTryReflection(body, full);
     cdxExtractFiles(full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(text, full);
@@ -4519,6 +4638,7 @@ ${ctx}`;
     body.innerHTML = formatCode(full);
     renderMermaidBlocks(body);
     addCodeActions(body, full);
+    cdxTryReflection(body, full);
     codexChatMsgs.push({ role: "assistant", text: full });
     saveCodexConv(`Scan projet : ${projectSourceLabel()}`, full);
   } catch (err) {
