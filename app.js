@@ -2894,6 +2894,51 @@ if (_cancelBtn) _cancelBtn.onclick = function() {
 };
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
+var _saveConvoBtn = $("#saveConvoBtn");
+if (_saveConvoBtn) _saveConvoBtn.onclick = function() {
+  if (!state.history || state.history.length < 2) return;
+  var session = null;
+  try {
+    var raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (raw) session = JSON.parse(raw);
+  } catch(e) {}
+  if (!session || !session.user) { alert("Connecte-toi pour sauvegarder."); return; }
+  var content = state.history.map(function(m) {
+    var txt = typeof m.content === "string" ? m.content : (m.content[0]?.text || "");
+    return m.role === "user" ? "**Moi :** " + txt : "**Agent AL :** " + txt;
+  }).join("\n\n---\n\n");
+  var firstUser = state.history.find(function(m) { return m.role === "user"; });
+  var firstTxt = typeof firstUser?.content === "string" ? firstUser.content : (firstUser?.content?.[0]?.text || "Conversation");
+  var title = "💬 " + firstTxt.slice(0, 45) + (firstTxt.length > 45 ? "..." : "");
+  _saveConvoBtn.disabled = true;
+  _saveConvoBtn.textContent = "⏳";
+  fetch("https://rnuripmfozlxenryxhdc.supabase.co/rest/v1/cerveau_notes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMDc2MTUsImV4cCI6MjA2Mzg4MzYxNX0.2aq83R7bg-sMKFaLTcnU5J7VbcBnbjqTGpL0bOU8x3w",
+      "Authorization": "Bearer " + session.access_token,
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify({
+      user_id: session.user.id,
+      title: title,
+      content: content,
+      tags: ["agent-al", "conversation-complète"]
+    })
+  }).then(function(res) {
+    if (res.ok) {
+      _saveConvoBtn.textContent = "✓";
+      _saveConvoBtn.classList.add("saved");
+      setTimeout(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.classList.remove("saved"); _saveConvoBtn.disabled = false; }, 3000);
+    } else {
+      _saveConvoBtn.textContent = "🧠";
+      _saveConvoBtn.disabled = false;
+      alert("Erreur sauvegarde: " + res.status);
+    }
+  }).catch(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.disabled = false; });
+};
+
 function avatarUser() {
   const av = createAvatarIA(42);
   av.classList.add("avatar-ia--user");
@@ -3092,15 +3137,16 @@ function serviceTags(text) {
 /* ---- Mode Réflexion (animation pensée) ---- */
 const REFLEXION_ETAPES = [
   { service: "supabase", texte: "Connexion à Supabase — lecture de tes notes", duree: 1800 },
-  { service: "google", texte: "Recherche Google en cours", duree: 1600 },
-  { service: "github", texte: "Analyse du dépôt GitHub", duree: 1400 },
+  { service: "google", texte: "Recherche Google en cours", duree: 1600, needs: /\b(cherche|recherche|google|web|internet|actualit|news|récent|dernier|2026|trouve)\b/i },
+  { service: "github", texte: "Analyse du dépôt GitHub", duree: 1400, needs: /\b(github|dépôt|repo|commit|pull request|code source|git)\b/i },
   { service: "anthropic", texte: "Agent AL réfléchit", duree: 2200 },
   { service: "anthropic", texte: "Rédaction de la réponse", duree: Infinity },
 ];
 
-function buildReflexionHTML(etape, faites) {
-  const svc = SERVICE[REFLEXION_ETAPES[etape].service] || SERVICE.anthropic;
-  const color = ({ anthropic: "#ff6600", supabase: "#3ecf8e", github: "#e5e7eb", google: "#4285f4" })[REFLEXION_ETAPES[etape].service] || "#ff6600";
+function buildReflexionHTML(etape, faites, steps) {
+  steps = steps || REFLEXION_ETAPES;
+  const svc = SERVICE[steps[etape].service] || SERVICE.anthropic;
+  const color = ({ anthropic: "#ff6600", supabase: "#3ecf8e", github: "#e5e7eb", google: "#4285f4" })[steps[etape].service] || "#ff6600";
   let badgesHtml = "";
   if (faites.length) {
     badgesHtml = '<div class="reflexion-done">' + faites.map(f => {
@@ -3108,22 +3154,24 @@ function buildReflexionHTML(etape, faites) {
       return `<span class="reflexion-badge">${s.svg}${f.texte}<span class="rfx-ok">✓</span></span>`;
     }).join("") + "</div>";
   }
-  return `<div class="reflexion-wrap">${badgesHtml}<div class="reflexion-active"><div class="reflexion-logo-wrap" style="--rfx-color:${color}">${svc.svg}<span class="reflexion-ring" style="--rfx-color:${color}"></span></div><span class="reflexion-text">${REFLEXION_ETAPES[etape].texte}<span class="reflexion-dots" style="--rfx-color:${color}"><span></span><span></span><span></span></span></span></div></div>`;
+  return `<div class="reflexion-wrap">${badgesHtml}<div class="reflexion-active"><div class="reflexion-logo-wrap" style="--rfx-color:${color}">${svc.svg}<span class="reflexion-ring" style="--rfx-color:${color}"></span></div><span class="reflexion-text">${steps[etape].texte}<span class="reflexion-dots" style="--rfx-color:${color}"><span></span><span></span><span></span></span></span></div></div>`;
 }
 
-function startReflexion(body) {
+function startReflexion(body, question) {
+  var steps = REFLEXION_ETAPES.filter(function(s) { return !s.needs || (question && s.needs.test(question)); });
   let etape = 0;
   const faites = [];
-  body.innerHTML = buildReflexionHTML(etape, faites);
+  body._rfxSteps = steps;
+  body.innerHTML = buildReflexionHTML(etape, faites, steps);
   const timers = [];
   function next() {
-    if (etape >= REFLEXION_ETAPES.length - 1) return;
-    const dur = REFLEXION_ETAPES[etape].duree;
+    if (etape >= steps.length - 1) return;
+    const dur = steps[etape].duree;
     if (dur === Infinity) return;
     timers.push(setTimeout(() => {
-      faites.push(REFLEXION_ETAPES[etape]);
+      faites.push(steps[etape]);
       etape++;
-      body.innerHTML = buildReflexionHTML(etape, faites);
+      body.innerHTML = buildReflexionHTML(etape, faites, steps);
       next();
     }, dur));
   }
@@ -3131,7 +3179,7 @@ function startReflexion(body) {
   body._stopReflexion = () => timers.forEach(clearTimeout);
 }
 
-function buildAssistantMsg() {
+function buildAssistantMsg(question) {
   const m = document.createElement("div");
   m.className = "msg assistant responding";
   const avatarWrap = avatarAL();
@@ -3145,7 +3193,7 @@ function buildAssistantMsg() {
   messages.scrollTop = messages.scrollHeight;
   b._msgWrap = m;
   b._avatar = av;
-  startReflexion(b);
+  startReflexion(b, question);
   return b;
 }
 
@@ -3168,7 +3216,7 @@ async function sendMessage() {
   input.value = ""; input.style.height = "auto";
   attachments = []; renderAttachStrip();
 
-  const body = buildAssistantMsg();
+  const body = buildAssistantMsg(text);
 
   if (!AI_PROXY) {
     if (body._stopReflexion) body._stopReflexion();
@@ -3232,6 +3280,7 @@ async function sendMessage() {
     stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
     saveChatConv();
+    if (_saveConvoBtn && state.history.length >= 2) _saveConvoBtn.classList.remove("hidden");
   } catch (err) {
     state.history.pop();
     if (body._stopReflexion) body._stopReflexion();
@@ -3330,6 +3379,7 @@ function renderAssistant(body, full, streaming) {
     addPreviewButton(body, full);
     renderMermaidBlocks(body);
     addTTSButton(body, answer);
+    addSaveToCerveauBtn(body, answer);
   }
 }
 
@@ -3479,6 +3529,68 @@ function addTTSButton(body, text) {
   };
 
   body.appendChild(bar);
+}
+
+function addSaveToCerveauBtn(body, answer) {
+  if (!answer || answer.length < 10) return;
+  var bar = body.querySelector(".tts-bar");
+  if (!bar) return;
+  var btn = document.createElement("button");
+  btn.className = "cerv-save-btn-chat";
+  btn.title = "Sauvegarder dans mon Deuxième Cerveau";
+  btn.innerHTML = "🧠 Garder";
+  btn.onclick = function() {
+    if (btn.disabled) return;
+    var userMsg = "";
+    var msgWrap = body.closest(".msg.assistant");
+    if (msgWrap) {
+      var prev = msgWrap.previousElementSibling;
+      if (prev && prev.classList.contains("user")) {
+        var userBody = prev.querySelector(".msg-body");
+        userMsg = userBody ? userBody.textContent.trim() : "";
+      }
+    }
+    var title = "🤖 " + answer.replace(/\n/g, " ").slice(0, 50) + (answer.length > 50 ? "..." : "");
+    var content = userMsg
+      ? "**Question :** " + userMsg + "\n\n**Agent AL :** " + answer
+      : "**Agent AL :** " + answer;
+    var session = null;
+    try {
+      var raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+      if (raw) session = JSON.parse(raw);
+    } catch(e) {}
+    if (!session || !session.user) { alert("Connecte-toi pour sauvegarder."); return; }
+    btn.disabled = true;
+    btn.innerHTML = "⏳";
+    fetch("https://rnuripmfozlxenryxhdc.supabase.co/rest/v1/cerveau_notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzMDc2MTUsImV4cCI6MjA2Mzg4MzYxNX0.2aq83R7bg-sMKFaLTcnU5J7VbcBnbjqTGpL0bOU8x3w",
+        "Authorization": "Bearer " + session.access_token,
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        user_id: session.user.id,
+        title: title,
+        content: content,
+        tags: ["agent-al", "conversation", "sauvegardé"]
+      })
+    }).then(function(res) {
+      if (res.ok) {
+        btn.innerHTML = "🧠 Sauvegardé ✓";
+        btn.classList.add("cerv-saved");
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = "🧠 Garder";
+        alert("Erreur sauvegarde: " + res.status);
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = "🧠 Garder";
+    });
+  };
+  bar.appendChild(btn);
 }
 
 if (speechSynthesis.onvoiceschanged !== undefined) {
