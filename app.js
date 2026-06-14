@@ -6993,13 +6993,6 @@ function getSupabaseSession() {
 }
 
 async function subscribeToplan(plan) {
-  const session = getSupabaseSession();
-  const user = session?.user;
-  if (!user) {
-    alert(t("alertSubscribe"));
-    return;
-  }
-
   const btn = document.querySelector(`.fp-cta[data-plan="${plan}"]`);
   const originalText = btn?.textContent;
   if (btn) {
@@ -7007,16 +7000,26 @@ async function subscribeToplan(plan) {
     btn.innerHTML = '<span class="fp-spinner"></span> Redirection…';
   }
 
+  const session = getSupabaseSession();
+  const user = session?.user;
+  const token = session?.access_token;
+
+  if (!user || !token) {
+    const link = PAYMENT_LINKS[plan];
+    if (link) {
+      window.location.href = link;
+      return;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    alert(t("alertSubscribe"));
+    return;
+  }
+
   try {
     const priceId = STRIPE_PRICE_IDS[plan];
     if (!priceId) {
       alert("Plan invalide: " + plan);
-      return;
-    }
-
-    const token = session.access_token;
-    if (!token) {
-      alert(t("alertSubscribe"));
+      if (btn) { btn.disabled = false; btn.textContent = originalText; }
       return;
     }
 
@@ -7036,10 +7039,7 @@ async function subscribeToplan(plan) {
       return;
     }
 
-    if (data.error) {
-      console.error("create-checkout error:", data.error);
-    }
-
+    console.error("create-checkout error:", data.error || data);
     const link = PAYMENT_LINKS[plan];
     if (link) {
       const url = new URL(link);
