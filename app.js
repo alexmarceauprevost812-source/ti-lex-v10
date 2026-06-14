@@ -356,7 +356,7 @@ const I18N = {
     fpMonthly: "Mensuel", fpAnnual: "Annuel", fpSave: "-20%",
     fpFlux: "FLUX", fpFluxPeriod: "/ mois",
     fpFluxPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
-    fpFluxCta: "Commencer à 28$/mois", fpFluxBilled: "Facturé 264$/an",
+    fpFluxCta: "Commencer à 19$/mois", fpFluxBilled: "Facturé 180$/an",
     fpFluxF1: "40 messages IA / jour", fpFluxF2: "1 200 messages / mois",
     fpFluxF3: "200 images générées / mois", fpFluxF4: "3 agents personnalisés",
     fpFluxF5: "Codex — 3 sessions / jour", fpFluxF6: "Mode Sécurité — scan de base",
@@ -365,7 +365,7 @@ const I18N = {
     fpSurgeBadge: "Le plus populaire",
     fpSurge: "SURGE", fpSurgePeriod: "/ mois",
     fpSurgePitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.",
-    fpSurgeCta: "S'abonner au SURGE", fpSurgeBilled: "Facturé 744$/an",
+    fpSurgeCta: "S'abonner au SURGE", fpSurgeBilled: "Facturé 372$/an",
     fpSurgeF1: "120 messages IA / jour", fpSurgeF2: "3 600 messages / mois",
     fpSurgeF3: "500 images générées / mois", fpSurgeF4: "10 agents personnalisés",
     fpSurgeF5: "Codex multi-projets — 5 projets", fpSurgeF6: "Mode Sécurité complet (SOW + scans)",
@@ -375,7 +375,7 @@ const I18N = {
     fpApexBadge: "Sur mesure",
     fpApex: "APEX", fpApexPeriod: "/ mois",
     fpApexPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
-    fpApexCta: "Contacter l'équipe", fpApexBilled: "Facturé 1 344$/an",
+    fpApexCta: "Contacter l'équipe", fpApexBilled: "Facturé 756$/an",
     fpApexF1: "200 messages IA / jour", fpApexF2: "6 000 messages / mois",
     fpApexF3: "1 000 images générées / mois", fpApexF4: "30 agents personnalisés",
     fpApexF5: "Codex illimité — 20 projets", fpApexF6: "Scans de sécurité avancés + rapports",
@@ -645,7 +645,7 @@ const I18N = {
     fpMonthly: "Monthly", fpAnnual: "Annual", fpSave: "-20%",
     fpFlux: "FLUX", fpFluxPeriod: "/ mo",
     fpFluxPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
-    fpFluxCta: "Start at $28/mo", fpFluxBilled: "Billed $264/yr",
+    fpFluxCta: "Start at $19/mo", fpFluxBilled: "Billed $180/yr",
     fpFluxF1: "40 AI messages / day", fpFluxF2: "1,200 messages / month",
     fpFluxF3: "200 images generated / month", fpFluxF4: "3 custom agents",
     fpFluxF5: "Codex — 3 sessions / day", fpFluxF6: "Security Mode — basic scan",
@@ -654,7 +654,7 @@ const I18N = {
     fpSurgeBadge: "Most popular",
     fpSurge: "SURGE", fpSurgePeriod: "/ mo",
     fpSurgePitch: "For those who build for real. Freelancers, teams, agencies — healthy margins.",
-    fpSurgeCta: "Subscribe — SURGE", fpSurgeBilled: "Billed $744/yr",
+    fpSurgeCta: "Subscribe — SURGE", fpSurgeBilled: "Billed $372/yr",
     fpSurgeF1: "120 AI messages / day", fpSurgeF2: "3,600 messages / month",
     fpSurgeF3: "500 images generated / month", fpSurgeF4: "10 custom agents",
     fpSurgeF5: "Multi-project Codex — 5 projects", fpSurgeF6: "Full Security Mode (SOW + scans)",
@@ -664,7 +664,7 @@ const I18N = {
     fpApexBadge: "Custom",
     fpApex: "APEX", fpApexPeriod: "/ mo",
     fpApexPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
-    fpApexCta: "Contact the team", fpApexBilled: "Billed $1,344/yr",
+    fpApexCta: "Contact the team", fpApexBilled: "Billed $756/yr",
     fpApexF1: "200 AI messages / day", fpApexF2: "6,000 messages / month",
     fpApexF3: "1,000 images generated / month", fpApexF4: "30 custom agents",
     fpApexF5: "Unlimited Codex — 20 projects", fpApexF6: "Advanced security scans + reports",
@@ -5670,9 +5670,9 @@ function loadAcctProfile() {
 }
 
 const PLAN_DATA = {
-  flux: { name: "FLUX", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
-  surge: { name: "SURGE", price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
-  apex:  { name: "APEX", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
+  flux: { name: "FLUX", price: "$19 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
+  surge: { name: "SURGE", price: "$39 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
+  apex:  { name: "APEX", price: "$79 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
 };
 
 function refreshAccountPage() {
