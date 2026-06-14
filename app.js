@@ -219,7 +219,13 @@ function renderMemory() {
 function proxyToken() {
   return state.supabase.key || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
 }
+var _chatAbort = null;
+var _chatTimeoutId = null;
 function chatFetch(bodyObj) {
+  if (_chatAbort) _chatAbort.abort();
+  if (_chatTimeoutId) clearTimeout(_chatTimeoutId);
+  _chatAbort = new AbortController();
+  _chatTimeoutId = setTimeout(function() { if (_chatAbort) _chatAbort.abort(); }, 30000);
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
@@ -228,6 +234,11 @@ function chatFetch(bodyObj) {
     method: "POST",
     headers: h,
     body: JSON.stringify({ kind: "chat", ...bodyObj }),
+    signal: _chatAbort.signal,
+  }).then(function(res) { return res; }, function(err) {
+    clearTimeout(_chatTimeoutId); _chatTimeoutId = null;
+    if (err.name === "AbortError") throw new Error("Délai dépassé (30s) — réessaie.");
+    throw err;
   });
 }
 
@@ -2233,6 +2244,8 @@ function rebuildChatFromHistory() {
       addUserMsg(contentText(m.content), imgs);
     } else {
       const body = buildAssistantMsg();
+      if (body._stopReflexion) body._stopReflexion();
+      if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       renderAssistant(body, m.content);
     }
@@ -2879,7 +2892,56 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 });
 $("#send").onclick = sendMessage;
+var _cancelBtn = $("#chatCancelBtn");
+if (_cancelBtn) _cancelBtn.onclick = function() {
+  if (_chatAbort) _chatAbort.abort();
+};
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
+
+var _saveConvoBtn = $("#saveConvoBtn");
+if (_saveConvoBtn) _saveConvoBtn.onclick = function() {
+  if (!state.history || state.history.length < 2) return;
+  var session = null;
+  try {
+    var raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (raw) session = JSON.parse(raw);
+  } catch(e) {}
+  if (!session || !session.user) { alert("Connecte-toi pour sauvegarder."); return; }
+  var content = state.history.map(function(m) {
+    var txt = typeof m.content === "string" ? m.content : (m.content[0]?.text || "");
+    return m.role === "user" ? "**Moi :** " + txt : "**Agent AL :** " + txt;
+  }).join("\n\n---\n\n");
+  var firstUser = state.history.find(function(m) { return m.role === "user"; });
+  var firstTxt = typeof firstUser?.content === "string" ? firstUser.content : (firstUser?.content?.[0]?.text || "Conversation");
+  var title = "💬 " + firstTxt.slice(0, 45) + (firstTxt.length > 45 ? "..." : "");
+  _saveConvoBtn.disabled = true;
+  _saveConvoBtn.textContent = "⏳";
+  fetch("https://rnuripmfozlxenryxhdc.supabase.co/rest/v1/cerveau_notes", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": proxyToken(),
+      "Authorization": "Bearer " + session.access_token,
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify({
+      user_id: session.user.id,
+      title: title,
+      content: content,
+      tags: ["agent-al", "conversation-complète"]
+    })
+  }).then(function(res) {
+    if (res.ok) {
+      _saveConvoBtn.textContent = "✓";
+      _saveConvoBtn.classList.add("saved");
+      setTimeout(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.classList.remove("saved"); _saveConvoBtn.disabled = false; }, 3000);
+    } else {
+      _saveConvoBtn.textContent = "🧠";
+      _saveConvoBtn.disabled = false;
+      alert("Erreur sauvegarde: " + res.status);
+    }
+  }).catch(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.disabled = false; });
+};
 
 function avatarUser() {
   const av = createAvatarIA(42);
@@ -3079,15 +3141,16 @@ function serviceTags(text) {
 /* ---- Mode Réflexion (animation pensée) ---- */
 const REFLEXION_ETAPES = [
   { service: "supabase", texte: "Connexion à Supabase — lecture de tes notes", duree: 1800 },
-  { service: "google", texte: "Recherche Google en cours", duree: 1600 },
-  { service: "github", texte: "Analyse du dépôt GitHub", duree: 1400 },
+  { service: "google", texte: "Recherche Google en cours", duree: 1600, needs: /\b(cherche|recherche|google|web|internet|actualit|news|récent|dernier|2026|trouve)\b/i },
+  { service: "github", texte: "Analyse du dépôt GitHub", duree: 1400, needs: /\b(github|dépôt|repo|commit|pull request|code source|git)\b/i },
   { service: "anthropic", texte: "Agent AL réfléchit", duree: 2200 },
   { service: "anthropic", texte: "Rédaction de la réponse", duree: Infinity },
 ];
 
-function buildReflexionHTML(etape, faites) {
-  const svc = SERVICE[REFLEXION_ETAPES[etape].service] || SERVICE.anthropic;
-  const color = ({ anthropic: "#ff6600", supabase: "#3ecf8e", github: "#e5e7eb", google: "#4285f4" })[REFLEXION_ETAPES[etape].service] || "#ff6600";
+function buildReflexionHTML(etape, faites, steps) {
+  steps = steps || REFLEXION_ETAPES;
+  const svc = SERVICE[steps[etape].service] || SERVICE.anthropic;
+  const color = ({ anthropic: "#ff6600", supabase: "#3ecf8e", github: "#e5e7eb", google: "#4285f4" })[steps[etape].service] || "#ff6600";
   let badgesHtml = "";
   if (faites.length) {
     badgesHtml = '<div class="reflexion-done">' + faites.map(f => {
@@ -3095,22 +3158,24 @@ function buildReflexionHTML(etape, faites) {
       return `<span class="reflexion-badge">${s.svg}${f.texte}<span class="rfx-ok">✓</span></span>`;
     }).join("") + "</div>";
   }
-  return `<div class="reflexion-wrap">${badgesHtml}<div class="reflexion-active"><div class="reflexion-logo-wrap" style="--rfx-color:${color}">${svc.svg}<span class="reflexion-ring" style="--rfx-color:${color}"></span></div><span class="reflexion-text">${REFLEXION_ETAPES[etape].texte}<span class="reflexion-dots" style="--rfx-color:${color}"><span></span><span></span><span></span></span></span></div></div>`;
+  return `<div class="reflexion-wrap">${badgesHtml}<div class="reflexion-active"><div class="reflexion-logo-wrap" style="--rfx-color:${color}">${svc.svg}<span class="reflexion-ring" style="--rfx-color:${color}"></span></div><span class="reflexion-text">${steps[etape].texte}<span class="reflexion-dots" style="--rfx-color:${color}"><span></span><span></span><span></span></span></span></div></div>`;
 }
 
-function startReflexion(body) {
+function startReflexion(body, question) {
+  var steps = REFLEXION_ETAPES.filter(function(s) { return !s.needs || (question && s.needs.test(question)); });
   let etape = 0;
   const faites = [];
-  body.innerHTML = buildReflexionHTML(etape, faites);
+  body._rfxSteps = steps;
+  body.innerHTML = buildReflexionHTML(etape, faites, steps);
   const timers = [];
   function next() {
-    if (etape >= REFLEXION_ETAPES.length - 1) return;
-    const dur = REFLEXION_ETAPES[etape].duree;
+    if (etape >= steps.length - 1) return;
+    const dur = steps[etape].duree;
     if (dur === Infinity) return;
     timers.push(setTimeout(() => {
-      faites.push(REFLEXION_ETAPES[etape]);
+      faites.push(steps[etape]);
       etape++;
-      body.innerHTML = buildReflexionHTML(etape, faites);
+      body.innerHTML = buildReflexionHTML(etape, faites, steps);
       next();
     }, dur));
   }
@@ -3118,7 +3183,7 @@ function startReflexion(body) {
   body._stopReflexion = () => timers.forEach(clearTimeout);
 }
 
-function buildAssistantMsg() {
+function buildAssistantMsg(question) {
   const m = document.createElement("div");
   m.className = "msg assistant responding";
   const avatarWrap = avatarAL();
@@ -3132,7 +3197,7 @@ function buildAssistantMsg() {
   messages.scrollTop = messages.scrollHeight;
   b._msgWrap = m;
   b._avatar = av;
-  startReflexion(b);
+  startReflexion(b, question);
   return b;
 }
 
@@ -3155,7 +3220,7 @@ async function sendMessage() {
   input.value = ""; input.style.height = "auto";
   attachments = []; renderAttachStrip();
 
-  const body = buildAssistantMsg();
+  const body = buildAssistantMsg(text);
 
   if (!AI_PROXY) {
     if (body._stopReflexion) body._stopReflexion();
@@ -3168,6 +3233,8 @@ async function sendMessage() {
   const apiContent = buildUserContent(text, atts);
   state.history.push({ role: "user", content: apiContent });
   $("#send").disabled = true;
+  var cancelBtn = $("#chatCancelBtn");
+  if (cancelBtn) cancelBtn.classList.remove("hidden");
 
   try {
     const DIAGRAM_HINT = " Quand c'est pertinent pour mieux expliquer (architecture, flux, relations, processus, comparaisons), utilise des diagrammes Mermaid dans des blocs ```mermaid. Types utiles : flowchart, sequenceDiagram, classDiagram, erDiagram, gantt, pie, mindmap, timeline.";
@@ -3217,6 +3284,7 @@ async function sendMessage() {
     stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
     saveChatConv();
+    if (_saveConvoBtn && state.history.length >= 2) _saveConvoBtn.classList.remove("hidden");
   } catch (err) {
     state.history.pop();
     if (body._stopReflexion) body._stopReflexion();
@@ -3224,6 +3292,9 @@ async function sendMessage() {
     body.innerHTML = `<p class="muted">${t("apiError")} ${escapeHtml(err.message || "API")}.</p>`;
   } finally {
     $("#send").disabled = false;
+    if (cancelBtn) cancelBtn.classList.add("hidden");
+    if (_chatTimeoutId) { clearTimeout(_chatTimeoutId); _chatTimeoutId = null; }
+    _chatAbort = null;
     messages.scrollTop = messages.scrollHeight;
   }
 }
@@ -3283,10 +3354,23 @@ function renderAssistant(body, full, streaming) {
     const decoded = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
     return `<div class="mermaid-wrap mermaid-pending" data-mermaid="${escapeHtml(decoded)}"><div class="typing"><span></span><span></span><span></span></div></div>`;
   });
-  // Other code blocks
+  // Other code blocks — with filename detection & macOS dots
   ans = ans.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
-    const langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
-    return `<div class="chat-code-wrap"><div class="chat-code-head">${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(code)}</pre></div>`;
+    var filename = "";
+    var displayCode = code;
+    var firstLine = code.split("\n")[0];
+    var fnMatch = firstLine.match(/^(?:\/\/|#|--)\s*([^\s].*\.(jsx?|tsx?|css|scss|sql|py|sh|json|md|ya?ml|toml|env|html))$/i);
+    if (fnMatch) {
+      filename = fnMatch[1];
+      displayCode = code.slice(firstLine.length).replace(/^\n/, "");
+    } else if (lang) {
+      var defaultNames = {jsx:"Component.jsx",tsx:"Component.tsx",js:"script.js",ts:"index.ts",css:"styles.css",scss:"styles.scss",html:"index.html",sql:"migration.sql",py:"script.py",python:"script.py",bash:"terminal.sh",sh:"script.sh",json:"config.json",yaml:"config.yaml",yml:"config.yml"};
+      filename = defaultNames[lang.toLowerCase()] || "";
+    }
+    var langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
+    var fnLabel = filename ? `<span class="code-filename">${filename}</span>` : '';
+    var dots = '<span class="code-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22d3ee"></span></span>';
+    return `<div class="chat-code-wrap"><div class="chat-code-head">${dots}${fnLabel}${langLabel}<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="${t("copyTitle")}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t("copy")}</button></div><pre class="chat-code-block">${highlightSyntax(displayCode)}</pre></div>`;
   });
   ans = ans.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, (_, c) => `<code>${highlightSyntax(c)}</code>`);
 
@@ -3300,6 +3384,7 @@ function renderAssistant(body, full, streaming) {
     addPreviewButton(body, full);
     renderMermaidBlocks(body);
     addTTSButton(body, answer);
+    addSaveToCerveauBtn(body, answer);
   }
 }
 
@@ -3449,6 +3534,68 @@ function addTTSButton(body, text) {
   };
 
   body.appendChild(bar);
+}
+
+function addSaveToCerveauBtn(body, answer) {
+  if (!answer || answer.length < 10) return;
+  var bar = body.querySelector(".tts-bar");
+  if (!bar) return;
+  var btn = document.createElement("button");
+  btn.className = "cerv-save-btn-chat";
+  btn.title = "Sauvegarder dans mon Deuxième Cerveau";
+  btn.innerHTML = "🧠 Garder";
+  btn.onclick = function() {
+    if (btn.disabled) return;
+    var userMsg = "";
+    var msgWrap = body.closest(".msg.assistant");
+    if (msgWrap) {
+      var prev = msgWrap.previousElementSibling;
+      if (prev && prev.classList.contains("user")) {
+        var userBody = prev.querySelector(".msg-body");
+        userMsg = userBody ? userBody.textContent.trim() : "";
+      }
+    }
+    var title = "🤖 " + answer.replace(/\n/g, " ").slice(0, 50) + (answer.length > 50 ? "..." : "");
+    var content = userMsg
+      ? "**Question :** " + userMsg + "\n\n**Agent AL :** " + answer
+      : "**Agent AL :** " + answer;
+    var session = null;
+    try {
+      var raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+      if (raw) session = JSON.parse(raw);
+    } catch(e) {}
+    if (!session || !session.user) { alert("Connecte-toi pour sauvegarder."); return; }
+    btn.disabled = true;
+    btn.innerHTML = "⏳";
+    fetch("https://rnuripmfozlxenryxhdc.supabase.co/rest/v1/cerveau_notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": proxyToken(),
+        "Authorization": "Bearer " + session.access_token,
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        user_id: session.user.id,
+        title: title,
+        content: content,
+        tags: ["agent-al", "conversation", "sauvegardé"]
+      })
+    }).then(function(res) {
+      if (res.ok) {
+        btn.innerHTML = "🧠 Sauvegardé ✓";
+        btn.classList.add("cerv-saved");
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = "🧠 Garder";
+        alert("Erreur sauvegarde: " + res.status);
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.innerHTML = "🧠 Garder";
+    });
+  };
+  bar.appendChild(btn);
 }
 
 if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -3954,26 +4101,34 @@ async function streamText(res, onUpdate) {
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "", full = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let nl;
-    while ((nl = buffer.indexOf("\n")) !== -1) {
-      const line = buffer.slice(0, nl).trim();
-      buffer = buffer.slice(nl + 1);
-      if (!line.startsWith("data:")) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === "[DONE]") continue;
-      let evt;
-      try { evt = JSON.parse(payload); } catch (_) { continue; }
-      if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-        full += evt.delta.text;
-        onUpdate(full);
-      } else if (evt.type === "error") {
-        throw new Error(evt.error?.message || t("streamError"));
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let nl;
+      while ((nl = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, nl).trim();
+        buffer = buffer.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        let evt;
+        try { evt = JSON.parse(payload); } catch (_) { continue; }
+        if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+          full += evt.delta.text;
+          onUpdate(full);
+        } else if (evt.type === "error") {
+          throw new Error(evt.error?.message || t("streamError"));
+        }
       }
     }
+  } catch (e) {
+    if (e.name === "AbortError") {
+      if (full) return full;
+      throw new Error("Délai dépassé — réessaie.");
+    }
+    throw e;
   }
   return full;
 }
@@ -7435,7 +7590,30 @@ function cervAddChatMsg(role, text) {
   if (!container) return;
   const div = document.createElement("div");
   div.className = `cerv-chat-msg ${role}`;
-  div.textContent = text;
+  if (role === "assistant") {
+    var rendered = escapeHtml(text);
+    rendered = rendered.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+      var filename = "";
+      var displayCode = code;
+      var firstLine = code.split("\n")[0];
+      var fnMatch = firstLine.match(/^(?:\/\/|#|--)\s*([^\s].*\.(jsx?|tsx?|css|scss|sql|py|sh|json|md|ya?ml|toml|env|html))$/i);
+      if (fnMatch) {
+        filename = fnMatch[1];
+        displayCode = code.slice(firstLine.length).replace(/^\n/, "");
+      } else if (lang) {
+        var defaultNames = {jsx:"Component.jsx",tsx:"Component.tsx",js:"script.js",ts:"index.ts",css:"styles.css",html:"index.html",sql:"migration.sql",py:"script.py",bash:"terminal.sh",json:"config.json"};
+        filename = defaultNames[lang.toLowerCase()] || "";
+      }
+      var langLabel = lang ? '<span class="code-lang">' + lang + '</span>' : '';
+      var fnLabel = filename ? '<span class="code-filename">' + filename + '</span>' : '';
+      var dots = '<span class="code-dots"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#22d3ee"></span></span>';
+      return '<div class="chat-code-wrap"><div class="chat-code-head">' + dots + fnLabel + langLabel + '<button class="code-copy-btn" onclick="copyCodeBlock(this)" title="Copier"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier</button></div><pre class="chat-code-block">' + highlightSyntax(displayCode) + '</pre></div>';
+    });
+    rendered = rendered.replace(/\n/g, "<br>").replace(/`([^`]+)`/g, function(_, c) { return "<code>" + highlightSyntax(c) + "</code>"; });
+    div.innerHTML = rendered;
+  } else {
+    div.textContent = text;
+  }
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
 }
@@ -7455,16 +7633,29 @@ async function cervChatSend() {
   if (tk) h["Authorization"] = `Bearer ${tk}`;
   if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
 
+  const container = $("#cervChatMessages");
+  var connDiv = document.createElement("div");
+  connDiv.className = "cerv-conn-badges";
+  connDiv.innerHTML = '<span class="cerv-conn-badge cerv-conn-supa"><span class="cerv-conn-dot" style="background:#3ECF8E"></span>Supabase · Edge Function...</span>';
+  if (container) { container.appendChild(connDiv); container.scrollTop = container.scrollHeight; }
+
   const thinkDiv = document.createElement("div");
   thinkDiv.className = "cerv-chat-msg assistant";
-  const container = $("#cervChatMessages");
   if (container) { container.appendChild(thinkDiv); container.scrollTop = container.scrollHeight; }
   startReflexion(thinkDiv);
+
+  var connT1 = setTimeout(function() {
+    connDiv.innerHTML += '<span class="cerv-conn-badge cerv-conn-anth"><span class="cerv-conn-dot" style="background:#CC785C"></span>Agent AL réfléchit...</span>';
+  }, 350);
+
+  var cervAbort = new AbortController();
+  var cervTimeout = setTimeout(function() { cervAbort.abort(); }, 25000);
 
   try {
     const res = await fetch(AI_PROXY, {
       method: "POST",
       headers: h,
+      signal: cervAbort.signal,
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
@@ -7472,6 +7663,9 @@ async function cervChatSend() {
         messages: cervChatHistory
       })
     });
+    clearTimeout(cervTimeout);
+    clearTimeout(connT1);
+    if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
     if (thinkDiv.parentNode) thinkDiv.remove();
     if (!res.ok) {
@@ -7482,9 +7676,13 @@ async function cervChatSend() {
     cervAddChatMsg("assistant", reply || "…");
     cervChatHistory.push({ role: "assistant", content: reply });
   } catch (e) {
+    clearTimeout(cervTimeout);
+    clearTimeout(connT1);
+    if (connDiv.parentNode) connDiv.remove();
     if (thinkDiv._stopReflexion) thinkDiv._stopReflexion();
     if (thinkDiv.parentNode) thinkDiv.remove();
-    cervAddChatMsg("assistant", "Erreur de connexion.");
+    var errMsg = e.name === "AbortError" ? "Délai dépassé (25s) — réessaie." : "Erreur de connexion.";
+    cervAddChatMsg("assistant", errMsg);
   }
 }
 
