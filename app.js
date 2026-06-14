@@ -3750,13 +3750,18 @@ function cdxTryReflection(body, fullText) {
   if (!jsonMatch) return;
   let data;
   try { data = JSON.parse(jsonMatch[1]); } catch { return; }
-  if (!data.reflectionSteps || !Array.isArray(data.reflectionSteps) || !data.code) return;
+  if (!data.code) return;
+  if (!data.reflectionSteps && !data.filePath) return;
+
+  const validation = data.filePath ? cdxValidateFilePath(data.filePath, data.type || "") : null;
+  const validIcon = validation ? (validation.valid ? "✅" : "❌") : "";
+  const pathLabel = data.filePath ? ` · <span style="color:${validation && validation.valid ? '#3ddc84' : '#ff4444'};font-size:11px">${validIcon} ${escapeHtml(data.filePath)}</span>` : "";
 
   const preview = document.createElement("div");
   preview.className = "cdx-reflect-preview";
   preview.innerHTML =
     `<div class="cdx-reflect-preview-head">` +
-      `<span class="cdx-reflect-preview-title">💡 ${escapeHtml(data.title || "Code Reflection")}</span>` +
+      `<span class="cdx-reflect-preview-title">💡 ${escapeHtml(data.title || "Code Reflection")}${pathLabel}</span>` +
       `<div class="cdx-reflect-preview-actions">` +
         `<button class="cdx-reflect-act" data-act="copy" title="Copier">⎘</button>` +
         `<button class="cdx-reflect-act" data-act="expand" title="Voir la réflexion">↗</button>` +
@@ -3778,12 +3783,53 @@ function cdxTryReflection(body, fullText) {
   body.appendChild(preview);
 }
 
+let _tilexConfig = null;
+function cdxGetConfig() {
+  if (_tilexConfig) return _tilexConfig;
+  try { _tilexConfig = JSON.parse(localStorage.getItem("tilex-config-cache") || "null"); } catch {}
+  if (!_tilexConfig) {
+    fetch("/ti-lex-config.json").then(r => r.json()).then(cfg => {
+      _tilexConfig = cfg;
+      try { localStorage.setItem("tilex-config-cache", JSON.stringify(cfg)); } catch {}
+    }).catch(() => {});
+  }
+  return _tilexConfig;
+}
+cdxGetConfig();
+
+function cdxValidateFilePath(filePath, fileType) {
+  const cfg = cdxGetConfig();
+  const errors = [];
+  if (!cfg || !cfg.fileStructure) return { valid: true, errors: [], warnings: [] };
+  const typeConfig = cfg.fileStructure[fileType];
+  if (!typeConfig) return { valid: true, errors: [], warnings: ["Type inconnu: " + fileType] };
+  if (!filePath.startsWith(typeConfig.path)) errors.push("Devrait être dans " + typeConfig.path + "/");
+  if (!filePath.endsWith(typeConfig.extension)) errors.push("Extension attendue: " + typeConfig.extension);
+  const namePattern = cfg.validationPatterns?.filePaths?.[fileType];
+  if (namePattern && !new RegExp(namePattern).test(filePath)) errors.push("Convention de nommage: " + typeConfig.pattern);
+  return { valid: errors.length === 0, errors: errors, warnings: [] };
+}
+
 function cdxOpenReflection(data) {
   const overlay = $("#cdxReflectOverlay");
   const body = $("#cdxReflectBody");
   let html = "";
 
-  if (data.reflectionSteps.length) {
+  if (data.filePath) {
+    const v = cdxValidateFilePath(data.filePath, data.type || "");
+    const icon = v.valid ? "✅" : "❌";
+    const color = v.valid ? "#3ddc84" : "#ff4444";
+    html +=
+      '<div class="cdx-reflect-section" style="background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.15);border-radius:8px;padding:14px;margin-bottom:20px">' +
+        '<h3 class="cdx-reflect-section-title">📁 Fichier</h3>' +
+        '<p style="font-size:13px;color:#ddd;margin:0 0 6px"><strong style="color:' + color + '">' + icon + ' ' + escapeHtml(data.filePath) + '</strong></p>' +
+        (data.type ? '<p style="font-size:11px;color:#888;margin:0">Type: <strong>' + escapeHtml(data.type) + '</strong></p>' : '') +
+        (v.errors.length ? '<p style="font-size:11px;color:#ff4444;margin:6px 0 0">' + v.errors.map(function(e) { return '• ' + escapeHtml(e); }).join('<br>') + '</p>' : '') +
+        (data.deploymentInstructions ? '<p style="font-size:11px;color:#888;margin:6px 0 0">📋 ' + escapeHtml(data.deploymentInstructions) + '</p>' : '') +
+      '</div>';
+  }
+
+  if (data.reflectionSteps && data.reflectionSteps.length) {
     html += '<div class="cdx-reflect-section">';
     data.reflectionSteps.forEach(function(step) {
       html +=
@@ -3852,11 +3898,33 @@ function cdxOpenReflection(data) {
   $("#cdxReflectCopyAll").onclick = function() {
     const data = overlay._reflectData;
     if (!data) return;
-    const allCode = data.reflectionSteps.map(function(s) { return s.code; }).join("\n\n");
+    const allCode = (data.reflectionSteps && data.reflectionSteps.length)
+      ? data.reflectionSteps.map(function(s) { return s.code; }).join("\n\n")
+      : data.code;
     navigator.clipboard.writeText(allCode);
     this.textContent = "✓ Copié !";
     var btn = this;
     setTimeout(function() { btn.textContent = "⎘ Copier tout le code"; }, 2000);
+  };
+  $("#cdxReflectCloseBtn").insertAdjacentHTML("beforebegin",
+    '<button class="cdx-reflect-btn cdx-reflect-btn-primary" id="cdxReflectAddFile" style="display:none">📁 Ajouter aux fichiers</button>');
+  var addFileBtn = $("#cdxReflectAddFile");
+  var origObserver = new MutationObserver(function() {
+    var data = overlay._reflectData;
+    addFileBtn.style.display = (data && data.filePath) ? "" : "none";
+  });
+  origObserver.observe(overlay, { attributes: true, attributeFilter: ["class"] });
+  addFileBtn.onclick = function() {
+    var data = overlay._reflectData;
+    if (!data || !data.filePath) return;
+    var name = data.filePath.split("/").pop() || data.fileName || "file.txt";
+    if (typeof cdxFiles !== "undefined") {
+      cdxFiles[name] = { content: data.code, binary: false, size: data.code.length, status: "ready" };
+      if (typeof cdxRenderFiles === "function") cdxRenderFiles();
+    }
+    this.textContent = "✓ Ajouté !";
+    var btn = this;
+    setTimeout(function() { btn.textContent = "📁 Ajouter aux fichiers"; }, 2000);
   };
 })();
 

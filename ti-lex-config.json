@@ -1,0 +1,282 @@
+{
+  "projectName": "ti-lex-v10",
+  "projectType": "react-typescript",
+  "version": "10.0.0",
+  "description": "Configuration for Agent AL code generation and file management",
+
+  "fileStructure": {
+    "components": {
+      "path": "src/components",
+      "pattern": "PascalCase",
+      "extension": ".tsx",
+      "description": "React components",
+      "examples": ["Button.tsx", "Modal.tsx", "UserProfile.tsx"]
+    },
+    "utils": {
+      "path": "src/utils",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "Utility functions",
+      "examples": ["formatDate.ts", "parseJson.ts", "validateEmail.ts"]
+    },
+    "hooks": {
+      "path": "src/hooks",
+      "pattern": "camelCase (useXxx)",
+      "extension": ".ts",
+      "description": "Custom React hooks",
+      "examples": ["useAuth.ts", "useFetch.ts", "useLocalStorage.ts"]
+    },
+    "types": {
+      "path": "src/types",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "TypeScript interfaces & types",
+      "examples": ["user.ts", "product.ts", "api.ts"]
+    },
+    "styles": {
+      "path": "src/styles",
+      "pattern": "kebab-case",
+      "extension": ".css",
+      "description": "CSS/SCSS files",
+      "examples": ["user-profile.css", "modal.css", "button.css"]
+    },
+    "services": {
+      "path": "src/services",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "API services & external integrations",
+      "examples": ["userService.ts", "apiClient.ts", "authService.ts"]
+    },
+    "constants": {
+      "path": "src/constants",
+      "pattern": "UPPER_SNAKE_CASE",
+      "extension": ".ts",
+      "description": "Constants & configuration",
+      "examples": ["API_ENDPOINTS.ts", "ERROR_MESSAGES.ts", "CONFIG.ts"]
+    },
+    "pages": {
+      "path": "src/pages",
+      "pattern": "PascalCase",
+      "extension": ".tsx",
+      "description": "Page components (routes)",
+      "examples": ["Dashboard.tsx", "UserSettings.tsx", "NotFound.tsx"]
+    },
+    "store": {
+      "path": "src/store",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "State management",
+      "examples": ["userStore.ts", "authSlice.ts", "appStore.ts"]
+    },
+    "context": {
+      "path": "src/context",
+      "pattern": "PascalCase",
+      "extension": ".tsx",
+      "description": "React Context files",
+      "examples": ["AuthContext.tsx", "ThemeContext.tsx", "UserContext.tsx"]
+    },
+    "middleware": {
+      "path": "src/middleware",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "Express/custom middleware",
+      "examples": ["authMiddleware.ts", "errorHandler.ts", "logger.ts"]
+    },
+    "lib": {
+      "path": "src/lib",
+      "pattern": "camelCase",
+      "extension": ".ts",
+      "description": "Library utilities",
+      "examples": ["supabase.ts", "firebase.ts", "axios.ts"]
+    }
+  },
+
+  "namingConventions": {
+    "components": {
+      "rule": "PascalCase",
+      "description": "First letter uppercase, no separators",
+      "examples": ["UserProfile.tsx", "CodeEditor.tsx", "Modal.tsx", "Button.tsx"],
+      "pattern": "^[A-Z][a-zA-Z0-9]*\\.tsx$",
+      "incorrect": ["userProfile.tsx", "user-profile.tsx", "user_profile.tsx"]
+    },
+    "utils": {
+      "rule": "camelCase",
+      "description": "Start lowercase, no separators",
+      "examples": ["formatDate.ts", "parseJson.ts", "validateEmail.ts", "calculateTotal.ts"],
+      "pattern": "^[a-z][a-zA-Z0-9]*\\.ts$",
+      "incorrect": ["FormatDate.ts", "format-date.ts", "FORMAT_DATE.ts"]
+    },
+    "hooks": {
+      "rule": "camelCase with 'use' prefix",
+      "description": "Always start with 'use', then camelCase",
+      "examples": ["useAuth.ts", "useFetch.ts", "useLocalStorage.ts", "useUserData.ts"],
+      "pattern": "^use[A-Z][a-zA-Z0-9]*\\.ts$",
+      "incorrect": ["auth.ts", "useAuthHook.ts", "use-auth.ts", "useAuth.tsx"]
+    },
+    "types": {
+      "rule": "camelCase or PascalCase",
+      "description": "Can be either, but be consistent",
+      "examples": ["user.ts", "User.ts", "userTypes.ts", "ApiResponse.ts"],
+      "pattern": "^[a-zA-Z][a-zA-Z0-9]*\\.ts$",
+      "incorrect": ["user-types.ts", "USER_TYPES.ts"]
+    },
+    "styles": {
+      "rule": "kebab-case",
+      "description": "All lowercase with hyphens",
+      "examples": ["user-profile.css", "code-editor.css", "modal.css", "button-primary.css"],
+      "pattern": "^[a-z][a-z0-9-]*\\.css$",
+      "incorrect": ["UserProfile.css", "userProfile.css", "user_profile.css"]
+    },
+    "services": {
+      "rule": "camelCase with 'Service' suffix",
+      "description": "camelCase, often ending in Service",
+      "examples": ["userService.ts", "apiService.ts", "authService.ts", "dataFetcher.ts"],
+      "pattern": "^[a-z][a-zA-Z0-9]*\\.ts$",
+      "incorrect": ["UserService.ts", "user-service.ts", "USER_SERVICE.ts"]
+    },
+    "constants": {
+      "rule": "UPPER_SNAKE_CASE",
+      "description": "All uppercase with underscores",
+      "examples": ["API_ENDPOINTS.ts", "ERROR_MESSAGES.ts", "CONFIG.ts", "DEFAULT_TIMEOUT.ts"],
+      "pattern": "^[A-Z][A-Z0-9_]*\\.ts$",
+      "incorrect": ["apiEndpoints.ts", "api-endpoints.ts", "ApiEndpoints.ts"]
+    },
+    "pages": {
+      "rule": "PascalCase",
+      "description": "Always PascalCase, matches route names",
+      "examples": ["Dashboard.tsx", "UserSettings.tsx", "NotFound.tsx", "Login.tsx"],
+      "pattern": "^[A-Z][a-zA-Z0-9]*\\.tsx$",
+      "incorrect": ["dashboard.tsx", "user-settings.tsx", "NOT_FOUND.tsx"]
+    }
+  },
+
+  "allowedImportPaths": {
+    "alias": {
+      "@": "src"
+    },
+    "examples": [
+      "import Button from '@/components/Button'",
+      "import { useAuth } from '@/hooks/useAuth'",
+      "import { formatDate } from '@/utils/formatDate'",
+      "import type { User } from '@/types/user'",
+      "import { userService } from '@/services/userService'",
+      "import '@/styles/modal.css'"
+    ],
+    "incorrect": [
+      "import from '../../../components/Button'",
+      "import from './components/Button'",
+      "import from 'src/components/Button'"
+    ]
+  },
+
+  "deploymentRules": {
+    "beforeDeploy": [
+      "npm run lint - Check code style",
+      "npm run type-check - TypeScript validation",
+      "npm run test - Run tests",
+      "npm run build - Build project",
+      "npm run validate-files - Validate file structure"
+    ],
+    "fileValidation": [
+      "Check all imports resolve correctly",
+      "Verify file names follow conventions",
+      "Check TypeScript compilation",
+      "Verify no orphaned files",
+      "Check for circular dependencies"
+    ],
+    "commonErrors": {
+      "fileNotFound": "File created in wrong directory or with wrong name",
+      "importError": "Using relative imports instead of @ alias",
+      "typingError": "File missing .ts or .tsx extension",
+      "namingError": "File name doesn't follow convention"
+    }
+  },
+
+  "agent_instructions": {
+    "primary": "Always consult this config when generating code. Never deviate from these rules.",
+    "whenGeneratingCode": [
+      "1. Identify file type from user request (component, hook, util, etc.)",
+      "2. Look up correct path in fileStructure",
+      "3. Look up naming convention for this file type",
+      "4. Generate code with CORRECT file path and name",
+      "5. Use @ alias for all imports",
+      "6. Validate against patterns before returning"
+    ],
+    "fileTypeDetection": {
+      "component": "Contains JSX/TSX, React imports, renders UI",
+      "hook": "Starts with 'use', contains useState/useEffect, custom hook logic",
+      "util": "Pure function, no JSX, no React imports, reusable logic",
+      "type": "Interfaces, types, enums, TypeScript definitions",
+      "style": "CSS/SCSS file, styling rules",
+      "service": "API calls, external integrations, data fetching",
+      "constant": "Fixed values, config, enums",
+      "page": "Top-level route component, often imports other components"
+    },
+    "ifUnsure": "Ask user: 'Is this a [component/hook/util/etc]? Where should it go?'",
+    "importExample": {
+      "correct": "@/components/Button",
+      "incorrect": "../../../components/Button"
+    },
+    "filePathExample": {
+      "correct": "src/components/MyComponent.tsx",
+      "incorrect": "MyComponent.tsx"
+    }
+  },
+
+  "validationPatterns": {
+    "filePaths": {
+      "component": "^src/components/[A-Z][a-zA-Z0-9]*\\.tsx$",
+      "hook": "^src/hooks/use[A-Z][a-zA-Z0-9]*\\.ts$",
+      "util": "^src/utils/[a-z][a-zA-Z0-9]*\\.ts$",
+      "type": "^src/types/[a-z][a-zA-Z0-9]*\\.ts$",
+      "style": "^src/styles/[a-z][a-z0-9-]*\\.css$",
+      "service": "^src/services/[a-z][a-zA-Z0-9]*\\.ts$",
+      "constant": "^src/constants/[A-Z][A-Z0-9_]*\\.ts$"
+    }
+  },
+
+  "codeQualityRules": {
+    "typescript": {
+      "strict": true,
+      "noImplicitAny": true,
+      "strictNullChecks": true
+    },
+    "imports": {
+      "useAliasNotRelative": true,
+      "noCircularDependencies": true,
+      "sortImports": true
+    },
+    "naming": {
+      "followConventions": true,
+      "noPrefixSuffixRedundancy": true,
+      "meaningfulNames": true
+    }
+  },
+
+  "examples": {
+    "componentStructure": {
+      "fileName": "Button.tsx",
+      "path": "src/components/Button.tsx",
+      "import": "import Button from '@/components/Button'",
+      "structure": "interface Props { ... } export const Button = (props) => { ... }"
+    },
+    "hookStructure": {
+      "fileName": "useAuth.ts",
+      "path": "src/hooks/useAuth.ts",
+      "import": "import { useAuth } from '@/hooks/useAuth'",
+      "structure": "export const useAuth = () => { const [user, setUser] = useState(...); return { user, ... } }"
+    },
+    "utilStructure": {
+      "fileName": "formatDate.ts",
+      "path": "src/utils/formatDate.ts",
+      "import": "import { formatDate } from '@/utils/formatDate'",
+      "structure": "export const formatDate = (date: Date) => { ... }"
+    },
+    "typeStructure": {
+      "fileName": "user.ts",
+      "path": "src/types/user.ts",
+      "import": "import type { User } from '@/types/user'",
+      "structure": "export interface User { id: string; name: string; ... }"
+    }
+  }
+}
