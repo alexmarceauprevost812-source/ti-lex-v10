@@ -2898,50 +2898,6 @@ if (_cancelBtn) _cancelBtn.onclick = function() {
 };
 $$(".sug").forEach(s => s.onclick = () => { input.value = s.textContent; sendMessage(); });
 
-var _saveConvoBtn = $("#saveConvoBtn");
-if (_saveConvoBtn) _saveConvoBtn.onclick = function() {
-  if (!state.history || state.history.length < 2) return;
-  var session = null;
-  try {
-    var raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
-    if (raw) session = JSON.parse(raw);
-  } catch(e) {}
-  if (!session || !session.user) { alert("Connecte-toi pour sauvegarder."); return; }
-  var content = state.history.map(function(m) {
-    var txt = typeof m.content === "string" ? m.content : (m.content[0]?.text || "");
-    return m.role === "user" ? "**Moi :** " + txt : "**Agent AL :** " + txt;
-  }).join("\n\n---\n\n");
-  var firstUser = state.history.find(function(m) { return m.role === "user"; });
-  var firstTxt = typeof firstUser?.content === "string" ? firstUser.content : (firstUser?.content?.[0]?.text || "Conversation");
-  var title = "💬 " + firstTxt.slice(0, 45) + (firstTxt.length > 45 ? "..." : "");
-  _saveConvoBtn.disabled = true;
-  _saveConvoBtn.textContent = "⏳";
-  fetch("https://rnuripmfozlxenryxhdc.supabase.co/rest/v1/cerveau_notes", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": proxyToken(),
-      "Authorization": "Bearer " + session.access_token,
-      "Prefer": "return=minimal"
-    },
-    body: JSON.stringify({
-      user_id: session.user.id,
-      title: title,
-      content: content,
-      tags: ["agent-al", "conversation-complète"]
-    })
-  }).then(function(res) {
-    if (res.ok) {
-      _saveConvoBtn.textContent = "✓";
-      _saveConvoBtn.classList.add("saved");
-      setTimeout(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.classList.remove("saved"); _saveConvoBtn.disabled = false; }, 3000);
-    } else {
-      _saveConvoBtn.textContent = "🧠";
-      _saveConvoBtn.disabled = false;
-      alert("Erreur sauvegarde: " + res.status);
-    }
-  }).catch(function() { _saveConvoBtn.textContent = "🧠"; _saveConvoBtn.disabled = false; });
-};
 
 function avatarUser() {
   const av = createAvatarIA(42);
@@ -3284,7 +3240,6 @@ async function sendMessage() {
     stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
     saveChatConv();
-    if (_saveConvoBtn && state.history.length >= 2) _saveConvoBtn.classList.remove("hidden");
   } catch (err) {
     state.history.pop();
     if (body._stopReflexion) body._stopReflexion();
@@ -3585,6 +3540,7 @@ function addSaveToCerveauBtn(body, answer) {
       if (res.ok) {
         btn.innerHTML = "🧠 Sauvegardé ✓";
         btn.classList.add("cerv-saved");
+        cervLoadNotes();
       } else {
         btn.disabled = false;
         btn.innerHTML = "🧠 Garder";
