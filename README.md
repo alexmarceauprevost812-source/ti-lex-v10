@@ -46,7 +46,7 @@ Frontend statique pur (HTML / CSS / JS) deploye sur Vercel, backend Supabase (Au
 - Module dedie dans `ti-lex-security-agent/`
 
 ### Forfaits et abonnements
-- 3 plans standard : FLUX (19 $/mois), SURGE (39 $/mois), APEX (79 $/mois)
+- 3 plans standard : FLUX (19 $/mois), SURGE (60 $/mois), APEX (125 $/mois)
 - 4 plans cybersecurite : Cyber Shield, Cyber Guardian, Cyber Sentinel, Cyber Fortress
 - Integration Stripe Checkout via Edge Functions Supabase + Payment Links en fallback
 - Suivi d'utilisation : messages/jour, messages/mois, images/mois
