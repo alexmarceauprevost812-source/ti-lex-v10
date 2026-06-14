@@ -436,6 +436,7 @@
         </div>
         <div class="codex-files-count" id="codexFilesCount"></div>
         <div class="codex-deploy-actions" id="codexDeployActions" style="display:none">
+          <button class="codex-errstudio-btn" id="codexErrorStudioBtn">🛠️ Error Studio</button>
           <button class="codex-deploy-btn" id="codexDeployGh">☢️☢️🤝👾🥸 Deploy</button>
           <button class="codex-zip-btn" id="codexDownloadZip">Telecharger ZIP</button>
         </div>
@@ -515,6 +516,26 @@
         <div class="cdx-reflect-footer">
           <button class="cdx-reflect-btn cdx-reflect-btn-primary" id="cdxReflectCopyAll">⎘ Copier tout le code</button>
           <button class="cdx-reflect-btn cdx-reflect-btn-secondary" id="cdxReflectCloseBtn">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="es-overlay" id="esOverlay">
+      <div class="es-modal">
+        <div class="es-header">
+          <div>
+            <h2 class="es-title">🛠️ Error Studio</h2>
+            <p class="es-sub">Validation avant déploiement</p>
+          </div>
+          <button class="es-close" id="esClose" aria-label="Fermer">✕</button>
+        </div>
+        <div class="es-summary" id="esSummary"></div>
+        <div class="es-body" id="esBody"></div>
+        <div class="es-footer">
+          <button class="es-btn es-btn-fix" id="esFixAll" style="display:none">🔧 Fix All</button>
+          <button class="es-btn es-btn-deploy" id="esDeployBtn" style="display:none">✅ Deploy</button>
+          <button class="es-btn es-btn-recheck" id="esRecheck">🔄 Re-check</button>
+          <button class="es-btn es-btn-close" id="esCloseBtn">Fermer</button>
         </div>
       </div>
     </div>

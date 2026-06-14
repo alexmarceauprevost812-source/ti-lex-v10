@@ -5119,6 +5119,251 @@ cdxInitFileSystem();
 if ($("#codexDeployGh")) $("#codexDeployGh").onclick = cdxDeployGitHub;
 if ($("#codexDownloadZip")) $("#codexDownloadZip").onclick = cdxDownloadZip;
 
+/* ================= ERROR STUDIO ================= */
+
+function esAnalyze() {
+  const cfg = cdxGetConfig();
+  const names = Object.keys(cdxFiles);
+  const results = [];
+
+  for (const name of names) {
+    const f = cdxFiles[name];
+    if (f.binary) { results.push({ name, issues: [], badge: "pass" }); continue; }
+    const issues = [];
+    const ext = name.includes(".") ? "." + name.split(".").pop() : "";
+    const content = f.content || "";
+
+    if (cfg && cfg.fileStructure) {
+      const detectedType = esDetectFileType(name, content);
+      if (detectedType) {
+        const tc = cfg.fileStructure[detectedType];
+        if (tc) {
+          if (ext && ext !== tc.extension) {
+            issues.push({
+              severity: "crit", title: "Extension incorrecte",
+              detail: `Attendu: ${tc.extension}, actuel: ${ext}`,
+              fix: { type: "rename", from: name, to: name.replace(/\.[^.]+$/, tc.extension) },
+            });
+          }
+          const nc = cfg.namingConventions?.[detectedType];
+          if (nc?.pattern && !new RegExp(nc.pattern).test(name)) {
+            const suggestion = esFixNaming(name, nc.rule, tc.extension);
+            issues.push({
+              severity: "warn", title: "Convention de nommage",
+              detail: `Règle: ${nc.rule}. Suggestion: ${suggestion}`,
+              fix: suggestion !== name ? { type: "rename", from: name, to: suggestion } : null,
+            });
+          }
+        }
+      }
+    }
+
+    const bracketCheck = esCheckBrackets(content);
+    if (bracketCheck) {
+      issues.push({ severity: "crit", title: "Brackets non fermés", detail: bracketCheck, fix: null });
+    }
+
+    const importIssues = esCheckImports(content);
+    importIssues.forEach(i => issues.push(i));
+
+    if ((ext === ".tsx" || ext === ".ts" || ext === ".jsx" || ext === ".js") && content.length > 10) {
+      if (!/\bexport\b/.test(content)) {
+        issues.push({ severity: "warn", title: "Pas de export", detail: "Le fichier ne contient pas de export", fix: null });
+      }
+    }
+
+    if (content.length > 0 && !content.endsWith("\n")) {
+      issues.push({ severity: "info", title: "Pas de newline final", detail: "Bonne pratique: terminer le fichier par une ligne vide", fix: { type: "append-newline", file: name } });
+    }
+
+    const badge = issues.some(i => i.severity === "crit") ? "fail" : issues.some(i => i.severity === "warn") ? "warn" : "pass";
+    results.push({ name, issues, badge });
+  }
+  return results;
+}
+
+function esDetectFileType(name, content) {
+  const lower = name.toLowerCase();
+  if (/^use[A-Z]/.test(name) || /\buseState\b|\buseEffect\b|\buseRef\b/.test(content)) return "hooks";
+  if (/\.tsx$/.test(lower) || (/\.jsx$/.test(lower))) return "components";
+  if (/\.css$/.test(lower) || /\.scss$/.test(lower)) return "styles";
+  if (/types?\.(ts|js)$/i.test(lower) || /\.d\.ts$/.test(lower) || /\binterface\s/.test(content) || /\btype\s+\w+\s*=/.test(content)) return "types";
+  if (/service/i.test(lower) || /api/i.test(lower)) return "services";
+  if (/constant|config/i.test(lower) || /\bconst\s+[A-Z_]{3,}/.test(content)) return "constants";
+  if (/page/i.test(lower)) return "pages";
+  if (/store|slice|reducer/i.test(lower)) return "store";
+  if (/\.ts$/.test(lower) || /\.js$/.test(lower)) return "utils";
+  return null;
+}
+
+function esCheckBrackets(content) {
+  const stk = [];
+  const pairs = { "(": ")", "[": "]", "{": "}" };
+  const close = new Set([")", "]", "}"]);
+  let inStr = false, strChar = "", escaped = false, inComment = false, inBlockComment = false;
+  for (let i = 0; i < content.length; i++) {
+    const c = content[i];
+    if (escaped) { escaped = false; continue; }
+    if (c === "\\") { escaped = true; continue; }
+    if (inBlockComment) { if (c === "*" && content[i + 1] === "/") { inBlockComment = false; i++; } continue; }
+    if (inComment) { if (c === "\n") inComment = false; continue; }
+    if (inStr) { if (c === strChar) inStr = false; continue; }
+    if (c === "/" && content[i + 1] === "/") { inComment = true; continue; }
+    if (c === "/" && content[i + 1] === "*") { inBlockComment = true; i++; continue; }
+    if (c === '"' || c === "'" || c === "`") { inStr = true; strChar = c; continue; }
+    if (pairs[c]) stk.push(c);
+    else if (close.has(c)) {
+      if (!stk.length) return `Fermeture '${c}' sans ouverture correspondante`;
+      const open = stk.pop();
+      if (pairs[open] !== c) return `'${open}' fermé par '${c}' au lieu de '${pairs[open]}'`;
+    }
+  }
+  if (stk.length) return `'${stk[stk.length - 1]}' jamais fermé (${stk.length} ouvert${stk.length > 1 ? "s" : ""})`;
+  return null;
+}
+
+function esCheckImports(content) {
+  const issues = [];
+  const importRegex = /import\s+.*?\s+from\s+['"](\.\..*)['"]|require\s*\(\s*['"](\.\..*)['"]|\bfrom\s+['"](\.\..*)['"]|import\s*\(\s*['"](\.\..*)['"]|import\s+['"](\.\..*)['"]$/gm;
+  let m;
+  while ((m = importRegex.exec(content)) !== null) {
+    const path = m[1] || m[2] || m[3] || m[4] || m[5];
+    if (path && path.startsWith("..")) {
+      issues.push({
+        severity: "warn", title: "Import relatif",
+        detail: `"${path}" — utiliser @/ alias plutôt`,
+        fix: null,
+      });
+    }
+  }
+  return issues;
+}
+
+function esFixNaming(name, rule, ext) {
+  const base = name.replace(/\.[^.]+$/, "");
+  switch (rule) {
+    case "PascalCase": return base.charAt(0).toUpperCase() + base.slice(1).replace(/[-_](\w)/g, (_, c) => c.toUpperCase()) + ext;
+    case "camelCase": return base.charAt(0).toLowerCase() + base.slice(1).replace(/[-_](\w)/g, (_, c) => c.toUpperCase()) + ext;
+    case "kebab-case": return base.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase().replace(/_/g, "-") + ext;
+    case "UPPER_SNAKE_CASE": return base.replace(/([a-z])([A-Z])/g, "$1_$2").toUpperCase() + ext;
+    default: return name;
+  }
+}
+
+function esOpenErrorStudio() {
+  const overlay = $("#esOverlay");
+  if (!overlay) return;
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+  esRunCheck();
+}
+
+function esRunCheck() {
+  const results = esAnalyze();
+  const summary = $("#esSummary");
+  const body = $("#esBody");
+  const fixAllBtn = $("#esFixAll");
+  const deployBtn = $("#esDeployBtn");
+
+  let critCount = 0, warnCount = 0, okCount = 0;
+  results.forEach(r => {
+    if (r.badge === "fail") critCount++;
+    else if (r.badge === "warn") warnCount++;
+    else okCount++;
+  });
+
+  summary.innerHTML =
+    `<span class="es-stat es-stat-ok">✅ ${okCount} OK</span>` +
+    (critCount ? `<span class="es-stat es-stat-err">🔴 ${critCount} Critique${critCount > 1 ? "s" : ""}</span>` : "") +
+    (warnCount ? `<span class="es-stat es-stat-warn">🟡 ${warnCount} Avertissement${warnCount > 1 ? "s" : ""}</span>` : "") +
+    `<span class="es-stat es-stat-info">📁 ${results.length} fichier${results.length > 1 ? "s" : ""}</span>`;
+
+  const totalFixes = results.reduce((n, r) => n + r.issues.filter(i => i.fix).length, 0);
+  fixAllBtn.style.display = totalFixes > 0 ? "" : "none";
+  deployBtn.style.display = critCount === 0 ? "" : "none";
+
+  if (!results.length) {
+    body.innerHTML = '<div class="es-all-good"><div class="es-all-good-icon">📭</div><div class="es-all-good-text">Aucun fichier</div><div class="es-all-good-sub">Ajoute des fichiers au Codex pour les analyser</div></div>';
+    return;
+  }
+
+  if (critCount === 0 && warnCount === 0) {
+    body.innerHTML = '<div class="es-all-good"><div class="es-all-good-icon">✅</div><div class="es-all-good-text">Aucune erreur trouvée!</div><div class="es-all-good-sub">Tous les fichiers passent la validation. Prêt à déployer.</div></div>';
+    return;
+  }
+
+  body.innerHTML = results.map(r => {
+    const badgeCls = r.badge === "pass" ? "es-badge-pass" : r.badge === "fail" ? "es-badge-fail" : "es-badge-warn";
+    const badgeText = r.badge === "pass" ? "OK" : r.badge === "fail" ? "ERREUR" : "AVERT.";
+    const icon = cdxIcon(r.name);
+    const issuesHtml = r.issues.length ? '<div class="es-file-issues">' + r.issues.map((issue, idx) => {
+      const cls = issue.severity === "crit" ? "es-issue-crit" : issue.severity === "warn" ? "es-issue-warn" : "es-issue-info";
+      const ico = issue.severity === "crit" ? "🔴" : issue.severity === "warn" ? "🟡" : "🔵";
+      const fixBtn = issue.fix ? `<button class="es-issue-fix" data-file="${escapeHtml(r.name)}" data-fix-idx="${idx}">✏️ Fix</button>` : "";
+      return `<div class="es-issue ${cls}"><span class="es-issue-icon">${ico}</span><div class="es-issue-body"><div class="es-issue-title">${escapeHtml(issue.title)}</div><div class="es-issue-detail">${escapeHtml(issue.detail)}</div></div>${fixBtn}</div>`;
+    }).join("") + "</div>" : "";
+    return `<div class="es-file-block" data-file="${escapeHtml(r.name)}"><div class="es-file-head"><span class="es-file-icon">${icon}</span><span class="es-file-name">${escapeHtml(r.name)}</span><span class="es-file-badge ${badgeCls}">${badgeText}</span></div>${issuesHtml}</div>`;
+  }).join("");
+
+  body.querySelectorAll(".es-issue-fix").forEach(btn => {
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      const fileName = this.dataset.file;
+      const fixIdx = parseInt(this.dataset.fixIdx, 10);
+      const fileResult = results.find(r => r.name === fileName);
+      if (!fileResult) return;
+      const issue = fileResult.issues[fixIdx];
+      if (!issue || !issue.fix) return;
+      esApplyFix(issue.fix);
+      this.textContent = "✓ Fixé";
+      this.classList.add("fixed");
+      setTimeout(() => esRunCheck(), 600);
+    };
+  });
+}
+
+function esApplyFix(fix) {
+  if (fix.type === "rename") {
+    if (cdxFiles[fix.from] && !cdxFiles[fix.to]) {
+      cdxFiles[fix.to] = cdxFiles[fix.from];
+      delete cdxFiles[fix.from];
+      cdxRenderFiles();
+    }
+  } else if (fix.type === "append-newline") {
+    const f = cdxFiles[fix.file];
+    if (f && !f.binary && f.content !== undefined) {
+      f.content += "\n";
+      f.size = f.content.length;
+    }
+  }
+}
+
+(function initErrorStudio() {
+  const overlay = $("#esOverlay");
+  if (!overlay) return;
+  const close = () => { overlay.classList.remove("open"); document.body.style.overflow = ""; };
+  if ($("#esClose")) $("#esClose").onclick = close;
+  if ($("#esCloseBtn")) $("#esCloseBtn").onclick = close;
+  overlay.onclick = e => { if (e.target === overlay) close(); };
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && overlay.classList.contains("open")) close(); });
+  if ($("#esRecheck")) $("#esRecheck").onclick = esRunCheck;
+  if ($("#esFixAll")) {
+    $("#esFixAll").onclick = () => {
+      const results = esAnalyze();
+      results.forEach(r => r.issues.forEach(i => { if (i.fix) esApplyFix(i.fix); }));
+      cdxRenderFiles();
+      setTimeout(esRunCheck, 200);
+    };
+  }
+  if ($("#esDeployBtn")) {
+    $("#esDeployBtn").onclick = () => {
+      close();
+      cdxDeployGitHub();
+    };
+  }
+  if ($("#codexErrorStudioBtn")) $("#codexErrorStudioBtn").onclick = esOpenErrorStudio;
+})();
+
 /* ================= STUDIO ================= */
 let studioZipFiles = [];
 let studioGhFiles = [];
