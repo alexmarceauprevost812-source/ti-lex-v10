@@ -2244,6 +2244,8 @@ function rebuildChatFromHistory() {
       addUserMsg(contentText(m.content), imgs);
     } else {
       const body = buildAssistantMsg();
+      if (body._stopReflexion) body._stopReflexion();
+      if (body._avatar) { body._avatar._setThinking(false); body._avatar._setSpeaking(false); }
       if (body._msgWrap) body._msgWrap.classList.remove("responding");
       renderAssistant(body, m.content);
     }
