@@ -4865,17 +4865,29 @@ function cdxFormatSize(bytes) {
 function cdxExtractFiles(raw) {
   const pat = /```(\w+)?\s*\n?\s*(?:\/\/\s*(\S+\.\w+)|#\s*(\S+\.\w+)|\/\*\s*(\S+\.\w+)\s*\*\/|--\s*(\S+\.\w+))?\n([\s\S]*?)```/g;
   const namePat = /^(?:\/\/|#|\/\*|\-\-)\s*(?:fichier|file|filename)?\s*:?\s*(\S+\.\w+)/im;
+  const extracted = new Set();
   let m;
   while ((m = pat.exec(raw)) !== null) {
     const lang = m[1] || "";
     const commentName = m[2] || m[3] || m[4] || m[5];
     let content = m[6] || "";
+    if (lang.toLowerCase() === "json") {
+      try { const j = JSON.parse(content.trim()); if (j.reflectionSteps || j.code) continue; } catch {}
+    }
     let fname = commentName;
     if (!fname) { const inner = namePat.exec(content); if (inner) { fname = inner[1]; content = content.replace(inner[0], "").trim(); } }
     if (!fname) {
       const extMap = { javascript:"script.js",js:"script.js",typescript:"script.ts",ts:"script.ts",jsx:"component.jsx",tsx:"component.tsx",css:"styles.css",scss:"styles.scss",html:"index.html",json:"config.json",sql:"migration.sql",python:"main.py",py:"main.py",rust:"main.rs",go:"main.go",bash:"script.sh",sh:"script.sh",markdown:"README.md",md:"README.md",yaml:"config.yml",yml:"config.yml",toml:"config.toml" };
       fname = extMap[lang.toLowerCase()] || `file.${lang || "txt"}`;
     }
+    if (extracted.has(fname)) {
+      const base = fname.replace(/\.[^.]+$/, "");
+      const ext = fname.slice(base.length);
+      let n = 2;
+      while (extracted.has(base + "-" + n + ext)) n++;
+      fname = base + "-" + n + ext;
+    }
+    extracted.add(fname);
     cdxFiles[fname] = { content: content.trim(), binary: false, size: new Blob([content]).size, status: cdxFiles[fname] ? "modified" : "ready" };
   }
   cdxRenderFiles();
@@ -5251,11 +5263,10 @@ function esFixNaming(name, rule, ext) {
 }
 
 function esOpenErrorStudio() {
-  const overlay = $("#esOverlay");
-  if (!overlay) return;
-  overlay.classList.add("open");
-  document.body.style.overflow = "hidden";
-  esRunCheck();
+  const panel = $("#esPanel");
+  if (!panel) return;
+  panel.classList.toggle("open");
+  if (panel.classList.contains("open")) esRunCheck();
 }
 
 function esRunCheck() {
@@ -5339,13 +5350,12 @@ function esApplyFix(fix) {
 }
 
 (function initErrorStudio() {
-  const overlay = $("#esOverlay");
-  if (!overlay) return;
-  const close = () => { overlay.classList.remove("open"); document.body.style.overflow = ""; };
+  const panel = $("#esPanel");
+  if (!panel) return;
+  const close = () => { panel.classList.remove("open"); };
   if ($("#esClose")) $("#esClose").onclick = close;
   if ($("#esCloseBtn")) $("#esCloseBtn").onclick = close;
-  overlay.onclick = e => { if (e.target === overlay) close(); };
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && overlay.classList.contains("open")) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && panel.classList.contains("open")) close(); });
   if ($("#esRecheck")) $("#esRecheck").onclick = esRunCheck;
   if ($("#esFixAll")) {
     $("#esFixAll").onclick = () => {

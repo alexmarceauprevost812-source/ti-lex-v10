@@ -502,6 +502,25 @@
       <input type="file" id="codexFileZip" accept=".zip,application/zip" hidden>
     </div>
 
+    <!-- Error Studio panel (right side) -->
+    <div class="es-panel" id="esPanel">
+      <div class="es-header">
+        <div>
+          <h2 class="es-title">🛠️ Error Studio</h2>
+          <p class="es-sub">Validation avant déploiement</p>
+        </div>
+        <button class="es-close" id="esClose" aria-label="Fermer">✕</button>
+      </div>
+      <div class="es-summary" id="esSummary"></div>
+      <div class="es-body" id="esBody"></div>
+      <div class="es-footer">
+        <button class="es-btn es-btn-fix" id="esFixAll" style="display:none">🔧 Fix All</button>
+        <button class="es-btn es-btn-deploy" id="esDeployBtn" style="display:none">✅ Deploy</button>
+        <button class="es-btn es-btn-recheck" id="esRecheck">🔄 Re-check</button>
+        <button class="es-btn es-btn-close" id="esCloseBtn">Fermer</button>
+      </div>
+    </div>
+
     <!-- Modale Code Reflection -->
     <div class="cdx-reflect-overlay" id="cdxReflectOverlay">
       <div class="cdx-reflect-modal">
@@ -520,25 +539,6 @@
       </div>
     </div>
 
-    <div class="es-overlay" id="esOverlay">
-      <div class="es-modal">
-        <div class="es-header">
-          <div>
-            <h2 class="es-title">🛠️ Error Studio</h2>
-            <p class="es-sub">Validation avant déploiement</p>
-          </div>
-          <button class="es-close" id="esClose" aria-label="Fermer">✕</button>
-        </div>
-        <div class="es-summary" id="esSummary"></div>
-        <div class="es-body" id="esBody"></div>
-        <div class="es-footer">
-          <button class="es-btn es-btn-fix" id="esFixAll" style="display:none">🔧 Fix All</button>
-          <button class="es-btn es-btn-deploy" id="esDeployBtn" style="display:none">✅ Deploy</button>
-          <button class="es-btn es-btn-recheck" id="esRecheck">🔄 Re-check</button>
-          <button class="es-btn es-btn-close" id="esCloseBtn">Fermer</button>
-        </div>
-      </div>
-    </div>
   </section>
   <section class="view view-security" id="view-security">
     <div class="sec-wrap">
