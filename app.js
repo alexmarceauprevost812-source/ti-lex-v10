@@ -6099,6 +6099,7 @@ async function loadSecurityDashboard() {
   if (fEl) fEl.textContent = findings && findings.length > 0 ? findings.length : "—";
 
   await loadSowList(userId);
+  loadCyberDashboard();
 }
 
 async function loadSowList(userId) {
@@ -6403,6 +6404,222 @@ function secForcePassword() {
   input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
   if (sendBtn) sendBtn.onclick = send;
   if (scanBtn) scanBtn.onclick = () => secSendChat("Scanner ma plateforme");
+})();
+
+/* ================= CYBER DASHBOARD ================= */
+let cyberDashInterval = null;
+let cyberActiveTab = "overview";
+
+async function loadCyberDashboard() {
+  const sb = state.supabase?.client;
+  if (!sb) return;
+  const userId = (await sb.auth.getUser())?.data?.user?.id;
+  if (!userId) return;
+
+  const [mandatesRes, findingsRes, companiesRes, scansRes, formationsRes] = await Promise.all([
+    sb.from("cyber_mandates").select("*").eq("user_id", userId),
+    sb.from("cyber_findings").select("*").eq("user_id", userId),
+    sb.from("cyber_companies").select("*").eq("user_id", userId),
+    sb.from("cyber_scans").select("*").eq("user_id", userId),
+    sb.from("cyber_formation_assignments").select("*").eq("user_id", userId),
+  ]);
+
+  const mandates = mandatesRes.data || [];
+  const findings = findingsRes.data || [];
+  const companies = companiesRes.data || [];
+  const scans = scansRes.data || [];
+  const formations = formationsRes.data || [];
+
+  const mandatesActive = mandates.filter(m => m.status === "active").length;
+  const criticalOpen = findings.filter(f => f.severity === "critical" && f.status === "open").length;
+  const companiesVerified = companies.filter(c => c.verification_status === "verified").length;
+  const today = new Date().toISOString().slice(0, 10);
+  const scansToday = scans.filter(s => s.created_at?.slice(0, 10) === today).length;
+  const formationPending = formations.filter(f => f.status === "assigned" || f.status === "in_progress").length;
+
+  const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  setTxt("cyberMandatesActive", mandatesActive);
+  setTxt("cyberCriticalOpen", criticalOpen);
+  setTxt("cyberCompaniesVerified", companiesVerified);
+  setTxt("cyberScansToday", scansToday);
+  setTxt("cyberFormationPending", formationPending);
+
+  const sevCounts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  findings.forEach(f => { if (sevCounts.hasOwnProperty(f.severity)) sevCounts[f.severity]++; });
+  const sevTotal = findings.length;
+  const sevBar = document.getElementById("cyberSevBar");
+  const sevTrack = document.getElementById("cyberSevTrack");
+  const sevLegend = document.getElementById("cyberSevLegend");
+  const sevTotalEl = document.getElementById("cyberSevTotal");
+  const colors = { critical: "#FF4444", high: "#FF9800", medium: "#FFC107", low: "#4CAF50", info: "#2196F3" };
+  const labels = { critical: "Critique", high: "Élevé", medium: "Moyen", low: "Faible", info: "Info" };
+
+  if (sevTotal > 0 && sevBar) {
+    sevBar.style.display = "";
+    if (sevTotalEl) sevTotalEl.textContent = sevTotal;
+    if (sevTrack) {
+      sevTrack.innerHTML = Object.entries(sevCounts)
+        .filter(([, c]) => c > 0)
+        .map(([sev, c]) => `<div style="width:${(c / sevTotal * 100).toFixed(1)}%;background:${colors[sev]}" title="${labels[sev]}: ${c}"></div>`)
+        .join("");
+    }
+    if (sevLegend) {
+      sevLegend.innerHTML = Object.entries(sevCounts)
+        .filter(([, c]) => c > 0)
+        .map(([sev, c]) => `<span><span class="cyber-sev-dot" style="background:${colors[sev]}"></span>${labels[sev]} ${c}</span>`)
+        .join("");
+    }
+  } else if (sevBar) {
+    sevBar.style.display = "none";
+  }
+
+  const critBadge = document.getElementById("cyberTabCritBadge");
+  if (critBadge) {
+    if (criticalOpen > 0) { critBadge.textContent = criticalOpen; critBadge.style.display = ""; }
+    else critBadge.style.display = "none";
+  }
+
+  window._cyberData = { mandates, findings, companies, scans, formations };
+  cyberRenderTab(cyberActiveTab);
+}
+
+function cyberRenderTab(tab) {
+  const container = document.getElementById("cyberTabContent");
+  if (!container) return;
+  const d = window._cyberData;
+  if (!d) { container.innerHTML = '<p class="muted">Chargement…</p>'; return; }
+  cyberActiveTab = tab;
+  $$(".cyber-tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tab));
+
+  if (tab === "overview") cyberRenderOverview(container, d);
+  else if (tab === "findings") cyberRenderFindings(container, d);
+  else if (tab === "mandates") cyberRenderMandates(container, d);
+  else if (tab === "companies") cyberRenderCompanies(container, d);
+}
+
+function cyberRenderOverview(el, d) {
+  const crit = d.findings.filter(f => f.severity === "critical" && f.status === "open");
+  const recentM = d.mandates.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+  const recentS = d.scans.slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+
+  el.innerHTML = `<div class="cyber-overview-grid">
+    <div class="cyber-overview-card">
+      <h4 class="cyber-panel-title critical">Alertes critiques</h4>
+      ${crit.length === 0 ? '<p class="cyber-empty"><span class="cyber-empty-icon">✅</span><br>Aucune alerte critique</p>' :
+        crit.map(f => `<div class="cyber-finding-row">
+          <span class="cyber-finding-badge" style="background:#330000;color:#FF4444">CRIT</span>
+          <div class="cyber-finding-info"><p class="cyber-finding-title">${escapeHtml(f.title)}</p></div>
+          <button class="cyber-finding-notify" style="border:1px solid #FF4444;color:#FF4444" onclick="cyberNotifyFinding('${f.id}')">Notifier</button>
+        </div>`).join("")}
+    </div>
+    <div class="cyber-overview-card">
+      <h4 class="cyber-panel-title">Mandats récents</h4>
+      ${recentM.length === 0 ? '<p class="cyber-empty"><span class="cyber-empty-icon">📋</span><br>Aucun mandat</p>' :
+        recentM.map(m => `<div class="cyber-finding-row">
+          <span class="cyber-mandate-status" style="background:${m.status === "active" ? "#002200;color:#4CAF50" : m.status === "draft" ? "#222;color:#888" : "#222200;color:#FFC107"}">${m.status}</span>
+          <div class="cyber-finding-info"><p class="cyber-finding-title">${escapeHtml(m.title)}</p><p class="cyber-finding-meta">${m.mandate_number}</p></div>
+        </div>`).join("")}
+    </div>
+    <div class="cyber-overview-card">
+      <h4 class="cyber-panel-title">Scans récents</h4>
+      ${recentS.length === 0 ? '<p class="cyber-empty"><span class="cyber-empty-icon">🔍</span><br>Aucun scan</p>' :
+        recentS.map(s => `<div class="cyber-finding-row">
+          <span class="cyber-mandate-status" style="background:${s.status === "completed" ? "#002200;color:#4CAF50" : s.status === "running" ? "#001133;color:#2196F3" : "#222;color:#888"}">${s.status}</span>
+          <div class="cyber-finding-info"><p class="cyber-finding-title">${s.scan_type}</p><p class="cyber-finding-meta">${new Date(s.created_at).toLocaleDateString("fr-CA")}</p></div>
+        </div>`).join("")}
+    </div>
+    <div class="cyber-overview-card">
+      <h4 class="cyber-panel-title">Compagnies</h4>
+      ${d.companies.length === 0 ? '<p class="cyber-empty"><span class="cyber-empty-icon">🏢</span><br>Aucune compagnie</p>' :
+        d.companies.slice(0, 5).map(c => `<div class="cyber-company-row">
+          <span class="cyber-company-name">${escapeHtml(c.company_name)}</span>
+          <span class="cyber-company-badge" style="background:${c.verification_status === "verified" ? "#002200;color:#4CAF50" : c.verification_status === "rejected" ? "#330000;color:#FF4444" : "#222;color:#888"}">${c.verification_status}</span>
+        </div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function cyberRenderFindings(el, d) {
+  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+  const sorted = d.findings.slice().sort((a, b) => (sevOrder[a.severity] ?? 5) - (sevOrder[b.severity] ?? 5));
+  const badgeColors = { critical: "#330000;color:#FF4444", high: "#331A00;color:#FF9800", medium: "#332B00;color:#FFC107", low: "#002200;color:#4CAF50", info: "#001133;color:#2196F3" };
+  const statusColors = { open: "#330000;color:#FF4444", acknowledged: "#332B00;color:#FFC107", resolved: "#002200;color:#4CAF50", false_positive: "#222;color:#888" };
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<p class="cyber-empty"><span class="cyber-empty-icon">🛡️</span><br>Aucun finding enregistré</p>';
+    return;
+  }
+  el.innerHTML = `<div class="cyber-findings-list">${sorted.map(f => `<div class="cyber-finding-row">
+    <span class="cyber-finding-badge" style="background:${badgeColors[f.severity] || "#222;color:#888"}">${f.severity.toUpperCase()}</span>
+    <div class="cyber-finding-info">
+      <p class="cyber-finding-title">${escapeHtml(f.title)}</p>
+      ${f.description ? `<p class="cyber-finding-meta">${escapeHtml(f.description).substring(0, 120)}</p>` : ""}
+      ${f.source_name ? `<p class="cyber-finding-meta">Source: ${escapeHtml(f.source_name)}</p>` : ""}
+    </div>
+    <span class="cyber-finding-badge" style="background:${statusColors[f.status] || "#222;color:#888"}">${f.status}</span>
+    ${f.status === "open" ? `<button class="cyber-finding-notify" style="border:1px solid #FF9800;color:#FF9800" onclick="cyberNotifyFinding('${f.id}')">Notifier</button>` : ""}
+  </div>`).join("")}</div>`;
+}
+
+function cyberRenderMandates(el, d) {
+  const _dl = state.lang === "en" ? "en-CA" : "fr-CA";
+  if (d.mandates.length === 0) {
+    el.innerHTML = '<p class="cyber-empty"><span class="cyber-empty-icon">📋</span><br>Aucun mandat</p>';
+    return;
+  }
+  el.innerHTML = `<div class="cyber-mandates-grid">${d.mandates.map(m => {
+    const start = m.starts_at ? new Date(m.starts_at).toLocaleDateString(_dl) : "—";
+    const end = m.ends_at ? new Date(m.ends_at).toLocaleDateString(_dl) : "—";
+    const max = m.max_employees_to_scan || 0;
+    const scanned = m.scanned_count || 0;
+    const pct = max > 0 ? Math.round(scanned / max * 100) : 0;
+    const statusBg = m.status === "active" ? "#002200;color:#4CAF50" : m.status === "completed" ? "#001133;color:#2196F3" : m.status === "expired" ? "#330000;color:#FF4444" : "#222;color:#888";
+    return `<div class="cyber-mandate-card">
+      <div class="cyber-mandate-head">
+        <div><p class="cyber-mandate-num">${m.mandate_number}</p><p class="cyber-mandate-title">${escapeHtml(m.title)}</p></div>
+        <span class="cyber-mandate-status" style="background:${statusBg}">${m.status}</span>
+      </div>
+      <p class="cyber-mandate-co">${start} → ${end}</p>
+      ${max > 0 ? `<div class="cyber-mandate-bar"><div class="cyber-mandate-fill" style="width:${pct}%"></div></div><p class="cyber-mandate-pct">${scanned}/${max} scannés (${pct}%)</p>` : ""}
+      ${m.notes ? `<p class="cyber-finding-meta" style="margin-top:6px">${escapeHtml(m.notes)}</p>` : ""}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function cyberRenderCompanies(el, d) {
+  if (d.companies.length === 0) {
+    el.innerHTML = '<p class="cyber-empty"><span class="cyber-empty-icon">🏢</span><br>Aucune compagnie</p>';
+    return;
+  }
+  el.innerHTML = `<div class="cyber-companies-list">${d.companies.map(c => {
+    const bg = c.verification_status === "verified" ? "#002200;color:#4CAF50" : c.verification_status === "rejected" ? "#330000;color:#FF4444" : "#222;color:#888";
+    return `<div class="cyber-company-row">
+      <div>
+        <p class="cyber-company-name">${escapeHtml(c.company_name)}</p>
+        ${c.contact_name ? `<p class="cyber-finding-meta">${escapeHtml(c.contact_name)}${c.contact_email ? " · " + escapeHtml(c.contact_email) : ""}</p>` : ""}
+        ${c.domain ? `<p class="cyber-finding-meta">${escapeHtml(c.domain)}</p>` : ""}
+      </div>
+      <span class="cyber-company-badge" style="background:${bg}">${c.verification_status}</span>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+async function cyberNotifyFinding(id) {
+  const sb = state.supabase?.client;
+  if (!sb) return;
+  const { error } = await sb.from("cyber_findings").update({ notified_at: new Date().toISOString() }).eq("id", id);
+  if (error) { alert("Erreur: " + error.message); return; }
+  alert("Notification envoyée.");
+  await loadCyberDashboard();
+}
+
+(function initCyberTabs() {
+  const tabs = document.getElementById("cyberTabs");
+  if (!tabs) return;
+  tabs.addEventListener("click", e => {
+    const tab = e.target.closest(".cyber-tab");
+    if (tab && tab.dataset.tab) cyberRenderTab(tab.dataset.tab);
+  });
 })();
 
 /* ================= PWA INSTALL ================= */

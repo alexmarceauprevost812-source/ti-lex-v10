@@ -1485,6 +1485,95 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
 }
 .sec-chat-send-btn:hover{background:rgba(255,107,53,.2)}
 
+/* ---- Cyber Dashboard ---- */
+.sec-grid{grid-template-columns:repeat(5,1fr)}
+.cyber-sev-bar{
+  background:#1e1e2e;border:1px solid #2a2a3c;border-radius:12px;
+  padding:14px 18px;margin-bottom:18px;
+}
+.cyber-sev-label{margin:0 0 8px;font-size:.7rem;color:#555;text-transform:uppercase;letter-spacing:1.5px}
+.cyber-sev-track{display:flex;gap:3px;height:8px;border-radius:4px;overflow:hidden}
+.cyber-sev-legend{display:flex;gap:14px;margin-top:8px}
+.cyber-sev-legend span{font-size:.7rem;font-weight:600}
+.cyber-tabs{
+  display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid #2a2a3c;
+}
+.cyber-tab{
+  padding:8px 16px;background:transparent;border:none;
+  border-bottom:2px solid transparent;color:#555;font-size:.82rem;
+  cursor:pointer;font-weight:400;transition:all .15s;
+}
+.cyber-tab.active{border-bottom-color:#00BFFF;color:#00BFFF;font-weight:700}
+.cyber-tab:hover{color:#aaa}
+.cyber-tab-badge{
+  font-size:.65rem;background:#330000;color:#FF4444;padding:1px 6px;
+  border-radius:10px;margin-left:4px;font-weight:700;
+}
+.cyber-tab-content{min-height:100px;margin-bottom:20px}
+.cyber-panel{
+  background:#1e1e2e;border:1px solid #2a2a3c;border-radius:12px;padding:16px;
+}
+.cyber-panel-title{
+  margin:0 0 12px;font-size:.72rem;color:#888;text-transform:uppercase;
+  letter-spacing:1.5px;font-weight:700;
+}
+.cyber-panel-title.critical{color:#FF6666}
+.cyber-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cyber-finding-row{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:#0D0D1A;border-radius:8px;margin-bottom:6px;
+}
+.cyber-finding-sev{flex-shrink:0;font-size:1rem}
+.cyber-finding-info{flex:1;min-width:0}
+.cyber-finding-title{
+  margin:0;font-size:.82rem;font-weight:600;color:#EEE;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cyber-finding-meta{margin:2px 0 0;font-size:.68rem;color:#555}
+.cyber-finding-badge{
+  padding:2px 8px;border-radius:16px;font-size:.62rem;
+  font-weight:700;letter-spacing:.5px;white-space:nowrap;
+}
+.cyber-finding-notify{
+  padding:3px 10px;background:transparent;border-radius:6px;
+  font-size:.7rem;cursor:pointer;
+}
+.cyber-finding-notify:hover{opacity:.8}
+.cyber-mandate-card{
+  background:#111;border:1px solid #2a2a3c;border-radius:12px;padding:14px;
+  margin-bottom:10px;
+}
+.cyber-mandate-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.cyber-mandate-num{font-size:.72rem;color:#00BFFF;font-family:var(--mono)}
+.cyber-mandate-title{font-size:.88rem;font-weight:700;color:#EEE;margin:2px 0}
+.cyber-mandate-co{font-size:.7rem;color:#555}
+.cyber-mandate-status{
+  padding:3px 10px;border-radius:16px;font-size:.62rem;font-weight:700;
+}
+.cyber-mandate-bar{background:#0A0A0A;border-radius:4px;height:6px;overflow:hidden;margin-top:6px}
+.cyber-mandate-fill{height:100%;background:#00BFFF;border-radius:4px;transition:width .5s}
+.cyber-mandate-pct{font-size:.65rem;color:#444;margin-top:4px}
+.cyber-company-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid #1A1A1A;
+}
+.cyber-company-name{font-size:.85rem;color:#DDD;font-weight:600}
+.cyber-company-badge{
+  font-size:.62rem;padding:2px 10px;border-radius:16px;font-weight:700;
+}
+.cyber-sev-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.cyber-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cyber-overview-card{background:#1e1e2e;border:1px solid #2a2a3c;border-radius:12px;padding:16px}
+.cyber-findings-list,.cyber-companies-list{display:flex;flex-direction:column;gap:4px}
+.cyber-mandates-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cyber-empty{text-align:center;padding:40px;color:#333;font-size:.85rem}
+.cyber-empty-icon{font-size:2.5rem;margin-bottom:8px}
+@media(max-width:768px){
+  .sec-grid{grid-template-columns:repeat(2,1fr)!important}
+  .cyber-grid-2{grid-template-columns:1fr}
+  .cyber-overview-grid,.cyber-mandates-grid{grid-template-columns:1fr}
+}
+
 /* ---- SOW Form & List ---- */
 .btn-outline{background:transparent;border:1px solid var(--orange);color:var(--orange);
   padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s}

@@ -551,12 +551,29 @@
           <p class="muted">Agent ti-lex-AL · scan & conformité. Une autorisation signée (SOW) est requise avant tout scan.</p>
         </div>
       </div>
-      <div class="sec-grid">
-        <div class="sec-card"><h3>Autorisations</h3><p class="big" id="sowCount">0</p><span class="muted">SOW actifs</span></div>
-        <div class="sec-card"><h3>Scans</h3><p class="big" id="scanCount">—</p><span class="muted" id="scanLabel">en attente d'autorisation</span></div>
-        <div class="sec-card"><h3>Findings</h3><p class="big" id="findingCount">—</p><span class="muted">aucun</span></div>
-        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">scan_authorizations</span></div>
+      <div class="sec-grid" id="secStatsGrid">
+        <div class="sec-card"><h3>Mandats actifs</h3><p class="big" id="cyberMandatesActive" style="color:#00BFFF">0</p><span class="muted">mandats</span></div>
+        <div class="sec-card"><h3>Critiques ouverts</h3><p class="big" id="cyberCriticalOpen" style="color:#FF4444">0</p><span class="muted">findings</span></div>
+        <div class="sec-card"><h3>Cie vérifiées</h3><p class="big" id="cyberCompaniesVerified" style="color:#4CAF50">0</p><span class="muted">compagnies</span></div>
+        <div class="sec-card"><h3>Scans aujourd'hui</h3><p class="big" id="cyberScansToday" style="color:#FF9800">0</p><span class="muted" id="scanLabel">scans</span></div>
+        <div class="sec-card"><h3>Formations</h3><p class="big" id="cyberFormationPending" style="color:#9C27B0">0</p><span class="muted">en attente</span></div>
       </div>
+
+      <!-- Severity distribution bar -->
+      <div class="cyber-sev-bar" id="cyberSevBar" style="display:none">
+        <p class="cyber-sev-label">Répartition findings — <span id="cyberSevTotal">0</span> total</p>
+        <div class="cyber-sev-track" id="cyberSevTrack"></div>
+        <div class="cyber-sev-legend" id="cyberSevLegend"></div>
+      </div>
+
+      <!-- Dashboard tabs -->
+      <div class="cyber-tabs" id="cyberTabs">
+        <button class="cyber-tab active" data-tab="overview">Vue d'ensemble</button>
+        <button class="cyber-tab" data-tab="findings">Findings <span id="cyberTabCritBadge" class="cyber-tab-badge" style="display:none"></span></button>
+        <button class="cyber-tab" data-tab="mandates">Mandats</button>
+        <button class="cyber-tab" data-tab="companies">Compagnies</button>
+      </div>
+      <div class="cyber-tab-content" id="cyberTabContent"></div>
 
       <!-- Bouton + Nouveau SOW -->
       <div style="display:flex;gap:10px;margin:18px 0 10px">
