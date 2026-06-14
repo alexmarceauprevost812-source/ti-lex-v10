@@ -663,6 +663,233 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* BOUTON DÉMO */
+    .tilex-btn-demo {
+      background: transparent;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      padding: 16px 40px;
+      font-size: 1.1em;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      font-family: 'Bebas Neue', sans-serif;
+    }
+    .tilex-btn-demo:hover {
+      background: #ffffff;
+      color: #0a0a0a;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+    }
+    /* OVERLAY MODALE DÉMO */
+    #tilexDemoOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0,0,0,0.95);
+      overflow-y: auto;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #tilexDemoOverlay.open { display: block; }
+    .tilex-demo-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+      color: #ffffff;
+    }
+    .tilex-demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0 40px;
+      border-bottom: 3px solid #ff7f27;
+      margin-bottom: 50px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .tilex-demo-header h1 {
+      font-size: clamp(1.6em, 3vw, 2.4em);
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .tilex-demo-header h1 span { color: #ff7f27; }
+    .tilex-demo-fermer {
+      background: #ff7f27;
+      color: #000;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .tilex-demo-fermer:hover {
+      background: #ffb366;
+      transform: scale(1.05);
+    }
+    .tilex-demo-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #333;
+      padding-bottom: 16px;
+    }
+    .tilex-demo-tab {
+      background: transparent;
+      border: 2px solid #555;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+    }
+    .tilex-demo-tab:hover { border-color: #ff7f27; color: #ff7f27; }
+    .tilex-demo-tab.actif {
+      background: #ff7f27;
+      border-color: #ff7f27;
+      color: #000;
+      box-shadow: 0 0 20px rgba(255,127,39,0.35);
+    }
+    .tilex-demo-panneau { display: none; animation: tilexFadeIn 0.4s ease; }
+    .tilex-demo-panneau.actif { display: block; }
+    @keyframes tilexFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .tilex-demo-schemas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 40px;
+    }
+    .tilex-demo-card {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .tilex-demo-card:hover {
+      border-color: #ff7f27;
+      box-shadow: 0 0 28px rgba(255,127,39,0.2);
+      transform: translateY(-4px);
+    }
+    .tilex-demo-card h3 {
+      color: #ff7f27;
+      font-size: 1.2em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tilex-demo-scenarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .tilex-scenario-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 22px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.3s ease;
+      color: #fff;
+      width: 100%;
+    }
+    .tilex-scenario-btn:hover, .tilex-scenario-btn.actif {
+      border-color: #ff7f27;
+      background: #242424;
+      box-shadow: 0 0 22px rgba(255,127,39,0.2);
+    }
+    .tilex-scenario-btn .s-icon { font-size: 2em; margin-bottom: 10px; display: block; }
+    .tilex-scenario-btn .s-titre { color: #ff7f27; font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+    .tilex-scenario-btn .s-desc { color: #aaa; font-size: 0.88em; line-height: 1.5; margin-bottom: 12px; }
+    .tilex-badge-menace {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 700;
+      color: #000;
+    }
+    .tilex-badge-menace.critique { background: #ff4444; color: #fff; }
+    .tilex-badge-menace.eleve    { background: #ff7f27; }
+    .tilex-badge-menace.moyen    { background: #fbbf24; }
+    .tilex-analyse-result {
+      background: #1a1a1a;
+      border: 2px solid #ff7f27;
+      border-radius: 12px;
+      padding: 30px;
+      margin-top: 30px;
+      animation: tilexFadeIn 0.5s ease;
+    }
+    .tilex-analyse-result h3 { color: #ff7f27; font-size: 1.3em; margin-bottom: 16px; }
+    .tilex-result-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      font-size: 0.95em;
+    }
+    .tilex-result-check { color: #ff7f27; font-weight: 700; flex-shrink: 0; }
+    .tilex-result-green { color: #10b981; font-weight: 700; flex-shrink: 0; }
+    .tilex-demo-flux {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .tilex-flux-item {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 22px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .tilex-flux-item:hover { border-color: #ff7f27; box-shadow: 0 0 20px rgba(255,127,39,0.15); }
+    .tilex-flux-num {
+      background: #ff7f27;
+      color: #000;
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3em; font-weight: 700;
+      margin: 0 auto 12px;
+    }
+    .tilex-flux-titre { color: #ff7f27; font-weight: 700; margin-bottom: 6px; }
+    .tilex-flux-desc  { color: #888; font-size: 0.88em; line-height: 1.5; }
+    .tilex-demo-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .tilex-stat-box {
+      background: #1a1a1a;
+      border: 2px solid #ff7f27;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+    }
+    .tilex-stat-num { color: #ff7f27; font-size: 2.4em; font-weight: 700; margin-bottom: 8px; }
+    .tilex-stat-lbl { color: #aaa; font-weight: 600; font-size: 0.95em; }
+    @media (max-width: 600px) {
+      .tilex-demo-tabs { gap: 8px; }
+      .tilex-demo-tab  { padding: 8px 14px; font-size: 0.85em; }
+      .tilex-demo-header h1 { font-size: 1.4em; }
+    }
   </style>
 </head>
 <body>
@@ -721,6 +948,9 @@
       <button class="btn btn-filled" onclick="showRegister()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
         INSCRIPTION
+      </button>
+      <button class="tilex-btn-demo" onclick="tilexOuvrirDemo()">
+        🎬 DÉMO
       </button>
     </div>
 
@@ -1306,6 +1536,254 @@
     if (isIOS || isSamsung) btn.classList.remove("hidden");
     window.addEventListener("appinstalled", () => { btn.classList.add("hidden"); deferredPrompt = null; });
   })();
+  </script>
+
+  <!-- MODALE DÉMO — AGENT TI-LEX CYBERSÉCURITÉ -->
+  <div id="tilexDemoOverlay">
+    <div class="tilex-demo-wrap">
+      <div class="tilex-demo-header">
+        <h1>🛡️ Démo Agent <span>ti-lex</span> Cybersécurité</h1>
+        <button class="tilex-demo-fermer" onclick="tilexFermerDemo()">✕ Fermer</button>
+      </div>
+      <div class="tilex-demo-tabs">
+        <button class="tilex-demo-tab actif" onclick="tilexTab(this,'schemas')">📊 Schémas</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'scenarios')">🎯 Scénarios</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'flux')">⚙️ Flux de Travail</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'stats')">📈 Statistiques</button>
+      </div>
+      <!-- PANNEAU: SCHÉMAS -->
+      <div id="tilex-pan-schemas" class="tilex-demo-panneau actif">
+        <div class="tilex-demo-schemas">
+          <div class="tilex-demo-card">
+            <h3>🏗️ Architecture 3 Couches</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <defs>
+                <marker id="da1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
+                <marker id="da2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+              </defs>
+              <rect x="10" y="10" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">COUCHE DÉTECTION</text>
+              <text x="180" y="62" text-anchor="middle" fill="#aaa" font-size="11">Capteurs · Logs · Flux Réseau</text>
+              <line x1="180" y1="80" x2="180" y2="105" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
+              <rect x="10" y="107" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="137" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">AGENT IA — Traitement</text>
+              <text x="180" y="159" text-anchor="middle" fill="#aaa" font-size="11">Analyse · Classification · Scoring</text>
+              <line x1="180" y1="177" x2="180" y2="202" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
+              <rect x="10" y="204" width="340" height="70" rx="8" fill="none" stroke="#10b981" stroke-width="2.5"/>
+              <text x="180" y="234" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">COUCHE RÉACTION</text>
+              <text x="180" y="256" text-anchor="middle" fill="#aaa" font-size="11">Quarantaine · Isolation · Alertes</text>
+            </svg>
+          </div>
+          <div class="tilex-demo-card">
+            <h3>🧠 Moteur de Décision</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <defs>
+                <marker id="db1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
+                <marker id="db2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff4444"/></marker>
+                <marker id="db3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+              </defs>
+              <circle cx="180" cy="35" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="12" font-weight="bold">ENTRÉE</text>
+              <line x1="180" y1="63" x2="180" y2="88" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <rect x="55" y="90" width="250" height="60" rx="8" fill="#111" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="116" text-anchor="middle" fill="#ff7f27" font-size="13" font-weight="bold">MOTEUR DE DÉCISION</text>
+              <text x="180" y="138" text-anchor="middle" fill="#aaa" font-size="10">Patterns · Risque · Scoring IA</text>
+              <line x1="90" y1="150" x2="55" y2="205" stroke="#ff4444" stroke-width="2" marker-end="url(#db2)"/>
+              <line x1="180" y1="150" x2="180" y2="205" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <line x1="270" y1="150" x2="305" y2="205" stroke="#10b981" stroke-width="2" marker-end="url(#db3)"/>
+              <circle cx="50" cy="232" r="28" fill="none" stroke="#ff4444" stroke-width="2"/>
+              <text x="50" y="228" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">CRIT-</text>
+              <text x="50" y="242" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">IQUE</text>
+              <circle cx="180" cy="232" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="236" text-anchor="middle" fill="#ff7f27" font-size="9" font-weight="bold">MOYEN</text>
+              <circle cx="310" cy="232" r="28" fill="none" stroke="#10b981" stroke-width="2"/>
+              <text x="310" y="236" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">BAS</text>
+              <text x="50" y="276" text-anchor="middle" fill="#ff4444" font-size="9">Isoler</text>
+              <text x="180" y="276" text-anchor="middle" fill="#ff7f27" font-size="9">Alerter</text>
+              <text x="310" y="276" text-anchor="middle" fill="#10b981" font-size="9">Monitor</text>
+            </svg>
+          </div>
+          <div class="tilex-demo-card">
+            <h3>⏱️ Temps de Réponse</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <text x="180" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Détection → Neutralisation</text>
+              <text x="180" y="50" text-anchor="middle" fill="#aaa" font-size="10">Réponse automatique complète</text>
+              <line x1="30" y1="140" x2="330" y2="140" stroke="#333" stroke-width="3"/>
+              <circle cx="55" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="140" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="225" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="310" cy="140" r="13" fill="#10b981"/>
+              <text x="55" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">0ms</text>
+              <text x="140" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">200ms</text>
+              <text x="225" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">800ms</text>
+              <text x="310" y="118" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">&lt; 2s</text>
+              <text x="55" y="162" text-anchor="middle" fill="#aaa" font-size="10">Détection</text>
+              <text x="140" y="162" text-anchor="middle" fill="#aaa" font-size="10">Analyse</text>
+              <text x="225" y="162" text-anchor="middle" fill="#aaa" font-size="10">Décision</text>
+              <text x="310" y="162" text-anchor="middle" fill="#10b981" font-size="10">✅ Résolu</text>
+              <path d="M 55 95 Q 182 68 310 95" fill="none" stroke="#ff7f27" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <text x="182" y="84" text-anchor="middle" fill="#ff7f27" font-size="10">⚡ &lt; 2 secondes</text>
+              <rect x="30" y="195" width="300" height="42" rx="6" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4,4"/>
+              <text x="180" y="213" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">Agent ti-lex IA: &lt; 2 secondes</text>
+              <text x="180" y="230" text-anchor="middle" fill="#666" font-size="10">Analyste humain: ~45 minutes</text>
+              <text x="180" y="268" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">1 350× plus rapide qu'un humain</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <!-- PANNEAU: SCÉNARIOS -->
+      <div id="tilex-pan-scenarios" class="tilex-demo-panneau">
+        <div class="tilex-demo-scenarios">
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'phishing')">
+            <span class="s-icon">🎣</span>
+            <div class="s-titre">Phishing</div>
+            <div class="s-desc">Email malveillant tentant de voler des identifiants</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'ransomware')">
+            <span class="s-icon">🔐</span>
+            <div class="s-titre">Ransomware</div>
+            <div class="s-desc">Chiffrement malveillant de fichiers système en cours</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'ddos')">
+            <span class="s-icon">⚡</span>
+            <div class="s-titre">Attaque DDoS</div>
+            <div class="s-desc">Débordement de trafic depuis sources multiples</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'fuite')">
+            <span class="s-icon">🔓</span>
+            <div class="s-titre">Fuite de Données</div>
+            <div class="s-desc">Exfiltration non-autorisée de fichiers sensibles</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'injection')">
+            <span class="s-icon">💉</span>
+            <div class="s-titre">Injection SQL</div>
+            <div class="s-desc">Exploitation d'une vulnérabilité applicative</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'acces')">
+            <span class="s-icon">👤</span>
+            <div class="s-titre">Accès Non-Autorisé</div>
+            <div class="s-desc">Tentative d'authentification compromise</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+        </div>
+        <div id="tilexAnalyseResult" style="display:none;"></div>
+      </div>
+      <!-- PANNEAU: FLUX DE TRAVAIL -->
+      <div id="tilex-pan-flux" class="tilex-demo-panneau">
+        <div class="tilex-demo-flux">
+          <div class="tilex-flux-item"><div class="tilex-flux-num">1</div><div class="tilex-flux-titre">🔍 Détection</div><div class="tilex-flux-desc">Identification d'une activité suspecte via capteurs et logs</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">2</div><div class="tilex-flux-titre">📥 Collecte</div><div class="tilex-flux-desc">Rassemblement du contexte et des données pertinentes</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">3</div><div class="tilex-flux-titre">🧠 Analyse IA</div><div class="tilex-flux-desc">Traitement par les modèles d'apprentissage de l'agent</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">4</div><div class="tilex-flux-titre">⚡ Classification</div><div class="tilex-flux-desc">Type de menace identifié et score de risque calculé</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">5</div><div class="tilex-flux-titre">🎯 Décision</div><div class="tilex-flux-desc">Sélection automatique de la meilleure réponse</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">6</div><div class="tilex-flux-titre">🛡️ Exécution</div><div class="tilex-flux-desc">Application des mesures de sécurité en temps réel</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">7</div><div class="tilex-flux-titre">📢 Alerte</div><div class="tilex-flux-desc">Notification immédiate aux administrateurs</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">8</div><div class="tilex-flux-titre">📋 Rapport</div><div class="tilex-flux-desc">Documentation complète générée pour audit</div></div>
+        </div>
+      </div>
+      <!-- PANNEAU: STATISTIQUES -->
+      <div id="tilex-pan-stats" class="tilex-demo-panneau">
+        <div class="tilex-demo-stats">
+          <div class="tilex-stat-box"><div class="tilex-stat-num">99.8%</div><div class="tilex-stat-lbl">Taux de Détection</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">&lt; 2s</div><div class="tilex-stat-lbl">Temps de Réponse</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">24/7</div><div class="tilex-stat-lbl">Surveillance Continue</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">5</div><div class="tilex-stat-lbl">Types de Menaces</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">100%</div><div class="tilex-stat-lbl">Automatisation</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">1350×</div><div class="tilex-stat-lbl">Plus Rapide qu'un Humain</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const TILEX_SCENARIOS = {
+    phishing: {
+      titre: "🎣 Phishing Détecté",
+      actions: ["Mise en quarantaine automatique du message","Blocage du domaine expéditeur suspect","Scan des boîtes aux lettres similaires","Notification envoyée à l'équipe IT"],
+      recommandations: ["Activer l'authentification multi-facteurs (MFA)","Former les utilisateurs à reconnaître le phishing","Mettre à jour les filtres anti-phishing"],
+      timeline: [{t:"0ms",a:"Email reçu — analyse initiale démarrée"},{t:"180ms",a:"Pattern phishing identifié (94% confiance)"},{t:"620ms",a:"URL malveillante validée via base de données"},{t:"940ms",a:"Quarantaine appliquée automatiquement"},{t:"< 2s",a:"Rapport généré et envoyé à l'administrateur"}]
+    },
+    ransomware: {
+      titre: "🔐 Ransomware Bloqué",
+      actions: ["Isolation immédiate du poste du réseau","Blocage des processus suspects en cours","Snapshot d'urgence des fichiers créé","Alertes critiques envoyées à tous les admins"],
+      recommandations: ["Restaurer depuis la dernière sauvegarde","Analyser le vecteur d'intrusion initial","Implémenter une sauvegarde immuable (immutable backup)"],
+      timeline: [{t:"0ms",a:"Activité anormale détectée sur le système de fichiers"},{t:"210ms",a:"342 fichiers/seconde modifiés — seuil critique dépassé"},{t:"580ms",a:"Pattern de chiffrement identifié — variant LockBit"},{t:"810ms",a:"Isolation du poste initiée"},{t:"< 2s",a:"847 fichiers protégés via snapshot d'urgence"}]
+    },
+    ddos: {
+      titre: "⚡ Attaque DDoS Neutralisée",
+      actions: ["Activation du rate limiting automatique","Redirection vers CDN de sécurité","Blocage géographique des IPs non-autorisées","Cache agressif des contenus statiques activé"],
+      recommandations: ["Implémenter un service DDoS professionnel (ex: Cloudflare)","Augmenter la bande passante disponible","Configurer des règles de pare-feu avancées"],
+      timeline: [{t:"0ms",a:"Pic de trafic anormal détecté"},{t:"150ms",a:"45 000 req/min depuis 127 IPs différentes confirmé"},{t:"490ms",a:"Attaque DDoS volumétrique identifiée"},{t:"720ms",a:"Mitigation activée automatiquement"},{t:"< 2s",a:"Trafic stabilisé — attaque neutralisée"}]
+    },
+    fuite: {
+      titre: "🔓 Fuite de Données Stoppée",
+      actions: ["Blocage immédiat de la connexion externe","Coupure de la session utilisateur compromise","Logs de transfert sauvegardés pour enquête","Notification au DPO (Data Protection Officer)"],
+      recommandations: ["Lancer une enquête médico-légale (forensique)","Notifier les autorités de protection des données","Renforcer les politiques DLP (Data Loss Prevention)"],
+      timeline: [{t:"0ms",a:"Transfert de fichiers volumineux vers IP externe détecté"},{t:"200ms",a:"Classification: 89% des fichiers sont confidentiels"},{t:"560ms",a:"Destination non-approuvée identifiée et confirmée"},{t:"830ms",a:"Connexion bloquée immédiatement"},{t:"< 2s",a:"Rapport généré — 156 enregistrements potentiellement exposés"}]
+    },
+    injection: {
+      titre: "💉 Injection SQL Bloquée",
+      actions: ["Requête bloquée avant toute exécution en base","IP source mise en surveillance renforcée","Tentative enregistrée dans les logs de sécurité","Règles WAF mises à jour automatiquement"],
+      recommandations: ["Utiliser des requêtes paramétrées (Prepared Statements)","Valider et nettoyer toutes les entrées utilisateur","Effectuer des tests de pénétration réguliers"],
+      timeline: [{t:"0ms",a:"Requête entrante analysée par le WAF"},{t:"95ms",a:"Payload SQL détecté : \"1' OR '1'='1\""},{t:"310ms",a:"Validation de sécurité échouée — injection confirmée"},{t:"580ms",a:"Requête bloquée — exception levée proprement"},{t:"< 2s",a:"IP source enregistrée pour monitoring renforcé"}]
+    },
+    acces: {
+      titre: "👤 Accès Non-Autorisé Bloqué",
+      actions: ["Compte verrouillé après 5 tentatives échouées","Session suspecte terminée immédiatement","Authentification renforcée demandée","Alerte envoyée au propriétaire du compte"],
+      recommandations: ["Activer l'authentification à deux facteurs (2FA)","Mettre en place une politique de mots de passe forts","Surveiller les connexions depuis des emplacements inhabituels"],
+      timeline: [{t:"0ms",a:"5e tentative de connexion échouée détectée"},{t:"120ms",a:"Comportement de force brute identifié"},{t:"380ms",a:"Géolocalisation suspecte — IP étrangère non reconnue"},{t:"710ms",a:"Compte temporairement verrouillé"},{t:"< 2s",a:"Email d'alerte envoyé au propriétaire du compte"}]
+    }
+  };
+  function tilexOuvrirDemo() {
+    document.getElementById('tilexDemoOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function tilexFermerDemo() {
+    document.getElementById('tilexDemoOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function tilexTab(btn, panneau) {
+    document.querySelectorAll('.tilex-demo-tab').forEach(function(b) { b.classList.remove('actif'); });
+    document.querySelectorAll('.tilex-demo-panneau').forEach(function(p) { p.classList.remove('actif'); });
+    btn.classList.add('actif');
+    document.getElementById('tilex-pan-' + panneau).classList.add('actif');
+  }
+  function tilexShowScenario(btn, type) {
+    document.querySelectorAll('.tilex-scenario-btn').forEach(function(b) { b.classList.remove('actif'); });
+    btn.classList.add('actif');
+    var s = TILEX_SCENARIOS[type];
+    var el = document.getElementById('tilexAnalyseResult');
+    el.style.display = 'block';
+    el.innerHTML =
+      '<div class="tilex-analyse-result">' +
+        '<h3>' + s.titre + '</h3>' +
+        '<p style="color:#aaa;margin-bottom:18px;font-size:0.95em;line-height:1.7;">L\'agent ti-lex a détecté et neutralisé automatiquement cette menace en moins de 2 secondes.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">' +
+          '<div><p style="color:#ff7f27;font-weight:700;margin-bottom:12px;">⚡ Actions Automatiques</p>' +
+            s.actions.map(function(a) { return '<div class="tilex-result-row"><span class="tilex-result-check">✓</span><span>' + a + '</span></div>'; }).join('') +
+          '</div>' +
+          '<div><p style="color:#10b981;font-weight:700;margin-bottom:12px;">💡 Recommandations</p>' +
+            s.recommandations.map(function(r) { return '<div class="tilex-result-row"><span class="tilex-result-green">→</span><span>' + r + '</span></div>'; }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-top:24px;background:#0a0a0a;border-radius:8px;padding:20px;border-left:3px solid #ff7f27;">' +
+          '<p style="color:#ff7f27;font-weight:700;margin-bottom:14px;">📋 Chronologie de l\'Incident</p>' +
+          s.timeline.map(function(item) { return '<div style="display:flex;gap:16px;margin-bottom:10px;font-size:0.9em;"><span style="color:#ff7f27;font-weight:700;min-width:55px;flex-shrink:0;">' + item.t + '</span><span style="color:#ddd;">' + item.a + '</span></div>'; }).join('') +
+        '</div>' +
+      '</div>';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') tilexFermerDemo();
+  });
+  document.getElementById('tilexDemoOverlay').addEventListener('click', function(e) {
+    if (e.target === this) tilexFermerDemo();
+  });
   </script>
 
   <!-- Loi 25 : consentement + documents légaux -->
