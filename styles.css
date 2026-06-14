@@ -482,6 +482,9 @@ body[data-theme="light"] .chat-code-block .syn-env{color:#c2410c;font-weight:600
 .agent-pick-info{display:flex;flex-direction:column;gap:1px;min-width:0}
 .agent-pick-name{font-family:var(--marker);font-weight:400;font-size:.9rem;letter-spacing:.3px}
 .agent-pick-desc{font-size:.7rem;color:var(--txt-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agent-pick-del{margin-left:auto;font-size:.85rem;padding:4px 6px;border-radius:6px;
+  opacity:.5;transition:all .2s;flex-shrink:0}
+.agent-pick-del:hover{opacity:1;background:rgba(239,68,68,.15)}
 body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.15)}
 
 .send{width:42px;height:42px;border:none;border-radius:13px;background:var(--orange);
