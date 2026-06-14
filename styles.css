@@ -494,10 +494,6 @@ body[data-theme="light"] .agent-picker-menu{box-shadow:0 12px 40px rgba(0,0,0,.1
   background:rgba(239,68,68,.08);color:#ef4444;font-size:16px;font-weight:700;
   cursor:pointer;flex-shrink:0;transition:var(--t)}
 .chat-cancel-btn:hover{background:rgba(239,68,68,.15);border-color:#ef4444}
-.save-convo-btn{width:42px;height:42px;border:1px solid #1e293b;border-radius:13px;
-  background:transparent;font-size:18px;cursor:pointer;flex-shrink:0;transition:var(--t)}
-.save-convo-btn:hover{border-color:#22d3ee;background:rgba(34,211,238,.06)}
-.save-convo-btn.saved{border-color:#3ecf8e;color:#3ecf8e}
 .cerv-save-btn-chat{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
   font-size:.7rem;color:#475569;background:transparent;border:1px solid transparent;
   border-radius:8px;cursor:pointer;transition:all .2s;font-weight:600}
