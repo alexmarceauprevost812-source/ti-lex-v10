@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Comic+Neue:ital,wght@0,400;0,700;1,400&family=Baloo+2:wght@400;500;600;700&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;600;700&family=Chakra+Petch:wght@400;500;600;700&family=Teko:wght@500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
@@ -26,7 +26,9 @@
       <span></span><span></span><span></span>
     </button>
     <div class="brand">
-      <img src="logo.png" alt="ti-lex-AL" class="brand-logo">
+      <video class="brand-avatar-vid" autoplay muted loop playsinline>
+        <source src="assets/avatar-ia.mp4" type="video/mp4">
+      </video>
       <span class="brand-name">ti-lex<span class="orange">-AL</span></span>
     </div>
   </div>
@@ -36,39 +38,47 @@
       <svg viewBox="0 0 24 24" class="ico"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
       <span class="lbl">Chat</span>
     </button>
-    <button class="nav-item" data-view="codex">
+    <div class="chat-sub-nav" id="chatSubNav">
+      <button class="chat-sub-item active" data-sub="convos">
+        <span class="sub-branch">├</span>
+        <span class="sub-lbl sub-spotlight" data-word="Conversations">Conversations</span>
+      </button>
+      <button class="chat-sub-item" data-sub="favs">
+        <span class="sub-branch">├</span>
+        <span class="sub-lbl sub-spotlight" data-word="Favoris">Favoris</span>
+      </button>
+      <button class="chat-sub-item" data-sub="projs">
+        <span class="sub-branch">├</span>
+        <span class="sub-lbl sub-spotlight" data-word="Projet">Projet</span>
+      </button>
+      <button class="chat-sub-item" data-sub="cerveau">
+        <span class="sub-branch">└</span>
+        <span class="sub-lbl sub-spotlight" data-word="Cerveau">Cerveau</span>
+      </button>
+    </div>
+    <button class="nav-item nav-codex" data-view="codex">
       <svg viewBox="0 0 24 24" class="ico"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
-      <span class="lbl">Codex</span>
+      <span class="lbl codex-matrix-lbl"><span class="cdx-letter" data-idx="0">C</span><span class="cdx-letter" data-idx="1">o</span><span class="cdx-letter" data-idx="2">d</span><span class="cdx-letter" data-idx="3">e</span><span class="cdx-letter" data-idx="4">x</span></span>
     </button>
-    <button class="nav-item nav-secure" data-view="security">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <button class="nav-item nav-finance" data-view="finance">
+      <svg viewBox="0 0 60 28" class="ico fin-ecg-svg">
+        <path class="fin-ecg-line" d="M0,14 L8,14 L12,14 L14,6 L17,22 L20,4 L23,20 L26,14 L30,14 L34,14 L36,6 L39,22 L42,4 L45,20 L48,14 L52,14 L60,14" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="fin-ecg-dot" cx="0" cy="14" r="2.5"/>
+      </svg>
+      <span class="lbl fin-glow"><span class="fin-letter" style="--i:0">F</span><span class="fin-letter" style="--i:1">i</span><span class="fin-letter" style="--i:2">n</span><span class="fin-letter" style="--i:3">a</span><span class="fin-letter" style="--i:4">n</span><span class="fin-letter" style="--i:5">c</span><span class="fin-letter" style="--i:6">e</span></span>
+    </button>
+    <button class="nav-item nav-creer-agent" id="navCreerAgent">
+      <video class="nav-video-ico" autoplay muted loop playsinline>
+        <source src="assets/creer-agent-icon.mp4" type="video/mp4">
+      </video>
+      <span class="lbl ca-lbl"><span class="ca-lt" style="--d:0">C</span><span class="ca-lt" style="--d:1">r</span><span class="ca-lt" style="--d:2">é</span><span class="ca-lt" style="--d:3">e</span><span class="ca-lt" style="--d:4">r</span><span class="ca-sp">&nbsp;</span><span class="ca-lt" style="--d:5">A</span><span class="ca-lt" style="--d:6">g</span><span class="ca-box"><span class="ca-lt ca-lt-box" style="--d:7">e</span><span class="ca-lt ca-lt-box" style="--d:8">n</span><span class="ca-lt ca-lt-box" style="--d:9">t</span></span></span>
+    </button>
+<button class="nav-item nav-secure" data-view="security">
+      <span class="nav-emoji">🛡️</span>
       <span class="lbl">Sécurité</span>
       <span class="badge">AL 7.8</span>
     </button>
-    <button class="nav-item" data-view="studio">
-      <svg viewBox="0 0 24 24" class="ico"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      <span class="lbl">Studio</span>
-    </button>
   </nav>
-
-  <!-- Historique conversations chat -->
-  <div class="connectors" style="border-top:none;margin-top:4px;padding-top:0">
-    <p class="conn-title">Conversations</p>
-    <div id="chatConvos" class="chat-convos"></div>
-    <button class="conn-btn" id="newChatConv" style="border-color:var(--orange);color:var(--orange);justify-content:center;font-weight:700">+ Nouvelle</button>
-  </div>
-
-  <!-- Conversations du projet GitHub -->
-  <div class="connectors proj-convs-section" id="projConvsSection">
-    <div class="proj-section-header">
-      <svg viewBox="0 0 24 24" class="proj-section-ico"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-      <p class="conn-title">Projet</p>
-    </div>
-    <span class="proj-conv-repo-label" id="projConvLabel">Aucun projet connecté</span>
-    <div class="proj-conv-list-wrap" id="projConvList">
-      <p class="muted" style="font-size:.75rem;padding:4px 0">Connecte GitHub dans le Codex pour voir tes conversations de projet.</p>
-    </div>
-  </div>
 
   <!-- INSTALLER L'APP -->
   <button class="install-btn hidden" id="installBtn">
@@ -76,7 +86,19 @@
     <span>Installer l'app</span>
   </button>
 
-  <!-- PARAMÈTRES TOUT EN BAS -->
+  <!-- FORFAIT -->
+  <button class="nav-item nav-bottom nav-forfaits" data-view="forfaits">
+    <svg viewBox="0 0 24 24" class="ico"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <span class="lbl"><span class="forf-spot" style="--i:0">F</span><span class="forf-spot" style="--i:1">o</span><span class="forf-spot" style="--i:2">r</span><span class="forf-spot" style="--i:3">f</span><span class="forf-spot" style="--i:4">a</span><span class="forf-spot" style="--i:5">i</span><span class="forf-spot" style="--i:6">t</span><span class="nav-dollar">$</span></span>
+  </button>
+
+  <!-- COMPTE -->
+  <button class="nav-item nav-bottom nav-account" data-view="account" id="accountBtn">
+    <svg viewBox="0 0 24 24" class="ico"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span class="lbl">Compte</span>
+  </button>
+
+  <!-- PARAMÈTRES -->
   <button class="nav-item nav-bottom" data-view="settings" id="settingsBtn">
     <svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">Paramètres</span>
@@ -93,7 +115,9 @@
       <span></span><span></span><span></span>
     </button>
     <div class="agent-id">
-      <img src="logo.png" alt="" class="agent-mini-logo">
+      <video class="topbar-avatar-vid" autoplay muted loop playsinline>
+        <source src="assets/avatar-ia.mp4" type="video/mp4">
+      </video>
       <div>
         <h1 id="viewTitle">Agent AL</h1>
         <p class="status"><span class="status-dot"></span>En ligne · ti-lex-AL v10</p>
@@ -108,6 +132,20 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 12 0v2"/></svg>
         <span class="agents-toggle-name" id="agentsToggleName">ti-lex-AL</span>
       </button>
+      <div class="conv-actions-wrap">
+        <button class="conv-dots-btn" id="convDotsBtn" title="Options">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+        </button>
+        <div class="conv-dots-dropdown hidden" id="convDotsDropdown">
+          <button class="conv-dd-item" data-act="fav"><span class="conv-dd-ico">★</span><span class="conv-dd-txt">Ajouter aux favoris</span></button>
+          <button class="conv-dd-item" data-act="proj"><span class="conv-dd-ico">📁</span><span class="conv-dd-txt">Ajouter au projet</span></button>
+          <button class="conv-dd-item" data-act="pin"><span class="conv-dd-ico">📌</span><span class="conv-dd-txt">Épingler</span></button>
+          <button class="conv-dd-item" data-act="rename"><span class="conv-dd-ico">✎</span><span class="conv-dd-txt">Renommer</span></button>
+          <button class="conv-dd-item" data-act="save"><span class="conv-dd-ico">💾</span><span class="conv-dd-txt">Sauvegarder</span></button>
+          <hr class="conv-dd-sep">
+          <button class="conv-dd-item conv-dd-danger" data-act="delete"><span class="conv-dd-ico">✕</span><span class="conv-dd-txt">Supprimer</span></button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -169,11 +207,158 @@
     <aside class="agents-panel" id="agentsPanel">
       <div class="agents-panel-head">
         <h3>Choisir un agent</h3>
-        <button class="agents-close" id="agentsClose" aria-label="Fermer">×</button>
+        <div class="agents-head-actions">
+          <button class="agents-create-btn" id="agentsCreateBtn" title="Créer un agent">+</button>
+          <button class="agents-close" id="agentsClose" aria-label="Fermer">×</button>
+        </div>
       </div>
       <div class="agents-list" id="agentsList"></div>
+
+      <!-- Formulaire Créer Agent -->
+      <div class="agents-form hidden" id="agentsForm">
+        <h3 class="agents-form-title" id="agentsFormTitle">Créer un agent</h3>
+        <div class="agents-form-avatar">
+          <div class="agents-form-photo" id="agentsFormPhoto">🤖</div>
+          <button class="agents-form-photo-btn" id="agentsFormPhotoBtn">📷 Photo</button>
+          <input type="file" id="agentsFormFileInput" accept="image/*" hidden>
+        </div>
+        <div class="agents-form-emojis" id="agentsFormEmojis"></div>
+        <input type="text" class="agents-form-input" id="agentsFormName" placeholder="Nom de l'agent *">
+        <input type="text" class="agents-form-input" id="agentsFormDesc" placeholder="Description courte">
+        <textarea class="agents-form-input agents-form-textarea" id="agentsFormPrompt" rows="4" placeholder="Personnalité / instructions…"></textarea>
+        <div class="agents-form-caps" id="agentsFormCaps"></div>
+        <div class="agents-form-actions">
+          <button class="agents-form-save" id="agentsFormSave">Créer l'agent</button>
+          <button class="agents-form-cancel" id="agentsFormCancel">Annuler</button>
+        </div>
+      </div>
     </aside>
     <div class="agents-overlay" id="agentsOverlay"></div>
+
+    <!-- ===== STUDIO PREVIEW (slide-in panel) ===== -->
+    <div class="studio-preview" id="studioPreview">
+      <div class="sp-head">
+        <div class="sp-head-left">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span class="sp-title">Studio</span>
+        </div>
+        <div class="sp-head-right">
+          <button class="sp-btn sp-code-toggle" id="spCodeToggle" title="Voir le code">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </button>
+          <button class="sp-btn sp-download" id="spDownload" title="Télécharger HTML">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button class="sp-btn sp-close" id="spClose" title="Fermer">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="sp-body" id="spBody">
+        <iframe id="spFrame" class="sp-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+        <textarea id="spSource" class="sp-source hidden" spellcheck="false" readonly></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE CONVERSATIONS ===== -->
+  <section class="view view-convos" id="view-convos">
+    <div class="convos-page">
+      <h2 class="convos-page-title">Conversations</h2>
+      <div class="convos-search-wrap">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" class="convos-search" id="convosSearch" placeholder="Rechercher une conversation">
+      </div>
+      <div class="convos-tabs">
+        <button class="convos-tab active" data-filter="all">Toutes</button>
+        <button class="convos-tab" data-filter="favs">★ Favoris</button>
+        <button class="convos-tab" data-filter="projs">📁 Projet</button>
+      </div>
+      <div class="convos-list" id="convosListCenter"></div>
+      <div class="convos-fab-wrap">
+        <div class="convos-fab-mascot" id="convosMascot">
+          <img src="assets/mascot-open.jpg" alt="" class="mascot-eyes mascot-open">
+          <img src="assets/mascot-wink.jpg" alt="" class="mascot-eyes mascot-wink">
+        </div>
+        <button class="convos-new-btn" id="convosNewBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Nouvelle conversation</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE PROJETS ===== -->
+  <section class="view view-projects" id="view-projects">
+    <!-- Liste des projets -->
+    <div class="proj-list-page" id="projListPage">
+      <h2 class="proj-page-title">Projets</h2>
+      <div class="proj-search-wrap">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" class="proj-search" id="projSearch" placeholder="Rechercher des projets">
+      </div>
+      <div class="proj-items" id="projItems"></div>
+      <div class="proj-fab-wrap" id="projFabWrap">
+        <div class="proj-fab-mascot" id="projFabMascot">
+          <img src="assets/mascot-open.jpg" alt="" class="mascot-eyes mascot-open">
+          <img src="assets/mascot-wink.jpg" alt="" class="mascot-eyes mascot-wink">
+        </div>
+        <button class="proj-new-btn" id="projNewBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Nouveau projet</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Vue détaillée d'un projet -->
+    <div class="proj-detail-page hidden" id="projDetailPage">
+      <div class="proj-detail-top">
+        <button class="proj-back-btn" id="projBackBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <div class="proj-detail-dots-wrap">
+          <button class="proj-detail-dots" id="projDetailDots">⋮</button>
+          <div class="proj-detail-menu hidden" id="projDetailMenu">
+            <button class="proj-dm-item" data-act="rename">✎ Renommer</button>
+            <button class="proj-dm-item" data-act="fav">★ Favori</button>
+            <button class="proj-dm-item proj-dm-danger" data-act="delete">✕ Supprimer</button>
+          </div>
+        </div>
+      </div>
+      <h2 class="proj-detail-name" id="projDetailName"></h2>
+      <span class="proj-privacy-badge">🔒 Privé</span>
+
+      <div class="proj-memo-card" id="projMemoCard">
+        <h4 class="proj-memo-title">Mémoire</h4>
+        <textarea class="proj-memo-input" id="projMemoInput" rows="3" placeholder="Décris le contexte du projet..."></textarea>
+      </div>
+
+      <div class="proj-cards-row">
+        <div class="proj-info-card" id="projFilesCard">
+          <h4>Connaissances du projet</h4>
+          <div class="proj-files-list" id="projFilesList"></div>
+          <button class="proj-upload-btn" id="projUploadBtn">+ Ajouter un fichier</button>
+          <input type="file" id="projFileInput" multiple hidden>
+        </div>
+        <div class="proj-info-card">
+          <h4>Instructions personnalisées</h4>
+          <textarea class="proj-instructions" id="projInstructions" rows="3" placeholder="Ajouter des instructions..."></textarea>
+        </div>
+      </div>
+
+      <h3 class="proj-convs-title">Conversations récentes</h3>
+      <div class="proj-convs-list" id="projConvsList"></div>
+      <div class="proj-fab-wrap proj-conv-fab" id="projConvFabWrap">
+        <div class="proj-fab-mascot" id="projConvMascot">
+          <img src="assets/mascot-open.jpg" alt="" class="mascot-eyes mascot-open">
+          <img src="assets/mascot-wink.jpg" alt="" class="mascot-eyes mascot-wink">
+        </div>
+        <button class="proj-new-conv-btn" id="projNewConvBtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Nouvelle conversation</span>
+        </button>
+      </div>
+    </div>
   </section>
 
   <!-- ===== VUE CODEX ===== -->
@@ -228,6 +413,34 @@
         <div class="codex-sb-convos" id="codexConvos">
           <p class="muted" style="font-size:.78rem;padding:6px 0">Aucune conversation</p>
         </div>
+      </div>
+
+      <!-- Fichiers (illimité, tous formats) -->
+      <div class="codex-sb-section codex-sb-files-section" id="codexFilesSection">
+        <div class="codex-files-header">
+          <p class="codex-sb-label">Fichiers</p>
+          <div class="codex-files-btns">
+            <button class="codex-file-add-btn" id="codexFileAddBtn" title="Ajouter fichiers">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button class="codex-file-add-btn" id="codexFileNewBtn" title="Nouveau fichier">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15h6"/></svg>
+            </button>
+          </div>
+        </div>
+        <input type="file" id="codexFilePickerAll" multiple hidden>
+        <div class="codex-sb-files" id="codexFiles">
+          <div class="codex-files-drop" id="codexFilesDrop">
+            <span>Glisse des fichiers ici</span>
+          </div>
+        </div>
+        <div class="codex-files-count" id="codexFilesCount"></div>
+        <div class="codex-deploy-actions" id="codexDeployActions" style="display:none">
+          <button class="codex-errstudio-btn" id="codexErrorStudioBtn">🛠️ Error Studio</button>
+          <button class="codex-deploy-btn" id="codexDeployGh">☢️☢️🤝👾🥸 Deploy</button>
+          <button class="codex-zip-btn" id="codexDownloadZip">Telecharger ZIP</button>
+        </div>
+        <div class="codex-deploy-status" id="codexDeployStatus"></div>
       </div>
 
       <!-- Bouton retour accueil -->
@@ -288,24 +501,79 @@
       <input type="file" id="codexFileAny" multiple hidden>
       <input type="file" id="codexFileZip" accept=".zip,application/zip" hidden>
     </div>
-  </section>
 
-  <!-- ===== VUE SÉCURITÉ ===== -->
+    <!-- Error Studio panel (right side) -->
+    <div class="es-panel" id="esPanel">
+      <div class="es-header">
+        <div>
+          <h2 class="es-title">🛠️ Error Studio</h2>
+          <p class="es-sub">Validation avant déploiement</p>
+        </div>
+        <button class="es-close" id="esClose" aria-label="Fermer">✕</button>
+      </div>
+      <div class="es-summary" id="esSummary"></div>
+      <div class="es-body" id="esBody"></div>
+      <div class="es-footer">
+        <button class="es-btn es-btn-fix" id="esFixAll" style="display:none">🔧 Fix All</button>
+        <button class="es-btn es-btn-deploy" id="esDeployBtn" style="display:none">✅ Deploy</button>
+        <button class="es-btn es-btn-recheck" id="esRecheck">🔄 Re-check</button>
+        <button class="es-btn es-btn-close" id="esCloseBtn">Fermer</button>
+      </div>
+    </div>
+
+    <!-- Modale Code Reflection -->
+    <div class="cdx-reflect-overlay" id="cdxReflectOverlay">
+      <div class="cdx-reflect-modal">
+        <div class="cdx-reflect-header">
+          <div>
+            <h2 class="cdx-reflect-title">Code Reflection</h2>
+            <p class="cdx-reflect-sub">Contexte complet et explication étape par étape</p>
+          </div>
+          <button class="cdx-reflect-close" id="cdxReflectClose" aria-label="Fermer">✕</button>
+        </div>
+        <div class="cdx-reflect-body" id="cdxReflectBody"></div>
+        <div class="cdx-reflect-footer">
+          <button class="cdx-reflect-btn cdx-reflect-btn-primary" id="cdxReflectCopyAll">⎘ Copier tout le code</button>
+          <button class="cdx-reflect-btn cdx-reflect-btn-secondary" id="cdxReflectCloseBtn">Fermer</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
   <section class="view view-security" id="view-security">
     <div class="sec-wrap">
       <div class="sec-head">
-        <img src="logo.png" class="sec-logo" alt="">
+        <video class="sec-avatar-vid" autoplay muted loop playsinline>
+          <source src="assets/avatar-ia.mp4" type="video/mp4">
+        </video>
         <div>
           <h2>Mode Sécurité <span class="orange">AL 7.8</span></h2>
           <p class="muted">Agent ti-lex-AL · scan & conformité. Une autorisation signée (SOW) est requise avant tout scan.</p>
         </div>
       </div>
-      <div class="sec-grid">
-        <div class="sec-card"><h3>Autorisations</h3><p class="big" id="sowCount">0</p><span class="muted">SOW actifs</span></div>
-        <div class="sec-card"><h3>Scans</h3><p class="big" id="scanCount">—</p><span class="muted" id="scanLabel">en attente d'autorisation</span></div>
-        <div class="sec-card"><h3>Findings</h3><p class="big" id="findingCount">—</p><span class="muted">aucun</span></div>
-        <div class="sec-card"><h3>RBAC</h3><p class="big ok">OK</p><span class="muted">scan_authorizations</span></div>
+      <div class="sec-grid" id="secStatsGrid">
+        <div class="sec-card"><h3>Mandats actifs</h3><p class="big" id="cyberMandatesActive" style="color:#00BFFF">0</p><span class="muted">mandats</span></div>
+        <div class="sec-card"><h3>Critiques ouverts</h3><p class="big" id="cyberCriticalOpen" style="color:#FF4444">0</p><span class="muted">findings</span></div>
+        <div class="sec-card"><h3>Cie vérifiées</h3><p class="big" id="cyberCompaniesVerified" style="color:#4CAF50">0</p><span class="muted">compagnies</span></div>
+        <div class="sec-card"><h3>Scans aujourd'hui</h3><p class="big" id="cyberScansToday" style="color:#FF9800">0</p><span class="muted" id="scanLabel">scans</span></div>
+        <div class="sec-card"><h3>Formations</h3><p class="big" id="cyberFormationPending" style="color:#9C27B0">0</p><span class="muted">en attente</span></div>
       </div>
+
+      <!-- Severity distribution bar -->
+      <div class="cyber-sev-bar" id="cyberSevBar" style="display:none">
+        <p class="cyber-sev-label">Répartition findings — <span id="cyberSevTotal">0</span> total</p>
+        <div class="cyber-sev-track" id="cyberSevTrack"></div>
+        <div class="cyber-sev-legend" id="cyberSevLegend"></div>
+      </div>
+
+      <!-- Dashboard tabs -->
+      <div class="cyber-tabs" id="cyberTabs">
+        <button class="cyber-tab active" data-tab="overview">Vue d'ensemble</button>
+        <button class="cyber-tab" data-tab="findings">Findings <span id="cyberTabCritBadge" class="cyber-tab-badge" style="display:none"></span></button>
+        <button class="cyber-tab" data-tab="mandates">Mandats</button>
+        <button class="cyber-tab" data-tab="companies">Compagnies</button>
+      </div>
+      <div class="cyber-tab-content" id="cyberTabContent"></div>
 
       <!-- Bouton + Nouveau SOW -->
       <div style="display:flex;gap:10px;margin:18px 0 10px">
@@ -374,10 +642,31 @@
       <!-- Liste des SOW -->
       <div id="sowList" class="sow-list"></div>
 
+      <!-- Agent Cybersécurité Chat -->
+      <div class="sec-chat-section">
+        <div class="sec-chat-head">
+          <h3>🔐 Agent Cybersécurité</h3>
+          <span class="sec-chat-status" id="secChatStatus">En ligne</span>
+        </div>
+        <div class="sec-chat-messages" id="secChatMessages">
+          <div class="sec-msg agent">
+            <span class="sec-msg-avatar">🤖</span>
+            <div class="sec-msg-body">Bonjour! Je suis l'Agent Cybersécurité de ti-lex. Je peux scanner ta plateforme, détecter les failles et générer un rapport détaillé. Tape <strong>"scanner"</strong> ou clique le bouton pour commencer.</div>
+          </div>
+        </div>
+        <div class="sec-chat-composer">
+          <input type="text" id="secChatInput" placeholder="Tape un message ou 'scanner'…">
+          <button class="sec-chat-scan-btn" id="secChatScanBtn" title="Lancer un scan">🔍 Scanner</button>
+          <button class="sec-chat-send-btn" id="secChatSendBtn" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="sec-note">
-        <strong>Rappel légal (Art. 342.1 C.cr.) :</strong> tout scan doit reposer sur un mandat autorisé,
-        un programme de bug bounty, ou de la divulgation responsable. Le mode Sécurité bloque les scans
-        tant qu'aucune autorisation valide n'est enregistrée.
+        <strong>// Rappel légal</strong> (<code>Art. 342.1 C.cr.</code>) : tout scan doit reposer sur un mandat autorisé,
+        un programme de <code>bug_bounty</code>, ou de la divulgation responsable. Le mode Sécurité bloque les scans
+        tant qu'aucune <code>authorization.status === "active"</code> n'est enregistrée.
       </div>
     </div>
   </section>
@@ -407,15 +696,556 @@
             Push
           </button>
         </div>
-        <textarea class="studio-code" id="studioCode" spellcheck="false" placeholder="Sélectionne un fichier à gauche…"></textarea>
+        <div class="studio-code-wrap">
+          <pre class="studio-code-highlight" id="studioCodeHighlight" aria-hidden="true"></pre>
+          <textarea class="studio-code" id="studioCode" spellcheck="false" placeholder="Sélectionne un fichier à gauche…"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE FORFAITS ===== -->
+  <section class="view view-forfaits" id="view-forfaits">
+    <video class="fp-video-bg" autoplay muted loop playsinline>
+      <source src="/assets/forfaits-bg.mp4" type="video/mp4">
+    </video>
+    <div class="fp-wrap">
+      <header class="fp-header">
+        <h1 class="fp-page-title">Forfaits <span class="fp-dollar-sign">$$$</span></h1>
+        <div class="fp-dollars" aria-hidden="true">
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+          <span class="fp-coin">&#x1FA99;</span>
+        </div>
+        <p class="fp-kicker">ti-lex-AL v10</p>
+        <h2 class="fp-title">Choisis ton <span class="fp-title-orange">forfait</span></h2>
+        <p class="fp-sub">Chaque forfait te donne accès à l'agent AL, au Codex et au mode Sécurité. La seule différence, c'est jusqu'où tu veux aller.</p>
+      </header>
+
+      <div class="fp-toggle" id="fpToggle">
+        <button class="fp-toggle-btn on" data-period="monthly" onclick="fpSetPeriod('monthly')">Mensuel</button>
+        <button class="fp-toggle-btn" data-period="annual" onclick="fpSetPeriod('annual')">Annuel</button>
+        <span class="fp-glide" id="fpGlide"></span>
+        <span class="fp-save">-20%</span>
+      </div>
+
+      <div class="fp-currency-toggle" id="fpCurrencyToggle">
+        <button class="fp-cur-btn on" data-cur="cad" onclick="fpSetCurrency('cad')">🇨🇦 CAD</button>
+        <button class="fp-cur-btn" data-cur="usd" onclick="fpSetCurrency('usd')">🇺🇸 USD</button>
+      </div>
+
+      <div class="fp-scroll">
+      <div class="fp-grid">
+        <!-- FLUX -->
+        <div class="fp-card fp-show">
+          <div class="fp-tier"><span class="fp-ico">⚡</span> FLUX</div>
+          <p class="fp-pitch">Pour débuter avec l'IA. Idéal si tu travailles solo.</p>
+          <div class="fp-price-row">
+            <span class="fp-cur">$</span>
+            <span class="fp-amt" data-monthly="19" data-annual="15" data-monthly-usd="14" data-annual-usd="11">19</span>
+            <span class="fp-per">/ mois</span>
+          </div>
+          <p class="fp-billed" data-monthly="" data-annual="Facturé 180$/an">&#160;</p>
+          <ul class="fp-feats">
+            <li><span class="fp-ck yes">&#10003;</span> <strong>40</strong> messages / fenêtre 12h</li>
+            <li><span class="fp-ck yes">&#10003;</span> Reset minuit + midi</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>5</strong> agents IA · Sonnet 4.6</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>2</strong> projets Codex · GitHub</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>10</strong> sessions Codex</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>1 GB</strong> stockage</li>
+            <li><span class="fp-ck yes">&#10003;</span> Marketplace agents</li>
+            <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Opus</li>
+            <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Publier ses agents</li>
+          </ul>
+          <button class="fp-cta fp-cta-solid" data-plan="flux" onclick="subscribeToplan('flux')">Commencer avec FLUX →</button>
+        </div>
+
+        <!-- SURGE -->
+        <div class="fp-card fp-feat fp-show">
+          <span class="fp-badge">Le plus populaire</span>
+          <div class="fp-tier"><span class="fp-ico">🔥</span> SURGE</div>
+          <p class="fp-pitch">Pour les créateurs sérieux. Freelancers, équipes, agences.</p>
+          <div class="fp-price-row">
+            <span class="fp-cur">$</span>
+            <span class="fp-amt" data-monthly="39" data-annual="31" data-monthly-usd="29" data-annual-usd="23">39</span>
+            <span class="fp-per">/ mois</span>
+          </div>
+          <p class="fp-billed" data-monthly="" data-annual="Facturé 372$/an">&#160;</p>
+          <ul class="fp-feats">
+            <li><span class="fp-ck yes">&#10003;</span> <strong>100</strong> messages / fenêtre 12h</li>
+            <li><span class="fp-ck yes">&#10003;</span> Reset minuit + midi</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>15</strong> agents IA · Sonnet 4.6</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>5</strong> projets Codex · Vercel</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>50</strong> sessions Codex</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>5 GB</strong> stockage</li>
+            <li><span class="fp-ck yes">&#10003;</span> Publier ses agents</li>
+            <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Opus</li>
+            <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Support prioritaire</li>
+          </ul>
+          <button class="fp-cta fp-cta-solid" data-plan="surge" onclick="subscribeToplan('surge')">Commencer avec SURGE →</button>
+        </div>
+
+        <!-- APEX -->
+        <div class="fp-card fp-show">
+          <span class="fp-badge fp-badge-ult">Sur mesure</span>
+          <div class="fp-tier"><span class="fp-ico">🚀</span> APEX</div>
+          <p class="fp-pitch">Puissance totale. Agents illimités + Opus 4.8.</p>
+          <div class="fp-price-row">
+            <span class="fp-cur">$</span>
+            <span class="fp-amt" data-monthly="79" data-annual="63" data-monthly-usd="59" data-annual-usd="47">79</span>
+            <span class="fp-per">/ mois</span>
+          </div>
+          <p class="fp-billed" data-monthly="" data-annual="Facturé 756$/an">&#160;</p>
+          <ul class="fp-feats">
+            <li><span class="fp-ck yes">&#10003;</span> <strong>250</strong> messages / fenêtre 12h</li>
+            <li><span class="fp-ck yes">&#10003;</span> Reset minuit + midi</li>
+            <li><span class="fp-ck yes">&#10003;</span> Agents IA <strong>illimités</strong></li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>100</strong> messages Opus 4.8</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>20</strong> projets Codex illimités</li>
+            <li><span class="fp-ck yes">&#10003;</span> <strong>10 GB</strong> stockage</li>
+            <li><span class="fp-ck yes">&#10003;</span> Support prioritaire</li>
+          </ul>
+          <button class="fp-cta fp-cta-solid" data-plan="apex" onclick="subscribeToplan('apex')">Commencer avec APEX →</button>
+        </div>
+      </div>
+      </div>
+
+      <div class="fp-trust">
+        <span><span class="fp-td">&#x1F512;</span> Paiement sécurisé Stripe</span>
+        <span><span class="fp-td">&#x267B;</span> Sans engagement · Annule quand tu veux</span>
+        <span><span class="fp-td">&#x1F550;</span> Reset minuit + midi</span>
+        <span><span class="fp-td">&#x1F1E8;&#x1F1E6;</span> CAD / USD</span>
+      </div>
+
+      <div class="fp-faq">
+        <h2 class="fp-faq-title">Questions fréquentes</h2>
+        <div class="fp-q" onclick="this.classList.toggle('open')">
+          <button><span>Est-ce que je peux changer de forfait en cours de route?</span><span class="fp-plus">+</span></button>
+          <div class="fp-ans">Oui! Tu peux upgrader ou downgrader à tout moment. Le prorata est automatiquement calculé par Stripe.</div>
+        </div>
+        <div class="fp-q" onclick="this.classList.toggle('open')">
+          <button><span>Qu'est-ce qui arrive si j'annule?</span><span class="fp-plus">+</span></button>
+          <div class="fp-ans">Tu gardes l'accès jusqu'à la fin de ta période payée. Aucune pénalité, aucun frais caché.</div>
+        </div>
+        <div class="fp-q" onclick="this.classList.toggle('open')">
+          <button><span>C'est quoi la différence entre SURGE et APEX?</span><span class="fp-plus">+</span></button>
+          <div class="fp-ans">Le forfait APEX offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.</div>
+        </div>
+        <div class="fp-q" onclick="this.classList.toggle('open')">
+          <button><span>Les prix sont en dollars canadiens?</span><span class="fp-plus">+</span></button>
+          <div class="fp-ans">Oui, tous les prix sont en CAD. Les taxes applicables sont ajoutées au moment du paiement.</div>
+        </div>
+      </div>
+
+      <div class="fp-footer">
+        <p>Taxes en sus. Annule quand tu veux, sans frais cachés.</p>
+        <button class="fp-manage-btn" id="manageSubscriptionBtn" onclick="manageSubscription()">Gérer mon abonnement</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE DEUXIÈME CERVEAU ===== -->
+  <section class="view view-cerveau" id="view-cerveau">
+    <div class="cerv-container">
+      <header class="cerv-header">
+        <svg class="cerv-emblem" width="42" height="42" viewBox="0 0 40 40">
+          <defs><linearGradient id="cervDisc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1e1e"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient></defs>
+          <circle cx="20" cy="20" r="18.5" fill="url(#cervDisc)" stroke="rgba(255,122,26,.5)" stroke-width="1"/>
+          <path d="M20 8a9 9 0 0 0-5.8 15.9c.6.5 1 1.3 1.1 2.1h9.4c.1-.8.5-1.6 1.1-2.1A9 9 0 0 0 20 8zM15 28h10M17 31h6" fill="none" stroke="#ff7a1a" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <div class="cerv-header-text">
+          <div class="cerv-title">Deuxième Cerveau</div>
+          <div class="cerv-subtitle">
+            <span class="cerv-status-dot"></span>
+            Notes &amp; IA
+            <span class="cerv-sep">·</span>
+            <span>Agent AL</span>
+          </div>
+        </div>
+        <button class="cerv-toggle-chat" id="cervToggleChat" title="Chat IA">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </button>
+      </header>
+
+      <div class="cerv-body">
+        <!-- PANNEAU NOTES -->
+        <div class="cerv-notes-panel" id="cervNotesPanel">
+          <div class="cerv-toolbar">
+            <div class="cerv-search-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" class="cerv-search" id="cervSearch" placeholder="Rechercher des notes…">
+            </div>
+            <button class="cerv-new-btn" id="cervNewBtn" title="Nouvelle note">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+          <div class="cerv-tags-bar" id="cervTagsBar"></div>
+          <div class="cerv-notes-list" id="cervNotesList"></div>
+        </div>
+
+        <!-- ÉDITEUR DE NOTE -->
+        <div class="cerv-editor hidden" id="cervEditor">
+          <div class="cerv-editor-top">
+            <button class="cerv-back-btn" id="cervBackBtn">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="cerv-editor-actions">
+              <button class="cerv-ai-btn" id="cervAiTagsBtn" title="Suggestion de tags IA">🏷️ Tags IA</button>
+              <button class="cerv-ai-btn" id="cervAiSumBtn" title="Résumer avec IA">📝 Résumer</button>
+              <button class="cerv-del-btn" id="cervDelBtn" title="Supprimer">🗑️</button>
+            </div>
+          </div>
+          <input type="text" class="cerv-title-input" id="cervTitleInput" placeholder="Titre de la note…">
+          <div class="cerv-tags-edit" id="cervTagsEdit">
+            <div class="cerv-tags-list" id="cervTagsList"></div>
+            <input type="text" class="cerv-tag-input" id="cervTagInput" placeholder="Ajouter un tag…">
+          </div>
+          <div class="cerv-summary-wrap hidden" id="cervSummaryWrap">
+            <div class="cerv-summary-label">Résumé IA</div>
+            <div class="cerv-summary-text" id="cervSummaryText"></div>
+          </div>
+          <textarea class="cerv-content-input" id="cervContentInput" placeholder="Écris ta note ici…"></textarea>
+          <button class="cerv-save-btn" id="cervSaveBtn">Enregistrer</button>
+        </div>
+
+        <!-- CHAT IA CERVEAU -->
+        <div class="cerv-chat hidden" id="cervChat">
+          <div class="cerv-chat-head">
+            <span>Chat — Deuxième Cerveau</span>
+            <button class="cerv-chat-close" id="cervChatClose">×</button>
+          </div>
+          <div class="cerv-chat-messages" id="cervChatMessages"></div>
+          <div class="cerv-chat-input-wrap">
+            <textarea class="cerv-chat-input" id="cervChatInput" rows="1" placeholder="Pose une question sur tes notes…"></textarea>
+            <button class="cerv-chat-send" id="cervChatSend" aria-label="Envoyer">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE FINANCE ===== -->
+  <section class="view view-finance" id="view-finance">
+    <div class="fin-container">
+      <header class="fin-header">
+        <svg class="fin-emblem" width="42" height="42" viewBox="0 0 40 40">
+          <defs><linearGradient id="finDisc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e1e1e"/><stop offset="1" stop-color="#0b0b0b"/></linearGradient></defs>
+          <circle cx="20" cy="20" r="18.5" fill="url(#finDisc)" stroke="rgba(255,122,26,.5)" stroke-width="1"/>
+          <polyline points="10,26.5 17,19.5 22.5,23 30,12.5" fill="none" stroke="#ff7a1a" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="30" cy="12.5" r="2.6" fill="#ff9d52"/>
+        </svg>
+        <div class="fin-header-text">
+          <div class="fin-title">Agent Finance</div>
+          <div class="fin-subtitle">
+            <span class="fin-status-dot"></span>
+            Finances personnelles &amp; crypto
+            <span class="fin-sep">·</span>
+            <span>Produit du Québec</span>
+          </div>
+        </div>
+        <span class="fin-badge">propulsé par Claude</span>
+      </header>
+
+      <div class="fin-messages fin-scroll" id="finMessages">
+        <div class="fin-welcome" id="finWelcome">
+          <div class="fin-welcome-title" id="finTypeTitle"></div>
+          <p class="fin-welcome-sub" id="finTypeSub"></p>
+          <div class="fin-suggestions" id="finSuggestions">
+            <button class="fin-chip" data-q="Bâtir un budget 50/30/20">Bâtir un budget 50/30/20</button>
+            <button class="fin-chip" data-q="CELI ou REER : par où commencer ?">CELI ou REER : par où commencer ?</button>
+            <button class="fin-chip" data-q="Comprendre Bitcoin et Ethereum">Comprendre Bitcoin et Ethereum</button>
+            <button class="fin-chip" data-q="Sécuriser mon portefeuille crypto">Sécuriser mon portefeuille crypto</button>
+            <button class="fin-chip" data-q="Impôt sur mes gains crypto au Québec">Impôt sur mes gains crypto au Québec</button>
+            <button class="fin-chip" data-q="Quelle place donner à la crypto ?">Quelle place donner à la crypto ?</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fin-input-area">
+        <div class="fin-input-wrap">
+          <textarea class="fin-input" id="finInput" rows="1" placeholder="Pose ta question sur tes finances…"></textarea>
+          <button class="fin-send" id="finSend" aria-label="Envoyer" disabled>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 12l15-7-5 15-3.5-5L4 12z" stroke="#140d05" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="fin-disclaimer">Information éducative générale — ne remplace pas un conseil financier personnalisé.</div>
       </div>
     </div>
   </section>
 
   <!-- ===== VUE PARAMÈTRES ===== -->
+  <!-- ===== VUE COMPTE ===== -->
+  <section class="view view-account" id="view-account">
+    <div class="account-wrap">
+      <div class="acct-header">
+        <div class="acct-avatar-wrap">
+          <div class="acct-avatar" id="acctAvatar">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" class="acct-avatar-default" id="acctAvatarDefault"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <img src="" alt="" class="acct-avatar-img hidden" id="acctAvatarImg">
+          </div>
+          <button class="acct-avatar-edit" id="acctAvatarEditBtn" title="Changer la photo">📷</button>
+          <input type="file" id="acctPhotoInput" accept="image/*" hidden>
+        </div>
+        <div class="acct-info">
+          <h2 class="acct-name" id="acctName">Utilisateur</h2>
+          <p class="acct-email" id="acctEmail">—</p>
+        </div>
+        <button class="acct-edit-btn" id="acctEditBtn" title="Modifier le profil">✏️</button>
+      </div>
+
+      <!-- Profil éditable (caché par défaut) -->
+      <div class="acct-card acct-edit-card hidden" id="acctEditCard">
+        <div class="acct-card-head">
+          <span style="font-size:1.2rem">✏️</span>
+          <h3 id="acctEditTitle">Modifier le profil</h3>
+        </div>
+        <label class="acct-field-label" id="acctNameLabel">Nom</label>
+        <input type="text" class="acct-field-input" id="acctNameInput" placeholder="Ton nom…">
+        <label class="acct-field-label" id="acctEmailLabel">Courriel</label>
+        <input type="email" class="acct-field-input" id="acctEmailInput" placeholder="ton@courriel.com">
+        <div class="acct-edit-actions">
+          <button class="acct-save-btn" id="acctSaveBtn">Enregistrer</button>
+          <button class="acct-cancel-btn" id="acctCancelEditBtn">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Abonnement -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <h3 id="acctSubTitle">Abonnement</h3>
+        </div>
+        <div class="acct-plan-row">
+          <span class="acct-plan-badge" id="acctPlanBadge">—</span>
+          <span class="acct-plan-price" id="acctPlanPrice"></span>
+          <span class="acct-plan-status" id="acctPlanStatus">Actif</span>
+        </div>
+        <div class="acct-stat-grid">
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctDaysLeft">—</span>
+            <span class="acct-stat-label" id="acctDaysLabel">Jours restants</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctMsgCount">0</span>
+            <span class="acct-stat-label" id="acctMsgLabel">Messages aujourd'hui</span>
+          </div>
+          <div class="acct-stat">
+            <span class="acct-stat-val" id="acctMsgLimit">—</span>
+            <span class="acct-stat-label" id="acctMsgLimitLabel">Limite / jour</span>
+          </div>
+        </div>
+
+        <!-- Détails du plan -->
+        <div class="acct-plan-details" id="acctPlanDetails">
+          <div class="acct-detail-row">
+            <span id="acctDetailMsgMonthLabel">Messages / mois</span>
+            <span id="acctDetailMsgMonth">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailAgentsLabel">Agents</span>
+            <span id="acctDetailAgents">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailModelsLabel">Modèles</span>
+            <span id="acctDetailModels">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailThinkingLabel">Réflexion</span>
+            <span id="acctDetailThinking">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailCodexLabel">Codex / jour</span>
+            <span id="acctDetailCodex">—</span>
+          </div>
+          <div class="acct-detail-row">
+            <span id="acctDetailImgLabel">Images / jour</span>
+            <span id="acctDetailImg">—</span>
+          </div>
+        </div>
+        <button class="acct-manage-btn" id="acctManageBtn">Gérer mon abonnement</button>
+      </div>
+
+      <!-- Préférences -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09c-.658.003-1.25.396-1.51 1z"/></svg>
+          <h3 id="acctPrefTitle">Préférences</h3>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctLangLabel">Langue</span>
+          <select id="acctLangSelect" class="acct-select">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctThemeLabel">Thème</span>
+          <button class="pill-toggle" id="acctThemeToggle" aria-pressed="false">
+            <span class="pill-knob"></span><span class="pill-txt">Sombre</span>
+          </button>
+        </div>
+        <div class="acct-pref-row">
+          <span id="acctModelLabel">Modèle</span>
+          <span class="acct-model-val" id="acctModelVal">Sonnet 4.6</span>
+        </div>
+      </div>
+
+      <!-- Utilisation -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+          <h3 id="acctUsageTitle">Utilisation</h3>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctUsageText">Messages utilisés</span>
+            <span id="acctUsageVal">0</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctUsageFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctImgText">Images générées</span>
+            <span id="acctImgVal">0</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctImgFill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="acct-usage-bar-wrap">
+          <div class="acct-usage-label">
+            <span id="acctStorageText">Stockage local</span>
+            <span id="acctStorageVal">—</span>
+          </div>
+          <div class="acct-usage-track">
+            <div class="acct-usage-fill" id="acctStorageFill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connexions -->
+      <div class="acct-card">
+        <div class="acct-card-head">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <h3 id="acctConnTitle">Connexions</h3>
+        </div>
+        <div class="acct-conn-row">
+          <span>GitHub</span>
+          <span class="acct-conn-status" id="acctGhStatus">Non connecté</span>
+        </div>
+        <div class="acct-conn-row">
+          <span>Supabase</span>
+          <span class="acct-conn-status" id="acctSbStatus">Non connecté</span>
+        </div>
+        <div class="acct-conn-row">
+          <span>Vercel</span>
+          <span class="acct-conn-status" id="acctVercelStatus">Non connecté</span>
+        </div>
+      </div>
+
+      <!-- Déconnexion -->
+      <button class="acct-logout-btn" id="acctLogoutBtn">Se déconnecter</button>
+    </div>
+  </section>
+
+  <!-- ============ ANIMATIONS ============ -->
+  <section class="view view-animations" id="view-animations">
+    <div class="anim-container">
+      <canvas class="anim-particles" id="animParticles"></canvas>
+
+      <div class="anim-content">
+        <header class="anim-header">
+          <h2 class="anim-title">Animations</h2>
+          <p class="anim-subtitle">Thème sombre élégant · ti-lex-AL</p>
+        </header>
+
+        <!-- Logo animé -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Logo animé</h3>
+          <div class="anim-logo-demo" id="animLogoDemo">
+            <div class="tlx-brain">🧠</div>
+            <div class="anim-logo-letters" id="animLogoLetters"></div>
+            <div class="tlx-gradient-text anim-version">V10</div>
+            <p class="anim-tagline">DEUXIÈME CERVEAU IA · QUÉBEC ⚜️</p>
+          </div>
+          <button class="anim-replay-btn" id="animReplayLogo">↻ Rejouer</button>
+        </div>
+
+        <!-- Badge pulsant -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Badge pulsant</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-badge">PRODUIT DU QUÉBEC ⚜️</span>
+            <span class="tlx-badge">LOI 25</span>
+            <span class="tlx-badge">SÉCURITÉ IA</span>
+          </div>
+        </div>
+
+        <!-- Texte shimmer -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Texte dégradé shimmer</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-gradient-text" style="font-size:clamp(28px,6vw,48px);font-weight:800">ti-lex-AL</span>
+          </div>
+        </div>
+
+        <!-- Bouton CTA -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Bouton CTA doré</h3>
+          <div class="anim-demo-row">
+            <button class="tlx-cta">Commencer maintenant</button>
+          </div>
+        </div>
+
+        <!-- Curseur typewriter -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Curseur machine à écrire</h3>
+          <div class="anim-demo-row">
+            <span class="tlx-typewriter" id="animTypewriter" style="font-size:20px;color:var(--tlx-text);font-family:'Share Tech Mono',monospace"></span>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Loader pulsant</h3>
+          <div class="anim-demo-row">
+            <div class="tlx-loader">🧠</div>
+          </div>
+        </div>
+
+        <!-- Particules or -->
+        <div class="anim-section">
+          <h3 class="anim-section-title">Particules dorées interactives</h3>
+          <p class="anim-hint">Bougez votre souris sur le fond pour interagir</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="view view-settings" id="view-settings">
     <div class="settings-wrap">
       <h2>Paramètres</h2>
+
+      <div class="set-block">
+        <h3>Clé API Anthropic <span class="conn-state" id="apiKeyState">— optionnel</span></h3>
+        <p class="muted">Entre ta propre clé pour appeler Claude directement sans passer par le proxy ti-lex.</p>
+        <input type="password" id="apiKeyInput" class="set-input" placeholder="sk-ant-api03-…">
+        <div class="set-row">
+          <button class="btn-codex" id="apiKeySave" data-w="Enregistr" data-b="er">Enregistrer</button>
+          <button class="btn-codex" id="apiKeyClear" style="border-color:#e53e3e;color:#e53e3e">Effacer</button>
+        </div>
+      </div>
 
       <div class="set-block">
         <h3>Modèle Claude</h3>
@@ -444,10 +1274,12 @@
       </div>
 
       <div class="set-block">
-        <h3>Clé API Anthropic</h3>
-        <p class="muted">Pour le déploiement. <span class="warn">⚠ Ne jamais exposer une vraie clé dans le frontend en production — route via une Edge Function Supabase.</span></p>
-        <input type="password" id="apiKey" class="set-input" placeholder="sk-ant-...">
-        <button class="btn-codex" id="saveKey" data-w="Enregis" data-b="trer">Enregistrer</button>
+        <h3>Langue / Language</h3>
+        <p class="muted">Choisis la langue de l'interface et des réponses de l'agent.</p>
+        <select id="langSelect" class="set-input" aria-label="Choisir la langue" title="Langue">
+          <option value="fr">🇫🇷 Français</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
       </div>
 
       <!-- ===== MÉMOIRE ===== -->
@@ -554,7 +1386,7 @@ if ("serviceWorker" in navigator) {
         if (nw.state === "activated" && navigator.serviceWorker.controller) {
           const b = document.createElement("div");
           b.className = "update-banner";
-          b.innerHTML = 'Mise à jour disponible <button onclick="location.reload()">Rafraîchir</button>';
+          b.innerHTML = (typeof t==="function"?t("updateBanner"):"Mise à jour disponible")+' <button onclick="location.reload()">'+(typeof t==="function"?t("updateRefresh"):"Rafraîchir")+'</button>';
           document.body.appendChild(b);
         }
       });

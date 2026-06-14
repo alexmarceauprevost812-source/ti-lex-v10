@@ -1,88 +1,64 @@
-import Stripe from "https://esm.sh/stripe@18?target=denonext";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Stripe from "npm:stripe@^17";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/cors.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-  apiVersion: "2026-05-27.dahlia" as Stripe.LatestApiVersion,
   httpClient: Stripe.createFetchHttpClient(),
 });
 
-const supabaseAdmin = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  { auth: { persistSession: false } }
-);
+const SITE_URL = Deno.env.get("SITE_URL") ?? "https://ti-lex-v10.vercel.app";
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Non authentifié" }), {
-        status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json({ error: "Non authentifié" }, 401);
 
-    const supabaseClient = createClient(
+    const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      {
-        global: { headers: { Authorization: authHeader } },
-        auth: { persistSession: false },
-      }
+      { global: { headers: { Authorization: authHeader } } },
     );
 
     const {
       data: { user },
-    } = await supabaseClient.auth.getUser();
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Session invalide" }), {
-        status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
-    }
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) return json({ error: "Session invalide" }, 401);
 
-    const { data: customer } = await supabaseAdmin
+    const adminDb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const { data: customer } = await adminDb
       .from("customers")
       .select("stripe_customer_id")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!customer?.stripe_customer_id) {
-      return new Response(
-        JSON.stringify({ error: "Aucun abonnement trouvé" }),
-        {
-          status: 404,
-          headers: { ...CORS, "Content-Type": "application/json" },
-        }
-      );
+      return json({ error: "Aucun abonnement trouvé" }, 404);
     }
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customer.stripe_customer_id,
-      return_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html`,
+      return_url: `${SITE_URL}/app.html`,
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      status: 200,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return json({ url: session.url });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: (err as Error).message }),
-      {
-        status: 500,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      }
-    );
+    console.error("portal error:", err);
+    return json({ error: (err as Error).message }, 500);
   }
 });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ti-lex-v10 — Agent intelligent québécois</title>
+  <title>TI-LEX-AL V10 · Votre Agent Intelligent</title>
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
@@ -11,228 +11,371 @@
   <meta name="theme-color" content="#ff6600">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
     :root {
-      --bg: #000000;
-      --bg-card: #111111;
-      --bg-input: #1a1a1a;
-      --text: #ffffff;
-      --text-secondary: #b0b0b0;
-      --orange: #ff6b00;
-      --orange-light: #ff8c00;
-      --orange-dark: #e55a00;
-      --border: #333333;
-      --error: #ff4444;
-      --success: #00cc66;
+      --orange:    #FF6A00;
+      --orange2:   #FF9A3C;
+      --red:       #C0392B;
+      --dark:      #0A0A0A;
+      --dark2:     #111111;
+      --dark3:     #1A1A1A;
+      --border:    rgba(255,106,0,0.35);
+      --text:      #F0EDE8;
+      --muted:     #888;
+      --radius:    10px;
+      --error:     #ff4444;
+      --success:   #00cc66;
     }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg);
+      background: var(--dark);
       color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       overflow-x: hidden;
     }
 
-    /* Particules dorées/orange */
-    .particles {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    /* ── BACKGROUND ──────────────────────────────────── */
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(192,57,43,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 30% at 80% 80%, rgba(255,106,0,0.10) 0%, transparent 60%),
+        var(--dark);
+      overflow: hidden;
     }
-    .particle {
-      position: absolute; border-radius: 50%;
-      background: rgba(255, 107, 0, 0.15);
-      animation: float 8s ease-in-out infinite;
+    .bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,106,0,0.04) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,106,0,0.04) 40px);
     }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); opacity: 0.2; }
-      50% { transform: translateY(-40px) scale(1.3); opacity: 0.5; }
-    }
-
-    /* Container */
-    .container {
-      position: relative; z-index: 10;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 100vh; padding: 2rem 1rem;
+    canvas#sparks {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
     }
 
-    /* Logo */
-    .logo-wrapper {
-      position: relative; margin-bottom: 2rem;
-      animation: fadeIn 1s ease-out;
-    }
-    .logo-halo {
-      position: absolute; inset: -50px;
-      background: radial-gradient(circle, rgba(255,107,0,0.2) 0%, transparent 60%);
-      border-radius: 50%; animation: pulse 4s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 0.6; }
-      50% { transform: scale(1.2); opacity: 1; }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .logo-img {
-      width: 320px; height: auto;
-      max-height: 220px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 30px rgba(255,107,0,0.4));
-      border-radius: 0.5rem;
-    }
-    @media (min-width: 768px) {
-      .logo-img { width: 420px; max-height: 280px; }
+    /* ── WRAPPER ──────────────────────────────────────── */
+    .wrap {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 480px;
+      padding: 32px 24px 48px;
+      display: flex; flex-direction: column; align-items: center; gap: 28px;
     }
 
-    /* Tagline */
-    .tagline {
-      text-align: center; margin-bottom: 2.5rem;
-      max-width: 500px; animation: fadeInUp 0.8s ease-out 0.3s both;
+    /* ── LOGO CARD ────────────────────────────────────── */
+    .logo-card {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--dark3);
+      box-shadow: 0 0 40px rgba(192,57,43,0.25), 0 0 80px rgba(255,106,0,0.08);
+      animation: logoIn .7s cubic-bezier(.22,1,.36,1) both;
     }
-    .tagline h1 {
-      font-size: 2.8rem; font-weight: 800;
-      margin-bottom: 0.5rem; letter-spacing: -0.03em;
-      text-transform: uppercase;
+    .logo-card img {
+      width: 100%; display: block;
     }
-    .tagline h1 span {
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .logo-fallback {
+      display: none; align-items: center; justify-content: center;
+      height: 220px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px; letter-spacing: 4px;
+      background: linear-gradient(135deg, #C0392B 0%, #FF6A00 50%, #FF9A3C 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .tagline p {
-      font-size: 1.1rem; color: var(--text-secondary);
-      margin-bottom: 0.5rem;
+    .logo-card img[src]~.logo-fallback { display: none; }
+
+    @keyframes logoIn {
+      from { opacity:0; transform: translateY(-24px) scale(.96); }
+      to   { opacity:1; transform: none; }
     }
+
+    /* ── HERO TEXT ────────────────────────────────────── */
+    .hero { text-align: center; animation: fadeUp .6s .15s both; }
+    .hero h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 12vw, 72px);
+      line-height: .95; letter-spacing: 2px;
+    }
+    .hero h1 span { color: var(--orange); }
+    .hero p {
+      margin-top: 10px;
+      font-size: 17px; color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* ── ÉCRITURE FLUIDE ─────────────────────────────── */
+    .tilex-ecriture-section {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      padding: 2vh 4vw 0;
+      width: 100%;
+    }
+    .tilex-titre {
+      font-family: 'Bebas Neue', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.6rem, 9vw, 6.5rem);
+      letter-spacing: 0.04em; line-height: 1;
+      background: linear-gradient(180deg, #fff8e7 0%, #e8d9b0 38%, #b08d4f 60%, #6e4f23 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 18px rgba(255,122,24,0.55)) drop-shadow(0 4px 2px rgba(0,0,0,0.9));
+      animation: tilex-braise 3.2s ease-in-out infinite alternate;
+    }
+    .tilex-v10 {
+      background: linear-gradient(180deg, #ffd34d, #ff7a18 55%, #c41010);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    @keyframes tilex-braise {
+      from { filter: drop-shadow(0 0 14px rgba(255,122,24,0.4)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
+      to   { filter: drop-shadow(0 0 26px rgba(255,160,40,0.75)) drop-shadow(0 4px 2px rgba(0,0,0,0.9)); }
+    }
+    .tilex-filet {
+      width: min(420px, 60vw); height: 2px;
+      margin: 2.5vh 0 3vh;
+      background: linear-gradient(90deg, transparent, #ff7a18, #c41010, #ff7a18, transparent);
+      box-shadow: 0 0 12px rgba(255,122,24,0.6);
+    }
+    .tilex-ecriture {
+      max-width: 760px; width: 100%; text-align: left;
+    }
+    .tilex-ligne {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+      line-height: 1.7; color: #f3ece1;
+      min-height: 1.7em; margin-bottom: 0.4em;
+      text-shadow: 0 0 10px rgba(255,122,24,0.15);
+    }
+    .tilex-curseur {
+      display: inline-block; width: 0.55em; height: 1.1em;
+      margin-left: 2px; vertical-align: text-bottom;
+      background: #ff7a18; box-shadow: 0 0 10px #ff7a18;
+      animation: tilex-clignote 0.85s steps(1) infinite;
+    }
+    @keyframes tilex-clignote { 50% { opacity: 0; } }
+    .tilex-neuf {
+      color: #ffd34d; text-shadow: 0 0 14px #ff7a18;
+      transition: color 0.5s ease, text-shadow 0.5s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tilex-titre { animation: none; }
+      .tilex-curseur { animation: none; }
+    }
+
+    /* ── BADGES ───────────────────────────────────────── */
     .badges {
-      display: flex; gap: 0.5rem;
-      justify-content: center; flex-wrap: wrap;
-      margin-top: 0.75rem;
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp .6s .25s both;
     }
     .badge {
-      font-size: 0.65rem; padding: 0.25rem 0.6rem;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 0.25rem; color: var(--text-secondary);
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 5px 14px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px; color: var(--orange2);
+      background: rgba(255,106,0,0.07);
+      letter-spacing: 1px;
     }
 
-    /* Boutons ORANGE */
-    .btn-group {
-      display: flex; flex-direction: column; gap: 0.75rem;
-      width: 100%; max-width: 360px;
-      animation: fadeInUp 0.6s ease-out 0.5s both;
+    /* ── DIVIDER ──────────────────────────────────────── */
+    .divider {
+      width: 100%; display: flex; align-items: center; gap: 14px;
+      color: var(--muted); font-size: 13px; letter-spacing: 2px;
+      font-family: 'Share Tech Mono', monospace;
+      animation: fadeUp .6s .45s both;
     }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    /* ── BUTTONS ──────────────────────────────────────── */
+    .btns { width: 100%; display: flex; flex-direction: column; gap: 14px; animation: fadeUp .6s .35s both; }
+
     .btn {
-      width: 100%; padding: 0.875rem 1.5rem;
-      border-radius: 0.5rem; font-size: 1rem;
-      font-weight: 700; cursor: pointer; border: none;
-      transition: all 0.2s; text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: flex; align-items: center;
-      justify-content: center; gap: 0.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      width: 100%; padding: 17px 24px;
+      border-radius: var(--radius);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 2px;
+      cursor: pointer; text-decoration: none;
+      transition: transform .18s, box-shadow .18s, filter .18s;
+      border: none; outline: none;
     }
-    .btn:hover { transform: scale(1.03); }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn:active { transform: scale(.97); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
-      color: #000; box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
-    }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, var(--orange-light), #ffaa00);
-      box-shadow: 0 6px 30px rgba(255, 107, 0, 0.6);
-    }
-    .btn-secondary {
+    .btn-outline {
       background: transparent;
       border: 2px solid var(--orange);
       color: var(--orange);
     }
-    .btn-secondary:hover {
-      background: var(--orange); color: #000;
+    .btn-outline:hover {
+      background: rgba(255,106,0,0.10);
+      box-shadow: 0 0 24px rgba(255,106,0,0.25);
     }
+
+    .btn-filled {
+      background: linear-gradient(135deg, #FF6A00, #FF9A3C);
+      color: #0A0A0A;
+      box-shadow: 0 4px 20px rgba(255,106,0,0.35);
+    }
+    .btn-filled:hover {
+      filter: brightness(1.1);
+      box-shadow: 0 6px 30px rgba(255,106,0,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* OAuth buttons */
+    .oauth-btns { width: 100%; display: flex; gap: 12px; animation: fadeUp .6s .55s both; }
+
     .btn-oauth {
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text); font-size: 0.85rem; padding: 0.75rem;
-      font-weight: 600;
+      flex: 1;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700; font-size: 15px; letter-spacing: 1px;
+      cursor: pointer; text-decoration: none;
+      border: 1px solid var(--border);
+      background: var(--dark3);
+      color: var(--text);
+      transition: transform .18s, box-shadow .18s, border-color .18s, background .18s;
+      position: relative; overflow: hidden;
     }
-    .btn-oauth:hover { border-color: var(--orange); }
-    .btn-oauth svg { width: 18px; height: 18px; }
-
-    .divider {
-      display: flex; align-items: center; gap: 1rem;
-      margin: 0.5rem 0; color: var(--text-secondary);
-      font-size: 0.75rem; text-transform: uppercase;
-      letter-spacing: 0.1em;
+    .btn-oauth::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity .2s;
     }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
+    .btn-oauth:hover { transform: translateY(-3px); }
+    .btn-oauth:active { transform: scale(.97); }
+
+    .btn-google::before { background: radial-gradient(circle at 50% 0%, rgba(66,133,244,0.15), transparent 70%); }
+    .btn-google:hover { border-color: rgba(66,133,244,0.5); box-shadow: 0 4px 20px rgba(66,133,244,0.2); }
+    .btn-google:hover::before { opacity: 1; }
+
+    .btn-github::before { background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 70%); }
+    .btn-github:hover { border-color: rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(255,255,255,0.1); }
+    .btn-github:hover::before { opacity: 1; }
+
+    .btn-gmail::before { background: radial-gradient(circle at 50% 0%, rgba(234,67,53,0.18), transparent 70%); }
+    .btn-gmail:hover { border-color: rgba(234,67,53,0.5); box-shadow: 0 4px 20px rgba(234,67,53,0.22); }
+    .btn-gmail:hover::before { opacity: 1; }
+
+    .btn-oauth svg { flex-shrink: 0; }
+    .btn-oauth span { position: relative; z-index: 1; }
+
+    /* ── EMAIL NOTICE ────────────────────────────────── */
+    .email-notice {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      border: 1px solid rgba(255,106,0,0.2);
+      border-radius: var(--radius);
+      background: rgba(255,106,0,0.05);
+      font-size: 14px; color: var(--muted);
+      animation: fadeUp .6s .6s both;
+      width: 100%;
     }
+    .email-notice svg { flex-shrink: 0; color: var(--orange2); }
 
-    .oauth-row { display: flex; gap: 0.75rem; }
-    .oauth-row .btn { flex: 1; }
+    /* ── STATUS DOT ──────────────────────────────────── */
+    .status-bar {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px; color: var(--muted);
+      animation: fadeUp .6s .65s both;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #27ae60;
+      box-shadow: 0 0 6px #27ae60; animation: pulse 2s infinite; }
 
-    /* Formulaires */
+    /* ── FOOTER ───────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: 12px; color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      line-height: 1.8;
+      animation: fadeUp .6s .7s both;
+    }
+    .footer a { color: var(--orange2); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── TOAST ────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--dark3); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 22px; border-radius: 8px;
+      font-family: 'Rajdhani', sans-serif; font-size: 15px;
+      transition: transform .3s cubic-bezier(.22,1,.36,1), opacity .3s;
+      opacity: 0; z-index: 999; white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ── FORM CARD ────────────────────────────────────── */
     .form-card {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 0.75rem; padding: 2rem;
-      width: 100%; max-width: 380px;
-      animation: fadeInUp 0.4s ease-out;
+      background: var(--dark3); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem;
+      width: 100%; max-width: 480px;
+      animation: fadeUp 0.4s ease-out;
+      box-shadow: 0 0 40px rgba(192,57,43,0.15);
     }
     .form-card h2 {
       text-align: center; margin-bottom: 1.5rem;
-      font-size: 1.5rem; font-weight: 800;
-      text-transform: uppercase; letter-spacing: 0.05em;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; letter-spacing: 2px;
     }
     .form-group { margin-bottom: 1rem; }
     .form-group label {
-      display: block; font-size: 0.75rem;
-      color: var(--text-secondary); margin-bottom: 0.375rem;
-      text-transform: uppercase; letter-spacing: 0.1em;
-      font-weight: 600;
+      display: block; font-size: 12px;
+      color: var(--muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 1px;
+      font-family: 'Share Tech Mono', monospace;
     }
     .form-group input {
-      width: 100%; padding: 0.75rem 1rem;
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 0.5rem; color: var(--text);
-      font-size: 0.95rem; outline: none;
-      transition: all 0.2s;
+      width: 100%; padding: 12px 16px;
+      background: var(--dark); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
     }
     .form-group input:focus {
       border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
+      box-shadow: 0 0 0 3px rgba(255,106,0,0.2);
     }
     .form-group input::placeholder { color: #555; }
 
     .alert {
-      padding: 0.75rem 1rem; border-radius: 0.5rem;
-      font-size: 0.875rem; margin-bottom: 1rem;
+      padding: 10px 14px; border-radius: 8px;
+      font-size: 14px; margin-bottom: 1rem;
       border-left: 3px solid;
     }
     .alert-error {
-      background: rgba(255, 68, 68, 0.1);
+      background: rgba(255,68,68,0.1);
       border-color: var(--error); color: #ff7777;
     }
     .alert-success {
-      background: rgba(0, 204, 102, 0.1);
+      background: rgba(0,204,102,0.1);
       border-color: var(--success); color: #77dd99;
     }
 
     .form-footer {
       text-align: center; margin-top: 1rem;
-      font-size: 0.875rem; color: var(--text-secondary);
+      font-size: 14px; color: var(--muted);
     }
     .form-footer button.link {
       color: var(--orange); background: none; border: none;
       cursor: pointer; font-weight: 600;
+      font-family: 'Rajdhani', sans-serif; font-size: 14px;
     }
     .form-footer button.link:hover { text-decoration: underline; }
 
@@ -240,67 +383,166 @@
       width: 16px; height: 16px;
       border: 2px solid rgba(0,0,0,0.3);
       border-top-color: #000; border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      animation: spin 0.8s linear infinite; display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .footer {
-      position: fixed; bottom: 1rem; left: 0; right: 0;
-      text-align: center; font-size: 0.65rem;
-      color: #444; z-index: 10;
+    /* ── CONSENT BANNER ──────────────────────────────── */
+    .consent-banner {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+      background: var(--dark3); border-top: 2px solid var(--orange);
+      padding: 1.25rem; box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
+      animation: slideUp 0.4s ease-out;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .consent-inner { max-width: 700px; margin: 0 auto; }
+    .consent-inner p { font-size: 13px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+    .consent-inner strong { color: var(--text); }
+    .consent-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+    .consent-accept,.consent-decline {
+      padding: 8px 20px; border-radius: var(--radius);
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 1px; cursor: pointer; border: none;
+    }
+    .consent-accept {
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #0a0a0a;
+    }
+    .consent-decline {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--orange);
+    }
+    .consent-link { color: var(--orange2); font-size: 13px; text-decoration: none; }
+    .consent-link:hover { text-decoration: underline; }
+
+    /* ── LEGAL MODAL ─────────────────────────────────── */
+    .legal-modal {
+      position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; animation: fadeUp 0.3s ease-out;
+    }
+    .legal-modal-card {
+      background: var(--dark3); border: 1px solid var(--orange);
+      border-radius: 16px; padding: 2rem; max-width: 600px; width: 100%;
+      max-height: 80vh; overflow-y: auto; text-align: left;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .legal-modal-card h3 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 24px;
+      letter-spacing: 1px; margin-bottom: 1rem;
+    }
+    .legal-modal-card div { font-size: 14px; line-height: 1.7; color: var(--muted); }
+    .legal-modal-card h4 { color: var(--text); margin: 16px 0 8px; }
+    .legal-modal-card ul { margin: 8px 0 8px 20px; }
+    .legal-modal-card li { margin-bottom: 4px; }
+
+    /* ── INTRO / LOGIN SPLASH ────────────────────────── */
+    .intro-splash {
+      position: fixed; inset: 0; z-index: 9000;
+      background: #000; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity 0.6s ease-out;
+    }
+    .intro-splash.fade-out { opacity: 0; pointer-events: none; }
+    .intro-video { width: 100%; height: 100%; object-fit: cover; }
+    .intro-skip {
+      position: absolute; bottom: 2rem; right: 2rem;
+      padding: 8px 20px; border-radius: 9999px;
+      background: rgba(255,107,0,0.85); color: #000;
+      border: none; font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px; letter-spacing: 1px;
+      cursor: pointer; z-index: 9001;
+      transition: transform 0.2s;
+    }
+    .intro-skip:hover { transform: scale(1.08); }
+
+    .login-splash {
+      position: fixed; inset: 0; z-index: 9500;
+      background: #000; display: flex;
+      align-items: center; justify-content: center;
+      transition: opacity 0.8s ease-out;
+    }
+    .login-splash.fade-out { opacity: 0; pointer-events: none; }
+    .login-splash video { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── PWA INSTALL ─────────────────────────────────── */
+    .pwa-install {
+      position: fixed; top: 1rem; right: 1rem; z-index: 200;
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px 8px 8px;
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
+      color: #000; border: none; border-radius: 9999px;
+      font-family: 'Bebas Neue', sans-serif; font-size: 16px;
+      letter-spacing: 1px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
+      animation: pwaPulse 3s ease-in-out infinite;
+    }
+    .pwa-install:hover { transform: scale(1.05); }
+    .pwa-install-icon { width: 26px; height: 26px; border-radius: 7px; }
+    @keyframes pwaPulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,0,0.5); }
+      50% { box-shadow: 0 4px 28px rgba(255,107,0,0.9); }
     }
 
-    /* Chat Widget */
+    .pwa-modal {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; animation: fadeUp 0.3s ease-out;
+    }
+    .pwa-modal-card {
+      background: var(--dark3); border: 1px solid var(--orange);
+      border-radius: 16px; padding: 2rem; max-width: 360px; width: 100%;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .pwa-modal-logo { width: 72px; height: 72px; border-radius: 16px; margin-bottom: 1rem;
+      box-shadow: 0 0 30px rgba(255,107,0,0.4); }
+    .pwa-modal-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; margin-bottom: 12px; letter-spacing: 1px; }
+    .pwa-modal-card p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 16px; white-space: pre-line; text-align: left; }
+
+    /* ── CHAT WIDGET ──────────────────────────────────── */
     .chat-bubble {
       position: fixed; bottom: 1.5rem; right: 1.5rem;
-      z-index: 100; display: flex; align-items: flex-end; gap: 0.75rem;
+      z-index: 100; display: flex; align-items: flex-end; gap: 10px;
     }
     .chat-badges {
       display: flex; flex-direction: column; align-items: flex-end;
-      gap: 0.5rem; margin-bottom: 0.5rem;
+      gap: 6px; margin-bottom: 6px;
     }
     .chat-badge {
-      display: flex; align-items: center; gap: 0.375rem;
-      padding: 0.375rem 0.75rem; border-radius: 9999px;
-      font-size: 0.75rem; animation: fadeIn 0.5s ease-out;
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 9999px;
+      font-size: 12px; animation: fadeUp 0.5s ease-out;
+      font-family: 'Share Tech Mono', monospace;
     }
     .chat-badge-provider {
-      background: var(--bg-card); border: 1px solid var(--border);
-      color: var(--text-secondary);
+      background: var(--dark3); border: 1px solid var(--border);
+      color: var(--muted);
     }
     .chat-badge-tilex {
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
       border: 1px solid var(--orange); color: #000; font-weight: 700;
     }
     .chat-btn {
       width: 56px; height: 56px; border-radius: 50%; border: none;
-      cursor: pointer; background: linear-gradient(135deg, var(--orange), var(--orange-light));
-      box-shadow: 0 4px 20px rgba(255, 107, 0, 0.5);
+      cursor: pointer; background: linear-gradient(135deg, var(--orange), var(--orange2));
+      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.3s; position: relative;
+      transition: all 0.3s;
     }
-    .chat-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(255, 107, 0, 0.7); }
-    .chat-btn:active { transform: scale(0.95); }
+    .chat-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(255,107,0,0.7); }
     .chat-btn svg { width: 28px; height: 28px; color: #000; }
-    .chat-notification {
-      position: absolute; top: -4px; right: -4px;
-      width: 20px; height: 20px; background: #fff;
-      border-radius: 50%; display: flex;
-      align-items: center; justify-content: center;
-      font-size: 0.65rem; font-weight: 900; color: #000;
-      border: 2px solid #000; animation: bounce 1s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
 
     .chat-window {
       position: fixed; bottom: 5.5rem; right: 1.5rem;
       width: 380px; max-width: calc(100vw - 3rem);
       height: 500px; max-height: calc(100vh - 7rem);
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 0.75rem; z-index: 100;
+      background: var(--dark); border: 1px solid var(--border);
+      border-radius: 16px; z-index: 100;
       display: flex; flex-direction: column; overflow: hidden;
       box-shadow: 0 20px 50px rgba(0,0,0,0.8);
       animation: chatOpen 0.3s ease-out;
@@ -310,27 +552,26 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     .chat-header {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.875rem 1rem; background: var(--bg-card);
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; background: var(--dark3);
       border-bottom: 1px solid var(--border);
     }
     .chat-header-avatar {
       width: 36px; height: 36px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
       display: flex; align-items: center; justify-content: center;
       position: relative;
     }
-    .chat-header-avatar svg { width: 20px; height: 20px; }
     .online-dot {
       position: absolute; bottom: 0; right: 0;
       width: 10px; height: 10px; background: #00cc66;
-      border-radius: 50%; border: 2px solid var(--bg);
+      border-radius: 50%; border: 2px solid var(--dark);
     }
     .chat-header-info { flex: 1; }
-    .chat-header-info h4 { font-size: 0.875rem; margin: 0; }
+    .chat-header-info h4 { font-size: 14px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
     .chat-header-info p {
-      font-size: 0.7rem; color: var(--text-secondary);
-      display: flex; align-items: center; gap: 0.25rem;
+      font-size: 11px; color: var(--muted);
+      display: flex; align-items: center; gap: 4px;
     }
     .chat-header-pulse {
       width: 6px; height: 6px; background: #00cc66;
@@ -339,43 +580,36 @@
 
     .chat-messages {
       flex: 1; overflow-y: auto; padding: 1rem;
-      display: flex; flex-direction: column; gap: 0.75rem;
+      display: flex; flex-direction: column; gap: 10px;
     }
-    .chat-message {
-      display: flex; gap: 0.5rem; max-width: 85%;
-    }
+    .chat-message { display: flex; gap: 8px; max-width: 85%; }
     .chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
     .chat-message.agent { align-self: flex-start; }
     .chat-avatar {
       width: 28px; height: 28px; border-radius: 50%;
       flex-shrink: 0; display: flex;
       align-items: center; justify-content: center;
-      font-size: 0.75rem;
+      font-size: 12px;
     }
-    .chat-avatar.user { background: var(--bg-input); }
+    .chat-avatar.user { background: var(--dark3); }
     .chat-avatar.agent {
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      background: linear-gradient(135deg, var(--orange), var(--orange2));
     }
     .chat-bubble-msg {
-      padding: 0.625rem 0.875rem; border-radius: 1rem;
-      font-size: 0.85rem; line-height: 1.5;
+      padding: 10px 14px; border-radius: 14px;
+      font-size: 14px; line-height: 1.5;
     }
     .chat-bubble-msg.user {
       background: var(--orange); color: #000;
-      border-bottom-right-radius: 0.25rem;
-      font-weight: 500;
+      border-bottom-right-radius: 4px; font-weight: 500;
     }
     .chat-bubble-msg.agent {
-      background: var(--bg-card); color: var(--text);
+      background: var(--dark3); color: var(--text);
       border: 1px solid var(--border);
-      border-bottom-left-radius: 0.25rem;
+      border-bottom-left-radius: 4px;
     }
-    .chat-bubble-msg .time {
-      font-size: 0.65rem; opacity: 0.5; margin-top: 0.25rem;
-    }
-    .chat-typing {
-      display: flex; gap: 0.25rem; padding: 0.5rem 0;
-    }
+    .chat-bubble-msg .time { font-size: 10px; opacity: 0.5; margin-top: 4px; }
+    .chat-typing { display: flex; gap: 4px; padding: 6px 0; }
     .chat-typing-dot {
       width: 6px; height: 6px; background: var(--orange);
       border-radius: 50%; animation: typing 1.4s infinite;
@@ -388,193 +622,364 @@
     }
 
     .chat-input-area {
-      padding: 0.75rem; background: var(--bg-card);
+      padding: 10px; background: var(--dark3);
       border-top: 1px solid var(--border);
     }
-    .chat-input-row { display: flex; gap: 0.5rem; }
+    .chat-input-row { display: flex; gap: 8px; }
     .chat-input {
-      flex: 1; padding: 0.625rem 0.875rem;
-      background: var(--bg-input); border: 1px solid var(--border);
-      border-radius: 0.5rem; color: var(--text);
-      font-size: 0.875rem; outline: none;
+      flex: 1; padding: 10px 14px;
+      background: var(--dark); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px; outline: none;
     }
     .chat-input:focus { border-color: var(--orange); }
     .chat-input::placeholder { color: #555; }
     .chat-send-btn {
-      width: 36px; height: 36px; border-radius: 0.5rem;
-      border: none; background: linear-gradient(135deg, var(--orange), var(--orange-light));
+      width: 36px; height: 36px; border-radius: var(--radius);
+      border: none; background: linear-gradient(135deg, var(--orange), var(--orange2));
       color: #000; cursor: pointer; display: flex;
       align-items: center; justify-content: center;
       transition: all 0.2s; flex-shrink: 0;
     }
     .chat-send-btn:hover { transform: scale(1.05); }
-    .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .chat-send-btn svg { width: 16px; height: 16px; }
     .chat-footer-text {
-      text-align: center; font-size: 0.6rem;
-      color: #444; margin-top: 0.375rem;
+      text-align: center; font-size: 10px;
+      color: #444; margin-top: 6px;
+      font-family: 'Share Tech Mono', monospace;
     }
 
     .hidden { display: none !important; }
 
-    /* Intro video splash */
-    .intro-splash {
-      position: fixed; inset: 0; z-index: 9000;
-      background: #000; display: flex;
-      align-items: center; justify-content: center;
-      transition: opacity 0.6s ease-out;
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(20px); }
+      to   { opacity:1; transform: none; }
     }
-    .intro-splash.fade-out { opacity: 0; pointer-events: none; }
-    .intro-video {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    .intro-skip {
-      position: absolute; bottom: 2rem; right: 2rem;
-      padding: 0.5rem 1.25rem; border-radius: 9999px;
-      background: rgba(255,107,0,0.85); color: #000;
-      border: none; font-weight: 800; font-size: 0.8rem;
-      cursor: pointer; text-transform: uppercase;
-      letter-spacing: 0.05em; z-index: 9001;
-      backdrop-filter: blur(4px);
-      transition: transform 0.2s;
-    }
-    .intro-skip:hover { transform: scale(1.08); }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
-    /* Bouton installer PWA */
-    .pwa-install {
-      position: fixed; top: 1rem; right: 1rem; z-index: 200;
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.6rem 1rem 0.6rem 0.6rem;
-      background: linear-gradient(135deg, var(--orange), var(--orange-light));
-      color: #000; border: none; border-radius: 9999px;
-      font-weight: 800; font-size: 0.85rem; cursor: pointer;
-      box-shadow: 0 4px 20px rgba(255,107,0,0.5);
-      animation: pwaPulse 3s ease-in-out infinite, fadeIn 0.5s ease-out;
-      text-transform: uppercase; letter-spacing: 0.03em;
-    }
-    .pwa-install:hover { transform: scale(1.05); }
-    .pwa-install:active { transform: scale(0.96); }
-    .pwa-install-icon { width: 26px; height: 26px; border-radius: 7px; }
-    @keyframes pwaPulse {
-      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,0,0.5); }
-      50% { box-shadow: 0 4px 28px rgba(255,107,0,0.9); }
-    }
-
-    /* Modale install */
-    .pwa-modal {
-      position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      padding: 1.5rem; animation: fadeIn 0.3s ease-out;
-    }
-    .pwa-modal-card {
-      background: var(--bg-card); border: 1px solid var(--orange);
-      border-radius: 1rem; padding: 2rem; max-width: 360px; width: 100%;
-      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-    }
-    .pwa-modal-logo { width: 72px; height: 72px; border-radius: 16px; margin-bottom: 1rem;
-      box-shadow: 0 0 30px rgba(255,107,0,0.4); }
-    .pwa-modal-card h3 { font-size: 1.2rem; margin-bottom: 0.75rem; text-transform: uppercase; }
-    .pwa-modal-card p { color: var(--text-secondary); font-size: 0.9rem;
-      line-height: 1.6; margin-bottom: 1.25rem; white-space: pre-line; text-align: left; }
-    .pwa-modal-card .btn { width: 100%; }
-
+    ::selection { background: rgba(255,106,0,0.3); color: #fff; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #444; }
 
-    ::selection {
-      background: rgba(255, 107, 0, 0.3);
+    /* BOUTON DÉMO */
+    .tilex-btn-demo {
+      background: transparent;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      padding: 16px 40px;
+      font-size: 1.1em;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      font-family: 'Bebas Neue', sans-serif;
+    }
+    .tilex-btn-demo:hover {
+      background: #ffffff;
+      color: #0a0a0a;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255,255,255,0.2);
+    }
+    .btn-pricing {
+      background: #FF6B00;
       color: #fff;
+      border: none;
+      padding: 16px 40px;
+      font-size: 1.1em;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      font-family: 'Bebas Neue', sans-serif;
     }
-
-    @keyframes blink {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
+    .btn-pricing:hover {
+      background: #ff8533;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255,107,0,0.3);
     }
-
-    .footer-legal { margin-top: 0.5rem; }
-    .footer-legal a { color: var(--orange); text-decoration: none; font-size: 0.75rem; }
-    .footer-legal a:hover { text-decoration: underline; }
-    .footer-legal span { color: var(--text-secondary); font-size: 0.75rem; margin: 0 0.25rem; }
-
-    .consent-banner {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
-      background: var(--bg-card); border-top: 2px solid var(--orange);
-      padding: 1.25rem; box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
-      animation: slideUp 0.4s ease-out;
+    /* OVERLAY MODALE DÉMO */
+    #tilexDemoOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0,0,0,0.95);
+      overflow-y: auto;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
+    #tilexDemoOverlay.open { display: block; }
+    .tilex-demo-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+      color: #ffffff;
     }
-    .consent-inner { max-width: 700px; margin: 0 auto; }
-    .consent-inner p { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; line-height: 1.5; }
-    .consent-inner strong { color: var(--text); }
-    .consent-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.75rem; }
-    .consent-accept { padding: 0.5rem 1.5rem !important; font-size: 0.85rem !important; }
-    .consent-decline { padding: 0.5rem 1.5rem !important; font-size: 0.85rem !important; }
-    .consent-link { color: var(--orange); font-size: 0.8rem; text-decoration: none; }
-    .consent-link:hover { text-decoration: underline; }
+    .tilex-demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 0 40px;
+      border-bottom: 3px solid #ff7f27;
+      margin-bottom: 50px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .tilex-demo-header h1 {
+      font-size: clamp(1.6em, 3vw, 2.4em);
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .tilex-demo-header h1 span { color: #ff7f27; }
+    .tilex-demo-fermer {
+      background: #ff7f27;
+      color: #000;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+    .tilex-demo-fermer:hover {
+      background: #ffb366;
+      transform: scale(1.05);
+    }
+    .tilex-demo-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      border-bottom: 2px solid #333;
+      padding-bottom: 16px;
+    }
+    .tilex-demo-tab {
+      background: transparent;
+      border: 2px solid #555;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+    }
+    .tilex-demo-tab:hover { border-color: #ff7f27; color: #ff7f27; }
+    .tilex-demo-tab.actif {
+      background: #ff7f27;
+      border-color: #ff7f27;
+      color: #000;
+      box-shadow: 0 0 20px rgba(255,127,39,0.35);
+    }
+    .tilex-demo-panneau { display: none; animation: tilexFadeIn 0.4s ease; }
+    .tilex-demo-panneau.actif { display: block; }
+    @keyframes tilexFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .tilex-demo-schemas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 40px;
+    }
+    .tilex-demo-card {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 12px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .tilex-demo-card:hover {
+      border-color: #ff7f27;
+      box-shadow: 0 0 28px rgba(255,127,39,0.2);
+      transform: translateY(-4px);
+    }
+    .tilex-demo-card h3 {
+      color: #ff7f27;
+      font-size: 1.2em;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tilex-demo-scenarios {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .tilex-scenario-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 22px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.3s ease;
+      color: #fff;
+      width: 100%;
+    }
+    .tilex-scenario-btn:hover, .tilex-scenario-btn.actif {
+      border-color: #ff7f27;
+      background: #242424;
+      box-shadow: 0 0 22px rgba(255,127,39,0.2);
+    }
+    .tilex-scenario-btn .s-icon { font-size: 2em; margin-bottom: 10px; display: block; }
+    .tilex-scenario-btn .s-titre { color: #ff7f27; font-weight: 700; font-size: 1.05em; margin-bottom: 6px; }
+    .tilex-scenario-btn .s-desc { color: #aaa; font-size: 0.88em; line-height: 1.5; margin-bottom: 12px; }
+    .tilex-badge-menace {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 700;
+      color: #000;
+    }
+    .tilex-badge-menace.critique { background: #ff4444; color: #fff; }
+    .tilex-badge-menace.eleve    { background: #ff7f27; }
+    .tilex-badge-menace.moyen    { background: #fbbf24; }
+    .tilex-analyse-result {
+      background: #1a1a1a;
+      border: 2px solid #ff7f27;
+      border-radius: 12px;
+      padding: 30px;
+      margin-top: 30px;
+      animation: tilexFadeIn 0.5s ease;
+    }
+    .tilex-analyse-result h3 { color: #ff7f27; font-size: 1.3em; margin-bottom: 16px; }
+    .tilex-result-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      font-size: 0.95em;
+    }
+    .tilex-result-check { color: #ff7f27; font-weight: 700; flex-shrink: 0; }
+    .tilex-result-green { color: #10b981; font-weight: 700; flex-shrink: 0; }
+    .tilex-demo-flux {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+    }
+    .tilex-flux-item {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 22px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .tilex-flux-item:hover { border-color: #ff7f27; box-shadow: 0 0 20px rgba(255,127,39,0.15); }
+    .tilex-flux-num {
+      background: #ff7f27;
+      color: #000;
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3em; font-weight: 700;
+      margin: 0 auto 12px;
+    }
+    .tilex-flux-titre { color: #ff7f27; font-weight: 700; margin-bottom: 6px; }
+    .tilex-flux-desc  { color: #888; font-size: 0.88em; line-height: 1.5; }
+    .tilex-demo-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+    }
+    .tilex-stat-box {
+      background: #1a1a1a;
+      border: 2px solid #ff7f27;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+    }
+    .tilex-stat-num { color: #ff7f27; font-size: 2.4em; font-weight: 700; margin-bottom: 8px; }
+    .tilex-stat-lbl { color: #aaa; font-weight: 600; font-size: 0.95em; }
+    @media (max-width: 600px) {
+      .tilex-demo-tabs { gap: 8px; }
+      .tilex-demo-tab  { padding: 8px 14px; font-size: 0.85em; }
+      .tilex-demo-header h1 { font-size: 1.4em; }
+    }
   </style>
 </head>
 <body>
+
   <!-- Intro Video Splash -->
   <div class="intro-splash" id="introSplash">
     <video class="intro-video" id="introVideo" autoplay muted playsinline>
       <source src="assets/intro.mp4" type="video/mp4">
     </video>
-    <button class="intro-skip" id="introSkip" onclick="skipIntro()">Passer</button>
+    <button class="intro-skip" id="introSkip" onclick="skipIntro()">PASSER</button>
   </div>
 
-  <div class="particles" id="particles"></div>
+  <!-- Login Animation Splash -->
+  <div class="login-splash hidden" id="loginSplash">
+    <video id="loginVideo" muted playsinline>
+      <source src="assets/login-animation.mp4" type="video/mp4">
+    </video>
+    <button class="intro-skip" onclick="skipLoginAnim()">PASSER</button>
+  </div>
 
-  <div class="container" id="main-container">
-    <!-- Logo -->
-    <div class="logo-wrapper">
-      <div class="logo-halo"></div>
-      <img src="logo.png" alt="ti-lex-al v10" class="logo-img" />
+  <div class="bg"></div>
+  <canvas id="sparks"></canvas>
+
+  <div class="wrap">
+
+    <!-- LOGO -->
+    <div class="logo-card">
+      <img src="logo.png" alt="TI-LEX-AL V10" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="logo-fallback">TI-LEX-AL V10</div>
     </div>
 
-    <!-- Tagline -->
-    <div class="tagline">
-      <h1>Votre <span>agent</span> intelligent</h1>
-      <p>Propulsé par ti-lex-al · Québec</p>
-      <div class="badges">
-        <span class="badge">Loi 25</span>
-        <span class="badge">Sécurité intégrée</span>
-        <span class="badge">100% légal</span>
+    <!-- HERO — Écriture fluide -->
+    <section class="tilex-ecriture-section" id="ecritureFluide">
+      <h1 class="tilex-titre">TI-LEX-AL <span class="tilex-v10">V10</span></h1>
+      <div class="tilex-filet"></div>
+      <div class="tilex-ecriture">
+        <p class="tilex-ligne" id="tilexLigne0"></p>
+        <p class="tilex-ligne" id="tilexLigne1"></p>
+        <p class="tilex-ligne" id="tilexLigne2"></p>
       </div>
+    </section>
+
+    <!-- BADGES -->
+    <div class="badges">
+      <span class="badge">LOI 25</span>
+      <span class="badge">SÉCURITÉ INTÉGRÉE</span>
+      <span class="badge">100% LÉGAL</span>
     </div>
 
-    <!-- VUE ACCUEIL -->
-    <div class="btn-group" id="view-home">
-      <button class="btn btn-secondary" onclick="showLogin()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-        Connexion
+    <!-- ═══ VUE ACCUEIL ═══ -->
+    <div id="view-home" class="btns">
+      <button class="btn btn-outline" onclick="showLogin()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        CONNEXION
       </button>
-      <button class="btn btn-primary" onclick="showRegister()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        Inscription
+      <button class="btn btn-filled" onclick="showRegister()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        INSCRIPTION
       </button>
-      <div class="divider">ou</div>
-      <div class="oauth-row">
-        <button class="btn btn-oauth" onclick="oauthLogin('google')">
-          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Google
-        </button>
-        <button class="btn btn-oauth" onclick="oauthLogin('github')">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
-        </button>
-      </div>
+      <button class="tilex-btn-demo" onclick="tilexOuvrirDemo()">
+        🎬 DÉMO
+      </button>
+      <button class="btn btn-pricing" onclick="window.location.href='app.html#forfaits'">
+        💎 Voir les forfaits
+      </button>
     </div>
 
-    <!-- VUE CONNEXION -->
+    <!-- ═══ VUE CONNEXION ═══ -->
     <div class="form-card hidden" id="view-login">
-      <h2>Connexion</h2>
+      <h2>CONNEXION</h2>
       <div id="login-error" class="alert alert-error hidden"></div>
       <div id="login-success" class="alert alert-success hidden"></div>
       <form onsubmit="handleLogin(event)">
@@ -586,19 +991,19 @@
           <label>Mot de passe</label>
           <input type="password" id="login-password" placeholder="••••••••" required>
         </div>
-        <button type="submit" class="btn btn-primary" id="login-btn" style="margin-top:0.5rem">
-          Se connecter
+        <button type="submit" class="btn btn-filled" id="login-btn" style="margin-top:8px">
+          SE CONNECTER
         </button>
       </form>
       <div class="form-footer">
-        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showHome()">← Retour</button><br>
         <button class="link" onclick="showRegister()">Pas de compte? Inscris-toi →</button>
       </div>
     </div>
 
-    <!-- VUE INSCRIPTION -->
+    <!-- ═══ VUE INSCRIPTION ═══ -->
     <div class="form-card hidden" id="view-register">
-      <h2>Inscription</h2>
+      <h2>INSCRIPTION</h2>
       <div id="register-error" class="alert alert-error hidden"></div>
       <div id="register-success" class="alert alert-success hidden"></div>
       <form onsubmit="handleRegister(event)">
@@ -614,68 +1019,114 @@
           <label>Mot de passe</label>
           <input type="password" id="register-password" placeholder="8 caractères minimum" minlength="8" required>
         </div>
-        <div class="form-group" style="margin-top:0.5rem">
-          <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.75rem;color:var(--text-secondary);line-height:1.4;text-transform:none;letter-spacing:0;font-weight:400;overflow-wrap:break-word;word-break:break-word">
+        <div class="form-group" style="margin-top:8px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:12px;color:var(--muted);line-height:1.4;text-transform:none;letter-spacing:0;font-weight:400">
             <input type="checkbox" id="register-consent" required style="margin-top:3px;accent-color:var(--orange);flex-shrink:0;width:18px;height:18px">
             <span>J'accepte la <a href="#" onclick="event.stopPropagation();showLegalModal('privacy');return false" style="color:var(--orange)">politique de confidentialité</a> et les <a href="#" onclick="event.stopPropagation();showLegalModal('terms');return false" style="color:var(--orange)">conditions d'utilisation</a> (Loi 25).</span>
           </label>
         </div>
-        <button type="submit" class="btn btn-primary" id="register-btn" style="margin-top:0.5rem">
-          Créer mon compte
+        <button type="submit" class="btn btn-filled" id="register-btn" style="margin-top:8px">
+          CRÉER MON COMPTE
         </button>
       </form>
       <div class="form-footer">
-        <button class="link" onclick="showHome()">← Retour à l'accueil</button><br>
+        <button class="link" onclick="showHome()">← Retour</button><br>
         <button class="link" onclick="showLogin()">Déjà un compte? Connecte-toi →</button>
       </div>
     </div>
+
+    <!-- DIVIDER -->
+    <div class="divider">OU SE CONNECTER AVEC</div>
+
+    <!-- OAUTH BUTTONS -->
+    <div class="oauth-btns">
+      <button class="btn-oauth btn-google" onclick="oauthLogin('google')" aria-label="Se connecter avec Google">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.36 7.09-17.65z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.78-3-.78-4.59s.28-3.14.78-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        </svg>
+        <span>GOOGLE</span>
+      </button>
+
+      <button class="btn-oauth btn-github" onclick="oauthLogin('github')" aria-label="Se connecter avec GitHub">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span>GITHUB</span>
+      </button>
+
+      <button class="btn-oauth btn-gmail" onclick="oauthLogin('google')" aria-label="Se connecter avec Gmail">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="#EA4335" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.548l8.073-6.055C21.69 2.28 24 3.434 24 5.457z"/>
+          <path fill="#4285F4" d="M0 5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.548V16.64L.818 8.183A1.636 1.636 0 010 6.73V5.457z" opacity=".5"/>
+        </svg>
+        <span>GMAIL</span>
+      </button>
+    </div>
+
+    <!-- EMAIL NOTICE -->
+    <div class="email-notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/>
+      </svg>
+      Connexion par email disponible après inscription
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar">
+      <div class="dot"></div>
+      ti-lex 7.8 · Serveurs opérationnels · Québec
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      Produit du Québec · Conforme Loi 25 · V10<br>
+      Données hébergées à Beauharnois, QC<br>
+      <a href="#" onclick="showLegalModal('privacy');return false">Politique de confidentialité</a> ·
+      <a href="#" onclick="showLegalModal('terms');return false">Conditions d'utilisation</a>
+    </div>
+
   </div>
 
-  <div class="footer">
-    <p>Produit du Québec · Conforme Loi 25 · ti-lex-al v10</p>
-    <p>Données hébergées à Beauharnois, ca-central-1</p>
-    <p class="footer-legal">
-      <a href="#" onclick="showLegalModal('privacy');return false">Politique de confidentialité</a>
-      <span>·</span>
-      <a href="#" onclick="showLegalModal('terms');return false">Conditions d'utilisation</a>
-    </p>
-  </div>
+  <div id="toast"></div>
 
   <!-- Bannière consentement Loi 25 -->
   <div id="consentBanner" class="consent-banner hidden">
     <div class="consent-inner">
       <p><strong>Protection de vos renseignements personnels</strong></p>
-      <p>ti-lex-AL utilise le stockage local de votre navigateur pour sauvegarder vos préférences, conversations et données de session. Aucun témoin (cookie) tiers n'est utilisé. Vos données sont hébergées au Québec (Beauharnois, ca-central-1) conformément à la <strong>Loi 25</strong> sur la protection des renseignements personnels.</p>
+      <p>ti-lex-AL utilise le stockage local de votre navigateur pour sauvegarder vos préférences, conversations et données de session. Aucun témoin (cookie) tiers n'est utilisé. Vos données sont hébergées au Québec (Beauharnois, ca-central-1) conformément à la <strong>Loi 25</strong>.</p>
       <div class="consent-actions">
-        <button class="btn btn-primary consent-accept" onclick="acceptConsent()">J'accepte</button>
-        <button class="btn btn-secondary consent-decline" onclick="declineConsent()">Je refuse</button>
+        <button class="consent-accept" onclick="acceptConsent()">J'ACCEPTE</button>
+        <button class="consent-decline" onclick="declineConsent()">JE REFUSE</button>
         <a href="#" class="consent-link" onclick="showLegalModal('privacy');return false">En savoir plus</a>
       </div>
     </div>
   </div>
 
-  <!-- Modale légale (Politique de confidentialité / Conditions d'utilisation) -->
-  <div id="legalModal" class="pwa-modal hidden">
-    <div class="pwa-modal-card" style="max-width:600px;max-height:80vh;overflow-y:auto;text-align:left">
+  <!-- Modale légale -->
+  <div id="legalModal" class="legal-modal hidden">
+    <div class="legal-modal-card">
       <h3 id="legalModalTitle"></h3>
-      <div id="legalModalContent" style="font-size:0.85rem;line-height:1.7;color:var(--text-secondary)"></div>
-      <button class="btn btn-primary" style="margin-top:1.5rem" onclick="document.getElementById('legalModal').classList.add('hidden')">Fermer</button>
+      <div id="legalModalContent"></div>
+      <button class="btn btn-filled" style="margin-top:1.5rem" onclick="document.getElementById('legalModal').classList.add('hidden')">FERMER</button>
     </div>
   </div>
 
   <!-- Bouton INSTALLER L'APP (PWA) -->
   <button id="pwaInstallBtn" class="pwa-install hidden">
     <img src="icon-192.png" alt="" class="pwa-install-icon">
-    <span>Installer l'app</span>
+    <span>INSTALLER</span>
   </button>
 
-  <!-- Modale instructions installation (iOS / fallback) -->
+  <!-- Modale instructions installation -->
   <div id="pwaModal" class="pwa-modal hidden">
     <div class="pwa-modal-card">
       <img src="icon-192.png" alt="ti-lex-AL" class="pwa-modal-logo">
-      <h3 id="pwaModalTitle">Installer ti-lex-AL</h3>
+      <h3 id="pwaModalTitle">INSTALLER TI-LEX-AL</h3>
       <p id="pwaModalText"></p>
-      <button class="btn btn-primary" onclick="document.getElementById('pwaModal').classList.add('hidden')">Compris</button>
+      <button class="btn btn-filled" onclick="document.getElementById('pwaModal').classList.add('hidden')">COMPRIS</button>
     </div>
   </div>
 
@@ -696,7 +1147,7 @@
         <span class="online-dot"></span>
       </div>
       <div class="chat-header-info">
-        <h4>ti-lex 7.8</h4>
+        <h4>TI-LEX 7.8</h4>
         <p><span class="chat-header-pulse"></span> En ligne · Agent de sécurité</p>
       </div>
     </div>
@@ -732,19 +1183,20 @@
         if (session?.user) {
           currentUser = session.user;
           updateUIBadges();
-          window.location.href = 'app.html';
+          playLoginAnimation();
         }
       } catch (e) { console.error(e); }
     }
 
+    /* ── Navigation ── */
     function hideAllViews() {
       document.getElementById('view-home').classList.add('hidden');
       document.getElementById('view-login').classList.add('hidden');
       document.getElementById('view-register').classList.add('hidden');
     }
     function showHome() { hideAllViews(); document.getElementById('view-home').classList.remove('hidden'); clearErrors(); }
-    function showLogin() { hideAllViews(); document.getElementById('view-login').classList.remove('hidden'); document.getElementById('login-email').focus(); clearErrors(); }
-    function showRegister() { hideAllViews(); document.getElementById('view-register').classList.remove('hidden'); document.getElementById('register-name').focus(); clearErrors(); }
+    function showLogin() { hideAllViews(); document.getElementById('view-login').classList.remove('hidden'); document.getElementById('login-email').focus(); clearErrors(); showToast('Connexion par email'); }
+    function showRegister() { hideAllViews(); document.getElementById('view-register').classList.remove('hidden'); document.getElementById('register-name').focus(); clearErrors(); showToast('Créer un compte'); }
 
     function clearErrors() {
       ['login-error','login-success','register-error','register-success'].forEach(id => {
@@ -755,11 +1207,21 @@
     function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
     function showSuccess(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
 
+    /* ── Toast ── */
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    /* ── Auth: Login ── */
     async function handleLogin(e) {
       e.preventDefault();
       if (!supabase) { showError('login-error', 'Supabase non initialisé.'); return; }
       const btn = document.getElementById('login-btn');
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Connexion...';
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> CONNEXION...';
       clearErrors();
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -769,29 +1231,31 @@
         if (error) showError('login-error', error.message);
         else if (data.user) {
           currentUser = data.user;
-          showSuccess('login-success', 'Connexion réussie! Redirection...');
+          showSuccess('login-success', 'Connexion réussie!');
+          showToast('Bienvenue!');
           updateUIBadges();
-          setTimeout(() => { window.location.href = 'app.html'; }, 1500);
+          setTimeout(() => { playLoginAnimation(); }, 800);
         }
       } catch (err) { showError('login-error', 'Erreur: ' + err.message); }
-      finally { btn.disabled = false; btn.innerHTML = 'Se connecter'; }
+      finally { btn.disabled = false; btn.innerHTML = 'SE CONNECTER'; }
     }
 
+    /* ── Auth: Register ── */
     async function handleRegister(e) {
       e.preventDefault();
       if (!supabase) { showError('register-error', 'Supabase non initialisé.'); return; }
       const btn = document.getElementById('register-btn');
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Inscription...';
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> INSCRIPTION...';
       clearErrors();
       const password = document.getElementById('register-password').value;
       const consentBox = document.getElementById('register-consent');
       if (!consentBox.checked) {
         showError('register-error', 'Vous devez accepter la politique de confidentialité et les conditions d\'utilisation.');
-        btn.disabled = false; btn.innerHTML = 'Créer mon compte'; return;
+        btn.disabled = false; btn.innerHTML = 'CRÉER MON COMPTE'; return;
       }
       if (password.length < 8) {
         showError('register-error', 'Mot de passe: 8 caractères minimum.');
-        btn.disabled = false; btn.innerHTML = 'Créer mon compte'; return;
+        btn.disabled = false; btn.innerHTML = 'CRÉER MON COMPTE'; return;
       }
       try {
         const { data, error } = await supabase.auth.signUp({
@@ -804,38 +1268,38 @@
         else {
           localStorage.setItem('tilex-consent', JSON.stringify({ accepted: true, date: new Date().toISOString() }));
           showSuccess('register-success', 'Compte créé! Vérifie ton courriel.');
+          showToast('Vérifie ton courriel!');
         }
       } catch (err) { showError('register-error', 'Erreur: ' + err.message); }
-      finally { btn.disabled = false; btn.innerHTML = 'Créer mon compte'; }
+      finally { btn.disabled = false; btn.innerHTML = 'CRÉER MON COMPTE'; }
     }
 
+    /* ── Auth: OAuth ── */
     async function oauthLogin(provider) {
-      if (!supabase) { alert('Supabase non initialisé'); return; }
+      if (!supabase) { showToast('Supabase non initialisé'); return; }
+      const label = provider === 'google' ? 'Google' : 'GitHub';
+      showToast('Redirection vers ' + label + '...');
       try {
         const { error } = await supabase.auth.signInWithOAuth({
           provider, options: { redirectTo: window.location.origin + '/app.html' }
         });
-        if (error) alert('Erreur: ' + error.message);
-      } catch (err) { alert('Erreur: ' + err.message); }
+        if (error) showToast('Erreur: ' + error.message);
+      } catch (err) { showToast('Erreur: ' + err.message); }
     }
 
     function updateUIBadges() {
       const badges = document.getElementById('chat-badges');
       if (!currentUser) { badges.innerHTML = ''; return; }
       const identities = currentUser.identities || [];
-      let provider = 'supabase', label = 'Email';
-      if (identities.some(i => i.provider === 'google')) { provider = 'google'; label = 'Google'; }
-      if (identities.some(i => i.provider === 'github')) { provider = 'github'; label = 'GitHub'; }
+      let label = 'Email';
+      if (identities.some(i => i.provider === 'google')) label = 'Google';
+      if (identities.some(i => i.provider === 'github')) label = 'GitHub';
       badges.innerHTML = `
-        <div class="chat-badge chat-badge-provider">
-          <span>Connecté avec ${label}</span>
-        </div>
-        <div class="chat-badge chat-badge-tilex">
-          <span>ti-lex 7.8</span>
-          <span style="width:6px;height:6px;background:#00cc66;border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 2s infinite"></span>
-        </div>`;
+        <div class="chat-badge chat-badge-provider"><span>Connecté avec ${label}</span></div>
+        <div class="chat-badge chat-badge-tilex"><span>ti-lex 7.8</span><span style="width:6px;height:6px;background:#00cc66;border-radius:50%;display:inline-block;margin-left:4px;animation:pulse 2s infinite"></span></div>`;
     }
 
+    /* ── Chat Widget ── */
     let chatOpen = false, chatMessages = [], isTyping = false;
     function toggleChat() {
       chatOpen = !chatOpen;
@@ -852,48 +1316,44 @@
       }
     }
     function addChatMessage(role, content) {
-      const msg = { id: Date.now(), role, content, time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}) };
-      chatMessages.push(msg); renderChatMessages();
+      chatMessages.push({ id: Date.now(), role, content, time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}) });
+      renderChatMessages();
     }
     function renderChatMessages() {
       const container = document.getElementById('chat-messages');
+      const agentSvg = '<svg width="14" height="14" viewBox="0 0 100 100"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cb)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg>';
       container.innerHTML = chatMessages.map(msg => `
         <div class="chat-message ${msg.role}">
-          <div class="chat-avatar ${msg.role}">${msg.role === 'user' ? '&#x1f464;' : '<svg width="16" height="16" viewBox="0 0 100 100"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cb)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg>'}</div>
+          <div class="chat-avatar ${msg.role}">${msg.role === 'user' ? '&#x1f464;' : agentSvg}</div>
           <div class="chat-bubble-msg ${msg.role}"><div style="white-space:pre-wrap">${msg.content}</div><div class="time">${msg.time}</div></div>
-        </div>
-      `).join('');
-      if (isTyping) container.innerHTML += `<div class="chat-message agent"><div class="chat-avatar agent"><svg width="16" height="16" viewBox="0 0 100 100"><polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill="url(#cb)" stroke="white" stroke-width="2"/><text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold" font-family="monospace">7.8</text><defs><linearGradient id="cb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ff6b00"/><stop offset="100%" stop-color="#ff8c00"/></linearGradient></defs></svg></div><div class="chat-bubble-msg agent"><div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div></div></div>`;
+        </div>`).join('');
+      if (isTyping) container.innerHTML += `<div class="chat-message agent"><div class="chat-avatar agent">${agentSvg}</div><div class="chat-bubble-msg agent"><div class="chat-typing"><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div></div></div></div>`;
       container.scrollTop = container.scrollHeight;
     }
     function getResponse(text) {
-      const lower = text.toLowerCase();
-      if (lower.includes('sow') || lower.includes('autorisation')) return "**Créer un SOW**\n\n1. Va dans l'onglet Sécurité → Mes SOWs\n2. Clique **+ Nouveau SOW**\n3. Remplis: titre, client, scope, types de scan autorisés\n4. Fais-le **signer** par le client pour l'activer\n\nSans SOW actif, aucun scan n'est possible (art. 342.1 C.cr.)";
-      if (lower.includes('scan') || lower.includes('lancer')) return "**Lancer un scan**\n\n1. Assure-toi d'avoir un **SOW actif**\n2. Va dans le Dashboard → **Scan rapide**\n3. Choisis: cible, type de scan, SOW\n4. Clique **Lancer le scan**";
-      if (lower.includes('desjardins') || lower.includes('fuite')) return "**Leçon Desjardins 2019**\n\n• **4.2 millions** de membres affectés\n• Cause: employé malveillant + absence de contrôles\n\n**Notre protection:**\n- Audit trail immuable\n- RLS (chacun ne voit que ses données)\n- SOW obligatoire pour tout scan\n- Chiffrement AES-256\n- Données au Québec (ca-central-1)";
-      if (lower.includes('loi 25') || lower.includes('conformité')) return "**Loi 25 (Québec)**\n\nObligations:\n• Consentement explicite\n• Minimisation des données\n• Droits d'accès et de rectification\n• Conservation limitée\n• Notification en cas de fuite (72h)\n\n**Notre conformité:**\n- 100% conforme Loi 25\n- Données en ca-central-1 (Beauharnois)\n- Anonymisation avant API externe\n- Audit trail > 5 ans";
-      if (lower.includes('help') || lower.includes('aide')) return "**Commandes disponibles**\n\n• **sow** — Créer/gérer des SOWs\n• **scan** — Lancer un scan de sécurité\n• **desjardins** — Leçon de la fuite 2019\n• **loi 25** — Conformité québécoise\n• **security** — Status de la sécurité\n• **help** — Afficher cette aide";
-      if (lower.includes('security') || lower.includes('status')) return "**Status sécurité**\n\n- Chiffrement AES-256\n- Audit trail immuable (hash chain SHA-256)\n- RLS activé (Row Level Security)\n- Données ca-central-1 (Beauharnois, Québec)\n- SOW validation (4 niveaux de protection)\n- Anonymisation avant API externe\n- Conforme Loi 25 + Art. 342.1 C.cr.";
+      const l = text.toLowerCase();
+      if (l.includes('sow') || l.includes('autorisation')) return "**Créer un SOW**\n\n1. Va dans l'onglet Sécurité → Mes SOWs\n2. Clique **+ Nouveau SOW**\n3. Remplis: titre, client, scope, types de scan autorisés\n4. Fais-le **signer** par le client pour l'activer\n\nSans SOW actif, aucun scan n'est possible (art. 342.1 C.cr.)";
+      if (l.includes('scan') || l.includes('lancer')) return "**Lancer un scan**\n\n1. Assure-toi d'avoir un **SOW actif**\n2. Va dans le Dashboard → **Scan rapide**\n3. Choisis: cible, type de scan, SOW\n4. Clique **Lancer le scan**";
+      if (l.includes('desjardins') || l.includes('fuite')) return "**Leçon Desjardins 2019**\n\n• **4.2 millions** de membres affectés\n• Cause: employé malveillant + absence de contrôles\n\n**Notre protection:**\n- Audit trail immuable\n- RLS (chacun ne voit que ses données)\n- SOW obligatoire pour tout scan\n- Chiffrement AES-256\n- Données au Québec (ca-central-1)";
+      if (l.includes('loi 25') || l.includes('conformité')) return "**Loi 25 (Québec)**\n\nObligations:\n• Consentement explicite\n• Minimisation des données\n• Droits d'accès et de rectification\n• Conservation limitée\n• Notification en cas de fuite (72h)\n\n**Notre conformité:**\n- 100% conforme Loi 25\n- Données en ca-central-1 (Beauharnois)\n- Anonymisation avant API externe\n- Audit trail > 5 ans";
+      if (l.includes('help') || l.includes('aide')) return "**Commandes disponibles**\n\n• **sow** — Créer/gérer des SOWs\n• **scan** — Lancer un scan de sécurité\n• **desjardins** — Leçon de la fuite 2019\n• **loi 25** — Conformité québécoise\n• **security** — Status de la sécurité\n• **help** — Afficher cette aide";
+      if (l.includes('security') || l.includes('status')) return "**Status sécurité**\n\n- Chiffrement AES-256\n- Audit trail immuable (hash chain SHA-256)\n- RLS activé (Row Level Security)\n- Données ca-central-1 (Beauharnois, Québec)\n- SOW validation (4 niveaux de protection)\n- Anonymisation avant API externe\n- Conforme Loi 25 + Art. 342.1 C.cr.";
       return "Je comprends. Pour t'aider mieux, peux-tu préciser?\n\nTu peux dire **help** pour voir les commandes disponibles.";
     }
-
     function typewriterEffect(fullText, bubbleEl, callback) {
       let i = 0;
-      const speed = 18;
       const contentEl = bubbleEl.querySelector('.typewriter-content');
       const cursorEl = bubbleEl.querySelector('.tw-cursor');
       function tick() {
         if (i < fullText.length) {
-          let chunk = fullText[i];
-          if (chunk === '\n') chunk = '<br>';
-          else if (chunk === '*') { i++; return tick(); }
-          else if (chunk === '<' || chunk === '>' || chunk === '&') {
-            chunk = {'<':'&lt;','>':'&gt;','&':'&amp;'}[chunk];
-          }
-          contentEl.innerHTML += chunk;
+          let ch = fullText[i];
+          if (ch === '\n') ch = '<br>';
+          else if (ch === '*') { i++; return tick(); }
+          else if (ch === '<' || ch === '>' || ch === '&') ch = {'<':'&lt;','>':'&gt;','&':'&amp;'}[ch];
+          contentEl.innerHTML += ch;
           i++;
           bubbleEl.closest('.chat-messages').scrollTop = bubbleEl.closest('.chat-messages').scrollHeight;
-          requestAnimationFrame(() => setTimeout(tick, speed));
+          requestAnimationFrame(() => setTimeout(tick, 18));
         } else {
           if (cursorEl) cursorEl.remove();
           if (callback) callback();
@@ -901,47 +1361,43 @@
       }
       tick();
     }
-
     function sendChatMessage() {
       const input = document.getElementById('chat-input');
       const text = input.value.trim();
       if (!text || isTyping) return;
       addChatMessage('user', text); input.value = '';
       isTyping = true; renderChatMessages();
-
       const response = getResponse(text);
-
       setTimeout(() => {
         isTyping = false;
         const msg = { id: Date.now(), role: 'agent', content: '', time: new Date().toLocaleTimeString('fr-CA', {hour:'2-digit', minute:'2-digit'}) };
-        chatMessages.push(msg);
-        renderChatMessages();
-
+        chatMessages.push(msg); renderChatMessages();
         const container = document.getElementById('chat-messages');
         const lastBubble = container.querySelector('.chat-message.agent:last-child .chat-bubble-msg.agent');
         lastBubble.innerHTML = '<span class="typewriter-content"></span><span class="tw-cursor" style="display:inline-block;width:2px;height:1em;background:var(--orange);margin-left:1px;vertical-align:text-bottom;animation:blink 1s steps(1) infinite"></span><div class="time">' + msg.time + '</div>';
-
-        typewriterEffect(response, lastBubble, () => {
-          msg.content = response;
-        });
+        typewriterEffect(response, lastBubble, () => { msg.content = response; });
       }, 1200);
     }
 
-    function initParticles() {
-      const container = document.getElementById('particles');
-      for (let i = 0; i < 25; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.top = Math.random() * 100 + '%';
-        p.style.width = (Math.random() * 3 + 1) + 'px';
-        p.style.height = p.style.width;
-        p.style.animationDelay = Math.random() * 5 + 's';
-        p.style.animationDuration = (3 + Math.random() * 4) + 's';
-        container.appendChild(p);
-      }
+    /* ── Splash screens ── */
+    function playLoginAnimation() {
+      const splash = document.getElementById('loginSplash');
+      const video = document.getElementById('loginVideo');
+      splash.classList.remove('hidden');
+      video.currentTime = 0;
+      video.play().catch(() => {});
+      video.addEventListener('ended', skipLoginAnim);
+      video.addEventListener('error', skipLoginAnim);
+      setTimeout(skipLoginAnim, 15000);
     }
-
+    function skipLoginAnim() {
+      const splash = document.getElementById('loginSplash');
+      const video = document.getElementById('loginVideo');
+      if (splash.classList.contains('fade-out')) return;
+      splash.classList.add('fade-out');
+      video.pause();
+      setTimeout(() => { window.location.href = 'app.html'; }, 800);
+    }
     function skipIntro() {
       const splash = document.getElementById('introSplash');
       const video = document.getElementById('introVideo');
@@ -950,17 +1406,105 @@
       setTimeout(() => { splash.style.display = 'none'; }, 600);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      initParticles();
-      initSupabase();
+    /* ── Canvas Sparks ── */
+    const canvas = document.getElementById('sparks');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+    function randomParticle() {
+      return {
+        x: Math.random() * W, y: H + 10,
+        vx: (Math.random() - .5) * .6, vy: -(Math.random() * 1.2 + .4),
+        r: Math.random() * 1.5 + .5, life: 1, decay: Math.random() * .004 + .002,
+        color: Math.random() > .5 ? '#FF6A00' : '#C0392B',
+      };
+    }
+    for (let i = 0; i < 60; i++) { const p = randomParticle(); p.y = Math.random() * H; particles.push(p); }
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+        if (p.life <= 0 || p.y < -10) { particles[i] = randomParticle(); return; }
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life * .6;
+        ctx.fill(); ctx.globalAlpha = 1;
+      });
+      requestAnimationFrame(frame);
+    }
+    frame();
 
-      const video = document.getElementById('introVideo');
-      if (video) {
-        video.addEventListener('ended', skipIntro);
-        video.addEventListener('error', skipIntro);
+    /* ── Écriture fluide ── */
+    (function initEcritureFluide() {
+      const LIGNES = [
+        "Ton deuxième cerveau s'éveille dans les flammes du code.",
+        "Capture tes idées, jase avec Agent AL, garde tout en mémoire.",
+        "TI-LEX-AL V10 — forgé au Québec, propulsé par l'intelligence artificielle. ⚜️",
+      ];
+      const CONFIG = [
+        { vitesse: 55, declencheur: 0.5 },
+        { vitesse: 60, declencheur: 0.25 },
+        { vitesse: 95, declencheur: 1.0 },
+      ];
+      const refs = [
+        document.getElementById('tilexLigne0'),
+        document.getElementById('tilexLigne1'),
+        document.getElementById('tilexLigne2'),
+      ];
+      let lance = false;
+      const timeouts = [];
+
+      function ecrireLigne(index) {
+        if (index >= LIGNES.length) return;
+        const el = refs[index];
+        if (!el) return;
+        const texte = LIGNES[index];
+        const cfg = CONFIG[index];
+        let i = 0, suivanteLancee = false;
+        const curseur = document.createElement('span');
+        curseur.className = 'tilex-curseur';
+        el.appendChild(curseur);
+
+        function tick() {
+          if (i < texte.length) {
+            const c = texte[i];
+            const span = document.createElement('span');
+            span.className = 'tilex-neuf';
+            span.textContent = c;
+            el.insertBefore(span, curseur);
+            timeouts.push(setTimeout(function() { span.classList.remove('tilex-neuf'); }, 350));
+            i++;
+            if (!suivanteLancee && i / texte.length >= cfg.declencheur) {
+              suivanteLancee = true;
+              ecrireLigne(index + 1);
+            }
+            var delai = cfg.vitesse * (0.65 + Math.random() * 0.7);
+            if (',.;:!?—'.indexOf(c) !== -1) delai += 220;
+            timeouts.push(setTimeout(tick, delai));
+          } else {
+            if (index < LIGNES.length - 1) curseur.remove();
+            if (!suivanteLancee) ecrireLigne(index + 1);
+          }
+        }
+        tick();
       }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        if (lance) return;
+        lance = true;
+        timeouts.push(setTimeout(function() { ecrireLigne(0); }, 900));
+      });
+    })();
+
+    /* ── Init ── */
+    document.addEventListener('DOMContentLoaded', () => {
+      initSupabase();
+      const video = document.getElementById('introVideo');
+      if (video) { video.addEventListener('ended', skipIntro); video.addEventListener('error', skipIntro); }
     });
   </script>
+
+  <!-- Service Worker -->
   <script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").then((reg) => {
@@ -970,8 +1514,8 @@
         nw.addEventListener("statechange", () => {
           if (nw.state === "activated" && navigator.serviceWorker.controller) {
             const b = document.createElement("div");
-            b.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;background:#ff6b00;color:#000;border-radius:12px;font-weight:700;font-family:system-ui;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(255,107,0,.4)";
-            b.innerHTML = 'Mise à jour disponible <button onclick="location.reload()" style="background:#000;color:#ff6b00;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:700">Rafraîchir</button>';
+            b.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;background:#ff6b00;color:#000;border-radius:12px;font-weight:700;font-family:'Bebas Neue',sans-serif;z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(255,107,0,.4);letter-spacing:1px";
+            b.innerHTML = 'MISE À JOUR DISPONIBLE <button onclick="location.reload()" style="background:#000;color:#ff6b00;border:none;padding:6px 14px;border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;letter-spacing:1px">RAFRAÎCHIR</button>';
             document.body.appendChild(b);
           }
         });
@@ -981,7 +1525,7 @@
   }
   </script>
 
-  <!-- INSTALLATION PWA (Android / Samsung / iOS) -->
+  <!-- PWA Install -->
   <script>
   (function () {
     const btn = document.getElementById("pwaInstallBtn");
@@ -989,57 +1533,280 @@
     const modalTitle = document.getElementById("pwaModalTitle");
     const modalText = document.getElementById("pwaModalText");
     let deferredPrompt = null;
-
     const ua = navigator.userAgent || "";
     const isIOS = /iPad|iPhone|iPod/.test(ua);
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
     const isSamsung = /SamsungBrowser/i.test(ua);
-
-    // Déjà installé → ne rien afficher
     if (isStandalone) { btn.classList.add("hidden"); return; }
-
     function showModal(title, text) {
-      modalTitle.textContent = title;
-      modalText.textContent = text;
+      modalTitle.textContent = title; modalText.textContent = text;
       modal.classList.remove("hidden");
     }
-
-    // Android / Chrome / Edge : capture le prompt natif
     window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      btn.classList.remove("hidden");
+      e.preventDefault(); deferredPrompt = e; btn.classList.remove("hidden");
     });
-
     btn.addEventListener("click", async () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === "accepted") btn.classList.add("hidden");
-        deferredPrompt = null;
-        return;
+        deferredPrompt = null; return;
       }
-      // Pas de prompt natif dispo → instructions manuelles
-      if (isIOS) {
-        showModal("Installer sur iPhone",
-          "1. Appuie sur le bouton Partager (carré avec une flèche)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
-      } else if (isSamsung) {
-        showModal("Installer sur Samsung",
-          "1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »");
-      } else {
-        showModal("Installer ti-lex-AL",
-          "1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil »\n3. Confirme");
-      }
+      if (isIOS) showModal("Installer sur iPhone", "1. Appuie sur le bouton Partager (carré avec une flèche)\n2. Choisis « Sur l'écran d'accueil »\n3. Confirme avec « Ajouter »");
+      else if (isSamsung) showModal("Installer sur Samsung", "1. Appuie sur le menu ☰ (en bas à droite)\n2. Choisis « Ajouter la page à »\n3. Sélectionne « Écran d'accueil »\n4. Confirme avec « Ajouter »");
+      else showModal("Installer ti-lex-AL", "1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil »\n3. Confirme");
     });
-
-    // iOS / Samsung : pas de beforeinstallprompt → afficher le bouton quand même
     if (isIOS || isSamsung) btn.classList.remove("hidden");
-
-    window.addEventListener("appinstalled", () => {
-      btn.classList.add("hidden");
-      deferredPrompt = null;
-    });
+    window.addEventListener("appinstalled", () => { btn.classList.add("hidden"); deferredPrompt = null; });
   })();
+  </script>
+
+  <!-- MODALE DÉMO — AGENT TI-LEX CYBERSÉCURITÉ -->
+  <div id="tilexDemoOverlay">
+    <div class="tilex-demo-wrap">
+      <div class="tilex-demo-header">
+        <h1>🛡️ Démo Agent <span>ti-lex</span> Cybersécurité</h1>
+        <button class="tilex-demo-fermer" onclick="tilexFermerDemo()">✕ Fermer</button>
+      </div>
+      <div class="tilex-demo-tabs">
+        <button class="tilex-demo-tab actif" onclick="tilexTab(this,'schemas')">📊 Schémas</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'scenarios')">🎯 Scénarios</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'flux')">⚙️ Flux de Travail</button>
+        <button class="tilex-demo-tab" onclick="tilexTab(this,'stats')">📈 Statistiques</button>
+      </div>
+      <!-- PANNEAU: SCHÉMAS -->
+      <div id="tilex-pan-schemas" class="tilex-demo-panneau actif">
+        <div class="tilex-demo-schemas">
+          <div class="tilex-demo-card">
+            <h3>🏗️ Architecture 3 Couches</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <defs>
+                <marker id="da1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
+                <marker id="da2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+              </defs>
+              <rect x="10" y="10" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">COUCHE DÉTECTION</text>
+              <text x="180" y="62" text-anchor="middle" fill="#aaa" font-size="11">Capteurs · Logs · Flux Réseau</text>
+              <line x1="180" y1="80" x2="180" y2="105" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
+              <rect x="10" y="107" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="137" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">AGENT IA — Traitement</text>
+              <text x="180" y="159" text-anchor="middle" fill="#aaa" font-size="11">Analyse · Classification · Scoring</text>
+              <line x1="180" y1="177" x2="180" y2="202" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
+              <rect x="10" y="204" width="340" height="70" rx="8" fill="none" stroke="#10b981" stroke-width="2.5"/>
+              <text x="180" y="234" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">COUCHE RÉACTION</text>
+              <text x="180" y="256" text-anchor="middle" fill="#aaa" font-size="11">Quarantaine · Isolation · Alertes</text>
+            </svg>
+          </div>
+          <div class="tilex-demo-card">
+            <h3>🧠 Moteur de Décision</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <defs>
+                <marker id="db1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
+                <marker id="db2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff4444"/></marker>
+                <marker id="db3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+              </defs>
+              <circle cx="180" cy="35" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="12" font-weight="bold">ENTRÉE</text>
+              <line x1="180" y1="63" x2="180" y2="88" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <rect x="55" y="90" width="250" height="60" rx="8" fill="#111" stroke="#ff7f27" stroke-width="2.5"/>
+              <text x="180" y="116" text-anchor="middle" fill="#ff7f27" font-size="13" font-weight="bold">MOTEUR DE DÉCISION</text>
+              <text x="180" y="138" text-anchor="middle" fill="#aaa" font-size="10">Patterns · Risque · Scoring IA</text>
+              <line x1="90" y1="150" x2="55" y2="205" stroke="#ff4444" stroke-width="2" marker-end="url(#db2)"/>
+              <line x1="180" y1="150" x2="180" y2="205" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <line x1="270" y1="150" x2="305" y2="205" stroke="#10b981" stroke-width="2" marker-end="url(#db3)"/>
+              <circle cx="50" cy="232" r="28" fill="none" stroke="#ff4444" stroke-width="2"/>
+              <text x="50" y="228" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">CRIT-</text>
+              <text x="50" y="242" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">IQUE</text>
+              <circle cx="180" cy="232" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="236" text-anchor="middle" fill="#ff7f27" font-size="9" font-weight="bold">MOYEN</text>
+              <circle cx="310" cy="232" r="28" fill="none" stroke="#10b981" stroke-width="2"/>
+              <text x="310" y="236" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">BAS</text>
+              <text x="50" y="276" text-anchor="middle" fill="#ff4444" font-size="9">Isoler</text>
+              <text x="180" y="276" text-anchor="middle" fill="#ff7f27" font-size="9">Alerter</text>
+              <text x="310" y="276" text-anchor="middle" fill="#10b981" font-size="9">Monitor</text>
+            </svg>
+          </div>
+          <div class="tilex-demo-card">
+            <h3>⏱️ Temps de Réponse</h3>
+            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+              <text x="180" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Détection → Neutralisation</text>
+              <text x="180" y="50" text-anchor="middle" fill="#aaa" font-size="10">Réponse automatique complète</text>
+              <line x1="30" y1="140" x2="330" y2="140" stroke="#333" stroke-width="3"/>
+              <circle cx="55" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="140" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="225" cy="140" r="10" fill="#ff7f27"/>
+              <circle cx="310" cy="140" r="13" fill="#10b981"/>
+              <text x="55" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">0ms</text>
+              <text x="140" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">200ms</text>
+              <text x="225" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">800ms</text>
+              <text x="310" y="118" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">&lt; 2s</text>
+              <text x="55" y="162" text-anchor="middle" fill="#aaa" font-size="10">Détection</text>
+              <text x="140" y="162" text-anchor="middle" fill="#aaa" font-size="10">Analyse</text>
+              <text x="225" y="162" text-anchor="middle" fill="#aaa" font-size="10">Décision</text>
+              <text x="310" y="162" text-anchor="middle" fill="#10b981" font-size="10">✅ Résolu</text>
+              <path d="M 55 95 Q 182 68 310 95" fill="none" stroke="#ff7f27" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <text x="182" y="84" text-anchor="middle" fill="#ff7f27" font-size="10">⚡ &lt; 2 secondes</text>
+              <rect x="30" y="195" width="300" height="42" rx="6" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4,4"/>
+              <text x="180" y="213" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">Agent ti-lex IA: &lt; 2 secondes</text>
+              <text x="180" y="230" text-anchor="middle" fill="#666" font-size="10">Analyste humain: ~45 minutes</text>
+              <text x="180" y="268" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">1 350× plus rapide qu'un humain</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <!-- PANNEAU: SCÉNARIOS -->
+      <div id="tilex-pan-scenarios" class="tilex-demo-panneau">
+        <div class="tilex-demo-scenarios">
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'phishing')">
+            <span class="s-icon">🎣</span>
+            <div class="s-titre">Phishing</div>
+            <div class="s-desc">Email malveillant tentant de voler des identifiants</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'ransomware')">
+            <span class="s-icon">🔐</span>
+            <div class="s-titre">Ransomware</div>
+            <div class="s-desc">Chiffrement malveillant de fichiers système en cours</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'ddos')">
+            <span class="s-icon">⚡</span>
+            <div class="s-titre">Attaque DDoS</div>
+            <div class="s-desc">Débordement de trafic depuis sources multiples</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'fuite')">
+            <span class="s-icon">🔓</span>
+            <div class="s-titre">Fuite de Données</div>
+            <div class="s-desc">Exfiltration non-autorisée de fichiers sensibles</div>
+            <span class="tilex-badge-menace critique">CRITIQUE</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'injection')">
+            <span class="s-icon">💉</span>
+            <div class="s-titre">Injection SQL</div>
+            <div class="s-desc">Exploitation d'une vulnérabilité applicative</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+          <button class="tilex-scenario-btn" onclick="tilexShowScenario(this,'acces')">
+            <span class="s-icon">👤</span>
+            <div class="s-titre">Accès Non-Autorisé</div>
+            <div class="s-desc">Tentative d'authentification compromise</div>
+            <span class="tilex-badge-menace eleve">ÉLEVÉ</span>
+          </button>
+        </div>
+        <div id="tilexAnalyseResult" style="display:none;"></div>
+      </div>
+      <!-- PANNEAU: FLUX DE TRAVAIL -->
+      <div id="tilex-pan-flux" class="tilex-demo-panneau">
+        <div class="tilex-demo-flux">
+          <div class="tilex-flux-item"><div class="tilex-flux-num">1</div><div class="tilex-flux-titre">🔍 Détection</div><div class="tilex-flux-desc">Identification d'une activité suspecte via capteurs et logs</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">2</div><div class="tilex-flux-titre">📥 Collecte</div><div class="tilex-flux-desc">Rassemblement du contexte et des données pertinentes</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">3</div><div class="tilex-flux-titre">🧠 Analyse IA</div><div class="tilex-flux-desc">Traitement par les modèles d'apprentissage de l'agent</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">4</div><div class="tilex-flux-titre">⚡ Classification</div><div class="tilex-flux-desc">Type de menace identifié et score de risque calculé</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">5</div><div class="tilex-flux-titre">🎯 Décision</div><div class="tilex-flux-desc">Sélection automatique de la meilleure réponse</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">6</div><div class="tilex-flux-titre">🛡️ Exécution</div><div class="tilex-flux-desc">Application des mesures de sécurité en temps réel</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">7</div><div class="tilex-flux-titre">📢 Alerte</div><div class="tilex-flux-desc">Notification immédiate aux administrateurs</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">8</div><div class="tilex-flux-titre">📋 Rapport</div><div class="tilex-flux-desc">Documentation complète générée pour audit</div></div>
+        </div>
+      </div>
+      <!-- PANNEAU: STATISTIQUES -->
+      <div id="tilex-pan-stats" class="tilex-demo-panneau">
+        <div class="tilex-demo-stats">
+          <div class="tilex-stat-box"><div class="tilex-stat-num">99.8%</div><div class="tilex-stat-lbl">Taux de Détection</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">&lt; 2s</div><div class="tilex-stat-lbl">Temps de Réponse</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">24/7</div><div class="tilex-stat-lbl">Surveillance Continue</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">5</div><div class="tilex-stat-lbl">Types de Menaces</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">100%</div><div class="tilex-stat-lbl">Automatisation</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">1350×</div><div class="tilex-stat-lbl">Plus Rapide qu'un Humain</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const TILEX_SCENARIOS = {
+    phishing: {
+      titre: "🎣 Phishing Détecté",
+      actions: ["Mise en quarantaine automatique du message","Blocage du domaine expéditeur suspect","Scan des boîtes aux lettres similaires","Notification envoyée à l'équipe IT"],
+      recommandations: ["Activer l'authentification multi-facteurs (MFA)","Former les utilisateurs à reconnaître le phishing","Mettre à jour les filtres anti-phishing"],
+      timeline: [{t:"0ms",a:"Email reçu — analyse initiale démarrée"},{t:"180ms",a:"Pattern phishing identifié (94% confiance)"},{t:"620ms",a:"URL malveillante validée via base de données"},{t:"940ms",a:"Quarantaine appliquée automatiquement"},{t:"< 2s",a:"Rapport généré et envoyé à l'administrateur"}]
+    },
+    ransomware: {
+      titre: "🔐 Ransomware Bloqué",
+      actions: ["Isolation immédiate du poste du réseau","Blocage des processus suspects en cours","Snapshot d'urgence des fichiers créé","Alertes critiques envoyées à tous les admins"],
+      recommandations: ["Restaurer depuis la dernière sauvegarde","Analyser le vecteur d'intrusion initial","Implémenter une sauvegarde immuable (immutable backup)"],
+      timeline: [{t:"0ms",a:"Activité anormale détectée sur le système de fichiers"},{t:"210ms",a:"342 fichiers/seconde modifiés — seuil critique dépassé"},{t:"580ms",a:"Pattern de chiffrement identifié — variant LockBit"},{t:"810ms",a:"Isolation du poste initiée"},{t:"< 2s",a:"847 fichiers protégés via snapshot d'urgence"}]
+    },
+    ddos: {
+      titre: "⚡ Attaque DDoS Neutralisée",
+      actions: ["Activation du rate limiting automatique","Redirection vers CDN de sécurité","Blocage géographique des IPs non-autorisées","Cache agressif des contenus statiques activé"],
+      recommandations: ["Implémenter un service DDoS professionnel (ex: Cloudflare)","Augmenter la bande passante disponible","Configurer des règles de pare-feu avancées"],
+      timeline: [{t:"0ms",a:"Pic de trafic anormal détecté"},{t:"150ms",a:"45 000 req/min depuis 127 IPs différentes confirmé"},{t:"490ms",a:"Attaque DDoS volumétrique identifiée"},{t:"720ms",a:"Mitigation activée automatiquement"},{t:"< 2s",a:"Trafic stabilisé — attaque neutralisée"}]
+    },
+    fuite: {
+      titre: "🔓 Fuite de Données Stoppée",
+      actions: ["Blocage immédiat de la connexion externe","Coupure de la session utilisateur compromise","Logs de transfert sauvegardés pour enquête","Notification au DPO (Data Protection Officer)"],
+      recommandations: ["Lancer une enquête médico-légale (forensique)","Notifier les autorités de protection des données","Renforcer les politiques DLP (Data Loss Prevention)"],
+      timeline: [{t:"0ms",a:"Transfert de fichiers volumineux vers IP externe détecté"},{t:"200ms",a:"Classification: 89% des fichiers sont confidentiels"},{t:"560ms",a:"Destination non-approuvée identifiée et confirmée"},{t:"830ms",a:"Connexion bloquée immédiatement"},{t:"< 2s",a:"Rapport généré — 156 enregistrements potentiellement exposés"}]
+    },
+    injection: {
+      titre: "💉 Injection SQL Bloquée",
+      actions: ["Requête bloquée avant toute exécution en base","IP source mise en surveillance renforcée","Tentative enregistrée dans les logs de sécurité","Règles WAF mises à jour automatiquement"],
+      recommandations: ["Utiliser des requêtes paramétrées (Prepared Statements)","Valider et nettoyer toutes les entrées utilisateur","Effectuer des tests de pénétration réguliers"],
+      timeline: [{t:"0ms",a:"Requête entrante analysée par le WAF"},{t:"95ms",a:"Payload SQL détecté : \"1' OR '1'='1\""},{t:"310ms",a:"Validation de sécurité échouée — injection confirmée"},{t:"580ms",a:"Requête bloquée — exception levée proprement"},{t:"< 2s",a:"IP source enregistrée pour monitoring renforcé"}]
+    },
+    acces: {
+      titre: "👤 Accès Non-Autorisé Bloqué",
+      actions: ["Compte verrouillé après 5 tentatives échouées","Session suspecte terminée immédiatement","Authentification renforcée demandée","Alerte envoyée au propriétaire du compte"],
+      recommandations: ["Activer l'authentification à deux facteurs (2FA)","Mettre en place une politique de mots de passe forts","Surveiller les connexions depuis des emplacements inhabituels"],
+      timeline: [{t:"0ms",a:"5e tentative de connexion échouée détectée"},{t:"120ms",a:"Comportement de force brute identifié"},{t:"380ms",a:"Géolocalisation suspecte — IP étrangère non reconnue"},{t:"710ms",a:"Compte temporairement verrouillé"},{t:"< 2s",a:"Email d'alerte envoyé au propriétaire du compte"}]
+    }
+  };
+  function tilexOuvrirDemo() {
+    document.getElementById('tilexDemoOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function tilexFermerDemo() {
+    document.getElementById('tilexDemoOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function tilexTab(btn, panneau) {
+    document.querySelectorAll('.tilex-demo-tab').forEach(function(b) { b.classList.remove('actif'); });
+    document.querySelectorAll('.tilex-demo-panneau').forEach(function(p) { p.classList.remove('actif'); });
+    btn.classList.add('actif');
+    document.getElementById('tilex-pan-' + panneau).classList.add('actif');
+  }
+  function tilexShowScenario(btn, type) {
+    document.querySelectorAll('.tilex-scenario-btn').forEach(function(b) { b.classList.remove('actif'); });
+    btn.classList.add('actif');
+    var s = TILEX_SCENARIOS[type];
+    var el = document.getElementById('tilexAnalyseResult');
+    el.style.display = 'block';
+    el.innerHTML =
+      '<div class="tilex-analyse-result">' +
+        '<h3>' + s.titre + '</h3>' +
+        '<p style="color:#aaa;margin-bottom:18px;font-size:0.95em;line-height:1.7;">L\'agent ti-lex a détecté et neutralisé automatiquement cette menace en moins de 2 secondes.</p>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">' +
+          '<div><p style="color:#ff7f27;font-weight:700;margin-bottom:12px;">⚡ Actions Automatiques</p>' +
+            s.actions.map(function(a) { return '<div class="tilex-result-row"><span class="tilex-result-check">✓</span><span>' + a + '</span></div>'; }).join('') +
+          '</div>' +
+          '<div><p style="color:#10b981;font-weight:700;margin-bottom:12px;">💡 Recommandations</p>' +
+            s.recommandations.map(function(r) { return '<div class="tilex-result-row"><span class="tilex-result-green">→</span><span>' + r + '</span></div>'; }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-top:24px;background:#0a0a0a;border-radius:8px;padding:20px;border-left:3px solid #ff7f27;">' +
+          '<p style="color:#ff7f27;font-weight:700;margin-bottom:14px;">📋 Chronologie de l\'Incident</p>' +
+          s.timeline.map(function(item) { return '<div style="display:flex;gap:16px;margin-bottom:10px;font-size:0.9em;"><span style="color:#ff7f27;font-weight:700;min-width:55px;flex-shrink:0;">' + item.t + '</span><span style="color:#ddd;">' + item.a + '</span></div>'; }).join('') +
+        '</div>' +
+      '</div>';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') tilexFermerDemo();
+  });
+  document.getElementById('tilexDemoOverlay').addEventListener('click', function(e) {
+    if (e.target === this) tilexFermerDemo();
+  });
   </script>
 
   <!-- Loi 25 : consentement + documents légaux -->
@@ -1075,7 +1842,7 @@
 <p>Le contenu des conversations est transmis aux API d'intelligence artificielle (Anthropic, OpenAI) pour générer les réponses. <strong>Aucune donnée personnelle identifiable</strong> n'est partagée avec ces fournisseurs au-delà du contenu de la conversation. Aucune donnée n'est vendue à des tiers.</p>
 
 <h4>5. Conservation</h4>
-<p>Les conversations sont conservées dans votre navigateur. Vous pouvez les supprimer à tout moment. Les données de compte sont conservées tant que le compte est actif. Les compteurs d'utilisation sont réinitialisés quotidiennement.</p>
+<p>Les conversations sont conservées dans votre navigateur. Vous pouvez les supprimer à tout moment. Les données de compte sont conservées tant que le compte est actif.</p>
 
 <h4>6. Vos droits (Loi 25)</h4>
 <p>Conformément à la <strong>Loi 25 sur la protection des renseignements personnels</strong> du Québec, vous avez le droit de :</p>
@@ -1086,13 +1853,12 @@
 <li><strong>Retirer</strong> votre consentement à tout moment</li>
 <li><strong>Porter plainte</strong> auprès de la Commission d'accès à l'information du Québec (CAI)</li>
 </ul>
-<p>Pour exercer vos droits, utilisez la section « Mes données » dans les paramètres de l'application ou contactez-nous.</p>
 
 <h4>7. Incident de confidentialité</h4>
-<p>En cas d'incident impliquant vos renseignements personnels, nous vous aviserons dans les <strong>72 heures</strong> conformément à la Loi 25, et nous aviserons la Commission d'accès à l'information du Québec.</p>
+<p>En cas d'incident impliquant vos renseignements personnels, nous vous aviserons dans les <strong>72 heures</strong> conformément à la Loi 25.</p>
 
 <h4>8. Consentement</h4>
-<p>En utilisant ti-lex-AL, vous consentez à la collecte et au traitement de vos renseignements personnels tels que décrits dans cette politique. Vous pouvez retirer votre consentement à tout moment depuis les paramètres.</p>
+<p>En utilisant ti-lex-AL, vous consentez à la collecte et au traitement de vos renseignements personnels tels que décrits dans cette politique.</p>
 `
     },
     terms: {
@@ -1101,13 +1867,12 @@
 <p><strong>Dernière mise à jour :</strong> 4 juin 2026</p>
 
 <h4>1. Acceptation</h4>
-<p>En accédant à ti-lex-AL, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le service.</p>
+<p>En accédant à ti-lex-AL, vous acceptez les présentes conditions d'utilisation.</p>
 
 <h4>2. Description du service</h4>
 <p>ti-lex-AL est une plateforme d'agent intelligent propulsée par l'intelligence artificielle. Le service inclut : chat IA, génération de code (Codex), analyse de sécurité, génération d'images et un studio de développement.</p>
 
 <h4>3. Utilisation acceptable</h4>
-<p>Vous vous engagez à :</p>
 <ul>
 <li>Ne pas utiliser le service à des fins illégales</li>
 <li>Ne pas tenter de contourner les limites d'utilisation</li>
@@ -1116,23 +1881,17 @@
 <li>Respecter les lois du Québec et du Canada</li>
 </ul>
 
-<h4>4. Limites d'utilisation</h4>
-<p>Le service applique des quotas journaliers : 200 messages et 20 images par jour. Ces limites peuvent être modifiées.</p>
-
-<h4>5. Propriété intellectuelle</h4>
+<h4>4. Propriété intellectuelle</h4>
 <p>Le contenu que vous créez via ti-lex-AL vous appartient. Le code source, le design et la marque ti-lex-AL sont protégés par le droit d'auteur.</p>
 
-<h4>6. Limitation de responsabilité</h4>
-<p>Les réponses générées par l'IA sont fournies à titre informatif. ti-lex-AL ne garantit pas l'exactitude, la complétude ou la pertinence des réponses. L'utilisateur est responsable de valider les informations avant de les utiliser.</p>
+<h4>5. Limitation de responsabilité</h4>
+<p>Les réponses générées par l'IA sont fournies à titre informatif. ti-lex-AL ne garantit pas l'exactitude des réponses.</p>
 
-<h4>7. Droit applicable</h4>
-<p>Les présentes conditions sont régies par les lois du <strong>Québec</strong> et du <strong>Canada</strong>. Tout litige sera soumis aux tribunaux compétents du district judiciaire de Montréal.</p>
+<h4>6. Droit applicable</h4>
+<p>Les présentes conditions sont régies par les lois du <strong>Québec</strong> et du <strong>Canada</strong>.</p>
 
-<h4>8. Modifications</h4>
-<p>Nous nous réservons le droit de modifier ces conditions. Les modifications prendront effet dès leur publication. L'utilisation continue du service après modification vaut acceptation.</p>
-
-<h4>9. Langue</h4>
-<p>Conformément à la <strong>Charte de la langue française</strong> (Loi 101), les présentes conditions sont rédigées en français. En cas de divergence avec toute version traduite, la version française prévaut.</p>
+<h4>7. Langue</h4>
+<p>Conformément à la <strong>Charte de la langue française</strong> (Loi 101), les présentes conditions sont rédigées en français. La version française prévaut.</p>
 `
     }
   };
@@ -1149,7 +1908,6 @@
     localStorage.setItem('tilex-consent', JSON.stringify({ accepted: true, date: new Date().toISOString() }));
     document.getElementById('consentBanner').classList.add('hidden');
   }
-
   function declineConsent() {
     localStorage.setItem('tilex-consent', JSON.stringify({ accepted: false, date: new Date().toISOString() }));
     document.getElementById('consentBanner').classList.add('hidden');

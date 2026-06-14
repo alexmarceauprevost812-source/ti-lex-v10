@@ -15,5 +15,9 @@
     "claude",
     "anthropic",
     "ia"
-  ]
+  ],
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "stripe": "^22.2.0"
+  }
 }

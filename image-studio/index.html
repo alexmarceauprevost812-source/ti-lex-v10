@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>TI-LEX-V10 AI IMAGE STUDIO</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0d1117;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+
+    textarea {
+      width: 80%;
+      height: 120px;
+      padding: 15px;
+      font-size: 16px;
+      border-radius: 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    img {
+      margin-top: 30px;
+      max-width: 90%;
+      border-radius: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔥 TI-LEX-V10 AI IMAGE STUDIO</h1>
+
+<textarea id="prompt" placeholder="Décris ton image IA..."></textarea>
+<br>
+
+<button onclick="generateImage()">Créer Image</button>
+
+<p id="status"></p>
+
+<img id="image" />
+
+<script>
+async function generateImage() {
+
+  const prompt = document.getElementById("prompt").value;
+
+  document.getElementById("status").innerText =
+    "Création en cours...";
+
+  const response = await fetch("/generate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await response.json();
+
+  if(data.image){
+
+    document.getElementById("image").src =
+      "data:image/png;base64," + data.image;
+
+    document.getElementById("status").innerText =
+      "Image créée ✅";
+
+  } else {
+
+    document.getElementById("status").innerText =
+      "Erreur ❌";
+  }
+}
+</script>
+
+</body>
+</html>
