@@ -14,8 +14,8 @@ const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 
 const PRICE_TO_PLAN: Record<string, string> = {
   "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
-  "price_1TiBFrFu0d9mAEdCRUY13Wvm": "surge",
-  "price_1TiBbSFu0d9mAEdCAlDYgtlv": "apex",
+  "price_1TiN0tFu0d9mAEdCVQtmwR7t": "surge",
+  "price_1TiMuYFu0d9mAEdCGONgQKBH": "apex",
 };
 
 function tierToPlan(

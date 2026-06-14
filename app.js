@@ -15,8 +15,8 @@ var PAYMENT_LINKS = {
 
 var STRIPE_PRICE_IDS = {
   flux:  "price_1TiA8fFu0d9mAEdCaIBd9Z5v",
-  surge: "price_1TiBFrFu0d9mAEdCRUY13Wvm",
-  apex:  "price_1TiBbSFu0d9mAEdCAlDYgtlv",
+  surge: "price_1TiN0tFu0d9mAEdCVQtmwR7t",
+  apex:  "price_1TiMuYFu0d9mAEdCGONgQKBH",
 };
 
 const state = {
@@ -389,7 +389,7 @@ const I18N = {
     fpSurgeBadge: "Le plus populaire",
     fpSurge: "SURGE", fpSurgePeriod: "/ mois",
     fpSurgePitch: "Pour les créateurs sérieux. Freelancers, équipes, agences.",
-    fpSurgeCta: "Commencer avec SURGE →", fpSurgeBilled: "Facturé 372$/an",
+    fpSurgeCta: "Commencer avec SURGE →", fpSurgeBilled: "Facturé 576$/an",
     fpSurgeF1: "100 messages / fenêtre 12h", fpSurgeF2: "Reset minuit + midi",
     fpSurgeF3: "15 agents IA · Sonnet 4.6", fpSurgeF4: "5 projets Codex · Vercel",
     fpSurgeF5: "50 sessions Codex", fpSurgeF6: "5 GB stockage",
@@ -398,7 +398,7 @@ const I18N = {
     fpApexBadge: "Sur mesure",
     fpApex: "APEX", fpApexPeriod: "/ mois",
     fpApexPitch: "Puissance totale. Agents illimités + Opus 4.8.",
-    fpApexCta: "Commencer avec APEX →", fpApexBilled: "Facturé 756$/an",
+    fpApexCta: "Commencer avec APEX →", fpApexBilled: "Facturé 1200$/an",
     fpApexF1: "250 messages / fenêtre 12h", fpApexF2: "Reset minuit + midi",
     fpApexF3: "Agents IA illimités", fpApexF4: "100 messages Opus 4.8",
     fpApexF5: "20 projets Codex illimités", fpApexF6: "10 GB stockage",
@@ -675,7 +675,7 @@ const I18N = {
     fpSurgeBadge: "Most popular",
     fpSurge: "SURGE", fpSurgePeriod: "/ mo",
     fpSurgePitch: "For serious creators. Freelancers, teams, agencies.",
-    fpSurgeCta: "Start with SURGE →", fpSurgeBilled: "Billed $372/yr",
+    fpSurgeCta: "Start with SURGE →", fpSurgeBilled: "Billed $576/yr",
     fpSurgeF1: "100 messages / 12h window", fpSurgeF2: "Reset midnight + noon",
     fpSurgeF3: "15 AI agents · Sonnet 4.6", fpSurgeF4: "5 Codex projects · Vercel",
     fpSurgeF5: "50 Codex sessions", fpSurgeF6: "5 GB storage",
@@ -684,7 +684,7 @@ const I18N = {
     fpApexBadge: "Custom",
     fpApex: "APEX", fpApexPeriod: "/ mo",
     fpApexPitch: "Total power. Unlimited agents + Opus 4.8.",
-    fpApexCta: "Start with APEX →", fpApexBilled: "Billed $756/yr",
+    fpApexCta: "Start with APEX →", fpApexBilled: "Billed $1200/yr",
     fpApexF1: "250 messages / 12h window", fpApexF2: "Reset midnight + noon",
     fpApexF3: "Unlimited AI agents", fpApexF4: "100 Opus 4.8 messages",
     fpApexF5: "20 unlimited Codex projects", fpApexF6: "10 GB storage",
@@ -5798,8 +5798,8 @@ function loadAcctProfile() {
 
 const PLAN_DATA = {
   flux: { name: "FLUX", price: "$19 CAD/mois", msgWindow: 40, agents: 5, models: "Sonnet 4.6", codexProjects: 2, codexSessions: 10, storage: "1 GB" },
-  surge: { name: "SURGE", price: "$39 CAD/mois", msgWindow: 100, agents: 15, models: "Sonnet 4.6", codexProjects: 5, codexSessions: 50, storage: "5 GB" },
-  apex:  { name: "APEX", price: "$79 CAD/mois", msgWindow: 250, agents: -1, models: "Sonnet 4.6 + Opus 4.8", opusMessages: 100, codexProjects: 20, codexSessions: -1, storage: "10 GB" },
+  surge: { name: "SURGE", price: "$60 CAD/mois", msgWindow: 100, agents: 15, models: "Sonnet 4.6", codexProjects: 5, codexSessions: 50, storage: "5 GB" },
+  apex:  { name: "APEX", price: "$125 CAD/mois", msgWindow: 250, agents: -1, models: "Sonnet 4.6 + Opus 4.8", opusMessages: 100, codexProjects: 20, codexSessions: -1, storage: "10 GB" },
 };
 
 function refreshAccountPage() {
