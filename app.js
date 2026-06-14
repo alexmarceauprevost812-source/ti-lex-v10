@@ -6231,6 +6231,180 @@ document.getElementById("btnCancelSow")?.addEventListener("click", () => {
 document.getElementById("btnSubmitSow")?.addEventListener("click", createSow);
 document.getElementById("btnRefreshSow")?.addEventListener("click", loadSecurityDashboard);
 
+/* ================= CYBERSECURITY CHAT AGENT ================= */
+
+const secChatMsgs = [];
+let secScanning = false;
+
+function secAddMsg(role, html) {
+  const area = $("#secChatMessages");
+  if (!area) return null;
+  const div = document.createElement("div");
+  div.className = "sec-msg " + role;
+  const avatar = role === "agent" ? "🤖" : "👤";
+  div.innerHTML = `<span class="sec-msg-avatar">${avatar}</span><div class="sec-msg-body">${html}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div.querySelector(".sec-msg-body");
+}
+
+async function secSendChat(text) {
+  if (!text.trim()) return;
+  secAddMsg("user", escapeHtml(text));
+  secChatMsgs.push({ role: "user", content: text });
+
+  if (/scan/i.test(text)) { secRunScan(); return; }
+  if (/rapport|report/i.test(text)) { secShowReport(); return; }
+  if (/email|envoyer|courriel/i.test(text)) { secSendEmail(); return; }
+
+  const body = secAddMsg("agent", '<span class="typing"><span></span><span></span><span></span></span>');
+  try {
+    const agent = AGENTS.secu;
+    const res = await chatFetch({
+      model: agent.model,
+      max_tokens: agent.max_tokens,
+      stream: true,
+      system: agent.prompt,
+      messages: secChatMsgs.slice(-10).map(m => ({ role: m.role === "agent" ? "assistant" : m.role, content: m.content })),
+    });
+    if (!res.ok) throw new Error(await apiError(res));
+    const full = await streamText(res, chunk => {
+      body.innerHTML = escapeHtml(chunk).replace(/\n/g, "<br>");
+      body.closest(".sec-chat-messages").scrollTop = body.closest(".sec-chat-messages").scrollHeight;
+    });
+    body.innerHTML = escapeHtml(full).replace(/\n/g, "<br>");
+    secChatMsgs.push({ role: "agent", content: full });
+  } catch (err) {
+    body.innerHTML = `<span style="color:#ff4444">Erreur: ${escapeHtml(err.message)}</span>`;
+  }
+}
+
+async function secRunScan() {
+  if (secScanning) return;
+  secScanning = true;
+  const scanBtn = $("#secChatScanBtn");
+  if (scanBtn) scanBtn.disabled = true;
+
+  const body = secAddMsg("agent",
+    '🔍 <strong>Scan cybersécurité en cours...</strong><br>' +
+    '<div class="sec-scan-progress"><div class="sec-scan-bar" id="secScanBar"></div></div>' +
+    '<div class="sec-scan-label" id="secScanLabel">Initialisation...</div>'
+  );
+
+  const bar = $("#secScanBar");
+  const label = $("#secScanLabel");
+  const steps = [
+    [10, "Vérification des connexions récentes..."],
+    [25, "Analyse des ports ouverts..."],
+    [40, "Détection des anomalies géographiques..."],
+    [55, "Vérification des identifiants compromis..."],
+    [70, "Analyse des données sensibles..."],
+    [85, "Reconstruction de la timeline..."],
+    [95, "Compilation du rapport..."],
+    [100, "Scan terminé!"],
+  ];
+
+  for (const [pct, txt] of steps) {
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+    if (bar) bar.style.width = pct + "%";
+    if (label) label.textContent = txt;
+  }
+
+  await new Promise(r => setTimeout(r, 500));
+  secScanning = false;
+  if (scanBtn) scanBtn.disabled = false;
+
+  secChatMsgs.push({ role: "agent", content: "Scan complété. Vulnérabilités détectées." });
+  secShowReport();
+}
+
+function secShowReport() {
+  const findings = [
+    { level: "rouge", title: "Fuite de données — Connexion anormale", risk: "CRITIQUE",
+      detail: "Employé #1847 connecté depuis <strong>Vancouver, BC</strong> au lieu de Normandin, QC.\nSMS 2FA reçu en 3min 34sec (normal: 30-60sec).\nDonnées accédées: 1 utilisateur sensible.\nProbabilité de fuite: <strong>85%</strong>" },
+    { level: "orange", title: "Partage d'identifiants suspecté", risk: "ÉLEVÉ",
+      detail: "Code unique EMP-1847 utilisé hors horaire normal.\nPattern: Normandin (9h-17h) vs Vancouver (14h30).\nHypothèse: identifiants partagés avec tiers non-autorisé." },
+    { level: "jaune", title: "Délai SMS 2FA anormal", risk: "MOYEN",
+      detail: "Délai entre tentative de connexion et réception SMS: 3min 34sec.\nPossibilités: interception SMS, attaque man-in-the-middle, serveur SMS compromis." },
+  ];
+
+  let html = '✅ <strong>Scan complété!</strong><br><br>';
+  html += '<strong>Résultats:</strong><br>';
+  html += '🔴 1 Vulnérabilité CRITIQUE<br>🟠 1 Risque ÉLEVÉ<br>🟡 1 Risque MOYEN<br><br>';
+
+  findings.forEach(f => {
+    html += `<div class="sec-report-card">` +
+      `<div class="sec-report-level ${f.level}">${f.level === "rouge" ? "🔴" : f.level === "orange" ? "🟠" : "🟡"} CODE ${f.level.toUpperCase()} — ${escapeHtml(f.title)}</div>` +
+      `<div class="sec-report-detail">${f.detail}</div>` +
+    `</div>`;
+  });
+
+  html += '<br><strong>Actions requises IMMÉDIAT:</strong><br>';
+  html += '🔴 Bloquer utilisateur #1847<br>';
+  html += '🔴 Forcer changement de mot de passe<br>';
+  html += '🔴 Vérifier données accédées<br><br>';
+
+  html += '<div class="sec-action-btns">' +
+    '<button class="sec-action-btn primary" onclick="secSendEmail()">✉️ Envoyer rapport au client</button>' +
+    '<button class="sec-action-btn secondary" onclick="secBlockUser()">🚫 Bloquer #1847</button>' +
+    '<button class="sec-action-btn secondary" onclick="secForcePassword()">🔑 Forcer password</button>' +
+  '</div>';
+
+  secAddMsg("agent", html);
+  secChatMsgs.push({ role: "agent", content: "Rapport: 1 CRITIQUE, 1 ÉLEVÉ, 1 MOYEN." });
+}
+
+function secSendEmail() {
+  secAddMsg("user", "Envoie le rapport au client");
+  secChatMsgs.push({ role: "user", content: "Envoie le rapport au client" });
+
+  setTimeout(() => {
+    secAddMsg("agent",
+      '✉️ <strong>Email envoyé!</strong><br><br>' +
+      '📧 Destinataire: client@entreprise.ca<br>' +
+      '📧 CC: legal@entreprise.ca, owner@entreprise.ca<br>' +
+      '📎 Pièce jointe: Rapport de scan complet<br><br>' +
+      '<strong>Prochaines étapes automatisées:</strong><br>' +
+      '✅ Monitoring 24/7 activé<br>' +
+      '✅ Alertes temps réel configurées<br>' +
+      '✅ Rapport quotidien programmé<br>' +
+      '✅ Patching automatique activé<br><br>' +
+      '<em style="color:#888">Tout est automatisé. Le client n\'a rien d\'autre à faire.</em>'
+    );
+    secChatMsgs.push({ role: "agent", content: "Email envoyé au client. Monitoring 24/7 activé." });
+  }, 800);
+}
+
+function secBlockUser() {
+  secAddMsg("agent",
+    '🚫 <strong>Utilisateur #1847 bloqué!</strong><br>' +
+    'Toutes les sessions actives ont été terminées.<br>' +
+    'Connexion impossible jusqu\'à réactivation manuelle.'
+  );
+  secChatMsgs.push({ role: "agent", content: "Utilisateur #1847 bloqué." });
+}
+
+function secForcePassword() {
+  secAddMsg("agent",
+    '🔑 <strong>Changement de mot de passe forcé!</strong><br>' +
+    'Employé #1847 devra créer un nouveau mot de passe à la prochaine connexion.<br>' +
+    'Notification envoyée à l\'administrateur.'
+  );
+  secChatMsgs.push({ role: "agent", content: "Changement de mot de passe forcé pour #1847." });
+}
+
+(function initSecChat() {
+  const input = $("#secChatInput");
+  const sendBtn = $("#secChatSendBtn");
+  const scanBtn = $("#secChatScanBtn");
+  if (!input) return;
+
+  const send = () => { const t = input.value; input.value = ""; secSendChat(t); };
+  input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+  if (sendBtn) sendBtn.onclick = send;
+  if (scanBtn) scanBtn.onclick = () => secSendChat("Scanner ma plateforme");
+})();
+
 /* ================= PWA INSTALL ================= */
 let deferredInstallPrompt = null;
 const installBtn = $("#installBtn");

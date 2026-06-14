@@ -625,6 +625,27 @@
       <!-- Liste des SOW -->
       <div id="sowList" class="sow-list"></div>
 
+      <!-- Agent Cybersécurité Chat -->
+      <div class="sec-chat-section">
+        <div class="sec-chat-head">
+          <h3>🔐 Agent Cybersécurité</h3>
+          <span class="sec-chat-status" id="secChatStatus">En ligne</span>
+        </div>
+        <div class="sec-chat-messages" id="secChatMessages">
+          <div class="sec-msg agent">
+            <span class="sec-msg-avatar">🤖</span>
+            <div class="sec-msg-body">Bonjour! Je suis l'Agent Cybersécurité de ti-lex. Je peux scanner ta plateforme, détecter les failles et générer un rapport détaillé. Tape <strong>"scanner"</strong> ou clique le bouton pour commencer.</div>
+          </div>
+        </div>
+        <div class="sec-chat-composer">
+          <input type="text" id="secChatInput" placeholder="Tape un message ou 'scanner'…">
+          <button class="sec-chat-scan-btn" id="secChatScanBtn" title="Lancer un scan">🔍 Scanner</button>
+          <button class="sec-chat-send-btn" id="secChatSendBtn" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+
       <div class="sec-note">
         <strong>// Rappel légal</strong> (<code>Art. 342.1 C.cr.</code>) : tout scan doit reposer sur un mandat autorisé,
         un programme de <code>bug_bounty</code>, ou de la divulgation responsable. Le mode Sécurité bloque les scans
