@@ -1605,15 +1605,21 @@ function renderAgentPicker() {
   }
   menu.innerHTML = Object.entries(AGENTS).map(([key, a]) => {
     const locked = isAgentLocked(key);
+    const isCustom = key.startsWith("custom_");
     return `<button class="agent-pick${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}">
       <span class="agent-pick-icon">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
       <span class="agent-pick-info">
         <span class="agent-pick-name">${a.name}${locked ? ' 🔒' : ''}</span>
         <span class="agent-pick-desc">${locked ? 'Forfait APEX requis' : agentDesc(key)}</span>
       </span>
+      ${isCustom ? `<span class="agent-pick-del" data-custom-id="${key.replace('custom_', '')}" title="Supprimer cet agent">🗑️</span>` : ''}
     </button>`;
   }).join("");
   $$(".agent-pick", menu).forEach(p => {
+    const delBtn = p.querySelector(".agent-pick-del");
+    if (delBtn) {
+      delBtn.onclick = (e) => { e.stopPropagation(); deleteCustomAgent(delBtn.dataset.customId); toggleAgentPicker(false); };
+    }
     if (isAgentLocked(p.dataset.agent)) {
       p.onclick = () => { toggleAgentPicker(false); switchView("forfaits"); };
       return;
@@ -2337,7 +2343,7 @@ function renderChatConvsFiltered() {
     const f = c._flags;
     const cls = `chat-conv-item${c._idx === activeChatConv ? ' active' : ''}${f.fav ? ' conv-fav' : ''}${f.proj ? ' conv-proj' : ''}${f.pinned ? ' conv-pinned' : ''}`;
     const badges = (f.fav ? '<span class="conv-badge">★</span>' : '') + (f.proj ? '<span class="conv-badge">📁</span>' : '');
-    return `<div class="${cls}" data-idx="${c._idx}"><span class="conv-title">${escapeHtml(c.title)}</span>${badges}${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${c._idx}" title="${t("delete_")}">×</button></div>`;
+    return `<div class="${cls}" data-idx="${c._idx}"><span class="conv-title">${escapeHtml(c.title)}</span>${badges}${age ? `<span class="conv-date">${age}</span>` : ""}<button class="conv-del" data-idx="${c._idx}" title="${t("delete_")}">🗑️</button></div>`;
   }).join("");
 
   $$(".chat-conv-item", el).forEach(item => {
@@ -2354,6 +2360,7 @@ function renderChatConvsFiltered() {
   $$(".conv-del", el).forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
+      if (!confirm("Supprimer cette conversation ?")) return;
       const idx = +btn.dataset.idx;
       chatConvs.splice(idx, 1);
       deleteConvFlags(idx);
@@ -2418,6 +2425,7 @@ function renderConvosCenter(filter) {
   $$(".convos-card-del", list).forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
+      if (!confirm("Supprimer cette conversation ?")) return;
       const idx = +btn.dataset.idx;
       chatConvs.splice(idx, 1);
       deleteConvFlags(idx);
@@ -2589,6 +2597,7 @@ $$(".conv-dd-item").forEach(item => {
       }
     } else if (act === "delete") {
       if (activeChatConv < 0) return;
+      if (!confirm("Supprimer cette conversation ?")) return;
       const idx = activeChatConv;
       chatConvs.splice(idx, 1);
       deleteConvFlags(idx);
