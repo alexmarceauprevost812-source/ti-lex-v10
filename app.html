@@ -1374,10 +1374,16 @@
   </div>
 </div>
 
+<script>
+var _FP_LINKS={flux:"https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",surge:"https://buy.stripe.com/28E9AT0t8aXL3eG5wq53O0a",apex:"https://buy.stripe.com/00w3cv3Fke9X5mO0c653O0b"};
+if(typeof subscribeToplan==="undefined"){window.subscribeToplan=function(p){window.location.href=_FP_LINKS[p]||"#"}}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script src="app.js"></script>
 <script>
+if(typeof subscribeToplan==="undefined"){window.subscribeToplan=function(p){window.location.href=_FP_LINKS[p]||"#"}}
 if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){r.update()})});
   navigator.serviceWorker.register("/sw.js").then((reg) => {
     reg.addEventListener("updatefound", () => {
       const nw = reg.installing;
