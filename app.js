@@ -6,6 +6,18 @@ const MODEL_DEFAULT = "claude-opus-4-8";
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
+var PAYMENT_LINKS = {
+  flux:  "https://buy.stripe.com/bJe14ndfUgi5g1scYS53O0d",
+  surge: "https://buy.stripe.com/00wcN5cbQ0j7aH80c653O0e",
+  apex:  "https://buy.stripe.com/7sY28r5Ns2rfbLc4sm53O0g",
+};
+
+var STRIPE_PRICE_IDS = {
+  flux:  "price_1TiA8fFu0d9mAEdCaIBd9Z5v",
+  surge: "price_1TiBFrFu0d9mAEdCRUY13Wvm",
+  apex:  "price_1TiBbSFu0d9mAEdCAlDYgtlv",
+};
+
 const state = {
   reflexion: true,
   theme: "dark",
@@ -6933,17 +6945,6 @@ async function trackImageGenerated() {
   }
 }
 
-const PAYMENT_LINKS = {
-  flux:  "https://buy.stripe.com/bJe14ndfUgi5g1scYS53O0d",
-  surge: "https://buy.stripe.com/00wcN5cbQ0j7aH80c653O0e",
-  apex:  "https://buy.stripe.com/7sY28r5Ns2rfbLc4sm53O0g",
-};
-
-const STRIPE_PRICE_IDS = {
-  flux:  "price_1TiA8fFu0d9mAEdCaIBd9Z5v",
-  surge: "price_1TiBFrFu0d9mAEdCRUY13Wvm",
-  apex:  "price_1TiBbSFu0d9mAEdCAlDYgtlv",
-};
 
 let _fpCurrency = "cad";
 function fpSetCurrency(cur) {
