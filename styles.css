@@ -3074,6 +3074,17 @@ textarea.fin-input:focus{outline:none}
   background:var(--fp-orange);box-shadow:0 0 18px var(--fp-orange-glow);z-index:1;
   transition:transform .32s cubic-bezier(.3,.9,.25,1),width .32s;
 }
+.fp-currency-toggle{
+  display:inline-flex;gap:4px;margin:12px auto 0;
+  background:var(--fp-bg-3);border:1px solid var(--fp-line);border-radius:999px;padding:4px;
+  animation:fpRise .7s ease .7s both;
+}
+.fp-cur-btn{
+  font-family:var(--font);font-weight:600;font-size:.78rem;
+  color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;
+  padding:6px 14px;border-radius:999px;transition:all .2s;
+}
+.fp-cur-btn.on{color:#fff;background:rgba(255,255,255,.12)}
 .fp-save{
   margin-left:8px;font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:#fff;background:var(--fp-green);padding:3px 9px;border-radius:999px;

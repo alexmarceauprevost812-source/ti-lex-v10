@@ -100,7 +100,7 @@ function loadSettings() {
     if (sb && sb.url) { state.supabase = sb; state.connected.supabase = true; }
   } catch (e) { /* localStorage indisponible */ }
   const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
-  if (plan !== "industriel") {
+  if (plan !== "apex") {
     if (state.model.includes("opus")) state.model = "claude-sonnet-4-6";
     if (state.agent === "tilex" || state.agent === "dev" || state.agent === "secu") {
       state.agent = "general";
@@ -354,42 +354,42 @@ const I18N = {
     fpChoose: 'Choisis ton <span class="fp-title-orange">forfait</span>',
     fpSub: "Chaque forfait te donne accès à l'agent AL, au Codex et au mode Sécurité. La seule différence, c'est jusqu'où tu veux aller.",
     fpMonthly: "Mensuel", fpAnnual: "Annuel", fpSave: "-20%",
-    fpStarter: "Starter", fpStarterPeriod: "/ mois",
-    fpStarterPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
-    fpStarterCta: "Commencer à 28$/mois", fpStarterBilled: "Facturé 264$/an",
-    fpStarterF1: "40 messages IA / jour", fpStarterF2: "1 200 messages / mois",
-    fpStarterF3: "200 images générées / mois", fpStarterF4: "3 agents personnalisés",
-    fpStarterF5: "Codex — 3 sessions / jour", fpStarterF6: "Mode Sécurité — scan de base",
-    fpStarterF7: "Modèles : Haiku + Sonnet", fpStarterF8: "Support par chat 7j/7",
-    fpStarterOff1: "Opus", fpStarterOff2: "SSO entreprise",
-    fpProBadge: "Le plus populaire",
-    fpPro: "Pro", fpProPeriod: "/ mois",
-    fpProPitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.",
-    fpProCta: "S'abonner au Pro", fpProBilled: "Facturé 744$/an",
-    fpProF1: "120 messages IA / jour", fpProF2: "3 600 messages / mois",
-    fpProF3: "500 images générées / mois", fpProF4: "10 agents personnalisés",
-    fpProF5: "Codex multi-projets — 5 projets", fpProF6: "Mode Sécurité complet (SOW + scans)",
-    fpProF7: "Modèles : Haiku + Sonnet", fpProF8: "Mémoire longue durée entre sessions",
-    fpProF9: "Support prioritaire en moins de 4h",
-    fpProOff1: "Opus", fpProOff2: "SSO entreprise",
-    fpIndustrialBadge: "Sur mesure",
-    fpIndustrial: "Industriel", fpIndustrialPeriod: "/ mois",
-    fpIndustrialPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
-    fpIndustrialCta: "Contacter l'équipe", fpIndustrialBilled: "Facturé 1 344$/an",
-    fpIndustrialF1: "200 messages IA / jour", fpIndustrialF2: "6 000 messages / mois",
-    fpIndustrialF3: "1 000 images générées / mois", fpIndustrialF4: "30 agents personnalisés",
-    fpIndustrialF5: "Codex illimité — 20 projets", fpIndustrialF6: "Scans de sécurité avancés + rapports",
-    fpIndustrialF7: "Modèles : Haiku + Sonnet + Opus", fpIndustrialF8: "Audit trail complet — 5 ans",
-    fpIndustrialF9: "SSO et intégrations entreprise", fpIndustrialF10: "SLA 99.9% avec support dédié",
-    fpIndustrialF11: "Option de déploiement privé",
+    fpFlux: "FLUX", fpFluxPeriod: "/ mois",
+    fpFluxPitch: "L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.",
+    fpFluxCta: "Commencer à 28$/mois", fpFluxBilled: "Facturé 264$/an",
+    fpFluxF1: "40 messages IA / jour", fpFluxF2: "1 200 messages / mois",
+    fpFluxF3: "200 images générées / mois", fpFluxF4: "3 agents personnalisés",
+    fpFluxF5: "Codex — 3 sessions / jour", fpFluxF6: "Mode Sécurité — scan de base",
+    fpFluxF7: "Modèles : Haiku + Sonnet", fpFluxF8: "Support par chat 7j/7",
+    fpFluxOff1: "Opus", fpFluxOff2: "SSO entreprise",
+    fpSurgeBadge: "Le plus populaire",
+    fpSurge: "SURGE", fpSurgePeriod: "/ mois",
+    fpSurgePitch: "Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.",
+    fpSurgeCta: "S'abonner au SURGE", fpSurgeBilled: "Facturé 744$/an",
+    fpSurgeF1: "120 messages IA / jour", fpSurgeF2: "3 600 messages / mois",
+    fpSurgeF3: "500 images générées / mois", fpSurgeF4: "10 agents personnalisés",
+    fpSurgeF5: "Codex multi-projets — 5 projets", fpSurgeF6: "Mode Sécurité complet (SOW + scans)",
+    fpSurgeF7: "Modèles : Haiku + Sonnet", fpSurgeF8: "Mémoire longue durée entre sessions",
+    fpSurgeF9: "Support prioritaire en moins de 4h",
+    fpSurgeOff1: "Opus", fpSurgeOff2: "SSO entreprise",
+    fpApexBadge: "Sur mesure",
+    fpApex: "APEX", fpApexPeriod: "/ mois",
+    fpApexPitch: "La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.",
+    fpApexCta: "Contacter l'équipe", fpApexBilled: "Facturé 1 344$/an",
+    fpApexF1: "200 messages IA / jour", fpApexF2: "6 000 messages / mois",
+    fpApexF3: "1 000 images générées / mois", fpApexF4: "30 agents personnalisés",
+    fpApexF5: "Codex illimité — 20 projets", fpApexF6: "Scans de sécurité avancés + rapports",
+    fpApexF7: "Modèles : Haiku + Sonnet + Opus", fpApexF8: "Audit trail complet — 5 ans",
+    fpApexF9: "SSO et intégrations entreprise", fpApexF10: "SLA 99.9% avec support dédié",
+    fpApexF11: "Option de déploiement privé",
     fpBadge1: "Paiement sécurisé Stripe", fpBadge2: "Annule quand tu veux", fpBadge3: "Support humain 7j/7", fpBadge4: "Prix en CAD",
     fpFaq: "Questions fréquentes",
     fpQ1: "Est-ce que je peux changer de forfait en cours de route?",
     fpA1: "Oui! Tu peux upgrader ou downgrader à tout moment. Le prorata est automatiquement calculé par Stripe.",
     fpQ2: "Qu'est-ce qui arrive si j'annule?",
     fpA2: "Tu gardes l'accès jusqu'à la fin de ta période payée. Aucune pénalité, aucun frais caché.",
-    fpQ3: "C'est quoi la différence entre Pro et Industriel?",
-    fpA3: "Le forfait Industriel offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.",
+    fpQ3: "C'est quoi la différence entre SURGE et APEX?",
+    fpA3: "Le forfait APEX offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.",
     fpQ4: "Les prix sont en dollars canadiens?",
     fpA4: "Oui, tous les prix sont en CAD. Les taxes applicables sont ajoutées au moment du paiement.",
     fpFooter: "Taxes en sus. Annule quand tu veux, sans frais cachés.",
@@ -643,42 +643,42 @@ const I18N = {
     fpChoose: 'Choose your <span class="fp-title-orange">plan</span>',
     fpSub: "Every plan gives you access to Agent AL, the Codex and Security Mode. The only difference is how far you want to go.",
     fpMonthly: "Monthly", fpAnnual: "Annual", fpSave: "-20%",
-    fpStarter: "Starter", fpStarterPeriod: "/ mo",
-    fpStarterPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
-    fpStarterCta: "Start at $28/mo", fpStarterBilled: "Billed $264/yr",
-    fpStarterF1: "40 AI messages / day", fpStarterF2: "1,200 messages / month",
-    fpStarterF3: "200 images generated / month", fpStarterF4: "3 custom agents",
-    fpStarterF5: "Codex — 3 sessions / day", fpStarterF6: "Security Mode — basic scan",
-    fpStarterF7: "Models: Haiku + Sonnet", fpStarterF8: "Chat support 7/7",
-    fpStarterOff1: "Opus", fpStarterOff2: "Enterprise SSO",
-    fpProBadge: "Most popular",
-    fpPro: "Pro", fpProPeriod: "/ mo",
-    fpProPitch: "For those who build for real. Freelancers, teams, agencies — healthy margins.",
-    fpProCta: "Subscribe — Pro", fpProBilled: "Billed $744/yr",
-    fpProF1: "120 AI messages / day", fpProF2: "3,600 messages / month",
-    fpProF3: "500 images generated / month", fpProF4: "10 custom agents",
-    fpProF5: "Multi-project Codex — 5 projects", fpProF6: "Full Security Mode (SOW + scans)",
-    fpProF7: "Models: Haiku + Sonnet", fpProF8: "Long-term memory between sessions",
-    fpProF9: "Priority support under 4h",
-    fpProOff1: "Opus", fpProOff2: "Enterprise SSO",
-    fpIndustrialBadge: "Custom",
-    fpIndustrial: "Industrial", fpIndustrialPeriod: "/ mo",
-    fpIndustrialPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
-    fpIndustrialCta: "Contact the team", fpIndustrialBilled: "Billed $1,344/yr",
-    fpIndustrialF1: "200 AI messages / day", fpIndustrialF2: "6,000 messages / month",
-    fpIndustrialF3: "1,000 images generated / month", fpIndustrialF4: "30 custom agents",
-    fpIndustrialF5: "Unlimited Codex — 20 projects", fpIndustrialF6: "Advanced security scans + reports",
-    fpIndustrialF7: "Models: Haiku + Sonnet + Opus", fpIndustrialF8: "Full audit trail — 5 years",
-    fpIndustrialF9: "SSO and enterprise integrations", fpIndustrialF10: "99.9% SLA with dedicated support",
-    fpIndustrialF11: "Private deployment option",
+    fpFlux: "FLUX", fpFluxPeriod: "/ mo",
+    fpFluxPitch: "The essentials to get started. Ideal if you work solo or want to test the beast.",
+    fpFluxCta: "Start at $28/mo", fpFluxBilled: "Billed $264/yr",
+    fpFluxF1: "40 AI messages / day", fpFluxF2: "1,200 messages / month",
+    fpFluxF3: "200 images generated / month", fpFluxF4: "3 custom agents",
+    fpFluxF5: "Codex — 3 sessions / day", fpFluxF6: "Security Mode — basic scan",
+    fpFluxF7: "Models: Haiku + Sonnet", fpFluxF8: "Chat support 7/7",
+    fpFluxOff1: "Opus", fpFluxOff2: "Enterprise SSO",
+    fpSurgeBadge: "Most popular",
+    fpSurge: "SURGE", fpSurgePeriod: "/ mo",
+    fpSurgePitch: "For those who build for real. Freelancers, teams, agencies — healthy margins.",
+    fpSurgeCta: "Subscribe — SURGE", fpSurgeBilled: "Billed $744/yr",
+    fpSurgeF1: "120 AI messages / day", fpSurgeF2: "3,600 messages / month",
+    fpSurgeF3: "500 images generated / month", fpSurgeF4: "10 custom agents",
+    fpSurgeF5: "Multi-project Codex — 5 projects", fpSurgeF6: "Full Security Mode (SOW + scans)",
+    fpSurgeF7: "Models: Haiku + Sonnet", fpSurgeF8: "Long-term memory between sessions",
+    fpSurgeF9: "Priority support under 4h",
+    fpSurgeOff1: "Opus", fpSurgeOff2: "Enterprise SSO",
+    fpApexBadge: "Custom",
+    fpApex: "APEX", fpApexPeriod: "/ mo",
+    fpApexPitch: "Total power. For companies that want to integrate AL into their infrastructure.",
+    fpApexCta: "Contact the team", fpApexBilled: "Billed $1,344/yr",
+    fpApexF1: "200 AI messages / day", fpApexF2: "6,000 messages / month",
+    fpApexF3: "1,000 images generated / month", fpApexF4: "30 custom agents",
+    fpApexF5: "Unlimited Codex — 20 projects", fpApexF6: "Advanced security scans + reports",
+    fpApexF7: "Models: Haiku + Sonnet + Opus", fpApexF8: "Full audit trail — 5 years",
+    fpApexF9: "SSO and enterprise integrations", fpApexF10: "99.9% SLA with dedicated support",
+    fpApexF11: "Private deployment option",
     fpBadge1: "Secure Stripe payment", fpBadge2: "Cancel anytime", fpBadge3: "Human support 7/7", fpBadge4: "Prices in CAD",
     fpFaq: "Frequently asked questions",
     fpQ1: "Can I change my plan anytime?",
     fpA1: "Yes! You can upgrade or downgrade at any time. Proration is automatically calculated by Stripe.",
     fpQ2: "What happens if I cancel?",
     fpA2: "You keep access until the end of your paid period. No penalty, no hidden fees.",
-    fpQ3: "What's the difference between Pro and Industrial?",
-    fpA3: "The Industrial plan offers unlimited agents, a dedicated API with 10x rate limit, SSO, 5-year audit trail and a 99.9% SLA with dedicated support.",
+    fpQ3: "What's the difference between SURGE and APEX?",
+    fpA3: "The APEX plan offers unlimited agents, a dedicated API with 10x rate limit, SSO, 5-year audit trail and a 99.9% SLA with dedicated support.",
     fpQ4: "Are prices in Canadian dollars?",
     fpA4: "Yes, all prices are in CAD. Applicable taxes are added at checkout.",
     fpFooter: "Taxes extra. Cancel anytime, no hidden fees.",
@@ -985,14 +985,14 @@ function applyLang() {
   { const e = $(".fp-save"); if (e) e.textContent = s.fpSave; }
   const fpCards = $$(".fp-card");
   const fpT = [
-    { n:"fpStarter", p:"fpStarterPitch", c:"fpStarterCta", b:"fpStarterBilled", per:"fpStarterPeriod",
-      f:["fpStarterF1","fpStarterF2","fpStarterF3","fpStarterF4","fpStarterF5","fpStarterF6","fpStarterF7","fpStarterF8"],
-      o:["fpStarterOff1","fpStarterOff2"] },
-    { n:"fpPro", p:"fpProPitch", c:"fpProCta", b:"fpProBilled", per:"fpProPeriod", badge:"fpProBadge",
-      f:["fpProF1","fpProF2","fpProF3","fpProF4","fpProF5","fpProF6","fpProF7","fpProF8","fpProF9"],
-      o:["fpProOff1","fpProOff2"] },
-    { n:"fpIndustrial", p:"fpIndustrialPitch", c:"fpIndustrialCta", b:"fpIndustrialBilled", per:"fpIndustrialPeriod", badge:"fpIndustrialBadge",
-      f:["fpIndustrialF1","fpIndustrialF2","fpIndustrialF3","fpIndustrialF4","fpIndustrialF5","fpIndustrialF6","fpIndustrialF7","fpIndustrialF8","fpIndustrialF9","fpIndustrialF10","fpIndustrialF11"],
+    { n:"fpFlux", p:"fpFluxPitch", c:"fpFluxCta", b:"fpFluxBilled", per:"fpFluxPeriod",
+      f:["fpFluxF1","fpFluxF2","fpFluxF3","fpFluxF4","fpFluxF5","fpFluxF6","fpFluxF7","fpFluxF8"],
+      o:["fpFluxOff1","fpFluxOff2"] },
+    { n:"fpSurge", p:"fpSurgePitch", c:"fpSurgeCta", b:"fpSurgeBilled", per:"fpSurgePeriod", badge:"fpSurgeBadge",
+      f:["fpSurgeF1","fpSurgeF2","fpSurgeF3","fpSurgeF4","fpSurgeF5","fpSurgeF6","fpSurgeF7","fpSurgeF8","fpSurgeF9"],
+      o:["fpSurgeOff1","fpSurgeOff2"] },
+    { n:"fpApex", p:"fpApexPitch", c:"fpApexCta", b:"fpApexBilled", per:"fpApexPeriod", badge:"fpApexBadge",
+      f:["fpApexF1","fpApexF2","fpApexF3","fpApexF4","fpApexF5","fpApexF6","fpApexF7","fpApexF8","fpApexF9","fpApexF10","fpApexF11"],
       o:[] },
   ];
   fpCards.forEach((card, i) => {
@@ -1117,6 +1117,7 @@ function switchView(v) {
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos" || v === "cerveau");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
+if (location.hash) { const hv = location.hash.slice(1); if ($(`#view-${hv}`)) switchView(hv); }
 
 /* ================= SÉLECTEUR D'AGENTS ================= */
 const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif", cerveau: "agentCerveau" };
@@ -1130,11 +1131,11 @@ function renderAgents() {
   list.innerHTML = Object.entries(AGENTS).map(([key, a]) => {
     const locked = isAgentLocked(key);
     const isCustom = !!a.custom;
-    return `<button class="agent-card${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}"${locked ? ' title="Disponible avec le forfait Industriel"' : ''}>
+    return `<button class="agent-card${key === state.agent ? ' active' : ''}${locked ? ' agent-locked' : ''}" data-agent="${key}"${locked ? ' title="Disponible avec le forfait APEX"' : ''}>
       <div class="agent-card-top">
         <span class="agent-emoji">${a.photo ? `<img src="${a.photo}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover">` : (a.img ? `<img src="${a.img}" alt="">` : a.emoji)}</span>
         <span class="agent-name">${a.name}</span>
-        ${locked ? '<span class="agent-lock-badge">🔒 Industriel</span>' : ''}
+        ${locked ? '<span class="agent-lock-badge">🔒 APEX</span>' : ''}
         ${isCustom ? `<span class="agent-custom-actions">
           <span class="agent-custom-edit" data-edit="${key}" title="Modifier">✏️</span>
           <span class="agent-custom-del" data-del="${a.customId}" title="Supprimer">🗑️</span>
@@ -1590,7 +1591,7 @@ function renderAgentPicker() {
       <span class="agent-pick-icon">${a.img ? `<img src="${a.img}" alt="">` : a.emoji}</span>
       <span class="agent-pick-info">
         <span class="agent-pick-name">${a.name}${locked ? ' 🔒' : ''}</span>
-        <span class="agent-pick-desc">${locked ? 'Forfait Industriel requis' : agentDesc(key)}</span>
+        <span class="agent-pick-desc">${locked ? 'Forfait APEX requis' : agentDesc(key)}</span>
       </span>
     </button>`;
   }).join("");
@@ -1723,7 +1724,7 @@ $("#themeToggle").onclick = function () {
 
 function isOpusAllowed() {
   const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
-  return plan === "industriel";
+  return plan === "apex";
 }
 
 function enforceModelRestrictions() {
@@ -1733,7 +1734,7 @@ function enforceModelRestrictions() {
   if (!opusOpt) return;
   if (!isOpusAllowed()) {
     opusOpt.disabled = true;
-    opusOpt.textContent = "Opus 4.8 — Industriel requis 🔒";
+    opusOpt.textContent = "Opus 4.8 — APEX requis 🔒";
     if (state.model.includes("opus")) {
       state.model = "claude-sonnet-4-6";
       sel.value = state.model;
@@ -5669,9 +5670,9 @@ function loadAcctProfile() {
 }
 
 const PLAN_DATA = {
-  starter: { name: "Starter", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
-  pro:     { name: "Pro",     price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
-  industriel: { name: "Industriel", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
+  flux: { name: "FLUX", price: "$28 CAD/mois", msgDay: 40, msgMonth: 1200, agents: 3, thinking: "3 000 tokens", models: "Haiku + Sonnet", codexDay: 3, imgMonth: 200 },
+  surge: { name: "SURGE", price: "$78 CAD/mois", msgDay: 120, msgMonth: 3600, agents: 10, thinking: "6 000 tokens", models: "Haiku + Sonnet", codexDay: 10, imgMonth: 500 },
+  apex:  { name: "APEX", price: "$140 CAD/mois", msgDay: 200, msgMonth: 6000, agents: 30, thinking: "10 000 tokens", models: "Haiku + Sonnet + Opus", codexDay: 30, imgMonth: 1000 },
 };
 
 function refreshAccountPage() {
@@ -6895,7 +6896,8 @@ function fpSetPeriod(period) {
     }
   }
   $$(".fp-amt").forEach(el => {
-    el.textContent = el.dataset[period] || el.dataset.monthly;
+    const key = _fpCurrency === "usd" ? period + "-usd" : period;
+    el.textContent = el.dataset[key] || el.dataset[period] || el.dataset.monthly;
   });
   $$(".fp-billed").forEach(el => {
     el.textContent = el.dataset[period] || " ";
@@ -6931,10 +6933,27 @@ async function trackImageGenerated() {
 }
 
 const PAYMENT_LINKS = {
-  starter:    "https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",
-  pro:        "https://buy.stripe.com/28E9AT0t8aXL3eG5wq53O0a",
-  industrial: "https://buy.stripe.com/00w3cv3Fke9X5mO0c653O0b",
+  flux:  "https://buy.stripe.com/5kQ4gzfo22rf6qSbUO53O09",
+  surge: "https://buy.stripe.com/28E9AT0t8aXL3eG5wq53O0a",
+  apex:  "https://buy.stripe.com/00w3cv3Fke9X5mO0c653O0b",
 };
+
+const STRIPE_PRICE_IDS = {
+  flux:  "price_1TiA8fFu0d9mAEdCaIBd9Z5v",
+  surge: "price_1TiBFrFu0d9mAEdCRUY13Wvm",
+  apex:  "price_1TiBbSFu0d9mAEdCAlDYgtlv",
+};
+
+let _fpCurrency = "cad";
+function fpSetCurrency(cur) {
+  _fpCurrency = cur;
+  $$(".fp-cur-btn").forEach(b => b.classList.toggle("on", b.dataset.cur === cur));
+  const period = $(".fp-toggle-btn.on")?.dataset?.period || "monthly";
+  $$(".fp-amt").forEach(el => {
+    const key = cur === "usd" ? period + "-usd" : period;
+    el.textContent = el.dataset[key] || el.dataset[period] || el.dataset.monthly;
+  });
+}
 
 const SUPABASE_REST = "https://rnuripmfozlxenryxhdc.supabase.co/rest/v1";
 
@@ -6947,20 +6966,20 @@ async function loadStripePrices() {
       `${SUPABASE_REST}/prices?select=id,product_id,products(name)&active=eq.true`,
       { headers: { apikey: tk, Authorization: `Bearer ${tk}` } }
     );
-    if (!res.ok) return null;
+    if (!res.ok) return STRIPE_PRICE_IDS;
     const rows = await res.json();
     const map = {};
     for (const row of rows) {
       const name = (row.products?.name || "").toLowerCase();
-      if (name.includes("starter")) map.starter = row.id;
-      else if (name.includes("industriel") || name.includes("industrial")) map.industrial = row.id;
-      else if (name.includes("pro")) map.pro = row.id;
+      if (name.includes("flux")) map.flux = row.id;
+      else if (name.includes("apex")) map.apex = row.id;
+      else if (name.includes("surge")) map.surge = row.id;
     }
-    _stripePrices = map;
-    return map;
+    _stripePrices = Object.keys(map).length > 0 ? map : STRIPE_PRICE_IDS;
+    return _stripePrices;
   } catch (e) {
     console.error("loadStripePrices:", e);
-    return null;
+    return STRIPE_PRICE_IDS;
   }
 }
 

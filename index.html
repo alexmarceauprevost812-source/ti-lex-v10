@@ -686,6 +686,26 @@
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(255,255,255,0.2);
     }
+    .btn-pricing {
+      background: #FF6B00;
+      color: #fff;
+      border: none;
+      padding: 16px 40px;
+      font-size: 1.1em;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      width: 100%;
+      font-family: 'Bebas Neue', sans-serif;
+    }
+    .btn-pricing:hover {
+      background: #ff8533;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255,107,0,0.3);
+    }
     /* OVERLAY MODALE DÉMO */
     #tilexDemoOverlay {
       display: none;
@@ -951,6 +971,9 @@
       </button>
       <button class="tilex-btn-demo" onclick="tilexOuvrirDemo()">
         🎬 DÉMO
+      </button>
+      <button class="btn btn-pricing" onclick="window.location.href='app.html#forfaits'">
+        💎 Voir les forfaits
       </button>
     </div>
 

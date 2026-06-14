@@ -736,15 +736,20 @@
         <span class="fp-save">-20%</span>
       </div>
 
+      <div class="fp-currency-toggle" id="fpCurrencyToggle">
+        <button class="fp-cur-btn on" data-cur="cad" onclick="fpSetCurrency('cad')">🇨🇦 CAD</button>
+        <button class="fp-cur-btn" data-cur="usd" onclick="fpSetCurrency('usd')">🇺🇸 USD</button>
+      </div>
+
       <div class="fp-scroll">
       <div class="fp-grid">
-        <!-- STARTER -->
+        <!-- FLUX -->
         <div class="fp-card fp-show">
-          <div class="fp-tier"><span class="fp-ico">&#x1F525;</span> Starter</div>
+          <div class="fp-tier"><span class="fp-ico">⚡</span> FLUX</div>
           <p class="fp-pitch">L'essentiel pour partir. Idéal si tu travailles solo ou si tu veux tester la bête.</p>
           <div class="fp-price-row">
             <span class="fp-cur">$</span>
-            <span class="fp-amt" data-monthly="28" data-annual="22">28</span>
+            <span class="fp-amt" data-monthly="28" data-annual="22" data-monthly-usd="21" data-annual-usd="17">28</span>
             <span class="fp-per">/ mois</span>
           </div>
           <p class="fp-billed" data-monthly="" data-annual="Facturé 264$/an">&#160;</p>
@@ -760,17 +765,17 @@
             <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Opus</li>
             <li class="fp-off"><span class="fp-ck no">&#x2715;</span> SSO entreprise</li>
           </ul>
-          <button class="fp-cta fp-cta-solid" data-plan="starter" onclick="subscribeToplan('starter')">Commencer à 28$/mois</button>
+          <button class="fp-cta fp-cta-solid" data-plan="flux" onclick="subscribeToplan('flux')">Commencer à 28$/mois</button>
         </div>
 
-        <!-- PRO -->
+        <!-- SURGE -->
         <div class="fp-card fp-feat fp-show">
           <span class="fp-badge">Le plus populaire</span>
-          <div class="fp-tier"><span class="fp-ico">&#x1F680;</span> Pro</div>
+          <div class="fp-tier"><span class="fp-ico">🚀</span> SURGE</div>
           <p class="fp-pitch">Pour ceux qui buildent pour vrai. Freelancers, équipes, agences — marges saines.</p>
           <div class="fp-price-row">
             <span class="fp-cur">$</span>
-            <span class="fp-amt" data-monthly="78" data-annual="62">78</span>
+            <span class="fp-amt" data-monthly="78" data-annual="62" data-monthly-usd="58" data-annual-usd="46">78</span>
             <span class="fp-per">/ mois</span>
           </div>
           <p class="fp-billed" data-monthly="" data-annual="Facturé 744$/an">&#160;</p>
@@ -787,17 +792,17 @@
             <li class="fp-off"><span class="fp-ck no">&#x2715;</span> Opus</li>
             <li class="fp-off"><span class="fp-ck no">&#x2715;</span> SSO entreprise</li>
           </ul>
-          <button class="fp-cta fp-cta-solid" data-plan="pro" onclick="subscribeToplan('pro')">S'abonner au Pro</button>
+          <button class="fp-cta fp-cta-solid" data-plan="surge" onclick="subscribeToplan('surge')">S'abonner au SURGE</button>
         </div>
 
-        <!-- INDUSTRIEL -->
+        <!-- APEX -->
         <div class="fp-card fp-show">
           <span class="fp-badge fp-badge-ult">Sur mesure</span>
-          <div class="fp-tier"><span class="fp-ico">&#x26A1;</span> Industriel</div>
+          <div class="fp-tier"><span class="fp-ico">&#x26A1;</span> APEX</div>
           <p class="fp-pitch">La puissance totale. Pour les entreprises qui veulent intégrer AL dans leur infrastructure.</p>
           <div class="fp-price-row">
             <span class="fp-cur">$</span>
-            <span class="fp-amt" data-monthly="140" data-annual="112">140</span>
+            <span class="fp-amt" data-monthly="140" data-annual="112" data-monthly-usd="105" data-annual-usd="84">140</span>
             <span class="fp-per">/ mois</span>
           </div>
           <p class="fp-billed" data-monthly="" data-annual="Facturé 1 344$/an">&#160;</p>
@@ -814,7 +819,7 @@
             <li><span class="fp-ck yes">&#10003;</span> SLA 99.9% avec support dédié</li>
             <li><span class="fp-ck yes">&#10003;</span> Option de déploiement privé</li>
           </ul>
-          <button class="fp-cta fp-cta-solid" data-plan="industrial" onclick="subscribeToplan('industrial')">Contacter l'équipe</button>
+          <button class="fp-cta fp-cta-solid" data-plan="apex" onclick="subscribeToplan('apex')">Contacter l'équipe</button>
         </div>
       </div>
       </div>
@@ -837,8 +842,8 @@
           <div class="fp-ans">Tu gardes l'accès jusqu'à la fin de ta période payée. Aucune pénalité, aucun frais caché.</div>
         </div>
         <div class="fp-q" onclick="this.classList.toggle('open')">
-          <button><span>C'est quoi la différence entre Pro et Industriel?</span><span class="fp-plus">+</span></button>
-          <div class="fp-ans">Le forfait Industriel offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.</div>
+          <button><span>C'est quoi la différence entre SURGE et APEX?</span><span class="fp-plus">+</span></button>
+          <div class="fp-ans">Le forfait APEX offre des agents illimités, une API dédiée avec rate limit x10, SSO, audit trail 5 ans et un SLA 99.9% avec support dédié.</div>
         </div>
         <div class="fp-q" onclick="this.classList.toggle('open')">
           <button><span>Les prix sont en dollars canadiens?</span><span class="fp-plus">+</span></button>
