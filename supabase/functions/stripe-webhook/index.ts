@@ -12,17 +12,26 @@ const db = createClient(
 
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 
+const PRICE_TO_PLAN: Record<string, string> = {
+  "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
+  "price_1TiBFrFu0d9mAEdCRUY13Wvm": "surge",
+  "price_1TiBbSFu0d9mAEdCAlDYgtlv": "apex",
+};
+
 function tierToPlan(
   tier?: string | null,
-): "free" | "starter" | "pro" | "industriel" {
+): "free" | "flux" | "surge" | "apex" {
   switch (tier) {
+    case "apex":
     case "industriel":
     case "ultra":
-      return "industriel";
+      return "apex";
+    case "surge":
     case "pro":
-      return "pro";
+      return "surge";
+    case "flux":
     case "starter":
-      return "starter";
+      return "flux";
     default:
       return "free";
   }
@@ -247,15 +256,20 @@ async function syncSubscription(sub: Stripe.Subscription) {
     trial_end: toIso(sub.trial_end),
   });
 
-  let tier: string | null = item?.price?.metadata?.plan_tier ?? null;
+  let tier: string | null =
+    sub.metadata?.plan_id ?? item?.price?.metadata?.plan_tier ?? null;
   if (!tier && priceId) {
-    const { data: priceRow } = await db
-      .from("prices")
-      .select("products(metadata)")
-      .eq("id", priceId)
-      .maybeSingle();
-    // deno-lint-ignore no-explicit-any
-    tier = (priceRow as any)?.products?.metadata?.plan_tier ?? null;
+    if (PRICE_TO_PLAN[priceId]) {
+      tier = PRICE_TO_PLAN[priceId];
+    } else {
+      const { data: priceRow } = await db
+        .from("prices")
+        .select("products(metadata)")
+        .eq("id", priceId)
+        .maybeSingle();
+      // deno-lint-ignore no-explicit-any
+      tier = (priceRow as any)?.products?.metadata?.plan_tier ?? null;
+    }
   }
 
   const active = sub.status === "active" || sub.status === "trialing";

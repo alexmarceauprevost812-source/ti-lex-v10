@@ -5729,7 +5729,7 @@ function refreshAccountPage() {
     }
   }
 
-  const msgLimit = plan ? plan.msgDay : 0;
+  const msgLimit = plan ? plan.msgWindow : 0;
   const todayKey = `tilex-msg-${new Date().toISOString().slice(0, 10)}`;
   const msgCount = parseInt(localStorage.getItem(todayKey) || "0", 10);
   if ($("#acctMsgCount")) $("#acctMsgCount").textContent = msgCount;
@@ -5742,23 +5742,17 @@ function refreshAccountPage() {
     if ($("#acctUsageFill")) $("#acctUsageFill").style.width = "0%";
   }
 
-  const imgLimit = plan ? plan.imgMonth : 0;
   const imgKey = `tilex-img-${new Date().toISOString().slice(0, 7)}`;
   const imgCount = parseInt(localStorage.getItem(imgKey) || "0", 10);
-  if (imgLimit) {
-    if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount} / ${imgLimit}`;
-    if ($("#acctImgFill")) $("#acctImgFill").style.width = Math.min(100, (imgCount / imgLimit) * 100) + "%";
-  } else {
-    if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount}`;
-    if ($("#acctImgFill")) $("#acctImgFill").style.width = "0%";
-  }
+  if ($("#acctImgVal")) $("#acctImgVal").textContent = `${imgCount}`;
+  if ($("#acctImgFill")) $("#acctImgFill").style.width = "0%";
 
-  if ($("#acctDetailMsgMonth")) $("#acctDetailMsgMonth").textContent = plan ? plan.msgMonth.toLocaleString() : "—";
-  if ($("#acctDetailAgents")) $("#acctDetailAgents").textContent = plan ? plan.agents : "—";
+  if ($("#acctDetailMsgMonth")) $("#acctDetailMsgMonth").textContent = plan ? (plan.msgWindow + " / fenêtre 12h") : "—";
+  if ($("#acctDetailAgents")) $("#acctDetailAgents").textContent = plan ? (plan.agents === -1 ? "Illimités" : plan.agents) : "—";
   if ($("#acctDetailModels")) $("#acctDetailModels").textContent = plan ? plan.models : "—";
-  if ($("#acctDetailThinking")) $("#acctDetailThinking").textContent = plan ? plan.thinking : "—";
-  if ($("#acctDetailCodex")) $("#acctDetailCodex").textContent = plan ? plan.codexDay + " sessions" : "—";
-  if ($("#acctDetailImg")) $("#acctDetailImg").textContent = plan ? plan.imgMonth.toLocaleString() : "—";
+  if ($("#acctDetailThinking")) $("#acctDetailThinking").textContent = plan ? plan.storage : "—";
+  if ($("#acctDetailCodex")) $("#acctDetailCodex").textContent = plan ? (plan.codexSessions === -1 ? "Illimité" : plan.codexSessions + " sessions") : "—";
+  if ($("#acctDetailImg")) $("#acctDetailImg").textContent = plan ? (plan.codexProjects + " projets") : "—";
 
   let totalStorage = 0;
   try {
@@ -5887,6 +5881,17 @@ if ($("#acctLogoutBtn")) {
 /* init */
 loadSettings();
 
+(function handleCheckoutReturn() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("checkout") === "success" && params.get("plan")) {
+    const plan = params.get("plan");
+    if (["flux", "surge", "apex"].includes(plan)) {
+      localStorage.setItem("tilex-plan", plan);
+    }
+    history.replaceState(null, "", location.pathname);
+  }
+})();
+
 (async function syncPlanFromDB() {
   const session = getSupabaseSession();
   if (!session?.user?.id) return;
@@ -5899,7 +5904,9 @@ loadSettings();
     if (!res.ok) return;
     const rows = await res.json();
     if (rows[0]?.plan) {
-      localStorage.setItem("tilex-plan", rows[0].plan);
+      const planMap = { starter: "flux", pro: "surge", industriel: "apex" };
+      const normalized = planMap[rows[0].plan] || rows[0].plan;
+      localStorage.setItem("tilex-plan", normalized);
     }
     if (rows[0]?.display_name && !localStorage.getItem("tilex-acct-name")) {
       localStorage.setItem("tilex-acct-name", rows[0].display_name);

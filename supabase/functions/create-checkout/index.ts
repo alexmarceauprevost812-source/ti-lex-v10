@@ -82,14 +82,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    const PRICE_TO_PLAN: Record<string, string> = {
+      "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
+      "price_1TiBFrFu0d9mAEdCRUY13Wvm": "surge",
+      "price_1TiBbSFu0d9mAEdCAlDYgtlv": "apex",
+    };
+    const planId = PRICE_TO_PLAN[priceId] || "unknown";
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html?checkout=success&plan=${planId}`,
       cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html`,
       locale: "fr",
+      metadata: { user_id: user.id, plan_id: planId },
+      subscription_data: {
+        metadata: { user_id: user.id, plan_id: planId },
+      },
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
