@@ -3159,6 +3159,8 @@ li.fp-off{color:rgba(255,255,255,.3)}
   text-transform:uppercase;cursor:pointer;padding:15px 18px;border-radius:13px;
   color:#fff;background:var(--fp-orange);border:2px solid var(--fp-orange);
   box-shadow:0 0 18px var(--fp-orange-glow);transition:.25s;width:100%;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  text-decoration:none;box-sizing:border-box;text-align:center;
 }
 .fp-cta:hover{filter:brightness(1.15);box-shadow:0 0 30px var(--fp-orange-glow);transform:translateY(-2px)}
 .fp-cta.fp-cta-solid{color:#fff;background:var(--fp-orange);box-shadow:0 0 24px var(--fp-orange-glow)}
