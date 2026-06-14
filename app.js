@@ -3785,10 +3785,14 @@ async function streamText(res, onUpdate) {
   return full;
 }
 
-/* ---- Typewriter fluide : écriture lente pour le texte, rapide pour le code.
-   Quand une ligne de texte est à ~50 %, la ligne suivante commence. ---- */
+/* ---- Typewriter ultra-fluide (rAF + easing) ---- */
+const typerConfig = { baseSpeed: 0.08, textCps: 80, codeCps: 600, easeStrength: 0.4 };
+
+function easeOutQuad(t) { return 1 - (1 - t) * (1 - t); }
+
 function makeTyper(renderFn) {
   let target = "", shown = 0, running = false, finished = false, doneCb = null, last = 0;
+  let accumulator = 0;
 
   function isInsideCodeBlock(pos) {
     let inside = false, i = 0;
@@ -3804,34 +3808,27 @@ function makeTyper(renderFn) {
 
   function step(ts) {
     if (!last) last = ts;
-    const dt = Math.min(ts - last, 100);
+    const dt = Math.min(ts - last, 50);
     last = ts;
 
     if (shown < target.length) {
       const inCode = isInsideCodeBlock(shown);
-      let cps = inCode ? 500 : 45;
       const backlog = target.length - shown;
-      if (!inCode && backlog > 400) cps = 120;
-      else if (!inCode && backlog > 200) cps = 80;
-      if (inCode && backlog > 600) cps = 1200;
+      let cps = inCode ? typerConfig.codeCps : typerConfig.textCps;
+      if (!inCode && backlog > 400) cps = 160;
+      else if (!inCode && backlog > 200) cps = 120;
+      if (inCode && backlog > 600) cps = 1400;
 
-      let advance = Math.max(1, Math.round((cps * dt) / 1000));
+      const rawProgress = backlog > 0 ? Math.min(1, shown / Math.max(target.length, 1)) : 1;
+      const easedMul = 1 + typerConfig.easeStrength * (1 - easeOutQuad(rawProgress));
 
-      if (!inCode) {
-        const curLineStart = target.lastIndexOf('\n', shown - 1) + 1;
-        const curLineEnd = target.indexOf('\n', shown);
-        if (curLineEnd !== -1) {
-          const lineLen = curLineEnd - curLineStart;
-          const lineProgress = shown - curLineStart;
-          if (lineLen > 0 && lineProgress >= lineLen * 0.5) {
-            const boost = Math.round(advance * 0.6);
-            advance += boost;
-          }
-        }
+      accumulator += (cps * easedMul * dt) / 1000;
+      const advance = Math.floor(accumulator);
+      if (advance >= 1) {
+        accumulator -= advance;
+        shown = Math.min(target.length, shown + advance);
+        renderFn(target.slice(0, shown));
       }
-
-      shown = Math.min(target.length, shown + advance);
-      renderFn(target.slice(0, shown));
     }
 
     if (shown >= target.length && finished) {
@@ -3846,7 +3843,7 @@ function makeTyper(renderFn) {
   return {
     push(full) {
       target = full;
-      if (!running) { running = true; last = 0; requestAnimationFrame(step); }
+      if (!running) { running = true; last = 0; accumulator = 0; requestAnimationFrame(step); }
     },
     finish(cb) {
       finished = true; doneCb = cb;
@@ -3854,6 +3851,11 @@ function makeTyper(renderFn) {
     },
   };
 }
+
+window.typewriterDebug = {
+  setSpeed(multiplier) { typerConfig.textCps = Math.round(80 * multiplier); typerConfig.codeCps = Math.round(600 * multiplier); },
+  config() { return typerConfig; },
+};
 const codexConvos = $("#codexConvos");
 const codexSb = $("#codexSidebar");
 let codexHistory = JSON.parse(localStorage.getItem("tilex-codex-history") || "[]");
