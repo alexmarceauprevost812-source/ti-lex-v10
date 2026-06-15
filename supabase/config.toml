@@ -2,7 +2,7 @@
 id = "rnuripmfozlxenryxhdc"
 
 [functions.ai-proxy]
-verify_jwt = false
+verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
