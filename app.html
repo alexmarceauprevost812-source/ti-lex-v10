@@ -78,6 +78,10 @@
       <span class="lbl">Sécurité</span>
       <span class="badge">AL 7.8</span>
     </button>
+    <button class="nav-item nav-cyber-forfaits" data-view="cyberforfaits">
+      <span class="nav-emoji">🔐</span>
+      <span class="lbl">Forfaits Cyber</span>
+    </button>
   </nav>
 
   <!-- INSTALLER L'APP -->
@@ -849,6 +853,159 @@
         <p>Taxes en sus. Annule quand tu veux, sans frais cachés.</p>
         <button class="fp-manage-btn" id="manageSubscriptionBtn" onclick="manageSubscription()">Gérer mon abonnement</button>
       </div>
+    </div>
+  </section>
+
+  <!-- ===== VUE FORFAITS CYBER ===== -->
+  <section class="view view-cyberforfaits" id="view-cyberforfaits">
+    <div class="cyf-wrap">
+      <header class="cyf-header">
+        <div class="cyf-kicker"><span class="cyf-dot"></span> ti-lex // AGENT CYBERSÉCURITÉ IA</div>
+        <h1 class="cyf-title">Protège tes clients.<br><span class="cyf-blue">L'IA fait la chasse.</span></h1>
+        <p class="cyf-sub">3 forfaits · Facturation mensuelle · Devise CAD</p>
+      </header>
+
+      <div class="cyf-grid">
+        <!-- RECON -->
+        <div class="cyf-card">
+          <div class="cyf-card-head">
+            <div class="cyf-plan-label">ti-lex CYBER</div>
+            <div class="cyf-plan-row"><span class="cyf-emoji">🔍</span><span class="cyf-plan-name">RECON</span></div>
+            <p class="cyf-tagline">Consultant solo</p>
+            <p class="cyf-desc">Débute tes premiers mandats de cybersécurité avec l'IA.</p>
+            <div class="cyf-model">🤖 Claude Sonnet 4.6</div>
+          </div>
+          <div class="cyf-price-box">
+            <div class="cyf-price"><span class="cyf-amt">$299</span><span class="cyf-per">CAD / mois</span></div>
+          </div>
+          <a class="cyf-cta" data-plan="cyber_recon" href="https://buy.stripe.com/8x28wPb7Mgi5dTk8IC53O0k" onclick="return onPlanClick('cyber_recon', event)">S'abonner maintenant</a>
+          <div class="cyf-divider"></div>
+          <div class="cyf-sections">
+            <div class="cyf-section">
+              <h4>📋 Mandats & Clients</h4>
+              <ul><li>3 entreprises clientes</li><li>3 mandats actifs simultanés</li><li>Tableau de bord mandats</li><li>Vérification légale entreprise</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🔎 Analyse & Scan</h4>
+              <ul><li>50 scans HIBP / mois</li><li>20 recherches OSINT / mois</li><li>5 surveillances dark web / mois</li><li>Détection de vulnérabilités basique</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>📄 Rapports</h4>
+              <ul><li>10 rapports PDF / mois</li><li>Rapport exécutif client</li><li>Export sécurisé</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🤖 Agent IA</h4>
+              <ul><li>Agent AL — Claude Sonnet 4.6</li><li>50 messages / fenêtre</li><li>Mode Codex TIEX Air</li><li>3 projets Codex</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>💾 Stockage & Support</h4>
+              <ul><li>2 GB de stockage</li><li>Support par email (72h)</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- GUARDIAN -->
+        <div class="cyf-card cyf-highlight">
+          <div class="cyf-badge">⭐ POPULAIRE</div>
+          <div class="cyf-card-head">
+            <div class="cyf-plan-label">ti-lex CYBER</div>
+            <div class="cyf-plan-row"><span class="cyf-emoji">🛡️</span><span class="cyf-plan-name">GUARDIAN</span></div>
+            <p class="cyf-tagline">Cabinet professionnel</p>
+            <p class="cyf-desc">Gère plusieurs clients avec des outils avancés et des alertes en temps réel.</p>
+            <div class="cyf-model">🤖 Claude Sonnet 4.6</div>
+          </div>
+          <div class="cyf-price-box">
+            <div class="cyf-price"><span class="cyf-amt">$599</span><span class="cyf-per">CAD / mois</span></div>
+          </div>
+          <a class="cyf-cta" data-plan="cyber_guardian" href="https://buy.stripe.com/4gM8wPcbQ0j78z04sm53O0l" onclick="return onPlanClick('cyber_guardian', event)">S'abonner maintenant</a>
+          <div class="cyf-divider"></div>
+          <div class="cyf-sections">
+            <div class="cyf-section">
+              <h4>📋 Mandats & Clients</h4>
+              <ul><li>15 entreprises clientes</li><li>8 mandats actifs simultanés</li><li>Tableau de bord avancé multi-clients</li><li>Vérification légale entreprise</li><li>Historique complet des mandats</li><li>Notes & annotations par mandat</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🔎 Analyse & Scan</h4>
+              <ul><li>200 scans HIBP / mois</li><li>100 recherches OSINT / mois</li><li>30 surveillances dark web / mois</li><li>Détection de vulnérabilités avancée</li><li>Analyse de réputation de domaine</li><li>Scan de ports & services exposés</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>📄 Rapports</h4>
+              <ul><li>50 rapports PDF / mois</li><li>Rapport exécutif client</li><li>Rapport technique détaillé</li><li>Export multi-formats (PDF, HTML)</li><li>Branding client sur les rapports</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🔔 Alertes & Notifications</h4>
+              <ul><li>Alertes Slack en temps réel</li><li>Alertes Email automatiques</li><li>Notifications de nouvelles vulnérabilités</li><li>Résumé hebdomadaire automatique</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🎓 Formation</h4>
+              <ul><li>Accès aux formations cybersécurité</li><li>Modules sensibilisation employés</li><li>Quiz & certifications internes</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🤖 Agent IA</h4>
+              <ul><li>Agent AL — Claude Sonnet 4.6</li><li>100 messages / fenêtre</li><li>1 agent personnalisé</li><li>Mode Codex TIEX Air complet</li><li>10 projets Codex</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>💾 Stockage & Support</h4>
+              <ul><li>5 GB de stockage</li><li>Support prioritaire (24h)</li><li>Accès à la base de connaissances</li></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- SENTINEL -->
+        <div class="cyf-card">
+          <div class="cyf-badge cyf-badge-elite">🔴 ÉLITE</div>
+          <div class="cyf-card-head">
+            <div class="cyf-plan-label">ti-lex CYBER</div>
+            <div class="cyf-plan-row"><span class="cyf-emoji">🏛️</span><span class="cyf-plan-name">SENTINEL</span></div>
+            <p class="cyf-tagline">Forteresse numérique</p>
+            <p class="cyf-desc">La solution complète pour grandes entreprises. Tout illimité, Opus 4.8, white-label.</p>
+            <div class="cyf-model cyf-model-fire">🤖 Claude Opus 4.8 🔥</div>
+          </div>
+          <div class="cyf-price-box">
+            <div class="cyf-price"><span class="cyf-amt">$1199</span><span class="cyf-per">CAD / mois</span></div>
+          </div>
+          <a class="cyf-cta" data-plan="cyber_sentinel" onclick="return onPlanClick('cyber_sentinel', event)">Contacter l'équipe</a>
+          <div class="cyf-divider"></div>
+          <div class="cyf-sections">
+            <div class="cyf-section">
+              <h4>📋 Mandats & Clients</h4>
+              <ul><li>50 entreprises clientes</li><li>20 mandats actifs simultanés</li><li>Tableau de bord enterprise multi-équipes</li><li>Vérification légale entreprise avancée</li><li>Historique illimité</li><li>Gestion des équipes & permissions</li><li>Portail client dédié</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🔎 Analyse & Scan</h4>
+              <ul><li>500 scans HIBP / mois</li><li>300 recherches OSINT / mois</li><li>100 surveillances dark web / mois</li><li>Simulation APT (Advanced Persistent Threat)</li><li>Pentest automatisé illimité</li><li>Analyse comportementale avancée</li><li>Threat Intelligence en temps réel</li><li>Corrélation d'événements de sécurité</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>📄 Rapports</h4>
+              <ul><li>Rapports PDF illimités</li><li>Rapport exécutif C-Level</li><li>Rapport technique forensique</li><li>Tableau de bord compliance (ISO 27001, SOC2)</li><li>Export multi-formats + API</li><li>White-label complet — ton logo, ta marque</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🔔 Alertes & Notifications</h4>
+              <ul><li>Alertes Slack en temps réel</li><li>Alertes Email automatiques</li><li>Alertes SMS critiques</li><li>Webhook personnalisé</li><li>Intégration SIEM</li><li>Escalade automatique selon sévérité</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🎓 Formation</h4>
+              <ul><li>Formations cybersécurité illimitées</li><li>Modules sensibilisation employés illimités</li><li>Simulations de phishing</li><li>Quiz, certifications & parcours personnalisés</li><li>Rapports de progression d'équipe</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>🤖 Agent IA</h4>
+              <ul><li>Agent AL — Claude Opus 4.8 🔥</li><li>250 messages / fenêtre</li><li>Agents personnalisés illimités</li><li>Fine-tuning du comportement</li><li>Mode Codex TIEX Air complet</li><li>50 projets Codex</li><li>Accès API complet + webhooks</li></ul>
+            </div>
+            <div class="cyf-section">
+              <h4>💾 Stockage, API & Support</h4>
+              <ul><li>20 GB de stockage</li><li>Accès API REST complet</li><li>White-label — revends la plateforme</li><li>SLA garanti 1h — support 24/7</li><li>Onboarding dédié</li><li>Account manager attitré</li></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cyf-trust">
+        <span>🔒 Chiffrement E2E</span>
+        <span>🇨🇦 Hébergé au Canada</span>
+        <span>⚡ Agent IA inclus</span>
+        <span>📊 Rapports OWASP</span>
+      </div>
+      <p class="cyf-footer">ti-lex · Produit du Québec · Tous droits réservés</p>
     </div>
   </section>
 

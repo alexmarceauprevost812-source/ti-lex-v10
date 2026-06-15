@@ -47,7 +47,7 @@ Frontend statique pur (HTML / CSS / JS) deploye sur Vercel, backend Supabase (Au
 
 ### Forfaits et abonnements
 - 3 plans standard : FLUX (19 $/mois), SURGE (60 $/mois), APEX (125 $/mois)
-- 4 plans cybersecurite : Cyber Shield, Cyber Guardian, Cyber Sentinel, Cyber Fortress
+- 3 plans cybersecurite : RECON (299 $/mois), GUARDIAN (599 $/mois), SENTINEL (1199 $/mois)
 - Integration Stripe Checkout via Edge Functions Supabase + Payment Links en fallback
 - Suivi d'utilisation : messages/jour, messages/mois, images/mois
 - Page forfaits avec fond video, theme noir et accents orange
