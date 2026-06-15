@@ -30,10 +30,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405);
 
-  // DEBUG temporaire — à retirer en production
-  console.log("KEY présente:", !!ANTHROPIC_KEY);
-  console.log("KEY début:", ANTHROPIC_KEY?.slice(0, 10));
-
   try {
     // ---- 1. Auth optionnelle ----
     const authHeader = req.headers.get("Authorization") || "";
@@ -55,33 +51,33 @@ Deno.serve(async (req) => {
 
     const kind = body.kind === "image" ? "image" : "chat";
 
-    // ---- 3. Rate limit (TEMPORAIREMENT DÉSACTIVÉ) ----
-    // if (userId !== "anonymous") {
-    //   try {
-    //     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-    //     const col = kind === "image" ? "image_count" : "chat_count";
-    //     const { data: usage } = await sb
-    //       .from("ai_usage")
-    //       .select(col)
-    //       .eq("user_id", userId)
-    //       .eq("day", new Date().toISOString().slice(0, 10))
-    //       .maybeSingle();
-    //
-    //     const current = (usage as any)?.[col] ?? 0;
-    //     if (current >= LIMITS[kind]) {
-    //       return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
-    //     }
-    //
-    //     await sb.from("ai_usage").upsert(
-    //       {
-    //         user_id: userId,
-    //         day: new Date().toISOString().slice(0, 10),
-    //         [col]: current + 1,
-    //       },
-    //       { onConflict: "user_id,day" },
-    //     );
-    //   } catch (_) {}
-    // }
+    // ---- 3. Rate limit ----
+    if (userId !== "anonymous") {
+      try {
+        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+        const col = kind === "image" ? "image_count" : "chat_count";
+        const { data: usage } = await sb
+          .from("ai_usage")
+          .select(col)
+          .eq("user_id", userId)
+          .eq("day", new Date().toISOString().slice(0, 10))
+          .maybeSingle();
+
+        const current = (usage as any)?.[col] ?? 0;
+        if (current >= LIMITS[kind]) {
+          return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
+        }
+
+        await sb.from("ai_usage").upsert(
+          {
+            user_id: userId,
+            day: new Date().toISOString().slice(0, 10),
+            [col]: current + 1,
+          },
+          { onConflict: "user_id,day" },
+        );
+      } catch (_) {}
+    }
 
     // ===================== IMAGE =====================
     if (kind === "image") {

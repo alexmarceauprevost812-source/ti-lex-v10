@@ -32,14 +32,13 @@ Deno.serve(async (req) => {
           error: data.error?.message ?? `HTTP ${res.status}`,
           status: res.status,
           key_present: !!ANTHROPIC_KEY,
-          key_start: ANTHROPIC_KEY?.slice(0, 15),
         }),
         { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
       );
     }
 
     return new Response(
-      JSON.stringify({ ok: true, id: data.id, key_start: ANTHROPIC_KEY?.slice(0, 15) }),
+      JSON.stringify({ ok: true, id: data.id }),
       { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
     );
   } catch (e: any) {
@@ -48,7 +47,6 @@ Deno.serve(async (req) => {
         ok: false,
         error: e.message,
         key_present: !!ANTHROPIC_KEY,
-        key_start: ANTHROPIC_KEY?.slice(0, 15),
       }),
       { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
     );
