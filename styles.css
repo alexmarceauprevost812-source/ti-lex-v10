@@ -1441,6 +1441,18 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
 .cyf-section li::before{content:"✓";color:#3b82f6;font-weight:700;font-size:13px;flex-shrink:0}
 .cyf-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:48px}
 .cyf-trust span{color:#64748b;font-size:12px;font-family:monospace}
+.cyf-coming-soon{font-size:clamp(28px,6vw,56px);font-weight:900;color:#ef4444;
+  letter-spacing:.08em;font-family:var(--marker);margin:12px 0 8px;
+  text-shadow:0 0 20px rgba(239,68,68,.4),0 0 60px rgba(239,68,68,.15);
+  animation:cyf-pulse 2s ease-in-out infinite}
+@keyframes cyf-pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.cyf-coming-desc{color:#94a3b8;font-size:13px;max-width:600px;margin:0 auto 12px;line-height:1.5}
+.cyf-disabled{pointer-events:none;position:relative;overflow:hidden}
+.cyf-disabled .cyf-cta{opacity:.4;cursor:not-allowed}
+.cyf-card-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);
+  z-index:10;font-size:clamp(22px,4vw,36px);font-weight:900;color:#ef4444;
+  letter-spacing:.1em;font-family:var(--marker);white-space:nowrap;
+  text-shadow:0 0 16px rgba(239,68,68,.5);opacity:.85;pointer-events:none}
 @media(max-width:860px){
   .cyf-grid{grid-template-columns:1fr}
   .cyf-card{padding:24px 20px}
