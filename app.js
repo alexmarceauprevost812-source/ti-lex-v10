@@ -3049,15 +3049,35 @@ function createAvatarIA(size) {
 function avatarAL() {
   const wrap = document.createElement("div");
   wrap.className = "msg-avatar-wrap";
-  const vid = document.createElement("video");
-  vid.className = "msg-avatar-vid";
-  vid.src = "assets/avatar-ia.mp4";
-  vid.autoplay = true;
-  vid.loop = true;
-  vid.muted = true;
-  vid.playsInline = true;
-  vid.setAttribute("playsinline", "");
-  wrap.appendChild(vid);
+  const a = AGENTS[state.agent];
+  if (a && a.photo) {
+    const img = document.createElement("img");
+    img.className = "msg-avatar-agent-img";
+    img.src = a.photo;
+    img.alt = a.name;
+    wrap.appendChild(img);
+  } else if (a && a.img) {
+    const img = document.createElement("img");
+    img.className = "msg-avatar-agent-img";
+    img.src = a.img;
+    img.alt = a.name;
+    wrap.appendChild(img);
+  } else if (state.agent !== "general" && state.agent !== "tilex" && a) {
+    const em = document.createElement("span");
+    em.className = "msg-avatar-agent-emoji";
+    em.textContent = a.emoji || "🤖";
+    wrap.appendChild(em);
+  } else {
+    const vid = document.createElement("video");
+    vid.className = "msg-avatar-vid";
+    vid.src = "assets/avatar-ia.mp4";
+    vid.autoplay = true;
+    vid.loop = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.setAttribute("playsinline", "");
+    wrap.appendChild(vid);
+  }
   const claude = document.createElement("img");
   claude.className = "claude-badge"; claude.src = CLAUDE_LOGO; claude.alt = "Claude";
   wrap.appendChild(claude);
