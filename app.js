@@ -2073,7 +2073,6 @@ $$(".plus-item").forEach(item => {
     if (act === "image") $("#fileImage").click();
     else if (act === "file") $("#fileAny").click();
     else if (act === "zip") $("#fileZip").click();
-    else if (act === "image-gen") { toggleImageMode(true); closePlus(); return; }
     else if (act === "mic") startMic();
     else if (act === "web") toggleWebSearch(item);
     if (act !== "web") closePlus();
