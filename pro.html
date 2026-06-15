@@ -292,6 +292,12 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .view.active{display:block;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
+/* HERO MASCOTTE DASHBOARD */
+.dash-hero{display:flex;justify-content:center;margin-bottom:22px;}
+.dash-hero-img{width:100%;max-width:480px;height:auto;border-radius:16px;
+  box-shadow:0 8px 40px rgba(255,106,0,.25),0 0 80px rgba(212,175,55,.1);
+  border:1px solid rgba(212,175,55,.2);}
+
 /* TITRES */
 .sec-title{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:3px;
   color:var(--or);display:flex;align-items:center;gap:14px;margin-bottom:20px;}
@@ -759,6 +765,9 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 
   <!-- DASHBOARD -->
   <div id="view-dash" class="view active">
+    <div class="dash-hero">
+      <img src="assets/tilex-v10-logo.png" alt="TI-LEX-AL V10" class="dash-hero-img">
+    </div>
     <div class="sec-title">TI-LEX-AL <span class="accent">MASTER</span></div>
     <div class="metrics">
       <div class="metric"><div class="m-lbl">AGENTS ACTIFS</div><div class="m-val or" id="m-agents">3</div><div class="m-sub">/ 10 max</div></div>
