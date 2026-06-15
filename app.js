@@ -1196,8 +1196,53 @@ function selectAgent(key) {
   $("#agentsToggleName").textContent = a.name.replace("AL ", "") || a.name;
   const inp = $("#input");
   if (inp && !state.imageMode) inp.placeholder = `${t("writeTo")} ${a.name}…`;
+  updateTopbarAgent(key, a);
   renderAgents();
   renderAgentPicker();
+}
+
+function updateTopbarAgent(key, a) {
+  const title = $("#viewTitle");
+  if (title) title.textContent = a.name;
+  const status = document.querySelector(".topbar .status");
+  if (status) {
+    const dot = status.querySelector(".status-dot");
+    status.innerHTML = "";
+    if (dot) status.appendChild(dot);
+    status.appendChild(document.createTextNode("En ligne · " + a.name));
+  }
+  const agentId = document.querySelector(".topbar .agent-id");
+  if (!agentId) return;
+  const oldVid = agentId.querySelector(".topbar-avatar-vid");
+  const oldImg = agentId.querySelector(".topbar-avatar-img");
+  const oldEmoji = agentId.querySelector(".topbar-avatar-emoji");
+  if (oldVid) oldVid.remove();
+  if (oldImg) oldImg.remove();
+  if (oldEmoji) oldEmoji.remove();
+  if (a.photo) {
+    const img = document.createElement("img");
+    img.className = "topbar-avatar-img";
+    img.src = a.photo;
+    img.alt = a.name;
+    agentId.insertBefore(img, agentId.firstChild);
+  } else if (a.img) {
+    const img = document.createElement("img");
+    img.className = "topbar-avatar-img";
+    img.src = a.img;
+    img.alt = a.name;
+    agentId.insertBefore(img, agentId.firstChild);
+  } else if (key === "general" || key === "tilex") {
+    const vid = document.createElement("video");
+    vid.className = "topbar-avatar-vid";
+    vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
+    vid.innerHTML = '<source src="assets/avatar-ia.mp4" type="video/mp4">';
+    agentId.insertBefore(vid, agentId.firstChild);
+  } else {
+    const span = document.createElement("span");
+    span.className = "topbar-avatar-emoji";
+    span.textContent = a.emoji || "🤖";
+    agentId.insertBefore(span, agentId.firstChild);
+  }
 }
 
 function openAgents(){ $("#agentsPanel").classList.add("open"); $("#agentsOverlay").classList.add("show"); }
