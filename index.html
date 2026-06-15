@@ -1578,78 +1578,89 @@
       <div id="tilex-pan-schemas" class="tilex-demo-panneau actif">
         <div class="tilex-demo-schemas">
           <div class="tilex-demo-card">
-            <h3>🏗️ Architecture 3 Couches</h3>
-            <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
+            <h3>🏗️ Architecture ti-lex Cybersécurité</h3>
+            <svg viewBox="0 0 360 320" style="width:100%;height:auto;">
               <defs>
                 <marker id="da1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
                 <marker id="da2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+                <marker id="da3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#3b82f6"/></marker>
               </defs>
-              <rect x="10" y="10" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
-              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">COUCHE DÉTECTION</text>
-              <text x="180" y="62" text-anchor="middle" fill="#aaa" font-size="11">Capteurs · Logs · Flux Réseau</text>
-              <line x1="180" y1="80" x2="180" y2="105" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
-              <rect x="10" y="107" width="340" height="70" rx="8" fill="none" stroke="#ff7f27" stroke-width="2.5"/>
-              <text x="180" y="137" text-anchor="middle" fill="#ff7f27" font-size="14" font-weight="bold">AGENT IA — Traitement</text>
-              <text x="180" y="159" text-anchor="middle" fill="#aaa" font-size="11">Analyse · Classification · Scoring</text>
-              <line x1="180" y1="177" x2="180" y2="202" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
-              <rect x="10" y="204" width="340" height="70" rx="8" fill="none" stroke="#10b981" stroke-width="2.5"/>
-              <text x="180" y="234" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">COUCHE RÉACTION</text>
-              <text x="180" y="256" text-anchor="middle" fill="#aaa" font-size="11">Quarantaine · Isolation · Alertes</text>
+              <rect x="90" y="5" width="180" height="45" rx="8" fill="#1a1206" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="24" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">UTILISATEUR</text>
+              <text x="180" y="40" text-anchor="middle" fill="#aaa" font-size="9">NEQ + DPA signée</text>
+              <line x1="180" y1="50" x2="180" y2="70" stroke="#ff7f27" stroke-width="2" marker-end="url(#da1)"/>
+              <rect x="10" y="72" width="340" height="55" rx="8" fill="#0a1628" stroke="#3b82f6" stroke-width="2"/>
+              <text x="180" y="94" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="bold">🛡️ AGENT IA CYBERSÉCURITÉ</text>
+              <text x="180" y="112" text-anchor="middle" fill="#aaa" font-size="9">Claude Opus · Analyse · Scan · Rapport privé</text>
+              <line x1="90" y1="127" x2="60" y2="155" stroke="#ff7f27" stroke-width="1.5" marker-end="url(#da1)"/>
+              <line x1="180" y1="127" x2="180" y2="155" stroke="#ff7f27" stroke-width="1.5" marker-end="url(#da1)"/>
+              <line x1="270" y1="127" x2="300" y2="155" stroke="#ff7f27" stroke-width="1.5" marker-end="url(#da1)"/>
+              <rect x="5" y="157" width="105" height="50" rx="6" fill="none" stroke="#ff7f27" stroke-width="1.5"/>
+              <text x="57" y="177" text-anchor="middle" fill="#ff7f27" font-size="10" font-weight="bold">RECON</text>
+              <text x="57" y="196" text-anchor="middle" fill="#aaa" font-size="8">Scan externe</text>
+              <rect x="127" y="157" width="105" height="50" rx="6" fill="none" stroke="#ff7f27" stroke-width="1.5"/>
+              <text x="179" y="177" text-anchor="middle" fill="#ff7f27" font-size="10" font-weight="bold">GUARDIAN</text>
+              <text x="179" y="196" text-anchor="middle" fill="#aaa" font-size="8">Scan + Rapport</text>
+              <rect x="249" y="157" width="105" height="50" rx="6" fill="none" stroke="#ff7f27" stroke-width="1.5"/>
+              <text x="301" y="177" text-anchor="middle" fill="#ff7f27" font-size="10" font-weight="bold">SENTINEL</text>
+              <text x="301" y="196" text-anchor="middle" fill="#aaa" font-size="8">Full pentest</text>
+              <line x1="180" y1="207" x2="180" y2="230" stroke="#10b981" stroke-width="2" marker-end="url(#da2)"/>
+              <rect x="30" y="232" width="300" height="42" rx="8" fill="#061210" stroke="#10b981" stroke-width="2"/>
+              <text x="180" y="250" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">📋 RAPPORT PRIVÉ — VOUS SEUL</text>
+              <text x="180" y="265" text-anchor="middle" fill="#aaa" font-size="9">Vulnérabilités · Recommandations · Score</text>
+              <rect x="60" y="282" width="240" height="30" rx="6" fill="#1a0a0a" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+              <text x="180" y="301" text-anchor="middle" fill="#ff4444" font-size="9">🔒 Chiffré · Loi 25 · Art. 342.1 C.cr. · Québec</text>
             </svg>
           </div>
           <div class="tilex-demo-card">
-            <h3>🧠 Moteur de Décision</h3>
+            <h3>🔐 Flux Légal Onboarding</h3>
             <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
               <defs>
                 <marker id="db1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff7f27"/></marker>
-                <marker id="db2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#ff4444"/></marker>
-                <marker id="db3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
+                <marker id="db2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#10b981"/></marker>
               </defs>
-              <circle cx="180" cy="35" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
-              <text x="180" y="40" text-anchor="middle" fill="#ff7f27" font-size="12" font-weight="bold">ENTRÉE</text>
-              <line x1="180" y1="63" x2="180" y2="88" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
-              <rect x="55" y="90" width="250" height="60" rx="8" fill="#111" stroke="#ff7f27" stroke-width="2.5"/>
-              <text x="180" y="116" text-anchor="middle" fill="#ff7f27" font-size="13" font-weight="bold">MOTEUR DE DÉCISION</text>
-              <text x="180" y="138" text-anchor="middle" fill="#aaa" font-size="10">Patterns · Risque · Scoring IA</text>
-              <line x1="90" y1="150" x2="55" y2="205" stroke="#ff4444" stroke-width="2" marker-end="url(#db2)"/>
-              <line x1="180" y1="150" x2="180" y2="205" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
-              <line x1="270" y1="150" x2="305" y2="205" stroke="#10b981" stroke-width="2" marker-end="url(#db3)"/>
-              <circle cx="50" cy="232" r="28" fill="none" stroke="#ff4444" stroke-width="2"/>
-              <text x="50" y="228" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">CRIT-</text>
-              <text x="50" y="242" text-anchor="middle" fill="#ff4444" font-size="9" font-weight="bold">IQUE</text>
-              <circle cx="180" cy="232" r="28" fill="none" stroke="#ff7f27" stroke-width="2"/>
-              <text x="180" y="236" text-anchor="middle" fill="#ff7f27" font-size="9" font-weight="bold">MOYEN</text>
-              <circle cx="310" cy="232" r="28" fill="none" stroke="#10b981" stroke-width="2"/>
-              <text x="310" y="236" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">BAS</text>
-              <text x="50" y="276" text-anchor="middle" fill="#ff4444" font-size="9">Isoler</text>
-              <text x="180" y="276" text-anchor="middle" fill="#ff7f27" font-size="9">Alerter</text>
-              <text x="310" y="276" text-anchor="middle" fill="#10b981" font-size="9">Monitor</text>
+              <rect x="105" y="10" width="150" height="40" rx="20" fill="#1a1206" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="35" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">1️⃣ Vérifier NEQ</text>
+              <line x1="180" y1="50" x2="180" y2="72" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <rect x="55" y="74" width="250" height="35" rx="6" fill="#111" stroke="#555" stroke-width="1"/>
+              <text x="180" y="96" text-anchor="middle" fill="#aaa" font-size="10">Registraire des entreprises du Québec ⚜️</text>
+              <line x1="180" y1="109" x2="180" y2="128" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <rect x="105" y="130" width="150" height="40" rx="20" fill="#1a1206" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="155" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">2️⃣ Accepter CGU</text>
+              <line x1="180" y1="170" x2="180" y2="188" stroke="#ff7f27" stroke-width="2" marker-end="url(#db1)"/>
+              <rect x="80" y="190" width="200" height="40" rx="20" fill="#1a1206" stroke="#ff7f27" stroke-width="2"/>
+              <text x="180" y="215" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">3️⃣ Déclarer domaines</text>
+              <line x1="180" y1="230" x2="180" y2="248" stroke="#10b981" stroke-width="2" marker-end="url(#db2)"/>
+              <rect x="80" y="250" width="200" height="40" rx="20" fill="#061210" stroke="#10b981" stroke-width="2"/>
+              <text x="180" y="275" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">4️⃣ Signer DPA ✅</text>
+              <text x="180" y="298" text-anchor="middle" fill="#aaa" font-size="9">Archivé 5 ans · Preuve légale · IP + horodatage</text>
             </svg>
           </div>
           <div class="tilex-demo-card">
             <h3>⏱️ Temps de Réponse</h3>
             <svg viewBox="0 0 360 300" style="width:100%;height:auto;">
-              <text x="180" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Détection → Neutralisation</text>
-              <text x="180" y="50" text-anchor="middle" fill="#aaa" font-size="10">Réponse automatique complète</text>
+              <text x="180" y="30" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Détection → Rapport complet</text>
+              <text x="180" y="50" text-anchor="middle" fill="#aaa" font-size="10">Analyse automatisée par l'agent IA</text>
               <line x1="30" y1="140" x2="330" y2="140" stroke="#333" stroke-width="3"/>
               <circle cx="55" cy="140" r="10" fill="#ff7f27"/>
               <circle cx="140" cy="140" r="10" fill="#ff7f27"/>
               <circle cx="225" cy="140" r="10" fill="#ff7f27"/>
               <circle cx="310" cy="140" r="13" fill="#10b981"/>
-              <text x="55" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">0ms</text>
-              <text x="140" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">200ms</text>
-              <text x="225" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">800ms</text>
-              <text x="310" y="118" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">&lt; 2s</text>
-              <text x="55" y="162" text-anchor="middle" fill="#aaa" font-size="10">Détection</text>
-              <text x="140" y="162" text-anchor="middle" fill="#aaa" font-size="10">Analyse</text>
-              <text x="225" y="162" text-anchor="middle" fill="#aaa" font-size="10">Décision</text>
-              <text x="310" y="162" text-anchor="middle" fill="#10b981" font-size="10">✅ Résolu</text>
+              <text x="55" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">0s</text>
+              <text x="140" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">5s</text>
+              <text x="225" y="118" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">30s</text>
+              <text x="310" y="118" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">&lt; 2min</text>
+              <text x="55" y="162" text-anchor="middle" fill="#aaa" font-size="10">Scan lancé</text>
+              <text x="140" y="162" text-anchor="middle" fill="#aaa" font-size="10">Ports/DNS</text>
+              <text x="225" y="162" text-anchor="middle" fill="#aaa" font-size="10">Vulns</text>
+              <text x="310" y="162" text-anchor="middle" fill="#10b981" font-size="10">📋 Rapport</text>
               <path d="M 55 95 Q 182 68 310 95" fill="none" stroke="#ff7f27" stroke-width="1.5" stroke-dasharray="4,3"/>
-              <text x="182" y="84" text-anchor="middle" fill="#ff7f27" font-size="10">⚡ &lt; 2 secondes</text>
-              <rect x="30" y="195" width="300" height="42" rx="6" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4,4"/>
-              <text x="180" y="213" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">Agent ti-lex IA: &lt; 2 secondes</text>
-              <text x="180" y="230" text-anchor="middle" fill="#666" font-size="10">Analyste humain: ~45 minutes</text>
-              <text x="180" y="268" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">1 350× plus rapide qu'un humain</text>
+              <text x="182" y="84" text-anchor="middle" fill="#ff7f27" font-size="10">⚡ Automatisé par IA</text>
+              <rect x="30" y="190" width="300" height="55" rx="6" fill="none" stroke="#555" stroke-width="1" stroke-dasharray="4,4"/>
+              <text x="180" y="210" text-anchor="middle" fill="#ff7f27" font-size="11" font-weight="bold">Agent ti-lex IA : &lt; 2 minutes</text>
+              <text x="180" y="228" text-anchor="middle" fill="#666" font-size="10">Firme externe : 2 à 6 semaines + $$$</text>
+              <text x="180" y="268" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">Votre rapport reste 100% privé</text>
+              <text x="180" y="286" text-anchor="middle" fill="#aaa" font-size="9">Vous seul voyez les résultats détaillés du scan</text>
             </svg>
           </div>
         </div>
@@ -1699,25 +1710,25 @@
       <!-- PANNEAU: FLUX DE TRAVAIL -->
       <div id="tilex-pan-flux" class="tilex-demo-panneau">
         <div class="tilex-demo-flux">
-          <div class="tilex-flux-item"><div class="tilex-flux-num">1</div><div class="tilex-flux-titre">🔍 Détection</div><div class="tilex-flux-desc">Identification d'une activité suspecte via capteurs et logs</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">2</div><div class="tilex-flux-titre">📥 Collecte</div><div class="tilex-flux-desc">Rassemblement du contexte et des données pertinentes</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">3</div><div class="tilex-flux-titre">🧠 Analyse IA</div><div class="tilex-flux-desc">Traitement par les modèles d'apprentissage de l'agent</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">4</div><div class="tilex-flux-titre">⚡ Classification</div><div class="tilex-flux-desc">Type de menace identifié et score de risque calculé</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">5</div><div class="tilex-flux-titre">🎯 Décision</div><div class="tilex-flux-desc">Sélection automatique de la meilleure réponse</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">6</div><div class="tilex-flux-titre">🛡️ Exécution</div><div class="tilex-flux-desc">Application des mesures de sécurité en temps réel</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">7</div><div class="tilex-flux-titre">📢 Alerte</div><div class="tilex-flux-desc">Notification immédiate aux administrateurs</div></div>
-          <div class="tilex-flux-item"><div class="tilex-flux-num">8</div><div class="tilex-flux-titre">📋 Rapport</div><div class="tilex-flux-desc">Documentation complète générée pour audit</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">1</div><div class="tilex-flux-titre">📝 Inscription</div><div class="tilex-flux-desc">Créez votre compte ti-lex-AL et choisissez un forfait cyber</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">2</div><div class="tilex-flux-titre">🏢 Vérification NEQ</div><div class="tilex-flux-desc">Validez votre entreprise via le Registraire du Québec (10 chiffres)</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">3</div><div class="tilex-flux-titre">🔐 Signature DPA</div><div class="tilex-flux-desc">Déclaration légale : vous êtes propriétaire des systèmes à scanner</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">4</div><div class="tilex-flux-titre">🌐 Déclaration domaines</div><div class="tilex-flux-desc">Listez vos domaines et IPs autorisés — l'agent ne scanne QUE ceux-là</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">5</div><div class="tilex-flux-titre">🛡️ Scan automatisé</div><div class="tilex-flux-desc">L'agent IA analyse ports, DNS, SSL, headers, vulnérabilités connues</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">6</div><div class="tilex-flux-titre">🧠 Analyse Claude IA</div><div class="tilex-flux-desc">Claude Opus traite les résultats et priorise les risques par gravité</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">7</div><div class="tilex-flux-titre">📋 Rapport privé</div><div class="tilex-flux-desc">Rapport détaillé visible uniquement par vous — jamais partagé</div></div>
+          <div class="tilex-flux-item"><div class="tilex-flux-num">8</div><div class="tilex-flux-titre">🔒 Archivage légal</div><div class="tilex-flux-desc">Logs immuables conservés 5 ans — Loi 25, LPRPDE, art. 342.1 C.cr.</div></div>
         </div>
       </div>
       <!-- PANNEAU: STATISTIQUES -->
       <div id="tilex-pan-stats" class="tilex-demo-panneau">
         <div class="tilex-demo-stats">
-          <div class="tilex-stat-box"><div class="tilex-stat-num">99.8%</div><div class="tilex-stat-lbl">Taux de Détection</div></div>
-          <div class="tilex-stat-box"><div class="tilex-stat-num">&lt; 2s</div><div class="tilex-stat-lbl">Temps de Réponse</div></div>
-          <div class="tilex-stat-box"><div class="tilex-stat-num">24/7</div><div class="tilex-stat-lbl">Surveillance Continue</div></div>
-          <div class="tilex-stat-box"><div class="tilex-stat-num">5</div><div class="tilex-stat-lbl">Types de Menaces</div></div>
-          <div class="tilex-stat-box"><div class="tilex-stat-num">100%</div><div class="tilex-stat-lbl">Automatisation</div></div>
-          <div class="tilex-stat-box"><div class="tilex-stat-num">1350×</div><div class="tilex-stat-lbl">Plus Rapide qu'un Humain</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">3</div><div class="tilex-stat-lbl">Forfaits Cyber</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">&lt; 2min</div><div class="tilex-stat-lbl">Scan complet</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">100%</div><div class="tilex-stat-lbl">Privé — Vous seul</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">5 ans</div><div class="tilex-stat-lbl">Archivage légal</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">Loi 25</div><div class="tilex-stat-lbl">Conforme Québec</div></div>
+          <div class="tilex-stat-box"><div class="tilex-stat-num">⚜️</div><div class="tilex-stat-lbl">Fait au Québec</div></div>
         </div>
       </div>
     </div>
