@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex-AL — Choix d'interface</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6600">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0A0A;--bg2:#111;--bg3:#1A1A1A;--bg4:#222;
+  --or:#D4AF37;--or2:#F0C040;--or3:#B8960C;
+  --orange:#FF6A00;--orange2:#FF9A3C;
+  --txt:#FFF8E7;--muted:rgba(255,248,231,.42);
+  --border:rgba(212,175,55,.18);--grid:rgba(212,175,55,.04);
+  --green:#00cc66;--radius:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min-height:100vh;
+  overflow-x:hidden;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,var(--grid) 60px),
+  repeating-linear-gradient(90deg,transparent,transparent 59px,var(--grid) 60px);
+  display:flex;align-items:center;justify-content:center;padding:24px;}
+
+.intro-inner{display:flex;flex-direction:column;align-items:center;max-width:800px;width:100%;animation:fadeUp .5s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+.intro-logo-box{position:relative;width:110px;height:110px;overflow:visible;margin-bottom:6px;}
+.intro-logo-box img{width:100%;height:100%;object-fit:cover;border-radius:18px;position:relative;z-index:1;}
+.intro-heat{position:absolute;inset:-22px;z-index:0;border-radius:50%;
+  background:radial-gradient(ellipse 80% 75% at 50% 58%,rgba(255,106,0,.5) 0%,rgba(212,175,55,.2) 50%,transparent 74%);
+  filter:blur(20px);animation:heat-p 3s ease-in-out infinite;pointer-events:none;}
+@keyframes heat-p{0%,100%{transform:scale(.85);opacity:.42}50%{transform:scale(1.1);opacity:.96}}
+
+.intro-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:6px;margin-top:10px;
+  background:linear-gradient(90deg,var(--or3) 20%,var(--or2) 45%,#fff 52%,var(--or2) 58%,var(--or) 72%,var(--or3) 90%);
+  background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:logo-sh 4.5s ease-in-out infinite;}
+@keyframes logo-sh{0%{background-position:220% center}100%{background-position:-80% center}}
+.intro-sub{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:4px;margin-top:2px;margin-bottom:34px;}
+
+.intro-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:100%;}
+.intro-card{background:var(--bg3);border:1.5px solid var(--border);border-radius:18px;padding:26px 22px;
+  cursor:pointer;transition:all .3s cubic-bezier(.22,1,.36,1);text-align:center;position:relative;overflow:hidden;}
+.intro-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.6;}
+.intro-card.pro::before{background:linear-gradient(90deg,transparent,var(--or),transparent);}
+.intro-card:hover{transform:translateY(-6px);border-color:var(--orange);box-shadow:0 16px 50px rgba(255,106,0,.18);}
+.intro-card.pro:hover{border-color:var(--or);box-shadow:0 16px 50px rgba(212,175,55,.18);}
+
+.intro-card-ico{font-size:46px;margin-bottom:14px;}
+.intro-card-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:3px;color:var(--txt);margin-bottom:10px;}
+.intro-card-desc{font-family:'Rajdhani',sans-serif;font-size:14px;line-height:1.6;color:var(--muted);margin-bottom:16px;min-height:66px;}
+.intro-card-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:18px;}
+.ictag{padding:3px 9px;border-radius:5px;font-family:'Share Tech Mono',monospace;font-size:8.5px;letter-spacing:1px;
+  border:1px solid var(--border);color:var(--muted);}
+.intro-card.animated .ictag{border-color:rgba(255,106,0,.3);color:var(--orange);background:rgba(255,106,0,.05);}
+.intro-card.pro .ictag{border-color:rgba(212,175,55,.3);color:var(--or);background:rgba(212,175,55,.05);}
+
+.intro-card-btn{padding:11px;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;
+  background:linear-gradient(135deg,#C04800,var(--orange),var(--orange2));color:#fff;transition:filter .2s;border:none;width:100%;cursor:pointer;}
+.intro-card.pro .intro-card-btn{background:linear-gradient(135deg,var(--or3),var(--or2));color:#0a0a0a;}
+.intro-card:hover .intro-card-btn{filter:brightness(1.12);}
+
+.intro-foot{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:28px;text-align:center;opacity:.6;}
+.intro-foot a{color:var(--orange);text-decoration:none;}
+.intro-foot a:hover{text-decoration:underline;}
+
+::selection{background:rgba(255,106,0,.3);}
+@media(max-width:600px){.intro-cards{grid-template-columns:1fr}.intro-title{font-size:38px}}
+</style>
+</head>
+<body>
+
+<div class="intro-inner">
+  <div class="intro-logo-box">
+    <div class="intro-heat"></div>
+    <img src="assets/tilex-logo.png" alt="ti-lex-AL">
+  </div>
+  <div class="intro-title">TI-LEX-AL</div>
+  <div class="intro-sub">CHOISIS TON INTERFACE</div>
+
+  <div class="intro-cards">
+
+    <div class="intro-card animated" onclick="chooseInterface('animated')">
+      <div class="intro-card-ico">🎬</div>
+      <div class="intro-card-name">INTERFACE ANIMÉE</div>
+      <div class="intro-card-desc">Effets visuels, vidéos, projecteurs, animations de chaleur. L'expérience ti-lex complète et immersive.</div>
+      <div class="intro-card-tags">
+        <span class="ictag">VIDÉOS</span>
+        <span class="ictag">EFFETS</span>
+        <span class="ictag">ANIMATIONS</span>
+        <span class="ictag">IMMERSIF</span>
+      </div>
+      <button class="intro-card-btn">ENTRER — MODE ANIMÉ</button>
+    </div>
+
+    <div class="intro-card pro" onclick="chooseInterface('pro')">
+      <div class="intro-card-ico">💼</div>
+      <div class="intro-card-name">INTERFACE PRO</div>
+      <div class="intro-card-desc">Sobre et professionnel. Mêmes fonctionnalités, design épuré, animations calmées. Idéal pour le travail.</div>
+      <div class="intro-card-tags">
+        <span class="ictag">SOBRE</span>
+        <span class="ictag">ÉPURÉ</span>
+        <span class="ictag">RAPIDE</span>
+        <span class="ictag">PRO</span>
+      </div>
+      <button class="intro-card-btn">ENTRER — MODE PRO</button>
+    </div>
+
+  </div>
+
+  <div class="intro-foot">
+    tu peux changer d'interface à tout moment dans les paramètres &nbsp;·&nbsp; <a href="index.html">déconnexion</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+(async function checkAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const saved = localStorage.getItem('tilex-interface-mode');
+  if (saved === 'animated') {
+    window.location.href = 'app.html';
+    return;
+  }
+  if (saved === 'pro') {
+    window.location.href = 'pro.html';
+    return;
+  }
+})();
+
+async function chooseInterface(mode) {
+  localStorage.setItem('tilex-interface-mode', mode);
+
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      await sb.from('profiles')
+        .update({ interface_mode: mode })
+        .eq('id', user.id);
+    }
+  } catch (e) { console.error(e); }
+
+  if (mode === 'animated') {
+    window.location.href = 'app.html';
+  } else {
+    window.location.href = 'pro.html';
+  }
+}
+</script>
+</body>
+</html>

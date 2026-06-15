@@ -1,10 +1,13 @@
-const CACHE_VERSION = "tilex-v10-213";
+const CACHE_VERSION = "tilex-v10-214";
 const ASSETS = [
   "/",
   "/index.html",
   "/app.html",
+  "/pro.html",
+  "/choose.html",
   "/app.js",
   "/styles.css",
+  "/pro-styles.css",
   "/logo.png",
   "/assets/tilex-logo.png",
   "/assets/avatar-ia.mp4",

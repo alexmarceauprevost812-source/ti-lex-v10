@@ -1262,7 +1262,7 @@
           email: document.getElementById('register-email').value.trim(),
           password,
           options: { data: { full_name: document.getElementById('register-name').value.trim() },
-            emailRedirectTo: window.location.origin + '/app.html' }
+            emailRedirectTo: window.location.origin + '/choose.html' }
         });
         if (error) showError('register-error', error.message);
         else {
@@ -1281,7 +1281,7 @@
       showToast('Redirection vers ' + label + '...');
       try {
         const { error } = await supabase.auth.signInWithOAuth({
-          provider, options: { redirectTo: window.location.origin + '/app.html' }
+          provider, options: { redirectTo: window.location.origin + '/choose.html' }
         });
         if (error) showToast('Erreur: ' + error.message);
       } catch (err) { showToast('Erreur: ' + err.message); }
@@ -1396,7 +1396,7 @@
       if (splash.classList.contains('fade-out')) return;
       splash.classList.add('fade-out');
       video.pause();
-      setTimeout(() => { window.location.href = 'app.html'; }, 800);
+      setTimeout(() => { window.location.href = 'choose.html'; }, 800);
     }
     function skipIntro() {
       const splash = document.getElementById('introSplash');

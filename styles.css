@@ -3630,3 +3630,10 @@ ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
   .cerv-notes-list{padding:10px 12px}
   .cerv-editor{padding:12px 14px}
 }
+
+/* ══ INTERFACE SWITCHER BUTTON ══ */
+.interface-switch-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
+  border-radius:8px;border:1px solid rgba(255,106,0,.25);background:rgba(255,106,0,.06);
+  color:#ff6600;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;
+  cursor:pointer;transition:all .2s}
+.interface-switch-btn:hover{border-color:#ff6600;background:rgba(255,106,0,.12)}
