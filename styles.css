@@ -1393,17 +1393,19 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
 .sec-head h2{font-family:var(--marker);font-size:1.5rem;font-weight:400;margin-bottom:4px;letter-spacing:.3px}
 .sec-head .orange{color:#e06c75}
 .sec-head .muted{font-family:var(--code-font);font-size:.82rem;color:#abb2bf}
-/* ── CYBER FORFAITS ── */
-.cyf-wrap{max-width:1200px;margin:0 auto;padding:40px 20px 60px}
-.cyf-header{text-align:center;margin-bottom:48px}
-.cyf-kicker{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,.1);
-  border:1px solid rgba(59,130,246,.3);border-radius:999px;padding:6px 18px;margin-bottom:20px;
-  font-size:11px;color:#60a5fa;letter-spacing:.14em;font-family:monospace}
-.cyf-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;flex-shrink:0}
-.cyf-title{font-size:clamp(26px,5vw,48px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:0 0 16px;color:#fff}
-.cyf-blue{color:#3b82f6}
-.cyf-sub{color:#94a3b8;font-size:15px;margin:0}
-.cyf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start}
+/* ── CYBER FORFAITS (inside fp-wrap) ── */
+@keyframes cyf-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.cyf-separator{margin:60px auto 0;width:80%;max-width:600px;height:2px;
+  background:linear-gradient(90deg,transparent,#d4a017,#ffd700,#d4a017,transparent)}
+.cyf-header{text-align:center;margin:48px 0 40px}
+.cyf-title-row{display:flex;align-items:center;justify-content:center;gap:16px}
+.cyf-dollar-spin{display:inline-block;font-size:38px;font-weight:900;color:#ffd700;
+  animation:cyf-spin 3s linear infinite;text-shadow:0 0 12px rgba(255,215,0,.5)}
+.cyf-dollar-sm{font-size:28px}
+.cyf-title{font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:.06em;
+  margin:0;color:#fff;font-family:var(--marker);text-transform:uppercase}
+.cyf-sub{color:#94a3b8;font-size:14px;margin:8px 0 0}
+.cyf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px;align-items:start}
 .cyf-card{position:relative;background:#0d1220;border:1.5px solid #1e293b;border-radius:20px;
   padding:32px 28px;transition:transform .2s,box-shadow .2s}
 .cyf-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,.4)}
@@ -1412,17 +1414,16 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
   background:#3b82f6;border-radius:999px;padding:4px 16px;font-size:11px;font-weight:700;
   color:#fff;white-space:nowrap;letter-spacing:.06em;z-index:1}
 .cyf-badge-elite{background:#1e293b;border:1px solid #334155}
-.cyf-plan-label{font-size:10px;color:#3b82f6;letter-spacing:.14em;font-family:monospace;margin-bottom:4px}
-.cyf-plan-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.cyf-emoji{font-size:26px}
-.cyf-plan-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:.04em;font-family:var(--marker)}
-.cyf-tagline{color:#94a3b8;font-size:12px;font-weight:600;margin:0 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.cyf-plan-name{font-size:22px;font-weight:700;color:#fff;letter-spacing:.04em;
+  font-family:var(--marker);margin:0 0 8px}
+.cyf-tagline{color:#94a3b8;font-size:12px;font-weight:600;margin:0 0 6px;
+  text-transform:uppercase;letter-spacing:.06em}
 .cyf-desc{color:#64748b;font-size:13px;margin:0 0 10px;line-height:1.5}
 .cyf-model{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,.08);
   border:1px solid rgba(59,130,246,.15);border-radius:6px;padding:3px 10px;font-size:11px;color:#60a5fa}
 .cyf-model-fire{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.2);color:#f87171}
-.cyf-price-box{background:#070b14;border-radius:12px;padding:18px 20px;margin:20px 0;border:1px solid #1e293b}
-.cyf-price{display:flex;align-items:flex-end;gap:6px}
+.cyf-price-box{display:flex;align-items:flex-end;gap:8px;background:#070b14;border-radius:12px;
+  padding:18px 20px;margin:20px 0;border:1px solid #1e293b}
 .cyf-amt{font-size:42px;font-weight:700;color:#fff;line-height:1}
 .cyf-per{color:#475569;font-size:14px;margin-bottom:6px}
 .cyf-cta{display:block;width:100%;padding:14px 0;border-radius:10px;border:none;cursor:pointer;
@@ -1439,11 +1440,12 @@ video.al-video{background:#000;object-fit:cover;pointer-events:none}
   font-size:13px;color:#cbd5e1;line-height:1.4}
 .cyf-section li::before{content:"✓";color:#3b82f6;font-weight:700;font-size:13px;flex-shrink:0}
 .cyf-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;margin-top:48px}
-.cyf-trust span{color:#334155;font-size:12px;font-family:monospace}
-.cyf-footer{text-align:center;color:#1e293b;font-size:11px;font-family:monospace;margin-top:12px}
+.cyf-trust span{color:#64748b;font-size:12px;font-family:monospace}
 @media(max-width:860px){
   .cyf-grid{grid-template-columns:1fr}
   .cyf-card{padding:24px 20px}
+  .cyf-dollar-spin{font-size:28px}
+  .cyf-title{font-size:28px}
 }
 
 .sec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}

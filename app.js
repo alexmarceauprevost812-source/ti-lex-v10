@@ -280,7 +280,7 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cyberforfaits: "Forfaits Cyber", cerveau: "Deuxième Cerveau", finance: "Agent Finance", animations: "Animations", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cerveau: "Deuxième Cerveau", finance: "Agent Finance", animations: "Animations", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
     acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
@@ -568,7 +568,7 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cyberforfaits: "Cyber Plans", cerveau: "Second Brain", finance: "Agent Finance", animations: "Animations", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cerveau: "Second Brain", finance: "Agent Finance", animations: "Animations", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
     acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",
