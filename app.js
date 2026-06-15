@@ -10,13 +10,17 @@ var PAYMENT_LINKS = {
   flux:  "https://buy.stripe.com/bJe14ndfUgi5g1scYS53O0d",
   surge: "https://buy.stripe.com/00wcN5cbQ0j7aH80c653O0e",
   apex:  "https://buy.stripe.com/7sY28r5Ns2rfbLc4sm53O0g",
-  cyber_shield: "https://buy.stripe.com/dRm28ra3I4zn8z0gb453O0i",
+  cyber_recon:    "https://buy.stripe.com/8x28wPb7Mgi5dTk8IC53O0k",
+  cyber_guardian: "https://buy.stripe.com/4gM8wPcbQ0j78z04sm53O0l",
 };
 
 var STRIPE_PRICE_IDS = {
   flux:  "price_1TiA8fFu0d9mAEdCaIBd9Z5v",
   surge: "price_1TiN0tFu0d9mAEdCVQtmwR7t",
   apex:  "price_1TiMuYFu0d9mAEdCGONgQKBH",
+  cyber_recon:    "price_1TiNFrFu0d9mAEdCDOok74WK",
+  cyber_guardian: "price_1TiNMKFu0d9mAEdCqEcMPVSN",
+  cyber_sentinel: "price_1TiNS9Fu0d9mAEdC3YfrwmWl",
 };
 
 const state = {
@@ -276,7 +280,7 @@ $("#overlay").onclick = () => { document.body.classList.remove("menu-open"); $("
 
 const I18N = {
   fr: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cerveau: "Deuxième Cerveau", finance: "Agent Finance", animations: "Animations", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Mode Sécurité", forfaits: "Forfaits", cyberforfaits: "Forfaits Cyber", cerveau: "Deuxième Cerveau", finance: "Agent Finance", animations: "Animations", settings: "Paramètres", conversations: "Conversations", convos: "Conversations", projects: "Projets", account: "Mon compte" },
     acctSub: "Abonnement", acctActive: "Actif", acctExpired: "Expiré", acctNoPlan: "Aucun forfait",
     acctDaysLeft: "Jours restants", acctMsgToday: "Messages aujourd'hui", acctMsgLimit: "Limite / jour",
     acctManage: "Gérer mon abonnement", acctPref: "Préférences", acctLang: "Langue", acctTheme: "Thème",
@@ -564,7 +568,7 @@ const I18N = {
     installOther: "Pour installer ti-lex-AL :\n\n1. Ouvre le menu ⋮ de ton navigateur\n2. Choisis « Installer l'application »\n3. Confirme",
   },
   en: {
-    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cerveau: "Second Brain", finance: "Agent Finance", animations: "Animations", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
+    titles: { chat: "Agent AL", codex: "Codex", security: "Security Mode", forfaits: "Plans", cyberforfaits: "Cyber Plans", cerveau: "Second Brain", finance: "Agent Finance", animations: "Animations", settings: "Settings", conversations: "Conversations", convos: "Conversations", projects: "Projects", account: "My Account" },
     acctSub: "Subscription", acctActive: "Active", acctExpired: "Expired", acctNoPlan: "No plan",
     acctDaysLeft: "Days remaining", acctMsgToday: "Messages today", acctMsgLimit: "Limit / day",
     acctManage: "Manage subscription", acctPref: "Preferences", acctLang: "Language", acctTheme: "Theme",

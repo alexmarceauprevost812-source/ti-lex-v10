@@ -16,11 +16,14 @@ const PRICE_TO_PLAN: Record<string, string> = {
   "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
   "price_1TiN0tFu0d9mAEdCVQtmwR7t": "surge",
   "price_1TiMuYFu0d9mAEdCGONgQKBH": "apex",
+  "price_1TiNFrFu0d9mAEdCDOok74WK": "cyber_recon",
+  "price_1TiNMKFu0d9mAEdCqEcMPVSN": "cyber_guardian",
+  "price_1TiNS9Fu0d9mAEdC3YfrwmWl": "cyber_sentinel",
 };
 
 function tierToPlan(
   tier?: string | null,
-): "free" | "flux" | "surge" | "apex" {
+): string {
   switch (tier) {
     case "apex":
     case "industriel":
@@ -32,6 +35,14 @@ function tierToPlan(
     case "flux":
     case "starter":
       return "flux";
+    case "cyber_recon":
+    case "cyber_shield":
+      return "cyber_recon";
+    case "cyber_guardian":
+      return "cyber_guardian";
+    case "cyber_sentinel":
+    case "cyber_fortress":
+      return "cyber_sentinel";
     default:
       return "free";
   }
