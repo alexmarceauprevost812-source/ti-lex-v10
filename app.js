@@ -1134,6 +1134,7 @@ function switchView(v) {
   if (v === "security" && typeof loadSecurityDashboard === "function") loadSecurityDashboard();
   if (v === "account" && typeof refreshAccountPage === "function") refreshAccountPage();
   if (v === "finance") { const w = $("#finWelcome"); if (w && w.style.display !== "none") finTypewriter(); }
+  if (v === "cerveau" && typeof cervLoadNotes === "function") cervLoadNotes();
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos" || v === "cerveau");
