@@ -327,7 +327,7 @@ body.menu-closed #menuToggleMobile{display:flex}
   50%{box-shadow:0 0 28px rgba(37,99,235,.5),0 0 56px rgba(37,99,235,.2),inset 0 0 18px rgba(37,99,235,.2)}}
 .msg-body{background:var(--bg-2);border:1px solid var(--line);border-radius:16px;
   padding:13px 17px;line-height:1.6;font-size:.95rem}
-.msg.assistant .msg-body{font-family:var(--code-font);font-size:.95rem;font-weight:400;line-height:1.75;color:#e8eaed}
+.msg.assistant .msg-body{font-family:var(--code-font);font-size:1.05rem;font-weight:500;line-height:1.8;color:#e8eaed}
 .msg.assistant .msg-body a{color:var(--orange);text-decoration:none;font-weight:700}
 .msg.assistant .msg-body a:hover{text-decoration:underline}
 .msg.assistant .msg-body strong{color:#fff;font-weight:700}
