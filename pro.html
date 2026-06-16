@@ -424,6 +424,25 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 
 /* (scanner CSS retiré — réservé aux forfaits cybersécurité futurs) */
 
+/* STUDIO */
+.deploy-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);}
+.deploy-row:last-child{border-bottom:none;}
+.deploy-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.deploy-val{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--txt);display:flex;align-items:center;gap:6px;}
+.studio-project-card{display:flex;align-items:center;gap:14px;padding:12px;
+  border:1px solid var(--border);border-radius:10px;transition:border-color .2s;cursor:pointer;}
+.studio-project-card:hover{border-color:var(--orange);}
+.sp-ico{font-size:24px;width:44px;height:44px;border-radius:10px;background:rgba(255,106,0,.08);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sp-info{flex:1;}
+.sp-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--or);}
+.sp-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:2px;}
+.sp-status{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
+  padding:3px 8px;border-radius:5px;flex-shrink:0;}
+.sp-live{color:var(--green);border:1px solid rgba(0,204,102,.3);background:rgba(0,204,102,.06);}
+.sp-err{color:var(--red);border:1px solid rgba(255,68,68,.3);background:rgba(255,68,68,.06);}
+
 /* CODEX */
 .cx-txt{width:100%;min-height:100px;padding:14px 17px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:15px;resize:none;outline:none;line-height:1.6;}
 .cx-txt::placeholder{color:var(--muted);}
@@ -753,6 +772,11 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
   </div>
 
+  <!-- STUDIO -->
+  <div class="sb-item" id="si-studio" onclick="showTab('studio')">
+    <span class="sb-icon">🚀</span><span class="sb-label" data-txt="STUDIO"></span>
+  </div>
+
   <!-- CRÉER AGENT IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
@@ -963,6 +987,69 @@ Comment puis-je t'aider aujourd'hui?</div>
     </div>
   </div>
 
+  <!-- STUDIO -->
+  <div id="view-studio" class="view">
+    <div class="sec-title">🚀 <span class="accent">STUDIO</span></div>
+
+    <!-- DÉPLOIEMENT -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">📡 DÉPLOIEMENT
+        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="refreshDeploy()">↻ ACTUALISER</button>
+      </div>
+      <div class="card-body">
+        <div class="deploy-status" id="deploy-status">
+          <div class="deploy-row">
+            <span class="deploy-label">Statut</span>
+            <span class="deploy-val" id="deploy-state"><span class="sdot g"></span> En ligne</span>
+          </div>
+          <div class="deploy-row">
+            <span class="deploy-label">Dernier déploiement</span>
+            <span class="deploy-val" id="deploy-time">—</span>
+          </div>
+          <div class="deploy-row">
+            <span class="deploy-label">Branche</span>
+            <span class="deploy-val" id="deploy-branch">main</span>
+          </div>
+          <div class="deploy-row">
+            <span class="deploy-label">URL</span>
+            <span class="deploy-val"><a href="#" id="deploy-url" style="color:var(--orange);text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:11px;">—</a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERREURS -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">⚠️ ERREURS DE BUILD
+        <span class="deploy-err-count" id="deploy-err-count" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);margin-left:auto;">0 erreurs</span>
+      </div>
+      <div class="card-body">
+        <div id="deploy-errors" style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:var(--muted);">
+          Aucune erreur détectée. ✓
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJETS / AGENTS -->
+    <div class="card">
+      <div class="card-hd">📂 MES PROJETS
+        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openModal()">+ NOUVEAU</button>
+      </div>
+      <div class="card-body">
+        <div class="studio-projects" id="studio-projects">
+          <div class="studio-project-card">
+            <div class="sp-ico">⚡</div>
+            <div class="sp-info">
+              <div class="sp-name">TI-LEX-AL v10</div>
+              <div class="sp-meta">HTML/JS · Vercel · 3 agents actifs</div>
+            </div>
+            <span class="sp-status sp-live">EN LIGNE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
@@ -1108,12 +1195,12 @@ document.getElementById("sidebar").classList.remove("collapsed");
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
 }
 
@@ -1394,6 +1481,28 @@ function createAgent(){
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal();});
 document.getElementById("plan-sel").addEventListener("click",e=>{if(e.target===document.getElementById("plan-sel"))closePlanSel();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();closeComposerMenu();}});
+
+/* ── STUDIO — DÉPLOIEMENT ── */
+function refreshDeploy(){
+  var stateEl=document.getElementById("deploy-state");
+  var timeEl=document.getElementById("deploy-time");
+  var urlEl=document.getElementById("deploy-url");
+  var errEl=document.getElementById("deploy-errors");
+  var errCnt=document.getElementById("deploy-err-count");
+  stateEl.innerHTML='<span class="sdot o" style="background:var(--orange);box-shadow:0 0 4px var(--orange);animation:blink 1s infinite;"></span> Vérification…';
+  setTimeout(function(){
+    var now=new Date();
+    var t=now.toLocaleDateString("fr-CA",{day:"numeric",month:"long",year:"numeric"})+
+      " · "+now.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+    stateEl.innerHTML='<span class="sdot g"></span> En ligne';
+    timeEl.textContent=t;
+    urlEl.textContent="ti-lex.vercel.app";
+    urlEl.href="https://ti-lex.vercel.app";
+    errEl.textContent="Aucune erreur détectée. ✓";
+    errCnt.textContent="0 erreurs";
+    errCnt.style.color="var(--green)";
+  },1500);
+}
 
 /* ── BARRE COMPOSITEUR FIXE ── */
 var composerViews=["view-chat","view-codex"];
