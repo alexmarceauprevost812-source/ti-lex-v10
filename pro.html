@@ -1248,91 +1248,50 @@ function renderUsage(){
 }
 renderUsage();
 
-/* ── CODEX ── */
+/* ── CODEX (vrai moteur IA — même proxy que le chat) ── */
 let genBusy=false;
-const CODE={
-js:`// ti-lex-AL — Agent personnalisé
-async function createAgent(name, config = {}) {
-  const { model = 'claude-sonnet-4-6', type = 'chat' } = config;
-  console.log('⚡ Création agent: ' + name);
-  const res = await fetch('/api/agents', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, model, type })
-  });
-  const agent = await res.json();
-  return { id: agent.id, name, model, type,
-    status: 'active', created: new Date().toISOString() };
-}`,
-py:`# ti-lex-AL — Assistant IA — Python
-import httpx
-
-async def chat_with_agent(message: str, history: list = None) -> dict:
-    """Envoie un message à Agent AL via l'API ti-lex."""
-    if not history:
-        history = []
-    history.append({"role": "user", "content": message})
-    response = await httpx.post(
-        "https://api.ti-lex.ca/v1/chat",
-        json={"messages": history[-20], "model": "claude-sonnet-4-6"}
-    )
-    reply = response.json()
-    return {"reply": reply["content"], "tokens": reply["usage"]}`,
-sql:`-- Migration ti-lex-AL — Supabase
-ALTER TABLE profiles
-ADD COLUMN IF NOT EXISTS interface_mode TEXT DEFAULT 'standard'
-CHECK (interface_mode IN ('standard','pro'));
-
-ALTER TABLE profiles
-ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'
-CHECK (plan IN ('basic','pro','apex'));
-
-CREATE TABLE IF NOT EXISTS custom_agents (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL, type TEXT NOT NULL,
-  model TEXT DEFAULT 'claude-sonnet-4-6',
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE custom_agents ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "own" ON custom_agents FOR ALL USING (auth.uid() = user_id);`,
-html:`<!-- Widget Chat — ti-lex-AL -->
-<div class="chat-widget">
-  <div class="chat-header">
-    <span>⚡</span>
-    <div>
-      <div class="chat-name">AGENT AL</div>
-      <div class="chat-status">⚡ EN LIGNE</div>
-    </div>
-  </div>
-  <div class="chat-messages" id="messages"></div>
-  <input type="text" placeholder="Écris un message..."
-    onkeydown="if(event.key==='Enter')sendMsg()">
-</div>`,
-bash:`#!/bin/bash
-# Déploiement ti-lex-AL sur Vercel
-echo "⚡ TI-LEX-AL · Déploiement"
-vercel --prod --yes
-echo "✓ Déploiement terminé"
-echo "🔗 https://ti-lex.ca"`,
-};
 const LANG_N={js:"JavaScript",py:"Python",sql:"SQL · Supabase",html:"HTML/CSS",bash:"Bash"};
-function genCode(){
+
+async function genCode(){
   if(genBusy)return;
-  const p=document.getElementById("codex-txt").value.trim();
-  const l=document.getElementById("codex-lang").value;
-  if(!p)return;
+  const prompt=document.getElementById("codex-txt").value.trim();
+  const lang=document.getElementById("codex-lang").value;
+  if(!prompt)return;
   genBusy=true;
   const out=document.getElementById("code-out");
   const body=document.getElementById("code-body");
-  document.getElementById("code-lang").textContent=LANG_N[l]||l;
-  out.style.display="block";body.style.color="var(--or)";body.textContent="⚡ Génération en cours…";
-  setTimeout(()=>{body.style.color="#d4d0c8";typeCode(CODE[l]||CODE.js,body,()=>{genBusy=false;});},700);
+  document.getElementById("code-lang").textContent=LANG_N[lang]||lang;
+  out.style.display="block";
+  body.style.color="var(--or)";
+  body.textContent="⚡ Génération en cours…";
+
+  const sysPrompt="Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre et production-ready en "+
+    (LANG_N[lang]||lang)+". Réponds avec le code et de courtes explications en français québécois. "+
+    "Pour chaque bloc de code, ajoute en première ligne un commentaire indiquant le chemin du fichier.";
+
+  try{
+    const tk=getToken();
+    const h={"Content-Type":"application/json","apikey":SB_ANON};
+    if(tk)h["Authorization"]="Bearer "+tk;
+    const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+      model:"claude-sonnet-4-6",max_tokens:4096,
+      system:sysPrompt,
+      messages:[{role:"user",content:prompt}]
+    })});
+    const data=await res.json();
+    const reply=(data.content&&data.content[0]&&data.content[0].text)||data.error||"Erreur de connexion.";
+    body.style.color="#d4d0c8";
+    typeCode(reply,body,function(){genBusy=false;});
+  }catch(e){
+    body.style.color="var(--red)";
+    body.textContent="Erreur: "+e.message;
+    genBusy=false;
+  }
 }
-function typeCode(txt,el,cb){el.textContent="";let i=0;function t(){if(i<txt.length){el.textContent+=txt[i++];el.scrollTop=el.scrollHeight;setTimeout(t,11);}else if(cb)cb();}t();}
+
+function typeCode(txt,el,cb){el.textContent="";var i=0;function t(){if(i<txt.length){el.textContent+=txt[i++];el.scrollTop=el.scrollHeight;setTimeout(t,8);}else if(cb)cb();}t();}
 function clearCx(){document.getElementById("codex-txt").value="";document.getElementById("code-out").style.display="none";genBusy=false;}
-function copyCode(){const c=document.getElementById("code-body").textContent;navigator.clipboard.writeText(c).catch(()=>{});const t=event.target;t.textContent="✓ COPIÉ";setTimeout(()=>{t.textContent="📋 COPIER";},2000);}
+function copyCode(){var c=document.getElementById("code-body").textContent;navigator.clipboard.writeText(c).catch(function(){});var t=event.target;t.textContent="✓ COPIÉ";setTimeout(function(){t.textContent="📋 COPIER";},2000);}
 
 /* ── MODAL AGENTS ── */
 let selTypeVal="chat";let customAgents=[];
