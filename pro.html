@@ -260,6 +260,18 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
   border:1px solid var(--border);border-radius:4px;padding:3px 6px;}
 .sidebar.collapsed .sb-locked{display:none;}
 
+/* ══ STATS UTILISATION SIDEBAR ══ */
+.sb-usage{margin:8px 10px;padding:10px 12px;border-radius:10px;
+  background:rgba(212,175,55,.04);border:1px solid rgba(212,175,55,.12);}
+.sb-usage-head{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--or);margin-bottom:8px;}
+.sb-usage-tranche{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:.5px;margin-bottom:6px;}
+.sb-usage-bar-wrap{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:6px;}
+.sb-usage-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--or2));transition:width .4s ease;}
+.sb-usage-count{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--txt);letter-spacing:.5px;}
+.sb-usage-sep{height:1px;background:rgba(212,175,55,.1);margin:7px 0;}
+.sb-usage-month{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);letter-spacing:.3px;}
+.sidebar.collapsed .sb-usage{display:none;}
+
 .sb-bottom{margin-top:auto;padding:10px 0;border-top:1px solid var(--border);overflow:hidden;}
 .sb-plan-row{display:flex;align-items:center;padding:8px 0 8px 0;gap:0;}
 .sb-plan-icon{width:var(--sb-c);text-align:center;font-size:14px;flex-shrink:0;}
@@ -748,6 +760,18 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   </div>
   <div class="sb-item" onclick="localStorage.removeItem('tilex-interface-mode');window.location.href='choose.html'">
     <span class="sb-icon">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
+  </div>
+
+  <!-- STATS UTILISATION -->
+  <div class="sb-usage sb-label" id="sb-usage">
+    <div class="sb-usage-head">📊 UTILISATION</div>
+    <div class="sb-usage-tranche" id="usage-tranche"></div>
+    <div class="sb-usage-bar-wrap">
+      <div class="sb-usage-bar" id="usage-bar"></div>
+    </div>
+    <div class="sb-usage-count" id="usage-count"></div>
+    <div class="sb-usage-sep"></div>
+    <div class="sb-usage-month" id="usage-month"></div>
   </div>
 
   <div class="sb-bottom">
@@ -1340,6 +1364,7 @@ async function sendChat(){
   const inp=document.getElementById("chat-in");
   const txt=inp.value.trim();if(!txt)return;
   addMsg("u",txt);inp.value="";chatBusy=true;
+  trackMsg();
   chatHistory.push({role:"user",content:txt});
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
@@ -1371,6 +1396,55 @@ function addMsg(role,txt){
   d.innerHTML=`<div class="cmsg-ico ${role}">${role==="u"?"👤":"⚡"}</div><div><div class="cmsg-bbl ${role}">${safe}</div><div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
+
+/* ── SUIVI UTILISATION (messages par tranche 12h) ── */
+const TRANCHE_LIMIT=50;
+function getTranche(){
+  var now=new Date();
+  var y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();
+  var slot=h<12?"am":"pm";
+  return y+"-"+(m+1)+"-"+d+"-"+slot;
+}
+function getTrancheLabel(){
+  var h=new Date().getHours();
+  return h<12?"MINUIT → MIDI (00h-12h)":"MIDI → MINUIT (12h-00h)";
+}
+function getUsageData(){
+  try{var d=JSON.parse(localStorage.getItem("tilex-usage")||"{}");return d;}catch(e){return{};}
+}
+function saveUsageData(d){localStorage.setItem("tilex-usage",JSON.stringify(d));}
+function trackMsg(){
+  var d=getUsageData();
+  var tr=getTranche();
+  if(!d.tranche||d.tranche!==tr){d.tranche=tr;d.count=0;}
+  d.count=(d.count||0)+1;
+  var now=new Date();var mKey=now.getFullYear()+"-"+(now.getMonth()+1);
+  if(!d.monthKey||d.monthKey!==mKey){d.monthKey=mKey;d.monthCount=0;}
+  d.monthCount=(d.monthCount||0)+1;
+  saveUsageData(d);
+  renderUsage();
+}
+function renderUsage(){
+  var d=getUsageData();
+  var tr=getTranche();
+  var sent=(d.tranche===tr)?d.count||0:0;
+  var remain=Math.max(0,TRANCHE_LIMIT-sent);
+  var pct=Math.min(100,Math.round((sent/TRANCHE_LIMIT)*100));
+  var now=new Date();var mKey=now.getFullYear()+"-"+(now.getMonth()+1);
+  var mCount=(d.monthKey===mKey)?d.monthCount||0:0;
+  var mNames=["JAN","FÉV","MAR","AVR","MAI","JUN","JUL","AOÛ","SEP","OCT","NOV","DÉC"];
+  var trEl=document.getElementById("usage-tranche");
+  var barEl=document.getElementById("usage-bar");
+  var cntEl=document.getElementById("usage-count");
+  var moEl=document.getElementById("usage-month");
+  if(trEl)trEl.textContent=getTrancheLabel();
+  if(barEl){barEl.style.width=pct+"%";
+    if(pct>80)barEl.style.background="linear-gradient(90deg,var(--orange),var(--red))";
+    else barEl.style.background="linear-gradient(90deg,var(--green),var(--or2))";}
+  if(cntEl)cntEl.textContent=sent+" / "+TRANCHE_LIMIT+" msgs · "+remain+" restants";
+  if(moEl)moEl.textContent="📅 "+mNames[now.getMonth()]+" : "+mCount+" messages envoyés";
+}
+renderUsage();
 
 /* ── CODEX ── */
 let genBusy=false;
