@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr-CA" data-theme="night" data-plan="cyber">
+<html lang="fr-CA" data-theme="night" data-plan="pro">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -422,21 +422,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .c-send::after{content:'';position:absolute;top:-50%;left:-90%;width:50%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transform:skewX(-18deg);animation:sweep 2.2s ease-in-out infinite;}
 .c-foot{font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(255,248,231,.12);margin-top:5px;text-align:center;}
 
-/* SCANNER */
-.scan-input{width:100%;padding:13px 17px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;}
-.scan-input::placeholder{color:var(--muted);}
-.scan-opts{padding:10px 17px;display:flex;flex-wrap:wrap;gap:7px;border-bottom:1px solid var(--border);}
-.sopt{padding:5px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s;}
-.sopt.on,.sopt:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,106,0,.07);}
-.scan-acts{padding:11px 17px;display:flex;gap:10px;}
-.scan-acts .btn-orange,.scan-acts .btn-outline{width:auto;flex:1;font-size:14px;padding:11px 14px;}
-.scan-prog{display:none;background:var(--bg3);border:1px solid var(--orange);border-radius:10px;padding:14px;margin:0 17px 17px;}
-.scan-prog.on{display:block;}
-.scan-plbl{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--orange);letter-spacing:1px;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
-.scan-bw{width:100%;height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-bottom:10px;}
-.scan-bar{height:100%;background:linear-gradient(90deg,#C04800,var(--orange),var(--orange2));border-radius:2px;width:0%;transition:width .4s ease;box-shadow:0 0 5px var(--orange);}
-.scan-log{font-family:'Share Tech Mono',monospace;font-size:10px;line-height:1.9;max-height:110px;overflow-y:auto;color:var(--muted);}
-.slog-ok{color:var(--green)}.slog-w{color:var(--or2)}.slog-e{color:var(--red)}
+/* (scanner CSS retiré — réservé aux forfaits cybersécurité futurs) */
 
 /* CODEX */
 .cx-txt{width:100%;min-height:100px;padding:14px 17px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:15px;resize:none;outline:none;line-height:1.6;}
@@ -652,7 +638,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
       </div>
       <div class="tb-logo-txt">
         <span class="tb-logo-main">TI-LEX-AL</span>
-        <span class="tb-logo-sub">MASTER PRO · CYBERSÉCURITÉ</span>
+        <span class="tb-logo-sub">MASTER PRO</span>
       </div>
     </div>
   </div>
@@ -664,11 +650,11 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   </div>
   <div class="topbar-right">
     <!-- Sélecteur de plan (démo) -->
-    <div class="plan-badge plan-cyber" id="plan-badge-tb" onclick="openPlanSel()" title="Changer de forfait">
+    <div class="plan-badge plan-pro" id="plan-badge-tb" onclick="openPlanSel()" title="Changer de forfait">
       <div class="plan-dot"></div>
-      <span id="plan-badge-txt">CYBER GUARDIAN</span>
+      <span id="plan-badge-txt">PRO</span>
     </div>
-    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge">5</span></button>
+    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge">4</span></button>
     <div class="clock" id="clock">--:--:--</div>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
@@ -684,7 +670,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
       <img src="assets/tilex-logo.png" alt="TI-LEX-AL" style="position:relative;z-index:1;">
     </div>
     <div class="sb-logo-name sb-label">TI-LEX-AL</div>
-    <div class="sb-badge"><div class="sb-badge-dot"></div><span class="sb-label">MASTER PRO · CYBERSÉCURITÉ</span></div>
+    <div class="sb-badge"><div class="sb-badge-dot"></div><span class="sb-label">MASTER PRO</span></div>
     <button class="sb-toggle-btn" id="sb-toggle-btn" onclick="toggleSidebar()" title="Ouvrir / Fermer le menu">◀</button>
   </div>
 
@@ -777,7 +763,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   <div class="sb-bottom">
     <div class="sb-plan-row">
       <div class="sb-plan-icon">⚡</div>
-      <div class="sb-plan-txt">PLAN PRO · ACTIF</div>
+      <div class="sb-plan-txt">PLAN SURGE · ACTIF</div>
     </div>
     <div class="sb-model">claude-opus-4-8 · Loi 25 · Québec ⚜️</div>
     <div class="mode-indicator" id="mode-indicator">MODE: ANIMÉ 🎬</div>
@@ -796,7 +782,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
     <div class="metrics">
       <div class="metric"><div class="m-lbl">AGENTS ACTIFS</div><div class="m-val or" id="m-agents">3</div><div class="m-sub">/ 10 max</div></div>
       <div class="metric"><div class="m-lbl">SCORE SÉCURITÉ</div><div class="m-val g">94</div><div class="m-sub">Grade A</div></div>
-      <div class="metric plan-cyber-only plan-pro-only"><div class="m-lbl">SCANS CE MOIS</div><div class="m-val og">12</div><div class="m-sub">3 restants</div></div>
+      <div class="metric"><div class="m-lbl">FORFAIT</div><div class="m-val or">PRO</div><div class="m-sub">Actif</div></div>
       <div class="metric"><div class="m-lbl">MESSAGES / JOUR</div><div class="m-val">∞</div><div class="m-sub">Illimité</div></div>
     </div>
     <div class="card">
@@ -815,17 +801,6 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
             <div class="ag-model">claude-opus-4-8 · Plan Pro</div>
             <div class="ag-stat"><div class="sdot g"></div> MAÎTRE DE TOUS LES AGENTS</div>
             <div class="ag-tags"><span class="atag or">MASTER</span><span class="atag or">LOI 25</span></div>
-          </div>
-          <div class="ag-card plan-cyber-only plan-pro-only" onclick="showTab('cyber')">
-            <div class="ag-top"><div class="ag-ico dark">🛡️</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
-                <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
-            </div>
-            <div class="ag-name">AGENT CY</div>
-            <div class="ag-role">CYBERSÉCURITÉ · SCANNER</div>
-            <div class="ag-model">claude-opus-4-8</div>
-            <div class="ag-stat"><div class="sdot g"></div> PRÊT À SCANNER</div>
-            <div class="ag-tags"><span class="atag og">CYBER</span><span class="atag">SCANNER</span></div>
           </div>
           <div class="ag-card" onclick="showTab('chat')">
             <div class="ag-top"><div class="ag-ico dark">💬</div>
@@ -860,94 +835,9 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
     <div class="card">
       <div class="card-hd">ACTIONS RAPIDES</div>
       <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn-orange plan-cyber-only plan-pro-only" style="width:auto;flex:1;min-width:140px;font-size:14px;padding:11px 14px;" onclick="showTab('cyber')">🛡️ LANCER UN SCAN</button>
-        <button class="btn-outline" style="flex:1;min-width:140px;font-size:14px;padding:10px 14px;" onclick="showTab('chat')"><span class="s">💬 PARLER À AGENT AL</span></button>
+        <button class="btn-orange" style="flex:1;min-width:140px;font-size:14px;padding:11px 14px;" onclick="showTab('chat')">💬 PARLER À AGENT AL</button>
         <button class="btn-outline" style="flex:1;min-width:140px;font-size:14px;padding:10px 14px;" onclick="showTab('codex')"><span class="s">⌨️ GÉNÉRER DU CODE</span></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CYBER -->
-  <div id="view-cyber" class="view plan-cyber-only plan-pro-only">
-    <div class="sec-title">🛡️ <span class="accent">CYBER</span>SÉCURITÉ</div>
-    <div class="metrics">
-      <div class="metric"><div class="m-lbl">SCORE GLOBAL</div><div class="m-val g">94</div><div class="m-sub">Grade A</div></div>
-      <div class="metric"><div class="m-lbl">MENACES</div><div class="m-val g">0</div><div class="m-sub">✓ Propre</div></div>
-      <div class="metric"><div class="m-lbl">VULNÉRABILITÉS</div><div class="m-val og">2</div><div class="m-sub">Priorité faible</div></div>
-      <div class="metric"><div class="m-lbl">DERNIÈRE ANALYSE</div><div class="m-val" style="font-size:20px;">2h</div><div class="m-sub">14 juin · 14h32</div></div>
-    </div>
-    <div class="card" style="margin-bottom:12px;">
-      <div class="card-hd">🔍 SCANNER · AGENT CY</div>
-      <input type="text" class="scan-input" id="scan-target" placeholder="Domaine ou IP — ex: monsite.ca">
-      <div class="scan-opts">
-        <button class="sopt on" onclick="this.classList.toggle('on')">🌐 DNS</button>
-        <button class="sopt on" onclick="this.classList.toggle('on')">🔌 PORTS</button>
-        <button class="sopt on" onclick="this.classList.toggle('on')">🔒 SSL</button>
-        <button class="sopt" onclick="this.classList.toggle('on')">📋 HEADERS</button>
-        <button class="sopt" onclick="this.classList.toggle('on')">🕵️ RECON</button>
-        <button class="sopt" onclick="this.classList.toggle('on')">💉 XSS/SQLi</button>
-      </div>
-      <div class="scan-acts">
-        <button class="btn-outline" onclick="launchScan('rapide')"><span class="s">⚡ SCAN RAPIDE</span></button>
-        <button class="btn-orange" onclick="launchScan('complet')">🛡️ SCAN COMPLET</button>
-      </div>
-      <div class="scan-prog" id="scan-prog">
-        <div class="scan-plbl">
-          <div class="sdot o" style="animation:blink 1s infinite;"></div>
-          <span id="scan-txt">ANALYSE EN COURS...</span>
-          <span style="margin-left:auto;color:var(--txt);" id="scan-pct">0%</span>
-        </div>
-        <div class="scan-bw"><div class="scan-bar" id="scan-bar"></div></div>
-        <div class="scan-log" id="scan-log"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd">📋 RAPPORTS RÉCENTS</div>
-      <div class="card-body">
-        <div class="rrow"><div><div class="rt">SCAN COMPLET · ti-lex.ca</div><div class="rs">14 juin 2026 · Score: 94/100 · 0 menaces</div></div><span class="bok">✓ TERMINÉ</span></div>
-        <div class="rrow"><div><div class="rt">DNS/SSL · app.ti-lex.ca</div><div class="rs">10 juin 2026 · Score: 88/100 · 2 vulns</div></div><span class="bwarn">⚠ ATTENTION</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MANDATS (SOW) -->
-  <div id="view-mandats" class="view plan-cyber-only plan-pro-only">
-    <div class="sec-title">📜 <span class="accent">MANDATS</span> · SOW</div>
-    <div class="metrics">
-      <div class="metric"><div class="m-lbl">MANDATS ACTIFS</div><div class="m-val or" id="m-mandats">2</div><div class="m-sub">Autorisations signées</div></div>
-      <div class="metric"><div class="m-lbl">EN ATTENTE</div><div class="m-val og">1</div><div class="m-sub">Signature client</div></div>
-      <div class="metric"><div class="m-lbl">SCANS AUTORISÉS</div><div class="m-val g">5</div><div class="m-sub">Cibles couvertes</div></div>
-      <div class="metric"><div class="m-lbl">CONFORMITÉ</div><div class="m-val" style="font-size:18px;color:var(--green);">LOI 25</div><div class="m-sub">Art. 342.1 C.cr.</div></div>
-    </div>
-    <div class="card" style="margin-bottom:12px;">
-      <div class="card-hd">MES MANDATS (STATEMENT OF WORK)
-        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openMandat()">+ NOUVEAU MANDAT</button>
-      </div>
-      <div class="card-body" id="mandats-list">
-        <div class="rrow">
-          <div><div class="rt">MANDAT #SOW-2026-001 · ti-lex.ca</div><div class="rs">Client: Ti-Lex inc. · Scope: DNS, SSL, Ports · Signé le 12 juin 2026</div></div>
-          <span class="bok">✓ ACTIF</span>
-        </div>
-        <div class="rrow">
-          <div><div class="rt">MANDAT #SOW-2026-002 · boutique-client.ca</div><div class="rs">Client: Boutique XYZ · Scope: Full pentest · Signé le 8 juin 2026</div></div>
-          <span class="bok">✓ ACTIF</span>
-        </div>
-        <div class="rrow">
-          <div><div class="rt">MANDAT #SOW-2026-003 · nouveau-client.ca</div><div class="rs">Client: Nouveau client · Scope: DNS, SSL · En attente de signature</div></div>
-          <span class="bwarn">⏳ EN ATTENTE</span>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd">⚖️ POURQUOI UN MANDAT ?</div>
-      <div class="card-body" style="font-family:'Rajdhani',sans-serif;font-size:14px;line-height:1.7;color:var(--muted);">
-        Un mandat (SOW) est une <span style="color:var(--or);">autorisation légale signée</span> par le propriétaire des systèmes à scanner. Sans mandat actif, aucun scan n'est possible — c'est ce qui rend chaque analyse 100% légale (art. 342.1 du Code criminel).
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <span class="atag or">SIGNATURE NUMÉRIQUE</span>
-          <span class="atag or">ARCHIVÉ 5 ANS</span>
-          <span class="atag or">IP + HORODATAGE</span>
-          <span class="atag or">PREUVE LÉGALE</span>
-        </div>
+        <button class="btn-outline" style="flex:1;min-width:140px;font-size:14px;padding:10px 14px;" onclick="openModal()"><span class="s">✦ CRÉER UN AGENT</span></button>
       </div>
     </div>
   </div>
@@ -1026,8 +916,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <input type="text" class="finput" id="a-name" placeholder="Agent Finance, Agent RH…">
     <label class="flbl">TYPE</label>
     <div class="tgrid">
-      <button class="ttype sel" onclick="selType(this,'cyber')"><span class="ti">🛡️</span><span class="tl">CYBER</span></button>
-      <button class="ttype" onclick="selType(this,'chat')"><span class="ti">💬</span><span class="tl">CHAT</span></button>
+      <button class="ttype sel" onclick="selType(this,'chat')"><span class="ti">💬</span><span class="tl">CHAT</span></button>
       <button class="ttype" onclick="selType(this,'code')"><span class="ti">⌨️</span><span class="tl">CODE</span></button>
       <button class="ttype" onclick="selType(this,'analyse')"><span class="ti">📊</span><span class="tl">ANALYSE</span></button>
       <button class="ttype" onclick="selType(this,'doc')"><span class="ti">📄</span><span class="tl">DOC</span></button>
@@ -1048,81 +937,46 @@ Comment puis-je t'aider aujourd'hui?</div>
   </div>
 </div>
 
-<!-- MODAL NOUVEAU MANDAT -->
-<div id="mandat-modal" class="modal-ov" style="display:none;">
-  <div class="modal-card">
-    <div class="modal-title">NOUVEAU <span>MANDAT</span> · SOW</div>
-    <label class="flbl">NOM DU CLIENT</label>
-    <input type="text" class="finput" id="md-client" placeholder="Nom de l'entreprise cliente">
-    <label class="flbl">NEQ (Registraire du Québec)</label>
-    <input type="text" class="finput" id="md-neq" placeholder="10 chiffres — ex: 1234567890">
-    <label class="flbl">DOMAINE / IP À SCANNER</label>
-    <input type="text" class="finput" id="md-target" placeholder="ex: monsite.ca">
-    <label class="flbl">TYPES DE SCAN AUTORISÉS</label>
-    <div class="tgrid" style="grid-template-columns:repeat(3,1fr);">
-      <button class="ttype sel" onclick="this.classList.toggle('sel')"><span class="ti">🌐</span><span class="tl">DNS</span></button>
-      <button class="ttype sel" onclick="this.classList.toggle('sel')"><span class="ti">🔒</span><span class="tl">SSL</span></button>
-      <button class="ttype sel" onclick="this.classList.toggle('sel')"><span class="ti">🔌</span><span class="tl">PORTS</span></button>
-      <button class="ttype" onclick="this.classList.toggle('sel')"><span class="ti">🕵️</span><span class="tl">RECON</span></button>
-      <button class="ttype" onclick="this.classList.toggle('sel')"><span class="ti">💉</span><span class="tl">XSS/SQLi</span></button>
-      <button class="ttype" onclick="this.classList.toggle('sel')"><span class="ti">🛡️</span><span class="tl">PENTEST</span></button>
-    </div>
-    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);line-height:1.6;padding:10px 12px;background:rgba(255,106,0,.05);border:1px solid rgba(255,106,0,.15);border-radius:8px;margin-bottom:12px;">
-      ⚖️ En créant ce mandat, vous déclarez être autorisé à scanner ces systèmes. Le mandat sera archivé 5 ans avec IP + horodatage (Loi 25, art. 342.1 C.cr.).
-    </div>
-    <div class="macts">
-      <button class="btn-ghost" onclick="closeMandat()">ANNULER</button>
-      <button class="btn-orange" onclick="createMandat()">📜 CRÉER LE MANDAT</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL SÉLECTEUR DE PLAN -->
 <div id="plan-sel" class="plan-sel-ov" style="display:none;">
   <div class="plan-sel-card">
     <div class="plan-sel-title">CHOISIR UN FORFAIT</div>
-    <div class="plan-sel-sub">MÊME INTERFACE SUR TOUS LES FORFAITS · LA CYBERSÉCURITÉ EST RÉSERVÉE AUX FORFAITS CYBER</div>
+    <div class="plan-sel-sub">CHOISIS LE FORFAIT QUI TE CONVIENT</div>
     <div class="plans-grid">
       <div class="plan-card" id="pc-basic" onclick="setPlan('basic')">
         <div class="plan-ico">⭐</div>
-        <div class="plan-name">STARTER</div>
+        <div class="plan-name">FLUX</div>
         <div class="plan-price">9$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">SANS CYBERSÉCURITÉ</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">BASE</div>
         <ul class="plan-feats">
           <li>Chat · Agent AL</li>
           <li>Codex · Génération code</li>
           <li>Créer des agents</li>
-          <li class="locked">Cybersécurité</li>
-          <li class="locked">Scanner</li>
-          <li class="locked">Mandats SOW</li>
         </ul>
       </div>
-      <div class="plan-card" id="pc-pro" onclick="setPlan('pro')">
+      <div class="plan-card selected" id="pc-pro" onclick="setPlan('pro')">
         <div class="plan-ico">🔥</div>
-        <div class="plan-name">PRO</div>
+        <div class="plan-name">SURGE</div>
         <div class="plan-price">29$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">SANS CYBERSÉCURITÉ</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--orange);letter-spacing:1px;margin-bottom:8px;">POPULAIRE</div>
         <ul class="plan-feats">
           <li>Chat · Agent AL</li>
           <li>Codex · Génération code</li>
           <li>Agents illimités</li>
-          <li class="locked">Cybersécurité</li>
-          <li class="locked">Scanner</li>
-          <li class="locked">Mandats SOW</li>
+          <li>Support prioritaire</li>
         </ul>
       </div>
-      <div class="plan-card cyber selected" id="pc-cyber" onclick="setPlan('cyber')">
-        <div class="plan-ico">🛡️</div>
-        <div class="plan-name">CYBER GUARDIAN</div>
+      <div class="plan-card" id="pc-cyber" onclick="setPlan('cyber')">
+        <div class="plan-ico">👑</div>
+        <div class="plan-name">APEX</div>
         <div class="plan-price" style="color:var(--or);">79$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:8px;">AVEC CYBERSÉCURITÉ</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:8px;">MAXIMUM</div>
         <ul class="plan-feats">
           <li>Chat · Agent AL</li>
           <li>Codex · Génération code</li>
           <li>Agents illimités</li>
-          <li>Cybersécurité complète</li>
-          <li>Scanner · Scans illimités</li>
-          <li>Mandats SOW · Agent CY</li>
+          <li>Priorité maximale</li>
+          <li>Accès anticipé nouveautés</li>
         </ul>
       </div>
     </div>
@@ -1183,12 +1037,12 @@ document.getElementById("sidebar").classList.remove("collapsed");
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-cyber","si-mandats","si-chat","si-codex"].forEach(id=>{
+  ["si-dash","si-chat","si-codex"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",cyber:"si-cyber",mandats:"si-mandats",chat:"si-chat",codex:"si-codex"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
 }
 
@@ -1253,7 +1107,7 @@ function cycleHeat(){setHeat(HCYCLE[(HCYCLE.indexOf(curHeat)+1)%HCYCLE.length]);
 const PLAN_CFG={
   basic:{lbl:"STARTER",cls:"plan-basic"},
   pro:{lbl:"PRO",cls:"plan-pro"},
-  cyber:{lbl:"CYBER GUARDIAN",cls:"plan-cyber"},
+  cyber:{lbl:"APEX",cls:"plan-cyber"},
 };
 function setPlan(plan){
   document.documentElement.setAttribute("data-plan",plan);
@@ -1263,9 +1117,6 @@ function setPlan(plan){
   document.getElementById("plan-badge-txt").textContent=cfg.lbl;
   // Ferme plan sel modal
   closePlanSel();
-  // Si on était sur cyber et qu'on change vers basic, retour au dash
-  if(plan==="basic"&&document.getElementById("view-cyber").classList.contains("active"))
-    showTab("dash");
   // Highlight selected plan card
   document.querySelectorAll(".plan-card").forEach(c=>c.classList.remove("selected"));
   document.getElementById("pc-"+plan).classList.add("selected");
@@ -1275,11 +1126,10 @@ function closePlanSel(){document.getElementById("plan-sel").style.display="none"
 
 /* ── NOTIFICATIONS ── */
 const NOTIFS=[
-  {icon:"✅",title:"Scan terminé · ti-lex.ca",desc:"Score: 94/100 · Grade A · 0 menaces",type:"ok",time:"il y a 2h"},
-  {icon:"⚠️",title:"X-Frame-Options manquant",desc:"Header absent sur /admin — risque faible",type:"warn",time:"il y a 3h"},
   {icon:"💬",title:"Nouveau message · Agent AL",desc:"Réponse disponible dans la section Chat",type:"ok",time:"il y a 5min"},
-  {icon:"🔒",title:"SSL/TLS · Grade A+ confirmé",desc:"Certificat valide · expire dans 287j",type:"ok",time:"il y a 6h"},
-  {icon:"🛡️",title:"Rapport disponible · Agent CY",desc:"Scan complet terminé — voir section Cyber",type:"ok",time:"il y a 8h"},
+  {icon:"⚡",title:"Agent créé avec succès",desc:"Ton nouvel agent est en ligne et prêt",type:"ok",time:"il y a 1h"},
+  {icon:"⌨️",title:"Code généré · Codex",desc:"Génération JavaScript terminée",type:"ok",time:"il y a 2h"},
+  {icon:"🔔",title:"Bienvenue sur ti-lex Pro",desc:"Interface professionnelle activée",type:"ok",time:"il y a 4h"},
 ];
 let notifOpen=false;
 (function(){
@@ -1300,54 +1150,6 @@ document.addEventListener("click",e=>{
   if(notifOpen&&!e.target.closest("#notif-panel")&&!e.target.closest(".notif-btn"))
     {notifOpen=false;document.getElementById("notif-panel").classList.remove("open");}
 });
-
-/* ── SCANNER ── */
-let scanning=false;
-function launchScan(type){
-  if(scanning)return;
-  const target=document.getElementById("scan-target").value.trim();
-  if(!target){const i=document.getElementById("scan-target");i.style.color="var(--red)";setTimeout(()=>i.style.color="",1200);return;}
-  scanning=true;
-  setHeat("watch"); // Bleu = surveillance en cours
-  const prog=document.getElementById("scan-prog");
-  const bar=document.getElementById("scan-bar");
-  const pct=document.getElementById("scan-pct");
-  const log=document.getElementById("scan-log");
-  const stxt=document.getElementById("scan-txt");
-  prog.classList.add("on");log.innerHTML="";bar.style.width="0%";
-  const steps=type==="complet"?[
-    {p:8, d:350, c:"",         m:"→ Cible: "+target},
-    {p:18,d:750, c:"slog-ok",  m:"✓ Résolution DNS réussie"},
-    {p:30,d:1300,c:"slog-ok",  m:"✓ SSL/TLS Grade A+ · expire dans 287j"},
-    {p:44,d:1900,c:"slog-ok",  m:"✓ HTTPS forcé · HSTS actif"},
-    {p:55,d:2600,c:"slog-w",   m:"⚠ X-Frame-Options manquant"},
-    {p:66,d:3300,c:"slog-ok",  m:"✓ Ports: 80,443 ouverts · 22,3389 fermés"},
-    {p:78,d:4000,c:"slog-ok",  m:"✓ Aucun port dangereux exposé"},
-    {p:90,d:4700,c:"slog-ok",  m:"✓ XSS/SQLi: 0 vulnérabilités"},
-    {p:100,d:5400,c:"slog-ok", m:"📋 Rapport généré · Score: 94/100 · Grade A"},
-  ]:[
-    {p:25,d:350,c:"",m:"→ Cible: "+target},
-    {p:60,d:850,c:"slog-ok",m:"✓ DNS + SSL analysés"},
-    {p:90,d:1400,c:"slog-w",m:"⚠ X-Frame-Options manquant"},
-    {p:100,d:2000,c:"slog-ok",m:"📋 Scan rapide terminé · Score: 94/100"},
-  ];
-  steps.forEach(({p,d,c,m})=>{
-    setTimeout(()=>{
-      bar.style.width=p+"%";pct.textContent=p+"%";
-      const ln=document.createElement("div");ln.className=c;ln.textContent=m;
-      log.appendChild(ln);log.scrollTop=log.scrollHeight;
-      // Si on détecte une alerte → chaleur ROUGE
-      if(c==="slog-w"){setHeat("warn");}
-      if(p===100){
-        stxt.textContent="✓ ANALYSE TERMINÉE";
-        scanning=false;
-        // Si vulnérabilités trouvées → garder orange/warn, sinon green
-        const hasWarns=log.querySelectorAll(".slog-w").length>0;
-        setTimeout(()=>setHeat(hasWarns?"warn":"safe"),1500);
-      }
-    },d);
-  });
-}
 
 /* ── SUPABASE + AI PROXY ── */
 const AI_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
@@ -1449,38 +1251,41 @@ renderUsage();
 /* ── CODEX ── */
 let genBusy=false;
 const CODE={
-js:`// Scan de sécurité ti-lex-AL
-async function scanDomain(target, opts = {}) {
-  const { types = ['dns','ssl','ports'] } = opts;
-  console.log('🛡️ Scan: ' + target);
-  const res = {};
-  if (types.includes('dns'))   res.dns  = await checkDNS(target);
-  if (types.includes('ssl'))   res.ssl  = await checkSSL(target);
-  if (types.includes('ports')) res.ports = await scanPorts(target);
-  const score = calcScore(res);
-  return { target, score, grade: score >= 90 ? 'A' : 'B',
-    timestamp: new Date().toISOString(), loi25: true };
+js:`// ti-lex-AL — Agent personnalisé
+async function createAgent(name, config = {}) {
+  const { model = 'claude-sonnet-4-6', type = 'chat' } = config;
+  console.log('⚡ Création agent: ' + name);
+  const res = await fetch('/api/agents', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, model, type })
+  });
+  const agent = await res.json();
+  return { id: agent.id, name, model, type,
+    status: 'active', created: new Date().toISOString() };
 }`,
-py:`# Agent CY — Analyseur de sécurité — Python
-def scan_domain(target: str, types: list = None) -> dict:
-    """Conforme Loi 25 — Québec, ca-central-1."""
-    if not types:
-        types = ['dns', 'ssl', 'ports']
-    print(f"🛡️  Scan: {target}")
-    results = {}
-    if 'ssl' in types:
-        results['ssl'] = {'valid': True, 'grade': 'A+', 'expires': 287}
-    score = calculate_score(results)
-    return {'target': target, 'score': score,
-            'grade': 'A' if score >= 90 else 'B', 'loi25': True}`,
-sql:`-- Migration ti-lex-AL — Supabase · Loi 25
+py:`# ti-lex-AL — Assistant IA — Python
+import httpx
+
+async def chat_with_agent(message: str, history: list = None) -> dict:
+    """Envoie un message à Agent AL via l'API ti-lex."""
+    if not history:
+        history = []
+    history.append({"role": "user", "content": message})
+    response = await httpx.post(
+        "https://api.ti-lex.ca/v1/chat",
+        json={"messages": history[-20], "model": "claude-sonnet-4-6"}
+    )
+    reply = response.json()
+    return {"reply": reply["content"], "tokens": reply["usage"]}`,
+sql:`-- Migration ti-lex-AL — Supabase
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS interface_mode TEXT DEFAULT 'standard'
-CHECK (interface_mode IN ('standard','pro_cyber'));
+CHECK (interface_mode IN ('standard','pro'));
 
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'basic'
-CHECK (plan IN ('basic','pro','cyber'));
+CHECK (plan IN ('basic','pro','apex'));
 
 CREATE TABLE IF NOT EXISTS custom_agents (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -1492,25 +1297,25 @@ CREATE TABLE IF NOT EXISTS custom_agents (
 );
 ALTER TABLE custom_agents ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "own" ON custom_agents FOR ALL USING (auth.uid() = user_id);`,
-html:`<!-- Widget Agent CY — ti-lex-AL -->
-<div class="cy-widget">
-  <div class="cy-header">
-    <span>🛡️</span>
+html:`<!-- Widget Chat — ti-lex-AL -->
+<div class="chat-widget">
+  <div class="chat-header">
+    <span>⚡</span>
     <div>
-      <div class="cy-name">AGENT CY</div>
-      <div class="cy-status">⚡ EN LIGNE</div>
+      <div class="chat-name">AGENT AL</div>
+      <div class="chat-status">⚡ EN LIGNE</div>
     </div>
   </div>
-  <div class="cy-score">94 / 100</div>
-  <button onclick="launchScan()">⚡ LANCER UN SCAN</button>
+  <div class="chat-messages" id="messages"></div>
+  <input type="text" placeholder="Écris un message..."
+    onkeydown="if(event.key==='Enter')sendMsg()">
 </div>`,
 bash:`#!/bin/bash
-# Déploiement sécurisé ti-lex-AL
-TARGET="ti-lex.ca"
-echo "🛡️  TI-LEX-AL · Québec · Loi 25"
-openssl s_client -connect ${TARGET}:443 2>/dev/null | \
-  openssl x509 -noout -dates
-echo "✓ Déploiement terminé"`,
+# Déploiement ti-lex-AL sur Vercel
+echo "⚡ TI-LEX-AL · Déploiement"
+vercel --prod --yes
+echo "✓ Déploiement terminé"
+echo "🔗 https://ti-lex.ca"`,
 };
 const LANG_N={js:"JavaScript",py:"Python",sql:"SQL · Supabase",html:"HTML/CSS",bash:"Bash"};
 function genCode(){
@@ -1530,8 +1335,8 @@ function clearCx(){document.getElementById("codex-txt").value="";document.getEle
 function copyCode(){const c=document.getElementById("code-body").textContent;navigator.clipboard.writeText(c).catch(()=>{});const t=event.target;t.textContent="✓ COPIÉ";setTimeout(()=>{t.textContent="📋 COPIER";},2000);}
 
 /* ── MODAL AGENTS ── */
-let selTypeVal="cyber";let customAgents=[];
-const TYPE_ICO={cyber:"🛡️",chat:"💬",code:"⌨️",analyse:"📊",doc:"📄",custom:"🔧"};
+let selTypeVal="chat";let customAgents=[];
+const TYPE_ICO={chat:"💬",code:"⌨️",analyse:"📊",doc:"📄",custom:"🔧"};
 function openModal(){document.getElementById("modal").style.display="flex";document.getElementById("a-name").focus();}
 function closeModal(){document.getElementById("modal").style.display="none";}
 function selType(btn,t){document.querySelectorAll(".ttype").forEach(b=>b.classList.remove("sel"));btn.classList.add("sel");selTypeVal=t;}
@@ -1556,36 +1361,9 @@ function createAgent(){
   document.getElementById("a-name").value="";
   closeModal();
 }
-/* ── MODALE MANDAT (SOW) ── */
-let mandatCount=2;
-function openMandat(){document.getElementById("mandat-modal").style.display="flex";document.getElementById("md-client").focus();}
-function closeMandat(){document.getElementById("mandat-modal").style.display="none";}
-function createMandat(){
-  const client=document.getElementById("md-client").value.trim();
-  const target=document.getElementById("md-target").value.trim();
-  if(!client||!target){
-    [["md-client",client],["md-target",target]].forEach(([id,v])=>{
-      if(!v){const i=document.getElementById(id);i.style.borderColor="var(--red)";setTimeout(()=>i.style.borderColor="var(--border)",1400);}
-    });
-    return;
-  }
-  mandatCount++;
-  const num=String(mandatCount+1).padStart(3,"0");
-  const list=document.getElementById("mandats-list");
-  const row=document.createElement("div");row.className="rrow";row.style.animation="fadeUp .38s ease both";
-  const today=new Date().toLocaleDateString("fr-CA",{day:"numeric",month:"long",year:"numeric"});
-  row.innerHTML=`<div><div class="rt">MANDAT #SOW-2026-${num} · ${target}</div><div class="rs">Client: ${client} · Créé le ${today} · En attente de signature</div></div><span class="bwarn">⏳ EN ATTENTE</span>`;
-  list.appendChild(row);
-  const mEl=document.getElementById("m-mandats");
-  document.getElementById("md-client").value="";
-  document.getElementById("md-neq").value="";
-  document.getElementById("md-target").value="";
-  closeMandat();
-}
-document.getElementById("mandat-modal").addEventListener("click",e=>{if(e.target===document.getElementById("mandat-modal"))closeMandat();});
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal();});
 document.getElementById("plan-sel").addEventListener("click",e=>{if(e.target===document.getElementById("plan-sel"))closePlanSel();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();closeMandat();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();}});
 </script>
 </body>
 </html>
