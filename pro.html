@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr-CA" data-theme="night" data-plan="pro">
+<html lang="fr-CA" data-theme="night" data-plan="pro" data-interface="serious">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -296,7 +296,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .lock-desc{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;max-width:280px;}
 
 /* ══ CONTENT ══ */
-.content{flex:1;margin-left:var(--sb-w);padding:26px 22px 64px;min-height:calc(100vh - var(--tb));
+.content{flex:1;margin-left:var(--sb-w);padding:26px 22px 80px;min-height:calc(100vh - var(--tb));
   transition:margin-left .42s cubic-bezier(.22,1,.36,1);}
 body.sb-collapsed .content{margin-left:var(--sb-c);}
 
@@ -388,7 +388,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .add-card:hover{border-color:var(--orange);color:var(--orange);}
 
 /* CHAT */
-.chat-wrap{height:calc(100vh - 205px);min-height:420px;display:flex;flex-direction:column;
+.chat-wrap{height:calc(100vh - 265px);min-height:420px;display:flex;flex-direction:column;
   background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .chat-hd{padding:11px 15px;background:rgba(0,0,0,.13);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:rgba(0,0,0,.04);}
@@ -569,6 +569,63 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 /* Indicateur de mode dans la sidebar */
 .mode-indicator{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);
   letter-spacing:1px;padding-left:calc(var(--sb-c) + 2px);margin-top:4px;white-space:nowrap;}
+
+/* ════════════════════════════════════════════════════════════
+   data-interface="serious" — animations calmées, RIEN caché
+   INTERDIT : display:none ou visibility:hidden lié à l'interface
+   ════════════════════════════════════════════════════════════ */
+[data-interface="serious"] body{background-image:none!important;}
+[data-interface="serious"] .tb-logo-main{animation:none!important;
+  background:linear-gradient(90deg,var(--or3),var(--or2))!important;
+  -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;}
+[data-interface="serious"] .btn-orange::after,
+[data-interface="serious"] .c-send::after{animation:none!important;opacity:0!important;}
+[data-interface="serious"] .btn-outline .s{animation:none!important;
+  background:var(--orange)!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;}
+[data-interface="serious"] .tb-logo-heat,
+[data-interface="serious"] .sb-heat{animation:none!important;opacity:.45!important;}
+[data-interface="serious"] .tb-logo-heat::after,
+[data-interface="serious"] .sb-heat::after{animation:none!important;opacity:.3!important;}
+[data-interface="serious"] .sb-item .ltr,
+[data-interface="serious"] .sb-item:hover .ltr,
+[data-interface="serious"] .sb-item.active .ltr{animation:none!important;text-shadow:none!important;}
+[data-interface="serious"] .sb-badge-dot,
+[data-interface="serious"] .sdot.g,
+[data-interface="serious"] .plan-dot{animation:none!important;}
+[data-interface="serious"] .metric::before{display:none!important;}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+/* ════════════════════════════════════════════════════════════
+   BARRE COMPOSITEUR FIXE (bas de l'écran) — Chat + Codex
+   ════════════════════════════════════════════════════════════ */
+.composer-bar{position:fixed;bottom:0;left:var(--sb-w);right:0;z-index:300;
+  padding:10px 16px;background:rgba(10,10,10,.95);border-top:1px solid var(--border);
+  backdrop-filter:blur(14px);display:none;transition:left .42s cubic-bezier(.22,1,.36,1);}
+body.sb-collapsed .composer-bar{left:var(--sb-c);}
+[data-theme="day"] .composer-bar{background:rgba(245,240,232,.96);}
+.composer-bar.visible{display:flex;align-items:flex-end;gap:8px;}
+.composer-plus{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);
+  background:var(--bg3);color:var(--or);cursor:pointer;font-size:18px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.composer-plus:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,106,0,.08);}
+.composer-input{flex:1;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:14px;
+  outline:none;resize:none;min-height:38px;max-height:120px;line-height:1.4;transition:border-color .2s;}
+.composer-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,.1);}
+.composer-input::placeholder{color:var(--muted);}
+.composer-send{width:38px;height:38px;border-radius:var(--radius);border:none;flex-shrink:0;
+  background:linear-gradient(135deg,#C04800,var(--orange),var(--orange2));color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.composer-send:hover{filter:brightness(1.1);transform:scale(1.05);}
+.composer-menu{position:absolute;bottom:56px;left:16px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:6px;display:none;min-width:180px;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+.composer-menu.open{display:block;}
+.composer-menu-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;
+  cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--txt);
+  letter-spacing:.5px;transition:background .15s;}
+.composer-menu-item:hover{background:rgba(255,106,0,.08);}
+.composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
+@media(max-width:680px){.composer-bar{left:0;}}
 
 
 </style>
@@ -907,6 +964,20 @@ Comment puis-je t'aider aujourd'hui?</div>
   </div>
 
 </main>
+
+<!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
+<div class="composer-bar" id="composer-bar">
+  <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
+  <div class="composer-menu" id="composer-menu">
+    <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
+    <div class="composer-menu-item" onclick="composeAction('agent')"><span class="cmi-ico">✦</span> Créer un agent</div>
+    <div class="composer-menu-item" onclick="composeAction('clear')"><span class="cmi-ico">🗑️</span> Effacer la conversation</div>
+  </div>
+  <textarea class="composer-input" id="composer-input" rows="1" placeholder="Écris un message…"></textarea>
+  <button class="composer-send" id="composer-send-btn" title="Envoyer">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+  </button>
+</div>
 
 <!-- MODAL AGENT -->
 <div id="modal" class="modal-ov" style="display:none;">
@@ -1322,7 +1393,79 @@ function createAgent(){
 }
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal();});
 document.getElementById("plan-sel").addEventListener("click",e=>{if(e.target===document.getElementById("plan-sel"))closePlanSel();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();closeComposerMenu();}});
+
+/* ── BARRE COMPOSITEUR FIXE ── */
+var composerViews=["view-chat","view-codex"];
+var currentComposerMode="chat";
+
+function updateComposer(){
+  var bar=document.getElementById("composer-bar");
+  var activeView="";
+  composerViews.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&el.classList.contains("active"))activeView=id;
+  });
+  if(activeView==="view-chat"){
+    bar.classList.add("visible");currentComposerMode="chat";
+    document.getElementById("composer-input").placeholder="Écris un message…";
+  }else if(activeView==="view-codex"){
+    bar.classList.add("visible");currentComposerMode="codex";
+    document.getElementById("composer-input").placeholder="Décris ce que tu veux coder…";
+  }else{
+    bar.classList.remove("visible");
+  }
+  closeComposerMenu();
+}
+
+var origShowTab=showTab;
+showTab=function(name){
+  origShowTab(name);
+  updateComposer();
+};
+updateComposer();
+
+document.getElementById("composer-send-btn").addEventListener("click",composerSend);
+document.getElementById("composer-input").addEventListener("keydown",function(e){
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();composerSend();}
+});
+document.getElementById("composer-input").addEventListener("input",function(){
+  this.style.height="auto";
+  this.style.height=Math.min(this.scrollHeight,120)+"px";
+});
+
+function composerSend(){
+  var inp=document.getElementById("composer-input");
+  var txt=inp.value.trim();
+  if(!txt)return;
+  if(currentComposerMode==="chat"){
+    document.getElementById("chat-in").value=txt;
+    inp.value="";inp.style.height="auto";
+    sendChat();
+  }else if(currentComposerMode==="codex"){
+    document.getElementById("codex-txt").value=txt;
+    inp.value="";inp.style.height="auto";
+    genCode();
+  }
+}
+
+document.getElementById("composer-plus-btn").addEventListener("click",function(){
+  document.getElementById("composer-menu").classList.toggle("open");
+});
+function closeComposerMenu(){document.getElementById("composer-menu").classList.remove("open");}
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#composer-plus-btn")&&!e.target.closest("#composer-menu"))closeComposerMenu();
+});
+
+function composeAction(action){
+  closeComposerMenu();
+  if(action==="codex")showTab("codex");
+  else if(action==="agent")openModal();
+  else if(action==="clear"){
+    document.getElementById("chat-msgs").innerHTML="";
+    chatHistory=[];
+  }
+}
 </script>
 </body>
 </html>
