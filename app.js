@@ -28,7 +28,7 @@ const state = {
   theme: "dark",
   model: MODEL_DEFAULT,
   lang: "fr",
-  apiKey: "",
+  apiKey: "", // non utilisé — conservé pour compatibilité
   history: [],
   connected: { anthropic: true, github: false, supabase: false, vercel: false, gmail: false },
   github: { token: "", repo: "", branch: "" },
@@ -107,16 +107,14 @@ function loadSettings() {
   try {
     const m = localStorage.getItem(LS_MODEL);
     const lang = localStorage.getItem(LS_LANG);
-    const ak = localStorage.getItem(LS_API);
     if (m) state.model = m;
     if (lang && (lang === "fr" || lang === "en")) state.lang = lang;
-    if (ak) state.apiKey = ak;
     const gh = JSON.parse(localStorage.getItem(LS_GH) || "null");
     if (gh && gh.token) { state.github = gh; state.connected.github = true; }
     const sb = JSON.parse(localStorage.getItem(LS_SB) || "null");
     if (sb && sb.url) { state.supabase = sb; state.connected.supabase = true; }
   } catch (e) { /* localStorage indisponible */ }
-  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
+  const plan = (localStorage.getItem("tilex-plan") || "surge").toLowerCase();
   if (plan !== "apex") {
     if (state.model.includes("opus")) state.model = "claude-sonnet-4-6";
     if (state.agent === "tilex" || state.agent === "dev" || state.agent === "secu") {
@@ -233,7 +231,7 @@ function chatFetch(bodyObj) {
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
-  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+
   return fetch(AI_PROXY, {
     method: "POST",
     headers: h,
@@ -1797,7 +1795,7 @@ $("#themeToggle").onclick = function () {
 };
 
 function isOpusAllowed() {
-  const plan = (localStorage.getItem("tilex-plan") || "").toLowerCase();
+  const plan = (localStorage.getItem("tilex-plan") || "surge").toLowerCase();
   return plan === "apex";
 }
 
@@ -5903,7 +5901,7 @@ function refreshAccountPage() {
 
   loadAcctProfile();
 
-  const planKey = localStorage.getItem("tilex-plan") || "";
+  const planKey = localStorage.getItem("tilex-plan") || "surge";
   const plan = PLAN_DATA[planKey] || null;
 
   if ($("#acctPlanBadge")) {
@@ -6197,27 +6195,6 @@ loadAcctProfile();
 })();
 
 // restaure les champs de connexion
-if (state.apiKey) {
-  const inp = $("#apiKeyInput"); if (inp) inp.value = state.apiKey;
-  const st = $("#apiKeyState"); if (st) { st.textContent = "✓ active"; st.classList.add("ok"); }
-}
-if ($("#apiKeySave")) {
-  $("#apiKeySave").onclick = () => {
-    const val = $("#apiKeyInput").value.trim();
-    if (!val) return;
-    state.apiKey = val;
-    try { localStorage.setItem(LS_API, val); } catch (_) {}
-    const st = $("#apiKeyState"); if (st) { st.textContent = "✓ active"; st.classList.add("ok"); }
-  };
-}
-if ($("#apiKeyClear")) {
-  $("#apiKeyClear").onclick = () => {
-    state.apiKey = "";
-    try { localStorage.removeItem(LS_API); } catch (_) {}
-    const inp = $("#apiKeyInput"); if (inp) inp.value = "";
-    const st = $("#apiKeyState"); if (st) { st.textContent = "— optionnel"; st.classList.remove("ok"); }
-  };
-}
 if (state.github.token) $("#ghToken").value = state.github.token;
 if (state.supabase.url) $("#sbUrl").value = state.supabase.url;
 if (state.supabase.key) $("#sbKey").value = state.supabase.key;
@@ -7544,7 +7521,7 @@ async function cervAiRequest(instruction, noteContent) {
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
-  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+
   const res = await fetch(AI_PROXY, {
     method: "POST",
     headers: h,
@@ -7665,7 +7642,7 @@ async function cervChatSend() {
   const h = { "Content-Type": "application/json" };
   const tk = proxyToken();
   if (tk) h["Authorization"] = `Bearer ${tk}`;
-  if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+
 
   const container = $("#cervChatMessages");
   var connDiv = document.createElement("div");
@@ -8044,7 +8021,7 @@ async function finSend(text) {
     const h = { "Content-Type": "application/json" };
     const tk = proxyToken();
     if (tk) h["Authorization"] = `Bearer ${tk}`;
-    if (state.apiKey) h["x-anthropic-key"] = state.apiKey;
+  
 
     const res = await fetch(AI_PROXY, {
       method: "POST",
