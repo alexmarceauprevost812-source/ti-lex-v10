@@ -1312,7 +1312,33 @@ document.addEventListener("click",e=>{
 /* ── SUPABASE + AI PROXY ── */
 const AI_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
-function getToken(){try{const r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){const s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
+function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
+
+async function readSSE(res){
+  var reader=res.body.getReader();
+  var decoder=new TextDecoder();
+  var full="";var buf="";
+  while(true){
+    var chunk=await reader.read();
+    if(chunk.done)break;
+    buf+=decoder.decode(chunk.value,{stream:true});
+    var lines=buf.split("\n");
+    buf=lines.pop()||"";
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i].trim();
+      if(!line.startsWith("data: "))continue;
+      var payload=line.slice(6);
+      if(payload==="[DONE]")continue;
+      try{
+        var evt=JSON.parse(payload);
+        if(evt.type==="content_block_delta"&&evt.delta&&evt.delta.text){
+          full+=evt.delta.text;
+        }
+      }catch(e){}
+    }
+  }
+  return full;
+}
 
 /* ── CHAT ── */
 let chatBusy=false;
@@ -1332,18 +1358,24 @@ async function sendChat(){
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
   try{
     const tk=getToken();
-    const h={"Content-Type":"application/json","apikey":SB_ANON};
+    const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+      kind:"chat",
       model:"claude-sonnet-4-6",max_tokens:4096,
       system:SYSTEM_PROMPT,
       messages:chatHistory.slice(-20)
     })});
-    const data=await res.json();
     td.remove();
-    const reply=(data.content&&data.content[0]&&data.content[0].text)||data.error||"Erreur de connexion.";
-    chatHistory.push({role:"assistant",content:reply});
-    addMsg("a",reply);
+    if(!res.ok){
+      let errMsg="Erreur de connexion.";
+      try{const errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
+      addMsg("a",errMsg);
+    }else{
+      const reply=await readSSE(res);
+      chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
+      addMsg("a",reply||"(réponse vide)");
+    }
   }catch(e){td.remove();addMsg("a","Erreur: "+e.message);}
   chatBusy=false;
 }
@@ -1429,17 +1461,22 @@ async function genCode(){
 
   try{
     const tk=getToken();
-    const h={"Content-Type":"application/json","apikey":SB_ANON};
+    const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+      kind:"chat",
       model:"claude-sonnet-4-6",max_tokens:4096,
       system:sysPrompt,
       messages:[{role:"user",content:prompt}]
     })});
-    const data=await res.json();
-    const reply=(data.content&&data.content[0]&&data.content[0].text)||data.error||"Erreur de connexion.";
+    if(!res.ok){
+      let errMsg="Erreur de connexion.";
+      try{const errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
+      body.style.color="var(--red)";body.textContent=errMsg;genBusy=false;return;
+    }
+    const reply=await readSSE(res);
     body.style.color="#d4d0c8";
-    typeCode(reply,body,function(){genBusy=false;});
+    typeCode(reply||"(réponse vide)",body,function(){genBusy=false;});
   }catch(e){
     body.style.color="var(--red)";
     body.textContent="Erreur: "+e.message;
