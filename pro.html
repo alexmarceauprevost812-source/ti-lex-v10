@@ -444,19 +444,38 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .sp-err{color:var(--red);border:1px solid rgba(255,68,68,.3);background:rgba(255,68,68,.06);}
 
 /* CODEX */
-.cx-txt{width:100%;min-height:100px;padding:14px 17px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:15px;resize:none;outline:none;line-height:1.6;}
-.cx-txt::placeholder{color:var(--muted);}
-.cx-bar{padding:10px 17px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.cx-lang{padding:7px 12px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;cursor:pointer;}
+/* ── CODEX — style terminal Claude Code ── */
+.codex-wrap{display:flex;flex-direction:column;height:calc(100vh - 70px - 58px);overflow:hidden;}
+.codex-topbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border);flex-shrink:0;}
+.codex-topbar .cx-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.codex-topbar .cx-dot.r{background:#ff5f57;}.codex-topbar .cx-dot.y{background:#febc2e;}.codex-topbar .cx-dot.g{background:#28c840;}
+.codex-title{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-left:6px;flex:1;}
+.cx-lang{padding:5px 10px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;color:var(--or);font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;cursor:pointer;}
 .cx-lang option{background:var(--bg3);}
-.cx-acts{display:flex;gap:8px;}
-.cx-acts .btn-orange,.cx-acts .btn-ghost{width:auto;font-size:14px;padding:8px 18px;}
-.code-out{background:#000;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:12px;display:none;}
-[data-theme="day"] .code-out{background:#1a1a1a;}
-.code-hd{padding:9px 16px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);}
-.code-hd span{cursor:pointer;transition:color .2s;}
-.code-hd span:hover{color:var(--orange);}
-.code-body{padding:17px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.9;min-height:150px;white-space:pre-wrap;color:#d4d0c8;}
+[data-theme="day"] .cx-lang{color:var(--or3);background:var(--bg);}
+.codex-feed{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.cx-msg{display:flex;gap:10px;max-width:95%;}
+.cx-msg.user{align-self:flex-end;flex-direction:row-reverse;}
+.cx-msg.agent{align-self:flex-start;}
+.cx-prompt{font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.7;color:var(--or);white-space:pre-wrap;}
+.cx-msg.user .cx-prompt{color:var(--txt);}
+.cx-prefix{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;padding-top:2px;user-select:none;}
+.cx-msg.user .cx-prefix{color:var(--orange);}
+.cx-msg.agent .cx-prefix{color:var(--or);}
+.cx-code-block{background:#0a0a0a;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:4px;width:100%;}
+[data-theme="day"] .cx-code-block{background:#1a1a1a;}
+.cx-code-hd{padding:5px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);}
+.cx-code-hd span{cursor:pointer;transition:color .2s;}.cx-code-hd span:hover{color:var(--orange);}
+.cx-code-pre{padding:14px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--or);overflow-x:auto;}
+[data-theme="day"] .cx-code-pre{color:#d4d0c8;}
+.cx-typing{display:flex;gap:4px;padding:6px 0;}
+.cx-typing .tyd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:tybounce .6s ease-in-out infinite alternate;}
+.cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
+.codex-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;opacity:.5;}
+.codex-empty-ico{font-size:36px;}
+.codex-empty-txt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.8;letter-spacing:.5px;}
+.cx-clear-btn{position:absolute;top:8px;right:14px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 10px;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.cx-clear-btn:hover{border-color:var(--orange);color:var(--orange);}
 
 /* RAPPORTS */
 .rrow{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;background:var(--bg4);border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all .2s;margin-bottom:8px;}
@@ -983,35 +1002,28 @@ Comment puis-je t'aider aujourd'hui?</div>
   </div>
 
   <!-- CODEX -->
-  <div id="view-codex" class="view">
-    <div class="sec-title">⌨️ <span class="accent">CODEX</span></div>
-    <div class="card">
-      <div class="card-hd">GÉNÉRATION DE CODE · AGENT CODEX</div>
-      <textarea class="cx-txt" id="codex-txt" placeholder="Décris ce que tu veux créer…"></textarea>
-      <div class="cx-bar">
+  <div id="view-codex" class="view" style="padding:0;position:relative;">
+    <div class="codex-wrap">
+      <div class="codex-topbar">
+        <span class="cx-dot r"></span><span class="cx-dot y"></span><span class="cx-dot g"></span>
+        <span class="codex-title">CODEX · TI-LEX-AL</span>
         <select class="cx-lang" id="codex-lang">
           <option value="js">JavaScript</option>
           <option value="py">Python</option>
-          <option value="sql">SQL / Supabase</option>
+          <option value="sql">SQL · Supabase</option>
           <option value="html">HTML/CSS</option>
           <option value="bash">Bash</option>
         </select>
-        <div class="cx-acts">
-          <button class="btn-ghost" onclick="clearCx()">EFFACER</button>
-          <button class="btn-orange" onclick="genCode()">⚡ GÉNÉRER</button>
+      </div>
+      <button class="cx-clear-btn" onclick="clearCx()">EFFACER</button>
+      <div class="codex-feed" id="codex-feed">
+        <div class="codex-empty" id="codex-empty">
+          <div class="codex-empty-ico">⌨️</div>
+          <div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div>
         </div>
       </div>
     </div>
-    <div class="code-out" id="code-out">
-      <div class="code-hd">
-        <span id="code-lang" style="color:var(--or);">JavaScript</span>
-        <div style="display:flex;gap:12px;">
-          <span onclick="copyCode()">📋 COPIER</span>
-          <span onclick="document.getElementById('code-out').style.display='none'" style="color:var(--muted);">✕</span>
-        </div>
-      </div>
-      <div class="code-body" id="code-body"></div>
-    </div>
+    <textarea class="cx-txt" id="codex-txt" style="display:none;"></textarea>
   </div>
 
   <!-- STUDIO -->
@@ -1482,55 +1494,128 @@ function renderUsage(){
 }
 renderUsage();
 
-/* ── CODEX (vrai moteur IA — même proxy que le chat) ── */
+/* ── CODEX (style terminal Claude Code) ── */
 let genBusy=false;
+let codexHistory=[];
 const LANG_N={js:"JavaScript",py:"Python",sql:"SQL · Supabase",html:"HTML/CSS",bash:"Bash"};
+
+function cxAddUser(txt){
+  var feed=document.getElementById("codex-feed");
+  var empty=document.getElementById("codex-empty");
+  if(empty)empty.style.display="none";
+  var d=document.createElement("div");d.className="cx-msg user";
+  d.innerHTML='<span class="cx-prefix">▸</span><div class="cx-prompt">'+escHtml(txt)+'</div>';
+  feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
+}
+function cxAddTyping(){
+  var feed=document.getElementById("codex-feed");
+  var d=document.createElement("div");d.className="cx-msg agent";d.id="cx-typing";
+  d.innerHTML='<span class="cx-prefix">⚡</span><div class="cx-typing"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div>';
+  feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
+}
+function cxRemoveTyping(){var el=document.getElementById("cx-typing");if(el)el.remove();}
+
+function cxParseReply(txt){
+  var parts=[];var buf="";var inCode=false;var lang="";
+  var lines=txt.split("\n");
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i];
+    if(!inCode&&l.trim().startsWith("```")){
+      if(buf.trim())parts.push({type:"text",content:buf.trim()});
+      buf="";inCode=true;lang=l.trim().slice(3).trim()||"code";continue;
+    }
+    if(inCode&&l.trim()==="```"){
+      parts.push({type:"code",lang:lang,content:buf});
+      buf="";inCode=false;lang="";continue;
+    }
+    buf+=l+"\n";
+  }
+  if(buf.trim()){
+    if(inCode)parts.push({type:"code",lang:lang,content:buf});
+    else parts.push({type:"text",content:buf.trim()});
+  }
+  return parts;
+}
+
+function cxAddReply(txt){
+  var feed=document.getElementById("codex-feed");
+  var parts=cxParseReply(txt);
+  var wrapper=document.createElement("div");wrapper.className="cx-msg agent";
+  wrapper.innerHTML='<span class="cx-prefix">⚡</span><div style="flex:1;min-width:0;"></div>';
+  var content=wrapper.children[1];
+  for(var p=0;p<parts.length;p++){
+    if(parts[p].type==="text"){
+      var td=document.createElement("div");td.className="cx-prompt";
+      td.innerHTML=projHtml(parts[p].content);
+      content.appendChild(td);
+    }else{
+      var block=document.createElement("div");block.className="cx-code-block";
+      var cid="cx-code-"+Date.now()+"-"+p;
+      block.innerHTML='<div class="cx-code-hd"><span>'+escHtml(parts[p].lang)+'</span><span onclick="cxCopy(\''+cid+'\')">📋 COPIER</span></div><pre class="cx-code-pre" id="'+cid+'"></pre>';
+      content.appendChild(block);
+      typeCode(parts[p].content,block.querySelector("pre"),null);
+    }
+  }
+  feed.appendChild(wrapper);feed.scrollTop=feed.scrollHeight;
+}
+
+function cxCopy(id){
+  var el=document.getElementById(id);if(!el)return;
+  navigator.clipboard.writeText(el.textContent).catch(function(){});
+  var hd=el.previousElementSibling;if(hd){var btn=hd.lastElementChild;if(btn){btn.textContent="✓ COPIÉ";setTimeout(function(){btn.textContent="📋 COPIER";},2000);}}
+}
 
 async function genCode(){
   if(genBusy)return;
-  const prompt=document.getElementById("codex-txt").value.trim();
-  const lang=document.getElementById("codex-lang").value;
+  var prompt=document.getElementById("codex-txt").value.trim();
+  if(!prompt){
+    var ci=document.getElementById("composer-input");
+    if(ci)prompt=ci.value.trim();
+  }
+  var lang=document.getElementById("codex-lang").value;
   if(!prompt)return;
   genBusy=true;
-  const out=document.getElementById("code-out");
-  const body=document.getElementById("code-body");
-  document.getElementById("code-lang").textContent=LANG_N[lang]||lang;
-  out.style.display="block";
-  body.style.color="var(--or)";
-  body.textContent="⚡ Génération en cours…";
+  cxAddUser(prompt);
+  document.getElementById("codex-txt").value="";
+  cxAddTyping();
 
-  const sysPrompt="Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre et production-ready en "+
-    (LANG_N[lang]||lang)+". Réponds avec le code et de courtes explications en français québécois. "+
+  var sysPrompt="Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre et production-ready en "+
+    (LANG_N[lang]||lang)+". Réponds avec le code dans des blocs ```"+lang+" et de courtes explications en français québécois. "+
     "Pour chaque bloc de code, ajoute en première ligne un commentaire indiquant le chemin du fichier.";
 
+  codexHistory.push({role:"user",content:prompt});
+
   try{
-    const tk=getToken();
-    const h={"Content-Type":"application/json"};
+    var tk=getToken();
+    var h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
-    const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+    var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
       model:"claude-sonnet-4-6",max_tokens:4096,
       system:sysPrompt,
-      messages:[{role:"user",content:prompt}]
+      messages:codexHistory.slice(-10)
     })});
+    cxRemoveTyping();
     if(!res.ok){
-      let errMsg="Erreur de connexion.";
-      try{const errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
-      body.style.color="var(--red)";body.textContent=errMsg;genBusy=false;return;
+      var errMsg="Erreur de connexion.";
+      try{var errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
+      cxAddReply(errMsg);genBusy=false;return;
     }
-    const reply=await readSSE(res);
-    body.style.color="#d4d0c8";
-    typeCode(reply||"(réponse vide)",body,function(){genBusy=false;});
+    var reply=await readSSE(res);
+    codexHistory.push({role:"assistant",content:reply});
+    cxAddReply(reply||"(réponse vide)");
   }catch(e){
-    body.style.color="var(--red)";
-    body.textContent="Erreur: "+e.message;
-    genBusy=false;
+    cxRemoveTyping();
+    cxAddReply("Erreur: "+e.message);
   }
+  genBusy=false;
 }
 
 function typeCode(txt,el,cb){el.textContent="";var i=0;function t(){if(i<txt.length){el.textContent+=txt[i++];el.scrollTop=el.scrollHeight;setTimeout(t,8);}else if(cb)cb();}t();}
-function clearCx(){document.getElementById("codex-txt").value="";document.getElementById("code-out").style.display="none";genBusy=false;}
-function copyCode(){var c=document.getElementById("code-body").textContent;navigator.clipboard.writeText(c).catch(function(){});var t=event.target;t.textContent="✓ COPIÉ";setTimeout(function(){t.textContent="📋 COPIER";},2000);}
+function clearCx(){
+  document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
+  codexHistory=[];genBusy=false;
+}
 
 /* ── MODAL AGENTS ── */
 let selTypeVal="chat";let customAgents=[];
