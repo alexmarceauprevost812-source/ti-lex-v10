@@ -1023,7 +1023,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   </div>
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item active" id="sub-convos" onclick="showSub('convos')">Conversations</div>
+      <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')">Conversations</div>
       <div class="sb-sub-item" id="sub-favs" onclick="showSub('favs')">Favoris</div>
       <div class="sb-sub-item" id="sub-projs" onclick="showSub('projs')">Projet</div>
       <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
@@ -1033,11 +1033,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <!-- CODEX -->
   <div class="sb-item" id="si-codex" onclick="showTab('codex')">
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
-  </div>
-
-  <!-- CONVERSATIONS -->
-  <div class="sb-item" id="si-conversations" onclick="showTab('conversations')">
-    <span class="sb-icon">📋</span><span class="sb-label" data-txt="CONVERSATIONS"></span>
   </div>
 
   <!-- STUDIO -->
@@ -1676,12 +1671,12 @@ document.getElementById("sidebar").classList.remove("collapsed");
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-conversations"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-conversations"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
 }
