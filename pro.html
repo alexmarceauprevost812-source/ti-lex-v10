@@ -1104,6 +1104,13 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .reflexion-block.expanded .reflexion-content{max-height:600px;padding:12px 14px;border-top:1px solid #2a2a35;overflow-y:auto;}
 [data-theme="day"] .reflexion-block{background:#EFE7D7;border-color:#D4C5A4;}
 [data-theme="day"] .reflexion-content{color:#555;}
+.reflexion-close{flex-shrink:0;width:24px;height:24px;margin-left:8px;border-radius:6px;background:transparent;
+  border:1px solid rgba(255,68,68,.3);color:#cc3333;font-size:12px;font-weight:700;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .15s,border-color .15s,color .15s,transform .1s;}
+.reflexion-close:hover{background:rgba(255,68,68,.15);border-color:#cc3333;color:#ff4444;}
+.reflexion-close:active{transform:scale(.9);}
+@keyframes reflexionClose{from{opacity:1;transform:translateY(0);max-height:600px;}to{opacity:0;transform:translateY(-8px);max-height:0;margin:0;padding:0;}}
+.reflexion-closing{animation:reflexionClose .25s ease forwards;overflow:hidden;pointer-events:none;}
 
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2204,8 +2211,9 @@ async function sendChat(){
       var rBlock=appendReflexionBlock();
       var rContent=rBlock.querySelector(".reflexion-content");
       var rStatus=rBlock.querySelector(".reflexion-status");
+      window._reflexionAbort=new AbortController();
       try{
-        var rRes=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+        var rRes=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._reflexionAbort.signal,body:JSON.stringify({
           kind:"chat",model:chatModel,max_tokens:2048,
           system:"Tu es ti-lex-AL. Réfléchis étape par étape. Décris ton raisonnement interne sans donner la réponse finale.",
           messages:[{role:"user",content:txt}]
@@ -2216,7 +2224,12 @@ async function sendChat(){
           rStatus.textContent="✓ Réflexion terminée";
           rBlock.classList.remove("expanded");
         }else{rStatus.textContent="⚠️ Échec";}
-      }catch(e){rStatus.textContent="⚠️ "+e.message;}
+        window._reflexionAbort=null;
+      }catch(e){
+        if(e.name==="AbortError"){console.log("[ti-lex] Réflexion stoppée");}
+        else{rStatus.textContent="⚠️ "+e.message;}
+        window._reflexionAbort=null;
+      }
       var td2=document.createElement("div");td2.className="cmsg a";td2.id="tyd";
       td2.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
       msgs.appendChild(td2);msgs.scrollTop=msgs.scrollHeight;
@@ -4348,10 +4361,17 @@ function appendReflexionBlock(){
   var msgs=document.getElementById("chat-msgs");
   var block=document.createElement("div");
   block.className="reflexion-block expanded";
-  block.innerHTML='<div class="reflexion-header" onclick="this.parentNode.classList.toggle(\'expanded\')"><span class="reflexion-icon">🧠</span><span class="reflexion-title">Réflexion</span><span class="reflexion-status">En cours...</span><span class="reflexion-chevron">▸</span></div><div class="reflexion-content"></div>';
+  block.innerHTML='<div class="reflexion-header"><span class="reflexion-icon" onclick="this.closest(\'.reflexion-block\').classList.toggle(\'expanded\')">🧠</span><span class="reflexion-title" onclick="this.closest(\'.reflexion-block\').classList.toggle(\'expanded\')">Réflexion</span><span class="reflexion-status">En cours...</span><span class="reflexion-chevron" onclick="this.closest(\'.reflexion-block\').classList.toggle(\'expanded\')">▸</span><button class="reflexion-close" onclick="closeReflexion(event,this)" title="Fermer">✕</button></div><div class="reflexion-content"></div>';
   msgs.appendChild(block);
   msgs.scrollTop=msgs.scrollHeight;
   return block;
+}
+function closeReflexion(event,btn){
+  event.stopPropagation();
+  var block=btn.closest(".reflexion-block");if(!block)return;
+  if(window._reflexionAbort){window._reflexionAbort.abort();window._reflexionAbort=null;console.log("[ti-lex] Réflexion annulée");}
+  block.classList.add("reflexion-closing");
+  setTimeout(function(){block.remove();},250);
 }
 
 /* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
