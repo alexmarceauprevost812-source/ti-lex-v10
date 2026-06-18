@@ -390,6 +390,9 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
 .sdot.g{background:var(--green);box-shadow:0 0 4px var(--green);animation:blink 2s infinite;}
 .sdot.o{background:var(--orange);box-shadow:0 0 4px var(--orange);}
+.sdot.r{background:var(--red);box-shadow:0 0 4px var(--red);}
+.deploy-log-err{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--red);padding:4px 8px;margin:2px 0;background:rgba(255,0,0,.06);border-left:2px solid var(--red);border-radius:2px;}
+.deploy-hist-row{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);padding:3px 0;display:flex;align-items:center;gap:6px;}
 .ag-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
 .atag{padding:2px 6px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:7.5px;border:1px solid var(--border);color:var(--muted);}
 .atag.og{border-color:rgba(255,106,0,.3);color:var(--orange);background:rgba(255,106,0,.06);}
@@ -398,6 +401,21 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
   padding:15px;cursor:pointer;transition:all .25s;display:flex;flex-direction:column;
   align-items:center;justify-content:center;min-height:128px;gap:7px;color:var(--muted);}
 .add-card:hover{border-color:var(--orange);color:var(--orange);}
+
+/* COMPTE MENU */
+.acct-profile{display:flex;align-items:center;gap:14px;padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+.acct-avatar{width:48px;height:48px;border-radius:50%;background:rgba(255,106,0,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:2px solid rgba(255,106,0,.25);}
+.acct-info{flex:1;min-width:0;}
+.acct-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--or);}
+.acct-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px;}
+.acct-menu{margin-top:8px;}
+.acct-menu-item{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,248,231,.04);}
+.acct-menu-item:hover{background:rgba(255,106,0,.06);}
+.acct-menu-ico{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.acct-menu-lbl{flex:1;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;color:var(--txt);letter-spacing:.5px;}
+.acct-menu-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-right:4px;}
+.acct-menu-chev{font-size:16px;color:var(--muted);flex-shrink:0;}
+.acct-sep{height:1px;background:var(--border);margin:4px 16px;}
 
 /* CHAT */
 .chat-wrap{height:calc(100vh - 120px);min-height:420px;display:flex;flex-direction:column;
@@ -526,8 +544,24 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 [data-theme="day"] .cx-code-block{background:#1a1a1a;}
 .cx-code-hd{padding:5px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);}
 .cx-code-hd span{cursor:pointer;transition:color .2s;}.cx-code-hd span:hover{color:var(--orange);}
-.cx-code-pre{padding:14px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--or);overflow-x:auto;}
+.cx-code-pre{padding:0;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.8;color:var(--or);overflow-x:auto;overflow-y:hidden;max-height:none;}
+.cx-code-pre.collapsed{max-height:180px;overflow-y:hidden;}
 [data-theme="day"] .cx-code-pre{color:#d4d0c8;}
+.cx-code-line{display:flex;padding:0 12px;}
+.cx-code-line:hover{background:rgba(212,175,55,.04);}
+.cx-ln{color:rgba(212,175,55,.25);min-width:36px;text-align:right;padding-right:12px;user-select:none;flex-shrink:0;border-right:1px solid rgba(212,175,55,.08);}
+.cx-lc{white-space:pre;padding-left:12px;flex:1;min-width:0;}
+.cx-expand-btn{display:block;padding:6px 14px;background:rgba(255,106,0,.08);border:none;border-top:1px solid var(--border);
+  color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;text-align:center;transition:background .2s;}
+.cx-expand-btn:hover{background:rgba(255,106,0,.15);}
+.syn-kw{color:#ff6a00;font-weight:600;}
+.syn-str{color:#28c840;}
+.syn-num{color:#F0C040;}
+.syn-fn{color:#00aaff;}
+.syn-cm{color:rgba(255,248,231,.25);font-style:italic;}
+.syn-tag{color:#ff6a00;}
+.syn-attr{color:#F0C040;}
+.syn-op{color:rgba(255,248,231,.5);}
 .cx-typing{display:flex;gap:4px;padding:6px 0;}
 .cx-typing .tyd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:tybounce .6s ease-in-out infinite alternate;}
 .cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
@@ -1000,6 +1034,11 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <span class="sb-icon">📋</span><span class="sb-label" data-txt="CONVERSATIONS"></span>
   </div>
 
+  <!-- STUDIO -->
+  <div class="sb-item" id="si-studio" onclick="showTab('studio')">
+    <span class="sb-icon">🚀</span><span class="sb-label" data-txt="STUDIO"></span>
+  </div>
+
   <!-- CRÉER AGENT IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
@@ -1074,19 +1113,44 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 <!-- CONTENU -->
 <main class="content" id="main-content">
 
-  <!-- DASHBOARD -->
+  <!-- COMPTE (MENU) -->
   <div id="view-dash" class="view active">
-    <div class="dash-hero">
-      <img src="assets/tilex-logo.png" alt="TI-LEX-AL" class="dash-hero-img">
+    <div class="acct-profile">
+      <div class="acct-avatar">👤</div>
+      <div class="acct-info">
+        <div class="acct-name">TI-LEX-AL · <span class="accent">MASTER</span></div>
+        <div class="acct-sub">Agents actifs : <span class="accent" id="m-agents">3</span> / 10 max</div>
+      </div>
     </div>
-    <div class="sec-title">TI-LEX-AL <span class="accent">MASTER</span></div>
-    <div class="metrics">
-      <div class="metric"><div class="m-lbl">AGENTS ACTIFS</div><div class="m-val or" id="m-agents">3</div><div class="m-sub">/ 10 max</div></div>
-      <div class="metric"><div class="m-lbl">SCORE SÉCURITÉ</div><div class="m-val g">94</div><div class="m-sub">Grade A</div></div>
-      <div class="metric"><div class="m-lbl">FORFAIT</div><div class="m-val or" id="m-plan-name">FLUX</div><div class="m-sub" id="m-plan-price">$19 CAD/mois</div></div>
-      <div class="metric"><div class="m-lbl">MESSAGES / FENÊTRE</div><div class="m-val" id="m-msg-limit">40</div><div class="m-sub" id="m-msg-sub">par fenêtre 12h</div></div>
+    <div class="acct-menu">
+      <div class="acct-menu-item" onclick="showTab('chat')">
+        <span class="acct-menu-ico">💬</span><span class="acct-menu-lbl">Chat</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-menu-item" onclick="showTab('conversations')">
+        <span class="acct-menu-ico">📋</span><span class="acct-menu-lbl">Conversations</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-menu-item" onclick="showTab('codex')">
+        <span class="acct-menu-ico">⌨️</span><span class="acct-menu-lbl">Codex</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-menu-item" onclick="showTab('studio')">
+        <span class="acct-menu-ico">🚀</span><span class="acct-menu-lbl">Studio</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-sep"></div>
+      <div class="acct-menu-item" onclick="openModal()">
+        <span class="acct-menu-ico">✦</span><span class="acct-menu-lbl">Créer un agent</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-menu-item" onclick="showTab('settings')">
+        <span class="acct-menu-ico">⚙</span><span class="acct-menu-lbl">Paramètres</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-menu-item" onclick="acctToggleLang()">
+        <span class="acct-menu-ico">🌐</span><span class="acct-menu-lbl">Langue</span><span class="acct-menu-val" id="acct-lang-val">Français</span><span class="acct-menu-chev">›</span>
+      </div>
+      <div class="acct-sep"></div>
+      <div class="acct-menu-item" onclick="acctLogout()" style="color:var(--orange);">
+        <span class="acct-menu-ico">🚪</span><span class="acct-menu-lbl" style="color:var(--orange);">Déconnexion</span><span class="acct-menu-chev">›</span>
+      </div>
     </div>
-    <div class="card">
+    <div class="card" style="margin-top:16px;">
       <div class="card-hd">MES AGENTS
         <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openModal()">+ CRÉER</button>
       </div>
@@ -1131,14 +1195,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
             <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:center;">Crée un agent personnalisé</div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-hd">ACTIONS RAPIDES</div>
-      <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn-orange" style="flex:1;min-width:140px;font-size:14px;padding:11px 14px;" onclick="showTab('chat')">💬 PARLER À AGENT AL</button>
-        <button class="btn-outline" style="flex:1;min-width:140px;font-size:14px;padding:10px 14px;" onclick="showTab('codex')"><span class="s">⌨️ GÉNÉRER DU CODE</span></button>
-        <button class="btn-outline" style="flex:1;min-width:140px;font-size:14px;padding:10px 14px;" onclick="openModal()"><span class="s">✦ CRÉER UN AGENT</span></button>
       </div>
     </div>
   </div>
@@ -1314,9 +1370,27 @@ Comment puis-je t'aider aujourd'hui?</div>
             <span class="deploy-val" id="deploy-branch">main</span>
           </div>
           <div class="deploy-row">
+            <span class="deploy-label">Commit</span>
+            <span class="deploy-val" id="deploy-commit" style="font-family:'Share Tech Mono',monospace;font-size:10px;">—</span>
+          </div>
+          <div class="deploy-row">
             <span class="deploy-label">URL</span>
             <span class="deploy-val"><a href="#" id="deploy-url" style="color:var(--orange);text-decoration:none;font-family:'Share Tech Mono',monospace;font-size:11px;">—</a></span>
           </div>
+        </div>
+        <div id="deploy-logs" style="margin-top:10px;max-height:150px;overflow-y:auto;"></div>
+        <div id="deploy-history" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <!-- VÉRIFIER AVANT DÉPLOIEMENT -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🛡 VÉRIFIER AVANT DÉPLOIEMENT</div>
+      <div class="card-body">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">VÉRIFIE L'ÉTAT VERCEL + ERREURS DE CODE AVANT DE DÉPLOYER</div>
+        <button class="btn-orange" style="width:100%;padding:10px;font-size:13px;margin-bottom:10px;" onclick="studioVerifyBeforeDeploy()">⚡ VÉRIFIER MAINTENANT</button>
+        <div id="verify-results">
+          <div style="color:var(--muted);font-family:Share Tech Mono,monospace;font-size:11px;">Clique « Vérifier » pour lancer l'analyse.</div>
         </div>
       </div>
     </div>
@@ -1348,14 +1422,11 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="card-hd">🔗 GITHUB</div>
       <div class="card-body">
         <div class="settings-section">
-          <div class="settings-label">PERSONAL ACCESS TOKEN (PAT)</div>
-          <input type="password" class="settings-input" id="set-gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-          <div class="settings-hint">Crée un token sur GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens.<br>Permissions requises : Contents (Read & Write), Metadata (Read).</div>
-          <div class="settings-saved" id="gh-token-saved">✓ Token sauvegardé</div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="saveGhToken()">SAUVEGARDER</button>
-          <button class="btn-ghost" style="width:auto;padding:8px 20px;font-size:13px;" onclick="clearGhToken()">EFFACER LE TOKEN</button>
+          <div class="settings-label">CONNEXION GITHUB</div>
+          <div class="settings-hint">La connexion GitHub passe par un proxy sécurisé (Edge Function Supabase). Aucun token n'est stocké dans le navigateur.<br>Utilise le bouton « CONNECTER » dans le Codex pour accéder au projet.</div>
+          <div style="margin-top:10px;">
+            <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="showTab('codex')">OUVRIR LE CODEX</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2251,6 +2322,72 @@ function cxParseReply(txt){
   return parts;
 }
 
+function cxHighlight(code,lang){
+  var h=escHtml(code);
+  var kw,str,num,fn,cm,tag,attr,op;
+  if(lang==="js"||lang==="ts"||lang==="jsx"||lang==="tsx"||lang==="javascript"||lang==="typescript"){
+    h=h.replace(/(\/\/[^\n]*)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g,'<span class="syn-str">$1</span>');
+    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
+    h=h.replace(/\b(var|let|const|function|return|if|else|for|while|switch|case|break|default|try|catch|throw|new|this|class|import|export|from|async|await|typeof|instanceof|of|in|true|false|null|undefined|void)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b([a-zA-Z_$]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
+  }else if(lang==="html"||lang==="htm"){
+    h=h.replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/(&lt;\/?[a-zA-Z][a-zA-Z0-9]*)/g,'<span class="syn-tag">$1</span>');
+    h=h.replace(/\s([a-zA-Z-]+)=/g,' <span class="syn-attr">$1</span>=');
+    h=h.replace(/("(?:[^"\\]|\\.)*")/g,'<span class="syn-str">$1</span>');
+  }else if(lang==="css"){
+    h=h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/([.#]?[a-zA-Z_-][\w-]*)\s*\{/g,'<span class="syn-tag">$1</span>{');
+    h=h.replace(/:\s*([^;{}]+)/g,': <span class="syn-str">$1</span>');
+  }else if(lang==="py"||lang==="python"){
+    h=h.replace(/(#[^\n]*)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
+    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
+    h=h.replace(/\b(def|class|return|if|elif|else|for|while|try|except|finally|with|as|import|from|in|not|and|or|is|True|False|None|pass|break|continue|lambda|yield|raise|async|await)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b([a-zA-Z_]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
+  }else if(lang==="sql"){
+    h=h.replace(/(--[^\n]*)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/('(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
+    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
+    h=h.replace(/\b(SELECT|FROM|WHERE|INSERT|INTO|UPDATE|SET|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|NOT|NULL|PRIMARY|KEY|FOREIGN|REFERENCES|DEFAULT|VALUES|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|AS|IF|EXISTS|BEGIN|END|GRANT|REVOKE|POLICY|ENABLE|ROW|LEVEL|SECURITY|USING|WITH|CHECK|CASCADE|UNIQUE|CONSTRAINT|TRIGGER|FUNCTION|RETURNS|LANGUAGE|DECLARE|RETURN|NEW|OLD|BEFORE|AFTER|EXECUTE|PROCEDURE|TYPE|ENUM|BOOLEAN|INTEGER|TEXT|TIMESTAMP|UUID|SERIAL|BIGINT|VARCHAR|JSONB|JSON)\b/gi,'<span class="syn-kw">$&</span>');
+  }else if(lang==="bash"||lang==="sh"){
+    h=h.replace(/(#[^\n]*)/g,'<span class="syn-cm">$1</span>');
+    h=h.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
+  }
+  return h;
+}
+function cxBuildCodeBlock(code,lang,cid){
+  var lines=code.split("\n");
+  var lineCount=lines.length;
+  var collapsed=lineCount>15;
+  var nums="";var codeLines="";
+  for(var i=0;i<lineCount;i++){nums+=(i+1)+"\n";codeLines+=lines[i]+(i<lineCount-1?"\n":"");}
+  var highlighted=cxHighlight(codeLines,lang);
+  var html='<div class="cx-code-block"><div class="cx-code-hd"><span>'+escHtml(lang)+(lineCount>1?" · "+lineCount+" lignes":"")+'</span><span style="cursor:pointer;" onclick="cxCopy(\''+cid+'\')">📋 COPIER</span></div>';
+  html+='<div style="display:flex;overflow:auto;max-height:'+(collapsed?"200px":"none")+';position:relative;" class="cx-code-wrap'+(collapsed?" collapsed":"")+'" id="wrap-'+cid+'">';
+  html+='<pre class="cx-ln" style="user-select:none;text-align:right;padding:10px 8px 10px 10px;color:#555;border-right:1px solid #333;margin:0;flex-shrink:0;">'+nums+'</pre>';
+  html+='<pre class="cx-lc cx-code-pre" id="'+cid+'" style="margin:0;padding:10px;flex:1;overflow-x:auto;">'+highlighted+'</pre>';
+  html+='</div>';
+  if(collapsed){
+    html+='<button class="cx-expand-btn" onclick="cxToggleExpand(\''+cid+'\')">▼ VOIR AU COMPLET ('+lineCount+' lignes)</button>';
+  }
+  html+='</div>';
+  return html;
+}
+function cxToggleExpand(cid){
+  var wrap=document.getElementById("wrap-"+cid);
+  var btn=wrap?wrap.parentElement.querySelector(".cx-expand-btn"):null;
+  if(!wrap)return;
+  if(wrap.classList.contains("collapsed")){
+    wrap.classList.remove("collapsed");wrap.style.maxHeight="none";
+    if(btn)btn.innerHTML="▲ REPLIER";
+  }else{
+    wrap.classList.add("collapsed");wrap.style.maxHeight="200px";
+    if(btn)btn.innerHTML="▼ VOIR AU COMPLET";
+  }
+}
 function cxAddReply(txt){
   var feed=document.getElementById("codex-feed");
   var parts=cxParseReply(txt);
@@ -2263,11 +2400,10 @@ function cxAddReply(txt){
       td.innerHTML=projHtml(parts[p].content);
       content.appendChild(td);
     }else{
-      var block=document.createElement("div");block.className="cx-code-block";
       var cid="cx-code-"+Date.now()+"-"+p;
-      block.innerHTML='<div class="cx-code-hd"><span>'+escHtml(parts[p].lang)+'</span><span onclick="cxCopy(\''+cid+'\')">📋 COPIER</span></div><pre class="cx-code-pre" id="'+cid+'"></pre>';
-      content.appendChild(block);
-      typeCode(parts[p].content,block.querySelector("pre"),null);
+      var blockHtml=cxBuildCodeBlock(parts[p].content,parts[p].lang,cid);
+      var tmp=document.createElement("div");tmp.innerHTML=blockHtml;
+      content.appendChild(tmp.firstChild);
     }
   }
   feed.appendChild(wrapper);feed.scrollTop=feed.scrollHeight;
@@ -2332,121 +2468,105 @@ function clearCx(){
   codexHistory=[];genBusy=false;
 }
 
-/* ── GITHUB INTEGRATION ── */
-var ghToken="";var ghRepos=[];var ghFiles=[];var ghCurrentRepo="";var ghCurrentBranch="";var ghFilesVisible=false;
-var ghFileCache={};
+/* ── GITHUB INTEGRATION (via Edge Function github-proxy) ── */
+var GH_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/github-proxy";
+var VERCEL_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/vercel-proxy";
+var ghFiles=[];var ghCurrentBranch="main";var ghFilesVisible=false;
+var ghFileCache={};var ghConnected=false;
 
-function getGhToken(){return localStorage.getItem("tilex-al-github")||"";}
-function saveGhToken(){
-  var val=document.getElementById("set-gh-token").value.trim();
-  if(!val)return;
-  localStorage.setItem("tilex-al-github",val);
-  ghToken=val;
-  var sv=document.getElementById("gh-token-saved");sv.style.display="block";setTimeout(function(){sv.style.display="none";},3000);
-  ghUpdateBar();
+async function ghProxyCall(body){
+  var tk=getToken();
+  var r=await fetch(GH_PROXY,{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok){var e;try{e=await r.json();}catch(x){e={error:r.statusText};}throw new Error(e.error||"Erreur GitHub");}
+  return r.json();
 }
-function clearGhToken(){
-  localStorage.removeItem("tilex-al-github");ghToken="";
-  document.getElementById("set-gh-token").value="";
-  ghUpdateBar();
+async function vercelCall(body){
+  var tk=getToken();
+  var r=await fetch(VERCEL_PROXY,{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok){var e;try{e=await r.json();}catch(x){e={error:r.statusText};}throw new Error(e.error||"Erreur Vercel");}
+  return r.json();
 }
+
 function ghUpdateBar(){
-  ghToken=getGhToken();
   var dot=document.getElementById("gh-dot");
   var label=document.getElementById("gh-conn-label");
   var connectBtn=document.getElementById("gh-connect-btn");
-  var repoSel=document.getElementById("gh-repo");
   var branchSel=document.getElementById("gh-branch");
   var browseBtn=document.getElementById("gh-browse-btn");
   var pushBtn=document.getElementById("gh-push-btn");
-  if(ghToken){
+  var repoSel=document.getElementById("gh-repo");
+  if(ghConnected){
     dot.className="gh-status on";
     label.textContent="GITHUB CONNECTÉ";
-    connectBtn.textContent="DÉCONNECTER";
-    connectBtn.onclick=function(){clearGhToken();};
-    repoSel.style.display="";
+    connectBtn.textContent="✓ CONNECTÉ";
+    connectBtn.onclick=function(){};
+    if(repoSel)repoSel.style.display="none";
     branchSel.style.display="";
     browseBtn.style.display="";
     pushBtn.style.display="";
-    ghLoadRepos();
   }else{
     dot.className="gh-status off";
     label.textContent="GITHUB";
-    connectBtn.textContent="CONNECTER";
+    connectBtn.textContent="CONNECTER LE PROJET";
     connectBtn.onclick=function(){ghConnect();};
-    repoSel.style.display="none";
+    if(repoSel)repoSel.style.display="none";
     branchSel.style.display="none";
     browseBtn.style.display="none";
     pushBtn.style.display="none";
   }
 }
-function ghConnect(){
-  var tk=getGhToken();
-  if(tk){ghToken=tk;ghUpdateBar();return;}
-  showTab("settings");
-  var inp=document.getElementById("set-gh-token");
-  if(inp){inp.focus();inp.style.borderColor="var(--orange)";setTimeout(function(){inp.style.borderColor="var(--border)";},2000);}
-}
-async function ghApi(path,opts){
-  if(!ghToken)return null;
-  var r=await fetch("https://api.github.com"+path,Object.assign({headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json"}},opts||{}));
-  if(!r.ok)return null;
-  return r.json();
-}
-async function ghLoadRepos(){
-  var sel=document.getElementById("gh-repo");
-  sel.innerHTML='<option value="">⏳ Chargement…</option>';
-  var data=await ghApi("/user/repos?sort=updated&per_page=30");
-  if(!data){sel.innerHTML='<option value="">Erreur</option>';return;}
-  ghRepos=data;
-  sel.innerHTML='<option value="">— choisir un repo —</option>';
-  for(var i=0;i<data.length;i++){
-    var o=document.createElement("option");o.value=data[i].full_name;o.textContent=data[i].name;
-    sel.appendChild(o);
+async function ghConnect(){
+  var dot=document.getElementById("gh-dot");
+  var label=document.getElementById("gh-conn-label");
+  label.textContent="CONNEXION…";
+  try{
+    var data=await ghProxyCall({action:"listBranches"});
+    ghConnected=true;
+    var sel=document.getElementById("gh-branch");
+    sel.innerHTML="";
+    var branches=data.branches||[];
+    for(var i=0;i<branches.length;i++){
+      var o=document.createElement("option");o.value=branches[i];o.textContent=branches[i];
+      if(branches[i]==="main")o.selected=true;
+      sel.appendChild(o);
+    }
+    ghCurrentBranch=sel.value||"main";
+    ghUpdateBar();
+  }catch(e){
+    label.textContent="ERREUR";dot.className="gh-status off";
+    cxAddReply("❌ Connexion GitHub échouée: "+e.message+"\n\nVérifie que le secret GITHUB_TOKEN est configuré dans Supabase.");
   }
-  if(ghCurrentRepo){sel.value=ghCurrentRepo;ghLoadBranches();}
 }
 async function ghLoadBranches(){
-  var repo=document.getElementById("gh-repo").value;
-  if(!repo){document.getElementById("gh-branch").innerHTML='<option value="">— branche —</option>';return;}
-  ghCurrentRepo=repo;
-  var sel=document.getElementById("gh-branch");
-  sel.innerHTML='<option value="">⏳…</option>';
-  var data=await ghApi("/repos/"+repo+"/branches?per_page=30");
-  if(!data){sel.innerHTML='<option value="">Erreur</option>';return;}
-  sel.innerHTML='<option value="">— branche —</option>';
-  for(var i=0;i<data.length;i++){
-    var o=document.createElement("option");o.value=data[i].name;o.textContent=data[i].name;
-    if(data[i].name==="main"||data[i].name==="master")o.selected=true;
-    sel.appendChild(o);
-  }
-  ghCurrentBranch=sel.value;
+  ghCurrentBranch=document.getElementById("gh-branch").value;
   if(ghCurrentBranch)ghLoadFiles();
 }
 async function ghLoadFiles(){
-  ghCurrentBranch=document.getElementById("gh-branch").value;
-  if(!ghCurrentRepo||!ghCurrentBranch)return;
+  ghCurrentBranch=document.getElementById("gh-branch").value||"main";
   var panel=document.getElementById("gh-files");
   panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">⏳</span><span class="gh-file-name">Chargement…</span></div>';
   panel.style.display="block";ghFilesVisible=true;
-  var data=await ghApi("/repos/"+ghCurrentRepo+"/git/trees/"+ghCurrentBranch+"?recursive=1");
-  if(!data||!data.tree){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">❌</span><span class="gh-file-name">Erreur de chargement</span></div>';return;}
-  ghFiles=data.tree.filter(function(f){return f.type==="blob";});
-  var codeExts=/\.(js|ts|html|css|json|py|sql|md|jsx|tsx|vue|svelte|sh|bash|yml|yaml)$/i;
-  var filtered=ghFiles.filter(function(f){return codeExts.test(f.path);});
-  panel.innerHTML="";
-  if(filtered.length===0){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">📁</span><span class="gh-file-name">Aucun fichier code trouvé</span></div>';return;}
-  for(var i=0;i<filtered.length;i++){
-    var f=filtered[i];
-    var ext=f.path.split(".").pop()||"";
-    var ico=ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"?"📄":ext==="html"?"🌐":ext==="css"?"🎨":ext==="json"?"📋":ext==="py"?"🐍":ext==="sql"?"🗄️":"📝";
-    var sz=f.size>1024?(f.size/1024).toFixed(1)+"k":f.size+"b";
-    var div=document.createElement("div");div.className="gh-file";div.setAttribute("data-path",f.path);
-    div.innerHTML='<span class="gh-file-ico">'+ico+'</span><span class="gh-file-name">'+escHtml(f.path)+'</span><span class="gh-file-size">'+sz+'</span>';
-    div.onclick=(function(path){return function(){ghOpenFile(path);};})(f.path);
-    panel.appendChild(div);
+  try{
+    var data=await ghProxyCall({action:"listFiles",branch:ghCurrentBranch});
+    ghFiles=data.tree||[];
+    var codeExts=/\.(js|ts|html|css|json|py|sql|md|jsx|tsx|vue|svelte|sh|bash|yml|yaml)$/i;
+    var filtered=ghFiles.filter(function(f){return codeExts.test(f.path);});
+    panel.innerHTML="";
+    if(filtered.length===0){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">📁</span><span class="gh-file-name">Aucun fichier code trouvé</span></div>';return;}
+    for(var i=0;i<filtered.length;i++){
+      var f=filtered[i];
+      var ext=f.path.split(".").pop()||"";
+      var ico=ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"?"📄":ext==="html"?"🌐":ext==="css"?"🎨":ext==="json"?"📋":ext==="py"?"🐍":ext==="sql"?"🗄️":"📝";
+      var sz=f.size>1024?(f.size/1024).toFixed(1)+"k":f.size+"b";
+      var div=document.createElement("div");div.className="gh-file";div.setAttribute("data-path",f.path);
+      div.innerHTML='<span class="gh-file-ico">'+ico+'</span><span class="gh-file-name">'+escHtml(f.path)+'</span><span class="gh-file-size">'+sz+'</span>';
+      div.onclick=(function(path){return function(){ghOpenFile(path);};})(f.path);
+      panel.appendChild(div);
+    }
+    studioScanAll();
+  }catch(e){
+    panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">❌</span><span class="gh-file-name">'+escHtml(e.message)+'</span></div>';
   }
-  studioScanAll();
 }
 function ghToggleFiles(){
   var panel=document.getElementById("gh-files");
@@ -2458,64 +2578,66 @@ async function ghOpenFile(path){
   document.querySelectorAll(".gh-file").forEach(function(f){f.classList.remove("active");});
   var el=document.querySelector('.gh-file[data-path="'+path+'"]');
   if(el)el.classList.add("active");
-  if(ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path]){
-    var cached=ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path];
+  var cacheKey=ghCurrentBranch+"/"+path;
+  if(ghFileCache[cacheKey]){
     cxAddUser("Ouvre le fichier : "+path);
-    cxAddReply("```"+path.split(".").pop()+"\n"+cached+"\n```\nFichier **"+path+"** chargé depuis GitHub ("+ghCurrentRepo+" / "+ghCurrentBranch+").");
+    cxAddReply("```"+path.split(".").pop()+"\n"+ghFileCache[cacheKey]+"\n```\nFichier **"+path+"** ("+ghCurrentBranch+")");
     return;
   }
   cxAddUser("Ouvre le fichier : "+path);
   cxAddTyping();
-  var data=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(path)+"?ref="+ghCurrentBranch);
-  cxRemoveTyping();
-  if(!data||!data.content){cxAddReply("Erreur: impossible de charger "+path);return;}
-  var content=atob(data.content.replace(/\n/g,""));
-  ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path]=content;
-  cxAddReply("```"+path.split(".").pop()+"\n"+content+"\n```\nFichier **"+path+"** ("+content.split("\n").length+" lignes) — "+ghCurrentRepo+" / "+ghCurrentBranch);
+  try{
+    var data=await ghProxyCall({action:"readFile",path:path,branch:ghCurrentBranch});
+    cxRemoveTyping();
+    if(!data||!data.content){cxAddReply("Erreur: fichier vide ou inaccessible.");return;}
+    var content=atob(data.content.replace(/\n/g,""));
+    ghFileCache[cacheKey]=content;
+    cxAddReply("```"+path.split(".").pop()+"\n"+content+"\n```\nFichier **"+path+"** ("+content.split("\n").length+" lignes · "+ghCurrentBranch+")");
+  }catch(e){cxRemoveTyping();cxAddReply("❌ "+e.message);}
 }
 async function ghPushCode(){
-  if(!ghCurrentRepo||!ghCurrentBranch){cxAddReply("Sélectionne un repo et une branche avant de push.");return;}
+  if(!ghConnected){cxAddReply("Connecte le projet GitHub d'abord.");return;}
   var lastCode="";
-  document.querySelectorAll(".cx-code-pre").forEach(function(el){if(el.textContent.trim())lastCode=el.textContent;});
+  document.querySelectorAll(".cx-code-pre").forEach(function(el){var t=el.textContent.trim();if(t)lastCode=t;});
   if(!lastCode){cxAddReply("Aucun code à push. Génère du code d'abord!");return;}
-  cxAddUser("Push le dernier code généré vers "+ghCurrentRepo+" / "+ghCurrentBranch);
+  cxAddUser("Push le dernier code généré ("+ghCurrentBranch+")");
   cxAddTyping();
-  var fileName=prompt("Nom du fichier à créer/modifier sur GitHub :","code.js");
+  var fileName=prompt("Nom du fichier à créer/modifier :","code.js");
   if(!fileName){cxRemoveTyping();return;}
-  var existing=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(fileName)+"?ref="+ghCurrentBranch);
-  var sha=existing?existing.sha:undefined;
-  var body={message:"[ti-lex-AL] "+fileName,content:btoa(unescape(encodeURIComponent(lastCode))),branch:ghCurrentBranch};
-  if(sha)body.sha=sha;
-  var result=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(fileName),{method:"PUT",body:JSON.stringify(body)});
-  cxRemoveTyping();
-  if(result&&result.content){cxAddReply("✅ Fichier **"+fileName+"** pushé avec succès sur **"+ghCurrentRepo+"** ("+ghCurrentBranch+").\n\nCommit: "+result.commit.sha.slice(0,7));
-    if(typeof pushNotif==="function")pushNotif("⬆️","Code poussé sur GitHub",fileName+" → "+ghCurrentRepo+" ("+ghCurrentBranch+").","ok");}
-  else{cxAddReply("❌ Erreur lors du push. Vérifie que ton token a les permissions d'écriture (Contents: Read & Write).");}
+  try{
+    var existing=null;
+    try{existing=await ghProxyCall({action:"readFile",path:fileName,branch:ghCurrentBranch});}catch(e){}
+    var sha=existing?existing.sha:undefined;
+    var b64=btoa(unescape(encodeURIComponent(lastCode)));
+    var result=await ghProxyCall({action:"pushFile",path:fileName,content:b64,branch:ghCurrentBranch,message:"[ti-lex-AL] "+fileName,sha:sha});
+    cxRemoveTyping();
+    if(result&&result.success){
+      cxAddReply("✅ **"+fileName+"** pushé avec succès ("+ghCurrentBranch+").\nCommit: "+result.commit);
+      if(typeof pushNotif==="function")pushNotif("⬆️","Code poussé sur GitHub",fileName+" → "+ghCurrentBranch,"ok");
+    }else{cxAddReply("❌ Erreur lors du push.");}
+  }catch(e){cxRemoveTyping();cxAddReply("❌ "+e.message);}
 }
-function ghRefreshProjects(){
-  if(!ghToken){showTab("settings");return;}
+async function ghRefreshProjects(){
   var container=document.getElementById("studio-projects");
   container.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">Chargement…</div>';
-  ghApi("/user/repos?sort=updated&per_page=10").then(function(data){
-    if(!data){container.innerHTML='<div style="color:var(--red);font-family:Share Tech Mono,monospace;font-size:11px;">Erreur de chargement</div>';return;}
+  try{
+    var data=await ghProxyCall({action:"listBranches"});
     container.innerHTML="";
-    for(var i=0;i<data.length;i++){
-      var r=data[i];
-      var card=document.createElement("div");card.className="studio-project-card";
-      card.innerHTML='<div class="sp-ico">'+(r.language==="JavaScript"?"⚡":r.language==="Python"?"🐍":r.language==="HTML"?"🌐":"📂")+'</div>'+
-        '<div class="sp-info"><div class="sp-name">'+escHtml(r.name)+'</div><div class="sp-meta">'+escHtml(r.language||"—")+" · "+(r.private?"Privé":"Public")+" · "+escHtml(r.default_branch)+'</div></div>'+
-        '<span class="sp-status sp-live" style="cursor:pointer;" onclick="document.getElementById(\'gh-repo\').value=\''+r.full_name+'\';ghLoadBranches();showTab(\'codex\');">OUVRIR</span>';
-      container.appendChild(card);
-    }
-  });
+    var card=document.createElement("div");card.className="studio-project-card";
+    card.innerHTML='<div class="sp-ico">⚡</div><div class="sp-info"><div class="sp-name">ti-lex-v10</div><div class="sp-meta">'+((data.branches||[]).length)+" branches · Privé · main"+'</div></div>'+
+      '<span class="sp-status sp-live" style="cursor:pointer;" onclick="ghConnect();showTab(\'codex\');">OUVRIR</span>';
+    container.appendChild(card);
+  }catch(e){
+    container.innerHTML='<div style="color:var(--red);font-family:Share Tech Mono,monospace;font-size:11px;">'+escHtml(e.message)+'</div>';
+  }
 }
 
 /* ── STUDIO — SCANNER DE CODE (toutes erreurs, tous langages) ── */
 var scannedFiles={};
 
 async function studioScanAll(){
-  if(!ghToken||!ghCurrentRepo||!ghCurrentBranch){
-    document.getElementById("scan-results").innerHTML='<div class="scan-result warning"><span class="scan-msg">Connecte GitHub et sélectionne un repo/branche dans le Codex pour scanner.</span></div>';
+  if(!ghConnected||!ghCurrentBranch){
+    document.getElementById("scan-results").innerHTML='<div class="scan-result warning"><span class="scan-msg">Connecte GitHub dans le Codex pour scanner le projet.</span></div>';
     return;
   }
   var container=document.getElementById("scan-results");
@@ -2528,11 +2650,13 @@ async function studioScanAll(){
   var allErrors=[];var scanned=0;
   for(var i=0;i<Math.min(toScan.length,20);i++){
     var f=toScan[i];
-    var cacheKey=ghCurrentRepo+"/"+ghCurrentBranch+"/"+f.path;
+    var cacheKey=ghCurrentBranch+"/"+f.path;
     var content=ghFileCache[cacheKey];
     if(!content){
-      var data=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(f.path)+"?ref="+ghCurrentBranch);
-      if(data&&data.content){content=atob(data.content.replace(/\n/g,""));ghFileCache[cacheKey]=content;}
+      try{
+        var data=await ghProxyCall({action:"readFile",path:f.path,branch:ghCurrentBranch});
+        if(data&&data.content){content=atob(data.content.replace(/\n/g,""));ghFileCache[cacheKey]=content;}
+      }catch(e){}
     }
     if(content){
       var errs=scanCode(f.path,content);
@@ -2643,7 +2767,7 @@ function scanCode(filename,code){
 async function studioAutoFix(file,line,errMsg){
   cxAddUser("Corrige l'erreur dans "+file+" (ligne "+line+") : "+errMsg);
   cxAddTyping();showTab("codex");
-  var cacheKey=ghCurrentRepo+"/"+ghCurrentBranch+"/"+file;
+  var cacheKey=ghCurrentBranch+"/"+file;
   var content=ghFileCache[cacheKey]||"";
   var sysPrompt="Tu es un correcteur de code expert. On te donne un fichier avec une erreur. "+
     "Corrige UNIQUEMENT l'erreur indiquée. Retourne le fichier corrigé complet dans un bloc ```"+file.split(".").pop()+" ."+
@@ -2673,6 +2797,17 @@ function saveSettingModel(){
 function saveSettingLang(){
   var v=document.getElementById("set-lang").value;
   localStorage.setItem("tilex-al-lang",v);
+  var lv=document.getElementById("acct-lang-val");
+  if(lv)lv.textContent=v==="en"?"English":"Français";
+}
+function acctToggleLang(){
+  var sel=document.getElementById("set-lang");
+  if(sel){sel.value=sel.value==="fr"?"en":"fr";saveSettingLang();}
+}
+function acctLogout(){
+  if(!confirm("Déconnexion ?"))return;
+  if(typeof SB!=="undefined"&&SB&&SB.auth)SB.auth.signOut().then(function(){window.location.href="choose.html";});
+  else window.location.href="choose.html";
 }
 function saveSettingMemory(){
   var v=document.getElementById("set-memory").value;
@@ -2744,9 +2879,6 @@ function renderAgentCards(){
 
 /* ── SETTINGS INIT ── */
 (function(){
-  ghToken=getGhToken();
-  var inp=document.getElementById("set-gh-token");
-  if(inp&&ghToken)inp.value=ghToken;
   ghUpdateBar();
   var savedModel=localStorage.getItem("tilex-al-model");
   var modelSel=document.getElementById("set-model");
@@ -2754,6 +2886,7 @@ function renderAgentCards(){
   var savedLang=localStorage.getItem("tilex-al-lang");
   var langSel=document.getElementById("set-lang");
   if(savedLang&&langSel){for(var i=0;i<langSel.options.length;i++){if(langSel.options[i].value===savedLang)langSel.selectedIndex=i;}}
+  var lv=document.getElementById("acct-lang-val");if(lv&&savedLang)lv.textContent=savedLang==="en"?"English":"Français";
   var savedMemory=localStorage.getItem("tilex-al-memory");
   var memEl=document.getElementById("set-memory");
   if(savedMemory&&memEl)memEl.value=savedMemory;
@@ -2819,27 +2952,101 @@ document.getElementById("plan-sel").addEventListener("click",e=>{if(e.target===d
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();closeComposerMenu();}});
 if(customAgents.length>0)renderAgentCards();
 
-/* ── STUDIO — DÉPLOIEMENT ── */
-function refreshDeploy(){
+/* ── STUDIO — DÉPLOIEMENT (via Vercel Edge Function) ── */
+async function refreshDeploy(){
   var stateEl=document.getElementById("deploy-state");
   var timeEl=document.getElementById("deploy-time");
   var urlEl=document.getElementById("deploy-url");
-  var errEl=document.getElementById("deploy-errors");
-  var errCnt=document.getElementById("deploy-err-count");
+  var branchEl=document.getElementById("deploy-branch");
+  var logsEl=document.getElementById("deploy-logs");
   stateEl.innerHTML='<span class="sdot o" style="background:var(--orange);box-shadow:0 0 4px var(--orange);animation:blink 1s infinite;"></span> Vérification…';
-  setTimeout(function(){
-    var now=new Date();
-    var t=now.toLocaleDateString("fr-CA",{day:"numeric",month:"long",year:"numeric"})+
-      " · "+now.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
-    stateEl.innerHTML='<span class="sdot g"></span> En ligne';
-    timeEl.textContent=t;
-    urlEl.textContent="ti-lex.vercel.app";
-    urlEl.href="https://ti-lex.vercel.app";
-    errEl.textContent="Aucune erreur détectée. ✓";
-    errCnt.textContent="0 erreurs";
-    errCnt.style.color="var(--green)";
-    if(typeof pushNotif==="function")pushNotif("🚀","Déploiement terminé","ti-lex.vercel.app est en ligne · 0 erreur.","ok");
-  },1500);
+  if(logsEl)logsEl.innerHTML="";
+  try{
+    var data=await vercelCall({action:"listDeployments",limit:5});
+    var deps=(data.deployments||[]);
+    if(deps.length===0){
+      stateEl.innerHTML='<span class="sdot o"></span> Aucun déploiement';
+      timeEl.textContent="—";return;
+    }
+    var d=deps[0];
+    var st=d.state;
+    var dotClass=st==="READY"?"g":st==="ERROR"?"r":"o";
+    var label=st==="READY"?"En ligne":st==="ERROR"?"Erreur":st==="BUILDING"?"En cours…":"En attente";
+    stateEl.innerHTML='<span class="sdot '+dotClass+'"></span> '+label;
+    if(d.created){var dt=new Date(d.created);timeEl.textContent=dt.toLocaleDateString("fr-CA",{day:"numeric",month:"long",year:"numeric"})+" · "+dt.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});}
+    if(d.url){urlEl.textContent=d.url;urlEl.href="https://"+d.url;}
+    if(d.meta&&d.meta.branch&&branchEl)branchEl.textContent=d.meta.branch;
+    if(d.meta&&d.meta.message){
+      var commitEl=document.getElementById("deploy-commit");
+      if(commitEl)commitEl.textContent=(d.meta.sha||"")+" — "+d.meta.message;
+    }
+    if(st==="ERROR"&&logsEl){
+      try{
+        var logs=await vercelCall({action:"getBuildLogs",deploymentId:d.id});
+        if(logs.hasErrors&&logs.errors){
+          for(var i=0;i<logs.errors.length;i++){
+            var le=document.createElement("div");le.className="deploy-log-err";
+            le.textContent=logs.errors[i].text;
+            logsEl.appendChild(le);
+          }
+        }
+      }catch(e){}
+    }
+    if(logsEl&&logsEl.children.length===0){
+      logsEl.innerHTML='<div style="color:var(--green);font-family:Share Tech Mono,monospace;font-size:11px;">Aucune erreur détectée. ✓</div>';
+    }
+    if(deps.length>1){
+      var histEl=document.getElementById("deploy-history");
+      if(histEl){
+        histEl.innerHTML="";
+        for(var i=1;i<deps.length;i++){
+          var h=deps[i];var hst=h.state;
+          var hdot=hst==="READY"?"g":hst==="ERROR"?"r":"o";
+          var hd=document.createElement("div");hd.className="deploy-hist-row";
+          hd.innerHTML='<span class="sdot '+hdot+'" style="width:6px;height:6px;"></span> '+(h.meta&&h.meta.sha?h.meta.sha+" ":"")+(h.meta&&h.meta.message?escHtml(h.meta.message.substring(0,50)):"—");
+          histEl.appendChild(hd);
+        }
+      }
+    }
+  }catch(e){
+    stateEl.innerHTML='<span class="sdot r"></span> Erreur de connexion';
+    timeEl.textContent=escHtml(e.message);
+  }
+}
+async function studioVerifyBeforeDeploy(){
+  var resultsEl=document.getElementById("verify-results");
+  if(!resultsEl)return;
+  resultsEl.innerHTML='<div style="color:var(--orange);font-family:Share Tech Mono,monospace;font-size:11px;">⏳ Vérification en cours…</div>';
+  var issues=[];
+  try{
+    var data=await vercelCall({action:"listDeployments",limit:1});
+    var d=(data.deployments||[])[0];
+    if(d&&d.state==="ERROR"){
+      issues.push({severity:"error",msg:"Dernier déploiement en erreur"});
+      try{
+        var logs=await vercelCall({action:"getBuildLogs",deploymentId:d.id});
+        if(logs.errors){for(var i=0;i<logs.errors.length;i++)issues.push({severity:"error",msg:logs.errors[i].text});}
+      }catch(e){}
+    }else if(d&&d.state==="BUILDING"){
+      issues.push({severity:"warning",msg:"Un déploiement est en cours"});
+    }
+  }catch(e){issues.push({severity:"warning",msg:"Impossible de vérifier Vercel: "+e.message});}
+  if(ghConnected&&ghFiles.length>0){
+    var scanContainer=document.getElementById("scan-results");
+    var scanErrs=scanContainer?scanContainer.querySelectorAll(".scan-result.error"):[];
+    if(scanErrs.length>0)issues.push({severity:"error",msg:scanErrs.length+" erreur(s) de code détectée(s) dans le scanner"});
+  }
+  resultsEl.innerHTML="";
+  if(issues.length===0){
+    resultsEl.innerHTML='<div style="color:var(--green);font-family:Share Tech Mono,monospace;font-size:11px;">✅ Aucune erreur bloquante. Prêt pour déploiement!</div>';
+  }else{
+    for(var i=0;i<issues.length;i++){
+      var div=document.createElement("div");
+      div.style.cssText="font-family:Share Tech Mono,monospace;font-size:11px;padding:4px 0;color:"+(issues[i].severity==="error"?"var(--red)":"var(--orange)")+";";
+      div.textContent=(issues[i].severity==="error"?"🔴 ":"🟠 ")+issues[i].msg;
+      resultsEl.appendChild(div);
+    }
+  }
 }
 
 /* ── BARRE COMPOSITEUR FIXE ── */
