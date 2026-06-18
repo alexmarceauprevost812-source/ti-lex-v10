@@ -591,19 +591,28 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 
 /* ════════════════════════════════════════════════════════════
    PROJECTEUR — balayage lettre par lettre sur réponses agent
-   MODE NUIT : blanc → or flash → reste OR permanent
-   MODE JOUR : noir  → or flash → revient NOIR
+   MODE NUIT : blanc → or → RESTE OR + halo infini
+   MODE JOUR : noir  → or → revient NOIR
+   Vitesse lente, écriture fluide
    ════════════════════════════════════════════════════════════ */
-.proj-ltr{display:inline;color:var(--txt);animation:proj .5s ease-out forwards;}
-@keyframes proj{
-  0%{color:#FFF8E7}
-  35%{color:var(--or);text-shadow:0 0 10px var(--or)}
+.proj-ltr{display:inline;color:#FFF8E7;
+  animation:proj-sweep .8s ease-out forwards, proj-pulse 2.5s ease-in-out infinite;
+  animation-delay:var(--d,0ms),calc(var(--d,0ms) + .8s);}
+@keyframes proj-sweep{
+  0%{color:#FFF8E7;text-shadow:none}
+  40%{color:var(--or);text-shadow:0 0 14px var(--or),0 0 4px var(--or2)}
   100%{color:var(--or);text-shadow:none}
 }
-[data-theme="day"] .proj-ltr{animation-name:proj-day;}
-@keyframes proj-day{
-  0%{color:#0A0A0A}
-  35%{color:var(--or);text-shadow:0 0 10px var(--or)}
+@keyframes proj-pulse{
+  0%,100%{text-shadow:none}
+  50%{text-shadow:0 0 6px var(--or)}
+}
+[data-theme="day"] .proj-ltr{color:#0A0A0A;
+  animation:proj-sweep-day .8s ease-out forwards;
+  animation-delay:var(--d,0ms);}
+@keyframes proj-sweep-day{
+  0%{color:#0A0A0A;text-shadow:none}
+  40%{color:var(--or);text-shadow:0 0 14px var(--or),0 0 4px var(--or2)}
   100%{color:#0A0A0A;text-shadow:none}
 }
 
@@ -1401,15 +1410,15 @@ function escHtml(s){const d=document.createElement("div");d.textContent=s;return
 function projHtml(txt){
   var safe=escHtml(txt);
   var out="";var idx=0;
-  var speed=Math.max(3,Math.min(8,2400/Math.max(1,safe.length)));
+  var speed=Math.max(6,Math.min(15,3000/Math.max(1,safe.length)));
   for(var i=0;i<safe.length;i++){
     if(safe[i]==="&"){
       var end=safe.indexOf(";",i);
-      if(end!==-1){var ent=safe.slice(i,end+1);out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">'+ent+'</span>';idx++;i=end;continue;}
+      if(end!==-1){var ent=safe.slice(i,end+1);out+='<span class="proj-ltr" style="--d:'+(idx*speed)+'ms">'+ent+'</span>';idx++;i=end;continue;}
     }
     if(safe[i]==="\n"){out+="<br>";continue;}
-    if(safe[i]===" "){out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">&nbsp;</span>';idx++;continue;}
-    out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">'+safe[i]+'</span>';idx++;
+    if(safe[i]===" "){out+='<span class="proj-ltr" style="--d:'+(idx*speed)+'ms"> </span>';idx++;continue;}
+    out+='<span class="proj-ltr" style="--d:'+(idx*speed)+'ms">'+safe[i]+'</span>';idx++;
   }
   return out;
 }
