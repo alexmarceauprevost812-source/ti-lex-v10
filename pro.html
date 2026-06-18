@@ -848,6 +848,43 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 .cerv-editor textarea{min-height:120px;resize:vertical;font-family:'Share Tech Mono',monospace;font-size:12px;}
 .cerv-tags-input{font-family:'Share Tech Mono',monospace;font-size:11px;}
 
+/* ══ CONVERSATIONS PAGE ══ */
+.cvp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap;}
+.cvp-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+.cvp-tab{flex:1;padding:9px 18px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:15px;
+  letter-spacing:2px;cursor:pointer;background:transparent;border:none;color:var(--muted);transition:all .2s;}
+.cvp-tab:hover{background:rgba(255,106,0,.06);color:var(--txt);}
+.cvp-tab.active{background:rgba(255,106,0,.12);color:var(--orange);border-bottom:2px solid var(--orange);}
+.cvp-list{display:flex;flex-direction:column;gap:6px;}
+.cvp-card{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;transition:all .2s;position:relative;min-width:0;}
+.cvp-card:hover{border-color:var(--orange);background:rgba(255,106,0,.04);}
+.cvp-card-ico{font-size:20px;flex-shrink:0;width:36px;height:36px;border-radius:8px;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;}
+.cvp-card-body{flex:1;min-width:0;}
+.cvp-card-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.cvp-card-preview{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cvp-card-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+.cvp-card-menu{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;border:none;
+  background:var(--bg4);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:14px;transition:opacity .15s;border:1px solid var(--border);}
+.cvp-card:hover .cvp-card-menu{opacity:1;}
+.cvp-card-menu:hover{border-color:var(--orange);color:var(--orange);}
+.cvp-dropdown{position:absolute;right:10px;top:calc(50% + 18px);background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:20;display:none;}
+.cvp-dropdown.open{display:block;}
+.cvp-dd-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;
+  font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;color:var(--txt);transition:background .15s;}
+.cvp-dd-item:hover{background:rgba(255,106,0,.08);}
+.cvp-dd-item.danger{color:var(--red);}
+.cvp-group{margin-bottom:18px;}
+.cvp-group-hd{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--or);
+  padding:6px 0;margin-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.cvp-empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.cvp-empty-ico{font-size:36px;margin-bottom:10px;}
+.cvp-empty-txt{font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;}
 
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -962,6 +999,10 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
   </div>
 
+  <!-- CONVERSATIONS -->
+  <div class="sb-item" id="si-conversations" onclick="showTab('conversations')">
+    <span class="sb-icon">📋</span><span class="sb-label" data-txt="CONVERSATIONS"></span>
+  </div>
 
   <!-- CRÉER AGENT IA -->
   <div class="sb-item" onclick="openModal()">
@@ -1379,6 +1420,24 @@ Comment puis-je t'aider aujourd'hui?</div>
     </div>
   </div>
 
+  <!-- CONVERSATIONS PAGE -->
+  <div id="view-conversations" class="view">
+    <div class="cvp-header">
+      <div class="sec-title">📋 CONVER<span class="accent">SATIONS</span></div>
+      <button class="btn-orange" style="width:auto;padding:8px 18px;font-size:13px;" onclick="cvpCreate()">+ NOUVELLE</button>
+    </div>
+    <div class="cvp-tabs">
+      <button class="cvp-tab active" id="cvp-tab-chat" onclick="cvpSwitchTab('chat')">💬 CHAT</button>
+      <button class="cvp-tab" id="cvp-tab-project" onclick="cvpSwitchTab('project')">📁 PROJETS</button>
+    </div>
+    <div id="cvp-content">
+      <div class="cvp-empty" id="cvp-loading">
+        <div class="cvp-empty-ico">⏳</div>
+        <div class="cvp-empty-txt">Chargement des conversations...</div>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
@@ -1543,13 +1602,14 @@ document.getElementById("sidebar").classList.remove("collapsed");
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-conversations"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-conversations"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
+  if(name==="conversations")cvpLoad();
 }
 
 /* ── ANIMATION LETTRE PAR LETTRE SIDEBAR ── */
@@ -2887,6 +2947,229 @@ function composeAction(action){
     sendChat();
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   CONVERSATIONS PAGE — Supabase-backed CRUD
+   ══════════════════════════════════════════════════════ */
+var SB_REST="https://rnuripmfozlxenryxhdc.supabase.co/rest/v1";
+
+async function sbRest(path,opts){
+  opts=opts||{};
+  var tk=getToken();
+  var headers={"apikey":SB_ANON,"Authorization":"Bearer "+tk,"Content-Type":"application/json"};
+  if(opts.prefer)headers["Prefer"]=opts.prefer;
+  if(opts.range)headers["Range"]=opts.range;
+  var res=await fetch(SB_REST+path,{method:opts.method||"GET",headers:headers,body:opts.body?JSON.stringify(opts.body):undefined});
+  if(!res.ok){var err;try{err=await res.json();}catch(e){err={message:res.statusText};}throw new Error(err.message||err.error||"Erreur Supabase");}
+  var txt=await res.text();
+  if(!txt)return null;
+  return JSON.parse(txt);
+}
+
+var cvpTab="chat";
+var cvpConvs=[];
+var cvpProjects=[];
+var cvpActiveConvId=null;
+var cvpDropdownOpen=null;
+
+async function cvpLoad(){
+  var content=document.getElementById("cvp-content");
+  if(!content)return;
+  content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">⏳</div><div class="cvp-empty-txt">Chargement...</div></div>';
+  try{
+    cvpConvs=await sbRest("/conversations?select=id,title,type,project_id,last_preview,updated_at,created_at&order=updated_at.desc")||[];
+    cvpProjects=await sbRest("/projects?select=id,name,created_at&order=created_at.desc")||[];
+  }catch(e){
+    content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">⚠️</div><div class="cvp-empty-txt">'+escHtml(e.message)+'</div></div>';
+    return;
+  }
+  cvpRender();
+}
+
+function cvpRender(){
+  var content=document.getElementById("cvp-content");if(!content)return;
+  var filtered=cvpConvs.filter(function(c){return c.type===cvpTab;});
+  if(cvpTab==="chat"){
+    if(filtered.length===0){
+      content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">💬</div><div class="cvp-empty-txt">Aucune conversation chat.<br>Clique + NOUVELLE pour commencer.</div></div>';
+      return;
+    }
+    var html='<div class="cvp-list">';
+    for(var i=0;i<filtered.length;i++){html+=cvpCardHtml(filtered[i]);}
+    html+='</div>';
+    content.innerHTML=html;
+  }else{
+    var html2="";
+    var ungrouped=filtered.filter(function(c){return !c.project_id;});
+    var grouped={};
+    for(var j=0;j<filtered.length;j++){
+      var c=filtered[j];
+      if(c.project_id){
+        if(!grouped[c.project_id])grouped[c.project_id]=[];
+        grouped[c.project_id].push(c);
+      }
+    }
+    html2+='<div style="margin-bottom:12px;"><button class="btn-ghost" style="font-size:12px;" onclick="cvpCreateProject()">+ NOUVEAU PROJET</button></div>';
+    for(var p=0;p<cvpProjects.length;p++){
+      var proj=cvpProjects[p];
+      var pConvs=grouped[proj.id]||[];
+      html2+='<div class="cvp-group"><div class="cvp-group-hd"><span>📁</span> '+escHtml(proj.name)+' <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);margin-left:auto;">'+pConvs.length+' conv</span><button class="btn-ghost" style="font-size:10px;padding:4px 10px;margin-left:8px;" onclick="cvpCreateInProject(\''+proj.id+'\')">+ conv</button></div>';
+      if(pConvs.length===0){html2+='<div class="cvp-empty-txt" style="padding:10px;font-size:10px;">Aucune conversation dans ce projet.</div>';}
+      else{html2+='<div class="cvp-list">';for(var k=0;k<pConvs.length;k++){html2+=cvpCardHtml(pConvs[k]);}html2+='</div>';}
+      html2+='</div>';
+    }
+    if(ungrouped.length>0){
+      html2+='<div class="cvp-group"><div class="cvp-group-hd"><span>📋</span> SANS PROJET</div><div class="cvp-list">';
+      for(var u=0;u<ungrouped.length;u++){html2+=cvpCardHtml(ungrouped[u]);}
+      html2+='</div></div>';
+    }
+    if(cvpProjects.length===0&&ungrouped.length===0){
+      html2+='<div class="cvp-empty"><div class="cvp-empty-ico">📁</div><div class="cvp-empty-txt">Aucun projet.<br>Crée un projet pour organiser tes conversations.</div></div>';
+    }
+    content.innerHTML=html2;
+  }
+}
+
+function cvpCardHtml(c){
+  var date=new Date(c.updated_at||c.created_at);
+  var dateStr=date.toLocaleDateString("fr-CA",{day:"numeric",month:"short"})+" · "+date.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+  var preview=c.last_preview?escHtml(c.last_preview).slice(0,80):"Pas de messages encore";
+  var ico=c.type==="project"?"📁":"💬";
+  return '<div class="cvp-card" onclick="cvpOpen(\''+c.id+'\')"><div class="cvp-card-ico">'+ico+'</div><div class="cvp-card-body"><div class="cvp-card-title">'+escHtml(c.title||"Conversation")+'</div><div class="cvp-card-preview">'+preview+'</div><div class="cvp-card-date">'+dateStr+'</div></div><button class="cvp-card-menu" onclick="event.stopPropagation();cvpToggleMenu(this,\''+c.id+'\')">⋯</button><div class="cvp-dropdown" id="cvp-dd-'+c.id+'"><div class="cvp-dd-item" onclick="event.stopPropagation();cvpRename(\''+c.id+'\')">✎ Renommer</div><div class="cvp-dd-item danger" onclick="event.stopPropagation();cvpDelete(\''+c.id+'\')">✕ Supprimer</div></div></div>';
+}
+
+function cvpSwitchTab(tab){
+  cvpTab=tab;
+  document.getElementById("cvp-tab-chat").classList.toggle("active",tab==="chat");
+  document.getElementById("cvp-tab-project").classList.toggle("active",tab==="project");
+  cvpRender();
+}
+
+function cvpToggleMenu(btn,id){
+  var dd=document.getElementById("cvp-dd-"+id);if(!dd)return;
+  if(cvpDropdownOpen&&cvpDropdownOpen!==dd){cvpDropdownOpen.classList.remove("open");}
+  dd.classList.toggle("open");
+  cvpDropdownOpen=dd.classList.contains("open")?dd:null;
+}
+document.addEventListener("click",function(e){
+  if(cvpDropdownOpen&&!e.target.closest(".cvp-card-menu")&&!e.target.closest(".cvp-dropdown")){
+    cvpDropdownOpen.classList.remove("open");cvpDropdownOpen=null;
+  }
+});
+
+async function cvpCreate(){
+  var type=cvpTab;
+  var projId=null;
+  if(type==="project"&&cvpProjects.length>0){
+    var names=cvpProjects.map(function(p){return p.name;});
+    var choice=prompt("Projet pour la conversation?\n"+names.map(function(n,i){return (i+1)+". "+n;}).join("\n")+"\n\n(Tapez le numéro, ou laissez vide pour sans projet)");
+    if(choice===null)return;
+    var idx=parseInt(choice)-1;
+    if(idx>=0&&idx<cvpProjects.length)projId=cvpProjects[idx].id;
+  }
+  try{
+    var row=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{title:"Nouvelle conversation",type:type,project_id:projId}});
+    if(row&&row[0]){cvpActiveConvId=row[0].id;cvpOpenInChat(row[0].id);}
+    else{cvpLoad();}
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+async function cvpCreateInProject(projId){
+  try{
+    var row=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{title:"Nouvelle conversation",type:"project",project_id:projId}});
+    if(row&&row[0]){cvpOpenInChat(row[0].id);}
+    else{cvpLoad();}
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+async function cvpCreateProject(){
+  var name=prompt("Nom du nouveau projet:");
+  if(!name)return;
+  try{
+    await sbRest("/projects",{method:"POST",prefer:"return=minimal",body:{name:name}});
+    cvpLoad();
+    if(typeof pushNotif==="function")pushNotif("📁","Projet créé",name,"ok");
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+async function cvpOpen(id){
+  cvpOpenInChat(id);
+}
+
+async function cvpOpenInChat(id){
+  cvpActiveConvId=id;
+  showTab("chat");showSub("convos");
+  var msgs=document.getElementById("chat-msgs");
+  msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a"><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div></div>';
+  try{
+    var rows=await sbRest("/messages?conversation_id=eq."+id+"&select=id,role,content,created_at&order=created_at.asc")||[];
+    chatHistory=[];
+    msgs.innerHTML="";
+    if(rows.length===0){
+      msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Conversation ouverte. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+    }else{
+      for(var i=0;i<rows.length;i++){
+        var r=rows[i].role==="user"?"user":"assistant";
+        chatHistory.push({role:r,content:rows[i].content});
+        addMsg(rows[i].role==="user"?"u":"a",rows[i].content);
+      }
+    }
+  }catch(e){
+    msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Erreur chargement: '+escHtml(e.message)+'</div><div class="cmsg-time">Maintenant</div></div></div>';
+  }
+}
+
+async function cvpRename(id){
+  if(cvpDropdownOpen){cvpDropdownOpen.classList.remove("open");cvpDropdownOpen=null;}
+  var c=cvpConvs.find(function(x){return x.id===id;});
+  var title=prompt("Nouveau titre:",c?c.title:"");
+  if(!title)return;
+  try{
+    await sbRest("/conversations?id=eq."+id,{method:"PATCH",prefer:"return=minimal",body:{title:title}});
+    cvpLoad();
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+async function cvpDelete(id){
+  if(cvpDropdownOpen){cvpDropdownOpen.classList.remove("open");cvpDropdownOpen=null;}
+  if(!confirm("Supprimer cette conversation et tous ses messages?"))return;
+  try{
+    await sbRest("/messages?conversation_id=eq."+id,{method:"DELETE"});
+    await sbRest("/conversations?id=eq."+id,{method:"DELETE"});
+    if(cvpActiveConvId===id){cvpActiveConvId=null;chatHistory=[];}
+    cvpLoad();
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+/* ── HOOK sendChat to persist in Supabase ── */
+var _origSendChat=sendChat;
+sendChat=async function(){
+  var inp=document.getElementById("chat-in");
+  var txt=inp.value.trim();
+  if(!txt)return;
+  if(!cvpActiveConvId){
+    try{
+      var row=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{title:txt.slice(0,40),type:"chat"}});
+      if(row&&row[0])cvpActiveConvId=row[0].id;
+    }catch(e){}
+  }
+  var convId=cvpActiveConvId;
+  await _origSendChat();
+  if(convId&&chatHistory.length>=2){
+    var last2=chatHistory.slice(-2);
+    try{
+      var userMsg=last2[0];var agentMsg=last2[1];
+      if(userMsg.role==="user"){
+        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:convId,role:"user",content:userMsg.content}});
+      }
+      if(agentMsg.role==="assistant"){
+        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:convId,role:"assistant",content:agentMsg.content}});
+        await sbRest("/conversations?id=eq."+convId,{method:"PATCH",prefer:"return=minimal",body:{last_preview:agentMsg.content.slice(0,120),updated_at:new Date().toISOString()}});
+      }
+    }catch(e){}
+  }
+};
+
 </script>
 </body>
 </html>
