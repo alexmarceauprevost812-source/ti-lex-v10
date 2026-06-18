@@ -870,6 +870,26 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
 @media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px;}}
 
+/* FAB — Nouvelle conversation — Mode Pro */
+.fab-new-conv-pro{position:fixed;bottom:88px;right:24px;z-index:900;display:none;
+  align-items:center;gap:8px;padding:13px 20px;border-radius:50px;
+  background:#101015;color:#f0e8d8;border:1px solid #23232c;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .15s ease;}
+.fab-new-conv-pro.visible{display:flex;}
+.fab-new-conv-pro .fab-icon{font-size:18px;font-weight:300;line-height:1;color:#ff7f27;}
+.fab-new-conv-pro .fab-label{color:#f0e8d8;}
+.fab-new-conv-pro:hover{background:#ff7f27;border-color:#ff7f27;color:#fff;
+  box-shadow:0 6px 20px rgba(255,127,39,.35);transform:translateY(-1px);}
+.fab-new-conv-pro:hover .fab-icon,.fab-new-conv-pro:hover .fab-label{color:#fff;}
+.fab-new-conv-pro:active{transform:translateY(0);box-shadow:0 2px 8px rgba(255,127,39,.2);}
+[data-theme="day"] .fab-new-conv-pro{background:#1a1a1a;color:#f0e8d8;border-color:#333;}
+[data-theme="day"] .fab-new-conv-pro:hover{background:#ff7f27;border-color:#ff7f27;color:#fff;}
+@media(max-height:500px){.fab-new-conv-pro{display:none!important;}}
+@media(max-width:680px){.fab-new-conv-pro{right:16px;bottom:80px;padding:10px 16px;font-size:12px;}}
+
 /* ══ ACTIVE SUB-ITEM ══ */
 .sb-sub-item.active{color:var(--orange)!important;font-weight:700;}
 
@@ -1774,6 +1794,11 @@ function showTab(name){
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings")updateSettingsConnStatus();
+  var fab=document.getElementById("fab-new-conv-pro");
+  if(fab){
+    if(name==="chat"||name==="conversations")fab.classList.add("visible");
+    else fab.classList.remove("visible");
+  }
 }
 
 /* ── ANIMATION LETTRE PAR LETTRE SIDEBAR ── */
@@ -3184,7 +3209,8 @@ var TRANSLATIONS={
     "save":"Sauvegarder","cancel":"Annuler","confirm":"Confirmer","delete":"Supprimer",
     "close":"Fermer","open":"Ouvrir","loading":"Chargement…","error":"Erreur","success":"Succès",
     "scan-btn":"SCANNER LE PROJET","code-btn":"COMMENCER À CODER","effacer":"EFFACER",
-    "delete-confirm":"Supprimer?","codex-ph":"Décris ce que tu veux coder…"
+    "delete-confirm":"Supprimer?","codex-ph":"Décris ce que tu veux coder…",
+    "new-conv-fab":"NOUVELLE"
   },
   en:{
     "settings":"SETTINGS","theme-hd":"🌗 THEME","theme-mode":"MODE","theme-night":"NIGHT","theme-day":"DAY",
@@ -3202,7 +3228,8 @@ var TRANSLATIONS={
     "save":"Save","cancel":"Cancel","confirm":"Confirm","delete":"Delete",
     "close":"Close","open":"Open","loading":"Loading…","error":"Error","success":"Success",
     "scan-btn":"SCAN PROJECT","code-btn":"START CODING","effacer":"CLEAR",
-    "delete-confirm":"Delete?","codex-ph":"Describe what you want to code…"
+    "delete-confirm":"Delete?","codex-ph":"Describe what you want to code…",
+    "new-conv-fab":"NEW"
   }
 };
 var currentLang=localStorage.getItem("tilex-al-lang")||"fr";
@@ -3840,5 +3867,12 @@ sendChat=async function(){
 };
 
 </script>
+
+<!-- FAB Nouvelle conversation — Interface Pro -->
+<button id="fab-new-conv-pro" class="fab-new-conv-pro" onclick="newConversation();showTab('chat');" aria-label="Nouvelle conversation">
+  <span class="fab-icon">+</span>
+  <span class="fab-label" data-i18n="new-conv-fab">NOUVELLE</span>
+</button>
+
 </body>
 </html>
