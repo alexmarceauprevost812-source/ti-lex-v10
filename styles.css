@@ -280,6 +280,8 @@ body.menu-closed #menuToggleMobile{display:flex}
   animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .topbar-right{margin-left:auto}
+.topbar-clock{font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:1.15rem;font-weight:600;color:#E8C24A;letter-spacing:0.05em;}
+html.light .topbar-clock{color:#1A1A1A;}
 
 /* ---- Toggle pilule ---- */
 .pill-toggle{
@@ -3637,3 +3639,12 @@ ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
   color:#ff6600;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;
   cursor:pointer;transition:all .2s}
 .interface-switch-btn:hover{border-color:#ff6600;background:rgba(255,106,0,.12)}
+
+/* ══ GOLD PROJECTION ANIMATION (app) ══ */
+.proj-char-app{display:inline;color:#FFFFFF;animation:projRevealApp 0.35s ease forwards;}
+@keyframes projRevealApp{
+0%{color:#FFFFFF;text-shadow:0 0 10px #FFFFFF;}
+50%{color:#F3A020;text-shadow:0 0 18px #F3A020;}
+100%{color:#E8C24A;text-shadow:0 0 4px rgba(232,194,74,.27);}
+}
+html.light .proj-char-app{color:#1A1A1A;animation:none;text-shadow:none;}

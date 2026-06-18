@@ -112,7 +112,8 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .notif-badge{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;
   background:var(--orange);font-family:'Share Tech Mono',monospace;font-size:9px;color:#fff;
   display:flex;align-items:center;justify-content:center;font-weight:700;}
-.clock{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--or);letter-spacing:2px;opacity:.75;}
+.clock{font-family:'Share Tech Mono',monospace;font-size:1.15rem;font-weight:600;color:#E8C24A;letter-spacing:0.05em;}
+[data-theme="day"] .clock{color:#1A1A1A;}
 .theme-btn{width:37px;height:37px;border-radius:50%;border:1px solid var(--border);
   background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;}
 .theme-btn:hover{border-color:var(--orange);}
@@ -589,6 +590,20 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .cx-typing{display:flex;gap:4px;padding:6px 0;}
 .cx-typing .tyd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:tybounce .6s ease-in-out infinite alternate;}
 .cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
+.cx-scan-bar{display:flex;gap:8px;padding:8px 16px;align-items:center;}
+.cx-scan-btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:8px 18px;}
+.cx-scan-results{padding:0 16px 8px;max-height:320px;overflow-y:auto;}
+.cx-scan-summary{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--or);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.cx-scan-tree{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--or);line-height:1.6;}
+.cx-tree-folder{cursor:pointer;padding:1px 0;user-select:none;}
+.cx-tree-folder:hover{color:var(--orange);}
+.cx-tree-file{padding:1px 0;padding-left:16px;color:var(--muted);}
+.cx-tree-file:hover{color:var(--or);}
+.cx-tree-children{padding-left:16px;}
+.cx-tree-children.collapsed{display:none;}
+.cx-scan-progress{padding:12px 16px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--or);}
+.cx-scan-progress-bar{height:3px;background:var(--bg3);border-radius:2px;margin-top:6px;overflow:hidden;}
+.cx-scan-progress-fill{height:100%;background:var(--orange);border-radius:2px;transition:width .3s;width:0%;}
 .codex-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;opacity:.5;}
 .codex-empty-ico{font-size:36px;}
 .codex-empty-txt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.8;letter-spacing:.5px;}
@@ -765,6 +780,16 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   60%{color:var(--or);text-shadow:0 0 18px var(--or),0 0 6px var(--or2)}
   100%{color:#0A0A0A;text-shadow:none}
 }
+
+.stream-active{color:#FFFFFF;transition:color .3s;}
+[data-theme="day"] .stream-active{color:#0A0A0A;}
+.proj-char{display:inline;color:#FFFFFF;animation:projectionReveal 0.35s ease forwards;}
+@keyframes projectionReveal{
+0%{color:#FFFFFF;text-shadow:0 0 8px #FFFFFF;}
+50%{color:#F3A020;text-shadow:0 0 16px #F3A020;}
+100%{color:#E8C24A;text-shadow:0 0 4px rgba(232,194,74,.27);}
+}
+[data-theme="day"] .proj-char{color:#0A0A0A;animation:none;text-shadow:none;}
 
 /* ════════════════════════════════════════════════════════════
    data-interface="serious" — animations calmées, RIEN caché
@@ -1046,7 +1071,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <div class="sb-sub-inner">
       <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')">Conversations</div>
       <div class="sb-sub-item" id="sub-favs" onclick="showSub('favs')">Favoris</div>
-      <div class="sb-sub-item" id="sub-projs" onclick="showSub('projs')">Projet</div>
+      <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
       <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
     </div>
   </div>
@@ -1054,11 +1079,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <!-- CODEX -->
   <div class="sb-item" id="si-codex" onclick="showTab('codex')">
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
-  </div>
-
-  <!-- STUDIO -->
-  <div class="sb-item" id="si-studio" onclick="showTab('studio')">
-    <span class="sb-icon">🚀</span><span class="sb-label" data-txt="STUDIO"></span>
   </div>
 
   <!-- CRÉER AGENT IA -->
@@ -1341,6 +1361,14 @@ Comment puis-je t'aider aujourd'hui?</div>
         <button class="gh-btn primary" id="gh-push-btn" onclick="ghPushCode()" style="display:none;">⬆ PUSH</button>
       </div>
       <div class="gh-files" id="gh-files"></div>
+      <div class="cx-scan-bar" id="cx-scan-bar">
+        <button class="btn-orange cx-scan-btn" id="cx-scan-btn" onclick="cxScanProject()">SCANNER LE PROJET</button>
+        <button class="btn-orange cx-scan-btn" id="cx-code-btn" onclick="cxStartCoding()" style="display:none;">COMMENCER À CODER</button>
+      </div>
+      <div class="cx-scan-results" id="cx-scan-results" style="display:none;">
+        <div class="cx-scan-summary" id="cx-scan-summary"></div>
+        <div class="cx-scan-tree" id="cx-scan-tree"></div>
+      </div>
       <button class="cx-clear-btn" onclick="clearCx()">EFFACER</button>
       <div class="codex-feed" id="codex-feed">
         <div class="codex-empty" id="codex-empty">
@@ -1863,6 +1891,58 @@ async function readSSE(res){
   return full;
 }
 
+async function readSSEStream(res,onDelta){
+  var reader=res.body.getReader();
+  var decoder=new TextDecoder();
+  var full="";var buf="";
+  while(true){
+    var chunk=await reader.read();
+    if(chunk.done)break;
+    buf+=decoder.decode(chunk.value,{stream:true});
+    var lines=buf.split("\n");
+    buf=lines.pop()||"";
+    for(var i=0;i<lines.length;i++){
+      var line=lines[i].trim();
+      if(!line.startsWith("data: "))continue;
+      var payload=line.slice(6);
+      if(payload==="[DONE]")continue;
+      try{
+        var evt=JSON.parse(payload);
+        if(evt.type==="content_block_delta"&&evt.delta&&evt.delta.text){
+          full+=evt.delta.text;
+          if(onDelta)onDelta(evt.delta.text,full);
+        }
+      }catch(e){}
+    }
+  }
+  return full;
+}
+
+var _streamQueue=[];var _streamBusy=false;var _streamAbort=false;
+async function typeStream(container,queue){
+  while(queue.length>0){
+    if(_streamAbort){container.textContent+=queue.join("");queue.length=0;break;}
+    container.textContent+=queue.shift();
+    container.closest(".chat-msgs,.codex-feed")&&(container.closest(".chat-msgs,.codex-feed").scrollTop=container.closest(".chat-msgs,.codex-feed").scrollHeight);
+    await new Promise(function(r){setTimeout(r,18);});
+  }
+}
+
+function applyGoldProjection(container){
+  var isNight=document.documentElement.getAttribute("data-theme")!=="day";
+  if(!isNight){return;}
+  var text=container.textContent;
+  if(!text||text.length>5000)return;
+  var html="";
+  for(var i=0;i<text.length;i++){
+    var ch=text[i];
+    if(ch==="\n"){html+="<br>";continue;}
+    if(ch===" "){html+='<span class="proj-char" style="animation-delay:'+(i*22)+'ms">&nbsp;</span>';continue;}
+    html+='<span class="proj-char" style="animation-delay:'+(i*22)+'ms">'+escHtml(ch)+'</span>';
+  }
+  container.innerHTML=html;
+}
+
 /* ── CHAT ── */
 let chatBusy=false;
 let chatHistory=[];
@@ -1898,9 +1978,35 @@ async function sendChat(){
       try{const errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
       addMsg("a",errMsg);
     }else{
-      const reply=await readSSE(res);
+      var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+      var bbl=document.createElement("div");bbl.className="cmsg a";
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-time">'+t+'</div></div>';
+      msgs.appendChild(bbl);
+      var bblText=bbl.querySelector(".cmsg-bbl");
+      bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"":"#FFFFFF";
+      var queue=[];var streaming=true;
+      async function drainQueue(){
+        while(streaming||queue.length>0){
+          if(queue.length>0){
+            bblText.textContent+=queue.shift();
+            msgs.scrollTop=msgs.scrollHeight;
+            await new Promise(function(r){setTimeout(r,18);});
+          }else{
+            await new Promise(function(r){setTimeout(r,30);});
+          }
+        }
+      }
+      var drain=drainQueue();
+      var reply=await readSSEStream(res,function(delta){
+        for(var ci=0;ci<delta.length;ci++)queue.push(delta[ci]);
+      });
+      streaming=false;
+      await drain;
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
-      addMsg("a",reply||"(réponse vide)");
+      bblText.classList.remove("stream-active");
+      if(document.documentElement.getAttribute("data-theme")!=="day"){
+        setTimeout(function(){applyGoldProjection(bblText);},4000);
+      }
     }
   }catch(e){td.remove();addMsg("a","Erreur: "+e.message);}
   chatBusy=false;
@@ -2492,6 +2598,126 @@ function typeCode(txt,el,cb){el.textContent="";var i=0;function t(){if(i<txt.len
 function clearCx(){
   document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   codexHistory=[];genBusy=false;
+}
+
+/* ── CODEX PROJECT SCAN ── */
+var cxScanData=null;
+async function cxScanProject(){
+  if(!ghConnected){cxAddReply("Connecte GitHub d'abord via le bouton CONNECTER ci-haut.");return;}
+  var resultsEl=document.getElementById("cx-scan-results");
+  var treeEl=document.getElementById("cx-scan-tree");
+  var summaryEl=document.getElementById("cx-scan-summary");
+  var scanBtn=document.getElementById("cx-scan-btn");
+  var codeBtn=document.getElementById("cx-code-btn");
+  scanBtn.disabled=true;scanBtn.textContent="ANALYSE EN COURS...";
+  resultsEl.style.display="block";
+  treeEl.innerHTML='<div class="cx-scan-progress">Analyse du projet...<div class="cx-scan-progress-bar"><div class="cx-scan-progress-fill" id="cx-scan-fill" style="width:20%;"></div></div></div>';
+  summaryEl.innerHTML="";
+  try{
+    var data=await ghProxyCall({action:"listFiles",path:""});
+    document.getElementById("cx-scan-fill")&&(document.getElementById("cx-scan-fill").style.width="80%");
+    var tree=data.tree||data;
+    if(!Array.isArray(tree)){tree=[];}
+    cxScanData=tree;
+    var stats=cxAnalyzeTree(tree);
+    summaryEl.innerHTML="<b>"+stats.files+"</b> fichiers · <b>"+stats.folders+"</b> dossiers · Langages: <b>"+stats.langs.join(", ")+"</b>";
+    treeEl.innerHTML="";
+    var treeHtml=cxBuildTree(tree);
+    treeEl.innerHTML=treeHtml;
+    document.getElementById("cx-scan-fill")&&(document.getElementById("cx-scan-fill").style.width="100%");
+    codeBtn.style.display="inline-flex";
+    scanBtn.textContent="RE-SCANNER";scanBtn.disabled=false;
+  }catch(e){
+    treeEl.innerHTML='<div style="color:var(--red);padding:8px;">Erreur: '+escHtml(e.message)+'</div>';
+    scanBtn.textContent="SCANNER LE PROJET";scanBtn.disabled=false;
+  }
+}
+
+function cxAnalyzeTree(tree){
+  var files=0;var folderSet={};var exts={};
+  for(var i=0;i<tree.length;i++){
+    var p=tree[i].path||"";
+    var slash=p.lastIndexOf("/");
+    if(slash>0)folderSet[p.slice(0,slash)]=true;
+    files++;
+    var dot=p.lastIndexOf(".");if(dot>0)exts[p.slice(dot+1)]=true;
+  }
+  var folders=Object.keys(folderSet).length;
+  var langMap={js:"JavaScript",ts:"TypeScript",html:"HTML",css:"CSS",py:"Python",sql:"SQL",json:"JSON",md:"Markdown",sh:"Bash",yml:"YAML",yaml:"YAML",jsx:"React",tsx:"React TS"};
+  var langs=[];
+  for(var ext in exts){if(langMap[ext])langs.push(langMap[ext]);else if(ext.length<=5)langs.push(ext.toUpperCase());}
+  if(langs.length===0)langs.push("N/A");
+  if(langs.length>6)langs=langs.slice(0,6);
+  return{files:files,folders:folders,langs:langs};
+}
+
+function cxBuildTree(tree){
+  var root={};
+  for(var i=0;i<tree.length;i++){
+    var parts=(tree[i].path||"").split("/");
+    var node=root;
+    for(var j=0;j<parts.length;j++){
+      if(j<parts.length-1){
+        if(!node[parts[j]])node[parts[j]]={_isDir:true};
+        node=node[parts[j]];
+      }else{
+        node[parts[j]]={_isFile:true,_path:tree[i].path};
+      }
+    }
+  }
+  return cxRenderNode(root,"",0);
+}
+
+function cxRenderNode(node,prefix,depth){
+  var html="";var dirs=[];var files=[];
+  for(var key in node){
+    if(key==="_isDir"||key==="_isFile"||key==="_path")continue;
+    if(node[key]._isFile)files.push(key);
+    else dirs.push(key);
+  }
+  dirs.sort();files.sort();
+  for(var d=0;d<dirs.length;d++){
+    var id="cx-tree-"+Date.now()+"-"+d+"-"+depth;
+    html+='<div class="cx-tree-folder" onclick="this.nextElementSibling.classList.toggle(\'collapsed\');this.querySelector(\'span\').textContent=this.nextElementSibling.classList.contains(\'collapsed\')?\'▶\':\'▼\'"><span>▼</span> 📁 '+escHtml(dirs[d])+'</div>';
+    html+='<div class="cx-tree-children">'+cxRenderNode(node[dirs[d]],prefix+dirs[d]+"/",depth+1)+'</div>';
+  }
+  for(var f=0;f<files.length;f++){
+    var path=node[files[f]]._path||prefix+files[f];
+    html+='<div class="cx-tree-file" onclick="cxScanOpenFile(\''+escHtml(path).replace(/'/g,"\\'")+'\')">📄 '+escHtml(files[f])+'</div>';
+  }
+  return html;
+}
+
+function cxScanOpenFile(path){
+  if(typeof ghOpenFile==="function")ghOpenFile(path);
+}
+
+function cxStartCoding(){
+  if(!cxScanData){cxAddReply("Scanne le projet d'abord.");return;}
+  var scanContext="Arbre du projet ti-lex-v10:\n";
+  for(var i=0;i<cxScanData.length;i++){
+    scanContext+=(cxScanData[i].type==="tree"?"[DIR] ":"      ")+cxScanData[i].path+"\n";
+    if(i>200){scanContext+="... et "+(cxScanData.length-i)+" autres fichiers\n";break;}
+  }
+  codexHistory=[{role:"user",content:"[CONTEXTE PROJET]\n"+scanContext+"\n[FIN CONTEXTE]\nJe suis prêt à coder. Dis-moi ce que tu vois dans le projet."}];
+  cxAddUser("[Scan du projet injecté comme contexte]");
+  cxAddTyping();
+  genBusy=true;
+  var sysPrompt="Tu es le Codex de ti-lex-AL. Le scan du projet a été chargé. Tu connais la structure complète. Aide l'usager à coder, modifier ou expliquer le code du projet. Réponds en français québécois.";
+  (async function(){
+    try{
+      var tk=getToken();
+      var h={"Content-Type":"application/json"};
+      if(tk)h["Authorization"]="Bearer "+tk;
+      var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,messages:codexHistory.slice(-10)})});
+      cxRemoveTyping();
+      if(!res.ok){var err=await res.json().catch(function(){return{};});cxAddReply(err.error||"Erreur.");genBusy=false;return;}
+      var reply=await readSSE(res);
+      codexHistory.push({role:"assistant",content:reply});
+      cxAddReply(reply||"(réponse vide)");
+    }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
+    genBusy=false;
+  })();
 }
 
 /* ── GITHUB INTEGRATION (via Edge Function github-proxy) ── */

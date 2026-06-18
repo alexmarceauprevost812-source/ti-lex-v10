@@ -3327,6 +3327,10 @@ async function sendMessage() {
     if (body._avatar) body._avatar._setSpeaking(false);
     if (body._msgWrap) body._msgWrap.classList.remove("responding");
     renderAssistant(body, full);
+    if (!document.documentElement.classList.contains("light")) {
+      body.style.color = "#FFFFFF";
+      setTimeout(function(){ applyGoldProjectionApp(body); }, 4000);
+    }
     state.history.push({ role: "assistant", content: full });
     stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
@@ -8110,5 +8114,39 @@ document.addEventListener("mousemove", (e) => {
     if (p) p.style.transform = `translate(calc(-50% + ${Math.cos(a)*d}px), calc(-50% + ${Math.sin(a)*d}px))`;
   });
 });
+
+/* ── Topbar clock ── */
+(function initClock(){
+  var el=document.getElementById("topbar-clock");
+  if(!el)return;
+  function tick(){el.textContent=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit",second:"2-digit"});}
+  setInterval(tick,1000);tick();
+})();
+
+/* ── Gold projection animation (night mode) ── */
+function applyGoldProjectionApp(container) {
+  if (document.documentElement.classList.contains("light")) return;
+  var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+  var textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+  var idx = 0;
+  textNodes.forEach(function(tn) {
+    if (!tn.textContent.trim()) return;
+    var parent = tn.parentNode;
+    if (parent.closest("pre,.chat-code-block,.chat-code-head,.mermaid-wrap")) return;
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < tn.textContent.length; i++) {
+      var ch = tn.textContent[i];
+      var span = document.createElement("span");
+      span.className = "proj-char-app";
+      span.style.animationDelay = (idx * 22) + "ms";
+      span.textContent = ch;
+      frag.appendChild(span);
+      idx++;
+    }
+    parent.replaceChild(frag, tn);
+  });
+  container.style.color = "";
+}
 
 console.log("ti-lex-AL v10 prêt — conforme Loi 25 du Québec.");
