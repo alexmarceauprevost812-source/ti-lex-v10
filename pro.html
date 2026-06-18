@@ -377,6 +377,14 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .ag-ico.dark{background:var(--bg4);border:1px solid var(--border);}
 .ag-ico.has-media{padding:0;overflow:hidden;background:#000;}
 .ag-ico img,.ag-ico video{width:100%;height:100%;object-fit:cover;border-radius:9px;display:block;}
+.ag-master-logo{background:#0a0a0a!important;border:2px solid #ffcf4a;overflow:hidden;
+  box-shadow:0 0 12px rgba(255,207,74,.3),0 0 24px rgba(255,127,39,.15);
+  animation:haloMaster 3s ease-in-out infinite alternate;}
+.ag-master-logo img{object-fit:contain!important;padding:3px;box-sizing:border-box;}
+@keyframes haloMaster{
+  from{box-shadow:0 0 10px rgba(255,207,74,.25),0 0 20px rgba(255,127,39,.1);}
+  to{box-shadow:0 0 18px rgba(255,207,74,.5),0 0 36px rgba(255,127,39,.25);}
+}
 /* ── UPLOAD AVATAR AGENT (photo / petite vidéo animée) ── */
 .avatar-upload{display:flex;align-items:center;gap:12px;padding:10px;border:1px dashed var(--border);
   border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:8px;}
@@ -1210,7 +1218,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 
   <!-- COMPTE (MENU) -->
   <div id="view-dash" class="view active">
-    <div class="acct-profile" style="margin-top:8px;">
+    <div class="acct-profile" style="margin-top:20px;">
       <div class="acct-avatar">👤</div>
       <div class="acct-info">
         <div class="acct-name">TI-LEX-AL · <span class="accent">MASTER</span></div>
@@ -1224,7 +1232,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="card-body">
         <div class="agents-grid" id="agents-grid">
           <div class="ag-card master">
-            <div class="ag-top"><div class="ag-ico gold">⚡</div>
+            <div class="ag-top"><div class="ag-ico gold ag-master-logo"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
               <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
             </div>
