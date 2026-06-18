@@ -450,6 +450,9 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .cmsg-bbl.a{background:none;border:none;color:var(--txt);padding:4px 0;}
 [data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;}
 [data-theme="day"] .cmsg-bbl.u{background:rgba(255,106,0,.1);border-color:rgba(255,106,0,.18);}
+.cmsg-actions{display:flex;gap:6px;margin-top:4px;}
+.cmsg-act-btn{border:1px solid var(--border);background:var(--bg3);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
+.cmsg-act-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,106,0,.06);}
 .cmsg-time{font-size:8px;opacity:.3;margin-top:3px;font-family:'Share Tech Mono',monospace;}
 .cmsg-typing{display:flex;flex-direction:column;align-items:flex-start;gap:6px;align-self:flex-start;}
 .cmsg-typing .cmsg-ty-avatar{width:28px;height:28px;border-radius:8px;overflow:hidden;}
@@ -949,11 +952,11 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 .cvp-card-preview{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cvp-card-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
-.cvp-card-menu{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;border:none;
+.cvp-card-del{position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:0;border:none;
   background:var(--bg4);color:var(--muted);width:26px;height:26px;border-radius:6px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:14px;transition:opacity .15s;border:1px solid var(--border);}
-.cvp-card:hover .cvp-card-menu{opacity:1;}
-.cvp-card-menu:hover{border-color:var(--orange);color:var(--orange);}
+  display:flex;align-items:center;justify-content:center;font-size:13px;transition:opacity .15s;border:1px solid var(--border);}
+.cvp-card:hover .cvp-card-del{opacity:1;}
+.cvp-card-del:hover{border-color:var(--red);color:var(--red);background:rgba(255,0,0,.06);}
 .cvp-dropdown{position:absolute;right:10px;top:calc(50% + 18px);background:var(--bg2);border:1px solid var(--border);
   border-radius:8px;padding:4px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:20;display:none;}
 .cvp-dropdown.open{display:block;}
@@ -964,6 +967,8 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 .cvp-group{margin-bottom:18px;}
 .cvp-group-hd{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--or);
   padding:6px 0;margin-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.cvp-proj-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px;transition:all .15s;margin-left:4px;}
+.cvp-proj-del:hover{color:var(--red);background:rgba(255,0,0,.08);}
 .cvp-empty{text-align:center;padding:40px 20px;color:var(--muted);}
 .cvp-empty-ico{font-size:36px;margin-bottom:10px;}
 .cvp-empty-txt{font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;}
@@ -1042,7 +1047,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <div class="topbar-right">
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
     <div class="clock" id="clock">--:--:--</div>
-    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
 </nav>
 
@@ -1467,15 +1471,44 @@ Comment puis-je t'aider aujourd'hui?</div>
 
   <!-- PARAMÈTRES -->
   <div id="view-settings" class="view">
-    <div class="sec-title">⚙ <span class="accent">PARAMÈTRES</span></div>
+    <div class="sec-title">⚙ <span class="accent" id="lbl-settings">PARAMÈTRES</span></div>
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd">🔗 GITHUB</div>
+      <div class="card-hd" id="lbl-theme-hd">🌗 THÈME</div>
       <div class="card-body">
+        <div class="settings-section" style="display:flex;align-items:center;gap:14px;">
+          <div class="settings-label" id="lbl-theme-mode" style="margin:0;">MODE</div>
+          <button class="btn-orange" id="theme-toggle-btn" style="width:auto;padding:8px 20px;font-size:13px;" onclick="toggleTheme()">🌙 NUIT</button>
+          <div class="settings-hint" id="lbl-theme-hint" style="margin:0;">Bascule entre le mode nuit (noir) et jour (beige).</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd" id="lbl-conn-hd">🔗 CONNEXIONS</div>
+      <div class="card-body">
+        <div class="settings-section" style="margin-bottom:12px;">
+          <div class="settings-label">GITHUB</div>
+          <div class="settings-hint">Proxy sécurisé via Edge Function Supabase. Aucun token dans le navigateur.</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <div class="gh-status off" id="set-gh-dot" style="width:8px;height:8px;"></div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);" id="set-gh-status">Non connecté</span>
+            <button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="showTab('codex');setTimeout(ghConnect,300);">CONNECTER</button>
+          </div>
+        </div>
+        <div class="settings-section" style="margin-bottom:12px;">
+          <div class="settings-label">VERCEL</div>
+          <div class="settings-hint">Déploiement via Edge Function Supabase.</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <div class="gh-status off" id="set-vc-dot" style="width:8px;height:8px;"></div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);" id="set-vc-status">Non connecté</span>
+            <button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="showTab('studio')">OUVRIR STUDIO</button>
+          </div>
+        </div>
         <div class="settings-section">
-          <div class="settings-label">CONNEXION GITHUB</div>
-          <div class="settings-hint">La connexion GitHub passe par un proxy sécurisé (Edge Function Supabase). Aucun token n'est stocké dans le navigateur.<br>Utilise le bouton « CONNECTER » dans le Codex pour accéder au projet.</div>
-          <div style="margin-top:10px;">
-            <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="showTab('codex')">OUVRIR LE CODEX</button>
+          <div class="settings-label">SUPABASE</div>
+          <div class="settings-hint">Backend authentification et base de données.</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <div class="gh-status on" style="width:8px;height:8px;"></div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);">Connecté (rnuripmfozlxenryxhdc)</span>
           </div>
         </div>
       </div>
@@ -1680,12 +1713,16 @@ function tick(){document.getElementById("clock").textContent=new Date().toLocale
 setInterval(tick,1000);tick();
 
 /* THÈME */
-let night=true;
+let night=(localStorage.getItem("tilex-al-theme")||"night")!=="day";
+(function(){document.documentElement.setAttribute("data-theme",night?"night":"day");})();
 function toggleTheme(){
   night=!night;
   document.documentElement.setAttribute("data-theme",night?"night":"day");
-  document.getElementById("theme-btn").textContent=night?"🌙":"☀️";
+  var btn=document.getElementById("theme-toggle-btn");
+  if(btn)btn.innerHTML=night?"🌙 NUIT":"☀️ JOUR";
+  localStorage.setItem("tilex-al-theme",night?"night":"day");
 }
+(function(){var btn=document.getElementById("theme-toggle-btn");if(btn)btn.innerHTML=night?"🌙 NUIT":"☀️ JOUR";})();
 
 /* ── CHOIX D'INTERFACE (animé vs sérieux) ── */
 function chooseMode(mode){
@@ -1728,6 +1765,7 @@ function showTab(name){
   const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
+  if(name==="settings")updateSettingsConnStatus();
 }
 
 /* ── ANIMATION LETTRE PAR LETTRE SIDEBAR ── */
@@ -1980,7 +2018,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"":"#FFFFFF";
@@ -1988,9 +2026,13 @@ async function sendChat(){
       async function drainQueue(){
         while(streaming||queue.length>0){
           if(queue.length>0){
-            bblText.textContent+=queue.shift();
+            var batch=1;
+            if(queue.length>100)batch=Math.min(queue.length,10);
+            else if(queue.length>40)batch=5;
+            else if(queue.length>15)batch=3;
+            bblText.textContent+=queue.splice(0,batch).join("");
             msgs.scrollTop=msgs.scrollHeight;
-            await new Promise(function(r){setTimeout(r,18);});
+            await new Promise(function(r){requestAnimationFrame(function(){setTimeout(r,batch>1?4:18);});});
           }else{
             await new Promise(function(r){setTimeout(r,30);});
           }
@@ -2004,6 +2046,7 @@ async function sendChat(){
       await drain;
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
+      var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       if(document.documentElement.getAttribute("data-theme")!=="day"){
         setTimeout(function(){applyGoldProjection(bblText);},4000);
       }
@@ -2048,7 +2091,8 @@ function addMsg(role,txt){
   if(role==="a"){content=projHtml(txt);}
   else{content=escHtml(txt).replace(/\n/g,"<br>");}
   var icoHtml=role==="u"?"👤":'<img src="assets/tilex-logo.png" alt="AL">';
-  d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div><div class="cmsg-time">${t}</div></div>`;
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>':"";
+  d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 
@@ -2398,6 +2442,48 @@ function cervRenderList(){
     d.onclick=function(){cervEditNote(n.id);};
     list.appendChild(d);
   });
+}
+
+function updateSettingsConnStatus(){
+  var ghDot=document.getElementById("set-gh-dot");
+  var ghStatus=document.getElementById("set-gh-status");
+  if(ghDot&&ghStatus){
+    if(ghConnected){ghDot.className="gh-status on";ghStatus.textContent="Connecté";ghStatus.style.color="var(--green)";}
+    else{ghDot.className="gh-status off";ghStatus.textContent="Non connecté";ghStatus.style.color="";}
+  }
+}
+
+/* ── SAVE TO CERVEAU + TTS ── */
+function saveToCerveau(btn){
+  var bbl=btn.closest(".cmsg").querySelector(".cmsg-bbl");
+  if(!bbl)return;
+  var text=bbl.textContent||"";
+  if(!text.trim()){if(typeof pushNotif==="function")pushNotif("⚠️","Cerveau","Rien à sauvegarder.","warn");return;}
+  var title="Note du "+new Date().toLocaleDateString("fr-CA")+" "+new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+  cervNotes.push({id:Date.now().toString()+Math.random().toString(36).slice(2,6),title:title,tags:["agent-al","chat"],content:text,created:Date.now(),updated:Date.now()});
+  cervLocalSave();
+  btn.textContent="✓";btn.style.color="var(--green)";
+  setTimeout(function(){btn.textContent="🧠";btn.style.color="";},2000);
+  if(typeof pushNotif==="function")pushNotif("🧠","Cerveau","Sauvegardé dans le Deuxième Cerveau!","ok");
+}
+
+var _ttsUtterance=null;
+function speakMsg(btn){
+  if(window.speechSynthesis.speaking){window.speechSynthesis.cancel();btn.textContent="▶";return;}
+  var bbl=btn.closest(".cmsg").querySelector(".cmsg-bbl");
+  if(!bbl)return;
+  var text=bbl.textContent||"";
+  if(!text.trim())return;
+  _ttsUtterance=new SpeechSynthesisUtterance(text);
+  _ttsUtterance.lang="fr-CA";
+  _ttsUtterance.rate=1;_ttsUtterance.pitch=1;
+  var voices=window.speechSynthesis.getVoices();
+  var frVoice=voices.find(function(v){return v.lang.startsWith("fr")&&v.name.indexOf("Female")>-1;})||voices.find(function(v){return v.lang.startsWith("fr");});
+  if(frVoice)_ttsUtterance.voice=frVoice;
+  btn.textContent="⏸";
+  _ttsUtterance.onend=function(){btn.textContent="▶";};
+  _ttsUtterance.onerror=function(){btn.textContent="▶";};
+  window.speechSynthesis.speak(_ttsUtterance);
 }
 
 /* ── INIT PLAN FROM LOCALSTORAGE ── */
@@ -3073,11 +3159,49 @@ function saveSettingModel(){
   }
   localStorage.setItem("tilex-al-model",v);
 }
+var LANG_MAP={
+  fr:{settings:"PARAMÈTRES",theme_hd:"THÈME",theme_mode:"MODE",theme_night:"NUIT",theme_day:"JOUR",theme_hint:"Bascule entre le mode nuit (noir) et jour (beige).",
+    conn_hd:"CONNEXIONS",model_hd:"MODÈLE IA",lang_hd:"LANGUE",memory_hd:"MÉMOIRE IA",convs_hd:"CONVERSATIONS",interface_hd:"INTERFACE",
+    chat:"CHAT",codex:"CODEX",studio:"STUDIO",account:"COMPTE",cerveau:"Cerveau",conversations:"Conversations",favoris:"Favoris",projet:"Projet",
+    send:"Envoyer",composer_ph:"Écris un message…",codex_ph:"Décris ce que tu veux coder…",new_conv:"+ NOUVELLE",
+    scan_btn:"SCANNER LE PROJET",code_btn:"COMMENCER À CODER",effacer:"EFFACER",delete_confirm:"Supprimer?",lang_label:"Français"},
+  en:{settings:"SETTINGS",theme_hd:"THEME",theme_mode:"MODE",theme_night:"NIGHT",theme_day:"DAY",theme_hint:"Toggle between night (black) and day (beige) mode.",
+    conn_hd:"CONNECTIONS",model_hd:"AI MODEL",lang_hd:"LANGUAGE",memory_hd:"AI MEMORY",convs_hd:"CONVERSATIONS",interface_hd:"INTERFACE",
+    chat:"CHAT",codex:"CODEX",studio:"STUDIO",account:"ACCOUNT",cerveau:"Brain",conversations:"Conversations",favoris:"Favorites",projet:"Project",
+    send:"Send",composer_ph:"Write a message…",codex_ph:"Describe what you want to code…",new_conv:"+ NEW",
+    scan_btn:"SCAN PROJECT",code_btn:"START CODING",effacer:"CLEAR",delete_confirm:"Delete?",lang_label:"English"}
+};
+
+function applyLang(lang){
+  var L=LANG_MAP[lang]||LANG_MAP.fr;
+  var pairs=[
+    ["lbl-settings",L.settings],["lbl-theme-hd","🌗 "+L.theme_hd],["lbl-theme-mode",L.theme_mode],
+    ["lbl-theme-hint",L.theme_hint],["lbl-conn-hd","🔗 "+L.conn_hd],
+    ["sub-convos",L.conversations],["sub-favs",L.favoris],["sub-projs",L.projet],["sub-cerveau",L.cerveau]
+  ];
+  pairs.forEach(function(p){var el=document.getElementById(p[0]);if(el)el.textContent=p[1];});
+  var labels=document.querySelectorAll(".sb-label[data-txt]");
+  labels.forEach(function(el){
+    var key=el.getAttribute("data-txt");
+    if(key==="CHAT")el.setAttribute("data-txt",L.chat);
+    else if(key==="CODEX"||key==="Codex")el.setAttribute("data-txt",L.codex);
+    else if(key==="CRÉER AGENT IA"&&lang==="en")el.setAttribute("data-txt","CREATE AI AGENT");
+    else if(key==="CREATE AI AGENT"&&lang==="fr")el.setAttribute("data-txt","CRÉER AGENT IA");
+  });
+  var inp=document.getElementById("composer-input");
+  if(inp)inp.placeholder=L.composer_ph;
+  var scanBtn=document.getElementById("cx-scan-btn");
+  if(scanBtn&&!scanBtn.disabled)scanBtn.textContent=L.scan_btn;
+  var codeBtn=document.getElementById("cx-code-btn");
+  if(codeBtn)codeBtn.textContent=L.code_btn;
+}
+
 function saveSettingLang(){
   var v=document.getElementById("set-lang").value;
   localStorage.setItem("tilex-al-lang",v);
   var lv=document.getElementById("acct-lang-val");
   if(lv)lv.textContent=v==="en"?"English":"Français";
+  applyLang(v);
 }
 function acctToggleLang(){
   var sel=document.getElementById("set-lang");
@@ -3167,6 +3291,7 @@ function renderAgentCards(){
   var langSel=document.getElementById("set-lang");
   if(savedLang&&langSel){for(var i=0;i<langSel.options.length;i++){if(langSel.options[i].value===savedLang)langSel.selectedIndex=i;}}
   var lv=document.getElementById("acct-lang-val");if(lv&&savedLang)lv.textContent=savedLang==="en"?"English":"Français";
+  if(savedLang)applyLang(savedLang);
   var savedMemory=localStorage.getItem("tilex-al-memory");
   var memEl=document.getElementById("set-memory");
   if(savedMemory&&memEl)memEl.value=savedMemory;
@@ -3496,7 +3621,7 @@ function cvpRender(){
     for(var p=0;p<cvpProjects.length;p++){
       var proj=cvpProjects[p];
       var pConvs=grouped[proj.id]||[];
-      html2+='<div class="cvp-group"><div class="cvp-group-hd"><span>📁</span> '+escHtml(proj.name)+' <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);margin-left:auto;">'+pConvs.length+' conv</span><button class="btn-ghost" style="font-size:10px;padding:4px 10px;margin-left:8px;" onclick="cvpCreateInProject(\''+proj.id+'\')">+ conv</button></div>';
+      html2+='<div class="cvp-group"><div class="cvp-group-hd"><span>📁</span> '+escHtml(proj.name)+' <span style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);margin-left:auto;">'+pConvs.length+' conv</span><button class="btn-ghost" style="font-size:10px;padding:4px 10px;margin-left:8px;" onclick="cvpCreateInProject(\''+proj.id+'\')">+ conv</button><button class="cvp-proj-del" onclick="event.stopPropagation();cvpDeleteProject(\''+proj.id+'\')" title="Supprimer le projet">✕</button></div>';
       if(pConvs.length===0){html2+='<div class="cvp-empty-txt" style="padding:10px;font-size:10px;">Aucune conversation dans ce projet.</div>';}
       else{html2+='<div class="cvp-list">';for(var k=0;k<pConvs.length;k++){html2+=cvpCardHtml(pConvs[k]);}html2+='</div>';}
       html2+='</div>';
@@ -3518,7 +3643,7 @@ function cvpCardHtml(c){
   var dateStr=date.toLocaleDateString("fr-CA",{day:"numeric",month:"short"})+" · "+date.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
   var preview=c.last_preview?escHtml(c.last_preview).slice(0,80):"Pas de messages encore";
   var ico=c.type==="project"?"📁":"💬";
-  return '<div class="cvp-card" onclick="cvpOpen(\''+c.id+'\')"><div class="cvp-card-ico">'+ico+'</div><div class="cvp-card-body"><div class="cvp-card-title">'+escHtml(c.title||"Conversation")+'</div><div class="cvp-card-preview">'+preview+'</div><div class="cvp-card-date">'+dateStr+'</div></div><button class="cvp-card-menu" onclick="event.stopPropagation();cvpToggleMenu(this,\''+c.id+'\')">⋯</button><div class="cvp-dropdown" id="cvp-dd-'+c.id+'"><div class="cvp-dd-item" onclick="event.stopPropagation();cvpRename(\''+c.id+'\')">✎ Renommer</div><div class="cvp-dd-item danger" onclick="event.stopPropagation();cvpDelete(\''+c.id+'\')">✕ Supprimer</div></div></div>';
+  return '<div class="cvp-card" onclick="cvpOpen(\''+c.id+'\')"><div class="cvp-card-ico">'+ico+'</div><div class="cvp-card-body"><div class="cvp-card-title">'+escHtml(c.title||"Conversation")+'</div><div class="cvp-card-preview">'+preview+'</div><div class="cvp-card-date">'+dateStr+'</div></div><button class="cvp-card-del" onclick="event.stopPropagation();cvpDelete(\''+c.id+'\')" title="Supprimer">✕</button></div>';
 }
 
 function cvpSwitchTab(tab){
@@ -3621,6 +3746,19 @@ async function cvpDelete(id){
     await sbRest("/messages?conversation_id=eq."+id,{method:"DELETE"});
     await sbRest("/conversations?id=eq."+id,{method:"DELETE"});
     if(cvpActiveConvId===id){cvpActiveConvId=null;chatHistory=[];}
+    cvpLoad();
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+async function cvpDeleteProject(id){
+  if(!confirm("Supprimer ce projet et toutes ses conversations?"))return;
+  try{
+    var convs=cvpConvs.filter(function(c){return c.project_id===id;});
+    for(var i=0;i<convs.length;i++){
+      await sbRest("/messages?conversation_id=eq."+convs[i].id,{method:"DELETE"});
+      await sbRest("/conversations?id=eq."+convs[i].id,{method:"DELETE"});
+    }
+    await sbRest("/projects?id=eq."+id,{method:"DELETE"});
     cvpLoad();
   }catch(e){alert("Erreur: "+e.message);}
 }
