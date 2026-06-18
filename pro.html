@@ -591,18 +591,20 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 
 /* ════════════════════════════════════════════════════════════
    PROJECTEUR — balayage lettre par lettre sur réponses agent
+   MODE NUIT : blanc → or flash → reste OR permanent
+   MODE JOUR : noir  → or flash → revient NOIR
    ════════════════════════════════════════════════════════════ */
-.proj-ltr{display:inline;opacity:0;animation:proj .35s ease-out forwards;}
+.proj-ltr{display:inline;color:var(--txt);animation:proj .5s ease-out forwards;}
 @keyframes proj{
-  0%{opacity:0;color:var(--or2);text-shadow:0 0 6px var(--or2)}
-  50%{opacity:1;color:var(--or);text-shadow:0 0 10px var(--or)}
-  100%{opacity:1;color:var(--or);text-shadow:none}
+  0%{color:#FFF8E7}
+  35%{color:var(--or);text-shadow:0 0 10px var(--or)}
+  100%{color:var(--or);text-shadow:none}
 }
 [data-theme="day"] .proj-ltr{animation-name:proj-day;}
 @keyframes proj-day{
-  0%{opacity:0;color:var(--or);text-shadow:0 0 6px var(--or)}
-  50%{opacity:1;color:var(--or);text-shadow:0 0 8px var(--or)}
-  100%{opacity:1;color:var(--txt);text-shadow:none}
+  0%{color:#0A0A0A}
+  35%{color:var(--or);text-shadow:0 0 10px var(--or)}
+  100%{color:#0A0A0A;text-shadow:none}
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1399,13 +1401,15 @@ function escHtml(s){const d=document.createElement("div");d.textContent=s;return
 function projHtml(txt){
   var safe=escHtml(txt);
   var out="";var idx=0;
+  var speed=Math.max(3,Math.min(8,2400/Math.max(1,safe.length)));
   for(var i=0;i<safe.length;i++){
     if(safe[i]==="&"){
       var end=safe.indexOf(";",i);
-      if(end!==-1){var ent=safe.slice(i,end+1);out+='<span class="proj-ltr" style="animation-delay:'+(idx*8)+'ms">'+ent+'</span>';idx++;i=end;continue;}
+      if(end!==-1){var ent=safe.slice(i,end+1);out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">'+ent+'</span>';idx++;i=end;continue;}
     }
-    if(safe[i]==="\n"||safe.slice(i,i+4)==="<br>"){out+="<br>";if(safe.slice(i,i+4)==="<br>")i+=3;continue;}
-    out+='<span class="proj-ltr" style="animation-delay:'+(idx*8)+'ms">'+safe[i]+'</span>';idx++;
+    if(safe[i]==="\n"){out+="<br>";continue;}
+    if(safe[i]===" "){out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">&nbsp;</span>';idx++;continue;}
+    out+='<span class="proj-ltr" style="animation-delay:'+(idx*speed)+'ms">'+safe[i]+'</span>';idx++;
   }
   return out;
 }
