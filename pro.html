@@ -2077,8 +2077,13 @@ async function sendChat(){
     td.remove();
     if(!res.ok){
       let errMsg="Erreur de connexion.";
-      try{const errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
-      addMsg("a",errMsg);
+      try{
+        var ct=res.headers.get("content-type")||"";
+        if(ct.includes("json")){var errData=await res.json();errMsg=errData.error||errMsg;}
+        else{var errTxt=await res.text();errMsg=errTxt.slice(0,200)||("HTTP "+res.status);}
+      }catch(e){errMsg="HTTP "+res.status;}
+      console.error("[ti-lex] Chat error:",res.status,errMsg);
+      addMsg("a","⚠️ "+errMsg);
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
@@ -2115,7 +2120,7 @@ async function sendChat(){
         setTimeout(function(){applyGoldProjection(bblText);},4000);
       }
     }
-  }catch(e){td.remove();addMsg("a","Erreur: "+e.message);}
+  }catch(e){td.remove();console.error("[ti-lex] sendChat error:",e);addMsg("a","⚠️ "+e.message);}
   chatBusy=false;
   syncChatToStorage();
 }
@@ -2123,11 +2128,21 @@ function syncChatToStorage(){
   try{
     var activeConv=chatConvs.find(function(c){return c.active;});
     if(!activeConv){
-      activeConv={id:Date.now(),title:chatHistory.length>0?chatHistory[0].content.slice(0,40):"Conversation",messages:[],active:true,ts:Date.now()};
-      chatConvs.push(activeConv);
+      if(chatConvs.length>0){
+        activeConv=chatConvs[chatConvs.length-1];
+        activeConv.active=true;
+        activeChatConv=chatConvs.length-1;
+      }else{
+        activeConv={id:Date.now(),title:chatHistory.length>0?chatHistory[0].content.slice(0,40):"Conversation",messages:[],active:true,ts:Date.now()};
+        chatConvs.push(activeConv);
+        activeChatConv=chatConvs.length-1;
+      }
     }
     activeConv.messages=chatHistory.slice();
     activeConv.ts=Date.now();
+    if(chatHistory.length>0&&activeConv.title==="Nouvelle conversation"){
+      activeConv.title=chatHistory[0].content.slice(0,40);
+    }
     localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
   }catch(e){}
 }
@@ -2232,6 +2247,13 @@ var chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
 /* ── SUB-NAVIGATION (Conversations / Favoris / Projet / Cerveau) ── */
 var chatSubFilter="convos";
 var activeChatConv=-1;
+(function(){
+  if(chatConvs.length===0)return;
+  var idx=chatConvs.findIndex(function(c){return c.active;});
+  if(idx===-1){idx=chatConvs.length-1;chatConvs[idx].active=true;}
+  activeChatConv=idx;
+  chatHistory=chatConvs[idx].messages?chatConvs[idx].messages.slice():[];
+})();
 function showSub(sub){
   chatSubFilter=sub;
   document.querySelectorAll("#sm-chat .sb-sub-item").forEach(function(el){el.classList.remove("active");});
@@ -2271,6 +2293,12 @@ function timeAgo(ts){
   return Math.floor(h/24)+"j";
 }
 function newConversation(){
+  var current=chatConvs.find(function(c){return c.active;});
+  if(current&&(!current.messages||current.messages.length===0)){
+    chatHistory=[];
+    document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+    return;
+  }
   chatConvs.forEach(function(c){c.active=false;});
   var nc={id:Date.now(),title:"Nouvelle conversation",messages:[],active:true,ts:Date.now()};
   chatConvs.push(nc);
@@ -2753,8 +2781,9 @@ async function genCode(){
     cxRemoveTyping();
     if(!res.ok){
       var errMsg="Erreur de connexion.";
-      try{var errData=await res.json();errMsg=errData.error||errMsg;}catch(e){}
-      cxAddReply(errMsg);genBusy=false;return;
+      try{var ct2=res.headers.get("content-type")||"";if(ct2.includes("json")){var errData=await res.json();errMsg=errData.error||errMsg;}else{errMsg=await res.text()||("HTTP "+res.status);}}catch(e){errMsg="HTTP "+res.status;}
+      console.error("[ti-lex] Codex error:",res.status,errMsg);
+      cxAddReply("⚠️ "+errMsg);genBusy=false;return;
     }
     var reply=await readSSE(res);
     codexHistory.push({role:"assistant",content:reply});
