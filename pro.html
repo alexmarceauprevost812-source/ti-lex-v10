@@ -392,7 +392,8 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
   background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .chat-hd{padding:11px 15px;background:rgba(0,0,0,.13);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:rgba(0,0,0,.04);}
-.c-ava{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--or3),var(--or2));display:flex;align-items:center;justify-content:center;font-size:15px;}
+.c-ava{width:32px;height:32px;border-radius:9px;overflow:hidden;flex-shrink:0;}
+.c-ava img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
 .chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#000;}
@@ -1004,7 +1005,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <div class="sec-title">💬 AGENT <span class="accent">AL</span></div>
     <div class="chat-wrap">
       <div class="chat-hd">
-        <div class="c-ava">⚡</div>
+        <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
         <div><div class="c-name">TI-LEX-AL · AGENT AL</div>
           <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active</div></div>
       </div>
