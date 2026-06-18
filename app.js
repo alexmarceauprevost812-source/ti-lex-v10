@@ -40,6 +40,8 @@ const state = {
 /* ---- Edge Function (remplace les appels directs à api.anthropic.com) ---- */
 const AI_PROXY = "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
 
+var adaptiveEngine = null;
+
 /* ---- Agents ---- */
 const AGENTS = {
   tilex: {
@@ -2459,6 +2461,11 @@ function renderConvosCenter(filter) {
     card.onclick = (e) => {
       if (e.target.closest(".convos-card-del")) return;
       const idx = +card.dataset.idx;
+      openConvoDetail(idx);
+    };
+    card.ondblclick = (e) => {
+      if (e.target.closest(".convos-card-del")) return;
+      const idx = +card.dataset.idx;
       activeChatConv = idx;
       state.history = [...chatConvs[idx].messages];
       rebuildChatFromHistory();
@@ -2494,6 +2501,40 @@ if ($("#convosSearch")) {
 $$(".convos-tab").forEach(tab => {
   tab.onclick = () => renderConvosCenter(tab.dataset.filter);
 });
+
+function openConvoDetail(idx) {
+  var conv = chatConvs[idx];
+  if (!conv) return;
+  var listPage = $("#convosListPage");
+  var detailPage = $("#convosDetailPage");
+  if (!listPage || !detailPage) return;
+
+  var titleEl = $("#convosDetailTitle");
+  var agentEl = $("#convosDetailAgent");
+  var msgsEl = $("#convosDetailMessages");
+  if (titleEl) titleEl.textContent = conv.title || "Sans titre";
+  if (agentEl) agentEl.textContent = conv.agent || state.agent;
+
+  var msgs = conv.messages || conv.msgs || [];
+  if (msgsEl) {
+    msgsEl.innerHTML = msgs.map(function(m) {
+      var txt = typeof m.content === "string" ? m.content : (Array.isArray(m.content) ? m.content.filter(function(b){return b.type==="text"}).map(function(b){return b.text}).join(" ") : "");
+      var roleClass = m.role === "user" ? "cdm-user" : "";
+      return '<div class="cdm-msg"><div class="cdm-role ' + roleClass + '">' + (m.role === "user" ? "Vous" : "Agent") + '</div><div class="cdm-body">' + escapeHtml(txt) + '</div></div>';
+    }).join("");
+  }
+
+  listPage.classList.add("hidden");
+  detailPage.classList.remove("hidden");
+}
+
+function closeConvoDetail() {
+  var listPage = $("#convosListPage");
+  var detailPage = $("#convosDetailPage");
+  if (listPage) listPage.classList.remove("hidden");
+  if (detailPage) detailPage.classList.add("hidden");
+}
+
 function convosMascotWink() {
   const m = $("#convosMascot");
   if (!m) return;
@@ -3289,7 +3330,8 @@ async function sendMessage() {
     const STUDIO_HINT = lastAttachedImages.length
       ? ` L'utilisateur a joint ${lastAttachedImages.length} image(s). Quand tu génères du HTML avec ces images, utilise {{IMAGE}} pour la première image (ou {{IMAGE_0}}, {{IMAGE_1}}… pour plusieurs). Le Studio remplacera automatiquement ces placeholders par les images réelles en base64. Génère un fichier HTML complet (<!DOCTYPE html>…) dans un bloc \`\`\`html pour qu'il soit prévisualisable dans le Studio.`
       : "";
-    const BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + STUDIO_HINT + memoryContext() + recentConversationsContext();
+    var BASE_BRAIN = AGENTS[state.agent].prompt + DIAGRAM_HINT + MEMORY_HINT + STUDIO_HINT + memoryContext() + recentConversationsContext();
+    if (adaptiveEngine) BASE_BRAIN = adaptiveEngine.buildEnrichedSystemPrompt(BASE_BRAIN);
     let sys = state.reflexion
       ? BASE_BRAIN + " Avant ta réponse finale, fournis un raisonnement structuré entre les balises <reflexion></reflexion>, puis la réponse complète après."
       : BASE_BRAIN;
@@ -3335,6 +3377,7 @@ async function sendMessage() {
     stripOldImagesFromHistory();
     extractMemoryFromResponse(full);
     saveChatConv();
+    if (adaptiveEngine) adaptiveEngine.onMessageSent();
   } catch (err) {
     state.history.pop();
     if (body._stopReflexion) body._stopReflexion();
@@ -6099,6 +6142,24 @@ if ($("#acctLogoutBtn")) {
 
 /* init */
 loadSettings();
+
+(async function initAdaptiveEngine() {
+  if (typeof TiLexChatEngine === "undefined") return;
+  try {
+    var agentCfg = AGENTS[state.agent] || AGENTS.tilex;
+    adaptiveEngine = new TiLexChatEngine(null, AI_PROXY, proxyToken, {
+      name: agentCfg.name || state.agent,
+      systemPrompt: agentCfg.prompt
+    });
+    adaptiveEngine.setHistoryRef(state.history);
+    var session = typeof getSupabaseSession === "function" ? getSupabaseSession() : null;
+    var uid = session && session.user ? session.user.id : null;
+    await adaptiveEngine.init(uid || "local");
+  } catch (e) {
+    console.warn("[ti-lex] Adaptive engine init fail:", e.message);
+    adaptiveEngine = null;
+  }
+})();
 
 (function handleCheckoutReturn() {
   const params = new URLSearchParams(location.search);

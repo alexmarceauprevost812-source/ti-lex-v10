@@ -264,7 +264,8 @@
 
   <!-- ===== VUE CONVERSATIONS ===== -->
   <section class="view view-convos" id="view-convos">
-    <div class="convos-page">
+    <!-- VUE A: Liste des conversations -->
+    <div class="convos-page" id="convosListPage">
       <h2 class="convos-page-title">Conversations</h2>
       <div class="convos-search-wrap">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#666" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -286,6 +287,17 @@
           <span>Nouvelle conversation</span>
         </button>
       </div>
+    </div>
+    <!-- VUE B: Détail d'une conversation -->
+    <div class="convos-detail-page hidden" id="convosDetailPage">
+      <div class="convos-detail-header">
+        <button class="convos-back-btn" id="convosBackBtn" onclick="closeConvoDetail()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <h3 class="convos-detail-title" id="convosDetailTitle"></h3>
+        <span class="convos-detail-agent" id="convosDetailAgent"></span>
+      </div>
+      <div class="convos-detail-messages" id="convosDetailMessages"></div>
     </div>
   </section>
 
@@ -1513,6 +1525,7 @@ window.onPlanClick=function(plan, ev){
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script src="js/adaptive-chat-engine.js"></script>
 <script src="app.js"></script>
 <script>
 if(typeof subscribeToplan==="undefined"){window.subscribeToplan=function(p){window.location.href=_FP_LINKS[p]||"#"}}

@@ -4,16 +4,19 @@
    ============================================================ */
 .hidden{display:none!important}
 :root{
-  --bg:#000;
-  --bg-2:#000;
-  --bg-3:#111;
-  --line:#262626;
-  --txt:#f5f5f5;
-  --txt-dim:#a3a3a3;
-  --reflex:#8a8a8a;          /* gris du mode réflexion */
+  --bg:#0a0a0a;
+  --bg-2:#101015;
+  --bg-3:#13131a;
+  --bg-4:#1a1a24;
+  --line:#1e1e2e;
+  --txt:#e8e6e3;
+  --txt-dim:#8a8a9a;
+  --reflex:#6a6a7a;
   --orange:#ff6600;
   --orange-soft:#ff7a1a;
   --orange-glow:rgba(255,102,0,.35);
+  --gold:#c8a84e;
+  --gold-glow:rgba(200,168,78,.25);
   --radius:16px;
   --sidebar-w:264px;
   --font:'Sora',system-ui,sans-serif;
@@ -33,15 +36,16 @@
   --punc:#abb2bf;
 }
 
-/* ---- MODE JOUR ---- */
+/* ---- MODE JOUR (ton froid cyberpunk) ---- */
 body[data-theme="light"]{
-  --bg:#ede7db;
-  --bg-2:#f5f0e8;
-  --bg-3:#e3dccf;
-  --line:#cfc5b4;
-  --txt:#141210;
-  --txt-dim:#4a4038;
-  --reflex:#7a6f62;
+  --bg:#f0f0f5;
+  --bg-2:#e8e8f0;
+  --bg-3:#dcdce8;
+  --bg-4:#d0d0e0;
+  --line:#c0c0d0;
+  --txt:#12121a;
+  --txt-dim:#4a4a5a;
+  --reflex:#6a6a7a;
 }
 
 /* ---- Light overrides for hardcoded elements ---- */
@@ -53,24 +57,24 @@ body[data-theme="light"] .hamburger{background:var(--bg-3)}
 body[data-theme="light"] .hamburger span{background:var(--txt)}
 body[data-theme="light"] .msg-avatar-user{background:linear-gradient(135deg,#dbeafe,#93c5fd);border-color:#60a5fa;box-shadow:0 0 10px rgba(37,99,235,.15)}
 body[data-theme="light"] .msg.user .msg-body{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-color:#3b82f6}
-body[data-theme="light"] .msg.assistant .msg-body{color:#1a1710;background:var(--bg-2);border-color:var(--line)}
+body[data-theme="light"] .msg.assistant .msg-body{color:#12121a;background:var(--bg-2);border-color:var(--line)}
 body[data-theme="light"] .msg.assistant .msg-body strong{color:#000}
-body[data-theme="light"] .msg.assistant .msg-body em{color:#5a4e3e}
+body[data-theme="light"] .msg.assistant .msg-body em{color:#3a3a5a}
 body[data-theme="light"] .msg.assistant .msg-body h1,
 body[data-theme="light"] .msg.assistant .msg-body h2,
-body[data-theme="light"] .msg.assistant .msg-body h3{color:#8b4513}
+body[data-theme="light"] .msg.assistant .msg-body h3{color:#1a1a3a}
 body[data-theme="light"] .msg.assistant .msg-body code{background:var(--bg-3);border-color:var(--line);color:#6f42c1}
-body[data-theme="light"] .msg.assistant .msg-body pre{background:#e7e0d4;border-color:var(--line);color:#1a1710}
-body[data-theme="light"] .msg.assistant .msg-body pre code{color:#1a1710}
+body[data-theme="light"] .msg.assistant .msg-body pre{background:var(--bg-3);border-color:var(--line);color:#12121a}
+body[data-theme="light"] .msg.assistant .msg-body pre code{color:#12121a}
 body[data-theme="light"] .sec-note{background:rgba(255,102,0,.05)}
 body[data-theme="light"] .tts-btn,
-body[data-theme="light"] .copy-btn{background:var(--bg-3);border-color:var(--line);color:#4a4038}
+body[data-theme="light"] .copy-btn{background:var(--bg-3);border-color:var(--line);color:#4a4a5a}
 body[data-theme="light"] .tts-btn:hover,
 body[data-theme="light"] .copy-btn:hover{border-color:#2563eb;color:#2563eb;background:var(--bg-2)}
-body[data-theme="light"] .cerv-save-btn-chat{color:#4a4038}
+body[data-theme="light"] .cerv-save-btn-chat{color:#4a4a5a}
 body[data-theme="light"] .cerv-save-btn-chat:hover{color:#2563eb;border-color:rgba(37,99,235,.3)}
-body[data-theme="light"] .reflexion-text{color:#5a4e3e}
-body[data-theme="light"] .reflexion-badge{color:#5a4e3e}
+body[data-theme="light"] .reflexion-text{color:#3a3a5a}
+body[data-theme="light"] .reflexion-badge{color:#3a3a5a}
 body[data-theme="light"] .update-banner{background:var(--orange);color:#000}
 body[data-theme="light"] .update-banner button{background:var(--bg-2);color:var(--orange)}
 body[data-theme="light"] .ti-lex-body{box-shadow:inset -5px -5px 15px rgba(0,0,0,.1),inset 5px 5px 15px rgba(255,255,255,.15),0 4px 15px rgba(255,107,53,.2)}
@@ -91,8 +95,8 @@ body[data-theme="light"] .fin-letter{color:#8b6914;text-shadow:0 0 3px rgba(139,
 
 /* ---- Light: code blocks ---- */
 body[data-theme="light"] .msg-body pre,
-body[data-theme="light"] .codex-msg-body pre{background:#e7e0d4!important;border-color:#cfc5b4!important;color:#141210}
-body[data-theme="light"] .code-out pre{background:#e7e0d4;border-color:#cfc5b4;color:#141210}
+body[data-theme="light"] .codex-msg-body pre{background:var(--bg-3)!important;border-color:var(--line)!important;color:#12121a}
+body[data-theme="light"] .code-out pre{background:var(--bg-3);border-color:var(--line);color:#12121a}
 
 /* ---- Light: syntax highlighting ---- */
 body[data-theme="light"] .codex-msg-body .syn-kw{color:#d35400;font-weight:700}
@@ -134,7 +138,7 @@ body{
 /* ============ SIDEBAR ============ */
 .sidebar{
   position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);
-  background:#000;border-right:none;
+  background:var(--bg-2);border-right:1px solid var(--line);
   display:flex;flex-direction:column;padding:18px 14px;z-index:40;
   transition:transform var(--t),background var(--t);
   overflow-y:auto;overflow-x:hidden;
@@ -2789,7 +2793,7 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 .convos-page{width:100%;max-width:700px;margin:0 auto;padding:28px 20px 120px;display:flex;flex-direction:column;gap:18px}
 .convos-page-title{font-size:1.6rem;font-weight:800;color:#fff;margin:0;font-family:var(--code-font)}
 .convos-search-wrap{display:flex;align-items:center;gap:10px;padding:12px 16px;
-  background:#111118;border:1px solid #222230;border-radius:12px}
+  background:var(--bg-3);border:1px solid var(--line);border-radius:12px}
 .convos-search{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:.95rem;font-family:var(--font)}
 .convos-search::placeholder{color:#555}
 .convos-tabs{display:flex;gap:8px}
@@ -2799,10 +2803,10 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
 .convos-tab.active{border-color:var(--orange);color:var(--orange);background:rgba(249,115,22,.08)}
 .convos-list{display:flex;flex-direction:column;gap:6px;min-height:100px}
 .convos-card{display:flex;align-items:center;gap:14px;padding:14px 16px;
-  background:#0d0d12;border:1px solid #1a1a24;border-radius:14px;cursor:pointer;transition:all .25s}
-.convos-card:hover{border-color:#333;background:#111118;transform:translateY(-1px)}
+  background:var(--bg-2);border:1px solid var(--line);border-radius:14px;cursor:pointer;transition:all .25s}
+.convos-card:hover{border-color:var(--bg-4);background:var(--bg-3);transform:translateY(-1px)}
 .convos-card.active{border-color:var(--orange);background:rgba(249,115,22,.04)}
-.convos-card-ico{width:38px;height:38px;border-radius:10px;background:#161620;
+.convos-card-ico{width:38px;height:38px;border-radius:10px;background:var(--bg-4);
   display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
 .convos-card-info{flex:1;min-width:0}
 .convos-card-title{font-size:.92rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2840,6 +2844,21 @@ body[data-theme="light"] .chat-sub-item:hover{color:#444;background:rgba(0,0,0,.
   font-size:.85rem;font-weight:700;cursor:pointer;font-family:var(--font);
   box-shadow:0 6px 20px rgba(230,126,34,.4);transition:all .2s;position:relative}
 .convos-new-btn:hover{transform:scale(1.04);box-shadow:0 8px 28px rgba(230,126,34,.5)}
+
+/* ── Conversations detail (VUE B) ── */
+.convos-detail-page{width:100%;max-width:760px;margin:0 auto;padding:0 20px 40px;display:flex;flex-direction:column;height:100%}
+.convos-detail-header{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);flex-shrink:0}
+.convos-back-btn{background:none;border:1px solid var(--line);border-radius:10px;padding:8px;cursor:pointer;color:var(--txt-dim);transition:all .2s;display:flex;align-items:center;justify-content:center}
+.convos-back-btn:hover{border-color:var(--orange);color:var(--orange)}
+.convos-detail-title{font-size:1.05rem;font-weight:700;color:var(--txt);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+.convos-detail-agent{font-size:.72rem;color:var(--txt-dim);background:var(--bg-3);padding:3px 10px;border-radius:8px;flex-shrink:0}
+.convos-detail-messages{flex:1;overflow-y:auto;padding:20px 0;display:flex;flex-direction:column;gap:16px}
+.convos-detail-messages .cdm-msg{display:flex;gap:12px;animation:messageScanIn .3s ease-out}
+.convos-detail-messages .cdm-role{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-dim);flex-shrink:0;width:60px;padding-top:4px;text-align:right}
+.convos-detail-messages .cdm-role.cdm-user{color:var(--orange)}
+.convos-detail-messages .cdm-body{flex:1;font-size:.9rem;line-height:1.6;color:var(--txt);background:var(--bg-3);border:1px solid var(--line);border-radius:12px;padding:14px 18px;min-width:0;word-wrap:break-word}
+.convos-detail-messages .cdm-body pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0;font-size:.82rem}
+.convos-detail-messages .cdm-body code{background:var(--bg);padding:2px 6px;border-radius:4px;font-size:.82rem;font-family:var(--mono)}
 
 /* Sub-nav staggered entrance */
 .chat-sub-nav.open .chat-sub-item{
@@ -3648,3 +3667,31 @@ ul.fp-feats li strong{color:var(--fp-orange);font-weight:700}
 100%{color:#E8C24A;text-shadow:0 0 4px rgba(232,194,74,.27);}
 }
 html.light .proj-char-app{color:#1A1A1A;animation:none;text-shadow:none;}
+
+/* ══ CYBERPUNK NIGHT MODE ANIMATIONS ══ */
+@keyframes statusPulse{
+  0%,100%{box-shadow:0 0 4px var(--orange-glow)}
+  50%{box-shadow:0 0 12px var(--orange-glow),0 0 24px rgba(255,102,0,.15)}
+}
+@keyframes messageScanIn{
+  0%{opacity:0;transform:translateY(8px);filter:blur(2px)}
+  100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+@keyframes inputFocusGlow{
+  0%,100%{box-shadow:0 0 0 1px var(--line)}
+  50%{box-shadow:0 0 0 1px var(--orange),0 0 12px rgba(255,102,0,.15)}
+}
+@keyframes scanLine{
+  0%{transform:translateY(-100%)}
+  100%{transform:translateY(100%)}
+}
+
+.msg{animation:messageScanIn .35s ease-out}
+.conn-dot.on{animation:statusPulse 2.5s ease-in-out infinite}
+.chat-input:focus{animation:inputFocusGlow 2s ease-in-out infinite}
+
+.sidebar::after{
+  content:"";position:absolute;top:0;right:0;bottom:0;width:1px;
+  background:linear-gradient(180deg,transparent,var(--orange-glow),transparent);
+  opacity:.4;pointer-events:none;
+}

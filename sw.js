@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-266";
+const CACHE_VERSION = "tilex-v10-267";
 const ASSETS = [
   "/",
   "/index.html",
@@ -6,6 +6,7 @@ const ASSETS = [
   "/pro.html",
   "/choose.html",
   "/app.js",
+  "/js/adaptive-chat-engine.js",
   "/styles.css",
   "/logo.png",
   "/assets/tilex-logo.png",
