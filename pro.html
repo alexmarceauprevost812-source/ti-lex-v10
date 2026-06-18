@@ -1332,7 +1332,7 @@ function showTab(name){
 document.querySelectorAll(".sb-label[data-txt]").forEach(el=>{
   const txt=el.getAttribute("data-txt");
   el.innerHTML=txt.split("").map((c,i)=>
-    c===" "?`<span class="ltr" style="--li:${i}"> </span>`:
+    c===" "?`<span class="ltr" style="--li:${i}">&nbsp;</span>`:
     `<span class="ltr" style="--li:${i}">${c}</span>`
   ).join("");
 });
