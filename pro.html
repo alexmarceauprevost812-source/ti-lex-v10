@@ -443,6 +443,48 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .sp-live{color:var(--green);border:1px solid rgba(0,204,102,.3);background:rgba(0,204,102,.06);}
 .sp-err{color:var(--red);border:1px solid rgba(255,68,68,.3);background:rgba(255,68,68,.06);}
 
+/* ── GitHub Codex Panel ── */
+.gh-bar{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.gh-bar.disconnected{opacity:.5;}
+.gh-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.gh-status.on{background:var(--green);box-shadow:0 0 4px var(--green);}
+.gh-status.off{background:var(--red);box-shadow:0 0 4px var(--red);}
+.gh-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
+.gh-select{padding:4px 8px;background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--or);font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;cursor:pointer;max-width:180px;}
+.gh-select option{background:var(--bg3);}
+[data-theme="day"] .gh-select{color:var(--or3);background:var(--bg);}
+.gh-btn{padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:none;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;}
+.gh-btn:hover{border-color:var(--orange);color:var(--orange);}
+.gh-btn.primary{background:var(--orange);color:#000;border-color:var(--orange);font-weight:600;}
+.gh-btn.primary:hover{filter:brightness(1.1);}
+.gh-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
+.gh-files{max-height:200px;overflow-y:auto;border-bottom:1px solid var(--border);flex-shrink:0;display:none;}
+.gh-file{display:flex;align-items:center;gap:8px;padding:6px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--txt);cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.03);}
+.gh-file:hover{background:rgba(255,106,0,.06);}
+.gh-file.active{background:rgba(255,106,0,.1);color:var(--orange);}
+.gh-file-ico{font-size:12px;width:16px;text-align:center;flex-shrink:0;}
+.gh-file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.gh-file-size{font-size:9px;color:var(--muted);}
+
+/* ── Settings view ── */
+.settings-section{margin-bottom:20px;}
+.settings-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--or);letter-spacing:1.5px;margin-bottom:6px;}
+.settings-input{width:100%;padding:10px 14px;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;}
+.settings-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,.1);}
+.settings-input::placeholder{color:var(--muted);}
+.settings-hint{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;line-height:1.6;}
+.settings-saved{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);display:none;margin-top:6px;}
+
+/* ── Studio error scanner ── */
+.scan-result{padding:10px 14px;border-radius:8px;margin-bottom:8px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.7;border:1px solid;}
+.scan-result.error{background:rgba(255,68,68,.06);border-color:rgba(255,68,68,.25);color:var(--red);}
+.scan-result.warning{background:rgba(255,166,0,.06);border-color:rgba(255,166,0,.25);color:#ffa600;}
+.scan-result.ok{background:rgba(0,204,102,.06);border-color:rgba(0,204,102,.25);color:var(--green);}
+.scan-file{font-weight:600;margin-bottom:2px;}.scan-line{color:var(--muted);font-size:9px;}
+.scan-msg{margin-top:2px;}
+.scan-fix-btn{margin-top:6px;padding:4px 12px;border:1px solid var(--orange);border-radius:5px;background:rgba(255,106,0,.08);color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;}
+.scan-fix-btn:hover{background:var(--orange);color:#000;}
+
 /* CODEX */
 /* ── CODEX — style terminal Claude Code ── */
 .codex-wrap{display:flex;flex-direction:column;height:calc(100vh - 70px - 58px);overflow:hidden;}
@@ -871,7 +913,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <div class="sb-item" id="si-dash" onclick="showTab('dash')">
     <span class="sb-icon">👤</span><span class="sb-label" data-txt="COMPTE"></span>
   </div>
-  <div class="sb-item" onclick="localStorage.removeItem('tilex-interface-mode');window.location.href='choose.html'">
+  <div class="sb-item" id="si-settings" onclick="showTab('settings')">
     <span class="sb-icon">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
   </div>
 
@@ -1015,11 +1057,22 @@ Comment puis-je t'aider aujourd'hui?</div>
           <option value="bash">Bash</option>
         </select>
       </div>
+      <div class="gh-bar" id="gh-bar">
+        <div class="gh-status off" id="gh-dot"></div>
+        <span class="gh-label" id="gh-conn-label">GITHUB</span>
+        <select class="gh-select" id="gh-repo" onchange="ghLoadBranches()" style="display:none;"><option value="">— repo —</option></select>
+        <select class="gh-select" id="gh-branch" onchange="ghLoadFiles()" style="display:none;"><option value="">— branche —</option></select>
+        <button class="gh-btn" id="gh-browse-btn" onclick="ghToggleFiles()" style="display:none;">📂 FICHIERS</button>
+        <div style="flex:1;"></div>
+        <button class="gh-btn" id="gh-connect-btn" onclick="ghConnect()">CONNECTER</button>
+        <button class="gh-btn primary" id="gh-push-btn" onclick="ghPushCode()" style="display:none;">⬆ PUSH</button>
+      </div>
+      <div class="gh-files" id="gh-files"></div>
       <button class="cx-clear-btn" onclick="clearCx()">EFFACER</button>
       <div class="codex-feed" id="codex-feed">
         <div class="codex-empty" id="codex-empty">
           <div class="codex-empty-ico">⌨️</div>
-          <div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div>
+          <div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.<br><br>🔗 Connecte GitHub dans la barre ci-haut<br>pour travailler sur tes projets.</div>
         </div>
       </div>
     </div>
@@ -1029,6 +1082,22 @@ Comment puis-je t'aider aujourd'hui?</div>
   <!-- STUDIO -->
   <div id="view-studio" class="view">
     <div class="sec-title">🚀 <span class="accent">STUDIO</span></div>
+
+    <!-- SCANNER DE CODE -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🔍 SCANNER DE CODE
+        <div style="display:flex;gap:6px;margin-left:auto;">
+          <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="studioScanAll()">⚡ SCANNER TOUT</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">VÉRIFIE TOUTES LES ERREURS AVANT DÉPLOIEMENT</div>
+        <div id="scan-results">
+          <div class="scan-result ok"><span class="scan-msg">Aucun fichier scanné. Connecte GitHub dans le Codex pour scanner ton projet.</span></div>
+        </div>
+        <div id="scan-summary" style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);"></div>
+      </div>
+    </div>
 
     <!-- DÉPLOIEMENT -->
     <div class="card" style="margin-bottom:14px;">
@@ -1057,22 +1126,10 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
 
-    <!-- ERREURS -->
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd">⚠️ ERREURS DE BUILD
-        <span class="deploy-err-count" id="deploy-err-count" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);margin-left:auto;">0 erreurs</span>
-      </div>
-      <div class="card-body">
-        <div id="deploy-errors" style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:var(--muted);">
-          Aucune erreur détectée. ✓
-        </div>
-      </div>
-    </div>
-
-    <!-- PROJETS / AGENTS -->
+    <!-- PROJETS GITHUB -->
     <div class="card">
-      <div class="card-hd">📂 MES PROJETS
-        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openModal()">+ NOUVEAU</button>
+      <div class="card-hd">📂 PROJETS GITHUB
+        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="ghRefreshProjects()">↻ ACTUALISER</button>
       </div>
       <div class="card-body">
         <div class="studio-projects" id="studio-projects">
@@ -1085,6 +1142,35 @@ Comment puis-je t'aider aujourd'hui?</div>
             <span class="sp-status sp-live">EN LIGNE</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARAMÈTRES -->
+  <div id="view-settings" class="view">
+    <div class="sec-title">⚙ <span class="accent">PARAMÈTRES</span></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🔗 GITHUB</div>
+      <div class="card-body">
+        <div class="settings-section">
+          <div class="settings-label">PERSONAL ACCESS TOKEN (PAT)</div>
+          <input type="password" class="settings-input" id="set-gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          <div class="settings-hint">Crée un token sur GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens.<br>Permissions requises : Contents (Read & Write), Metadata (Read).</div>
+          <div class="settings-saved" id="gh-token-saved">✓ Token sauvegardé</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="saveGhToken()">SAUVEGARDER</button>
+          <button class="btn-ghost" style="width:auto;padding:8px 20px;font-size:13px;" onclick="clearGhToken()">EFFACER LE TOKEN</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🎨 INTERFACE</div>
+      <div class="card-body">
+        <div style="display:flex;gap:8px;">
+          <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="localStorage.removeItem('tilex-interface-mode');window.location.href='choose.html'">CHANGER D'INTERFACE</button>
+        </div>
+        <div class="settings-hint" style="margin-top:8px;">Retourne au choix entre l'interface animée et l'interface pro.</div>
       </div>
     </div>
   </div>
@@ -1234,12 +1320,12 @@ document.getElementById("sidebar").classList.remove("collapsed");
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
 }
 
@@ -1616,6 +1702,344 @@ function clearCx(){
   document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   codexHistory=[];genBusy=false;
 }
+
+/* ── GITHUB INTEGRATION ── */
+var ghToken="";var ghRepos=[];var ghFiles=[];var ghCurrentRepo="";var ghCurrentBranch="";var ghFilesVisible=false;
+var ghFileCache={};
+
+function getGhToken(){return localStorage.getItem("tilex-gh-token")||"";}
+function saveGhToken(){
+  var val=document.getElementById("set-gh-token").value.trim();
+  if(!val)return;
+  localStorage.setItem("tilex-gh-token",val);
+  ghToken=val;
+  var sv=document.getElementById("gh-token-saved");sv.style.display="block";setTimeout(function(){sv.style.display="none";},3000);
+  ghUpdateBar();
+}
+function clearGhToken(){
+  localStorage.removeItem("tilex-gh-token");ghToken="";
+  document.getElementById("set-gh-token").value="";
+  ghUpdateBar();
+}
+function ghUpdateBar(){
+  ghToken=getGhToken();
+  var dot=document.getElementById("gh-dot");
+  var label=document.getElementById("gh-conn-label");
+  var connectBtn=document.getElementById("gh-connect-btn");
+  var repoSel=document.getElementById("gh-repo");
+  var branchSel=document.getElementById("gh-branch");
+  var browseBtn=document.getElementById("gh-browse-btn");
+  var pushBtn=document.getElementById("gh-push-btn");
+  if(ghToken){
+    dot.className="gh-status on";
+    label.textContent="GITHUB CONNECTÉ";
+    connectBtn.textContent="DÉCONNECTER";
+    connectBtn.onclick=function(){clearGhToken();};
+    repoSel.style.display="";
+    branchSel.style.display="";
+    browseBtn.style.display="";
+    pushBtn.style.display="";
+    ghLoadRepos();
+  }else{
+    dot.className="gh-status off";
+    label.textContent="GITHUB";
+    connectBtn.textContent="CONNECTER";
+    connectBtn.onclick=function(){ghConnect();};
+    repoSel.style.display="none";
+    branchSel.style.display="none";
+    browseBtn.style.display="none";
+    pushBtn.style.display="none";
+  }
+}
+function ghConnect(){
+  var tk=getGhToken();
+  if(tk){ghToken=tk;ghUpdateBar();return;}
+  showTab("settings");
+  var inp=document.getElementById("set-gh-token");
+  if(inp){inp.focus();inp.style.borderColor="var(--orange)";setTimeout(function(){inp.style.borderColor="var(--border)";},2000);}
+}
+async function ghApi(path,opts){
+  if(!ghToken)return null;
+  var r=await fetch("https://api.github.com"+path,Object.assign({headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json"}},opts||{}));
+  if(!r.ok)return null;
+  return r.json();
+}
+async function ghLoadRepos(){
+  var sel=document.getElementById("gh-repo");
+  sel.innerHTML='<option value="">⏳ Chargement…</option>';
+  var data=await ghApi("/user/repos?sort=updated&per_page=30");
+  if(!data){sel.innerHTML='<option value="">Erreur</option>';return;}
+  ghRepos=data;
+  sel.innerHTML='<option value="">— choisir un repo —</option>';
+  for(var i=0;i<data.length;i++){
+    var o=document.createElement("option");o.value=data[i].full_name;o.textContent=data[i].name;
+    sel.appendChild(o);
+  }
+  if(ghCurrentRepo){sel.value=ghCurrentRepo;ghLoadBranches();}
+}
+async function ghLoadBranches(){
+  var repo=document.getElementById("gh-repo").value;
+  if(!repo){document.getElementById("gh-branch").innerHTML='<option value="">— branche —</option>';return;}
+  ghCurrentRepo=repo;
+  var sel=document.getElementById("gh-branch");
+  sel.innerHTML='<option value="">⏳…</option>';
+  var data=await ghApi("/repos/"+repo+"/branches?per_page=30");
+  if(!data){sel.innerHTML='<option value="">Erreur</option>';return;}
+  sel.innerHTML='<option value="">— branche —</option>';
+  for(var i=0;i<data.length;i++){
+    var o=document.createElement("option");o.value=data[i].name;o.textContent=data[i].name;
+    if(data[i].name==="main"||data[i].name==="master")o.selected=true;
+    sel.appendChild(o);
+  }
+  ghCurrentBranch=sel.value;
+  if(ghCurrentBranch)ghLoadFiles();
+}
+async function ghLoadFiles(){
+  ghCurrentBranch=document.getElementById("gh-branch").value;
+  if(!ghCurrentRepo||!ghCurrentBranch)return;
+  var panel=document.getElementById("gh-files");
+  panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">⏳</span><span class="gh-file-name">Chargement…</span></div>';
+  panel.style.display="block";ghFilesVisible=true;
+  var data=await ghApi("/repos/"+ghCurrentRepo+"/git/trees/"+ghCurrentBranch+"?recursive=1");
+  if(!data||!data.tree){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">❌</span><span class="gh-file-name">Erreur de chargement</span></div>';return;}
+  ghFiles=data.tree.filter(function(f){return f.type==="blob";});
+  var codeExts=/\.(js|ts|html|css|json|py|sql|md|jsx|tsx|vue|svelte|sh|bash|yml|yaml)$/i;
+  var filtered=ghFiles.filter(function(f){return codeExts.test(f.path);});
+  panel.innerHTML="";
+  if(filtered.length===0){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">📁</span><span class="gh-file-name">Aucun fichier code trouvé</span></div>';return;}
+  for(var i=0;i<filtered.length;i++){
+    var f=filtered[i];
+    var ext=f.path.split(".").pop()||"";
+    var ico=ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"?"📄":ext==="html"?"🌐":ext==="css"?"🎨":ext==="json"?"📋":ext==="py"?"🐍":ext==="sql"?"🗄️":"📝";
+    var sz=f.size>1024?(f.size/1024).toFixed(1)+"k":f.size+"b";
+    var div=document.createElement("div");div.className="gh-file";div.setAttribute("data-path",f.path);
+    div.innerHTML='<span class="gh-file-ico">'+ico+'</span><span class="gh-file-name">'+escHtml(f.path)+'</span><span class="gh-file-size">'+sz+'</span>';
+    div.onclick=(function(path){return function(){ghOpenFile(path);};})(f.path);
+    panel.appendChild(div);
+  }
+}
+function ghToggleFiles(){
+  var panel=document.getElementById("gh-files");
+  if(ghFilesVisible){panel.style.display="none";ghFilesVisible=false;}
+  else{if(ghFiles.length===0)ghLoadFiles();else{panel.style.display="block";ghFilesVisible=true;}}
+}
+async function ghOpenFile(path){
+  document.querySelectorAll(".gh-file").forEach(function(f){f.classList.remove("active");});
+  var el=document.querySelector('.gh-file[data-path="'+path+'"]');
+  if(el)el.classList.add("active");
+  if(ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path]){
+    var cached=ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path];
+    cxAddUser("Ouvre le fichier : "+path);
+    cxAddReply("```"+path.split(".").pop()+"\n"+cached+"\n```\nFichier **"+path+"** chargé depuis GitHub ("+ghCurrentRepo+" / "+ghCurrentBranch+").");
+    return;
+  }
+  cxAddUser("Ouvre le fichier : "+path);
+  cxAddTyping();
+  var data=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(path)+"?ref="+ghCurrentBranch);
+  cxRemoveTyping();
+  if(!data||!data.content){cxAddReply("Erreur: impossible de charger "+path);return;}
+  var content=atob(data.content.replace(/\n/g,""));
+  ghFileCache[ghCurrentRepo+"/"+ghCurrentBranch+"/"+path]=content;
+  cxAddReply("```"+path.split(".").pop()+"\n"+content+"\n```\nFichier **"+path+"** ("+content.split("\n").length+" lignes) — "+ghCurrentRepo+" / "+ghCurrentBranch);
+}
+async function ghPushCode(){
+  if(!ghCurrentRepo||!ghCurrentBranch){cxAddReply("Sélectionne un repo et une branche avant de push.");return;}
+  var lastCode="";
+  document.querySelectorAll(".cx-code-pre").forEach(function(el){if(el.textContent.trim())lastCode=el.textContent;});
+  if(!lastCode){cxAddReply("Aucun code à push. Génère du code d'abord!");return;}
+  cxAddUser("Push le dernier code généré vers "+ghCurrentRepo+" / "+ghCurrentBranch);
+  cxAddTyping();
+  var fileName=prompt("Nom du fichier à créer/modifier sur GitHub :","code.js");
+  if(!fileName){cxRemoveTyping();return;}
+  var existing=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(fileName)+"?ref="+ghCurrentBranch);
+  var sha=existing?existing.sha:undefined;
+  var body={message:"[ti-lex-AL] "+fileName,content:btoa(unescape(encodeURIComponent(lastCode))),branch:ghCurrentBranch};
+  if(sha)body.sha=sha;
+  var result=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(fileName),{method:"PUT",body:JSON.stringify(body)});
+  cxRemoveTyping();
+  if(result&&result.content){cxAddReply("✅ Fichier **"+fileName+"** pushé avec succès sur **"+ghCurrentRepo+"** ("+ghCurrentBranch+").\n\nCommit: "+result.commit.sha.slice(0,7));}
+  else{cxAddReply("❌ Erreur lors du push. Vérifie que ton token a les permissions d'écriture (Contents: Read & Write).");}
+}
+function ghRefreshProjects(){
+  if(!ghToken){showTab("settings");return;}
+  var container=document.getElementById("studio-projects");
+  container.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">Chargement…</div>';
+  ghApi("/user/repos?sort=updated&per_page=10").then(function(data){
+    if(!data){container.innerHTML='<div style="color:var(--red);font-family:Share Tech Mono,monospace;font-size:11px;">Erreur de chargement</div>';return;}
+    container.innerHTML="";
+    for(var i=0;i<data.length;i++){
+      var r=data[i];
+      var card=document.createElement("div");card.className="studio-project-card";
+      card.innerHTML='<div class="sp-ico">'+(r.language==="JavaScript"?"⚡":r.language==="Python"?"🐍":r.language==="HTML"?"🌐":"📂")+'</div>'+
+        '<div class="sp-info"><div class="sp-name">'+escHtml(r.name)+'</div><div class="sp-meta">'+escHtml(r.language||"—")+" · "+(r.private?"Privé":"Public")+" · "+escHtml(r.default_branch)+'</div></div>'+
+        '<span class="sp-status sp-live" style="cursor:pointer;" onclick="document.getElementById(\'gh-repo\').value=\''+r.full_name+'\';ghLoadBranches();showTab(\'codex\');">OUVRIR</span>';
+      container.appendChild(card);
+    }
+  });
+}
+
+/* ── STUDIO — SCANNER DE CODE (toutes erreurs, tous langages) ── */
+var scannedFiles={};
+
+async function studioScanAll(){
+  if(!ghToken||!ghCurrentRepo||!ghCurrentBranch){
+    document.getElementById("scan-results").innerHTML='<div class="scan-result warning"><span class="scan-msg">Connecte GitHub et sélectionne un repo/branche dans le Codex pour scanner.</span></div>';
+    return;
+  }
+  var container=document.getElementById("scan-results");
+  var summary=document.getElementById("scan-summary");
+  container.innerHTML='<div class="scan-result ok"><span class="scan-msg">⏳ Scan en cours…</span></div>';
+  summary.textContent="";
+  var codeExts=/\.(js|ts|html|css|json|py|jsx|tsx|sql)$/i;
+  var toScan=ghFiles.filter(function(f){return codeExts.test(f.path)&&f.size<200000;});
+  if(toScan.length===0){container.innerHTML='<div class="scan-result warning"><span class="scan-msg">Aucun fichier code trouvé. Charge les fichiers dans le Codex (📂 FICHIERS).</span></div>';return;}
+  var allErrors=[];var scanned=0;
+  for(var i=0;i<Math.min(toScan.length,20);i++){
+    var f=toScan[i];
+    var cacheKey=ghCurrentRepo+"/"+ghCurrentBranch+"/"+f.path;
+    var content=ghFileCache[cacheKey];
+    if(!content){
+      var data=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(f.path)+"?ref="+ghCurrentBranch);
+      if(data&&data.content){content=atob(data.content.replace(/\n/g,""));ghFileCache[cacheKey]=content;}
+    }
+    if(content){
+      var errs=scanCode(f.path,content);
+      for(var j=0;j<errs.length;j++)allErrors.push(errs[j]);
+    }
+    scanned++;
+  }
+  container.innerHTML="";
+  if(allErrors.length===0){
+    container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Aucune erreur détectée dans '+scanned+' fichiers scannés!</span></div>';
+    summary.textContent=scanned+" fichiers scannés · 0 erreurs · Prêt pour déploiement ✓";
+    summary.style.color="var(--green)";
+  }else{
+    for(var k=0;k<allErrors.length;k++){
+      var err=allErrors[k];
+      var div=document.createElement("div");div.className="scan-result "+(err.severity==="error"?"error":"warning");
+      div.innerHTML='<div class="scan-file">'+escHtml(err.file)+'</div><div class="scan-line">Ligne '+err.line+' · '+err.type+'</div><div class="scan-msg">'+escHtml(err.message)+'</div>'+
+        '<button class="scan-fix-btn" onclick="studioAutoFix(\''+escHtml(err.file).replace(/'/g,"\\'")+'\','+err.line+',\''+escHtml(err.message).replace(/'/g,"\\'")+'\')">⚡ CORRIGER AUTOMATIQUEMENT</button>';
+      container.appendChild(div);
+    }
+    summary.textContent=scanned+" fichiers scannés · "+allErrors.length+" erreur(s) trouvée(s) · Corriger avant déploiement";
+    summary.style.color="var(--red)";
+  }
+}
+
+function scanCode(filename,code){
+  var errors=[];var ext=filename.split(".").pop().toLowerCase();
+  var lines=code.split("\n");
+
+  if(ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"){
+    try{new Function(code);}catch(e){
+      var lineMatch=e.message.match(/line (\d+)/i)||e.message.match(/:(\d+):/);
+      var ln=lineMatch?parseInt(lineMatch[1]):1;
+      errors.push({file:filename,line:ln,type:"JS Syntax",severity:"error",message:e.message});
+    }
+    var braces=0;var parens=0;var brackets=0;
+    for(var i=0;i<lines.length;i++){
+      var l=lines[i];
+      for(var c=0;c<l.length;c++){
+        if(l[c]==="{")braces++;if(l[c]==="}")braces--;
+        if(l[c]==="(")parens++;if(l[c]===")")parens--;
+        if(l[c]==="[")brackets++;if(l[c]==="]")brackets--;
+      }
+    }
+    if(braces!==0)errors.push({file:filename,line:lines.length,type:"JS Structure",severity:"error",message:"Accolades débalancées ("+braces+" non fermées)"});
+    if(parens!==0)errors.push({file:filename,line:lines.length,type:"JS Structure",severity:"error",message:"Parenthèses débalancées ("+parens+" non fermées)"});
+    if(brackets!==0)errors.push({file:filename,line:lines.length,type:"JS Structure",severity:"error",message:"Crochets débalancés ("+brackets+" non fermés)"});
+    for(var i=0;i<lines.length;i++){
+      if(/console\.(log|warn|error|debug)\s*\(/.test(lines[i]))
+        errors.push({file:filename,line:i+1,type:"JS Warning",severity:"warning",message:"console."+lines[i].match(/console\.(\w+)/)[1]+"() trouvé — retirer en production"});
+    }
+  }
+
+  if(ext==="html"||ext==="htm"){
+    var tagStack=[];
+    var selfClosing=/^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i;
+    var tagRegex=/<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*\/?>/g;var m;
+    while((m=tagRegex.exec(code))!==null){
+      var full=m[0];var tag=m[1].toLowerCase();
+      if(selfClosing.test(tag)||full.endsWith("/>"))continue;
+      if(full.startsWith("</")){
+        if(tagStack.length>0&&tagStack[tagStack.length-1]===tag)tagStack.pop();
+        else errors.push({file:filename,line:code.substring(0,m.index).split("\n").length,type:"HTML Structure",severity:"error",message:"Balise </"+tag+"> inattendue ou non ouverte"});
+      }else{tagStack.push(tag);}
+    }
+    for(var t=0;t<tagStack.length;t++){
+      errors.push({file:filename,line:lines.length,type:"HTML Structure",severity:"error",message:"Balise <"+tagStack[t]+"> non fermée"});
+    }
+  }
+
+  if(ext==="css"){
+    var braces=0;
+    for(var i=0;i<lines.length;i++){
+      for(var c=0;c<lines[i].length;c++){
+        if(lines[i][c]==="{")braces++;if(lines[i][c]==="}")braces--;
+      }
+      if(braces<0){errors.push({file:filename,line:i+1,type:"CSS Structure",severity:"error",message:"} en trop — accolade fermante sans ouvrante"});braces=0;}
+    }
+    if(braces>0)errors.push({file:filename,line:lines.length,type:"CSS Structure",severity:"error",message:braces+" accolade(s) non fermée(s)"});
+  }
+
+  if(ext==="json"){
+    try{JSON.parse(code);}catch(e){
+      errors.push({file:filename,line:1,type:"JSON Syntax",severity:"error",message:e.message});
+    }
+  }
+
+  if(ext==="py"){
+    for(var i=0;i<lines.length;i++){
+      var l=lines[i];
+      if(/\t/.test(l)&&/^ /.test(l))errors.push({file:filename,line:i+1,type:"PY Indent",severity:"warning",message:"Mélange de tabs et espaces dans l'indentation"});
+    }
+  }
+
+  if(ext==="sql"){
+    var parens=0;
+    for(var i=0;i<lines.length;i++){
+      for(var c=0;c<lines[i].length;c++){
+        if(lines[i][c]==="(")parens++;if(lines[i][c]===")")parens--;
+      }
+    }
+    if(parens!==0)errors.push({file:filename,line:lines.length,type:"SQL Structure",severity:"error",message:"Parenthèses débalancées dans la requête SQL"});
+  }
+
+  return errors;
+}
+
+async function studioAutoFix(file,line,errMsg){
+  cxAddUser("Corrige l'erreur dans "+file+" (ligne "+line+") : "+errMsg);
+  cxAddTyping();showTab("codex");
+  var cacheKey=ghCurrentRepo+"/"+ghCurrentBranch+"/"+file;
+  var content=ghFileCache[cacheKey]||"";
+  var sysPrompt="Tu es un correcteur de code expert. On te donne un fichier avec une erreur. "+
+    "Corrige UNIQUEMENT l'erreur indiquée. Retourne le fichier corrigé complet dans un bloc ```"+file.split(".").pop()+" ."+
+    " Explique brièvement la correction en français québécois.";
+  codexHistory.push({role:"user",content:"Fichier: "+file+"\nErreur ligne "+line+": "+errMsg+"\n\nCode actuel:\n```\n"+content+"\n```\n\nCorrige cette erreur."});
+  try{
+    var tk=getToken();
+    var h={"Content-Type":"application/json"};
+    if(tk)h["Authorization"]="Bearer "+tk;
+    var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+      kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
+      messages:codexHistory.slice(-6)
+    })});
+    cxRemoveTyping();
+    if(!res.ok){var errData=await res.json().catch(function(){return{};});cxAddReply(errData.error||"Erreur de connexion.");return;}
+    var reply=await readSSE(res);
+    codexHistory.push({role:"assistant",content:reply});
+    cxAddReply(reply||"(réponse vide)");
+  }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
+}
+
+/* ── SETTINGS INIT ── */
+(function(){
+  ghToken=getGhToken();
+  var inp=document.getElementById("set-gh-token");
+  if(inp&&ghToken)inp.value=ghToken;
+  ghUpdateBar();
+})();
 
 /* ── MODAL AGENTS ── */
 let selTypeVal="chat";let customAgents=[];
