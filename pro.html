@@ -303,12 +303,13 @@ html[data-plan="cyber_fortress"] .plan-opus-only{display:flex!important;}
 .lock-desc{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;max-width:280px;}
 
 /* ══ CONTENT ══ */
-.content{flex:1;margin-left:var(--sb-w);padding:16px 12px 80px;min-height:calc(100vh - var(--tb));
+.content{flex:1;margin-left:var(--sb-w);padding:0 0 80px;min-height:calc(100vh - var(--tb));
   transition:margin-left .42s cubic-bezier(.22,1,.36,1);min-width:0;max-width:100%;}
 body.sb-collapsed .content{margin-left:var(--sb-c);}
 
-.view{display:none;animation:fadeUp .35s ease both;min-width:0;max-width:100%;}
+.view{display:none;animation:fadeUp .35s ease both;min-width:0;max-width:100%;padding:16px 12px;}
 .view.active{display:block;}
+#view-chat{padding:0;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
 /* HERO MASCOTTE DASHBOARD */
@@ -425,7 +426,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .acct-sep{height:1px;background:var(--border);margin:4px 16px;}
 
 /* CHAT */
-.chat-wrap{height:calc(100vh - 120px);min-height:420px;display:flex;flex-direction:column;
+.chat-wrap{height:calc(100vh - var(--tb));min-height:420px;display:flex;flex-direction:column;
   background:var(--bg);border:none;border-radius:0;overflow:hidden;min-width:0;max-width:100%;width:100%;}
 .chat-hd{padding:11px 15px;background:transparent;border-bottom:none;display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:var(--bg3);border-bottom:1px solid var(--border);}
@@ -442,8 +443,8 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .cmsg-ico.u{background:var(--bg4);border:1px solid var(--border);}
 .cmsg-ico.a{background:none;padding:0;overflow:hidden;}
 .cmsg-ico.a img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
-.cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.5;white-space:pre-wrap;
-  overflow-wrap:break-word;word-break:break-word;min-width:0;}
+.cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.6;white-space:pre-wrap;
+  overflow-wrap:break-word;word-break:normal;word-wrap:break-word;min-width:0;max-width:100%;}
 .cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:var(--txt);border-bottom-right-radius:3px;}
 .cmsg-bbl.a{background:none;border:none;color:var(--txt);padding:4px 0;}
 [data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;}
@@ -610,10 +611,13 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 ::-webkit-scrollbar-thumb{background:rgba(255,106,0,.2);border-radius:2px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,106,0,.4);}
 @media(max-width:640px){
-  .content{margin-left:var(--sb-c)!important;padding:8px 6px 60px;}
-  .chat-wrap{height:calc(100vh - 130px);min-height:320px;}
-  .cmsg{max-width:96%;}
-  .chat-msgs{padding:8px 6px;}
+  .content{margin-left:var(--sb-c)!important;padding:0 0 60px;}
+  .view{padding:10px 8px;}
+  #view-chat{padding:0;}
+  .chat-wrap{height:calc(100vh - var(--tb));min-height:320px;}
+  .cmsg{max-width:98%;}
+  .chat-msgs{padding:6px 4px;}
+  .cmsg-bbl{font-size:15px;}
   .sec-title{font-size:22px;letter-spacing:1.5px;}
 }
 
@@ -815,7 +819,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   letter-spacing:.5px;transition:background .15s;}
 .composer-menu-item:hover{background:rgba(255,106,0,.08);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
-@media(max-width:680px){.composer-bar{left:0;}}
+@media(max-width:680px){.composer-bar{left:var(--sb-c);padding:8px 10px;}}
 
 /* ══ ACTIVE SUB-ITEM ══ */
 .sb-sub-item.active{color:var(--orange)!important;font-weight:700;}

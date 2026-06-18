@@ -3000,7 +3000,7 @@ body[data-theme="light"] .proj-file-item{background:var(--bg-3);color:var(--txt)
 .fin-sep{opacity:.5}
 .fin-badge{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#8c8780;border:1px solid #2a2a2a;border-radius:20px;padding:4px 9px;letter-spacing:.5px;white-space:nowrap}
 
-.fin-messages{flex:1;overflow-y:auto;padding:22px 20px 8px;position:relative;z-index:1}
+.fin-messages{flex:1;overflow-y:auto;padding:12px 8px 8px;position:relative;z-index:1}
 .fin-scroll{scrollbar-width:thin;scrollbar-color:#333 transparent}
 .fin-scroll::-webkit-scrollbar{width:9px}
 .fin-scroll::-webkit-scrollbar-thumb{background:#333;border-radius:20px;border:2px solid #000}
@@ -3023,8 +3023,8 @@ body[data-theme="light"] .proj-file-item{background:var(--bg-3);color:var(--txt)
 .fin-msg-label{display:flex;align-items:center;gap:7px;margin:0 0 5px 2px}
 .fin-msg-label svg{width:15px;height:15px}
 .fin-msg-label span{font-family:'Fraunces',Georgia,serif;font-size:13px;font-weight:600;color:#ff7a1a;letter-spacing:.2px}
-.fin-bubble-user{background:linear-gradient(135deg,#ff8a2e,#ee6b12);color:#140d05;padding:11px 15px;border-radius:16px 16px 5px 16px;font-size:15px;line-height:1.55;font-weight:600;box-shadow:0 3px 16px rgba(255,122,26,.22);white-space:pre-wrap}
-.fin-bubble-ai{background:#161616;color:#f3f1ec;border:1px solid #2a2a2a;padding:10px 16px 12px;border-radius:5px 16px 16px 16px;font-size:15px;line-height:1.65}
+.fin-bubble-user{background:linear-gradient(135deg,#ff8a2e,#ee6b12);color:#140d05;padding:11px 15px;border-radius:16px 16px 5px 16px;font-size:15px;line-height:1.55;font-weight:600;box-shadow:0 3px 16px rgba(255,122,26,.22);white-space:pre-wrap;overflow-wrap:break-word;word-break:normal;max-width:100%;}
+.fin-bubble-ai{background:#161616;color:#f3f1ec;border:1px solid #2a2a2a;padding:10px 16px 12px;border-radius:5px 16px 16px 16px;font-size:15px;line-height:1.65;overflow-wrap:break-word;word-break:normal;max-width:100%;}
 .fin-bubble-ai.error{border-color:rgba(221,154,126,.4);background:rgba(221,154,126,.08)}
 .fin-bubble-ai strong{font-weight:700;color:#f3f1ec}
 .fin-bubble-ai code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:rgba(255,122,26,.13);color:#ff9d52;padding:1px 5px;border-radius:4px}
