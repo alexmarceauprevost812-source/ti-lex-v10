@@ -147,30 +147,34 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .layout{display:flex;min-height:100vh;padding-top:var(--tb);}
 
 /* ══ SIDEBAR ══ */
+#sidebar-toggle-btn{position:fixed;top:12px;left:12px;z-index:9999;width:40px;height:40px;
+  background:#101015;border:1px solid #23232c;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;transition:background .2s,border-color .2s;}
+#sidebar-toggle-btn:hover{background:#1a1a24;border-color:var(--orange);}
+#sidebar-toggle-btn svg{color:#ffcf4a;width:20px;height:20px;transition:transform .3s ease;}
+#sidebar-toggle-btn.menu-open svg{transform:rotate(90deg);}
+[data-theme="day"] #sidebar-toggle-btn{background:var(--bg2);border-color:var(--border);}
+[data-theme="day"] #sidebar-toggle-btn:hover{border-color:var(--orange);}
+[data-theme="day"] #sidebar-toggle-btn svg{color:#1A1A1A;}
+
 .sidebar{
   position:fixed;top:var(--tb);bottom:0;left:0;z-index:200;
-  width:var(--sb-w);overflow:hidden;
+  width:0;overflow:hidden;opacity:0;
   background:#000;border-right:none;backdrop-filter:none;
-  display:flex;flex-direction:column;
-  transition:width .42s cubic-bezier(.22,1,.36,1),background .35s;
+  display:flex;flex-direction:column;padding:0;
+  transition:width .3s cubic-bezier(.4,0,.2,1),opacity .25s ease,padding .3s ease;
+  will-change:width,opacity;
   overflow-y:auto;
 }
-[data-theme="day"] .sidebar{background:var(--bg3);border-right:1px solid var(--border);}
+.sidebar.sidebar-open{
+  width:var(--sb-w);opacity:1;padding:0;
+  border-right:1px solid rgba(35,35,44,.5);
+}
+[data-theme="day"] .sidebar.sidebar-open{background:var(--bg3);border-right:1px solid var(--border);}
+[data-theme="day"] .sidebar{background:var(--bg3);}
 [data-theme="day"] .sb-sub-item{color:var(--txt);}
 [data-theme="day"] .sb-sub-item:hover{color:var(--orange);background:rgba(243,144,0,.08);}
 [data-theme="day"] .sb-sub-item::before{color:var(--muted);}
-.sidebar.collapsed{width:var(--sb-c);}
-
-/* Textes qui disparaissent en mode collapsed */
-.sidebar.collapsed .sb-label,
-.sidebar.collapsed .sb-sec,
-.sidebar.collapsed .sb-logo-name,
-.sidebar.collapsed .sb-badge,
-.sidebar.collapsed .sb-badge2-txt,
-.sidebar.collapsed .sb-plan-txt,
-.sidebar.collapsed .sb-model{
-  opacity:0;width:0;overflow:hidden;white-space:nowrap;transition:opacity .2s, width .2s;
-}
 .sb-label,.sb-sec,.sb-logo-name,.sb-badge,.sb-badge2-txt,.sb-plan-txt,.sb-model{
   transition:opacity .3s .1s, width .3s;
 }
@@ -178,7 +182,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 /* Logo sidebar */
 .sb-logo-box{padding:14px 10px 10px;display:flex;flex-direction:column;align-items:center;}
 .sb-logo-img-wrap{position:relative;width:100%;max-width:160px;overflow:visible;}
-.sidebar.collapsed .sb-logo-img-wrap{max-width:40px;}
 .sb-logo-img-wrap img{width:100%;display:block;border-radius:10px;position:relative;z-index:1;transition:all .42s cubic-bezier(.22,1,.36,1);}
 /* Chaleur sidebar (derrière l'image) */
 .sb-heat{position:absolute;inset:-16px;z-index:0;border-radius:50%;
@@ -193,14 +196,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
   font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1px;}
 .sb-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);animation:blink 2s infinite;flex-shrink:0;}
 
-/* BOUTON TOGGLE SIDEBAR — sous le logo */
-.sb-toggle-btn{display:flex;align-items:center;justify-content:center;
-  width:34px;height:34px;border-radius:50%;
-  border:1px solid rgba(255,106,0,.35);background:rgba(255,106,0,.08);
-  cursor:pointer;color:var(--orange);font-size:14px;margin:6px auto 8px;
-  transition:all .25s;flex-shrink:0;}
-.sb-toggle-btn:hover{background:rgba(255,106,0,.18);border-color:var(--orange);box-shadow:0 0 10px rgba(255,106,0,.2);}
-.sidebar.collapsed .sb-toggle-btn{transform:rotate(180deg);}
+/* BOUTON TOGGLE SIDEBAR — removed (using #sidebar-toggle-btn instead) */
 
 .sb-sep{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:5px 10px;}
 .sb-sec{padding:8px 16px 3px;font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:2px;white-space:nowrap;}
@@ -304,9 +300,9 @@ html[data-plan="cyber_fortress"] .plan-opus-only{display:flex!important;}
 .lock-desc{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;max-width:280px;}
 
 /* ══ CONTENT ══ */
-.content{flex:1;margin-left:var(--sb-w);padding:0 0 80px;min-height:calc(100vh - var(--tb));
-  transition:margin-left .42s cubic-bezier(.22,1,.36,1);min-width:0;max-width:100%;}
-body.sb-collapsed .content{margin-left:var(--sb-c);}
+.content{flex:1;margin-left:0;padding:0 0 80px;min-height:calc(100vh - var(--tb));
+  transition:margin-left .3s cubic-bezier(.4,0,.2,1);min-width:0;max-width:100%;}
+body.sb-open .content{margin-left:var(--sb-w);}
 
 .view{display:none;animation:fadeUp .35s ease both;min-width:0;max-width:100%;padding:16px 12px;}
 .view.active{display:block;}
@@ -425,6 +421,37 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .acct-menu-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-right:4px;}
 .acct-menu-chev{font-size:16px;color:var(--muted);flex-shrink:0;}
 .acct-sep{height:1px;background:var(--border);margin:4px 16px;}
+
+/* MENU OVERLAY */
+.menu-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,10,.97);
+  z-index:9998;display:none;flex-direction:column;justify-content:space-between;padding:20px;box-sizing:border-box;}
+.menu-overlay.open{display:flex;}
+.menu-overlay-header{display:flex;align-items:center;gap:14px;padding-top:60px;margin-top:20px;}
+.menu-profile-avatar{width:64px;height:64px;border-radius:50%;border:2px solid #ff7f27;overflow:hidden;flex-shrink:0;margin-top:8px;}
+.menu-profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.menu-profile-info{display:flex;flex-direction:column;}
+.menu-username{color:#ffcf4a;font-size:18px;font-weight:600;letter-spacing:.5px;font-family:'Bebas Neue',sans-serif;}
+.menu-plan-badge{display:block;color:#6c6c78;font-size:12px;margin-top:4px;text-transform:uppercase;letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
+.menu-overlay-footer{padding-bottom:32px;}
+.btn-logout{width:100%;display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;
+  background:transparent;border:1px solid rgba(255,127,39,.3);border-radius:10px;color:#ff7f27;
+  font-size:16px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:background .2s ease,border-color .2s ease;font-family:'Bebas Neue',sans-serif;}
+.btn-logout:hover,.btn-logout:active{background:rgba(255,127,39,.1);border-color:#ff7f27;}
+[data-theme="day"] .menu-overlay{background:rgba(230,218,196,.97);}
+[data-theme="day"] .menu-username{color:#7A5800;}
+[data-theme="day"] .menu-plan-badge{color:#8a8070;}
+[data-theme="day"] .btn-logout{color:#ff7f27;border-color:rgba(255,127,39,.3);}
+
+/* LANG SWITCHER */
+.lang-switcher{display:flex;gap:12px;margin-top:12px;}
+.lang-btn{flex:1;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);
+  color:var(--muted);font-size:14px;font-weight:600;letter-spacing:.5px;cursor:pointer;
+  transition:all .2s ease;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:'Rajdhani',sans-serif;}
+.lang-btn.lang-btn-active{border-color:var(--orange);background:rgba(255,106,0,.12);color:var(--orange);box-shadow:0 0 8px rgba(255,106,0,.2);}
+.lang-btn.lang-btn-inactive{border-color:var(--border);background:var(--bg3);color:var(--muted);}
+.lang-btn:hover{border-color:var(--orange);color:var(--orange);}
 
 /* CHAT */
 .chat-wrap{height:calc(100vh - var(--tb));min-height:420px;display:flex;flex-direction:column;
@@ -646,7 +673,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 ::-webkit-scrollbar-thumb{background:rgba(255,106,0,.2);border-radius:2px;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(255,106,0,.4);}
 @media(max-width:640px){
-  .content{margin-left:var(--sb-c)!important;padding:0 0 60px;}
+  .content{margin-left:0!important;padding:0 0 60px;}
   .view{padding:10px 8px;}
   #view-chat{padding:0;}
   .chat-wrap{height:calc(100vh - var(--tb));min-height:320px;}
@@ -664,9 +691,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .mb-line{display:block;height:2px;border-radius:2px;background:var(--orange);
   transition:all .35s cubic-bezier(.22,1,.36,1);width:100%;}
 /* Animation X quand le menu est fermé */
-body.sb-collapsed .menu-btn .mb-line:nth-child(1){transform:translateY(6px) rotate(45deg);}
-body.sb-collapsed .menu-btn .mb-line:nth-child(2){opacity:0;transform:scaleX(0);}
-body.sb-collapsed .menu-btn .mb-line:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+/* menu-btn no longer used */
 
 
 
@@ -837,10 +862,10 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 /* ════════════════════════════════════════════════════════════
    BARRE COMPOSITEUR FIXE (bas de l'écran) — Chat + Codex
    ════════════════════════════════════════════════════════════ */
-.composer-bar{position:fixed;bottom:0;left:var(--sb-w);right:0;z-index:300;
+.composer-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;
   padding:10px 16px;background:var(--bg);border-top:none;
   backdrop-filter:blur(14px);display:none;transition:left .42s cubic-bezier(.22,1,.36,1);}
-body.sb-collapsed .composer-bar{left:var(--sb-c);}
+body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .composer-bar{background:var(--bg);border-top:1px solid var(--border);}
 .composer-bar.visible{display:flex;align-items:flex-end;gap:8px;}
 .composer-plus{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);
@@ -864,7 +889,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   letter-spacing:.5px;transition:background .15s;}
 .composer-menu-item:hover{background:rgba(255,106,0,.08);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
-@media(max-width:680px){.composer-bar{left:var(--sb-c);padding:8px 10px;}}
+@media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px;}}
 
 /* ══ ACTIVE SUB-ITEM ══ */
 .sb-sub-item.active{color:var(--orange)!important;font-weight:700;}
@@ -1027,12 +1052,32 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <div class="notif-list" id="notif-list"></div>
 </div>
 
+<!-- SIDEBAR TOGGLE (always visible) -->
+<button id="sidebar-toggle-btn" onclick="toggleMenu()" title="Menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+</button>
+
+<!-- MENU OVERLAY -->
+<div id="menu-overlay" class="menu-overlay">
+  <div class="menu-overlay-header">
+    <div class="menu-profile-avatar"><img id="menu-avatar" src="assets/tilex-logo.png" alt="Avatar"></div>
+    <div class="menu-profile-info">
+      <span class="menu-username">TI-LEX-AL · MASTER</span>
+      <span class="menu-plan-badge" id="menu-plan-badge">FLUX</span>
+    </div>
+  </div>
+  <div class="menu-overlay-footer">
+    <button class="btn-logout" onclick="acctLogout()">
+      <span>🚪</span>
+      <span data-i18n="logout">Déconnexion</span>
+    </button>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <nav class="topbar">
   <div class="topbar-left">
-    <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()" title="Ouvrir / Fermer le menu">
-      <span class="mb-line"></span><span class="mb-line"></span><span class="mb-line"></span>
-    </button>
+    <div style="width:48px;flex-shrink:0;"></div>
     <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="showTab('dash')">
       <div class="tb-logo-box">
         <div class="tb-logo-heat hs-safe" id="heat-tb"></div>
@@ -1060,7 +1105,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     </div>
     <div class="sb-logo-name sb-label">TI-LEX-AL</div>
     <div class="sb-badge"><div class="sb-badge-dot"></div><span class="sb-label">MASTER PRO</span></div>
-    <button class="sb-toggle-btn" id="sb-toggle-btn" onclick="toggleSidebar()" title="Ouvrir / Fermer le menu">◀</button>
   </div>
 
   <div class="sb-sep"></div>
@@ -1161,44 +1205,16 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 
   <!-- COMPTE (MENU) -->
   <div id="view-dash" class="view active">
-    <div class="acct-profile">
+    <div class="acct-profile" style="margin-top:8px;">
       <div class="acct-avatar">👤</div>
       <div class="acct-info">
         <div class="acct-name">TI-LEX-AL · <span class="accent">MASTER</span></div>
-        <div class="acct-sub">Agents actifs : <span class="accent" id="m-agents">3</span> / 10 max</div>
-      </div>
-    </div>
-    <div class="acct-menu">
-      <div class="acct-menu-item" onclick="showTab('chat')">
-        <span class="acct-menu-ico">💬</span><span class="acct-menu-lbl">Chat</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-menu-item" onclick="showTab('conversations')">
-        <span class="acct-menu-ico">📋</span><span class="acct-menu-lbl">Conversations</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-menu-item" onclick="showTab('codex')">
-        <span class="acct-menu-ico">⌨️</span><span class="acct-menu-lbl">Codex</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-menu-item" onclick="showTab('studio')">
-        <span class="acct-menu-ico">🚀</span><span class="acct-menu-lbl">Studio</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-sep"></div>
-      <div class="acct-menu-item" onclick="openModal()">
-        <span class="acct-menu-ico">✦</span><span class="acct-menu-lbl">Créer un agent</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-menu-item" onclick="showTab('settings')">
-        <span class="acct-menu-ico">⚙</span><span class="acct-menu-lbl">Paramètres</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-menu-item" onclick="acctToggleLang()">
-        <span class="acct-menu-ico">🌐</span><span class="acct-menu-lbl">Langue</span><span class="acct-menu-val" id="acct-lang-val">Français</span><span class="acct-menu-chev">›</span>
-      </div>
-      <div class="acct-sep"></div>
-      <div class="acct-menu-item" onclick="acctLogout()" style="color:var(--orange);">
-        <span class="acct-menu-ico">🚪</span><span class="acct-menu-lbl" style="color:var(--orange);">Déconnexion</span><span class="acct-menu-chev">›</span>
+        <div class="acct-sub" data-i18n="active-agents-line">Agents actifs : <span class="accent" id="m-agents">3</span> / 10 max</div>
       </div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <div class="card-hd">MES AGENTS
-        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openModal()">+ CRÉER</button>
+      <div class="card-hd"><span data-i18n="my-agents">MES AGENTS</span>
+        <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="openModal()"><span data-i18n="create-btn">+ CRÉER</span></button>
       </div>
       <div class="card-body">
         <div class="agents-grid" id="agents-grid">
@@ -1262,7 +1278,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <div class="sub-view active" id="sv-convos">
       <div class="sec-title">💬 AGENT <span class="accent">AL</span></div>
       <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
-        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="newConversation()">+ NOUVELLE CONVERSATION</button>
+        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="newConversation()" data-i18n="new-conversation">+ NOUVELLE CONVERSATION</button>
       </div>
       <div class="conv-list" id="conv-list"></div>
       <div class="chat-wrap">
@@ -1471,9 +1487,9 @@ Comment puis-je t'aider aujourd'hui?</div>
 
   <!-- PARAMÈTRES -->
   <div id="view-settings" class="view">
-    <div class="sec-title">⚙ <span class="accent" id="lbl-settings">PARAMÈTRES</span></div>
+    <div class="sec-title">⚙ <span class="accent" id="lbl-settings" data-i18n="settings">PARAMÈTRES</span></div>
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd" id="lbl-theme-hd">🌗 THÈME</div>
+      <div class="card-hd" id="lbl-theme-hd" data-i18n="theme-hd">🌗 THÈME</div>
       <div class="card-body">
         <div class="settings-section" style="display:flex;align-items:center;gap:14px;">
           <div class="settings-label" id="lbl-theme-mode" style="margin:0;">MODE</div>
@@ -1483,7 +1499,7 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd" id="lbl-conn-hd">🔗 CONNEXIONS</div>
+      <div class="card-hd" id="lbl-conn-hd" data-i18n="conn-hd">🔗 CONNEXIONS</div>
       <div class="card-body">
         <div class="settings-section" style="margin-bottom:12px;">
           <div class="settings-label">GITHUB</div>
@@ -1529,13 +1545,17 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd">🌐 LANGUE</div>
+      <div class="card-hd">🌐 <span data-i18n="lang-label">Langue de la plateforme</span></div>
       <div class="card-body">
         <div class="settings-section">
-          <select class="settings-input" id="set-lang" style="cursor:pointer;" onchange="saveSettingLang()">
-            <option value="fr">Français</option>
-            <option value="en">English</option>
-          </select>
+          <div class="lang-switcher">
+            <button id="lang-btn-fr" class="lang-btn lang-btn-active" onclick="applyLanguage('fr')">
+              🇨🇦 <span data-i18n="lang-french">Français</span>
+            </button>
+            <button id="lang-btn-en" class="lang-btn lang-btn-inactive" onclick="applyLanguage('en')">
+              🇺🇸 <span data-i18n="lang-english">English</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1602,7 +1622,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
     <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
   </div>
-  <textarea class="composer-input" id="composer-input" rows="1" placeholder="Écris un message…"></textarea>
+  <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Écris un message…"></textarea>
   <button class="composer-send" id="composer-send-btn" title="Envoyer">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
   </button>
@@ -1719,10 +1739,11 @@ function toggleTheme(){
   night=!night;
   document.documentElement.setAttribute("data-theme",night?"night":"day");
   var btn=document.getElementById("theme-toggle-btn");
-  if(btn)btn.innerHTML=night?"🌙 NUIT":"☀️ JOUR";
+  if(btn&&typeof t==="function")btn.textContent=night?("🌙 "+t("theme-night")):("☀️ "+t("theme-day"));
+  else if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";
   localStorage.setItem("tilex-al-theme",night?"night":"day");
 }
-(function(){var btn=document.getElementById("theme-toggle-btn");if(btn)btn.innerHTML=night?"🌙 NUIT":"☀️ JOUR";})();
+(function(){var btn=document.getElementById("theme-toggle-btn");if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";})();
 
 /* ── CHOIX D'INTERFACE (animé vs sérieux) ── */
 function chooseMode(mode){
@@ -1742,17 +1763,44 @@ function reopenIntro(){
   document.getElementById("intro-screen").classList.remove("hidden");
 }
 
+/* ── MENU OVERLAY TOGGLE ── */
+let menuOpen=false;
+function toggleMenu(){
+  menuOpen=!menuOpen;
+  var overlay=document.getElementById("menu-overlay");
+  var btn=document.getElementById("sidebar-toggle-btn");
+  if(menuOpen){
+    overlay.classList.add("open");
+    btn.classList.add("menu-open");
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  }else{
+    overlay.classList.remove("open");
+    btn.classList.remove("menu-open");
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>';
+  }
+}
+document.addEventListener("click",function(e){
+  if(!menuOpen)return;
+  var overlay=document.getElementById("menu-overlay");
+  var btn=document.getElementById("sidebar-toggle-btn");
+  if(!overlay.contains(e.target)&&!btn.contains(e.target))toggleMenu();
+});
+
 /* ── SIDEBAR TOGGLE (fluide) ── */
-let sbOpen=true;
+let sbOpen=window.innerWidth>640;
 function toggleSidebar(){
   sbOpen=!sbOpen;
-  const sb=document.getElementById("sidebar");
-  const btn=document.getElementById("sb-toggle-btn");
-  if(sbOpen){sb.classList.remove("collapsed");document.body.classList.remove("sb-collapsed");}
-  else{sb.classList.add("collapsed");document.body.classList.add("sb-collapsed");}
+  var sb=document.getElementById("sidebar");
+  if(sbOpen){sb.classList.add("sidebar-open");document.body.classList.add("sb-open");}
+  else{sb.classList.remove("sidebar-open");document.body.classList.remove("sb-open");}
+  localStorage.setItem("tilex-sb-open",sbOpen?"1":"0");
 }
-// Commencer avec sidebar ouverte
-document.getElementById("sidebar").classList.remove("collapsed");
+(function(){
+  var saved=localStorage.getItem("tilex-sb-open");
+  if(window.innerWidth<=640){sbOpen=false;}
+  else if(saved!==null){sbOpen=saved==="1";}
+  if(sbOpen){document.getElementById("sidebar").classList.add("sidebar-open");document.body.classList.add("sb-open");}
+})();
 
 /* ── NAVIGATION ── */
 function showTab(name){
@@ -1833,6 +1881,7 @@ function setPlan(plan){
   var badge=document.getElementById("plan-badge-tb");
   if(badge)badge.className="plan-badge plan-"+plan;
   var ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=pd.name;
+  var mpb=document.getElementById("menu-plan-badge");if(mpb)mpb.textContent=pd.name;
   var mn=document.getElementById("m-plan-name");if(mn)mn.textContent=pd.name;
   var mp=document.getElementById("m-plan-price");if(mp)mp.textContent=pd.price;
   var ml=document.getElementById("m-msg-limit");if(ml)ml.textContent=pd.msgWindow===-1?"∞":pd.msgWindow;
@@ -3159,56 +3208,99 @@ function saveSettingModel(){
   }
   localStorage.setItem("tilex-al-model",v);
 }
-var LANG_MAP={
-  fr:{settings:"PARAMÈTRES",theme_hd:"THÈME",theme_mode:"MODE",theme_night:"NUIT",theme_day:"JOUR",theme_hint:"Bascule entre le mode nuit (noir) et jour (beige).",
-    conn_hd:"CONNEXIONS",model_hd:"MODÈLE IA",lang_hd:"LANGUE",memory_hd:"MÉMOIRE IA",convs_hd:"CONVERSATIONS",interface_hd:"INTERFACE",
-    chat:"CHAT",codex:"CODEX",studio:"STUDIO",account:"COMPTE",cerveau:"Cerveau",conversations:"Conversations",favoris:"Favoris",projet:"Projet",
-    send:"Envoyer",composer_ph:"Écris un message…",codex_ph:"Décris ce que tu veux coder…",new_conv:"+ NOUVELLE",
-    scan_btn:"SCANNER LE PROJET",code_btn:"COMMENCER À CODER",effacer:"EFFACER",delete_confirm:"Supprimer?",lang_label:"Français"},
-  en:{settings:"SETTINGS",theme_hd:"THEME",theme_mode:"MODE",theme_night:"NIGHT",theme_day:"DAY",theme_hint:"Toggle between night (black) and day (beige) mode.",
-    conn_hd:"CONNECTIONS",model_hd:"AI MODEL",lang_hd:"LANGUAGE",memory_hd:"AI MEMORY",convs_hd:"CONVERSATIONS",interface_hd:"INTERFACE",
-    chat:"CHAT",codex:"CODEX",studio:"STUDIO",account:"ACCOUNT",cerveau:"Brain",conversations:"Conversations",favoris:"Favorites",projet:"Project",
-    send:"Send",composer_ph:"Write a message…",codex_ph:"Describe what you want to code…",new_conv:"+ NEW",
-    scan_btn:"SCAN PROJECT",code_btn:"START CODING",effacer:"CLEAR",delete_confirm:"Delete?",lang_label:"English"}
+var TRANSLATIONS={
+  fr:{
+    "settings":"PARAMÈTRES","theme-hd":"🌗 THÈME","theme-mode":"MODE","theme-night":"NUIT","theme-day":"JOUR",
+    "theme-hint":"Bascule entre le mode nuit (noir) et jour (beige).",
+    "conn-hd":"🔗 CONNEXIONS","model-hd":"MODÈLE IA","lang-label":"Langue de la plateforme",
+    "lang-french":"Français","lang-english":"Anglais",
+    "memory-hd":"MÉMOIRE IA","convs-hd":"CONVERSATIONS","interface-hd":"INTERFACE",
+    "chat":"CHAT","codex":"CODEX","studio":"STUDIO","account":"COMPTE",
+    "cerveau":"Cerveau","conversations":"Conversations","favoris":"Favoris","projet":"Projet",
+    "logout":"Déconnexion","online":"En ligne","offline":"Hors ligne","memory-active":"Mémoire active",
+    "new-conversation":"+ NOUVELLE CONVERSATION","no-saved-conv":"Aucune conversation sauvegardée.",
+    "type-message":"Écris un message…","how-can-help":"Comment puis-je t'aider?",
+    "my-agents":"MES AGENTS","create-btn":"+ CRÉER","active-agents":"Agents actifs","max":"max",
+    "agent-online":"EN LIGNE","settings-title":"Paramètres",
+    "save":"Sauvegarder","cancel":"Annuler","confirm":"Confirmer","delete":"Supprimer",
+    "close":"Fermer","open":"Ouvrir","loading":"Chargement…","error":"Erreur","success":"Succès",
+    "scan-btn":"SCANNER LE PROJET","code-btn":"COMMENCER À CODER","effacer":"EFFACER",
+    "delete-confirm":"Supprimer?","codex-ph":"Décris ce que tu veux coder…"
+  },
+  en:{
+    "settings":"SETTINGS","theme-hd":"🌗 THEME","theme-mode":"MODE","theme-night":"NIGHT","theme-day":"DAY",
+    "theme-hint":"Toggle between night (black) and day (beige) mode.",
+    "conn-hd":"🔗 CONNECTIONS","model-hd":"AI MODEL","lang-label":"Platform language",
+    "lang-french":"French","lang-english":"English",
+    "memory-hd":"AI MEMORY","convs-hd":"CONVERSATIONS","interface-hd":"INTERFACE",
+    "chat":"CHAT","codex":"CODEX","studio":"STUDIO","account":"ACCOUNT",
+    "cerveau":"Brain","conversations":"Conversations","favoris":"Favorites","projet":"Project",
+    "logout":"Log out","online":"Online","offline":"Offline","memory-active":"Memory active",
+    "new-conversation":"+ NEW CONVERSATION","no-saved-conv":"No saved conversations.",
+    "type-message":"Type a message…","how-can-help":"How can I help you?",
+    "my-agents":"MY AGENTS","create-btn":"+ CREATE","active-agents":"Active agents","max":"max",
+    "agent-online":"ONLINE","settings-title":"Settings",
+    "save":"Save","cancel":"Cancel","confirm":"Confirm","delete":"Delete",
+    "close":"Close","open":"Open","loading":"Loading…","error":"Error","success":"Success",
+    "scan-btn":"SCAN PROJECT","code-btn":"START CODING","effacer":"CLEAR",
+    "delete-confirm":"Delete?","codex-ph":"Describe what you want to code…"
+  }
 };
+var currentLang=localStorage.getItem("tilex-al-lang")||"fr";
 
-function applyLang(lang){
-  var L=LANG_MAP[lang]||LANG_MAP.fr;
-  var pairs=[
-    ["lbl-settings",L.settings],["lbl-theme-hd","🌗 "+L.theme_hd],["lbl-theme-mode",L.theme_mode],
-    ["lbl-theme-hint",L.theme_hint],["lbl-conn-hd","🔗 "+L.conn_hd],
-    ["sub-convos",L.conversations],["sub-favs",L.favoris],["sub-projs",L.projet],["sub-cerveau",L.cerveau]
-  ];
-  pairs.forEach(function(p){var el=document.getElementById(p[0]);if(el)el.textContent=p[1];});
+function t(key){return (TRANSLATIONS[currentLang]||{})[key]||(TRANSLATIONS.fr||{})[key]||key;}
+
+function applyLanguage(lang){
+  if(!TRANSLATIONS[lang])return;
+  currentLang=lang;
+  localStorage.setItem("tilex-al-lang",lang);
+  document.documentElement.lang=lang==="fr"?"fr-CA":"en";
+  document.querySelectorAll("[data-i18n]").forEach(function(el){
+    var key=el.getAttribute("data-i18n");
+    var tr=TRANSLATIONS[lang][key];
+    if(tr!==undefined){
+      if(el.tagName==="INPUT"||el.tagName==="TEXTAREA")el.placeholder=tr;
+      else el.textContent=tr;
+    }
+  });
   var labels=document.querySelectorAll(".sb-label[data-txt]");
   labels.forEach(function(el){
     var key=el.getAttribute("data-txt");
-    if(key==="CHAT")el.setAttribute("data-txt",L.chat);
-    else if(key==="CODEX"||key==="Codex")el.setAttribute("data-txt",L.codex);
-    else if(key==="CRÉER AGENT IA"&&lang==="en")el.setAttribute("data-txt","CREATE AI AGENT");
-    else if(key==="CREATE AI AGENT"&&lang==="fr")el.setAttribute("data-txt","CRÉER AGENT IA");
+    var map={"CHAT":"chat","CODEX":"codex","CRÉER AGENT IA":"create-agent","CREATE AI AGENT":"create-agent",
+      "COMPTE":"account","ACCOUNT":"account","PARAMÈTRES":"settings","SETTINGS":"settings","FORFAIT":"forfait"};
+    var trKey=map[key];
+    if(trKey&&TRANSLATIONS[lang][trKey]){
+      var newTxt=TRANSLATIONS[lang][trKey];
+      el.setAttribute("data-txt",newTxt);
+      el.innerHTML=newTxt.split("").map(function(c,i){
+        return c===" "?'<span class="ltr" style="--li:'+i+'">&nbsp;</span>':
+          '<span class="ltr" style="--li:'+i+'">'+c+'</span>';
+      }).join("");
+    }
   });
-  var inp=document.getElementById("composer-input");
-  if(inp)inp.placeholder=L.composer_ph;
+  var sub={"sub-convos":"conversations","sub-favs":"favoris","sub-projs":"projet","sub-cerveau":"cerveau"};
+  Object.keys(sub).forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.textContent=TRANSLATIONS[lang][sub[id]]||el.textContent;
+  });
+  var btnFr=document.getElementById("lang-btn-fr");
+  var btnEn=document.getElementById("lang-btn-en");
+  if(btnFr){btnFr.classList.toggle("lang-btn-active",lang==="fr");btnFr.classList.toggle("lang-btn-inactive",lang!=="fr");}
+  if(btnEn){btnEn.classList.toggle("lang-btn-active",lang==="en");btnEn.classList.toggle("lang-btn-inactive",lang!=="en");}
   var scanBtn=document.getElementById("cx-scan-btn");
-  if(scanBtn&&!scanBtn.disabled)scanBtn.textContent=L.scan_btn;
+  if(scanBtn&&!scanBtn.disabled)scanBtn.textContent=TRANSLATIONS[lang]["scan-btn"];
   var codeBtn=document.getElementById("cx-code-btn");
-  if(codeBtn)codeBtn.textContent=L.code_btn;
+  if(codeBtn)codeBtn.textContent=TRANSLATIONS[lang]["code-btn"];
+  var thBtn=document.getElementById("theme-toggle-btn");
+  if(thBtn){
+    var isNight=document.documentElement.getAttribute("data-theme")!=="day";
+    thBtn.textContent=isNight?("🌙 "+TRANSLATIONS[lang]["theme-night"]):("☀️ "+TRANSLATIONS[lang]["theme-day"]);
+  }
 }
-
-function saveSettingLang(){
-  var v=document.getElementById("set-lang").value;
-  localStorage.setItem("tilex-al-lang",v);
-  var lv=document.getElementById("acct-lang-val");
-  if(lv)lv.textContent=v==="en"?"English":"Français";
-  applyLang(v);
-}
-function acctToggleLang(){
-  var sel=document.getElementById("set-lang");
-  if(sel){sel.value=sel.value==="fr"?"en":"fr";saveSettingLang();}
-}
+function applyLang(lang){applyLanguage(lang);}
 function acctLogout(){
-  if(!confirm("Déconnexion ?"))return;
+  var msg=typeof t==="function"?t("logout")+" ?":"Déconnexion ?";
+  if(!confirm(msg))return;
   if(typeof SB!=="undefined"&&SB&&SB.auth)SB.auth.signOut().then(function(){window.location.href="choose.html";});
   else window.location.href="choose.html";
 }
@@ -3287,11 +3379,7 @@ function renderAgentCards(){
   var modelSel=document.getElementById("set-model");
   if(savedModel&&modelSel){for(var i=0;i<modelSel.options.length;i++){if(modelSel.options[i].value===savedModel)modelSel.selectedIndex=i;}}
   enforceModelGating();
-  var savedLang=localStorage.getItem("tilex-al-lang");
-  var langSel=document.getElementById("set-lang");
-  if(savedLang&&langSel){for(var i=0;i<langSel.options.length;i++){if(langSel.options[i].value===savedLang)langSel.selectedIndex=i;}}
-  var lv=document.getElementById("acct-lang-val");if(lv&&savedLang)lv.textContent=savedLang==="en"?"English":"Français";
-  if(savedLang)applyLang(savedLang);
+  applyLanguage(currentLang);
   var savedMemory=localStorage.getItem("tilex-al-memory");
   var memEl=document.getElementById("set-memory");
   if(savedMemory&&memEl)memEl.value=savedMemory;
@@ -3467,10 +3555,10 @@ function updateComposer(){
   });
   if(activeView==="view-chat"){
     bar.classList.add("visible");currentComposerMode="chat";
-    document.getElementById("composer-input").placeholder="Écris un message…";
+    document.getElementById("composer-input").placeholder=typeof t==="function"?t("type-message"):"Écris un message…";
   }else if(activeView==="view-codex"){
     bar.classList.add("visible");currentComposerMode="codex";
-    document.getElementById("composer-input").placeholder="Décris ce que tu veux coder…";
+    document.getElementById("composer-input").placeholder=typeof t==="function"?t("codex-ph"):"Décris ce que tu veux coder…";
   }else{
     bar.classList.remove("visible");
   }
