@@ -660,8 +660,10 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
    MODE NUIT : blanc → or sweep → RESTE OR + pulse infini fluide
    MODE JOUR : noir  → or sweep → revient NOIR
    ════════════════════════════════════════════════════════════ */
-.proj-ltr{display:inline;color:#FFF8E7;
+.proj-ltr{display:inline;color:#FFF8E7;will-change:color,text-shadow;
+  -webkit-animation:proj-sweep 1.2s ease-out forwards, proj-pulse 3s ease-in-out infinite;
   animation:proj-sweep 1.2s ease-out forwards, proj-pulse 3s ease-in-out infinite;
+  -webkit-animation-delay:var(--d,0ms),calc(var(--d,0ms) + 1.2s);
   animation-delay:var(--d,0ms),calc(var(--d,0ms) + 1.2s);}
 @keyframes proj-sweep{
   0%{color:#FFF8E7;text-shadow:none}
@@ -674,8 +676,10 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   50%{text-shadow:0 0 10px var(--or),0 0 3px var(--or2)}
   100%{text-shadow:0 0 2px rgba(212,175,55,.15)}
 }
-[data-theme="day"] .proj-ltr{color:#0A0A0A;
+[data-theme="day"] .proj-ltr{color:#0A0A0A;will-change:color,text-shadow;
+  -webkit-animation:proj-sweep-day 1.2s ease-out forwards;
   animation:proj-sweep-day 1.2s ease-out forwards;
+  -webkit-animation-delay:var(--d,0ms);
   animation-delay:var(--d,0ms);}
 @keyframes proj-sweep-day{
   0%{color:#0A0A0A;text-shadow:none}
@@ -707,7 +711,22 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 [data-interface="serious"] .sdot.g,
 [data-interface="serious"] .plan-dot{animation:none!important;}
 [data-interface="serious"] .metric::before{display:none!important;}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+/* RÉDUCTION DE MOUVEMENT (souvent activée sur téléphone / mode économie d'énergie) :
+   on calme UNIQUEMENT le décoratif, mais le PROJECTEUR lettre-par-lettre des réponses IA
+   (.proj-ltr) reste TOUJOURS fluide — c'est une demande explicite, pas une déco. */
+@media (prefers-reduced-motion:reduce){
+  *:not(.proj-ltr){animation-duration:.01ms!important;animation-iteration-count:1!important;}
+  .proj-ltr{
+    -webkit-animation:proj-sweep 1.2s ease-out forwards, proj-pulse 3s ease-in-out infinite!important;
+    animation:proj-sweep 1.2s ease-out forwards, proj-pulse 3s ease-in-out infinite!important;
+    -webkit-animation-delay:var(--d,0ms),calc(var(--d,0ms) + 1.2s)!important;
+    animation-delay:var(--d,0ms),calc(var(--d,0ms) + 1.2s)!important;}
+  [data-theme="day"] .proj-ltr{
+    -webkit-animation:proj-sweep-day 1.2s ease-out forwards!important;
+    animation:proj-sweep-day 1.2s ease-out forwards!important;
+    -webkit-animation-delay:var(--d,0ms)!important;
+    animation-delay:var(--d,0ms)!important;}
+}
 
 /* ════════════════════════════════════════════════════════════
    BARRE COMPOSITEUR FIXE (bas de l'écran) — Chat + Codex
