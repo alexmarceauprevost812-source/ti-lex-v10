@@ -388,14 +388,16 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .add-card:hover{border-color:var(--orange);color:var(--orange);}
 
 /* CHAT */
-.chat-wrap{height:calc(100vh - 265px);min-height:420px;display:flex;flex-direction:column;
+.chat-wrap{height:calc(100vh - 120px);min-height:420px;display:flex;flex-direction:column;background:#000;
   background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
 .chat-hd{padding:11px 15px;background:rgba(0,0,0,.13);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:rgba(0,0,0,.04);}
 .c-ava{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--or3),var(--or2));display:flex;align-items:center;justify-content:center;font-size:15px;}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#000;}
+[data-theme="day"] .chat-msgs{background:var(--bg);}
+[data-theme="day"] .chat-wrap{background:var(--bg);}
 .cmsg{display:flex;gap:8px;max-width:80%;}
 .cmsg.u{align-self:flex-end;flex-direction:row-reverse;}
 .cmsg.a{align-self:flex-start;}
@@ -803,22 +805,11 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
       </div>
       <div class="tb-logo-txt">
         <span class="tb-logo-main">TI-LEX-AL</span>
-        <span class="tb-logo-sub">MASTER PRO</span>
       </div>
     </div>
   </div>
-  <div class="topbar-center">
-    <div class="eye-status-bar" id="eye-bar" onclick="cycleHeat()">
-      <div class="sdot g" id="eye-sdot"></div>
-      <span id="eye-txt">✓ SYSTÈME PROTÉGÉ</span>
-    </div>
-  </div>
+  <div class="topbar-center"></div>
   <div class="topbar-right">
-    <!-- Sélecteur de plan (démo) -->
-    <div class="plan-badge plan-pro" id="plan-badge-tb" onclick="openPlanSel()" title="Changer de forfait">
-      <div class="plan-dot"></div>
-      <span id="plan-badge-txt">PRO</span>
-    </div>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge">4</span></button>
     <div class="clock" id="clock">--:--:--</div>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
@@ -1028,16 +1019,8 @@ Comment puis-je t'aider aujourd'hui?</div>
             <div class="cmsg-time">Maintenant</div></div>
         </div>
       </div>
-      <div class="c-inp-area">
-        <div class="c-row">
-          <input type="text" class="c-field" id="chat-in" placeholder="Écris un message..." onkeydown="if(event.key==='Enter')sendChat()">
-          <button class="c-send" onclick="sendChat()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-          </button>
-        </div>
-        <div class="c-foot">TI-LEX-AL · Loi 25 · Québec ⚜️</div>
-      </div>
     </div>
+    <input type="hidden" id="chat-in">
   </div>
 
   <!-- CODEX -->
@@ -1178,8 +1161,12 @@ Comment puis-je t'aider aujourd'hui?</div>
 <div class="composer-bar" id="composer-bar">
   <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
   <div class="composer-menu" id="composer-menu">
+    <div class="composer-menu-item" onclick="composeAction('file')"><span class="cmi-ico">📄</span> Fichier</div>
+    <div class="composer-menu-item" onclick="composeAction('zip')"><span class="cmi-ico">📦</span> Fichier ZIP</div>
+    <div class="composer-menu-item" onclick="composeAction('image')"><span class="cmi-ico">🖼️</span> Image</div>
+    <div class="composer-menu-item" onclick="composeAction('micro')"><span class="cmi-ico">🎙️</span> Micro</div>
+    <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
     <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
-    <div class="composer-menu-item" onclick="composeAction('agent')"><span class="cmi-ico">✦</span> Créer un agent</div>
     <div class="composer-menu-item" onclick="composeAction('clear')"><span class="cmi-ico">🗑️</span> Effacer la conversation</div>
   </div>
   <textarea class="composer-input" id="composer-input" rows="1" placeholder="Écris un message…"></textarea>
@@ -1386,9 +1373,9 @@ function setHeat(state){
     el.className=el.className.replace(/hs-\w+/g,"").trim()+" "+s.c;
   });
   const bar=document.getElementById("eye-bar");
-  bar.style.cssText=s.bar;
-  document.getElementById("eye-sdot").style.cssText=s.dot;
-  document.getElementById("eye-txt").textContent=s.txt;
+  if(bar)bar.style.cssText=s.bar;
+  const sdot=document.getElementById("eye-sdot");if(sdot)sdot.style.cssText=s.dot;
+  const etxt=document.getElementById("eye-txt");if(etxt)etxt.textContent=s.txt;
 }
 function cycleHeat(){setHeat(HCYCLE[(HCYCLE.indexOf(curHeat)+1)%HCYCLE.length]);}
 
@@ -1402,8 +1389,8 @@ function setPlan(plan){
   document.documentElement.setAttribute("data-plan",plan);
   const cfg=PLAN_CFG[plan];
   const badge=document.getElementById("plan-badge-tb");
-  badge.className="plan-badge plan-"+plan;
-  document.getElementById("plan-badge-txt").textContent=cfg.lbl;
+  if(badge)badge.className="plan-badge plan-"+plan;
+  const ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=cfg.lbl;
   // Ferme plan sel modal
   closePlanSel();
   // Highlight selected plan card
@@ -2170,6 +2157,36 @@ function composeAction(action){
   else if(action==="clear"){
     document.getElementById("chat-msgs").innerHTML="";
     chatHistory=[];
+  }
+  else if(action==="file"||action==="zip"||action==="image"){
+    var inp=document.createElement("input");inp.type="file";
+    if(action==="image")inp.accept="image/*";
+    else if(action==="zip")inp.accept=".zip,.rar,.7z,.tar,.gz";
+    inp.onchange=function(){
+      if(!inp.files||!inp.files[0])return;
+      var f=inp.files[0];
+      var reader=new FileReader();
+      reader.onload=function(){
+        var name=f.name;var size=(f.size/1024).toFixed(1)+"KB";
+        addMsg("u","📎 Fichier joint : "+name+" ("+size+")");
+        chatHistory.push({role:"user",content:"[Fichier joint: "+name+", taille: "+size+"]"});
+      };
+      reader.readAsDataURL(f);
+    };
+    inp.click();
+  }
+  else if(action==="micro"){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){addMsg("a","Micro non disponible sur cet appareil.");return;}
+    addMsg("u","🎙️ Enregistrement vocal…");
+    addMsg("a","La fonction micro sera disponible prochainement.");
+  }
+  else if(action==="web"){
+    var query=document.getElementById("composer-input").value.trim();
+    if(!query){addMsg("a","Écris ta recherche dans la barre, puis clique 🌐 Recherche Web.");return;}
+    document.getElementById("chat-in").value="Recherche web : "+query;
+    document.getElementById("composer-input").value="";
+    document.getElementById("composer-input").style.height="auto";
+    sendChat();
   }
 }
 </script>
