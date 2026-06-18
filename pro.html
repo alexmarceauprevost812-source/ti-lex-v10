@@ -371,6 +371,18 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .ag-ico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;}
 .ag-ico.gold{background:linear-gradient(135deg,var(--or3),var(--or2));color:#0a0a0a;}
 .ag-ico.dark{background:var(--bg4);border:1px solid var(--border);}
+.ag-ico.has-media{padding:0;overflow:hidden;background:#000;}
+.ag-ico img,.ag-ico video{width:100%;height:100%;object-fit:cover;border-radius:9px;display:block;}
+/* ── UPLOAD AVATAR AGENT (photo / petite vidéo animée) ── */
+.avatar-upload{display:flex;align-items:center;gap:12px;padding:10px;border:1px dashed var(--border);
+  border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:8px;}
+.avatar-upload:hover{border-color:var(--orange);background:rgba(255,106,0,.04);}
+.avatar-preview{width:52px;height:52px;border-radius:11px;overflow:hidden;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:24px;background:var(--bg4);border:1px solid var(--border);}
+.avatar-preview img,.avatar-preview video{width:100%;height:100%;object-fit:cover;}
+.avatar-upload-txt{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);line-height:1.55;}
+.avatar-clear{margin-left:auto;border:none;background:none;color:var(--red);cursor:pointer;font-size:15px;opacity:.7;}
+.avatar-clear:hover{opacity:1;}
 .ag-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--txt);}
 .ag-name.g{background:linear-gradient(90deg,var(--or3),var(--or2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .ag-role{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);letter-spacing:1px;margin-top:1px;}
@@ -877,7 +889,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 <!-- PANEL NOTIFICATIONS -->
 <div class="notif-panel" id="notif-panel">
   <div class="notif-hd"><span>🔔 NOTIFICATIONS</span>
-    <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);">5 alertes</span>
+    <span id="notif-count" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);cursor:pointer;" onclick="clearNotifs()">0 alerte</span>
   </div>
   <div class="notif-list" id="notif-list"></div>
 </div>
@@ -900,7 +912,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
-    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge">4</span></button>
+    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
     <div class="clock" id="clock">--:--:--</div>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
@@ -1383,6 +1395,13 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="modal-title">CRÉER UN <span>AGENT</span></div>
     <label class="flbl">NOM DE L'AGENT</label>
     <input type="text" class="finput" id="a-name" placeholder="Agent Finance, Agent RH…">
+    <label class="flbl">PHOTO / VIDÉO DE L'AGENT (optionnel)</label>
+    <div class="avatar-upload" onclick="if(event.target.className!=='avatar-clear')document.getElementById('a-avatar-input').click()">
+      <div class="avatar-preview" id="a-avatar-preview">📷</div>
+      <div class="avatar-upload-txt">Ajoute une photo, ou une petite vidéo (mp4/webm)<br>pour un avatar animé intelligent. Max ~2,5&nbsp;Mo.</div>
+      <button type="button" class="avatar-clear" id="a-avatar-clear" onclick="clearAvatar()" style="display:none;" title="Retirer">✕</button>
+    </div>
+    <input type="file" id="a-avatar-input" accept="image/*,video/mp4,video/webm" style="display:none;" onchange="handleAvatarUpload(this)">
     <label class="flbl">TYPE</label>
     <div class="tgrid">
       <button class="ttype sel" onclick="selType(this,'chat')"><span class="ti">💬</span><span class="tl">CHAT</span></button>
@@ -1601,32 +1620,57 @@ function setPlan(plan){
 function openPlanSel(){document.getElementById("plan-sel").style.display="flex";}
 function closePlanSel(){document.getElementById("plan-sel").style.display="none";}
 
-/* ── NOTIFICATIONS ── */
-const NOTIFS=[
-  {icon:"💬",title:"Nouveau message · Agent AL",desc:"Réponse disponible dans la section Chat",type:"ok",time:"il y a 5min"},
-  {icon:"⚡",title:"Agent créé avec succès",desc:"Ton nouvel agent est en ligne et prêt",type:"ok",time:"il y a 1h"},
-  {icon:"⌨️",title:"Code généré · Codex",desc:"Génération JavaScript terminée",type:"ok",time:"il y a 2h"},
-  {icon:"🔔",title:"Bienvenue sur ti-lex Pro",desc:"Interface professionnelle activée",type:"ok",time:"il y a 4h"},
-];
+/* ── NOTIFICATIONS (dynamiques — événements réels : agents, code, déploiement) ── */
+let proNotifs=[];
+try{proNotifs=JSON.parse(localStorage.getItem("tilex-pro-notifs")||"[]");}catch(e){proNotifs=[];}
 let notifOpen=false;
-(function(){
-  const list=document.getElementById("notif-list");
-  list.innerHTML=NOTIFS.map(n=>`
-    <div class="ni">
-      <div class="ni-icon">${n.icon}</div>
-      <div class="ni-body">
-        <div class="ni-title">${n.title}</div>
-        <div class="ni-desc">${n.desc}</div>
-        <span class="nb ${n.type==="warn"?"nb-w":"nb-ok"}">${n.type.toUpperCase()}</span>
-      </div>
-      <div class="ni-time">${n.time}</div>
-    </div>`).join("");
-})();
+function notifTimeAgo(ts){
+  var d=Date.now()-(ts||Date.now());var m=Math.floor(d/60000);
+  if(m<1)return"à l'instant";if(m<60)return"il y a "+m+" min";
+  var h=Math.floor(m/60);if(h<24)return"il y a "+h+" h";
+  return"il y a "+Math.floor(h/24)+" j";
+}
+function renderNotifs(){
+  var list=document.getElementById("notif-list");if(!list)return;
+  var badge=document.querySelector(".notif-badge");
+  var cnt=document.getElementById("notif-count");
+  if(cnt)cnt.textContent=proNotifs.length+" alerte"+(proNotifs.length!==1?"s":"");
+  if(badge){
+    if(proNotifs.length===0){badge.style.display="none";}
+    else{badge.style.display="flex";badge.textContent=proNotifs.length>9?"9+":proNotifs.length;}
+  }
+  if(proNotifs.length===0){
+    list.innerHTML='<div style="padding:26px;text-align:center;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--muted);line-height:1.7;">Aucune notification pour le moment.<br>Les déploiements, agents créés et code généré apparaîtront ici.</div>';
+    return;
+  }
+  list.innerHTML=proNotifs.map(function(n){return ''+
+    '<div class="ni">'+
+      '<div class="ni-icon">'+n.icon+'</div>'+
+      '<div class="ni-body">'+
+        '<div class="ni-title">'+escHtml(n.title)+'</div>'+
+        '<div class="ni-desc">'+escHtml(n.desc)+'</div>'+
+        '<span class="nb '+(n.type==="warn"?"nb-w":"nb-ok")+'">'+(n.type||"ok").toUpperCase()+'</span>'+
+      '</div>'+
+      '<div class="ni-time">'+notifTimeAgo(n.ts)+'</div>'+
+    '</div>';}).join("");
+}
+function pushNotif(icon,title,desc,type){
+  proNotifs.unshift({icon:icon,title:title,desc:desc,type:type||"ok",ts:Date.now()});
+  if(proNotifs.length>30)proNotifs=proNotifs.slice(0,30);
+  try{localStorage.setItem("tilex-pro-notifs",JSON.stringify(proNotifs));}catch(e){}
+  renderNotifs();
+}
+function clearNotifs(){
+  proNotifs=[];
+  try{localStorage.removeItem("tilex-pro-notifs");}catch(e){}
+  renderNotifs();
+}
 function toggleNotif(){notifOpen=!notifOpen;document.getElementById("notif-panel").classList.toggle("open",notifOpen);}
 document.addEventListener("click",e=>{
   if(notifOpen&&!e.target.closest("#notif-panel")&&!e.target.closest(".notif-btn"))
     {notifOpen=false;document.getElementById("notif-panel").classList.remove("open");}
 });
+renderNotifs();
 
 /* ── SUPABASE + AI PROXY ── */
 const AI_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
@@ -2209,6 +2253,7 @@ async function genCode(){
     var reply=await readSSE(res);
     codexHistory.push({role:"assistant",content:reply});
     cxAddReply(reply||"(réponse vide)");
+    if(typeof pushNotif==="function")pushNotif("⌨️","Code généré · Codex","Génération terminée, prête à pousser sur GitHub.","ok");
   }catch(e){
     cxRemoveTyping();
     cxAddReply("Erreur: "+e.message);
@@ -2378,7 +2423,8 @@ async function ghPushCode(){
   if(sha)body.sha=sha;
   var result=await ghApi("/repos/"+ghCurrentRepo+"/contents/"+encodeURIComponent(fileName),{method:"PUT",body:JSON.stringify(body)});
   cxRemoveTyping();
-  if(result&&result.content){cxAddReply("✅ Fichier **"+fileName+"** pushé avec succès sur **"+ghCurrentRepo+"** ("+ghCurrentBranch+").\n\nCommit: "+result.commit.sha.slice(0,7));}
+  if(result&&result.content){cxAddReply("✅ Fichier **"+fileName+"** pushé avec succès sur **"+ghCurrentRepo+"** ("+ghCurrentBranch+").\n\nCommit: "+result.commit.sha.slice(0,7));
+    if(typeof pushNotif==="function")pushNotif("⬆️","Code poussé sur GitHub",fileName+" → "+ghCurrentRepo+" ("+ghCurrentBranch+").","ok");}
   else{cxAddReply("❌ Erreur lors du push. Vérifie que ton token a les permissions d'écriture (Contents: Read & Write).");}
 }
 function ghRefreshProjects(){
@@ -2590,18 +2636,41 @@ function loadCustomAgentsFromSync(){
   }catch(e){}
 }
 function saveCustomAgentsToSync(){
-  try{localStorage.setItem("tilex-custom-agents",JSON.stringify(customAgents));}catch(e){}
+  try{localStorage.setItem("tilex-custom-agents",JSON.stringify(customAgents));}
+  catch(e){alert("Stockage plein — la vidéo ou l'image de l'agent est trop lourde pour être sauvegardée.\nEssaie une vidéo plus courte ou une image plus légère.");}
+}
+/* ── AVATAR AGENT (image ou petite vidéo animée) ── */
+function avatarMediaHtml(av){
+  if(!av||!av.data)return"";
+  if(av.type==="video")return'<video src="'+av.data+'" autoplay loop muted playsinline></video>';
+  return'<img src="'+av.data+'" alt="">';
+}
+function agentIcoHtml(a){
+  if(a&&a.avatar&&a.avatar.data)return'<div class="ag-ico dark has-media">'+avatarMediaHtml(a.avatar)+'</div>';
+  return'<div class="ag-ico dark">'+(TYPE_ICO[a?a.type:"custom"]||"🔧")+'</div>';
+}
+function agentCardHtml(a){
+  var role=escHtml(a.desc||((a.type||"custom").toUpperCase()+" · PERSONNALISÉ"));
+  var tp=(a.type||"custom").toUpperCase();
+  return '<div class="ag-top">'+agentIcoHtml(a)+
+    '<div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>'+
+    '<span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div></div>'+
+    '<div class="ag-name">'+escHtml((a.name||"").toUpperCase())+'</div>'+
+    '<div class="ag-role">'+role+'</div>'+
+    '<div class="ag-model">'+escHtml(a.model||"claude-sonnet-4-6")+'</div>'+
+    '<div class="ag-stat"><div class="sdot g"></div> ACTIF</div>'+
+    '<div class="ag-tags"><span class="atag og">'+tp+'</span><span class="atag">CUSTOM</span></div>';
 }
 function renderAgentCards(){
   var grid=document.getElementById("agents-grid");if(!grid)return;
   var add=grid.querySelector(".add-card");
-  var cards=grid.querySelectorAll(".ag-card:not(.add-card)");
+  /* ne retire QUE les cartes custom — garde les cartes statiques (Master, Agent AL, Codex) */
+  var cards=grid.querySelectorAll(".ag-card.ag-custom");
   for(var i=0;i<cards.length;i++)cards[i].remove();
   for(var i=0;i<customAgents.length;i++){
     var a=customAgents[i];
-    var card=document.createElement("div");card.className="ag-card";
-    var ico=TYPE_ICO[a.type]||"🔧";
-    card.innerHTML='<div class="ag-top"><div class="ag-ico dark">'+ico+'</div><div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div><span style="font-size:10px;color:var(--muted);">actif</span></div></div><div class="ag-name">'+escHtml(a.name)+'</div><div class="ag-model">'+escHtml(a.model||"claude-sonnet-4-6")+'</div>';
+    var card=document.createElement("div");card.className="ag-card ag-custom";
+    card.innerHTML=agentCardHtml(a);
     if(add)grid.insertBefore(card,add);else grid.appendChild(card);
   }
   var mEl=document.getElementById("m-agents");
@@ -2628,30 +2697,56 @@ function renderAgentCards(){
 
 /* ── MODAL AGENTS ── */
 let selTypeVal="chat";let customAgents=JSON.parse(localStorage.getItem("tilex-custom-agents")||"[]");
+let agentAvatar=null; /* {type:'image'|'video', data:dataURL} */
 const TYPE_ICO={chat:"💬",code:"⌨️",analyse:"📊",doc:"📄",custom:"🔧"};
-function openModal(){document.getElementById("modal").style.display="flex";document.getElementById("a-name").focus();}
+function resetAgentForm(){
+  agentAvatar=null;
+  var prev=document.getElementById("a-avatar-preview");if(prev)prev.innerHTML="📷";
+  var clr=document.getElementById("a-avatar-clear");if(clr)clr.style.display="none";
+  var ai=document.getElementById("a-avatar-input");if(ai)ai.value="";
+  var nm=document.getElementById("a-name");if(nm)nm.value="";
+  var ds=document.getElementById("a-desc");if(ds)ds.value="";
+}
+function openModal(){resetAgentForm();document.getElementById("modal").style.display="flex";document.getElementById("a-name").focus();}
 function closeModal(){document.getElementById("modal").style.display="none";}
 function selType(btn,t){document.querySelectorAll(".ttype").forEach(b=>b.classList.remove("sel"));btn.classList.add("sel");selTypeVal=t;}
+function handleAvatarUpload(input){
+  if(!input.files||!input.files[0])return;
+  var f=input.files[0];
+  var isVideo=/^video\//.test(f.type);
+  var maxBytes=isVideo?2.5*1024*1024:1.5*1024*1024;
+  if(f.size>maxBytes){
+    alert((isVideo?"Vidéo":"Image")+" trop lourde ("+(f.size/1048576).toFixed(1)+" Mo).\nMaximum "+(maxBytes/1048576)+" Mo pour garder l'app rapide.\nEssaie une vidéo plus courte ou une image plus légère.");
+    input.value="";return;
+  }
+  var reader=new FileReader();
+  reader.onload=function(){
+    agentAvatar={type:isVideo?"video":"image",data:reader.result};
+    var prev=document.getElementById("a-avatar-preview");if(prev)prev.innerHTML=avatarMediaHtml(agentAvatar);
+    var clr=document.getElementById("a-avatar-clear");if(clr)clr.style.display="block";
+  };
+  reader.readAsDataURL(f);
+}
+function clearAvatar(){
+  agentAvatar=null;
+  var prev=document.getElementById("a-avatar-preview");if(prev)prev.innerHTML="📷";
+  var clr=document.getElementById("a-avatar-clear");if(clr)clr.style.display="none";
+  var ai=document.getElementById("a-avatar-input");if(ai)ai.value="";
+}
 function createAgent(){
   const name=document.getElementById("a-name").value.trim();
   const model=document.getElementById("a-model").value;
+  const descEl=document.getElementById("a-desc");const desc=descEl?descEl.value.trim():"";
   if(!name){const i=document.getElementById("a-name");i.style.borderColor="var(--red)";setTimeout(()=>i.style.borderColor="var(--border)",1400);return;}
-  customAgents.push({name,type:selTypeVal,model});
+  const agent={name:name,type:selTypeVal,model:model,desc:desc,avatar:agentAvatar};
+  customAgents.push(agent);
   saveCustomAgentsToSync();
-  const grid=document.getElementById("agents-grid");
-  const add=grid.querySelector(".add-card");
-  const card=document.createElement("div");card.className="ag-card";card.style.animation="fadeUp .38s ease both";
-  card.innerHTML=`<div class="ag-top"><div class="ag-ico dark">${TYPE_ICO[selTypeVal]||"🔧"}</div>
-    <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
-    <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div></div>
-    <div class="ag-name">${name.toUpperCase()}</div>
-    <div class="ag-role">${selTypeVal.toUpperCase()} · PERSONNALISÉ</div>
-    <div class="ag-model">${model}</div>
-    <div class="ag-stat"><div class="sdot g"></div> ACTIF</div>
-    <div class="ag-tags"><span class="atag og">${selTypeVal.toUpperCase()}</span><span class="atag">CUSTOM</span></div>`;
-  grid.insertBefore(card,add);
-  document.getElementById("m-agents").textContent=3+customAgents.length;
-  document.getElementById("a-name").value="";
+  renderAgentCards();
+  /* petite animation d'apparition sur la dernière carte custom ajoutée */
+  var added=document.querySelectorAll("#agents-grid .ag-card.ag-custom");
+  if(added.length)added[added.length-1].style.animation="fadeUp .38s ease both";
+  if(typeof pushNotif==="function")pushNotif(agentAvatar?(agentAvatar.type==="video"?"🎬":"🖼️"):"⚡","Agent créé","« "+name+" » est en ligne et prêt.","ok");
+  resetAgentForm();
   closeModal();
 }
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal();});
@@ -2678,6 +2773,7 @@ function refreshDeploy(){
     errEl.textContent="Aucune erreur détectée. ✓";
     errCnt.textContent="0 erreurs";
     errCnt.style.color="var(--green)";
+    if(typeof pushNotif==="function")pushNotif("🚀","Déploiement terminé","ti-lex.vercel.app est en ligne · 0 erreur.","ok");
   },1500);
 }
 
