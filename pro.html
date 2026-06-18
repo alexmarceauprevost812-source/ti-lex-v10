@@ -828,7 +828,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   <!-- Logo sidebar avec chaleur derrière -->
   <div class="sb-logo-box">
     <div class="sb-logo-img-wrap">
-      <div class="sb-heat hs-safe" id="heat-sb"></div>
       <img src="assets/tilex-logo.png" alt="TI-LEX-AL" style="position:relative;z-index:1;">
     </div>
     <div class="sb-logo-name sb-label">TI-LEX-AL</div>
@@ -1817,6 +1816,7 @@ async function ghLoadFiles(){
     div.onclick=(function(path){return function(){ghOpenFile(path);};})(f.path);
     panel.appendChild(div);
   }
+  studioScanAll();
 }
 function ghToggleFiles(){
   var panel=document.getElementById("gh-files");
