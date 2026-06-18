@@ -1075,6 +1075,36 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .conv-search-input:focus{outline:none;border-color:#ff7f27;}
 [data-theme="day"] .conv-search-input{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
 
+/* ══ #3 CODE BLOCKS IN CHAT ══ */
+.code-block-wrap{margin:12px 0;border-radius:10px;overflow:hidden;border:1px solid #23232c;background:#0e0e14;}
+.code-block-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#16161e;border-bottom:1px solid #23232c;}
+.code-lang{font-family:'Share Tech Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#ff7f27;}
+.code-copy-btn{background:none;border:1px solid #333;border-radius:6px;padding:4px 10px;color:#f0e0c0;font-size:12px;cursor:pointer;transition:all .15s;font-family:'Rajdhani',sans-serif;}
+.code-copy-btn:hover{border-color:#ff7f27;color:#ff7f27;}
+.code-block{margin:0;padding:14px;overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.55;color:#e8e0d0;background:transparent;}
+.code-block code{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;padding:0;}
+.inline-code{font-family:'Share Tech Mono',monospace;font-size:13px;background:rgba(255,127,39,.1);border:1px solid rgba(255,127,39,.2);border-radius:4px;padding:1px 6px;color:#ff9a40;}
+[data-theme="day"] .code-block-wrap{background:#E8E0D0;border-color:#D4C5A4;}
+[data-theme="day"] .code-block-header{background:#DDD5C5;border-color:#D4C5A4;}
+[data-theme="day"] .code-block{color:#1a1a1a;}
+
+/* ══ #4 REFLEXION MODE ══ */
+.reflexion-toggle{background:none;border:1px solid #2a2a35;border-radius:8px;padding:6px 12px;color:#6c6c78;font-size:12px;cursor:pointer;transition:all .2s;font-family:'Rajdhani',sans-serif;white-space:nowrap;}
+.reflexion-toggle:hover{border-color:#c084fc;color:#c084fc;}
+.reflexion-toggle.active{border-color:#c084fc;color:#c084fc;background:rgba(192,132,252,.08);}
+.reflexion-block{margin:10px 0;border-radius:10px;border:1px solid #2a2a35;background:#0e0e14;overflow:hidden;}
+.reflexion-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s;}
+.reflexion-header:hover{background:#16161e;}
+.reflexion-icon{font-size:15px;}
+.reflexion-title{color:#c084fc;font-weight:600;font-size:14px;font-family:'Rajdhani',sans-serif;}
+.reflexion-status{color:#6c6c78;font-size:12px;margin-left:auto;font-family:'Share Tech Mono',monospace;}
+.reflexion-chevron{color:#6c6c78;transition:transform .2s;}
+.reflexion-block.expanded .reflexion-chevron{transform:rotate(90deg);}
+.reflexion-content{max-height:0;overflow:hidden;padding:0 14px;color:#9a9aa5;font-size:13px;line-height:1.6;font-style:italic;font-family:'Rajdhani',sans-serif;transition:max-height .3s ease,padding .3s ease;}
+.reflexion-block.expanded .reflexion-content{max-height:600px;padding:12px 14px;border-top:1px solid #2a2a35;overflow-y:auto;}
+[data-theme="day"] .reflexion-block{background:#EFE7D7;border-color:#D4C5A4;}
+[data-theme="day"] .reflexion-content{color:#555;}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1264,7 +1294,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 <main class="content" id="main-content">
 
   <!-- COMPTE (MENU) -->
-  <div id="view-dash" class="view active">
+  <div id="view-dash" class="view">
     <div class="acct-profile" style="margin-top:20px;">
       <div class="acct-avatar">👤</div>
       <div class="acct-info">
@@ -1352,7 +1382,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
 
   <!-- CHAT -->
-  <div id="view-chat" class="view" style="position:relative;">
+  <div id="view-chat" class="view active" style="position:relative;">
     <!-- 3-dot menu -->
     <button class="chat-dots-btn" id="chat-dots-btn" onclick="toggleDots()">⋮</button>
     <div class="dots-dropdown" id="dots-dropdown">
@@ -1733,6 +1763,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
     <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
   </div>
+  <button id="btn-reflexion-toggle" class="reflexion-toggle" onclick="toggleReflexionMode()" title="Mode réflexion">🧠</button>
   <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Écris un message…"></textarea>
   <button class="composer-send" id="composer-send-btn" title="Envoyer">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
@@ -2148,7 +2179,7 @@ function applyGoldProjection(container){
 /* ── CHAT ── */
 let chatBusy=false;
 let chatHistory=[];
-const SYSTEM_PROMPT="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. Ton style est intense, direct et confiant. Tu donnes des réponses tranchées, complètes et actionnables, en français québécois.";
+const SYSTEM_PROMPT="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. Ton style est intense, direct et confiant. Tu donnes des réponses tranchées, complètes et actionnables, en français québécois. Quand l'utilisateur demande du code, fournis le code complet dans un bloc markdown avec le langage (```javascript, ```python, etc.), puis explique ce que fait chaque partie importante. Utilise le gras **...** pour les concepts clés.";
 
 async function sendChat(){
   if(chatBusy)return;
@@ -2168,13 +2199,38 @@ async function sendChat(){
     if(tk)h["Authorization"]="Bearer "+tk;
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
     if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-4-6";
+    if(reflexionMode){
+      td.remove();
+      var rBlock=appendReflexionBlock();
+      var rContent=rBlock.querySelector(".reflexion-content");
+      var rStatus=rBlock.querySelector(".reflexion-status");
+      try{
+        var rRes=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+          kind:"chat",model:chatModel,max_tokens:2048,
+          system:"Tu es ti-lex-AL. Réfléchis étape par étape. Décris ton raisonnement interne sans donner la réponse finale.",
+          messages:[{role:"user",content:txt}]
+        })});
+        if(rRes.ok){
+          var rThink=await readSSE(rRes);
+          rContent.textContent=rThink;
+          rStatus.textContent="✓ Réflexion terminée";
+          rBlock.classList.remove("expanded");
+        }else{rStatus.textContent="⚠️ Échec";}
+      }catch(e){rStatus.textContent="⚠️ "+e.message;}
+      var td2=document.createElement("div");td2.className="cmsg a";td2.id="tyd";
+      td2.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
+      msgs.appendChild(td2);msgs.scrollTop=msgs.scrollHeight;
+      setTimeout(function(){td2.querySelectorAll(".tyd").forEach(function(d){d.classList.add("tyd-loop");});},300);
+      var tdRef=td2;
+    }
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
       system:SYSTEM_PROMPT,
       messages:chatHistory.slice(-20)
     })});
-    td.remove();
+    if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
+    else td.remove();
     if(!res.ok){
       let errMsg="Erreur de connexion.";
       try{
@@ -2216,11 +2272,15 @@ async function sendChat(){
       await drain;
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
-      var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
-      applySyntaxHL(bblText);
-      if(document.documentElement.getAttribute("data-theme")!=="day"){
-        setTimeout(function(){applyGoldProjection(bblText);},4000);
+      if(reply&&(/```/.test(reply)||/\*\*/.test(reply))){
+        bblText.innerHTML=renderMd(reply);
+      }else{
+        applySyntaxHL(bblText);
+        if(document.documentElement.getAttribute("data-theme")!=="day"){
+          setTimeout(function(){applyGoldProjection(bblText);},4000);
+        }
       }
+      var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
     }
   }catch(e){td.remove();console.error("[ti-lex] sendChat error:",e);addMsg("a","⚠️ "+e.message);}
   chatBusy=false;
@@ -2249,7 +2309,20 @@ function syncChatToStorage(){
   }catch(e){}
 }
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+function renderMd(txt){
+  var safe=escHtml(txt);
+  safe=safe.replace(/```(\w+)?\n?([\s\S]*?)```/g,function(m,lang,code){
+    var language=lang||"code";
+    var cid="code_"+Math.random().toString(36).substr(2,8);
+    return '<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'">'+code.trim()+'</code></pre></div>';
+  });
+  safe=safe.replace(/`([^`]+)`/g,'<code class="inline-code">$1</code>');
+  safe=safe.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  safe=safe.replace(/\n/g,"<br>");
+  return safe;
+}
 function projHtml(txt){
+  if(/```/.test(txt)||/\*\*/.test(txt))return renderMd(txt);
   var safe=escHtml(txt);
   var out="";var idx=0;
   var speed=Math.max(6,Math.min(15,3000/Math.max(1,safe.length)));
@@ -3399,7 +3472,8 @@ var TRANSLATIONS={
     "new-conv-fab":"NOUVELLE",
     "supabase-title":"CONNEXION SUPABASE","supabase-url":"URL du projet","supabase-key":"Clé Anon publique",
     "edit-profile":"MON PROFIL","display-name":"Nom d'affichage","click-to-change":"Cliquer pour changer",
-    "add-favorite":"Ajouter aux favoris","add-to-project":"Ajouter à un projet","share":"Partager"
+    "add-favorite":"Ajouter aux favoris","add-to-project":"Ajouter à un projet","share":"Partager",
+    "reflexion-mode":"Mode réflexion"
   },
   en:{
     "settings":"SETTINGS","theme-hd":"🌗 THEME","theme-mode":"MODE","theme-night":"NIGHT","theme-day":"DAY",
@@ -3421,7 +3495,8 @@ var TRANSLATIONS={
     "new-conv-fab":"NEW",
     "supabase-title":"SUPABASE CONNECTION","supabase-url":"Project URL","supabase-key":"Anon public key",
     "edit-profile":"MY PROFILE","display-name":"Display name","click-to-change":"Click to change",
-    "add-favorite":"Add to favorites","add-to-project":"Add to project","share":"Share"
+    "add-favorite":"Add to favorites","add-to-project":"Add to project","share":"Share",
+    "reflexion-mode":"Reflexion mode"
   }
 };
 var currentLang=localStorage.getItem("tilex-al-lang")||"fr";
@@ -3854,8 +3929,14 @@ async function cvpLoad(){
     cvpConvs=await sbRest("/conversations?select=id,title,type,project_id,last_preview,updated_at,created_at&order=updated_at.desc")||[];
     cvpProjects=await sbRest("/projects?select=id,name,created_at&order=created_at.desc")||[];
   }catch(e){
-    content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">⚠️</div><div class="cvp-empty-txt">'+escHtml(e.message)+'</div></div>';
-    return;
+    console.warn("[ti-lex] Supabase indisponible, fallback local:",e.message);
+    cvpConvs=chatConvs.map(function(c,i){
+      return{id:c.id||i,title:c.title||"Conversation",type:"chat",project_id:null,
+        last_preview:(c.messages&&c.messages.length>0)?c.messages[c.messages.length-1].content.slice(0,80):"",
+        updated_at:c.ts?new Date(c.ts).toISOString():new Date().toISOString(),
+        created_at:c.ts?new Date(c.ts).toISOString():new Date().toISOString()};
+    });
+    cvpProjects=[];
   }
   cvpRender();
 }
@@ -4244,6 +4325,41 @@ function applySyntaxHL(el){
   });
   el.innerHTML=html;
 }
+
+/* ══ #3 COPY CODE BLOCK ══ */
+function copyCodeBlock(cid){
+  var el=document.getElementById(cid);if(!el)return;
+  navigator.clipboard.writeText(el.textContent).then(function(){showToastMsg("✅ Code copié");}).catch(function(){showToastMsg("❌ Impossible de copier");});
+}
+
+/* ══ #4 REFLEXION MODE ══ */
+var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
+(function(){var btn=document.getElementById("btn-reflexion-toggle");if(btn&&reflexionMode)btn.classList.add("active");})();
+
+function toggleReflexionMode(){
+  reflexionMode=!reflexionMode;
+  localStorage.setItem("tilex-reflexion",reflexionMode);
+  var btn=document.getElementById("btn-reflexion-toggle");
+  if(btn)btn.classList.toggle("active",reflexionMode);
+  showToastMsg(reflexionMode?"🧠 Mode réflexion activé":"Mode réflexion désactivé");
+}
+
+function appendReflexionBlock(){
+  var msgs=document.getElementById("chat-msgs");
+  var block=document.createElement("div");
+  block.className="reflexion-block expanded";
+  block.innerHTML='<div class="reflexion-header" onclick="this.parentNode.classList.toggle(\'expanded\')"><span class="reflexion-icon">🧠</span><span class="reflexion-title">Réflexion</span><span class="reflexion-status">En cours...</span><span class="reflexion-chevron">▸</span></div><div class="reflexion-content"></div>';
+  msgs.appendChild(block);
+  msgs.scrollTop=msgs.scrollHeight;
+  return block;
+}
+
+/* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
+(function(){
+  showTab("chat");
+  var fab=document.getElementById("fab-new-conv-pro");
+  if(fab)fab.classList.add("visible");
+})();
 
 </script>
 
