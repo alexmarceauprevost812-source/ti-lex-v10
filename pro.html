@@ -590,6 +590,22 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   letter-spacing:1px;padding-left:calc(var(--sb-c) + 2px);margin-top:4px;white-space:nowrap;}
 
 /* ════════════════════════════════════════════════════════════
+   PROJECTEUR — balayage lettre par lettre sur réponses agent
+   ════════════════════════════════════════════════════════════ */
+.proj-ltr{display:inline;opacity:0;animation:proj .35s ease-out forwards;}
+@keyframes proj{
+  0%{opacity:0;color:var(--or2);text-shadow:0 0 6px var(--or2)}
+  50%{opacity:1;color:var(--or);text-shadow:0 0 10px var(--or)}
+  100%{opacity:1;color:var(--or);text-shadow:none}
+}
+[data-theme="day"] .proj-ltr{animation-name:proj-day;}
+@keyframes proj-day{
+  0%{opacity:0;color:var(--or);text-shadow:0 0 6px var(--or)}
+  50%{opacity:1;color:var(--or);text-shadow:0 0 8px var(--or)}
+  100%{opacity:1;color:var(--txt);text-shadow:none}
+}
+
+/* ════════════════════════════════════════════════════════════
    data-interface="serious" — animations calmées, RIEN caché
    INTERDIT : display:none ou visibility:hidden lié à l'interface
    ════════════════════════════════════════════════════════════ */
@@ -1380,12 +1396,27 @@ async function sendChat(){
   chatBusy=false;
 }
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+function projHtml(txt){
+  var safe=escHtml(txt);
+  var out="";var idx=0;
+  for(var i=0;i<safe.length;i++){
+    if(safe[i]==="&"){
+      var end=safe.indexOf(";",i);
+      if(end!==-1){var ent=safe.slice(i,end+1);out+='<span class="proj-ltr" style="animation-delay:'+(idx*8)+'ms">'+ent+'</span>';idx++;i=end;continue;}
+    }
+    if(safe[i]==="\n"||safe.slice(i,i+4)==="<br>"){out+="<br>";if(safe.slice(i,i+4)==="<br>")i+=3;continue;}
+    out+='<span class="proj-ltr" style="animation-delay:'+(idx*8)+'ms">'+safe[i]+'</span>';idx++;
+  }
+  return out;
+}
 function addMsg(role,txt){
   const msgs=document.getElementById("chat-msgs");
   const t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
   const d=document.createElement("div");d.className="cmsg "+role;
-  const safe=escHtml(txt).replace(/\n/g,"<br>");
-  d.innerHTML=`<div class="cmsg-ico ${role}">${role==="u"?"👤":"⚡"}</div><div><div class="cmsg-bbl ${role}">${safe}</div><div class="cmsg-time">${t}</div></div>`;
+  var content;
+  if(role==="a"){content=projHtml(txt);}
+  else{content=escHtml(txt).replace(/\n/g,"<br>");}
+  d.innerHTML=`<div class="cmsg-ico ${role}">${role==="u"?"👤":"⚡"}</div><div><div class="cmsg-bbl ${role}">${content}</div><div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 
