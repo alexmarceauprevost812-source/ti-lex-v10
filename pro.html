@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr-CA" data-theme="night" data-plan="pro" data-interface="serious">
+<html lang="fr-CA" data-theme="night" data-plan="flux" data-interface="serious">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -282,11 +282,9 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .sb-model{font-family:'Share Tech Mono',monospace;font-size:7.5px;color:rgba(212,175,55,.3);padding-left:calc(var(--sb-c) + 2px);padding-right:10px;margin-top:2px;white-space:nowrap;}
 
 /* ══ PLAN-BASED VISIBILITY ══ */
-/* Plan BASIC: pas de cyber, pas de master */
-[data-plan="basic"] .plan-cyber-only{display:none!important;}
-[data-plan="basic"] .plan-pro-only{display:none!important;}
-/* Plan PRO: pas de master/scan avancé */
-[data-plan="pro"] .plan-cyber-only{display:none!important;}
+[data-plan="flux"] .plan-cyber-only{display:none!important;}
+[data-plan="flux"] .plan-pro-only{display:none!important;}
+[data-plan="surge"] .plan-cyber-only{display:none!important;}
 /* Tous les plans ont chat + codex */
 
 /* Lock overlay pour feature verrouillée */
@@ -743,6 +741,73 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
 @media(max-width:680px){.composer-bar{left:0;}}
 
+/* ══ ACTIVE SUB-ITEM ══ */
+.sb-sub-item.active{color:var(--orange)!important;font-weight:700;}
+
+/* ══ CONVERSATION LIST (in chat view) ══ */
+.conv-list{padding:8px 0;display:flex;flex-direction:column;gap:2px;}
+.conv-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;
+  transition:background .15s;position:relative;}
+.conv-item:hover{background:rgba(255,106,0,.06);}
+.conv-item.active{background:rgba(255,106,0,.1);border-left:2px solid var(--orange);}
+.conv-item-ico{font-size:14px;flex-shrink:0;}
+.conv-item-info{flex:1;min-width:0;}
+.conv-item-title{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.conv-item-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);display:flex;gap:8px;}
+.conv-item-badges{display:flex;gap:4px;}
+.conv-badge{font-size:10px;padding:1px 5px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:8px;}
+.conv-badge.fav{color:var(--or);border:1px solid rgba(212,175,55,.3);}
+.conv-badge.proj{color:var(--orange);border:1px solid rgba(255,106,0,.3);}
+.conv-item-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);opacity:0;border:none;background:none;
+  color:var(--red);cursor:pointer;font-size:12px;transition:opacity .15s;}
+.conv-item:hover .conv-item-del{opacity:.6;}
+.conv-item-del:hover{opacity:1!important;}
+
+/* ══ 3-DOT MENU ══ */
+.chat-dots-btn{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border);
+  background:var(--bg2);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;z-index:10;transition:all .15s;}
+.chat-dots-btn:hover{border-color:var(--orange);color:var(--orange);}
+.dots-dropdown{position:absolute;top:44px;right:12px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:6px;min-width:200px;box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:20;display:none;}
+.dots-dropdown.open{display:block;}
+.dots-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;cursor:pointer;
+  font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--txt);transition:background .15s;}
+.dots-item:hover{background:rgba(255,106,0,.08);}
+.dots-item.danger{color:var(--red);}
+.dots-item .di-ico{font-size:14px;width:20px;text-align:center;}
+
+/* ══ FAVORITES / PROJECTS / CERVEAU VIEWS ══ */
+.sub-view{display:none;padding:14px;}
+.sub-view.active{display:block;}
+.sub-header{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--or);margin-bottom:14px;}
+.sub-empty{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);padding:20px;text-align:center;}
+
+/* Projects */
+.proj-card-item{padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.proj-card-item:hover{border-color:var(--orange);background:rgba(255,106,0,.04);}
+.proj-card-name{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;}
+.proj-card-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+.proj-detail{padding:14px;}
+.proj-detail-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.proj-detail-back{border:none;background:none;color:var(--orange);cursor:pointer;font-size:18px;}
+
+/* Cerveau */
+.cerv-note{padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.cerv-note:hover{border-color:var(--or);background:rgba(212,175,55,.04);}
+.cerv-note.active{border-color:var(--or);background:rgba(212,175,55,.06);}
+.cerv-note-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;}
+.cerv-note-preview{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cerv-note-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.cerv-tag{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 6px;border-radius:4px;
+  border:1px solid rgba(212,175,55,.3);color:var(--or);}
+.cerv-editor{margin-top:14px;}
+.cerv-editor input,.cerv-editor textarea{width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:10px;color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:13px;margin-bottom:8px;}
+.cerv-editor textarea{min-height:120px;resize:vertical;font-family:'Share Tech Mono',monospace;font-size:12px;}
+.cerv-tags-input{font-family:'Share Tech Mono',monospace;font-size:11px;}
+
 
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -845,10 +910,10 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   </div>
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item" onclick="showTab('chat')">Conversations</div>
-      <div class="sb-sub-item" onclick="showTab('chat')">Favoris</div>
-      <div class="sb-sub-item" onclick="showTab('chat')">Projet</div>
-      <div class="sb-sub-item" onclick="showTab('chat')">Cerveau</div>
+      <div class="sb-sub-item active" id="sub-convos" onclick="showSub('convos')">Conversations</div>
+      <div class="sb-sub-item" id="sub-favs" onclick="showSub('favs')">Favoris</div>
+      <div class="sb-sub-item" id="sub-projs" onclick="showSub('projs')">Projet</div>
+      <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
     </div>
   </div>
 
@@ -870,14 +935,14 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   </div>
   <div class="sb-submenu" id="sm-forfait">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item sb-tier flux">
-        <span class="tier-name">FLUX</span><span class="tier-badge">BASE</span>
+      <div class="sb-sub-item sb-tier flux" onclick="setPlan('flux')" style="cursor:pointer;">
+        <span class="tier-name">FLUX</span><span class="tier-badge">$19</span>
       </div>
-      <div class="sb-sub-item sb-tier surge">
-        <span class="tier-name">SURGE</span><span class="tier-badge">POPULAIRE</span>
+      <div class="sb-sub-item sb-tier surge" onclick="setPlan('surge')" style="cursor:pointer;">
+        <span class="tier-name">SURGE</span><span class="tier-badge">$60</span>
       </div>
-      <div class="sb-sub-item sb-tier apex">
-        <span class="tier-name">APEX</span><span class="tier-badge">MAX</span>
+      <div class="sb-sub-item sb-tier apex" onclick="setPlan('apex')" style="cursor:pointer;">
+        <span class="tier-name">APEX</span><span class="tier-badge">$125</span>
       </div>
 
       <!-- Cybersécurité VERROUILLÉE — lecture seule -->
@@ -941,8 +1006,8 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <div class="metrics">
       <div class="metric"><div class="m-lbl">AGENTS ACTIFS</div><div class="m-val or" id="m-agents">3</div><div class="m-sub">/ 10 max</div></div>
       <div class="metric"><div class="m-lbl">SCORE SÉCURITÉ</div><div class="m-val g">94</div><div class="m-sub">Grade A</div></div>
-      <div class="metric"><div class="m-lbl">FORFAIT</div><div class="m-val or">PRO</div><div class="m-sub">Actif</div></div>
-      <div class="metric"><div class="m-lbl">MESSAGES / JOUR</div><div class="m-val">∞</div><div class="m-sub">Illimité</div></div>
+      <div class="metric"><div class="m-lbl">FORFAIT</div><div class="m-val or" id="m-plan-name">FLUX</div><div class="m-sub" id="m-plan-price">$19 CAD/mois</div></div>
+      <div class="metric"><div class="m-lbl">MESSAGES / FENÊTRE</div><div class="m-val" id="m-msg-limit">40</div><div class="m-sub" id="m-msg-sub">par fenêtre 12h</div></div>
     </div>
     <div class="card">
       <div class="card-hd">MES AGENTS
@@ -957,7 +1022,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
             </div>
             <div class="ag-name g">TI-LEX-AL</div>
             <div class="ag-role">AGENT MASTER · ORCHESTRATEUR</div>
-            <div class="ag-model">claude-opus-4-8 · Plan Pro</div>
+            <div class="ag-model" id="master-agent-model">claude-sonnet-4-6</div>
             <div class="ag-stat"><div class="sdot g"></div> MAÎTRE DE TOUS LES AGENTS</div>
             <div class="ag-tags"><span class="atag or">MASTER</span><span class="atag or">LOI 25</span></div>
           </div>
@@ -1002,14 +1067,31 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
   </div>
 
   <!-- CHAT -->
-  <div id="view-chat" class="view">
-    <div class="sec-title">💬 AGENT <span class="accent">AL</span></div>
-    <div class="chat-wrap">
-      <div class="chat-hd">
-        <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
-        <div><div class="c-name">TI-LEX-AL · AGENT AL</div>
-          <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active</div></div>
+  <div id="view-chat" class="view" style="position:relative;">
+    <!-- 3-dot menu -->
+    <button class="chat-dots-btn" id="chat-dots-btn" onclick="toggleDots()">⋮</button>
+    <div class="dots-dropdown" id="dots-dropdown">
+      <div class="dots-item" onclick="dotAction('fav')"><span class="di-ico">★</span> <span id="dot-fav-txt">Ajouter aux favoris</span></div>
+      <div class="dots-item" onclick="dotAction('proj')"><span class="di-ico">📁</span> <span id="dot-proj-txt">Ajouter au projet</span></div>
+      <div class="dots-item" onclick="dotAction('rename')"><span class="di-ico">✎</span> Renommer</div>
+      <div class="dots-item" onclick="dotAction('save')"><span class="di-ico">💾</span> Sauvegarder</div>
+      <div class="dots-item" onclick="dotAction('newconv')"><span class="di-ico">➕</span> Nouvelle conversation</div>
+      <div class="dots-item danger" onclick="dotAction('delete')"><span class="di-ico">✕</span> Supprimer</div>
+    </div>
+
+    <!-- Sub-view: Conversations (default active) -->
+    <div class="sub-view active" id="sv-convos">
+      <div class="sec-title">💬 AGENT <span class="accent">AL</span></div>
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="newConversation()">+ NOUVELLE CONVERSATION</button>
       </div>
+      <div class="conv-list" id="conv-list"></div>
+      <div class="chat-wrap">
+        <div class="chat-hd">
+          <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
+          <div><div class="c-name">TI-LEX-AL · AGENT AL</div>
+            <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active</div></div>
+        </div>
       <div class="chat-msgs" id="chat-msgs">
         <div class="cmsg a">
           <div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div>
@@ -1023,6 +1105,60 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <input type="hidden" id="chat-in">
+    </div><!-- /sv-convos -->
+
+    <!-- Sub-view: Favoris -->
+    <div class="sub-view" id="sv-favs">
+      <div class="sub-header">★ FAVORIS</div>
+      <div id="favs-list"></div>
+      <div class="sub-empty" id="favs-empty">Aucun favori pour l'instant.<br>Utilise le menu ⋮ pour ajouter des conversations en favoris.</div>
+    </div>
+
+    <!-- Sub-view: Projets -->
+    <div class="sub-view" id="sv-projs">
+      <div class="sub-header">📁 PROJETS</div>
+      <div style="margin-bottom:10px;">
+        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="createProject()">+ NOUVEAU PROJET</button>
+      </div>
+      <div id="projs-list"></div>
+      <div class="sub-empty" id="projs-empty">Aucun projet créé.<br>Crée un projet pour organiser tes conversations et fichiers.</div>
+      <div id="proj-detail" class="proj-detail" style="display:none;">
+        <div class="proj-detail-hd">
+          <button class="proj-detail-back" onclick="closeProjectDetail()">←</button>
+          <span class="sub-header" style="margin:0;" id="proj-detail-name"></span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:6px;">MÉMO / INSTRUCTIONS</div>
+          <textarea class="cerv-editor textarea" id="proj-memo" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:11px;resize:vertical;" placeholder="Notes du projet…"></textarea>
+          <button class="btn-ghost" style="margin-top:6px;font-size:11px;padding:4px 12px;" onclick="saveCurrentProject()">SAUVEGARDER</button>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:6px;">CONVERSATIONS DU PROJET</div>
+        <div id="proj-convs-list"></div>
+      </div>
+    </div>
+
+    <!-- Sub-view: Cerveau -->
+    <div class="sub-view" id="sv-cerveau">
+      <div class="sub-header">🧠 DEUXIÈME CERVEAU</div>
+      <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="cervNewNote()">+ NOUVELLE NOTE</button>
+        <input type="text" id="cerv-search" placeholder="Rechercher…" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:11px;" oninput="cervRenderList()">
+      </div>
+      <div class="cerv-note-tags" id="cerv-tags-bar" style="margin-bottom:10px;"></div>
+      <div id="cerv-notes-list"></div>
+      <div class="sub-empty" id="cerv-empty">Aucune note.<br>Ton deuxième cerveau stocke tes idées, faits et connaissances.</div>
+      <div id="cerv-editor-wrap" class="cerv-editor" style="display:none;">
+        <input type="text" id="cerv-title" placeholder="Titre de la note…">
+        <input type="text" id="cerv-tags" class="cerv-tags-input" placeholder="Tags (séparés par des virgules)">
+        <textarea id="cerv-content" placeholder="Contenu de la note…"></textarea>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="cervSaveNote()">SAUVEGARDER</button>
+          <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="cervCancelEdit()">ANNULER</button>
+          <button class="btn-ghost" style="font-size:11px;padding:4px 12px;color:var(--red);border-color:var(--red);" id="cerv-del-btn" onclick="cervDeleteNote()" style="display:none;">SUPPRIMER</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- CODEX -->
@@ -1257,7 +1393,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="plan-sel-title">CHOISIR UN FORFAIT</div>
     <div class="plan-sel-sub">CHOISIS LE FORFAIT QUI TE CONVIENT</div>
     <div class="plans-grid">
-      <div class="plan-card" id="pc-basic" onclick="setPlan('basic')">
+      <div class="plan-card" id="pc-flux" onclick="setPlan('flux')">
         <div class="plan-ico">⚡</div>
         <div class="plan-name">FLUX</div>
         <div class="plan-price">19$/mois</div>
@@ -1272,7 +1408,7 @@ Comment puis-je t'aider aujourd'hui?</div>
           <li>Marketplace agents</li>
         </ul>
       </div>
-      <div class="plan-card selected" id="pc-pro" onclick="setPlan('pro')">
+      <div class="plan-card" id="pc-surge" onclick="setPlan('surge')">
         <div class="plan-ico">🔥</div>
         <div class="plan-name">SURGE</div>
         <div class="plan-price">60$/mois</div>
@@ -1287,7 +1423,7 @@ Comment puis-je t'aider aujourd'hui?</div>
           <li>Publier ses agents</li>
         </ul>
       </div>
-      <div class="plan-card" id="pc-cyber" onclick="setPlan('cyber')">
+      <div class="plan-card" id="pc-apex" onclick="setPlan('apex')">
         <div class="plan-ico">🚀</div>
         <div class="plan-name">APEX</div>
         <div class="plan-price" style="color:var(--or);">125$/mois</div>
@@ -1427,22 +1563,21 @@ function setHeat(state){
 function cycleHeat(){setHeat(HCYCLE[(HCYCLE.indexOf(curHeat)+1)%HCYCLE.length]);}
 
 /* ── PLAN SYSTEM ── */
-const PLAN_CFG={
-  basic:{lbl:"STARTER",cls:"plan-basic"},
-  pro:{lbl:"PRO",cls:"plan-pro"},
-  cyber:{lbl:"APEX",cls:"plan-cyber"},
-};
 function setPlan(plan){
+  localStorage.setItem("tilex-plan",plan);
   document.documentElement.setAttribute("data-plan",plan);
-  const cfg=PLAN_CFG[plan];
-  const badge=document.getElementById("plan-badge-tb");
+  var pd=PLAN_DATA[plan]||PLAN_DATA.flux;
+  var badge=document.getElementById("plan-badge-tb");
   if(badge)badge.className="plan-badge plan-"+plan;
-  const ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=cfg.lbl;
-  // Ferme plan sel modal
+  var ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=pd.name;
+  var mn=document.getElementById("m-plan-name");if(mn)mn.textContent=pd.name;
+  var mp=document.getElementById("m-plan-price");if(mp)mp.textContent=pd.price;
+  var ml=document.getElementById("m-msg-limit");if(ml)ml.textContent=pd.msgWindow===-1?"∞":pd.msgWindow;
+  var ms=document.getElementById("m-msg-sub");if(ms)ms.textContent=pd.msgWindow===-1?"Illimité":"par fenêtre 12h";
   closePlanSel();
-  // Highlight selected plan card
-  document.querySelectorAll(".plan-card").forEach(c=>c.classList.remove("selected"));
-  document.getElementById("pc-"+plan).classList.add("selected");
+  document.querySelectorAll(".plan-card").forEach(function(c){c.classList.remove("selected");});
+  var pc=document.getElementById("pc-"+plan);if(pc)pc.classList.add("selected");
+  renderUsage();
 }
 function openPlanSel(){document.getElementById("plan-sel").style.display="flex";}
 function closePlanSel(){document.getElementById("plan-sel").style.display="none";}
@@ -1592,8 +1727,8 @@ const PLAN_DATA={
   surge:{name:"SURGE",price:"$60 CAD/mois",msgWindow:100,agents:15,models:"Sonnet 4.6",codexProjects:5,codexSessions:50,storage:"5 GB"},
   apex:{name:"APEX",price:"$125 CAD/mois",msgWindow:250,agents:-1,models:"Sonnet 4.6 + Opus 4.8",opusMessages:100,codexProjects:20,codexSessions:-1,storage:"10 GB"}
 };
-function getPlan(){return(localStorage.getItem("tilex-plan")||"surge").toLowerCase();}
-function getPlanData(){return PLAN_DATA[getPlan()]||PLAN_DATA.surge;}
+function getPlan(){return(localStorage.getItem("tilex-plan")||"flux").toLowerCase();}
+function getPlanData(){return PLAN_DATA[getPlan()]||PLAN_DATA.flux;}
 
 /* ── SUIVI UTILISATION (synchro avec app.js) ── */
 function getTranche(){
@@ -1651,6 +1786,299 @@ function renderUsage(){
   if(planEl)planEl.textContent="FORFAIT "+plan.name+" · "+limit+" msgs / fenêtre 12h";
 }
 renderUsage();
+
+/* ── CONVERSATION SYNC ── */
+var chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
+
+/* ── SUB-NAVIGATION (Conversations / Favoris / Projet / Cerveau) ── */
+var chatSubFilter="convos";
+var activeChatConv=-1;
+function showSub(sub){
+  chatSubFilter=sub;
+  document.querySelectorAll("#sm-chat .sb-sub-item").forEach(function(el){el.classList.remove("active");});
+  var el=document.getElementById("sub-"+sub);if(el)el.classList.add("active");
+  document.querySelectorAll("#view-chat .sub-view").forEach(function(v){v.classList.remove("active");});
+  var sv=document.getElementById("sv-"+sub);if(sv)sv.classList.add("active");
+  showTab("chat");
+  if(sub==="convos")renderConvList();
+  else if(sub==="favs")renderFavsList();
+  else if(sub==="projs")renderProjsList();
+  else if(sub==="cerveau")cervRenderList();
+}
+
+/* ── CONVERSATION LIST ── */
+function renderConvList(){
+  var list=document.getElementById("conv-list");if(!list)return;
+  if(chatConvs.length===0){list.innerHTML='<div class="sub-empty">Aucune conversation sauvegardée.</div>';return;}
+  list.innerHTML="";
+  for(var i=chatConvs.length-1;i>=0;i--){
+    var c=chatConvs[i];
+    var flags=getConvFlags(i);
+    var ago=timeAgo(c.ts||Date.now());
+    var msgCount=(c.messages||[]).length;
+    var d=document.createElement("div");d.className="conv-item"+(i===activeChatConv?" active":"");d.setAttribute("data-idx",i);
+    var badges="";
+    if(flags.fav)badges+='<span class="conv-badge fav">★</span>';
+    if(flags.proj)badges+='<span class="conv-badge proj">📁</span>';
+    d.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div><div class="conv-item-meta"><span>'+ago+'</span><span>'+msgCount+' msg</span></div></div><div class="conv-item-badges">'+badges+'</div><button class="conv-item-del" data-idx="'+i+'" onclick="event.stopPropagation();deleteConv('+i+')">✕</button>';
+    d.onclick=(function(idx){return function(){loadConv(idx);};})(i);
+    list.appendChild(d);
+  }
+}
+function timeAgo(ts){
+  var d=Date.now()-ts;var m=Math.floor(d/60000);
+  if(m<1)return"maintenant";if(m<60)return m+"min";
+  var h=Math.floor(m/60);if(h<24)return h+"h";
+  return Math.floor(h/24)+"j";
+}
+function newConversation(){
+  chatConvs.forEach(function(c){c.active=false;});
+  var nc={id:Date.now(),title:"Nouvelle conversation",messages:[],active:true,ts:Date.now()};
+  chatConvs.push(nc);
+  activeChatConv=chatConvs.length-1;
+  chatHistory=[];
+  document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+  localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
+  renderConvList();
+}
+function loadConv(idx){
+  if(idx<0||idx>=chatConvs.length)return;
+  chatConvs.forEach(function(c){c.active=false;});
+  chatConvs[idx].active=true;
+  activeChatConv=idx;
+  chatHistory=chatConvs[idx].messages.slice();
+  var msgs=document.getElementById("chat-msgs");
+  msgs.innerHTML="";
+  for(var i=0;i<chatHistory.length;i++){
+    var m=chatHistory[i];
+    addMsg(m.role==="user"?"u":"a",m.content);
+  }
+  renderConvList();
+}
+function deleteConv(idx){
+  if(!confirm("Supprimer cette conversation?"))return;
+  chatConvs.splice(idx,1);
+  deleteConvFlags(idx);
+  if(activeChatConv===idx){activeChatConv=-1;chatHistory=[];}
+  else if(activeChatConv>idx)activeChatConv--;
+  localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
+  renderConvList();
+}
+
+/* ── CONV FLAGS (shared with app.js) ── */
+function getConvFlags(idx){
+  try{var all=JSON.parse(localStorage.getItem("tilex-conv-flags")||"{}");return all[idx]||{};}catch(e){return{};}
+}
+function setConvFlag(idx,key,val){
+  try{
+    var all=JSON.parse(localStorage.getItem("tilex-conv-flags")||"{}");
+    if(!all[idx])all[idx]={};
+    all[idx][key]=val;
+    localStorage.setItem("tilex-conv-flags",JSON.stringify(all));
+  }catch(e){}
+}
+function deleteConvFlags(idx){
+  try{
+    var all=JSON.parse(localStorage.getItem("tilex-conv-flags")||"{}");
+    delete all[idx];
+    localStorage.setItem("tilex-conv-flags",JSON.stringify(all));
+  }catch(e){}
+}
+
+/* ── 3-DOT MENU ── */
+function toggleDots(){
+  var dd=document.getElementById("dots-dropdown");
+  dd.classList.toggle("open");
+  if(dd.classList.contains("open"))updateDotsState();
+}
+function closeDots(){document.getElementById("dots-dropdown").classList.remove("open");}
+function updateDotsState(){
+  if(activeChatConv<0)return;
+  var f=getConvFlags(activeChatConv);
+  var ft=document.getElementById("dot-fav-txt");if(ft)ft.textContent=f.fav?"Retirer des favoris":"Ajouter aux favoris";
+  var pt=document.getElementById("dot-proj-txt");if(pt)pt.textContent=f.proj?"Retirer du projet":"Ajouter au projet";
+}
+function dotAction(act){
+  closeDots();
+  if(activeChatConv<0&&act!=="newconv"){addMsg("a","Sélectionne ou crée une conversation d'abord.");return;}
+  if(act==="fav"){
+    var f=getConvFlags(activeChatConv);setConvFlag(activeChatConv,"fav",!f.fav);renderConvList();
+  }else if(act==="proj"){
+    var f=getConvFlags(activeChatConv);setConvFlag(activeChatConv,"proj",!f.proj);renderConvList();
+  }else if(act==="rename"){
+    var name=prompt("Nouveau nom:",chatConvs[activeChatConv].title||"");
+    if(name){chatConvs[activeChatConv].title=name;localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));renderConvList();}
+  }else if(act==="save"){
+    var conv=chatConvs[activeChatConv];
+    var blob=new Blob([JSON.stringify(conv,null,2)],{type:"application/json"});
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(conv.title||"conversation")+".json";a.click();
+  }else if(act==="newconv"){newConversation();}
+  else if(act==="delete"){deleteConv(activeChatConv);}
+}
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#dots-dropdown")&&!e.target.closest("#chat-dots-btn"))closeDots();
+});
+
+/* ── FAVORIS VIEW ── */
+function renderFavsList(){
+  var list=document.getElementById("favs-list");
+  var empty=document.getElementById("favs-empty");
+  if(!list)return;
+  list.innerHTML="";var count=0;
+  for(var i=0;i<chatConvs.length;i++){
+    var f=getConvFlags(i);
+    if(!f.fav)continue;
+    count++;
+    var c=chatConvs[i];
+    var d=document.createElement("div");d.className="conv-item";d.setAttribute("data-idx",i);
+    d.innerHTML='<span class="conv-item-ico">★</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div><div class="conv-item-meta"><span>'+timeAgo(c.ts||Date.now())+'</span><span>'+(c.messages||[]).length+' msg</span></div></div>';
+    d.onclick=(function(idx){return function(){showSub("convos");loadConv(idx);};})(i);
+    list.appendChild(d);
+  }
+  if(empty)empty.style.display=count===0?"block":"none";
+}
+
+/* ── PROJETS VIEW ── */
+var projects=JSON.parse(localStorage.getItem("tilex-projects")||"[]");
+var activeProjectId=null;
+function saveProjStorage(){localStorage.setItem("tilex-projects",JSON.stringify(projects));}
+function createProject(){
+  var name=prompt("Nom du projet:");
+  if(!name)return;
+  projects.push({id:Date.now().toString()+Math.random().toString(36).slice(2,6),name:name,memo:"",conversations:[],fav:false,ts:Date.now()});
+  saveProjStorage();renderProjsList();
+}
+function renderProjsList(){
+  var list=document.getElementById("projs-list");
+  var empty=document.getElementById("projs-empty");
+  var detail=document.getElementById("proj-detail");
+  if(!list)return;
+  if(activeProjectId){detail.style.display="block";list.style.display="none";if(empty)empty.style.display="none";return;}
+  detail.style.display="none";list.style.display="block";list.innerHTML="";
+  if(projects.length===0){if(empty)empty.style.display="block";return;}
+  if(empty)empty.style.display="none";
+  for(var i=0;i<projects.length;i++){
+    var p=projects[i];
+    var d=document.createElement("div");d.className="proj-card-item";
+    d.innerHTML='<div class="proj-card-name">'+(p.fav?"★ ":"")+escHtml(p.name)+'</div><div class="proj-card-meta">'+timeAgo(p.ts||Date.now())+' · '+(p.conversations||[]).length+' conversations</div>';
+    d.onclick=(function(id){return function(){openProjectDetail(id);};})(p.id);
+    list.appendChild(d);
+  }
+}
+function openProjectDetail(id){
+  var p=projects.find(function(x){return x.id===id;});if(!p)return;
+  activeProjectId=id;
+  document.getElementById("proj-detail-name").textContent=p.name;
+  document.getElementById("proj-memo").value=p.memo||"";
+  var cl=document.getElementById("proj-convs-list");cl.innerHTML="";
+  for(var i=0;i<chatConvs.length;i++){
+    var f=getConvFlags(i);
+    if(!f.proj)continue;
+    var c=chatConvs[i];
+    var d=document.createElement("div");d.className="conv-item";
+    d.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div></div>';
+    d.onclick=(function(idx){return function(){showSub("convos");loadConv(idx);};})(i);
+    cl.appendChild(d);
+  }
+  renderProjsList();
+}
+function closeProjectDetail(){activeProjectId=null;renderProjsList();}
+function saveCurrentProject(){
+  var p=projects.find(function(x){return x.id===activeProjectId;});if(!p)return;
+  p.memo=document.getElementById("proj-memo").value;p.ts=Date.now();
+  saveProjStorage();
+}
+
+/* ── CERVEAU (Deuxième Cerveau / Notes) ── */
+var cervNotes=JSON.parse(localStorage.getItem("tilex-cerveau-notes")||"[]");
+var cervCurrentId=null;var cervActiveTag=null;
+function cervLocalSave(){localStorage.setItem("tilex-cerveau-notes",JSON.stringify(cervNotes));}
+function cervNewNote(){
+  cervCurrentId=null;
+  document.getElementById("cerv-title").value="";
+  document.getElementById("cerv-tags").value="";
+  document.getElementById("cerv-content").value="";
+  document.getElementById("cerv-editor-wrap").style.display="block";
+  document.getElementById("cerv-del-btn").style.display="none";
+}
+function cervSaveNote(){
+  var title=document.getElementById("cerv-title").value.trim()||"Sans titre";
+  var tags=document.getElementById("cerv-tags").value.split(",").map(function(t){return t.trim();}).filter(Boolean);
+  var content=document.getElementById("cerv-content").value;
+  if(cervCurrentId){
+    var n=cervNotes.find(function(x){return x.id===cervCurrentId;});
+    if(n){n.title=title;n.tags=tags;n.content=content;n.updated=Date.now();}
+  }else{
+    cervNotes.push({id:Date.now().toString()+Math.random().toString(36).slice(2,6),title:title,tags:tags,content:content,created:Date.now(),updated:Date.now()});
+  }
+  cervLocalSave();cervCancelEdit();cervRenderList();
+}
+function cervCancelEdit(){
+  cervCurrentId=null;
+  document.getElementById("cerv-editor-wrap").style.display="none";
+}
+function cervEditNote(id){
+  var n=cervNotes.find(function(x){return x.id===id;});if(!n)return;
+  cervCurrentId=id;
+  document.getElementById("cerv-title").value=n.title||"";
+  document.getElementById("cerv-tags").value=(n.tags||[]).join(", ");
+  document.getElementById("cerv-content").value=n.content||"";
+  document.getElementById("cerv-editor-wrap").style.display="block";
+  document.getElementById("cerv-del-btn").style.display="inline-flex";
+}
+function cervDeleteNote(){
+  if(!cervCurrentId)return;
+  if(!confirm("Supprimer cette note?"))return;
+  cervNotes=cervNotes.filter(function(n){return n.id!==cervCurrentId;});
+  cervLocalSave();cervCancelEdit();cervRenderList();
+}
+function cervRenderList(){
+  var list=document.getElementById("cerv-notes-list");
+  var empty=document.getElementById("cerv-empty");
+  var search=(document.getElementById("cerv-search")||{}).value||"";
+  search=search.toLowerCase();
+  if(!list)return;
+  var tagsBar=document.getElementById("cerv-tags-bar");
+  var allTags={};
+  cervNotes.forEach(function(n){(n.tags||[]).forEach(function(t){allTags[t]=true;});});
+  if(tagsBar){
+    tagsBar.innerHTML="";
+    Object.keys(allTags).forEach(function(t){
+      var pill=document.createElement("span");pill.className="cerv-tag"+(cervActiveTag===t?" active":"");pill.textContent=t;
+      pill.style.cursor="pointer";if(cervActiveTag===t)pill.style.background="rgba(212,175,55,.15)";
+      pill.onclick=function(){cervActiveTag=cervActiveTag===t?null:t;cervRenderList();};
+      tagsBar.appendChild(pill);
+    });
+  }
+  var filtered=cervNotes.filter(function(n){
+    if(cervActiveTag&&!(n.tags||[]).includes(cervActiveTag))return false;
+    if(search&&(n.title||"").toLowerCase().indexOf(search)===-1&&(n.content||"").toLowerCase().indexOf(search)===-1)return false;
+    return true;
+  });
+  filtered.sort(function(a,b){return(b.updated||0)-(a.updated||0);});
+  list.innerHTML="";
+  if(filtered.length===0){if(empty)empty.style.display="block";return;}
+  if(empty)empty.style.display="none";
+  filtered.forEach(function(n){
+    var d=document.createElement("div");d.className="cerv-note"+(cervCurrentId===n.id?" active":"");
+    var preview=(n.content||"").slice(0,80);
+    var tagsHtml=(n.tags||[]).map(function(t){return'<span class="cerv-tag">'+escHtml(t)+'</span>';}).join("");
+    d.innerHTML='<div class="cerv-note-title">'+escHtml(n.title||"Sans titre")+'</div><div class="cerv-note-preview">'+escHtml(preview)+'</div><div class="cerv-note-tags">'+tagsHtml+'</div>';
+    d.onclick=function(){cervEditNote(n.id);};
+    list.appendChild(d);
+  });
+}
+
+/* ── INIT PLAN FROM LOCALSTORAGE ── */
+(function(){
+  var plan=localStorage.getItem("tilex-plan")||"flux";
+  setPlan(plan);
+  renderConvList();
+  if(chatConvs.length>0){
+    var lastActive=chatConvs.findIndex(function(c){return c.active;});
+    if(lastActive>=0)loadConv(lastActive);
+  }
+})();
 
 /* ── CODEX (style terminal Claude Code) ── */
 let genBusy=false;
@@ -2178,9 +2606,6 @@ function renderAgentCards(){
   if(savedMemory&&memEl)memEl.value=savedMemory;
   loadConvsInfo();
 })();
-
-/* ── CONVERSATION SYNC ── */
-let chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
 
 /* ── MODAL AGENTS ── */
 let selTypeVal="chat";let customAgents=JSON.parse(localStorage.getItem("tilex-custom-agents")||"[]");
