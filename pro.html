@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#0A0A0A;--bg2:#111;--bg3:#1A1A1A;--bg4:#222;
+  --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
   --or:#D4AF37;--or2:#F0C040;--or3:#B8960C;
   --orange:#FF6A00;--orange2:#FF9A3C;--og:#rgba(255,106,0,.2);
   --txt:#FFF8E7;--muted:rgba(255,248,231,.42);
@@ -25,11 +25,9 @@
   --or:#7A5800;--or2:#9A7200;--or3:#5A4000;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{overflow-x:hidden;}
-body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min-height:100vh;
-  overflow-x:hidden;transition:background .35s,color .35s;
-  background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,var(--grid) 60px),
-  repeating-linear-gradient(90deg,transparent,transparent 59px,var(--grid) 60px);}
+html{overflow-x:hidden;background:#000;}
+body{background:#000;color:var(--txt);font-family:'Rajdhani',sans-serif;min-height:100vh;
+  overflow-x:hidden;transition:background .35s,color .35s;}
 
 /* ══ BOUTONS ORANGE ══ */
 .btn-orange{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -60,7 +58,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 /* ══ TOPBAR ══ */
 .topbar{position:fixed;top:0;left:0;right:0;z-index:400;height:var(--tb);
   display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 12px;
-  background:rgba(10,10,10,.94);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
+  background:#000;border-bottom:none;backdrop-filter:none;
   transition:background .35s;}
 [data-theme="day"] .topbar{background:rgba(245,240,232,.96);}
 .topbar-left{display:flex;align-items:center;gap:10px;flex-shrink:0;}
@@ -151,7 +149,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .sidebar{
   position:fixed;top:var(--tb);bottom:0;left:0;z-index:200;
   width:var(--sb-w);overflow:hidden;
-  background:rgba(5,5,5,.55);border-right:1px solid var(--border);backdrop-filter:blur(12px);
+  background:#000;border-right:none;backdrop-filter:none;
   display:flex;flex-direction:column;
   transition:width .42s cubic-bezier(.22,1,.36,1),background .35s;
   overflow-y:auto;
@@ -330,7 +328,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 
 /* CARDS */
 .card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:background .35s;margin-bottom:12px;position:relative;}
-.card-hd{padding:11px 17px;background:rgba(0,0,0,.13);border-bottom:1px solid var(--border);
+.card-hd{padding:11px 17px;background:transparent;border-bottom:1px solid var(--border);
   font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:2px;
   display:flex;align-items:center;justify-content:space-between;}
 [data-theme="day"] .card-hd{background:rgba(0,0,0,.04);}
@@ -402,9 +400,9 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .add-card:hover{border-color:var(--orange);color:var(--orange);}
 
 /* CHAT */
-.chat-wrap{height:calc(100vh - 120px);min-height:420px;display:flex;flex-direction:column;background:#000;
-  background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;min-width:0;max-width:100%;}
-.chat-hd{padding:11px 15px;background:rgba(0,0,0,.13);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.chat-wrap{height:calc(100vh - 120px);min-height:420px;display:flex;flex-direction:column;
+  background:#000;border:none;border-radius:14px;overflow:hidden;min-width:0;max-width:100%;}
+.chat-hd{padding:11px 15px;background:transparent;border-bottom:none;display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:rgba(0,0,0,.04);}
 .c-ava{width:32px;height:32px;border-radius:9px;overflow:hidden;flex-shrink:0;}
 .c-ava img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
@@ -431,7 +429,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .tyd{width:6px;height:6px;background:var(--orange);border-radius:50%;animation:td 1.4s infinite;}
 .tyd:nth-child(2){animation-delay:.2s}.tyd:nth-child(3){animation-delay:.4s}
 @keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.c-inp-area{padding:10px;background:rgba(0,0,0,.12);border-top:1px solid var(--border);}
+.c-inp-area{padding:10px;background:transparent;border-top:none;}
 [data-theme="day"] .c-inp-area{background:rgba(0,0,0,.04);}
 .c-row{display:flex;gap:8px;}
 .c-field{flex:1;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:14px;outline:none;transition:border-color .2s,background .35s,color .35s;}
@@ -508,7 +506,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 /* CODEX */
 /* ── CODEX — style terminal Claude Code ── */
 .codex-wrap{display:flex;flex-direction:column;height:calc(100vh - 70px - 58px);overflow:hidden;}
-.codex-topbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg3);border-bottom:1px solid var(--border);flex-shrink:0;}
+.codex-topbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#000;border-bottom:none;flex-shrink:0;}
 .codex-topbar .cx-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .codex-topbar .cx-dot.r{background:#ff5f57;}.codex-topbar .cx-dot.y{background:#febc2e;}.codex-topbar .cx-dot.g{background:#28c840;}
 .codex-title{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-left:6px;flex:1;}
@@ -524,7 +522,7 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .cx-prefix{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;padding-top:2px;user-select:none;}
 .cx-msg.user .cx-prefix{color:var(--orange);}
 .cx-msg.agent .cx-prefix{color:var(--or);}
-.cx-code-block{background:#0a0a0a;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:4px;width:100%;}
+.cx-code-block{background:#000;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:4px;width:100%;}
 [data-theme="day"] .cx-code-block{background:#1a1a1a;}
 .cx-code-hd{padding:5px 12px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);}
 .cx-code-hd span{cursor:pointer;transition:color .2s;}.cx-code-hd span:hover{color:var(--orange);}
@@ -603,10 +601,8 @@ body.sb-collapsed .menu-btn .mb-line:nth-child(3){transform:translateY(-6px) rot
 /* ════════════════════════════════════════════════════════════
    ÉCRAN DE CHOIX D'INTERFACE
    ════════════════════════════════════════════════════════════ */
-.intro-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);
+.intro-screen{position:fixed;inset:0;z-index:9999;background:#000;
   display:flex;align-items:center;justify-content:center;padding:24px;
-  background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,var(--grid) 60px),
-  repeating-linear-gradient(90deg,transparent,transparent 59px,var(--grid) 60px);
   transition:opacity .5s ease,visibility .5s ease;}
 .intro-screen.hidden{opacity:0;visibility:hidden;pointer-events:none;}
 .intro-inner{display:flex;flex-direction:column;align-items:center;max-width:760px;width:100%;animation:fadeUp .5s ease both;}
@@ -753,7 +749,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
    BARRE COMPOSITEUR FIXE (bas de l'écran) — Chat + Codex
    ════════════════════════════════════════════════════════════ */
 .composer-bar{position:fixed;bottom:0;left:var(--sb-w);right:0;z-index:300;
-  padding:10px 16px;background:rgba(10,10,10,.95);border-top:1px solid var(--border);
+  padding:10px 16px;background:#000;border-top:none;
   backdrop-filter:blur(14px);display:none;transition:left .42s cubic-bezier(.22,1,.36,1);}
 body.sb-collapsed .composer-bar{left:var(--sb-c);}
 [data-theme="day"] .composer-bar{background:rgba(245,240,232,.96);}
