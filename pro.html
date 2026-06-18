@@ -1028,6 +1028,53 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .cvp-empty-ico{font-size:36px;margin-bottom:10px;}
 .cvp-empty-txt{font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;}
 
+/* ══ #1 SUPABASE CONFIG SETTINGS ══ */
+.settings-field{margin-bottom:14px;position:relative;}
+.settings-field .settings-label{display:block;color:#6c6c78;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.settings-input-cfg{width:100%;padding:11px 14px;background:#0e0e14;border:1px solid #23232c;border-radius:8px;color:#f0e0c0;font-size:14px;box-sizing:border-box;transition:border-color .2s;font-family:'Rajdhani',sans-serif;}
+.settings-input-cfg:focus{outline:none;border-color:#ff7f27;}
+.settings-input-mono{font-family:'Share Tech Mono',monospace;font-size:12px;}
+.btn-toggle-vis{position:absolute;right:10px;top:34px;background:none;border:none;cursor:pointer;font-size:16px;opacity:.5;color:#f0e0c0;}
+.btn-toggle-vis:hover{opacity:1;}
+.btn-save-cfg{padding:11px 24px;background:#ff7f27;border:none;border-radius:8px;color:#fff;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background .2s;font-family:'Rajdhani',sans-serif;font-size:14px;}
+.btn-save-cfg:hover{background:#ff9a40;}
+.settings-actions-row{display:flex;align-items:center;gap:14px;margin-top:10px;}
+.sb-cfg-status{font-size:13px;font-family:'Share Tech Mono',monospace;}
+.status-success{color:#37e0a0;}
+.status-error{color:#ff4444;}
+.status-warn{color:#ffcf4a;}
+[data-theme="day"] .settings-input-cfg{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
+
+/* ══ #2 PROFILE EDIT ══ */
+.profile-edit-section{margin-top:16px;}
+.profile-avatar-edit{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:20px;}
+.avatar-preview-wrap{position:relative;width:80px;height:80px;cursor:pointer;}
+.avatar-preview-img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #ff7f27;background:#1a1a1a;}
+.avatar-overlay-edit{position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-size:20px;}
+.avatar-preview-wrap:hover .avatar-overlay-edit{opacity:1;}
+.avatar-hint{font-size:11px;color:#6c6c78;}
+
+/* ══ #4 CONTEXT MENU 3 DOTS ══ */
+.conv-context-menu{position:fixed;z-index:9999;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:6px;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:fadeInScale .15s ease;}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.95) translateY(-4px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.conv-context-menu button{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;background:none;border:none;border-radius:7px;color:#f0e0c0;font-size:14px;cursor:pointer;text-align:left;transition:background .15s;font-family:'Rajdhani',sans-serif;}
+.conv-context-menu button:hover{background:rgba(255,127,39,.12);color:#ff7f27;}
+.btn-conv-dots{background:none;border:none;color:#6c6c78;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s,color .15s;letter-spacing:2px;flex-shrink:0;}
+.btn-conv-dots:hover{background:rgba(255,127,39,.12);color:#ff7f27;}
+[data-theme="day"] .conv-context-menu{background:#EFE7D7;border-color:#D4C5A4;}
+[data-theme="day"] .conv-context-menu button{color:#1a1a1a;}
+
+/* ══ #6 SYNTAX HIGHLIGHTING ══ */
+.syntax-hl{font-weight:600;border-radius:3px;padding:0 2px;background:rgba(255,255,255,.04);}
+.cmsg-bbl code{font-family:'Share Tech Mono',monospace;font-size:13px;background:rgba(255,127,39,.1);border:1px solid rgba(255,127,39,.2);border-radius:4px;padding:1px 6px;color:#ff9a40;}
+.cmsg-bbl pre{background:#0e0e14;border:1px solid #23232c;border-radius:8px;padding:14px;overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.5;color:#f0e0c0;margin:10px 0;}
+[data-theme="day"] .cmsg-bbl pre{background:#E8E0D0;border-color:#D4C5A4;color:#1a1a1a;}
+
+/* ══ SEARCH INPUT (conversations page) ══ */
+.conv-search-input{width:100%;padding:10px 14px;background:#0e0e14;border:1px solid #23232c;border-radius:8px;color:#f0e0c0;font-size:14px;box-sizing:border-box;font-family:'Rajdhani',sans-serif;transition:border-color .2s;}
+.conv-search-input:focus{outline:none;border-color:#ff7f27;}
+[data-theme="day"] .conv-search-input{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1268,6 +1315,33 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             <div style="font-size:22px;opacity:.45;">＋</div>
             <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;">AJOUTER UN AGENT</div>
             <div style="font-family:'Share Tech Mono',monospace;font-size:8.5px;text-align:center;">Crée un agent personnalisé</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="card-hd">✏️ <span data-i18n="edit-profile">MON PROFIL</span></div>
+      <div class="card-body">
+        <div class="profile-edit-section">
+          <div class="profile-avatar-edit">
+            <div class="avatar-preview-wrap" onclick="document.getElementById('input-profile-avatar').click()">
+              <img id="preview-avatar" src="" alt="Avatar" class="avatar-preview-img"/>
+              <div class="avatar-overlay-edit"><span>✏️</span></div>
+            </div>
+            <input type="file" id="input-profile-avatar" accept="image/*" style="display:none" onchange="handleProfileAvatarUpload(event)"/>
+            <span class="avatar-hint" data-i18n="click-to-change">Cliquer pour changer</span>
+          </div>
+          <div class="settings-field">
+            <div class="settings-label" data-i18n="display-name">Nom d'affichage</div>
+            <input type="text" id="input-display-name" class="settings-input-cfg" placeholder="Ton nom" maxlength="40"/>
+          </div>
+          <div class="settings-field">
+            <div class="settings-label">Gmail</div>
+            <input type="email" id="input-gmail" class="settings-input-cfg" placeholder="ton@gmail.com"/>
+          </div>
+          <div class="settings-actions-row">
+            <button class="btn-save-cfg" onclick="saveProfile()"><span data-i18n="save">Sauvegarder</span></button>
+            <span id="profile-status" class="sb-cfg-status"></span>
           </div>
         </div>
       </div>
@@ -1597,6 +1671,24 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🗄️ <span data-i18n="supabase-title">CONNEXION SUPABASE</span></div>
+      <div class="card-body">
+        <div class="settings-field">
+          <div class="settings-label" data-i18n="supabase-url">URL du projet</div>
+          <input type="url" id="input-supabase-url" class="settings-input-cfg" placeholder="https://xxxx.supabase.co" autocomplete="off"/>
+        </div>
+        <div class="settings-field">
+          <div class="settings-label" data-i18n="supabase-key">Clé Anon publique</div>
+          <input type="password" id="input-supabase-key" class="settings-input-cfg settings-input-mono" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off"/>
+          <button class="btn-toggle-vis" onclick="var ik=document.getElementById('input-supabase-key');if(ik)ik.type=ik.type==='password'?'text':'password';">👁</button>
+        </div>
+        <div class="settings-actions-row">
+          <button class="btn-save-cfg" onclick="saveSupabaseConfig()"><span data-i18n="save">Sauvegarder</span></button>
+          <span id="supabase-cfg-status" class="sb-cfg-status"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
       <div class="card-hd">🎨 INTERFACE</div>
       <div class="card-body">
         <div style="display:flex;gap:8px;">
@@ -1612,6 +1704,9 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="cvp-header">
       <div class="sec-title">📋 CONVER<span class="accent">SATIONS</span></div>
       <button class="btn-orange" style="width:auto;padding:8px 18px;font-size:13px;" onclick="cvpCreate()">+ NOUVELLE</button>
+    </div>
+    <div style="margin:10px 0;">
+      <input type="text" id="cvp-search-input" class="conv-search-input" placeholder="🔍 Rechercher..." oninput="cvpFilterSearch(this.value)"/>
     </div>
     <div class="cvp-tabs">
       <button class="cvp-tab active" id="cvp-tab-chat" onclick="cvpSwitchTab('chat')">💬 CHAT</button>
@@ -2024,9 +2119,14 @@ var _streamQueue=[];var _streamBusy=false;var _streamAbort=false;
 async function typeStream(container,queue){
   while(queue.length>0){
     if(_streamAbort){container.textContent+=queue.join("");queue.length=0;break;}
-    container.textContent+=queue.shift();
+    var ch=queue.shift();
+    container.textContent+=ch;
     container.closest(".chat-msgs,.codex-feed")&&(container.closest(".chat-msgs,.codex-feed").scrollTop=container.closest(".chat-msgs,.codex-feed").scrollHeight);
-    await new Promise(function(r){setTimeout(r,18);});
+    var isPunct='.!?,;:'.indexOf(ch)!==-1;
+    var delay=isPunct?66:22;
+    if(queue.length>200)delay=4;
+    else if(queue.length>80)delay=10;
+    await new Promise(function(r){setTimeout(r,delay);});
   }
 }
 
@@ -2095,13 +2195,14 @@ async function sendChat(){
       async function drainQueue(){
         while(streaming||queue.length>0){
           if(queue.length>0){
-            var batch=1;
-            if(queue.length>100)batch=Math.min(queue.length,10);
-            else if(queue.length>40)batch=5;
-            else if(queue.length>15)batch=3;
-            bblText.textContent+=queue.splice(0,batch).join("");
+            var ch=queue.shift();
+            bblText.textContent+=ch;
             msgs.scrollTop=msgs.scrollHeight;
-            await new Promise(function(r){requestAnimationFrame(function(){setTimeout(r,batch>1?4:18);});});
+            var isPunct='.!?,;:'.indexOf(ch)!==-1;
+            var delay=isPunct?66:22;
+            if(queue.length>200)delay=4;
+            else if(queue.length>80)delay=10;
+            await new Promise(function(r){setTimeout(r,delay);});
           }else{
             await new Promise(function(r){setTimeout(r,30);});
           }
@@ -2116,6 +2217,7 @@ async function sendChat(){
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
+      applySyntaxHL(bblText);
       if(document.documentElement.getAttribute("data-theme")!=="day"){
         setTimeout(function(){applyGoldProjection(bblText);},4000);
       }
@@ -2173,6 +2275,7 @@ function addMsg(role,txt){
   var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl&&typeof applySyntaxHL==="function")applySyntaxHL(bbl);}
 }
 
 /* ── FORFAITS (mêmes données que app.js) ── */
@@ -2281,7 +2384,7 @@ function renderConvList(){
     var badges="";
     if(flags.fav)badges+='<span class="conv-badge fav">★</span>';
     if(flags.proj)badges+='<span class="conv-badge proj">📁</span>';
-    d.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div><div class="conv-item-meta"><span>'+ago+'</span><span>'+msgCount+' msg</span></div></div><div class="conv-item-badges">'+badges+'</div><button class="conv-item-del" data-idx="'+i+'" onclick="event.stopPropagation();deleteConv('+i+')">✕</button>';
+    d.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div><div class="conv-item-meta"><span>'+ago+'</span><span>'+msgCount+' msg</span></div></div><div class="conv-item-badges">'+badges+'</div><button class="btn-conv-dots" onclick="event.stopPropagation();openConvCtxMenu(event,'+i+')">⋯</button><button class="conv-item-del" data-idx="'+i+'" onclick="event.stopPropagation();deleteConv('+i+')">✕</button>';
     d.onclick=(function(idx){return function(){loadConv(idx);};})(i);
     list.appendChild(d);
   }
@@ -3293,7 +3396,10 @@ var TRANSLATIONS={
     "close":"Fermer","open":"Ouvrir","loading":"Chargement…","error":"Erreur","success":"Succès",
     "scan-btn":"SCANNER LE PROJET","code-btn":"COMMENCER À CODER","effacer":"EFFACER",
     "delete-confirm":"Supprimer?","codex-ph":"Décris ce que tu veux coder…",
-    "new-conv-fab":"NOUVELLE"
+    "new-conv-fab":"NOUVELLE",
+    "supabase-title":"CONNEXION SUPABASE","supabase-url":"URL du projet","supabase-key":"Clé Anon publique",
+    "edit-profile":"MON PROFIL","display-name":"Nom d'affichage","click-to-change":"Cliquer pour changer",
+    "add-favorite":"Ajouter aux favoris","add-to-project":"Ajouter à un projet","share":"Partager"
   },
   en:{
     "settings":"SETTINGS","theme-hd":"🌗 THEME","theme-mode":"MODE","theme-night":"NIGHT","theme-day":"DAY",
@@ -3312,7 +3418,10 @@ var TRANSLATIONS={
     "close":"Close","open":"Open","loading":"Loading…","error":"Error","success":"Success",
     "scan-btn":"SCAN PROJECT","code-btn":"START CODING","effacer":"CLEAR",
     "delete-confirm":"Delete?","codex-ph":"Describe what you want to code…",
-    "new-conv-fab":"NEW"
+    "new-conv-fab":"NEW",
+    "supabase-title":"SUPABASE CONNECTION","supabase-url":"Project URL","supabase-key":"Anon public key",
+    "edit-profile":"MY PROFILE","display-name":"Display name","click-to-change":"Click to change",
+    "add-favorite":"Add to favorites","add-to-project":"Add to project","share":"Share"
   }
 };
 var currentLang=localStorage.getItem("tilex-al-lang")||"fr";
@@ -3800,7 +3909,7 @@ function cvpCardHtml(c){
   var dateStr=date.toLocaleDateString("fr-CA",{day:"numeric",month:"short"})+" · "+date.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
   var preview=c.last_preview?escHtml(c.last_preview).slice(0,80):"Pas de messages encore";
   var ico=c.type==="project"?"📁":"💬";
-  return '<div class="cvp-card" onclick="cvpOpen(\''+c.id+'\')"><div class="cvp-card-ico">'+ico+'</div><div class="cvp-card-body"><div class="cvp-card-title">'+escHtml(c.title||"Conversation")+'</div><div class="cvp-card-preview">'+preview+'</div><div class="cvp-card-date">'+dateStr+'</div></div><button class="cvp-card-del" onclick="event.stopPropagation();cvpDelete(\''+c.id+'\')" title="Supprimer">✕</button></div>';
+  return '<div class="cvp-card" onclick="cvpOpen(\''+c.id+'\')"><div class="cvp-card-ico">'+ico+'</div><div class="cvp-card-body"><div class="cvp-card-title">'+escHtml(c.title||"Conversation")+'</div><div class="cvp-card-preview">'+preview+'</div><div class="cvp-card-date">'+dateStr+'</div></div><button class="btn-conv-dots" onclick="event.stopPropagation();openCvpCtxMenu(event,\''+c.id+'\')">⋯</button><button class="cvp-card-del" onclick="event.stopPropagation();cvpDelete(\''+c.id+'\')" title="Supprimer">✕</button></div>';
 }
 
 function cvpSwitchTab(tab){
@@ -3950,6 +4059,191 @@ sendChat=async function(){
     }catch(e){}
   }
 };
+
+/* ══ #1 SUPABASE CONFIG ══ */
+function loadSupabaseConfig(){
+  var iu=document.getElementById("input-supabase-url");
+  var ik=document.getElementById("input-supabase-key");
+  if(iu)iu.value=localStorage.getItem("tilex-supabase-url")||"";
+  if(ik)ik.value=localStorage.getItem("tilex-supabase-anon")||"";
+}
+async function saveSupabaseConfig(){
+  var url=(document.getElementById("input-supabase-url")||{}).value;
+  var key=(document.getElementById("input-supabase-key")||{}).value;
+  var st=document.getElementById("supabase-cfg-status");
+  if(!url||!key){showCfgStatus(st,"⚠️ URL et clé requis","warn");return;}
+  url=url.trim();key=key.trim();
+  localStorage.setItem("tilex-supabase-url",url);
+  localStorage.setItem("tilex-supabase-anon",key);
+  try{
+    var r=await fetch(url+"/rest/v1/?apikey="+encodeURIComponent(key),{headers:{"apikey":key}});
+    if(r.ok)showCfgStatus(st,"✅ Connecté","success");
+    else showCfgStatus(st,"❌ Erreur "+r.status,"error");
+  }catch(e){showCfgStatus(st,"❌ "+e.message,"error");}
+}
+function showCfgStatus(el,msg,type){
+  if(!el)return;el.textContent=msg;el.className="sb-cfg-status status-"+type;
+  setTimeout(function(){el.textContent="";},4000);
+}
+loadSupabaseConfig();
+
+/* ══ #2 PROFILE EDIT ══ */
+function loadProfile(){
+  var name=localStorage.getItem("tilex-profile-name")||"";
+  var gmail=localStorage.getItem("tilex-profile-gmail")||"";
+  var avatar=localStorage.getItem("tilex-profile-avatar")||"";
+  var iN=document.getElementById("input-display-name");
+  var iG=document.getElementById("input-gmail");
+  var pA=document.getElementById("preview-avatar");
+  if(iN)iN.value=name;
+  if(iG)iG.value=gmail;
+  if(pA&&avatar)pA.src=avatar;
+  applyProfileToUI(name,avatar);
+}
+function handleProfileAvatarUpload(event){
+  var file=event.target.files[0];if(!file)return;
+  if(file.size>2*1024*1024){alert("Photo trop grande (max 2 Mo)");return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var b64=e.target.result;
+    document.getElementById("preview-avatar").src=b64;
+    localStorage.setItem("tilex-profile-avatar",b64);
+    applyProfileToUI(null,b64);
+  };
+  reader.readAsDataURL(file);
+}
+function saveProfile(){
+  var name=(document.getElementById("input-display-name")||{}).value||"";
+  var gmail=(document.getElementById("input-gmail")||{}).value||"";
+  var avatar=localStorage.getItem("tilex-profile-avatar")||"";
+  var st=document.getElementById("profile-status");
+  name=name.trim();gmail=gmail.trim();
+  localStorage.setItem("tilex-profile-name",name);
+  localStorage.setItem("tilex-profile-gmail",gmail);
+  applyProfileToUI(name,avatar);
+  showCfgStatus(st,"✅ Profil sauvegardé","success");
+}
+function applyProfileToUI(name,avatar){
+  if(name!==null&&name!==undefined){
+    var acctName=document.querySelector(".acct-name");
+    if(acctName&&name)acctName.innerHTML=escHtml(name)+' · <span class="accent">MASTER</span>';
+  }
+  if(avatar){
+    var acctAv=document.querySelector(".acct-avatar");
+    if(acctAv)acctAv.innerHTML='<img src="'+avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
+  }
+}
+loadProfile();
+
+/* ══ #3 CONVERSATION SEARCH ══ */
+function cvpFilterSearch(q){
+  q=(q||"").toLowerCase().trim();
+  document.querySelectorAll(".cvp-card").forEach(function(card){
+    var title=(card.querySelector(".cvp-card-title")||{}).textContent||"";
+    var preview=(card.querySelector(".cvp-card-preview")||{}).textContent||"";
+    var match=!q||title.toLowerCase().indexOf(q)!==-1||preview.toLowerCase().indexOf(q)!==-1;
+    card.style.display=match?"":"none";
+  });
+}
+
+/* ══ #4 CONTEXT MENU (local convs) ══ */
+function openConvCtxMenu(event,idx){
+  document.getElementById("conv-ctx-menu")&&document.getElementById("conv-ctx-menu").remove();
+  var menu=document.createElement("div");menu.id="conv-ctx-menu";menu.className="conv-context-menu";
+  var flags=getConvFlags(idx);
+  var favLabel=flags.fav?"Retirer des favoris":"Ajouter aux favoris";
+  var projLabel=flags.proj?"Retirer du projet":"Ajouter à un projet";
+  menu.innerHTML='<button onclick="toggleConvFlag('+idx+',\'fav\');document.getElementById(\'conv-ctx-menu\').remove();"><span>⭐</span> '+favLabel+'</button><button onclick="toggleConvFlag('+idx+',\'proj\');document.getElementById(\'conv-ctx-menu\').remove();"><span>📁</span> '+projLabel+'</button><button onclick="shareConvLocal('+idx+');document.getElementById(\'conv-ctx-menu\').remove();"><span>🔗</span> Partager</button>';
+  var rect=event.target.getBoundingClientRect();
+  menu.style.top=(rect.bottom+6)+"px";
+  menu.style.left=Math.max(10,rect.left-140)+"px";
+  document.body.appendChild(menu);
+  setTimeout(function(){document.addEventListener("click",function rm(){menu.remove();document.removeEventListener("click",rm);});},50);
+}
+function toggleConvFlag(idx,flag){
+  var flags=getConvFlags(idx);
+  setConvFlag(idx,flag,!flags[flag]);
+  renderConvList();
+}
+function shareConvLocal(idx){
+  var c=chatConvs[idx];if(!c)return;
+  var txt=(c.messages||[]).map(function(m){return(m.role==="user"?"Moi: ":"AL: ")+m.content;}).join("\n\n");
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){showToastMsg("🔗 Conversation copiée");});
+}
+
+/* ══ #4 CONTEXT MENU (CVP Supabase convs) ══ */
+function openCvpCtxMenu(event,convId){
+  document.getElementById("conv-ctx-menu")&&document.getElementById("conv-ctx-menu").remove();
+  var menu=document.createElement("div");menu.id="conv-ctx-menu";menu.className="conv-context-menu";
+  menu.innerHTML='<button onclick="cvpToggleFav(\''+convId+'\');document.getElementById(\'conv-ctx-menu\').remove();"><span>⭐</span> Favoris</button><button onclick="cvpAddToProject(\''+convId+'\');document.getElementById(\'conv-ctx-menu\').remove();"><span>📁</span> Ajouter à un projet</button><button onclick="cvpShareConv(\''+convId+'\');document.getElementById(\'conv-ctx-menu\').remove();"><span>🔗</span> Partager</button>';
+  var rect=event.target.getBoundingClientRect();
+  menu.style.top=(rect.bottom+6)+"px";
+  menu.style.left=Math.max(10,rect.left-140)+"px";
+  document.body.appendChild(menu);
+  setTimeout(function(){document.addEventListener("click",function rm(){menu.remove();document.removeEventListener("click",rm);});},50);
+}
+async function cvpToggleFav(convId){
+  try{
+    var data=await sbRest("/conversations?id=eq."+convId+"&select=is_favorite");
+    var current=data&&data[0]?data[0].is_favorite:false;
+    await sbRest("/conversations?id=eq."+convId,{method:"PATCH",prefer:"return=minimal",body:{is_favorite:!current}});
+    showToastMsg(current?"⭐ Retiré des favoris":"⭐ Ajouté aux favoris");
+    cvpLoad();
+  }catch(e){showToastMsg("❌ "+e.message);}
+}
+async function cvpAddToProject(convId){
+  if(!cvpProjects||cvpProjects.length===0){showToastMsg("Aucun projet. Crée un projet d'abord.");return;}
+  var names=cvpProjects.map(function(p){return p.name;});
+  var choice=prompt("Ajouter à quel projet?\n"+names.map(function(n,i){return(i+1)+". "+n;}).join("\n"));
+  if(!choice)return;
+  var idx=parseInt(choice)-1;
+  if(idx<0||idx>=cvpProjects.length){showToastMsg("Choix invalide");return;}
+  try{
+    await sbRest("/conversations?id=eq."+convId,{method:"PATCH",prefer:"return=minimal",body:{project_id:cvpProjects[idx].id,type:"project"}});
+    showToastMsg("📁 Ajouté à "+cvpProjects[idx].name);
+    cvpLoad();
+  }catch(e){showToastMsg("❌ "+e.message);}
+}
+async function cvpShareConv(convId){
+  try{
+    var msgs=await sbRest("/messages?conversation_id=eq."+convId+"&select=role,content&order=created_at.asc");
+    var txt=(msgs||[]).map(function(m){return(m.role==="user"?"Moi: ":"AL: ")+m.content;}).join("\n\n");
+    if(navigator.clipboard)await navigator.clipboard.writeText(txt);
+    showToastMsg("🔗 Conversation copiée");
+  }catch(e){showToastMsg("❌ "+e.message);}
+}
+function showToastMsg(msg){
+  var t=document.createElement("div");
+  t.className="delete-confirm-toast";
+  t.style.borderColor="var(--orange)";
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},2500);
+}
+
+/* ══ #6 SYNTAX HIGHLIGHTING ══ */
+var SYNTAX_RULES=[
+  {color:"#ff4444",keywords:["secret","password","mot de passe","clé","key","token","api key","private","danger","erreur","error","interdit","bloqué"]},
+  {color:"#ff7f27",keywords:["attention","warning","important","critique","avertissement","requis","obligatoire","loi 25","supabase"]},
+  {color:"#ffcf4a",keywords:["ti-lex-al","ti-lex","agent al","codex","master","orchestrateur","mémoire","memory","claude","anthropic"]},
+  {color:"#37e0a0",keywords:["succès","success","connecté","en ligne","actif","confirmé","validé","ok","protégé","sécurisé"]},
+  {color:"#60a5fa",keywords:["javascript","python","sql","html","css","json","api","function","const","let","var","async","await","fetch"]},
+  {color:"#c084fc",keywords:["intelligence artificielle","ia","modèle","model","llm","gpt","claude-sonnet","claude-opus","neural","prédiction"]}
+];
+function applySyntaxHL(el){
+  if(!el)return;
+  var html=el.innerHTML;
+  if(html.indexOf("<code")!==-1||html.indexOf("<pre")!==-1)return;
+  var allRules=[];
+  SYNTAX_RULES.forEach(function(rule){rule.keywords.forEach(function(kw){allRules.push({keyword:kw,color:rule.color});});});
+  allRules.sort(function(a,b){return b.keyword.length-a.keyword.length;});
+  allRules.forEach(function(r){
+    var escaped=r.keyword.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    var regex=new RegExp("\\b("+escaped+")\\b","gi");
+    html=html.replace(regex,'<span class="syntax-hl" style="color:'+r.color+';font-weight:600;">$1</span>');
+  });
+  el.innerHTML=html;
+}
 
 </script>
 
