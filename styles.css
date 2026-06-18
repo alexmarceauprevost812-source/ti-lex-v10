@@ -2985,7 +2985,7 @@ body[data-theme="light"] .proj-file-item{background:var(--bg-3);color:var(--txt)
 
 .view-finance{overflow:hidden!important}
 .view-finance.active{display:flex!important}
-.fin-container{width:100%;max-width:760px;margin:0 auto;height:100%;display:flex;flex-direction:column;border-left:1px solid #2a2a2a;border-right:1px solid #2a2a2a;background:linear-gradient(180deg,rgba(30,30,30,.45),rgba(0,0,0,0) 220px);position:relative}
+.fin-container{width:100%;max-width:100%;margin:0;height:100%;display:flex;flex-direction:column;border-left:none;border-right:none;background:linear-gradient(180deg,rgba(30,30,30,.25),rgba(0,0,0,0) 220px);position:relative}
 .fin-container::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(900px 380px at 50% -8%,rgba(255,122,26,.12),transparent 70%);animation:finGlow 7s ease-in-out infinite}
 @keyframes finGlow{0%,100%{opacity:.55}50%{opacity:.9}}
 @keyframes finUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -3019,7 +3019,7 @@ body[data-theme="light"] .proj-file-item{background:var(--bg-3);color:var(--txt)
 .fin-msg-wrap{display:flex;animation:finUp .35s ease both}
 .fin-msg-wrap.user{justify-content:flex-end}
 .fin-msg-wrap.assistant{justify-content:flex-start}
-.fin-msg-inner{max-width:86%;min-width:40px}
+.fin-msg-inner{max-width:92%;min-width:40px}
 .fin-msg-label{display:flex;align-items:center;gap:7px;margin:0 0 5px 2px}
 .fin-msg-label svg{width:15px;height:15px}
 .fin-msg-label span{font-family:'Fraunces',Georgia,serif;font-size:13px;font-weight:600;color:#ff7a1a;letter-spacing:.2px}
@@ -3072,7 +3072,7 @@ textarea.fin-input:focus{outline:none}
   textarea.fin-input{font-size:14px}
   .fin-send{width:36px;height:36px;border-radius:10px}
   .fin-bubble-user,.fin-bubble-ai{font-size:14px;padding:9px 12px}
-  .fin-msg-inner{max-width:90%}
+  .fin-msg-inner{max-width:96%}
   .fin-disclaimer{font-size:10px;margin-top:6px}
 }
 
