@@ -435,11 +435,11 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
 .chat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 10px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-width:0;}
-.cmsg{display:flex;gap:8px;max-width:92%;min-width:0;}
+.cmsg{display:flex;gap:8px;max-width:92%;min-width:0;align-items:flex-start;}
 .cmsg>div:not(.cmsg-ico){min-width:0;flex:1;}
 .cmsg.u{align-self:flex-end;flex-direction:row-reverse;}
 .cmsg.a{align-self:flex-start;}
-.cmsg-ico{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.cmsg-ico{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px;}
 .cmsg-ico.u{background:var(--bg4);border:1px solid var(--border);}
 .cmsg-ico.a{background:none;padding:0;overflow:hidden;}
 .cmsg-ico.a img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
@@ -450,10 +450,27 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 [data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;}
 [data-theme="day"] .cmsg-bbl.u{background:rgba(255,106,0,.1);border-color:rgba(255,106,0,.18);}
 .cmsg-time{font-size:8px;opacity:.3;margin-top:3px;font-family:'Share Tech Mono',monospace;}
-.tydots{display:flex;gap:4px;padding:4px 0;}
-.tyd{width:6px;height:6px;background:var(--orange);border-radius:50%;animation:td 1.4s infinite;}
-.tyd:nth-child(2){animation-delay:.2s}.tyd:nth-child(3){animation-delay:.4s}
-@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.cmsg-typing{display:flex;flex-direction:column;align-items:flex-start;gap:6px;align-self:flex-start;}
+.cmsg-typing .cmsg-ty-avatar{width:28px;height:28px;border-radius:8px;overflow:hidden;}
+.cmsg-typing .cmsg-ty-avatar img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.tydots{display:flex;gap:6px;padding:4px 0;align-items:flex-end;}
+.tyd{width:8px;height:8px;background:var(--orange);border-radius:50%;opacity:0;animation:tdBounceIn .6s ease forwards;}
+.tyd:nth-child(1){animation-delay:.1s}
+.tyd:nth-child(2){animation-delay:.35s}
+.tyd:nth-child(3){animation-delay:.6s}
+@keyframes tdBounceIn{
+0%{opacity:0;transform:translateY(12px) scale(.3);}
+40%{opacity:1;transform:translateY(-8px) scale(1.15);}
+60%{transform:translateY(2px) scale(.95);}
+75%{transform:translateY(-3px) scale(1.05);}
+90%{transform:translateY(1px) scale(.98);}
+100%{opacity:1;transform:translateY(0) scale(1);}
+}
+.tyd.tyd-loop{opacity:1;animation:tdPulse 1.4s ease-in-out infinite;}
+.tyd.tyd-loop:nth-child(1){animation-delay:0s}
+.tyd.tyd-loop:nth-child(2){animation-delay:.2s}
+.tyd.tyd-loop:nth-child(3){animation-delay:.4s}
+@keyframes tdPulse{0%,100%{transform:translateY(0) scale(1);}30%{transform:translateY(-10px) scale(1.2);}60%{transform:translateY(2px) scale(.9);}}
 .c-inp-area{padding:10px;background:transparent;border-top:none;}
 [data-theme="day"] .c-inp-area{background:var(--bg3);}
 .c-row{display:flex;gap:8px;}
@@ -1860,8 +1877,9 @@ async function sendChat(){
   chatHistory.push({role:"user",content:txt});
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
-  td.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a"><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
+  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(function(){var dots=td.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
     const tk=getToken();
     const h={"Content-Type":"application/json"};
@@ -3339,7 +3357,8 @@ async function cvpOpenInChat(id){
   cvpActiveConvId=id;
   showTab("chat");showSub("convos");
   var msgs=document.getElementById("chat-msgs");
-  msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a"><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div></div>';
+  msgs.innerHTML='<div class="cmsg a"><div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
+  setTimeout(function(){var dots=msgs.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
     var rows=await sbRest("/messages?conversation_id=eq."+id+"&select=id,role,content,created_at&order=created_at.asc")||[];
     chatHistory=[];
