@@ -920,15 +920,12 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <div class="sb-usage-count" id="usage-count"></div>
     <div class="sb-usage-sep"></div>
     <div class="sb-usage-month" id="usage-month"></div>
+    <div class="sb-usage-sep"></div>
+    <div class="sb-usage-count" id="usage-plan" style="color:var(--or);font-weight:600;"></div>
   </div>
 
   <div class="sb-bottom">
-    <div class="sb-plan-row">
-      <div class="sb-plan-icon">⚡</div>
-      <div class="sb-plan-txt">PLAN SURGE · ACTIF</div>
-    </div>
-    <div class="sb-model">claude-opus-4-8 · Loi 25 · Québec ⚜️</div>
-    <div class="mode-indicator" id="mode-indicator">MODE: ANIMÉ 🎬</div>
+    <div class="sb-model">Loi 25 · Québec ⚜️</div>
   </div>
 </div>
 
@@ -1150,12 +1147,58 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🤖 MODÈLE IA</div>
+      <div class="card-body">
+        <div class="settings-section">
+          <div class="settings-label">MODÈLE PAR DÉFAUT</div>
+          <select class="settings-input" id="set-model" style="cursor:pointer;" onchange="saveSettingModel()">
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-opus-4-8">Claude Opus 4.8</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+          </select>
+          <div class="settings-hint">Le modèle utilisé pour le chat et le Codex.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🌐 LANGUE</div>
+      <div class="card-body">
+        <div class="settings-section">
+          <select class="settings-input" id="set-lang" style="cursor:pointer;" onchange="saveSettingLang()">
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">🧠 MÉMOIRE IA</div>
+      <div class="card-body">
+        <div class="settings-section">
+          <div class="settings-label">FAITS MÉMORISÉS</div>
+          <textarea class="settings-input" id="set-memory" rows="4" placeholder="L'IA se souvient de ces informations entre les sessions…" style="resize:vertical;font-family:'Rajdhani',sans-serif;"></textarea>
+          <div class="settings-hint">Un fait par ligne. Partagé entre les deux interfaces.</div>
+          <div style="margin-top:8px;"><button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="saveSettingMemory()">SAUVEGARDER MÉMOIRE</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">💬 CONVERSATIONS</div>
+      <div class="card-body">
+        <div id="set-convs-info" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);line-height:1.8;">Chargement…</div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;" onclick="loadConvsInfo()">↻ ACTUALISER</button>
+          <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="if(confirm('Effacer toutes les conversations?')){localStorage.removeItem('tilex-chat-convs');loadConvsInfo();}">EFFACER TOUT</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
       <div class="card-hd">🎨 INTERFACE</div>
       <div class="card-body">
         <div style="display:flex;gap:8px;">
           <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="localStorage.removeItem('tilex-interface-mode');window.location.href='choose.html'">CHANGER D'INTERFACE</button>
         </div>
-        <div class="settings-hint" style="margin-top:8px;">Retourne au choix entre l'interface animée et l'interface pro.</div>
+        <div class="settings-hint" style="margin-top:8px;">Retourne au choix entre l'interface animée et l'interface pro. Toutes tes conversations, agents et paramètres sont partagés entre les deux.</div>
       </div>
     </div>
   </div>
@@ -1530,8 +1573,16 @@ function addMsg(role,txt){
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 
-/* ── SUIVI UTILISATION (messages par tranche 12h) ── */
-const TRANCHE_LIMIT=50;
+/* ── FORFAITS (mêmes données que app.js) ── */
+const PLAN_DATA={
+  flux:{name:"FLUX",price:"$19 CAD/mois",msgWindow:40,agents:5,models:"Sonnet 4.6",codexProjects:2,codexSessions:10,storage:"1 GB"},
+  surge:{name:"SURGE",price:"$60 CAD/mois",msgWindow:100,agents:15,models:"Sonnet 4.6",codexProjects:5,codexSessions:50,storage:"5 GB"},
+  apex:{name:"APEX",price:"$125 CAD/mois",msgWindow:250,agents:-1,models:"Sonnet 4.6 + Opus 4.8",opusMessages:100,codexProjects:20,codexSessions:-1,storage:"10 GB"}
+};
+function getPlan(){return(localStorage.getItem("tilex-plan")||"surge").toLowerCase();}
+function getPlanData(){return PLAN_DATA[getPlan()]||PLAN_DATA.surge;}
+
+/* ── SUIVI UTILISATION (synchro avec app.js) ── */
 function getTranche(){
   var now=new Date();
   var y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();
@@ -1546,6 +1597,8 @@ function getUsageData(){
   try{var d=JSON.parse(localStorage.getItem("tilex-usage")||"{}");return d;}catch(e){return{};}
 }
 function saveUsageData(d){localStorage.setItem("tilex-usage",JSON.stringify(d));}
+function getDayKey(){return"tilex-msg-"+new Date().toISOString().slice(0,10);}
+function getDayCount(){return parseInt(localStorage.getItem(getDayKey())||"0",10);}
 function trackMsg(){
   var d=getUsageData();
   var tr=getTranche();
@@ -1555,14 +1608,19 @@ function trackMsg(){
   if(!d.monthKey||d.monthKey!==mKey){d.monthKey=mKey;d.monthCount=0;}
   d.monthCount=(d.monthCount||0)+1;
   saveUsageData(d);
+  var dayKey=getDayKey();
+  var dayCount=parseInt(localStorage.getItem(dayKey)||"0",10)+1;
+  localStorage.setItem(dayKey,dayCount.toString());
   renderUsage();
 }
 function renderUsage(){
+  var plan=getPlanData();
+  var limit=plan.msgWindow;
   var d=getUsageData();
   var tr=getTranche();
   var sent=(d.tranche===tr)?d.count||0:0;
-  var remain=Math.max(0,TRANCHE_LIMIT-sent);
-  var pct=Math.min(100,Math.round((sent/TRANCHE_LIMIT)*100));
+  var remain=Math.max(0,limit-sent);
+  var pct=Math.min(100,Math.round((sent/limit)*100));
   var now=new Date();var mKey=now.getFullYear()+"-"+(now.getMonth()+1);
   var mCount=(d.monthKey===mKey)?d.monthCount||0:0;
   var mNames=["JAN","FÉV","MAR","AVR","MAI","JUN","JUL","AOÛ","SEP","OCT","NOV","DÉC"];
@@ -1574,8 +1632,10 @@ function renderUsage(){
   if(barEl){barEl.style.width=pct+"%";
     if(pct>80)barEl.style.background="linear-gradient(90deg,var(--orange),var(--red))";
     else barEl.style.background="linear-gradient(90deg,var(--green),var(--or2))";}
-  if(cntEl)cntEl.textContent=sent+" / "+TRANCHE_LIMIT+" msgs · "+remain+" restants";
-  if(moEl)moEl.textContent="📅 "+mNames[now.getMonth()]+" : "+mCount+" messages envoyés";
+  if(cntEl)cntEl.textContent=sent+" / "+limit+" msgs · "+remain+" restants";
+  if(moEl)moEl.textContent="📅 "+mNames[now.getMonth()]+" : "+mCount+" msgs ce mois · "+plan.name+" ("+plan.price+")";
+  var planEl=document.getElementById("usage-plan");
+  if(planEl)planEl.textContent="FORFAIT "+plan.name+" · "+limit+" msgs / fenêtre 12h";
 }
 renderUsage();
 

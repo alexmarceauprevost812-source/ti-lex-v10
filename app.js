@@ -3252,6 +3252,21 @@ async function sendMessage() {
   input.value = ""; input.style.height = "auto";
   attachments = []; renderAttachStrip();
 
+  // Sync local message counter (shared with pro interface)
+  const _dk = `tilex-msg-${new Date().toISOString().slice(0, 10)}`;
+  localStorage.setItem(_dk, (parseInt(localStorage.getItem(_dk) || "0", 10) + 1).toString());
+  try {
+    const _ud = JSON.parse(localStorage.getItem("tilex-usage") || "{}");
+    const _h = new Date().getHours();
+    const _tr = new Date().getFullYear() + "-" + (new Date().getMonth() + 1) + "-" + new Date().getDate() + "-" + (_h < 12 ? "am" : "pm");
+    if (!_ud.tranche || _ud.tranche !== _tr) { _ud.tranche = _tr; _ud.count = 0; }
+    _ud.count = (_ud.count || 0) + 1;
+    const _mk = new Date().getFullYear() + "-" + (new Date().getMonth() + 1);
+    if (!_ud.monthKey || _ud.monthKey !== _mk) { _ud.monthKey = _mk; _ud.monthCount = 0; }
+    _ud.monthCount = (_ud.monthCount || 0) + 1;
+    localStorage.setItem("tilex-usage", JSON.stringify(_ud));
+  } catch (_e) {}
+
   const body = buildAssistantMsg(text);
 
   if (!AI_PROXY) {
