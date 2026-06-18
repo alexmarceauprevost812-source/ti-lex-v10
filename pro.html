@@ -401,7 +401,8 @@ body.sb-collapsed .content{margin-left:var(--sb-c);}
 .cmsg.a{align-self:flex-start;}
 .cmsg-ico{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
 .cmsg-ico.u{background:var(--bg4);border:1px solid var(--border);}
-.cmsg-ico.a{background:linear-gradient(135deg,var(--or3),var(--or2));color:#0a0a0a;}
+.cmsg-ico.a{background:none;padding:0;overflow:hidden;}
+.cmsg-ico.a img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
 .cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.5;white-space:pre-wrap;}
 .cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:var(--txt);border-bottom-right-radius:3px;}
 .cmsg-bbl.a{background:var(--bg4);border:1px solid var(--border);color:var(--txt);border-bottom-left-radius:3px;}
@@ -860,10 +861,6 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
   </div>
 
-  <!-- STUDIO -->
-  <div class="sb-item" id="si-studio" onclick="showTab('studio')">
-    <span class="sb-icon">🚀</span><span class="sb-label" data-txt="STUDIO"></span>
-  </div>
 
   <!-- CRÉER AGENT IA -->
   <div class="sb-item" onclick="openModal()">
@@ -1022,7 +1019,7 @@ body.sb-collapsed .composer-bar{left:var(--sb-c);}
       </div>
       <div class="chat-msgs" id="chat-msgs">
         <div class="cmsg a">
-          <div class="cmsg-ico a">⚡</div>
+          <div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div>
           <div><div class="cmsg-bbl a">Salut! Je suis Agent AL.
 
 Plan actif — je coordonne avec Codex pour le code et tous les autres agents disponibles.
@@ -1227,39 +1224,48 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="plan-sel-sub">CHOISIS LE FORFAIT QUI TE CONVIENT</div>
     <div class="plans-grid">
       <div class="plan-card" id="pc-basic" onclick="setPlan('basic')">
-        <div class="plan-ico">⭐</div>
+        <div class="plan-ico">⚡</div>
         <div class="plan-name">FLUX</div>
-        <div class="plan-price">9$/mois</div>
+        <div class="plan-price">19$/mois</div>
         <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">BASE</div>
         <ul class="plan-feats">
-          <li>Chat · Agent AL</li>
-          <li>Codex · Génération code</li>
-          <li>Créer des agents</li>
+          <li><strong>40</strong> messages / fenêtre 12h</li>
+          <li>Reset minuit + midi</li>
+          <li><strong>5</strong> agents IA · Sonnet 4.6</li>
+          <li><strong>2</strong> projets Codex · GitHub</li>
+          <li><strong>10</strong> sessions Codex</li>
+          <li><strong>1 GB</strong> stockage</li>
+          <li>Marketplace agents</li>
         </ul>
       </div>
       <div class="plan-card selected" id="pc-pro" onclick="setPlan('pro')">
         <div class="plan-ico">🔥</div>
         <div class="plan-name">SURGE</div>
-        <div class="plan-price">29$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--orange);letter-spacing:1px;margin-bottom:8px;">POPULAIRE</div>
+        <div class="plan-price">60$/mois</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--orange);letter-spacing:1px;margin-bottom:8px;">LE PLUS POPULAIRE</div>
         <ul class="plan-feats">
-          <li>Chat · Agent AL</li>
-          <li>Codex · Génération code</li>
-          <li>Agents illimités</li>
-          <li>Support prioritaire</li>
+          <li><strong>100</strong> messages / fenêtre 12h</li>
+          <li>Reset minuit + midi</li>
+          <li><strong>15</strong> agents IA · Sonnet 4.6</li>
+          <li><strong>5</strong> projets Codex · Vercel</li>
+          <li><strong>50</strong> sessions Codex</li>
+          <li><strong>5 GB</strong> stockage</li>
+          <li>Publier ses agents</li>
         </ul>
       </div>
       <div class="plan-card" id="pc-cyber" onclick="setPlan('cyber')">
-        <div class="plan-ico">👑</div>
+        <div class="plan-ico">🚀</div>
         <div class="plan-name">APEX</div>
-        <div class="plan-price" style="color:var(--or);">79$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:8px;">MAXIMUM</div>
+        <div class="plan-price" style="color:var(--or);">125$/mois</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:8px;">SUR MESURE</div>
         <ul class="plan-feats">
-          <li>Chat · Agent AL</li>
-          <li>Codex · Génération code</li>
-          <li>Agents illimités</li>
-          <li>Priorité maximale</li>
-          <li>Accès anticipé nouveautés</li>
+          <li><strong>250</strong> messages / fenêtre 12h</li>
+          <li>Reset minuit + midi</li>
+          <li>Agents IA <strong>illimités</strong></li>
+          <li><strong>100</strong> messages Opus 4.8</li>
+          <li><strong>20</strong> projets Codex illimités</li>
+          <li><strong>10 GB</strong> stockage</li>
+          <li>Support prioritaire</li>
         </ul>
       </div>
     </div>
@@ -1479,7 +1485,7 @@ async function sendChat(){
   chatHistory.push({role:"user",content:txt});
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
-  td.innerHTML='<div class="cmsg-ico a">⚡</div><div><div class="cmsg-bbl a"><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
+  td.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a"><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
   try{
     const tk=getToken();
@@ -1527,7 +1533,8 @@ function addMsg(role,txt){
   var content;
   if(role==="a"){content=projHtml(txt);}
   else{content=escHtml(txt).replace(/\n/g,"<br>");}
-  d.innerHTML=`<div class="cmsg-ico ${role}">${role==="u"?"👤":"⚡"}</div><div><div class="cmsg-bbl ${role}">${content}</div><div class="cmsg-time">${t}</div></div>`;
+  var icoHtml=role==="u"?"👤":'<img src="assets/tilex-logo.png" alt="AL">';
+  d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div><div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 
