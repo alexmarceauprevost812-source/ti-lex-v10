@@ -1215,7 +1215,6 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="composer-menu-item" onclick="composeAction('micro')"><span class="cmi-ico">🎙️</span> Micro</div>
     <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
     <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
-    <div class="composer-menu-item" onclick="composeAction('clear')"><span class="cmi-ico">🗑️</span> Effacer la conversation</div>
   </div>
   <textarea class="composer-input" id="composer-input" rows="1" placeholder="Écris un message…"></textarea>
   <button class="composer-send" id="composer-send-btn" title="Envoyer">
@@ -1526,9 +1525,10 @@ async function sendChat(){
     const tk=getToken();
     const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
+    const chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
-      model:"claude-sonnet-4-6",max_tokens:4096,
+      model:chatModel,max_tokens:4096,
       system:SYSTEM_PROMPT,
       messages:chatHistory.slice(-20)
     })});
@@ -1544,6 +1544,19 @@ async function sendChat(){
     }
   }catch(e){td.remove();addMsg("a","Erreur: "+e.message);}
   chatBusy=false;
+  syncChatToStorage();
+}
+function syncChatToStorage(){
+  try{
+    var activeConv=chatConvs.find(function(c){return c.active;});
+    if(!activeConv){
+      activeConv={id:Date.now(),title:chatHistory.length>0?chatHistory[0].content.slice(0,40):"Conversation",messages:[],active:true,ts:Date.now()};
+      chatConvs.push(activeConv);
+    }
+    activeConv.messages=chatHistory.slice();
+    activeConv.ts=Date.now();
+    localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
+  }catch(e){}
 }
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
 function projHtml(txt){
@@ -1766,17 +1779,17 @@ function clearCx(){
 var ghToken="";var ghRepos=[];var ghFiles=[];var ghCurrentRepo="";var ghCurrentBranch="";var ghFilesVisible=false;
 var ghFileCache={};
 
-function getGhToken(){return localStorage.getItem("tilex-gh-token")||"";}
+function getGhToken(){return localStorage.getItem("tilex-al-github")||"";}
 function saveGhToken(){
   var val=document.getElementById("set-gh-token").value.trim();
   if(!val)return;
-  localStorage.setItem("tilex-gh-token",val);
+  localStorage.setItem("tilex-al-github",val);
   ghToken=val;
   var sv=document.getElementById("gh-token-saved");sv.style.display="block";setTimeout(function(){sv.style.display="none";},3000);
   ghUpdateBar();
 }
 function clearGhToken(){
-  localStorage.removeItem("tilex-gh-token");ghToken="";
+  localStorage.removeItem("tilex-al-github");ghToken="";
   document.getElementById("set-gh-token").value="";
   ghUpdateBar();
 }
@@ -1880,7 +1893,8 @@ async function ghLoadFiles(){
 }
 function ghToggleFiles(){
   var panel=document.getElementById("gh-files");
-  if(ghFilesVisible){panel.style.display="none";ghFilesVisible=false;}
+  if(!panel)return;
+  if(panel.style.display!=="none"&&panel.style.display!==""){panel.style.display="none";ghFilesVisible=false;}
   else{if(ghFiles.length===0)ghLoadFiles();else{panel.style.display="block";ghFilesVisible=true;}}
 }
 async function ghOpenFile(path){
@@ -2093,16 +2107,83 @@ async function studioAutoFix(file,line,errMsg){
   }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
 }
 
+/* ── SETTINGS FUNCTIONS ── */
+function saveSettingModel(){
+  var v=document.getElementById("set-model").value;
+  localStorage.setItem("tilex-al-model",v);
+}
+function saveSettingLang(){
+  var v=document.getElementById("set-lang").value;
+  localStorage.setItem("tilex-al-lang",v);
+}
+function saveSettingMemory(){
+  var v=document.getElementById("set-memory").value;
+  localStorage.setItem("tilex-al-memory",v);
+}
+function loadConvsInfo(){
+  var el=document.getElementById("set-convs-info");if(!el)return;
+  var convs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
+  var codex=JSON.parse(localStorage.getItem("tilex-codex-history")||"[]");
+  var agents=JSON.parse(localStorage.getItem("tilex-custom-agents")||"[]");
+  var totalMsgs=0;
+  for(var i=0;i<convs.length;i++){totalMsgs+=(convs[i].messages||[]).length;}
+  el.innerHTML="Conversations : "+convs.length+"<br>"+
+    "Messages totaux : "+totalMsgs+"<br>"+
+    "Sessions Codex : "+(codex.length>0?"actif":"aucune")+"<br>"+
+    "Agents personnalisés : "+agents.length;
+}
+function saveConvsToSync(){
+  try{localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));}catch(e){}
+}
+function loadCustomAgentsFromSync(){
+  try{
+    var saved=JSON.parse(localStorage.getItem("tilex-custom-agents")||"[]");
+    customAgents=saved;
+    renderAgentCards();
+  }catch(e){}
+}
+function saveCustomAgentsToSync(){
+  try{localStorage.setItem("tilex-custom-agents",JSON.stringify(customAgents));}catch(e){}
+}
+function renderAgentCards(){
+  var grid=document.getElementById("agents-grid");if(!grid)return;
+  var add=grid.querySelector(".add-card");
+  var cards=grid.querySelectorAll(".ag-card:not(.add-card)");
+  for(var i=0;i<cards.length;i++)cards[i].remove();
+  for(var i=0;i<customAgents.length;i++){
+    var a=customAgents[i];
+    var card=document.createElement("div");card.className="ag-card";
+    var ico=TYPE_ICO[a.type]||"🔧";
+    card.innerHTML='<div class="ag-top"><div class="ag-ico dark">'+ico+'</div><div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div><span style="font-size:10px;color:var(--muted);">actif</span></div></div><div class="ag-name">'+escHtml(a.name)+'</div><div class="ag-model">'+escHtml(a.model||"claude-sonnet-4-6")+'</div>';
+    if(add)grid.insertBefore(card,add);else grid.appendChild(card);
+  }
+  var mEl=document.getElementById("m-agents");
+  if(mEl)mEl.textContent=3+customAgents.length;
+}
+
 /* ── SETTINGS INIT ── */
 (function(){
   ghToken=getGhToken();
   var inp=document.getElementById("set-gh-token");
   if(inp&&ghToken)inp.value=ghToken;
   ghUpdateBar();
+  var savedModel=localStorage.getItem("tilex-al-model");
+  var modelSel=document.getElementById("set-model");
+  if(savedModel&&modelSel){for(var i=0;i<modelSel.options.length;i++){if(modelSel.options[i].value===savedModel)modelSel.selectedIndex=i;}}
+  var savedLang=localStorage.getItem("tilex-al-lang");
+  var langSel=document.getElementById("set-lang");
+  if(savedLang&&langSel){for(var i=0;i<langSel.options.length;i++){if(langSel.options[i].value===savedLang)langSel.selectedIndex=i;}}
+  var savedMemory=localStorage.getItem("tilex-al-memory");
+  var memEl=document.getElementById("set-memory");
+  if(savedMemory&&memEl)memEl.value=savedMemory;
+  loadConvsInfo();
 })();
 
+/* ── CONVERSATION SYNC ── */
+let chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
+
 /* ── MODAL AGENTS ── */
-let selTypeVal="chat";let customAgents=[];
+let selTypeVal="chat";let customAgents=JSON.parse(localStorage.getItem("tilex-custom-agents")||"[]");
 const TYPE_ICO={chat:"💬",code:"⌨️",analyse:"📊",doc:"📄",custom:"🔧"};
 function openModal(){document.getElementById("modal").style.display="flex";document.getElementById("a-name").focus();}
 function closeModal(){document.getElementById("modal").style.display="none";}
@@ -2112,6 +2193,7 @@ function createAgent(){
   const model=document.getElementById("a-model").value;
   if(!name){const i=document.getElementById("a-name");i.style.borderColor="var(--red)";setTimeout(()=>i.style.borderColor="var(--border)",1400);return;}
   customAgents.push({name,type:selTypeVal,model});
+  saveCustomAgentsToSync();
   const grid=document.getElementById("agents-grid");
   const add=grid.querySelector(".add-card");
   const card=document.createElement("div");card.className="ag-card";card.style.animation="fadeUp .38s ease both";
@@ -2131,6 +2213,7 @@ function createAgent(){
 document.getElementById("modal").addEventListener("click",e=>{if(e.target===document.getElementById("modal"))closeModal();});
 document.getElementById("plan-sel").addEventListener("click",e=>{if(e.target===document.getElementById("plan-sel"))closePlanSel();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeModal();closePlanSel();closeComposerMenu();}});
+if(customAgents.length>0)renderAgentCards();
 
 /* ── STUDIO — DÉPLOIEMENT ── */
 function refreshDeploy(){
