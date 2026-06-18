@@ -2,7 +2,7 @@
    ti-lex-AL v10 — app.js
    ============================================================ */
 
-const MODEL_DEFAULT = "claude-opus-4-8";
+const MODEL_DEFAULT = "claude-sonnet-4-6";
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -1795,8 +1795,8 @@ $("#themeToggle").onclick = function () {
 };
 
 function isOpusAllowed() {
-  const plan = (localStorage.getItem("tilex-plan") || "surge").toLowerCase();
-  return plan === "apex";
+  const plan = (localStorage.getItem("tilex-plan") || "flux").toLowerCase();
+  return plan === "apex" || plan.startsWith("cyber");
 }
 
 function enforceModelRestrictions() {
@@ -1806,7 +1806,7 @@ function enforceModelRestrictions() {
   if (!opusOpt) return;
   if (!isOpusAllowed()) {
     opusOpt.disabled = true;
-    opusOpt.textContent = "Opus 4.8 — APEX requis 🔒";
+    opusOpt.textContent = "Opus 4.8 — Apex / Cyber requis 🔒";
     if (state.model.includes("opus")) {
       state.model = "claude-sonnet-4-6";
       sel.value = state.model;

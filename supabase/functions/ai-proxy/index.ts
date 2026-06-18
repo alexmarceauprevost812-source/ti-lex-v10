@@ -106,7 +106,29 @@ Deno.serve(async (req) => {
     }
 
     // ===================== CHAT =====================
-    const model = ALLOWED_MODELS.has(body.model) ? body.model : "claude-opus-4-8";
+    const OPUS_PLANS = new Set(["apex", "cyber_guardian", "cyber_shield", "cyber_sentinel", "cyber_fortress"]);
+    const DEFAULT_FALLBACK = "claude-sonnet-4-6";
+    let requestedModel = ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_FALLBACK;
+
+    if (requestedModel === "claude-opus-4-8" || requestedModel === "claude-opus-4-7") {
+      let userPlan = "flux";
+      if (userId !== "anonymous") {
+        try {
+          const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+          const { data: profile } = await sb
+            .from("profiles")
+            .select("plan")
+            .eq("id", userId)
+            .maybeSingle();
+          if (profile?.plan) userPlan = profile.plan;
+        } catch (_) {}
+      }
+      if (!OPUS_PLANS.has(userPlan)) {
+        requestedModel = DEFAULT_FALLBACK;
+      }
+    }
+
+    const model = requestedModel;
 
     if (!Array.isArray(body.messages) || body.messages.length === 0)
       return json({ error: "messages requis" }, 400);

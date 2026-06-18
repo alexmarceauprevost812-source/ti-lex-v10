@@ -284,6 +284,13 @@ body{background:#000;color:var(--txt);font-family:'Rajdhani',sans-serif;min-heig
 [data-plan="flux"] .plan-cyber-only{display:none!important;}
 [data-plan="flux"] .plan-pro-only{display:none!important;}
 [data-plan="surge"] .plan-cyber-only{display:none!important;}
+/* Opus 4.8 : Apex + cyber uniquement */
+.plan-opus-only{display:none!important;}
+html[data-plan="apex"] .plan-opus-only{display:flex!important;}
+html[data-plan="cyber_guardian"] .plan-opus-only{display:flex!important;}
+html[data-plan="cyber_shield"] .plan-opus-only{display:flex!important;}
+html[data-plan="cyber_sentinel"] .plan-opus-only{display:flex!important;}
+html[data-plan="cyber_fortress"] .plan-opus-only{display:flex!important;}
 /* Tous les plans ont chat + codex */
 
 /* Lock overlay pour feature verrouillée */
@@ -1437,10 +1444,11 @@ Comment puis-je t'aider aujourd'hui?</div>
           <div class="settings-label">MODÈLE PAR DÉFAUT</div>
           <select class="settings-input" id="set-model" style="cursor:pointer;" onchange="saveSettingModel()">
             <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-            <option value="claude-opus-4-8">Claude Opus 4.8</option>
+            <option value="claude-opus-4-8" id="opt-opus">Claude Opus 4.8</option>
             <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
           </select>
           <div class="settings-hint">Le modèle utilisé pour le chat et le Codex.</div>
+          <div class="opus-lock-notice" id="opus-lock-notice" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,106,0,.06);border:1px solid rgba(255,106,0,.2);border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--orange);">🔒 Claude Opus 4.8 requiert le forfait <strong>Apex</strong> ou un forfait <strong>Cybersécurité</strong>. <span style="cursor:pointer;text-decoration:underline;" onclick="openPlanSel()">Changer de forfait</span></div>
         </div>
       </div>
     </div>
@@ -1547,7 +1555,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     </div>
     <label class="flbl">MODÈLE IA</label>
     <select class="fselect" id="a-model">
-      <option value="claude-opus-4-8">claude-opus-4-8 (Haute performance)</option>
+      <option value="claude-opus-4-8" id="opt-opus-agent">claude-opus-4-8 (Apex / Cyber)</option>
       <option value="claude-sonnet-4-6" selected>claude-sonnet-4-6 (Recommandé)</option>
       <option value="claude-haiku-4-5">claude-haiku-4-5 (Rapide)</option>
     </select>
@@ -1752,6 +1760,7 @@ function setPlan(plan){
   document.querySelectorAll(".plan-card").forEach(function(c){c.classList.remove("selected");});
   var pc=document.getElementById("pc-"+plan);if(pc)pc.classList.add("selected");
   renderUsage();
+  if(typeof enforceModelGating==="function")enforceModelGating();
 }
 function openPlanSel(){document.getElementById("plan-sel").style.display="flex";}
 function closePlanSel(){document.getElementById("plan-sel").style.display="none";}
@@ -1859,7 +1868,8 @@ async function sendChat(){
     const tk=getToken();
     const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
-    const chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
+    var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
+    if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-4-6";
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
@@ -2790,8 +2800,35 @@ async function studioAutoFix(file,line,errMsg){
 }
 
 /* ── SETTINGS FUNCTIONS ── */
+function canUseOpus(){
+  var p=getPlan();
+  return p==="apex"||p.indexOf("cyber")===0;
+}
+function enforceModelGating(){
+  var allowed=canUseOpus();
+  var opt=document.getElementById("opt-opus");
+  var notice=document.getElementById("opus-lock-notice");
+  var sel=document.getElementById("set-model");
+  if(opt){
+    opt.disabled=!allowed;
+    opt.textContent=allowed?"Claude Opus 4.8":"Claude Opus 4.8 🔒 Apex / Cyber";
+  }
+  if(notice)notice.style.display=allowed?"none":"block";
+  if(!allowed&&sel&&sel.value==="claude-opus-4-8"){
+    sel.value="claude-sonnet-4-6";localStorage.setItem("tilex-al-model","claude-sonnet-4-6");
+  }
+  var optA=document.getElementById("opt-opus-agent");
+  if(optA){
+    optA.disabled=!allowed;
+    optA.textContent=allowed?"claude-opus-4-8 (Haute performance)":"claude-opus-4-8 🔒 Apex / Cyber";
+  }
+}
 function saveSettingModel(){
   var v=document.getElementById("set-model").value;
+  if(v==="claude-opus-4-8"&&!canUseOpus()){
+    v="claude-sonnet-4-6";document.getElementById("set-model").value=v;
+    enforceModelGating();return;
+  }
   localStorage.setItem("tilex-al-model",v);
 }
 function saveSettingLang(){
@@ -2883,6 +2920,7 @@ function renderAgentCards(){
   var savedModel=localStorage.getItem("tilex-al-model");
   var modelSel=document.getElementById("set-model");
   if(savedModel&&modelSel){for(var i=0;i<modelSel.options.length;i++){if(modelSel.options[i].value===savedModel)modelSel.selectedIndex=i;}}
+  enforceModelGating();
   var savedLang=localStorage.getItem("tilex-al-lang");
   var langSel=document.getElementById("set-lang");
   if(savedLang&&langSel){for(var i=0;i<langSel.options.length;i++){if(langSel.options[i].value===savedLang)langSel.selectedIndex=i;}}
