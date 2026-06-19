@@ -3,6 +3,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/forfaits", "destination": "/forfaits.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/app", "destination": "/pro.html" }
   ],
