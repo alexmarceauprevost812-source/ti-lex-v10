@@ -4,39 +4,62 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
 };
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS });
   }
 
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } },
+  );
+
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser(token!);
+  if (authError || !user) return json({ error: "Non authentifié" }, 401);
+
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
-    );
+    // DELETE = disconnect (clear Vault + metadata)
+    if (req.method === "DELETE") {
+      await supabase.rpc("delete_github_pat", { p_user_id: user.id });
 
-    const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token!);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Non authentifié" }), {
-        status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
+      await supabase
+        .from("user_connections")
+        .update({
+          github_connected: false,
+          github_username: null,
+          github_pat: null,
+          github_avatar_url: null,
+          github_connected_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id);
+
+      await supabase
+        .from("profiles")
+        .update({ github_username: null, github_pat: null })
+        .eq("id", user.id);
+
+      return json({ ok: true });
     }
 
+    // POST = validate PAT + store in Vault
     const { pat } = await req.json();
-    if (!pat) {
-      return new Response(JSON.stringify({ error: "PAT manquant" }), {
-        status: 400,
-        headers: { ...CORS, "Content-Type": "application/json" },
-      });
-    }
+    if (!pat) return json({ error: "PAT manquant" }, 400);
 
     const githubRes = await fetch("https://api.github.com/user", {
       headers: {
@@ -47,44 +70,57 @@ Deno.serve(async (req) => {
     });
 
     if (!githubRes.ok) {
-      return new Response(
-        JSON.stringify({ valide: false, error: "PAT GitHub invalide ou expiré" }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
-      );
+      return json({
+        valide: false,
+        error: "PAT GitHub invalide ou expiré",
+      });
     }
 
     const githubUser = await githubRes.json();
 
-    const { error: dbError } = await supabase
+    // Store PAT in Vault (encrypted at rest)
+    const { error: vaultErr } = await supabase.rpc("store_github_pat", {
+      p_user_id: user.id,
+      p_pat: pat,
+    });
+
+    if (vaultErr) {
+      console.error("Vault store error:", vaultErr);
+      return json({ error: "Erreur stockage sécurisé" }, 500);
+    }
+
+    // Store metadata (no PAT) in user_connections
+    await supabase
       .from("user_connections")
       .upsert(
         {
           user_id: user.id,
           github_connected: true,
           github_username: githubUser.login,
-          github_pat: pat,
+          github_pat: null,
           github_avatar_url: githubUser.avatar_url,
           github_connected_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "user_id" }
+        { onConflict: "user_id" },
       );
 
-    if (dbError) throw dbError;
+    // Keep profiles username in sync
+    await supabase
+      .from("profiles")
+      .update({
+        github_username: githubUser.login,
+        github_pat: null,
+      })
+      .eq("id", user.id);
 
-    return new Response(
-      JSON.stringify({
-        valide: true,
-        username: githubUser.login,
-        avatar_url: githubUser.avatar_url,
-        nom: githubUser.name,
-      }),
-      { headers: { ...CORS, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
+    return json({
+      valide: true,
+      username: githubUser.login,
+      avatar_url: githubUser.avatar_url,
+      nom: githubUser.name,
     });
+  } catch (err) {
+    return json({ error: (err as Error).message }, 500);
   }
 });
