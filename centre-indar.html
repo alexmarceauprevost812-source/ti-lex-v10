@@ -1007,7 +1007,7 @@ async function lancerScanReel() {
     var tk = getToken();
     var res = await fetch(SB_URL + "/functions/v1/scan-engine", {
       method: "POST",
-      headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" },
+      headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json", "apikey": SB_ANON },
       body: JSON.stringify({ target: target, scan_type: scanType })
     });
     clearInterval(logInterval);

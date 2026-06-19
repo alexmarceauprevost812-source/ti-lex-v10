@@ -2716,7 +2716,7 @@ async function sendChat(){
   setTimeout(function(){var dots=td.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
     const tk=getToken();
-    const h={"Content-Type":"application/json"};
+    const h={"Content-Type":"application/json","apikey":SB_ANON};
     if(tk)h["Authorization"]="Bearer "+tk;
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
     if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-4-6";
@@ -3416,7 +3416,7 @@ function initGithubSettings(){
     if(connectBtn){connectBtn.disabled=true;connectBtn.textContent="VÉRIFICATION...";}
     try{
       var tk=getToken();
-      var res=await fetch(SB_URL+"/functions/v1/validate-github",{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify({pat:pat})});
+      var res=await fetch(SB_URL+"/functions/v1/validate-github",{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json","apikey":SB_ANON},body:JSON.stringify({pat:pat})});
       var data=await res.json();
       if(!res.ok||!data.valide){
         showFeedback(data.error||"Token invalide. Génère un nouveau token avec les scopes repo + workflow.","error");
@@ -3437,7 +3437,7 @@ function initGithubSettings(){
   async function disconnectGithub(){
     try{
       var tk=getToken();
-      await fetch(SB_URL+"/functions/v1/validate-github",{method:"DELETE",headers:{"Authorization":"Bearer "+tk}});
+      await fetch(SB_URL+"/functions/v1/validate-github",{method:"DELETE",headers:{"Authorization":"Bearer "+tk,"apikey":SB_ANON}});
       patIn.value="";
       setConnectedState(false);
       window._githubSession=null;
@@ -3568,7 +3568,7 @@ async function ucDisconnectGitHub(){
   if(!confirm("Déconnecter GitHub?"))return;
   try{
     var tk=getToken();
-    await fetch(SB_URL+"/functions/v1/validate-github",{method:"DELETE",headers:{"Authorization":"Bearer "+tk}});
+    await fetch(SB_URL+"/functions/v1/validate-github",{method:"DELETE",headers:{"Authorization":"Bearer "+tk,"apikey":SB_ANON}});
     window._githubSession=null;window._codexGithub=null;ghConnected=false;
     ucSetGitHubConnected(false);
     ucFeedback("uc-gh-feedback","GitHub déconnecté.","ok");
@@ -3837,7 +3837,7 @@ async function genCode(){
 
   try{
     var tk=getToken();
-    var h={"Content-Type":"application/json"};
+    var h={"Content-Type":"application/json","apikey":SB_ANON};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
@@ -3976,7 +3976,7 @@ function cxStartCoding(){
   (async function(){
     try{
       var tk=getToken();
-      var h={"Content-Type":"application/json"};
+      var h={"Content-Type":"application/json","apikey":SB_ANON};
       if(tk)h["Authorization"]="Bearer "+tk;
       var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,messages:codexHistory.slice(-10)})});
       cxRemoveTyping();
@@ -4001,7 +4001,7 @@ var GH_PROXY=SB_URL+"/functions/v1/github-proxy";
 
 async function ghProxyFetch(body){
   var tk=getToken();
-  var r=await fetch(GH_PROXY,{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  var r=await fetch(GH_PROXY,{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json","apikey":SB_ANON},body:JSON.stringify(body)});
   if(!r.ok){var e;try{e=await r.json();}catch(x){e={};}throw new Error(e.error||"Erreur GitHub ("+r.status+")");}
   return r.json();
 }
@@ -4471,7 +4471,7 @@ async function studioAutoFix(file,line,errMsg){
   codexHistory.push({role:"user",content:"Fichier: "+file+"\nErreur ligne "+line+": "+errMsg+"\n\nCode actuel:\n```\n"+content+"\n```\n\nCorrige cette erreur."});
   try{
     var tk=getToken();
-    var h={"Content-Type":"application/json"};
+    var h={"Content-Type":"application/json","apikey":SB_ANON};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
@@ -5621,7 +5621,7 @@ async function studioAIScan(){
     "Pour chaque problème retourne un JSON: {\"errors\":[{\"file\":\"chemin.ext\",\"line\":42,\"severity\":\"critical|error|warning|info\",\"type\":\"Type\",\"message\":\"Description\"}]} "+
     "critical=faille de sécurité/crash, error=bug certain, warning=problème potentiel, info=amélioration. Réponds UNIQUEMENT avec le JSON.";
   try{
-    var tk=getToken();var h={"Content-Type":"application/json"};
+    var tk=getToken();var h={"Content-Type":"application/json","apikey":SB_ANON};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
