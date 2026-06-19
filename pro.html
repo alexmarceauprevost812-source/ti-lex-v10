@@ -2716,7 +2716,7 @@ async function sendChat(){
   setTimeout(function(){var dots=td.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
     const tk=getToken();
-    const h={"Content-Type":"application/json","apikey":SB_ANON};
+    const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
     if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-4-6";
@@ -3837,7 +3837,7 @@ async function genCode(){
 
   try{
     var tk=getToken();
-    var h={"Content-Type":"application/json","apikey":SB_ANON};
+    var h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
@@ -3976,7 +3976,7 @@ function cxStartCoding(){
   (async function(){
     try{
       var tk=getToken();
-      var h={"Content-Type":"application/json","apikey":SB_ANON};
+      var h={"Content-Type":"application/json"};
       if(tk)h["Authorization"]="Bearer "+tk;
       var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,messages:codexHistory.slice(-10)})});
       cxRemoveTyping();
@@ -4471,7 +4471,7 @@ async function studioAutoFix(file,line,errMsg){
   codexHistory.push({role:"user",content:"Fichier: "+file+"\nErreur ligne "+line+": "+errMsg+"\n\nCode actuel:\n```\n"+content+"\n```\n\nCorrige cette erreur."});
   try{
     var tk=getToken();
-    var h={"Content-Type":"application/json","apikey":SB_ANON};
+    var h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
@@ -5621,7 +5621,7 @@ async function studioAIScan(){
     "Pour chaque problème retourne un JSON: {\"errors\":[{\"file\":\"chemin.ext\",\"line\":42,\"severity\":\"critical|error|warning|info\",\"type\":\"Type\",\"message\":\"Description\"}]} "+
     "critical=faille de sécurité/crash, error=bug certain, warning=problème potentiel, info=amélioration. Réponds UNIQUEMENT avec le JSON.";
   try{
-    var tk=getToken();var h={"Content-Type":"application/json","apikey":SB_ANON};
+    var tk=getToken();var h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
