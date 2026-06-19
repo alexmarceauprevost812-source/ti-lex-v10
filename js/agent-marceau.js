@@ -644,5 +644,9 @@
     if (!view) return;
     view.innerHTML = getMarceauHTML();
     initMarceauAgent();
+    setTimeout(function () {
+      var input = document.getElementById("marceau-input");
+      if (input) input.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
   };
 })();
