@@ -2819,14 +2819,14 @@ function _ghGetUserId(){
 }
 
 function initGithubSettings(){
-  var badge=document.getElementById("gh-pat-badge");
-  var usernameIn=document.getElementById("gh-pat-username");
-  var patIn=document.getElementById("gh-pat-input");
-  var connectBtn=document.getElementById("gh-pat-connect-btn");
-  var disconnectBtn=document.getElementById("gh-pat-disconnect-btn");
-  var toggleBtn=document.getElementById("gh-pat-toggle");
-  var feedback=document.getElementById("gh-pat-feedback");
-  if(!usernameIn||!patIn)return;
+  var badge=document.getElementById("github-status-badge");
+  var usernameIn=document.getElementById("github-username-input");
+  var patIn=document.getElementById("github-pat-input");
+  var connectBtn=document.getElementById("github-save-btn");
+  var disconnectBtn=document.getElementById("github-disconnect-btn");
+  var toggleBtn=document.getElementById("github-pat-toggle");
+  var feedback=document.getElementById("github-feedback");
+  if(!patIn){console.warn("[GitHub] Éléments du formulaire GitHub introuvables.");return;}
 
   function showFeedback(msg,type){
     if(!feedback)return;
@@ -2836,43 +2836,92 @@ function initGithubSettings(){
   }
 
   function setConnectedState(connected,username){
-    if(badge){badge.textContent=connected?"Connecté":"Non connecté";badge.className="github-status-badge"+(connected?" connected":"");}
+    if(badge){badge.textContent=connected?"CONNECTÉ":"NON CONNECTÉ";badge.className="github-status-badge"+(connected?" connected":"");}
     if(disconnectBtn)disconnectBtn.style.display=connected?"inline-flex":"none";
-    if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER";
+    if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER GITHUB";
   }
 
   async function loadGithubData(){
-    var uid=_ghGetUserId();if(!uid)return;
     try{
-      var data=await sbRest("/profiles?id=eq."+uid+"&select=github_username,github_pat");
-      if(data&&data[0]){
-        usernameIn.value=data[0].github_username||"";
-        patIn.value=data[0].github_pat||"";
-        setConnectedState(!!(data[0].github_username&&data[0].github_pat),data[0].github_username);
+      var authRes=await supabase.auth.getUser();
+      if(authRes.error||!authRes.data.user)return;
+      var uid=authRes.data.user.id;
+      var profRes=await supabase.from("profiles").select("github_username,github_pat").eq("id",uid).single();
+      console.log("[GitHub] Données chargées depuis profiles:",profRes.data,profRes.error);
+      if(!profRes.error&&profRes.data&&profRes.data.github_pat&&profRes.data.github_username){
+        if(usernameIn)usernameIn.value=profRes.data.github_username;
+        patIn.value=profRes.data.github_pat;
+        setConnectedState(true,profRes.data.github_username);
+      }else{
+        if(usernameIn)usernameIn.value="";
+        patIn.value="";
+        setConnectedState(false);
       }
-    }catch(e){showFeedback("Erreur chargement: "+e.message,"error");}
+    }catch(e){console.error("[GitHub] Erreur loadGithubData:",e);}
   }
 
   async function saveGithubData(){
-    var uid=_ghGetUserId();if(!uid){showFeedback("Non authentifié.","error");return;}
-    var username=usernameIn.value.trim();
+    console.log("[GitHub] saveGithubData() appelé");
     var pat=patIn.value.trim();
-    if(!username||!pat){showFeedback("Nom d'utilisateur et token requis.","error");return;}
-    connectBtn.textContent="CONNEXION…";connectBtn.disabled=true;
+    console.log("[GitHub] PAT longueur:",pat.length,"| commence par:",pat.substring(0,6));
+    if(!pat){showFeedback("Entre ton Personal Access Token GitHub.","error");return;}
+    if(connectBtn){connectBtn.disabled=true;connectBtn.textContent="VÉRIFICATION...";}
     try{
-      await sbRest("/profiles?id=eq."+uid,{method:"PATCH",prefer:"return=minimal",body:{github_username:username,github_pat:pat}});
-      setConnectedState(true,username);
-      showFeedback("GitHub connecté avec succès!","success");
-    }catch(e){showFeedback("Erreur: "+e.message,"error");}
-    connectBtn.disabled=false;
+      console.log("[GitHub] Appel api.github.com/user...");
+      var ghRes;
+      try{
+        ghRes=await fetch("https://api.github.com/user",{headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-app"}});
+      }catch(fetchErr){
+        console.error("[GitHub] fetch échoué:",fetchErr);
+        showFeedback("Impossible de joindre GitHub: "+fetchErr.message,"error");
+        return;
+      }
+      console.log("[GitHub] Status HTTP:",ghRes.status);
+      if(!ghRes.ok){
+        var errBody=await ghRes.text();
+        console.error("[GitHub] Réponse erreur:",errBody);
+        showFeedback("Token invalide ("+ghRes.status+"). Génère un nouveau token avec les scopes repo + workflow.","error");
+        return;
+      }
+      var ghUser=await ghRes.json();
+      console.log("[GitHub] Utilisateur GitHub:",ghUser.login,"| ID:",ghUser.id);
+
+      var authRes=await supabase.auth.getUser();
+      console.log("[GitHub] Supabase user:",authRes.data&&authRes.data.user&&authRes.data.user.id,authRes.error);
+      if(authRes.error||!authRes.data.user){showFeedback("Non authentifié dans ti-lex. Reconnecte-toi.","error");return;}
+      var userId=authRes.data.user.id;
+
+      console.log("[GitHub] Sauvegarde dans profiles pour userId:",userId);
+      var upRes=await supabase.from("profiles").upsert({id:userId,github_username:ghUser.login,github_pat:pat},{onConflict:"id"});
+      console.log("[GitHub] Résultat upsert:",upRes.data,upRes.error);
+      if(upRes.error){
+        console.error("[GitHub] Erreur upsert:",upRes.error);
+        showFeedback("Erreur base de données: "+upRes.error.message,"error");
+        return;
+      }
+
+      if(usernameIn)usernameIn.value=ghUser.login;
+      setConnectedState(true,ghUser.login);
+      showFeedback("@"+ghUser.login+" connecté avec succès!","success");
+      window._githubSession={token:pat,username:ghUser.login,avatar:ghUser.avatar_url,name:ghUser.name||ghUser.login};
+      console.log("[GitHub] Connexion réussie pour @"+ghUser.login);
+    }catch(err){
+      console.error("[GitHub] Exception non gérée:",err);
+      showFeedback("Erreur inattendue: "+err.message,"error");
+    }finally{
+      if(connectBtn){connectBtn.disabled=false;connectBtn.textContent="CONNECTER GITHUB";}
+    }
   }
 
   async function disconnectGithub(){
-    var uid=_ghGetUserId();if(!uid)return;
     try{
-      await sbRest("/profiles?id=eq."+uid,{method:"PATCH",prefer:"return=minimal",body:{github_username:null,github_pat:null}});
-      usernameIn.value="";patIn.value="";
+      var authRes=await supabase.auth.getUser();
+      if(authRes.error||!authRes.data.user)return;
+      var uid=authRes.data.user.id;
+      await supabase.from("profiles").update({github_username:null,github_pat:null}).eq("id",uid);
+      if(usernameIn)usernameIn.value="";patIn.value="";
       setConnectedState(false);
+      window._githubSession=null;
       showFeedback("GitHub déconnecté.","success");
     }catch(e){showFeedback("Erreur: "+e.message,"error");}
   }
@@ -2889,10 +2938,12 @@ function initGithubSettings(){
 }
 
 async function getGithubToken(){
-  var uid=_ghGetUserId();if(!uid)return null;
+  if(window._githubSession&&window._githubSession.token)return window._githubSession.token;
   try{
-    var data=await sbRest("/profiles?id=eq."+uid+"&select=github_pat");
-    if(data&&data[0]&&data[0].github_pat)return data[0].github_pat;
+    var authRes=await supabase.auth.getUser();
+    if(authRes.error||!authRes.data.user)return null;
+    var profRes=await supabase.from("profiles").select("github_pat").eq("id",authRes.data.user.id).single();
+    if(!profRes.error&&profRes.data&&profRes.data.github_pat)return profRes.data.github_pat;
   }catch(e){console.error("getGithubToken error:",e);}
   return null;
 }
@@ -3269,8 +3320,11 @@ async function ghGetPat(){
 }
 
 async function ghApiFetch(path,opts){
-  var token=await ghGetPat();
-  var r=await fetch("https://api.github.com"+path,Object.assign({},{headers:{"Authorization":"token "+token,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex","Content-Type":"application/json"}},opts||{}));
+  var pat=await ghGetPat();
+  var baseHeaders={"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-codex"};
+  var fetchOpts=Object.assign({},opts||{});
+  fetchOpts.headers=Object.assign({},baseHeaders,fetchOpts.headers||{});
+  var r=await fetch("https://api.github.com"+path,fetchOpts);
   if(!r.ok){var e;try{e=await r.json();}catch(x){e={};}throw new Error(e.message||"Erreur GitHub ("+r.status+")");}
   return r.json();
 }
@@ -3354,7 +3408,7 @@ async function ghConnect(){
   if(connectBtn)connectBtn.disabled=true;
   try{
     var pat=await ghGetPat();
-    var ghUser=await fetch("https://api.github.com/user",{headers:{"Authorization":"token "+pat,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex"}});
+    var ghUser=await fetch("https://api.github.com/user",{headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-codex"}});
     if(!ghUser.ok){var errD=await ghUser.json().catch(function(){return{};});throw new Error("Token GitHub invalide ("+ghUser.status+"): "+(errD.message||"Unauthorized"));}
     var userData=await ghUser.json();
     window._githubSession={token:pat,username:userData.login,avatar:userData.avatar_url,name:userData.name||userData.login};
@@ -3847,7 +3901,7 @@ function renderAgentCards(){
       if(!sess.data.session)return;
       var pat=await ghGetPat();
       if(!pat)return;
-      var r=await fetch("https://api.github.com/user",{headers:{"Authorization":"token "+pat,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex"}});
+      var r=await fetch("https://api.github.com/user",{headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-codex"}});
       if(!r.ok)return;
       var u=await r.json();
       window._githubSession={token:pat,username:u.login,avatar:u.avatar_url,name:u.name||u.login};
