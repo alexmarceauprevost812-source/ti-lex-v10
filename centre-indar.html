@@ -828,21 +828,20 @@ async function lancerScan() {
   var rapport = null;
   try {
     var token = getToken();
-    var res = await fetch(AI_PROXY, {
+    var res = await fetch(SB_URL + "/functions/v1/scan-engine", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": SB_ANON },
-      body: JSON.stringify({
-        kind: "chat",
-        model: "claude-sonnet-4-6",
-        max_tokens: 900,
-        system: "Tu es PHANTOM-RED, pentester IA en mode SIMULATION EDUCATIVE.\nTu ne touches AUCUN systeme reel — tout est fictif et pedagogique.\nREPONDS UNIQUEMENT EN JSON, aucun backtick.\nFormat : { \"score\":0-100, \"niveau\":\"FAIBLE|MOYEN|ELEVE|CRITIQUE\", \"breche\":true|false, \"vulnerabilites\":[\"v1\",\"v2\",\"v3\"], \"recommandations\":[\"r1\",\"r2\",\"r3\"] }",
-        messages: [{ role: "user", content: "Rapport de pentest SIMULE et fictif pour la plateforme \"" + pentCible + "\". 3 vulnerabilites plausibles + 3 recommandations. breche=true si score < 55." }]
-      })
+      body: JSON.stringify({ target: pentCible, scan_type: "osint" })
     });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    var txt = await readSSE(res);
-    txt = txt.replace(/```json|```/g, "").trim();
-    rapport = JSON.parse(txt);
+    var data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || "Erreur scan");
+    rapport = {
+      score: data.risk_score || 0,
+      niveau: (data.risk_level || "FAIBLE").replace("ÉLEVÉ","ELEVE"),
+      breche: (data.risk_score || 0) < 55,
+      vulnerabilites: (data.findings || []).map(function(f){ return f.title + " — " + (f.severity || ""); }),
+      recommandations: data.recommendations || []
+    };
   } catch(e) {
     console.log("[INDAR] AI fallback for pentest:", e.message || e);
     var score = 40 + Math.floor(Math.random() * 55);
