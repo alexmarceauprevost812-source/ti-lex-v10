@@ -3251,17 +3251,62 @@ function cxStartCoding(){
   })();
 }
 
-/* ── GITHUB INTEGRATION (via Edge Function github-proxy) ── */
-var GH_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/github-proxy";
+/* ── GITHUB INTEGRATION (direct API via PAT from profiles) ── */
 var VERCEL_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/vercel-proxy";
 var ghFiles=[];var ghCurrentBranch="main";var ghFilesVisible=false;
 var ghFileCache={};var ghConnected=false;
+var ghRepo="alexmarceauprevost812-source/ti-lex-v10";
+
+window._githubSession=null;
+
+async function ghGetPat(){
+  if(window._githubSession&&window._githubSession.token)return window._githubSession.token;
+  var s=await supabase.auth.getUser();
+  if(s.error||!s.data.user)throw new Error("Non authentifié. Connecte-toi à ti-lex d'abord.");
+  var p=await supabase.from("profiles").select("github_pat,github_username").eq("id",s.data.user.id).single();
+  if(p.error||!p.data||!p.data.github_pat)throw new Error("Aucun token GitHub trouvé. Va dans ⚙ Paramètres → GITHUB pour connecter ton compte.");
+  return p.data.github_pat;
+}
+
+async function ghApiFetch(path,opts){
+  var token=await ghGetPat();
+  var r=await fetch("https://api.github.com"+path,Object.assign({},{headers:{"Authorization":"token "+token,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex","Content-Type":"application/json"}},opts||{}));
+  if(!r.ok){var e;try{e=await r.json();}catch(x){e={};}throw new Error(e.message||"Erreur GitHub ("+r.status+")");}
+  return r.json();
+}
 
 async function ghProxyCall(body){
-  var tk=getToken();
-  var r=await fetch(GH_PROXY,{method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"},body:JSON.stringify(body)});
-  if(!r.ok){var e;try{e=await r.json();}catch(x){e={error:r.statusText};}throw new Error(e.error||"Erreur GitHub");}
-  return r.json();
+  var action=body.action;
+  var branch=body.branch||"main";
+  switch(action){
+    case "listBranches":{
+      var data=await ghApiFetch("/repos/"+ghRepo+"/branches?per_page=30");
+      return{branches:data.map(function(b){return b.name;})};
+    }
+    case "listFiles":{
+      var data=await ghApiFetch("/repos/"+ghRepo+"/git/trees/"+encodeURIComponent(branch)+"?recursive=1");
+      var blobs=(data.tree||[]).filter(function(f){return f.type==="blob";});
+      return{tree:blobs,truncated:data.truncated};
+    }
+    case "readFile":{
+      if(!body.path)throw new Error("path requis");
+      var data=await ghApiFetch("/repos/"+ghRepo+"/contents/"+encodeURIComponent(body.path)+"?ref="+encodeURIComponent(branch));
+      return{content:data.content,sha:data.sha,size:data.size};
+    }
+    case "listCommits":{
+      var lim=Math.min(body.limit||10,30);
+      var data=await ghApiFetch("/repos/"+ghRepo+"/commits?sha="+encodeURIComponent(branch)+"&per_page="+lim);
+      return{commits:data.map(function(c){return{sha:(c.sha||"").slice(0,7),message:(c.commit&&c.commit.message||"").split("\n")[0],author:c.commit&&c.commit.author&&c.commit.author.name,date:c.commit&&c.commit.author&&c.commit.author.date};})};
+    }
+    case "pushFile":{
+      if(!body.path||!body.content)throw new Error("path + content requis");
+      var payload={message:body.message||"[ti-lex-AL] update "+body.path,content:body.content,branch:branch};
+      if(body.sha)payload.sha=body.sha;
+      var data=await ghApiFetch("/repos/"+ghRepo+"/contents/"+encodeURIComponent(body.path),{method:"PUT",body:JSON.stringify(payload)});
+      return{success:true,sha:data.content&&data.content.sha,commit:data.commit&&data.commit.sha&&data.commit.sha.slice(0,7)};
+    }
+    default:throw new Error("Action inconnue: "+action);
+  }
 }
 async function vercelCall(body){
   var tk=getToken();
@@ -3280,9 +3325,11 @@ function ghUpdateBar(){
   var repoSel=document.getElementById("gh-repo");
   if(ghConnected){
     dot.className="gh-status on";
-    label.textContent="GITHUB CONNECTÉ";
+    var uname=window._githubSession&&window._githubSession.username;
+    label.textContent=uname?"@"+uname+" · CONNECTÉ":"GITHUB CONNECTÉ";
     connectBtn.textContent="✓ CONNECTÉ";
-    connectBtn.onclick=function(){};
+    connectBtn.disabled=false;
+    connectBtn.onclick=function(){ghLoadFiles();};
     if(repoSel)repoSel.style.display="none";
     branchSel.style.display="";
     browseBtn.style.display="";
@@ -3291,6 +3338,7 @@ function ghUpdateBar(){
     dot.className="gh-status off";
     label.textContent="GITHUB";
     connectBtn.textContent="CONNECTER LE PROJET";
+    connectBtn.disabled=false;
     connectBtn.onclick=function(){ghConnect();};
     if(repoSel)repoSel.style.display="none";
     branchSel.style.display="none";
@@ -3301,8 +3349,15 @@ function ghUpdateBar(){
 async function ghConnect(){
   var dot=document.getElementById("gh-dot");
   var label=document.getElementById("gh-conn-label");
+  var connectBtn=document.getElementById("gh-connect-btn");
   label.textContent="CONNEXION…";
+  if(connectBtn)connectBtn.disabled=true;
   try{
+    var pat=await ghGetPat();
+    var ghUser=await fetch("https://api.github.com/user",{headers:{"Authorization":"token "+pat,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex"}});
+    if(!ghUser.ok){var errD=await ghUser.json().catch(function(){return{};});throw new Error("Token GitHub invalide ("+ghUser.status+"): "+(errD.message||"Unauthorized"));}
+    var userData=await ghUser.json();
+    window._githubSession={token:pat,username:userData.login,avatar:userData.avatar_url,name:userData.name||userData.login};
     var data=await ghProxyCall({action:"listBranches"});
     ghConnected=true;
     var sel=document.getElementById("gh-branch");
@@ -3315,9 +3370,14 @@ async function ghConnect(){
     }
     ghCurrentBranch=sel.value||"main";
     ghUpdateBar();
+    cxAddReply("✅ GitHub connecté · @"+userData.login+"\nDépôt: "+ghRepo+" · "+branches.length+" branches");
   }catch(e){
     label.textContent="ERREUR";dot.className="gh-status off";
-    cxAddReply("❌ Connexion GitHub échouée: "+e.message+"\n\nVérifie que le secret GITHUB_TOKEN est configuré dans Supabase.");
+    if(connectBtn){connectBtn.disabled=false;connectBtn.textContent="CONNECTER LE PROJET";}
+    var msg=e.message||"Erreur inconnue";
+    if(msg==="Failed to fetch")msg="Impossible de joindre GitHub. Vérifie ta connexion internet.";
+    if(msg.indexOf("Aucun token")>=0)msg+="\n\n💡 Clique sur ⚙ PARAMÈTRES dans le menu, puis entre ton GitHub PAT.";
+    cxAddReply("❌ Connexion GitHub échouée: "+msg);
   }
 }
 async function ghLoadBranches(){
@@ -3781,6 +3841,23 @@ function renderAgentCards(){
 /* ── SETTINGS INIT ── */
 (function(){
   ghUpdateBar();
+  (async function(){
+    try{
+      var sess=await supabase.auth.getSession();
+      if(!sess.data.session)return;
+      var pat=await ghGetPat();
+      if(!pat)return;
+      var r=await fetch("https://api.github.com/user",{headers:{"Authorization":"token "+pat,"Accept":"application/vnd.github.v3+json","User-Agent":"ti-lex-codex"}});
+      if(!r.ok)return;
+      var u=await r.json();
+      window._githubSession={token:pat,username:u.login,avatar:u.avatar_url,name:u.name||u.login};
+      var data=await ghProxyCall({action:"listBranches"});
+      ghConnected=true;
+      var sel=document.getElementById("gh-branch");
+      if(sel){sel.innerHTML="";var branches=data.branches||[];for(var i=0;i<branches.length;i++){var o=document.createElement("option");o.value=branches[i];o.textContent=branches[i];if(branches[i]==="main")o.selected=true;sel.appendChild(o);}ghCurrentBranch=sel.value||"main";}
+      ghUpdateBar();
+    }catch(e){}
+  })();
   var savedModel=localStorage.getItem("tilex-al-model");
   var modelSel=document.getElementById("set-model");
   if(savedModel&&modelSel){for(var i=0;i<modelSel.options.length;i++){if(modelSel.options[i].value===savedModel)modelSel.selectedIndex=i;}}
