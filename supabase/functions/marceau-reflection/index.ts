@@ -27,9 +27,7 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
-    if (userId === "anonymous") {
-      return json({ error: "Authentification requise" }, 401);
-    }
+    // Auth optionnelle — comme ai-proxy
 
     let body: any;
     try { body = await req.json(); }

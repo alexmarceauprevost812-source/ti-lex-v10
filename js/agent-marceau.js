@@ -59,20 +59,23 @@
   };
 
   // ── Streaming SSE ──
-  async function streamFromEdge(systemPrompt, messages, onText) {
-    var session = null;
+  function marceauGetToken() {
+    if (typeof getToken === "function") return getToken();
     try {
-      var result = await window.supabase.auth.getSession();
-      session = result.data.session;
+      var r = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+      if (r) { var s = JSON.parse(r); if (s && s.access_token) return s.access_token; }
     } catch (_) {}
-    var token = session ? session.access_token : "";
+    return "";
+  }
+
+  async function streamFromEdge(systemPrompt, messages, onText) {
+    var token = marceauGetToken();
+    var headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
 
     var res = await fetch(MARCEAU_CONFIG.EDGE_FUNCTION, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
+      headers: headers,
       body: JSON.stringify({ systemPrompt: systemPrompt, messages: messages }),
     });
 
@@ -109,19 +112,13 @@
   }
 
   async function callEdge(systemPrompt, content) {
-    var session = null;
-    try {
-      var result = await window.supabase.auth.getSession();
-      session = result.data.session;
-    } catch (_) {}
-    var token = session ? session.access_token : "";
+    var token = marceauGetToken();
+    var headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = "Bearer " + token;
 
     var res = await fetch(MARCEAU_CONFIG.EDGE_FUNCTION, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
-      },
+      headers: headers,
       body: JSON.stringify({
         systemPrompt: systemPrompt,
         messages: [{ role: "user", content: content }],
@@ -409,11 +406,9 @@
 
   // ── Sauvegarde Supabase ──
   async function saveToSupabase(question, phases, synth) {
+    if (!window.supabase) return;
     var session = null;
-    try {
-      var result = await window.supabase.auth.getSession();
-      session = result.data.session;
-    } catch (_) {}
+    try { session = (await window.supabase.auth.getSession()).data.session; } catch (_) {}
     if (!session) return;
 
     try {
@@ -561,6 +556,7 @@
       dialogueState.step = "done";
       updateStep("done");
     } catch (err) {
+      console.error("MARCEAU launchDialogue error:", err);
       showError(err.message || "Erreur inattendue");
       dialogueState.step = "idle";
       updateStep("idle");

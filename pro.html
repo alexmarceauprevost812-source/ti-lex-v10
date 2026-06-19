@@ -524,19 +524,45 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .sp-err{color:var(--red);border:1px solid rgba(255,68,68,.3);background:rgba(255,68,68,.06);}
 
 /* ── GitHub Codex Panel ── */
-.gh-bar{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
-.gh-bar.disconnected{opacity:.5;}
-.gh-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.gh-status.on{background:var(--green);box-shadow:0 0 4px var(--green);}
-.gh-status.off{background:var(--red);box-shadow:0 0 4px var(--red);}
-.gh-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;}
-.gh-select{padding:4px 8px;background:var(--bg4);border:1px solid var(--border);border-radius:5px;color:var(--or);font-family:'Share Tech Mono',monospace;font-size:10px;outline:none;cursor:pointer;max-width:180px;}
-.gh-select option{background:var(--bg3);}
-[data-theme="day"] .gh-select{color:var(--or3);background:var(--bg);}
-.gh-btn{padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:none;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;}
-.gh-btn:hover{border-color:var(--orange);color:var(--orange);}
-.gh-btn.primary{background:var(--orange);color:#000;border-color:var(--orange);font-weight:600;}
-.gh-btn.primary:hover{filter:brightness(1.1);}
+/* == CODEX GITHUB BAR == */
+.codex-github-bar{display:flex;align-items:center;gap:8px;padding:7px 14px;background:#101015;border-bottom:1px solid #23232c;border-top:1px solid #23232c;position:sticky;top:0;z-index:50;flex-shrink:0;overflow:visible;}
+.cgb-icon{color:#6c6c78;display:flex;align-items:center;flex-shrink:0;}
+.cgb-select-wrap{position:relative;}
+.cgb-select-btn{display:flex;align-items:center;gap:6px;padding:4px 10px;background:#0a0a0a;border:1px solid #23232c;border-radius:4px;cursor:pointer;color:#e0e0e0;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:11px;white-space:nowrap;transition:border-color .15s;min-width:90px;}
+.cgb-select-btn:hover:not(:disabled){border-color:#ff7f27;}
+.cgb-select-btn:disabled{opacity:.4;cursor:not-allowed;}
+.cgb-select-btn.active{border-color:#ff7f27;}
+.cgb-select-label{color:#ffcf4a;font-weight:600;letter-spacing:.05em;max-width:160px;overflow:hidden;text-overflow:ellipsis;}
+.cgb-chevron{color:#6c6c78;font-size:10px;margin-left:auto;}
+.cgb-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:240px;background:#101015;border:1px solid #23232c;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:999;overflow:hidden;}
+.cgb-dropdown-search{padding:8px;border-bottom:1px solid #23232c;}
+.cgb-search-input{width:100%;padding:6px 10px;background:#0a0a0a;border:1px solid #23232c;border-radius:4px;color:#e0e0e0;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:12px;outline:none;box-sizing:border-box;}
+.cgb-search-input:focus{border-color:#ff7f27;}
+.cgb-dropdown-list{max-height:240px;overflow-y:auto;padding:4px 0;}
+.cgb-dropdown-loading{padding:12px 16px;color:#6c6c78;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:11px;text-align:center;}
+.cgb-dropdown-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:background .1s;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:12px;color:#e0e0e0;}
+.cgb-dropdown-item:hover{background:rgba(255,127,39,.08);}
+.cgb-dropdown-item.selected{color:#ff7f27;}
+.cgb-dropdown-item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cgb-dropdown-item-badge{font-size:9px;padding:1px 5px;border-radius:3px;background:#1a1a20;border:1px solid #23232c;color:#6c6c78;flex-shrink:0;}
+.cgb-dropdown-item-badge.private{border-color:#ffcf4a33;color:#ffcf4a;}
+.cgb-dropdown-item-badge.branch-default{border-color:#37e0a033;color:#37e0a0;}
+.cgb-sep{color:#23232c;font-size:14px;flex-shrink:0;}
+.cgb-spacer{flex:1;}
+.cgb-status-wrap{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.cgb-status-dot{width:6px;height:6px;border-radius:50%;background:#6c6c78;flex-shrink:0;transition:background .3s;}
+.cgb-status-dot.connected{background:#37e0a0;box-shadow:0 0 6px #37e0a0;}
+.cgb-status-dot.loading{background:#ffcf4a;animation:cgb-pulse 1s infinite;}
+@keyframes cgb-pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.cgb-status-text{font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:10px;letter-spacing:.08em;color:#6c6c78;}
+.cgb-status-text.connected{color:#37e0a0;}
+.cgb-connect-btn{padding:4px 12px;background:transparent;border:1px solid #ff7f27;border-radius:4px;color:#ff7f27;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .15s;}
+.cgb-connect-btn:hover{background:rgba(255,127,39,.12);}
+.cgb-connect-btn.hidden{display:none;}
+.cgb-action-btn{padding:4px 10px;border:1px solid #23232c;border-radius:4px;background:none;color:#6c6c78;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .15s;}
+.cgb-action-btn:hover{border-color:#ff7f27;color:#ff7f27;}
+.cgb-action-btn.cgb-push{background:#ff7f27;color:#000;border-color:#ff7f27;font-weight:700;}
+.cgb-action-btn.cgb-push:hover{filter:brightness(1.1);}
 .gh-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
 .gh-files{max-height:200px;overflow-y:auto;border-bottom:1px solid var(--border);flex-shrink:0;display:none;}
 .gh-file{display:flex;align-items:center;gap:8px;padding:6px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--txt);cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.03);}
@@ -1544,15 +1570,37 @@ Comment puis-je t'aider aujourd'hui?</div>
           <option value="bash">Bash</option>
         </select>
       </div>
-      <div class="gh-bar" id="gh-bar">
-        <div class="gh-status off" id="gh-dot"></div>
-        <span class="gh-label" id="gh-conn-label">GITHUB</span>
-        <select class="gh-select" id="gh-repo" onchange="ghLoadBranches()" style="display:none;"><option value="">— repo —</option></select>
-        <select class="gh-select" id="gh-branch" onchange="ghLoadFiles()" style="display:none;"><option value="">— branche —</option></select>
-        <button class="gh-btn" id="gh-browse-btn" onclick="ghToggleFiles()" style="display:none;">📂 FICHIERS</button>
-        <div style="flex:1;"></div>
-        <button class="gh-btn" id="gh-connect-btn" onclick="ghConnect()">CONNECTER</button>
-        <button class="gh-btn primary" id="gh-push-btn" onclick="ghPushCode()" style="display:none;">⬆ PUSH</button>
+      <!-- BARRE GITHUB CODEX -->
+      <div class="codex-github-bar" id="codex-github-bar">
+        <span class="cgb-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></span>
+        <div class="cgb-select-wrap" id="cgb-repo-wrap">
+          <button class="cgb-select-btn" id="cgb-repo-btn" title="Choisir un projet GitHub">
+            <span class="cgb-select-label" id="cgb-repo-label">PROJET</span>
+            <span class="cgb-chevron">&#9662;</span>
+          </button>
+          <div class="cgb-dropdown" id="cgb-repo-dropdown" style="display:none;">
+            <div class="cgb-dropdown-search"><input type="text" id="cgb-repo-search" placeholder="Chercher un repo..." class="cgb-search-input"/></div>
+            <div class="cgb-dropdown-list" id="cgb-repo-list"><div class="cgb-dropdown-loading">Chargement...</div></div>
+          </div>
+        </div>
+        <span class="cgb-sep">/</span>
+        <div class="cgb-select-wrap" id="cgb-branch-wrap">
+          <button class="cgb-select-btn" id="cgb-branch-btn" title="Choisir une branche" disabled>
+            <span class="cgb-select-label" id="cgb-branch-label">BRANCHE</span>
+            <span class="cgb-chevron">&#9662;</span>
+          </button>
+          <div class="cgb-dropdown" id="cgb-branch-dropdown" style="display:none;">
+            <div class="cgb-dropdown-list" id="cgb-branch-list"><div class="cgb-dropdown-loading">Choisis un projet d'abord</div></div>
+          </div>
+        </div>
+        <div class="cgb-spacer"></div>
+        <button class="cgb-action-btn" id="cgb-files-btn" style="display:none;" title="Parcourir les fichiers">FICHIERS</button>
+        <button class="cgb-action-btn cgb-push" id="cgb-push-btn" style="display:none;" title="Push le code">PUSH</button>
+        <div class="cgb-status-wrap">
+          <span class="cgb-status-dot" id="cgb-status-dot"></span>
+          <span class="cgb-status-text" id="cgb-status-text">NON CONNECT&#201;</span>
+          <button class="cgb-connect-btn" id="cgb-connect-btn">CONNECTER</button>
+        </div>
       </div>
       <div class="gh-files" id="gh-files"></div>
       <div class="cx-scan-bar" id="cx-scan-bar">
@@ -3297,21 +3345,27 @@ function cxStartCoding(){
   })();
 }
 
-/* ── GITHUB INTEGRATION (direct API via PAT from profiles) ── */
+/* ── GITHUB INTEGRATION (dynamic repo/branch via PAT from profiles) ── */
 var VERCEL_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/vercel-proxy";
 var ghFiles=[];var ghCurrentBranch="main";var ghFilesVisible=false;
 var ghFileCache={};var ghConnected=false;
-var ghRepo="alexmarceauprevost812-source/ti-lex-v10";
 
 window._githubSession=null;
+window._codexGithub=null;
 
 async function ghGetPat(){
   if(window._githubSession&&window._githubSession.token)return window._githubSession.token;
   var s=await supabase.auth.getUser();
   if(s.error||!s.data.user)throw new Error("Non authentifié. Connecte-toi à ti-lex d'abord.");
   var p=await supabase.from("profiles").select("github_pat,github_username").eq("id",s.data.user.id).single();
-  if(p.error||!p.data||!p.data.github_pat)throw new Error("Aucun token GitHub trouvé. Va dans ⚙ Paramètres → GITHUB pour connecter ton compte.");
+  if(p.error||!p.data||!p.data.github_pat)throw new Error("Aucun token GitHub trouvé. Va dans Paramètres pour connecter ton compte.");
   return p.data.github_pat;
+}
+
+function ghGetRepo(){
+  var gh=window._codexGithub;
+  if(gh&&gh.repo)return gh.repo.owner+"/"+gh.repo.name;
+  return null;
 }
 
 async function ghApiFetch(path,opts){
@@ -3325,33 +3379,35 @@ async function ghApiFetch(path,opts){
 }
 
 async function ghProxyCall(body){
+  var repo=ghGetRepo();
+  if(!repo)throw new Error("Aucun projet sélectionné. Choisis un repo dans la barre GitHub.");
   var action=body.action;
-  var branch=body.branch||"main";
+  var branch=body.branch||ghCurrentBranch||"main";
   switch(action){
     case "listBranches":{
-      var data=await ghApiFetch("/repos/"+ghRepo+"/branches?per_page=30");
+      var data=await ghApiFetch("/repos/"+repo+"/branches?per_page=50");
       return{branches:data.map(function(b){return b.name;})};
     }
     case "listFiles":{
-      var data=await ghApiFetch("/repos/"+ghRepo+"/git/trees/"+encodeURIComponent(branch)+"?recursive=1");
+      var data=await ghApiFetch("/repos/"+repo+"/git/trees/"+encodeURIComponent(branch)+"?recursive=1");
       var blobs=(data.tree||[]).filter(function(f){return f.type==="blob";});
       return{tree:blobs,truncated:data.truncated};
     }
     case "readFile":{
       if(!body.path)throw new Error("path requis");
-      var data=await ghApiFetch("/repos/"+ghRepo+"/contents/"+encodeURIComponent(body.path)+"?ref="+encodeURIComponent(branch));
+      var data=await ghApiFetch("/repos/"+repo+"/contents/"+encodeURIComponent(body.path)+"?ref="+encodeURIComponent(branch));
       return{content:data.content,sha:data.sha,size:data.size};
     }
     case "listCommits":{
       var lim=Math.min(body.limit||10,30);
-      var data=await ghApiFetch("/repos/"+ghRepo+"/commits?sha="+encodeURIComponent(branch)+"&per_page="+lim);
+      var data=await ghApiFetch("/repos/"+repo+"/commits?sha="+encodeURIComponent(branch)+"&per_page="+lim);
       return{commits:data.map(function(c){return{sha:(c.sha||"").slice(0,7),message:(c.commit&&c.commit.message||"").split("\n")[0],author:c.commit&&c.commit.author&&c.commit.author.name,date:c.commit&&c.commit.author&&c.commit.author.date};})};
     }
     case "pushFile":{
       if(!body.path||!body.content)throw new Error("path + content requis");
       var payload={message:body.message||"[ti-lex-AL] update "+body.path,content:body.content,branch:branch};
       if(body.sha)payload.sha=body.sha;
-      var data=await ghApiFetch("/repos/"+ghRepo+"/contents/"+encodeURIComponent(body.path),{method:"PUT",body:JSON.stringify(payload)});
+      var data=await ghApiFetch("/repos/"+repo+"/contents/"+encodeURIComponent(body.path),{method:"PUT",body:JSON.stringify(payload)});
       return{success:true,sha:data.content&&data.content.sha,commit:data.commit&&data.commit.sha&&data.commit.sha.slice(0,7)};
     }
     default:throw new Error("Action inconnue: "+action);
@@ -3364,79 +3420,213 @@ async function vercelCall(body){
   return r.json();
 }
 
-function ghUpdateBar(){
-  var dot=document.getElementById("gh-dot");
-  var label=document.getElementById("gh-conn-label");
-  var connectBtn=document.getElementById("gh-connect-btn");
-  var branchSel=document.getElementById("gh-branch");
-  var browseBtn=document.getElementById("gh-browse-btn");
-  var pushBtn=document.getElementById("gh-push-btn");
-  var repoSel=document.getElementById("gh-repo");
-  if(ghConnected){
-    dot.className="gh-status on";
-    var uname=window._githubSession&&window._githubSession.username;
-    label.textContent=uname?"@"+uname+" · CONNECTÉ":"GITHUB CONNECTÉ";
-    connectBtn.textContent="✓ CONNECTÉ";
-    connectBtn.disabled=false;
-    connectBtn.onclick=function(){ghLoadFiles();};
-    if(repoSel)repoSel.style.display="none";
-    branchSel.style.display="";
-    browseBtn.style.display="";
-    pushBtn.style.display="";
-  }else{
-    dot.className="gh-status off";
-    label.textContent="GITHUB";
-    connectBtn.textContent="CONNECTER LE PROJET";
-    connectBtn.disabled=false;
-    connectBtn.onclick=function(){ghConnect();};
-    if(repoSel)repoSel.style.display="none";
-    branchSel.style.display="none";
-    browseBtn.style.display="none";
-    pushBtn.style.display="none";
+/* ── CODEX GITHUB BAR — Sélecteur Repo + Branche ── */
+(async function initCodexGithubBar(){
+  var repoBtn=document.getElementById("cgb-repo-btn");
+  var repoLabel=document.getElementById("cgb-repo-label");
+  var repoDropdown=document.getElementById("cgb-repo-dropdown");
+  var repoList=document.getElementById("cgb-repo-list");
+  var repoSearch=document.getElementById("cgb-repo-search");
+  var branchBtn=document.getElementById("cgb-branch-btn");
+  var branchLabel=document.getElementById("cgb-branch-label");
+  var branchDropdown=document.getElementById("cgb-branch-dropdown");
+  var branchList=document.getElementById("cgb-branch-list");
+  var statusDot=document.getElementById("cgb-status-dot");
+  var statusText=document.getElementById("cgb-status-text");
+  var connectBtn=document.getElementById("cgb-connect-btn");
+  var filesBtn=document.getElementById("cgb-files-btn");
+  var pushBtn=document.getElementById("cgb-push-btn");
+  if(!repoBtn)return;
+
+  var ghToken=null;var ghUsername=null;var allRepos=[];
+  var currentRepo=null;var currentBranch=null;
+
+  function setStatus(type,msg){
+    statusDot.className="cgb-status-dot"+(type==="connected"?" connected":type==="loading"?" loading":"");
+    statusText.className="cgb-status-text"+(type==="connected"?" connected":"");
+    statusText.textContent=msg.toUpperCase();
   }
-}
-async function ghConnect(){
-  var dot=document.getElementById("gh-dot");
-  var label=document.getElementById("gh-conn-label");
-  var connectBtn=document.getElementById("gh-connect-btn");
-  label.textContent="CONNEXION…";
-  if(connectBtn)connectBtn.disabled=true;
-  try{
-    var pat=await ghGetPat();
-    var ghUser=await fetch("https://api.github.com/user",{headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-codex"}});
-    if(!ghUser.ok){var errD=await ghUser.json().catch(function(){return{};});throw new Error("Token GitHub invalide ("+ghUser.status+"): "+(errD.message||"Unauthorized"));}
-    var userData=await ghUser.json();
-    window._githubSession={token:pat,username:userData.login,avatar:userData.avatar_url,name:userData.name||userData.login};
-    var data=await ghProxyCall({action:"listBranches"});
+
+  function exposeGlobal(){
+    if(!currentRepo||!currentBranch)return;
+    window._codexGithub={token:ghToken,username:ghUsername,repo:currentRepo,branch:currentBranch};
+    window._githubSession={token:ghToken,username:ghUsername};
+    ghCurrentBranch=currentBranch;
     ghConnected=true;
-    var sel=document.getElementById("gh-branch");
-    sel.innerHTML="";
-    var branches=data.branches||[];
-    for(var i=0;i<branches.length;i++){
-      var o=document.createElement("option");o.value=branches[i];o.textContent=branches[i];
-      if(branches[i]==="main")o.selected=true;
-      sel.appendChild(o);
-    }
-    ghCurrentBranch=sel.value||"main";
-    ghUpdateBar();
-    cxAddReply("✅ GitHub connecté · @"+userData.login+"\nDépôt: "+ghRepo+" · "+branches.length+" branches");
-  }catch(e){
-    label.textContent="ERREUR";dot.className="gh-status off";
-    if(connectBtn){connectBtn.disabled=false;connectBtn.textContent="CONNECTER LE PROJET";}
-    var msg=e.message||"Erreur inconnue";
-    if(msg==="Failed to fetch")msg="Impossible de joindre GitHub. Vérifie ta connexion internet.";
-    if(msg.indexOf("Aucun token")>=0)msg+="\n\n💡 Clique sur ⚙ PARAMÈTRES dans le menu, puis entre ton GitHub PAT.";
-    cxAddReply("❌ Connexion GitHub échouée: "+msg);
+    if(filesBtn)filesBtn.style.display="";
+    if(pushBtn)pushBtn.style.display="";
   }
-}
-async function ghLoadBranches(){
-  ghCurrentBranch=document.getElementById("gh-branch").value;
-  if(ghCurrentBranch)ghLoadFiles();
-}
+
+  async function loadGithubSession(){
+    try{
+      var authRes=await window.supabase.auth.getUser();
+      if(!authRes.data||!authRes.data.user)return false;
+      var prof=await window.supabase.from("profiles").select("github_pat,github_username,github_repo,github_branch,github_repo_owner").eq("id",authRes.data.user.id).single();
+      if(!prof.data||!prof.data.github_pat)return false;
+      ghToken=prof.data.github_pat;
+      ghUsername=prof.data.github_username;
+      if(prof.data.github_repo){
+        currentRepo={name:prof.data.github_repo,owner:prof.data.github_repo_owner||ghUsername};
+        currentBranch=prof.data.github_branch||"main";
+        repoLabel.textContent=prof.data.github_repo;
+        branchLabel.textContent=currentBranch;
+        branchBtn.disabled=false;
+        setStatus("connected","@"+ghUsername);
+        connectBtn.classList.add("hidden");
+        exposeGlobal();
+      }else{
+        setStatus("connected","@"+ghUsername+" — Choisis un projet");
+        connectBtn.classList.add("hidden");
+      }
+      return true;
+    }catch(err){console.error("[GithubBar] loadGithubSession:",err);return false;}
+  }
+
+  async function fetchRepos(){
+    if(!ghToken)return[];
+    setStatus("loading","Chargement...");
+    try{
+      var res=await fetch("https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator",{
+        headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}
+      });
+      if(!res.ok)throw new Error("GitHub API "+res.status);
+      allRepos=await res.json();
+      setStatus("connected","@"+ghUsername);
+      return allRepos;
+    }catch(err){console.error("[GithubBar] fetchRepos:",err);setStatus("","Erreur repos");return[];}
+  }
+
+  async function fetchBranches(owner,repo){
+    if(!ghToken)return[];
+    try{
+      var res=await fetch("https://api.github.com/repos/"+owner+"/"+repo+"/branches?per_page=50",{
+        headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}
+      });
+      if(!res.ok)throw new Error("GitHub API "+res.status);
+      return await res.json();
+    }catch(err){console.error("[GithubBar] fetchBranches:",err);return[];}
+  }
+
+  function renderRepos(repos){
+    if(!repos.length){repoList.innerHTML='<div class="cgb-dropdown-loading">Aucun repo trouvé</div>';return;}
+    repoList.innerHTML="";
+    for(var i=0;i<repos.length;i++){
+      var r=repos[i];
+      var div=document.createElement("div");
+      div.className="cgb-dropdown-item"+(currentRepo&&currentRepo.name===r.name?" selected":"");
+      div.setAttribute("data-repo",r.name);
+      div.setAttribute("data-owner",r.owner.login);
+      div.setAttribute("data-default-branch",r.default_branch);
+      div.innerHTML='<span class="cgb-dropdown-item-name">'+escHtml(r.name)+'</span>'+(r.private?'<span class="cgb-dropdown-item-badge private">PRIVÉ</span>':'<span class="cgb-dropdown-item-badge">PUBLIC</span>');
+      div.addEventListener("click",(function(repo){return function(){
+        currentRepo={name:repo.name,owner:repo.owner.login};
+        repoLabel.textContent=repo.name;
+        closeAllDropdowns();
+        selectRepo(repo.owner.login,repo.name,repo.default_branch);
+      };})(r));
+      repoList.appendChild(div);
+    }
+  }
+
+  async function selectRepo(owner,repoName,defaultBranch){
+    branchBtn.disabled=true;
+    branchLabel.textContent="Chargement...";
+    var branches=await fetchBranches(owner,repoName);
+    if(!branches.length){branchLabel.textContent="BRANCHE";return;}
+    branchList.innerHTML="";
+    for(var i=0;i<branches.length;i++){
+      var b=branches[i];
+      var div=document.createElement("div");
+      div.className="cgb-dropdown-item"+(b.name===defaultBranch?" selected":"");
+      div.setAttribute("data-branch",b.name);
+      div.innerHTML='<span class="cgb-dropdown-item-name">'+escHtml(b.name)+'</span>'+(b.name===defaultBranch?'<span class="cgb-dropdown-item-badge branch-default">DEFAULT</span>':"");
+      div.addEventListener("click",(function(bName){return function(){
+        currentBranch=bName;
+        branchLabel.textContent=bName;
+        closeAllDropdowns();
+        saveSelection();
+      };})(b.name));
+      branchList.appendChild(div);
+    }
+    currentBranch=defaultBranch;
+    branchLabel.textContent=defaultBranch;
+    branchBtn.disabled=false;
+    await saveSelection();
+  }
+
+  async function saveSelection(){
+    if(!currentRepo||!currentBranch)return;
+    exposeGlobal();
+    try{
+      var authRes=await window.supabase.auth.getUser();
+      if(!authRes.data||!authRes.data.user)return;
+      await window.supabase.from("profiles").update({
+        github_repo:currentRepo.name,
+        github_repo_owner:currentRepo.owner,
+        github_branch:currentBranch
+      }).eq("id",authRes.data.user.id);
+      console.log("[GithubBar] Saved: "+currentRepo.owner+"/"+currentRepo.name+"@"+currentBranch);
+    }catch(err){console.error("[GithubBar] saveSelection:",err);}
+  }
+
+  function closeAllDropdowns(){
+    repoDropdown.style.display="none";
+    branchDropdown.style.display="none";
+    repoBtn.classList.remove("active");
+    branchBtn.classList.remove("active");
+  }
+
+  repoBtn.addEventListener("click",async function(e){
+    e.stopPropagation();
+    var isOpen=repoDropdown.style.display!=="none";
+    closeAllDropdowns();
+    if(isOpen)return;
+    if(!ghToken){
+      var s=document.getElementById("si-parametres");
+      if(s)s.click();
+      return;
+    }
+    repoDropdown.style.display="block";
+    repoBtn.classList.add("active");
+    if(!allRepos.length){
+      repoList.innerHTML='<div class="cgb-dropdown-loading">Chargement...</div>';
+      var repos=await fetchRepos();
+      renderRepos(repos);
+    }else{renderRepos(allRepos);}
+    if(repoSearch)repoSearch.focus();
+  });
+
+  branchBtn.addEventListener("click",function(e){
+    e.stopPropagation();
+    var isOpen=branchDropdown.style.display!=="none";
+    closeAllDropdowns();
+    if(!isOpen){branchDropdown.style.display="block";branchBtn.classList.add("active");}
+  });
+
+  document.addEventListener("click",closeAllDropdowns);
+
+  if(repoSearch)repoSearch.addEventListener("input",function(){
+    var q=repoSearch.value.toLowerCase();
+    var filtered=allRepos.filter(function(r){return r.name.toLowerCase().indexOf(q)>=0;});
+    renderRepos(filtered);
+  });
+
+  connectBtn.addEventListener("click",function(){
+    var s=document.getElementById("si-parametres");
+    if(s)s.click();
+  });
+
+  if(filesBtn)filesBtn.addEventListener("click",function(){ghToggleFiles();});
+  if(pushBtn)pushBtn.addEventListener("click",function(){ghPushCode();});
+
+  var hasSession=await loadGithubSession();
+  if(!hasSession){setStatus("","NON CONNECTÉ");connectBtn.classList.remove("hidden");}
+})();
+
 async function ghLoadFiles(){
-  ghCurrentBranch=document.getElementById("gh-branch").value||"main";
   var panel=document.getElementById("gh-files");
-  panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">⏳</span><span class="gh-file-name">Chargement…</span></div>';
+  if(!panel)return;
+  panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">&#9203;</span><span class="gh-file-name">Chargement...</span></div>';
   panel.style.display="block";ghFilesVisible=true;
   try{
     var data=await ghProxyCall({action:"listFiles",branch:ghCurrentBranch});
@@ -3444,20 +3634,20 @@ async function ghLoadFiles(){
     var codeExts=/\.(js|ts|html|css|json|py|sql|md|jsx|tsx|vue|svelte|sh|bash|yml|yaml)$/i;
     var filtered=ghFiles.filter(function(f){return codeExts.test(f.path);});
     panel.innerHTML="";
-    if(filtered.length===0){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">📁</span><span class="gh-file-name">Aucun fichier code trouvé</span></div>';return;}
+    if(filtered.length===0){panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">&#128193;</span><span class="gh-file-name">Aucun fichier code trouvé</span></div>';return;}
     for(var i=0;i<filtered.length;i++){
       var f=filtered[i];
       var ext=f.path.split(".").pop()||"";
-      var ico=ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"?"📄":ext==="html"?"🌐":ext==="css"?"🎨":ext==="json"?"📋":ext==="py"?"🐍":ext==="sql"?"🗄️":"📝";
+      var ico=ext==="js"||ext==="ts"||ext==="jsx"||ext==="tsx"?"&#128196;":ext==="html"?"&#127760;":ext==="css"?"&#127912;":ext==="json"?"&#128203;":ext==="py"?"&#128013;":ext==="sql"?"&#128452;":"&#128221;";
       var sz=f.size>1024?(f.size/1024).toFixed(1)+"k":f.size+"b";
       var div=document.createElement("div");div.className="gh-file";div.setAttribute("data-path",f.path);
       div.innerHTML='<span class="gh-file-ico">'+ico+'</span><span class="gh-file-name">'+escHtml(f.path)+'</span><span class="gh-file-size">'+sz+'</span>';
       div.onclick=(function(path){return function(){ghOpenFile(path);};})(f.path);
       panel.appendChild(div);
     }
-    studioScanAll();
+    if(typeof studioScanAll==="function")studioScanAll();
   }catch(e){
-    panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">❌</span><span class="gh-file-name">'+escHtml(e.message)+'</span></div>';
+    panel.innerHTML='<div class="gh-file"><span class="gh-file-ico">&#10060;</span><span class="gh-file-name">'+escHtml(e.message)+'</span></div>';
   }
 }
 function ghToggleFiles(){
@@ -3485,14 +3675,14 @@ async function ghOpenFile(path){
     var content=atob(data.content.replace(/\n/g,""));
     ghFileCache[cacheKey]=content;
     cxAddReply("```"+path.split(".").pop()+"\n"+content+"\n```\nFichier **"+path+"** ("+content.split("\n").length+" lignes · "+ghCurrentBranch+")");
-  }catch(e){cxRemoveTyping();cxAddReply("❌ "+e.message);}
+  }catch(e){cxRemoveTyping();cxAddReply("&#10060; "+e.message);}
 }
 async function ghPushCode(){
-  if(!ghConnected){cxAddReply("Connecte le projet GitHub d'abord.");return;}
+  if(!ghConnected||!ghGetRepo()){cxAddReply("Sélectionne un projet GitHub dans la barre en haut.");return;}
   var lastCode="";
   document.querySelectorAll(".cx-code-pre").forEach(function(el){var t=el.textContent.trim();if(t)lastCode=t;});
   if(!lastCode){cxAddReply("Aucun code à push. Génère du code d'abord!");return;}
-  cxAddUser("Push le dernier code généré ("+ghCurrentBranch+")");
+  cxAddUser("Push le dernier code généré ("+ghGetRepo()+"@"+ghCurrentBranch+")");
   cxAddTyping();
   var fileName=prompt("Nom du fichier à créer/modifier :","code.js");
   if(!fileName){cxRemoveTyping();return;}
@@ -3504,20 +3694,24 @@ async function ghPushCode(){
     var result=await ghProxyCall({action:"pushFile",path:fileName,content:b64,branch:ghCurrentBranch,message:"[ti-lex-AL] "+fileName,sha:sha});
     cxRemoveTyping();
     if(result&&result.success){
-      cxAddReply("✅ **"+fileName+"** pushé avec succès ("+ghCurrentBranch+").\nCommit: "+result.commit);
-      if(typeof pushNotif==="function")pushNotif("⬆️","Code poussé sur GitHub",fileName+" → "+ghCurrentBranch,"ok");
-    }else{cxAddReply("❌ Erreur lors du push.");}
-  }catch(e){cxRemoveTyping();cxAddReply("❌ "+e.message);}
+      cxAddReply("&#9989; **"+fileName+"** push sur "+ghGetRepo()+"@"+ghCurrentBranch+"\nCommit: "+result.commit);
+      if(typeof pushNotif==="function")pushNotif("UP","Code push sur GitHub",fileName+" → "+ghCurrentBranch,"ok");
+    }else{cxAddReply("Erreur lors du push.");}
+  }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
 }
 async function ghRefreshProjects(){
   var container=document.getElementById("studio-projects");
-  container.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">Chargement…</div>';
+  container.innerHTML='<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);">Chargement...</div>';
   try{
+    var repoStr=ghGetRepo();
+    if(!repoStr)throw new Error("Sélectionne un projet GitHub dans la barre Codex.");
     var data=await ghProxyCall({action:"listBranches"});
     container.innerHTML="";
     var card=document.createElement("div");card.className="studio-project-card";
-    card.innerHTML='<div class="sp-ico">⚡</div><div class="sp-info"><div class="sp-name">ti-lex-v10</div><div class="sp-meta">'+((data.branches||[]).length)+" branches · Privé · main"+'</div></div>'+
-      '<span class="sp-status sp-live" style="cursor:pointer;" onclick="ghConnect();showTab(\'codex\');">OUVRIR</span>';
+    var gh=window._codexGithub;
+    var repoName=gh?gh.repo.name:"projet";
+    card.innerHTML='<div class="sp-ico">&#9889;</div><div class="sp-info"><div class="sp-name">'+escHtml(repoName)+'</div><div class="sp-meta">'+((data.branches||[]).length)+" branches · "+ghCurrentBranch+'</div></div>'+
+      '<span class="sp-status sp-live" style="cursor:pointer;" onclick="showTab(\'codex\');">OUVRIR</span>';
     container.appendChild(card);
   }catch(e){
     container.innerHTML='<div style="color:var(--red);font-family:Share Tech Mono,monospace;font-size:11px;">'+escHtml(e.message)+'</div>';
@@ -3889,24 +4083,6 @@ function renderAgentCards(){
 
 /* ── SETTINGS INIT ── */
 (function(){
-  ghUpdateBar();
-  (async function(){
-    try{
-      var sess=await supabase.auth.getSession();
-      if(!sess.data.session)return;
-      var pat=await ghGetPat();
-      if(!pat)return;
-      var r=await fetch("https://api.github.com/user",{headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"ti-lex-codex"}});
-      if(!r.ok)return;
-      var u=await r.json();
-      window._githubSession={token:pat,username:u.login,avatar:u.avatar_url,name:u.name||u.login};
-      var data=await ghProxyCall({action:"listBranches"});
-      ghConnected=true;
-      var sel=document.getElementById("gh-branch");
-      if(sel){sel.innerHTML="";var branches=data.branches||[];for(var i=0;i<branches.length;i++){var o=document.createElement("option");o.value=branches[i];o.textContent=branches[i];if(branches[i]==="main")o.selected=true;sel.appendChild(o);}ghCurrentBranch=sel.value||"main";}
-      ghUpdateBar();
-    }catch(e){}
-  })();
   var savedModel=localStorage.getItem("tilex-al-model");
   var modelSel=document.getElementById("set-model");
   if(savedModel&&modelSel){for(var i=0;i<modelSel.options.length;i++){if(modelSel.options[i].value===savedModel)modelSel.selectedIndex=i;}}
