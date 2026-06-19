@@ -17,8 +17,8 @@
     blue: "#4f8ef7",
   };
 
-  var MARCEAU_AVATAR_URL = "https://rnuripmfozlxenryxhdc.supabase.co/storage/v1/object/public/agents-avatars/marceau-avatar.png";
-  var MARCEAU_AVATAR_LOCAL = "assets/agents/marceau-avatar.png";
+  var MARCEAU_AVATAR_URL = "assets/agents/marceau-logo.png";
+  var MARCEAU_AVATAR_LOCAL = "assets/agents/marceau-logo.png";
 
   // ── System Prompts 4 phases + NEXUS ──
   var SYS = {
