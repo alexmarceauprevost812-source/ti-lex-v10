@@ -1630,11 +1630,22 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="card-body">
         <div class="settings-section" style="margin-bottom:12px;">
           <div class="settings-label">GITHUB</div>
-          <div class="settings-hint">Proxy sécurisé via Edge Function Supabase. Aucun token dans le navigateur.</div>
-          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
-            <div class="gh-status off" id="set-gh-dot" style="width:8px;height:8px;"></div>
-            <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);" id="set-gh-status">Non connecté</span>
-            <button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="showTab('codex');setTimeout(ghConnect,300);">CONNECTER</button>
+          <div class="settings-hint">Connexion sécurisée via Edge Function Supabase. Le token GitHub reste côté serveur.</div>
+          <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <div class="gh-status off" id="set-gh-dot" style="width:8px;height:8px;flex-shrink:0;"></div>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);" id="set-gh-status">Non connecté</span>
+            <button class="btn-orange" id="set-gh-connect-btn" style="width:auto;padding:7px 18px;font-size:12px;" onclick="settingsGhConnect()">CONNECTER</button>
+          </div>
+          <div id="set-gh-details" style="display:none;margin-top:12px;">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="#e8e6e3"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);" id="set-gh-repo-name"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <label style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);">BRANCHE :</label>
+              <select class="settings-input" id="set-gh-branch" style="width:auto;min-width:140px;padding:6px 10px;font-size:12px;" onchange="settingsGhBranchChange()"></select>
+            </div>
+            <div id="set-gh-files" style="margin-top:10px;max-height:200px;overflow-y:auto;"></div>
           </div>
         </div>
         <div class="settings-section" style="margin-bottom:12px;">
@@ -2743,9 +2754,81 @@ function cervRenderList(){
 function updateSettingsConnStatus(){
   var ghDot=document.getElementById("set-gh-dot");
   var ghStatus=document.getElementById("set-gh-status");
+  var ghBtn=document.getElementById("set-gh-connect-btn");
+  var ghDetails=document.getElementById("set-gh-details");
   if(ghDot&&ghStatus){
-    if(ghConnected){ghDot.className="gh-status on";ghStatus.textContent="Connecté";ghStatus.style.color="var(--green)";}
-    else{ghDot.className="gh-status off";ghStatus.textContent="Non connecté";ghStatus.style.color="";}
+    if(ghConnected){
+      ghDot.className="gh-status on";
+      ghStatus.textContent="Connecté";
+      ghStatus.style.color="var(--green)";
+      if(ghBtn){ghBtn.textContent="✓ CONNECTÉ";ghBtn.style.opacity=".6";}
+      if(ghDetails)ghDetails.style.display="";
+      var repoName=document.getElementById("set-gh-repo-name");
+      if(repoName){
+        var sel=document.getElementById("gh-repo");
+        repoName.textContent=sel?sel.value:"Projet connecté";
+      }
+      settingsGhSyncBranches();
+    }else{
+      ghDot.className="gh-status off";
+      ghStatus.textContent="Non connecté";
+      ghStatus.style.color="";
+      if(ghBtn){ghBtn.textContent="CONNECTER";ghBtn.style.opacity="1";}
+      if(ghDetails)ghDetails.style.display="none";
+    }
+  }
+}
+async function settingsGhConnect(){
+  if(ghConnected){updateSettingsConnStatus();return;}
+  var btn=document.getElementById("set-gh-connect-btn");
+  var status=document.getElementById("set-gh-status");
+  if(btn)btn.textContent="CONNEXION…";
+  if(status){status.textContent="Connexion…";status.style.color="var(--or)";}
+  try{
+    await ghConnect();
+    updateSettingsConnStatus();
+  }catch(e){
+    if(status){status.textContent="Erreur: "+e.message;status.style.color="#ff4444";}
+    if(btn)btn.textContent="RÉESSAYER";
+  }
+}
+function settingsGhSyncBranches(){
+  var srcSel=document.getElementById("gh-branch");
+  var setSel=document.getElementById("set-gh-branch");
+  if(!srcSel||!setSel)return;
+  setSel.innerHTML="";
+  for(var i=0;i<srcSel.options.length;i++){
+    var o=document.createElement("option");
+    o.value=srcSel.options[i].value;
+    o.textContent=srcSel.options[i].textContent;
+    if(srcSel.options[i].selected)o.selected=true;
+    setSel.appendChild(o);
+  }
+}
+function settingsGhBranchChange(){
+  var setSel=document.getElementById("set-gh-branch");
+  var srcSel=document.getElementById("gh-branch");
+  if(setSel&&srcSel){
+    srcSel.value=setSel.value;
+    ghCurrentBranch=setSel.value;
+    ghLoadFiles();
+    settingsGhLoadFiles();
+  }
+}
+async function settingsGhLoadFiles(){
+  var container=document.getElementById("set-gh-files");
+  if(!container||!ghConnected)return;
+  container.innerHTML='<span style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--muted);">Chargement…</span>';
+  try{
+    var data=await ghProxyCall({action:"listFiles",branch:ghCurrentBranch});
+    var files=data.files||[];
+    if(!files.length){container.innerHTML='<span style="font-size:10px;color:var(--muted);">Aucun fichier</span>';return;}
+    container.innerHTML=files.slice(0,30).map(function(f){
+      var ico=f.endsWith("/")?"📁":"📄";
+      return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--txt);">'+ico+' '+escHtml(f)+'</div>';
+    }).join("")+(files.length>30?'<div style="font-size:10px;color:var(--muted);margin-top:4px;">+'+(files.length-30)+' fichiers…</div>':"");
+  }catch(e){
+    container.innerHTML='<span style="font-size:10px;color:#ff4444;">Erreur: '+escHtml(e.message)+'</span>';
   }
 }
 
