@@ -1135,12 +1135,14 @@ function switchView(v) {
   if (v === "account" && typeof refreshAccountPage === "function") refreshAccountPage();
   if (v === "finance") { const w = $("#finWelcome"); if (w && w.style.display !== "none") finTypewriter(); }
   if (v === "cerveau" && typeof cervLoadNotes === "function") cervLoadNotes();
+  if (v === "convos" && typeof renderConvosCenter === "function") renderConvosCenter();
   if (v !== "chat") closeStudioPreview();
   const subNav = $("#chatSubNav");
   if (subNav) subNav.classList.toggle("open", v === "chat" || v === "projects" || v === "convos" || v === "cerveau");
 }
 $$(".nav-item").forEach(b => b.dataset.view && (b.onclick = () => switchView(b.dataset.view)));
 if (location.hash) { const hv = location.hash.slice(1); if ($(`#view-${hv}`)) switchView(hv); }
+else { switchView("convos"); }
 
 /* ================= SÉLECTEUR D'AGENTS ================= */
 const AGENT_DESC_KEYS = { tilex: "agentTilex", general: "agentGeneral", dev: "agentDev", secu: "agentSecu", creatif: "agentCreatif", cerveau: "agentCerveau" };
@@ -2030,32 +2032,7 @@ function projectContextString({ maxBytes = 70000, withContent = true } = {}) {
   return s;
 }
 
-/* ================= CONNEXION SUPABASE ================= */
-function setSbState(txt, ok) {
-  const el = $("#sbState");
-  if (el) { el.textContent = txt; el.classList.toggle("ok", !!ok); }
-}
-async function sbConnect() {
-  const url = $("#sbUrl").value.trim().replace(/\/$/, "");
-  const key = $("#sbKey").value.trim();
-  if (!url || !key) { setSbState(t("sbRequired"), false); return; }
-  setSbState(t("sbConnecting"), false);
-  const btn = $("#sbConnect"); btn.disabled = true;
-  try {
-    const res = await fetch(`${url}/rest/v1/`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
-    if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
-    state.supabase = { url, key };
-    state.connected.supabase = true;
-    setSbState(t("connectedMark"), true);
-    try { localStorage.setItem(LS_SB, JSON.stringify(state.supabase)); } catch (_) {}
-    $$(`.conn-btn[data-service="supabase"]`).forEach(b => b.classList.add("connected"));
-    syncCodexProjects();
-  } catch (err) {
-    setSbState(`✗ ${err.message}`, false);
-    state.connected.supabase = false;
-  } finally { btn.disabled = false; }
-}
-if ($("#sbConnect")) $("#sbConnect").onclick = sbConnect;
+/* Supabase connection is hardcoded — no user-facing config */
 
 /* ================= BOUTON + (pièces jointes / micro / web) ================= */
 const plusBtn = $("#plusBtn"), plusMenu = $("#plusMenu");
@@ -2502,9 +2479,11 @@ $$(".convos-tab").forEach(tab => {
   tab.onclick = () => renderConvosCenter(tab.dataset.filter);
 });
 
+var _convoDetailIdx = -1;
 function openConvoDetail(idx) {
   var conv = chatConvs[idx];
   if (!conv) return;
+  _convoDetailIdx = idx;
   var listPage = $("#convosListPage");
   var detailPage = $("#convosDetailPage");
   if (!listPage || !detailPage) return;
@@ -2533,6 +2512,18 @@ function closeConvoDetail() {
   var detailPage = $("#convosDetailPage");
   if (listPage) listPage.classList.remove("hidden");
   if (detailPage) detailPage.classList.add("hidden");
+  _convoDetailIdx = -1;
+}
+
+function continueConvoFromDetail() {
+  if (_convoDetailIdx < 0 || !chatConvs[_convoDetailIdx]) return;
+  activeChatConv = _convoDetailIdx;
+  state.history = [...chatConvs[_convoDetailIdx].messages];
+  rebuildChatFromHistory();
+  renderChatConvsFiltered();
+  updateConvDotsState();
+  closeConvoDetail();
+  switchView("chat");
 }
 
 function convosMascotWink() {
@@ -6276,15 +6267,12 @@ loadAcctProfile();
 
 // restaure les champs de connexion
 if (state.github.token) $("#ghToken").value = state.github.token;
-if (state.supabase.url) $("#sbUrl").value = state.supabase.url;
-if (state.supabase.key) $("#sbKey").value = state.supabase.key;
 
 // ré-applique l'état "connecté" sur les boutons (après loadSettings)
 Object.keys(state.connected).forEach(s => {
   if (state.connected[s]) $$(`.conn-btn[data-service="${s}"]`).forEach(b => b.classList.add("connected"));
 });
 if (state.connected.github) { setGhState(t("connectedMark"), true); }
-if (state.connected.supabase) { setSbState(t("connectedMark"), true); }
 
 syncReflexion();
 syncCodexProjects();
