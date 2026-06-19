@@ -301,7 +301,7 @@ html[data-plan="cyber_fortress"] .plan-opus-only{display:flex!important;}
 .lock-desc{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;max-width:280px;}
 
 /* ══ CONTENT ══ */
-.content{flex:1;margin-left:0;padding:0 0 80px;min-height:calc(100vh - var(--tb));
+.content{flex:1;margin-left:0;padding:var(--tb) 0 80px;min-height:100vh;
   transition:margin-left .3s cubic-bezier(.4,0,.2,1);min-width:0;max-width:100%;}
 body.sb-open .content{margin-left:var(--sb-w);}
 
@@ -566,7 +566,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 
 /* CODEX */
 /* ── CODEX — style terminal Claude Code ── */
-.codex-wrap{display:flex;flex-direction:column;height:calc(100vh - 70px - 58px);overflow:hidden;}
+.codex-wrap{display:flex;flex-direction:column;height:calc(100vh - var(--tb) - 58px);overflow:hidden;}
 .codex-topbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg);border-bottom:none;flex-shrink:0;}
 .codex-topbar .cx-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .codex-topbar .cx-dot.r{background:#ff5f57;}.codex-topbar .cx-dot.y{background:#febc2e;}.codex-topbar .cx-dot.g{background:#28c840;}
