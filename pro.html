@@ -1277,6 +1277,21 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .uc-bloc{background:#f5f0e8;border-color:#D4C5A4;}
 [data-theme="day"] .uc-input{background:#fff;border-color:#D4C5A4;color:#1a1a1a;}
 
+/* GARDE IA — Blocage abonnement */
+.message-blocage{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin:10px 0;flex-wrap:wrap;}
+.blocage-icone{font-size:26px;flex-shrink:0;}
+.blocage-texte{flex:1;font-size:14px;color:var(--muted);line-height:1.5;font-family:'Rajdhani',sans-serif;}
+.blocage-texte strong{color:var(--txt);display:block;margin-bottom:3px;}
+.blocage-btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;background:transparent;border:1px solid var(--orange);color:var(--orange);transition:all .2s;white-space:nowrap;font-family:'Share Tech Mono',monospace;cursor:pointer;display:inline-block;}
+.blocage-btn:hover{background:var(--orange);color:#0a0a0a;}
+.blocage-btn-or{border-color:var(--or);color:var(--or);}
+.blocage-btn-or:hover{background:var(--or);color:#0a0a0a;}
+.banniere-abonnement{display:flex;align-items:center;justify-content:center;gap:14px;padding:12px 20px;background:rgba(255,127,39,.08);border-bottom:1px solid rgba(255,127,39,.2);font-size:13px;color:var(--orange);flex-wrap:wrap;text-align:center;font-family:'Share Tech Mono',monospace;}
+.banniere-btn{padding:6px 16px;background:linear-gradient(135deg,var(--orange),var(--or));color:#0a0a0a;border-radius:20px;font-size:12px;font-weight:700;text-decoration:none;transition:opacity .2s;font-family:'Share Tech Mono',monospace;}
+.banniere-btn:hover{opacity:.85;}
+.composer-input:disabled{opacity:.4;cursor:not-allowed!important;}
+.composer-send:disabled{opacity:.3;cursor:not-allowed!important;}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2744,6 +2759,8 @@ async function sendChat(){
     if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
     else td.remove();
     if(!res.ok){
+      if(res.status===401){afficherMessageBlocage("non_connecte");chatBusy=false;return;}
+      if(res.status===403){afficherMessageBlocage("sans_abonnement");chatBusy=false;return;}
       let errMsg="Erreur de connexion.";
       try{
         var ct=res.headers.get("content-type")||"";
@@ -4951,15 +4968,19 @@ document.getElementById("composer-input").addEventListener("input",function(){
   this.style.height=Math.min(this.scrollHeight,120)+"px";
 });
 
-function composerSend(){
+async function composerSend(){
   var inp=document.getElementById("composer-input");
   var txt=inp.value.trim();
   if(!txt)return;
   if(currentComposerMode==="chat"){
+    var autorise=await gardeIA();
+    if(!autorise)return;
     document.getElementById("chat-in").value=txt;
     inp.value="";inp.style.height="auto";
     sendChat();
   }else if(currentComposerMode==="codex"){
+    var autorise2=await gardeIA();
+    if(!autorise2)return;
     document.getElementById("codex-txt").value=txt;
     inp.value="";inp.style.height="auto";
     genCode();
@@ -5739,6 +5760,83 @@ function initMobileUX(){
   }
 }
 
+/* ══ GARDE IA — Vérification abonnement avant chaque appel IA ══ */
+async function verifierAccesIA(){
+  try{
+    var sess=await supabase.auth.getSession();
+    var token=sess.data.session?.access_token;
+    if(!token)return{autorise:false,raison:"non_connecte",message:"Connecte-toi pour utiliser ti-lex-al."};
+    var res=await fetch(SB_URL+"/functions/v1/check-abonnement",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON}
+    });
+    return await res.json();
+  }catch(e){
+    return{autorise:false,raison:"erreur",message:"Erreur de connexion. Réessaie."};
+  }
+}
+
+function afficherMessageBlocage(raison){
+  var msgs=document.getElementById("chat-msgs");
+  if(!msgs)return;
+  var el=document.createElement("div");
+  el.className="message-blocage";
+  if(raison==="non_connecte"){
+    el.innerHTML='<div class="blocage-icone">🔒</div><div class="blocage-texte"><strong>Connexion requise</strong>Connecte-toi pour utiliser ti-lex-al.</div><button class="blocage-btn" onclick="showTab(\'settings\')">Se connecter</button>';
+  }else if(raison==="sans_abonnement"){
+    el.innerHTML='<div class="blocage-icone">⭐</div><div class="blocage-texte"><strong>Abonnement requis</strong>Choisis un forfait pour accéder à l\'IA.</div><a href="/forfaits" class="blocage-btn blocage-btn-or">Voir les forfaits</a>';
+  }else{
+    el.innerHTML='<div class="blocage-icone">⚠️</div><div class="blocage-texte"><strong>Erreur</strong>Réessaie dans un moment.</div>';
+  }
+  msgs.appendChild(el);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function gardeIA(){
+  var acces=await verifierAccesIA();
+  if(!acces.autorise){
+    afficherMessageBlocage(acces.raison);
+    return false;
+  }
+  return true;
+}
+
+function afficherBanniereAbonnement(raison){
+  if(document.getElementById("banniere-abonnement"))return;
+  var b=document.createElement("div");
+  b.id="banniere-abonnement";
+  b.className="banniere-abonnement";
+  if(raison==="non_connecte"){
+    b.innerHTML='🔒 Connecte-toi pour utiliser ti-lex-al <button class="banniere-btn" onclick="showTab(\'settings\')">Se connecter</button>';
+  }else{
+    b.innerHTML='⭐ Abonne-toi pour accéder à l\'IA <a href="/forfaits" class="banniere-btn">Voir les forfaits</a>';
+  }
+  var chatContainer=document.getElementById("chat-msgs")?.parentElement;
+  if(chatContainer)chatContainer.prepend(b);
+}
+
+function retirerBanniereAbonnement(){
+  var b=document.getElementById("banniere-abonnement");
+  if(b)b.remove();
+}
+
+async function verifierEtatChat(){
+  var inp=document.getElementById("composer-input");
+  var btn=document.getElementById("composer-send-btn");
+  var acces=await verifierAccesIA();
+  if(!acces.autorise){
+    if(inp){inp.disabled=true;inp.placeholder=acces.raison==="non_connecte"?"🔒 Connecte-toi pour écrire...":"⭐ Abonne-toi pour utiliser l'IA...";}
+    if(btn)btn.disabled=true;
+    afficherBanniereAbonnement(acces.raison);
+  }else{
+    if(inp){inp.disabled=false;inp.placeholder="Écris un message…";}
+    if(btn)btn.disabled=false;
+    retirerBanniereAbonnement();
+  }
+}
+window.gardeIA=gardeIA;
+window.verifierAccesIA=verifierAccesIA;
+
 /* ══ SILEX — Cybersécurité Admin ══ */
 var SILEX_SOW_ID='9b7013d9-6bd3-4b13-8a88-0fc9869cced4';
 var SILEX_ADMIN_EMAIL='alexmarceauprevost812@gmail.com';
@@ -5937,8 +6035,9 @@ silexCheckAccess();
 applyPlanVisibility();
 checkAdminStatus();
 initUserConnexions();
+verifierEtatChat();
 supabase.auth.onAuthStateChange(function(event,session){
-  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){demarrerConversation(session.user.id).catch(function(){});}
 });

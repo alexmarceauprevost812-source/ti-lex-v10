@@ -16,6 +16,11 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const PLANS_VALIDES = new Set([
+  "ti", "flux", "surge", "apex",
+  "cyber_recon", "cyber_guardian", "cyber_shield", "cyber_sentinel", "cyber_fortress",
+]);
+
 const LIMITS = { chat: 200, image: 20 };
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
@@ -31,17 +36,30 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405);
 
   try {
-    // ---- 1. Auth optionnelle ----
+    // ---- 1. Auth obligatoire + vérification abonnement ----
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    let userId = "anonymous";
 
-    if (token) {
-      try {
-        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-        const { data: userData } = await sb.auth.getUser(token);
-        if (userData?.user?.id) userId = userData.user.id;
-      } catch (_) {}
+    if (!token) {
+      return json({ error: "non_connecte", message: "Connecte-toi pour utiliser ti-lex-al." }, 401);
+    }
+
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data: userData, error: authError } = await sb.auth.getUser(token);
+    if (authError || !userData?.user?.id) {
+      return json({ error: "non_connecte", message: "Session expirée. Reconnecte-toi." }, 401);
+    }
+    const userId = userData.user.id;
+
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("plan")
+      .eq("id", userId)
+      .maybeSingle();
+    const userPlan = profile?.plan || "";
+
+    if (!PLANS_VALIDES.has(userPlan)) {
+      return json({ error: "sans_abonnement", message: "Abonne-toi pour accéder à ti-lex-al." }, 403);
     }
 
     // ---- 2. Parse + valide le body ----
@@ -52,9 +70,8 @@ Deno.serve(async (req) => {
     const kind = body.kind === "image" ? "image" : "chat";
 
     // ---- 3. Rate limit ----
-    if (userId !== "anonymous") {
+    {
       try {
-        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
         const col = kind === "image" ? "image_count" : "chat_count";
         const { data: usage } = await sb
           .from("ai_usage")
@@ -111,18 +128,6 @@ Deno.serve(async (req) => {
     let requestedModel = ALLOWED_MODELS.has(body.model) ? body.model : DEFAULT_FALLBACK;
 
     if (requestedModel === "claude-opus-4-8" || requestedModel === "claude-opus-4-7") {
-      let userPlan = "flux";
-      if (userId !== "anonymous") {
-        try {
-          const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-          const { data: profile } = await sb
-            .from("profiles")
-            .select("plan")
-            .eq("id", userId)
-            .maybeSingle();
-          if (profile?.plan) userPlan = profile.plan;
-        } catch (_) {}
-      }
       if (!OPUS_PLANS.has(userPlan)) {
         requestedModel = DEFAULT_FALLBACK;
       }
