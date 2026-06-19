@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ti-lex-AL v10 — Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/agent-marceau.css">
 <style>
 :root{
   --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
@@ -1259,6 +1260,18 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
   </div>
 
+  <!-- AGENT MARCEAU -->
+  <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
+    <span class="sb-icon" style="color:#ff7f27;">
+      <svg width="14" height="16" viewBox="0 0 22 26" fill="none" style="vertical-align:middle">
+        <defs><linearGradient id="nav-flame" x1="11" y1="2" x2="11" y2="26" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#ffe566"/><stop offset="40%" stop-color="#ff7f27"/><stop offset="100%" stop-color="#bb1500"/>
+        </linearGradient></defs>
+        <path d="M11 26C11 26 3 20 3 12.5C3 8 7 5.5 9 7C8.5 4.5 10 2.5 11 2C12 2.5 13.5 4.5 13 7C15 5.5 19 8 19 12.5C19 20 11 26 11 26Z" fill="url(#nav-flame)"/>
+      </svg>
+    </span><span class="sb-label" data-txt="MARCEAU"></span>
+  </div>
+
   <!-- CRÉER AGENT IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
@@ -1805,6 +1818,9 @@ Comment puis-je t'aider aujourd'hui?</div>
     </div>
   </div>
 
+  <!-- AGENT MARCEAU — Dialogue multi-agents 4 phases -->
+  <div id="view-marceau" class="view"></div>
+
 </main>
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
@@ -1997,15 +2013,16 @@ document.addEventListener("click",function(e){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings")initGithubSettings();
+  if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab){
     if(name==="chat"||name==="conversations")fab.classList.add("visible");
@@ -4505,6 +4522,8 @@ function closeReflexion(event,btn){
 })();
 
 </script>
+
+<script src="js/agent-marceau.js"></script>
 
 <!-- FAB Nouvelle conversation — Interface Pro -->
 <button id="fab-new-conv-pro" class="fab-new-conv-pro" onclick="newConversation();showTab('chat');" aria-label="Nouvelle conversation">
