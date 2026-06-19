@@ -7,39 +7,41 @@ const CORS = {
 };
 
 const PLANS_VALIDES = new Set([
-  "ti", "flux", "surge", "apex",
+  "free", "ti", "flux", "surge", "apex",
   "cyber_recon", "cyber_guardian", "cyber_shield", "cyber_sentinel", "cyber_fortress",
 ]);
 
 const PLAN_LIMITS: Record<string, { window: number; day: number }> = {
-  ti:    { window: 50,  day: 100 },
-  flux:  { window: 100, day: 200 },
-  surge: { window: 200, day: 400 },
+  free:  { window: 10,  day: 20 },
+  ti:    { window: 40,  day: 80 },
+  flux:  { window: 40,  day: 80 },
+  surge: { window: 100, day: 200 },
   apex:  { window: 200, day: 400 },
 };
 
+// EDT (UTC-4) : 8h ET = 12h UTC, 20h ET = 0h UTC
 function getWindow(): { name: string; start: Date; end: Date; nextRechargeLabel: string } {
   const now = new Date();
-  const h = now.getUTCHours() - 4;
-  const hour = h < 0 ? h + 24 : h;
+  const utcHour = now.getUTCHours();
   const today = new Date(now);
   today.setUTCHours(0, 0, 0, 0);
 
-  if (hour < 12) {
-    const start = new Date(today); start.setUTCHours(4 + 0, 0, 0, 0);
-    const end = new Date(today); end.setUTCHours(4 + 12, 0, 0, 0);
-    const diff = end.getTime() - now.getTime();
-    const hLeft = Math.floor(diff / 3600000);
-    const mLeft = Math.floor((diff % 3600000) / 60000);
-    return { name: "matin", start, end, nextRechargeLabel: `${hLeft}h${String(mLeft).padStart(2, "0")}` };
+  let name: string, start: Date, end: Date;
+
+  if (utcHour >= 12) {
+    name = "matin";
+    start = new Date(today); start.setUTCHours(12, 0, 0, 0);
+    end = new Date(today); end.setUTCHours(24, 0, 0, 0);
   } else {
-    const start = new Date(today); start.setUTCHours(4 + 12, 0, 0, 0);
-    const end = new Date(today); end.setUTCHours(4 + 24, 0, 0, 0);
-    const diff = end.getTime() - now.getTime();
-    const hLeft = Math.floor(diff / 3600000);
-    const mLeft = Math.floor((diff % 3600000) / 60000);
-    return { name: "soir", start, end, nextRechargeLabel: `${hLeft}h${String(mLeft).padStart(2, "0")}` };
+    name = "soir";
+    start = new Date(today); start.setUTCHours(0, 0, 0, 0);
+    end = new Date(today); end.setUTCHours(12, 0, 0, 0);
   }
+
+  const diff = end.getTime() - now.getTime();
+  const hLeft = Math.floor(diff / 3600000);
+  const mLeft = Math.floor((diff % 3600000) / 60000);
+  return { name, start, end, nextRechargeLabel: `${hLeft}h${String(mLeft).padStart(2, "0")}` };
 }
 
 Deno.serve(async (req) => {
