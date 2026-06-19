@@ -1112,6 +1112,39 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 @keyframes reflexionClose{from{opacity:1;transform:translateY(0);max-height:600px;}to{opacity:0;transform:translateY(-8px);max-height:0;margin:0;padding:0;}}
 .reflexion-closing{animation:reflexionClose .25s ease forwards;overflow:hidden;pointer-events:none;}
 
+/* ── GitHub PAT Section ── */
+.param-section{border:1px solid #23232c;border-radius:6px;margin-bottom:16px;overflow:hidden;}
+.param-section-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#101015;border-bottom:1px solid #23232c;}
+.param-section-icon{color:#6c6c78;display:flex;align-items:center;}
+.param-section-title{font-family:'JetBrains Mono','Courier New',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;color:#ffcf4a;flex:1;}
+.github-status-badge{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;padding:2px 8px;border-radius:3px;background:#1a1a20;border:1px solid #23232c;color:#6c6c78;transition:all .2s;}
+.github-status-badge.connected{background:rgba(55,224,160,.12);border-color:#37e0a0;color:#37e0a0;}
+.param-section-body{padding:16px;display:flex;flex-direction:column;gap:14px;}
+.param-field-group{display:flex;flex-direction:column;gap:6px;}
+.param-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:#6c6c78;display:flex;align-items:center;justify-content:space-between;}
+.param-link{color:#ff7f27;text-decoration:none;font-size:9px;}
+.param-link:hover{text-decoration:underline;}
+.param-input{width:100%;padding:9px 12px;background:#0a0a0a;border:1px solid #23232c;border-radius:4px;color:#e0e0e0;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box;}
+.param-input:focus{border-color:#ff7f27;}
+.param-input-row{display:flex;gap:8px;align-items:center;}
+.param-toggle-btn{padding:8px 10px;background:#101015;border:1px solid #23232c;border-radius:4px;cursor:pointer;color:#6c6c78;font-size:14px;flex-shrink:0;}
+.param-toggle-btn:hover{border-color:#ff7f27;color:#ff7f27;}
+.param-hint{font-size:10px;color:#6c6c78;font-family:'JetBrains Mono',monospace;}
+.param-hint code{background:#101015;border:1px solid #23232c;padding:1px 4px;border-radius:2px;color:#ffcf4a;}
+.param-actions-row{display:flex;gap:10px;flex-wrap:wrap;}
+.param-btn-primary{padding:9px 18px;background:#ff7f27;color:#0a0a0a;border:none;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:opacity .2s;}
+.param-btn-primary:hover{opacity:.85;}
+.param-btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.param-btn-danger{padding:9px 18px;background:transparent;color:#e05555;border:1px solid #e05555;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:all .2s;}
+.param-btn-danger:hover{background:rgba(224,85,85,.1);}
+.param-feedback{font-family:'JetBrains Mono',monospace;font-size:11px;min-height:18px;}
+.param-feedback.success{color:#37e0a0;}
+.param-feedback.error{color:#e05555;}
+[data-theme="day"] .param-section-header{background:#EFE7D7;}
+[data-theme="day"] .param-section{border-color:#D4C5A4;}
+[data-theme="day"] .param-input{background:#f5f0e8;border-color:#D4C5A4;color:#1a1a1a;}
+[data-theme="day"] .param-toggle-btn{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1628,24 +1661,36 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="card" style="margin-bottom:14px;">
       <div class="card-hd" id="lbl-conn-hd" data-i18n="conn-hd">🔗 CONNEXIONS</div>
       <div class="card-body">
-        <div class="settings-section" style="margin-bottom:12px;">
-          <div class="settings-label">GITHUB</div>
-          <div class="settings-hint">Connexion sécurisée via Edge Function Supabase. Le token GitHub reste côté serveur.</div>
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <div class="gh-status off" id="set-gh-dot" style="width:8px;height:8px;flex-shrink:0;"></div>
-            <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);" id="set-gh-status">Non connecté</span>
-            <button class="btn-orange" id="set-gh-connect-btn" style="width:auto;padding:7px 18px;font-size:12px;" onclick="settingsGhConnect()">CONNECTER</button>
+        <!-- ─── SECTION GITHUB PAT ─── -->
+        <div class="param-section" id="github-section">
+          <div class="param-section-header">
+            <span class="param-section-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            </span>
+            <span class="param-section-title">GITHUB</span>
+            <span class="github-status-badge" id="github-status-badge">NON CONNECTÉ</span>
           </div>
-          <div id="set-gh-details" style="display:none;margin-top:12px;">
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="#e8e6e3"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-              <span style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--green);" id="set-gh-repo-name"></span>
+          <div class="param-section-body">
+            <div class="param-field-group">
+              <label class="param-label" for="github-username-input">USERNAME GITHUB</label>
+              <input type="text" id="github-username-input" class="param-input" placeholder="ex: alexmarceau" autocomplete="off"/>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <label style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);">BRANCHE :</label>
-              <select class="settings-input" id="set-gh-branch" style="width:auto;min-width:140px;padding:6px 10px;font-size:12px;" onchange="settingsGhBranchChange()"></select>
+            <div class="param-field-group">
+              <label class="param-label" for="github-pat-input">
+                PERSONAL ACCESS TOKEN (PAT)
+                <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=ti-lex" target="_blank" rel="noopener" class="param-link">↗ Générer un token</a>
+              </label>
+              <div class="param-input-row">
+                <input type="password" id="github-pat-input" class="param-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="new-password"/>
+                <button class="param-toggle-btn" id="github-pat-toggle" title="Afficher / Masquer">👁</button>
+              </div>
+              <span class="param-hint">Scopes requis : <code>repo</code>, <code>workflow</code></span>
             </div>
-            <div id="set-gh-files" style="margin-top:10px;max-height:200px;overflow-y:auto;"></div>
+            <div class="param-actions-row">
+              <button class="param-btn-primary" id="github-save-btn">CONNECTER GITHUB</button>
+              <button class="param-btn-danger" id="github-disconnect-btn" style="display:none;">DÉCONNECTER</button>
+            </div>
+            <div class="param-feedback" id="github-feedback"></div>
           </div>
         </div>
         <div class="settings-section" style="margin-bottom:12px;">
@@ -1960,7 +2005,7 @@ function showTab(name){
   const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
-  if(name==="settings")updateSettingsConnStatus();
+  if(name==="settings")initGithubSettings();
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab){
     if(name==="chat"||name==="conversations")fab.classList.add("visible");
@@ -2751,85 +2796,88 @@ function cervRenderList(){
   });
 }
 
-function updateSettingsConnStatus(){
-  var ghDot=document.getElementById("set-gh-dot");
-  var ghStatus=document.getElementById("set-gh-status");
-  var ghBtn=document.getElementById("set-gh-connect-btn");
-  var ghDetails=document.getElementById("set-gh-details");
-  if(ghDot&&ghStatus){
-    if(ghConnected){
-      ghDot.className="gh-status on";
-      ghStatus.textContent="Connecté";
-      ghStatus.style.color="var(--green)";
-      if(ghBtn){ghBtn.textContent="✓ CONNECTÉ";ghBtn.style.opacity=".6";}
-      if(ghDetails)ghDetails.style.display="";
-      var repoName=document.getElementById("set-gh-repo-name");
-      if(repoName){
-        var sel=document.getElementById("gh-repo");
-        repoName.textContent=sel?sel.value:"Projet connecté";
+/* ── GitHub PAT Settings ── */
+function _ghGetUserId(){
+  try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.user&&s.user.id)return s.user.id;}}catch(e){}return null;
+}
+
+function initGithubSettings(){
+  var badge=document.getElementById("gh-pat-badge");
+  var usernameIn=document.getElementById("gh-pat-username");
+  var patIn=document.getElementById("gh-pat-input");
+  var connectBtn=document.getElementById("gh-pat-connect-btn");
+  var disconnectBtn=document.getElementById("gh-pat-disconnect-btn");
+  var toggleBtn=document.getElementById("gh-pat-toggle");
+  var feedback=document.getElementById("gh-pat-feedback");
+  if(!usernameIn||!patIn)return;
+
+  function showFeedback(msg,type){
+    if(!feedback)return;
+    feedback.textContent=msg;feedback.className="param-feedback "+(type||"");
+    feedback.style.display="block";
+    if(type!=="error")setTimeout(function(){feedback.style.display="none";},4000);
+  }
+
+  function setConnectedState(connected,username){
+    if(badge){badge.textContent=connected?"Connecté":"Non connecté";badge.className="github-status-badge"+(connected?" connected":"");}
+    if(disconnectBtn)disconnectBtn.style.display=connected?"inline-flex":"none";
+    if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER";
+  }
+
+  async function loadGithubData(){
+    var uid=_ghGetUserId();if(!uid)return;
+    try{
+      var data=await sbRest("/profiles?id=eq."+uid+"&select=github_username,github_pat");
+      if(data&&data[0]){
+        usernameIn.value=data[0].github_username||"";
+        patIn.value=data[0].github_pat||"";
+        setConnectedState(!!(data[0].github_username&&data[0].github_pat),data[0].github_username);
       }
-      settingsGhSyncBranches();
-    }else{
-      ghDot.className="gh-status off";
-      ghStatus.textContent="Non connecté";
-      ghStatus.style.color="";
-      if(ghBtn){ghBtn.textContent="CONNECTER";ghBtn.style.opacity="1";}
-      if(ghDetails)ghDetails.style.display="none";
-    }
+    }catch(e){showFeedback("Erreur chargement: "+e.message,"error");}
   }
+
+  async function saveGithubData(){
+    var uid=_ghGetUserId();if(!uid){showFeedback("Non authentifié.","error");return;}
+    var username=usernameIn.value.trim();
+    var pat=patIn.value.trim();
+    if(!username||!pat){showFeedback("Nom d'utilisateur et token requis.","error");return;}
+    connectBtn.textContent="CONNEXION…";connectBtn.disabled=true;
+    try{
+      await sbRest("/profiles?id=eq."+uid,{method:"PATCH",prefer:"return=minimal",body:{github_username:username,github_pat:pat}});
+      setConnectedState(true,username);
+      showFeedback("GitHub connecté avec succès!","success");
+    }catch(e){showFeedback("Erreur: "+e.message,"error");}
+    connectBtn.disabled=false;
+  }
+
+  async function disconnectGithub(){
+    var uid=_ghGetUserId();if(!uid)return;
+    try{
+      await sbRest("/profiles?id=eq."+uid,{method:"PATCH",prefer:"return=minimal",body:{github_username:null,github_pat:null}});
+      usernameIn.value="";patIn.value="";
+      setConnectedState(false);
+      showFeedback("GitHub déconnecté.","success");
+    }catch(e){showFeedback("Erreur: "+e.message,"error");}
+  }
+
+  if(toggleBtn)toggleBtn.onclick=function(){
+    var isPass=patIn.type==="password";
+    patIn.type=isPass?"text":"password";
+    toggleBtn.textContent=isPass?"🙈":"👁";
+  };
+  if(connectBtn)connectBtn.onclick=saveGithubData;
+  if(disconnectBtn)disconnectBtn.onclick=disconnectGithub;
+
+  loadGithubData();
 }
-async function settingsGhConnect(){
-  if(ghConnected){updateSettingsConnStatus();return;}
-  var btn=document.getElementById("set-gh-connect-btn");
-  var status=document.getElementById("set-gh-status");
-  if(btn)btn.textContent="CONNEXION…";
-  if(status){status.textContent="Connexion…";status.style.color="var(--or)";}
+
+async function getGithubToken(){
+  var uid=_ghGetUserId();if(!uid)return null;
   try{
-    await ghConnect();
-    updateSettingsConnStatus();
-  }catch(e){
-    if(status){status.textContent="Erreur: "+e.message;status.style.color="#ff4444";}
-    if(btn)btn.textContent="RÉESSAYER";
-  }
-}
-function settingsGhSyncBranches(){
-  var srcSel=document.getElementById("gh-branch");
-  var setSel=document.getElementById("set-gh-branch");
-  if(!srcSel||!setSel)return;
-  setSel.innerHTML="";
-  for(var i=0;i<srcSel.options.length;i++){
-    var o=document.createElement("option");
-    o.value=srcSel.options[i].value;
-    o.textContent=srcSel.options[i].textContent;
-    if(srcSel.options[i].selected)o.selected=true;
-    setSel.appendChild(o);
-  }
-}
-function settingsGhBranchChange(){
-  var setSel=document.getElementById("set-gh-branch");
-  var srcSel=document.getElementById("gh-branch");
-  if(setSel&&srcSel){
-    srcSel.value=setSel.value;
-    ghCurrentBranch=setSel.value;
-    ghLoadFiles();
-    settingsGhLoadFiles();
-  }
-}
-async function settingsGhLoadFiles(){
-  var container=document.getElementById("set-gh-files");
-  if(!container||!ghConnected)return;
-  container.innerHTML='<span style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:var(--muted);">Chargement…</span>';
-  try{
-    var data=await ghProxyCall({action:"listFiles",branch:ghCurrentBranch});
-    var files=data.files||[];
-    if(!files.length){container.innerHTML='<span style="font-size:10px;color:var(--muted);">Aucun fichier</span>';return;}
-    container.innerHTML=files.slice(0,30).map(function(f){
-      var ico=f.endsWith("/")?"📁":"📄";
-      return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-family:\'Share Tech Mono\',monospace;font-size:11px;color:var(--txt);">'+ico+' '+escHtml(f)+'</div>';
-    }).join("")+(files.length>30?'<div style="font-size:10px;color:var(--muted);margin-top:4px;">+'+(files.length-30)+' fichiers…</div>':"");
-  }catch(e){
-    container.innerHTML='<span style="font-size:10px;color:#ff4444;">Erreur: '+escHtml(e.message)+'</span>';
-  }
+    var data=await sbRest("/profiles?id=eq."+uid+"&select=github_pat");
+    if(data&&data[0]&&data[0].github_pat)return data[0].github_pat;
+  }catch(e){console.error("getGithubToken error:",e);}
+  return null;
 }
 
 /* ── SAVE TO CERVEAU + TTS ── */
