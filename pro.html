@@ -5750,11 +5750,11 @@ function retirerBanniereAbonnement(){
 async function verifierEtatChat(){
   var inp=document.getElementById("composer-input");
   var btn=document.getElementById("composer-send-btn");
-  var acces=await verifierAccesIA();
-  if(!acces.autorise){
-    if(inp){inp.disabled=true;inp.placeholder=acces.raison==="non_connecte"?"🔒 Connecte-toi pour écrire...":"⭐ Abonne-toi pour utiliser l'IA...";}
+  var sess=await supabase.auth.getSession();
+  if(!sess.data.session){
+    if(inp){inp.disabled=true;inp.placeholder="🔒 Connecte-toi pour écrire...";}
     if(btn)btn.disabled=true;
-    afficherBanniereAbonnement(acces.raison);
+    afficherBanniereAbonnement("non_connecte");
   }else{
     if(inp){inp.disabled=false;inp.placeholder="Écris un message…";}
     if(btn)btn.disabled=false;
