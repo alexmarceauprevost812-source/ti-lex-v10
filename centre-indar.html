@@ -59,6 +59,60 @@ button{font-family:inherit;border:none;outline:none;}
 .cmd-agents-count{font-size:28px;font-weight:800;font-family:'Share Tech Mono',monospace;transition:color 0.3s;}
 .cmd-agents-count span{font-size:14px;color:#444;}
 
+/* ═══ SCAN TAB ═══ */
+.scan-form{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;}
+.scan-form-title{font-size:11px;font-weight:800;letter-spacing:0.15em;color:#a78bfa;font-family:'Share Tech Mono',monospace;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.scan-input{width:100%;background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:12px 14px;color:#eaeaea;font-size:14px;font-family:'Rajdhani',sans-serif;outline:none;transition:border-color 0.2s;}
+.scan-input:focus{border-color:#a78bfa;}
+.scan-input::placeholder{color:#555;}
+.scan-type-row{display:flex;gap:8px;margin:14px 0 16px;flex-wrap:wrap;}
+.scan-type-btn{padding:8px 16px;border-radius:8px;border:1px solid #222;background:#0a0a0a;color:#888;font-size:12px;font-weight:700;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:0.06em;transition:all 0.15s;}
+.scan-type-btn.active{border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,0.08);}
+.scan-type-btn:hover:not(.active){border-color:#444;color:#bbb;}
+.btn-scan-real{width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#a78bfa,#c4b5fd);color:#000;font-weight:800;font-size:14px;letter-spacing:0.02em;box-shadow:0 4px 20px rgba(167,139,250,0.3);font-family:'Rajdhani',sans-serif;transition:transform 0.15s,box-shadow 0.15s;}
+.btn-scan-real:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(167,139,250,0.4);}
+.btn-scan-real:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.scan-admin-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:0.12em;color:#ffcf4a;background:rgba(255,207,74,0.08);border:1px solid rgba(255,207,74,0.2);padding:4px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;margin-bottom:14px;}
+.scan-terminal{background:#0a0a0a;border:1px solid #1c1c1c;border-radius:10px;padding:16px;margin-bottom:16px;max-height:260px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.7;}
+.scan-log{color:#777;}
+.scan-log.phantom{color:#a78bfa;}
+.scan-log.success{color:#37e0a0;}
+.scan-log.warn{color:#ffcf4a;}
+.scan-log.error{color:#f87171;}
+.scan-result{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;animation:fadeIn 0.5s;}
+.scan-score-row{display:flex;align-items:center;gap:18px;margin-bottom:18px;}
+.scan-score-box{width:80px;height:80px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;}
+.scan-score-val{font-size:32px;font-weight:800;font-family:'Share Tech Mono',monospace;}
+.scan-score-max{font-size:10px;color:#777;font-family:'Share Tech Mono',monospace;}
+.scan-risk-label{font-size:10px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;}
+.scan-risk-level{font-size:22px;font-weight:800;}
+.scan-summary{font-size:13px;color:#ccc;line-height:1.6;margin-bottom:18px;padding:14px;background:#0a0a0a;border-radius:8px;border-left:3px solid #a78bfa;}
+.finding-card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px;margin-bottom:8px;}
+.finding-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.finding-title{font-size:13px;font-weight:700;color:#eaeaea;}
+.sev-badge{font-size:9px;font-weight:800;letter-spacing:0.1em;padding:2px 8px;border-radius:4px;font-family:'Share Tech Mono',monospace;}
+.sev-CRITIQUE{background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3);}
+.sev-HAUTE{background:rgba(255,127,39,0.12);color:#ff7f27;border:1px solid rgba(255,127,39,0.25);}
+.sev-MOYENNE{background:rgba(255,207,74,0.12);color:#ffcf4a;border:1px solid rgba(255,207,74,0.25);}
+.sev-FAIBLE{background:rgba(55,224,160,0.1);color:#37e0a0;border:1px solid rgba(55,224,160,0.2);}
+.sev-INFO{background:rgba(79,142,247,0.1);color:#4f8ef7;border:1px solid rgba(79,142,247,0.2);}
+.finding-desc{font-size:12px;color:#aaa;line-height:1.5;margin-bottom:6px;}
+.finding-remed{font-size:11px;color:#37e0a0;display:flex;align-items:flex-start;gap:6px;}
+.scan-recs{margin-top:14px;}
+.scan-recs-title{font-size:11px;font-weight:800;letter-spacing:0.12em;color:#37e0a0;font-family:'Share Tech Mono',monospace;margin-bottom:8px;}
+.scan-rec-item{font-size:12px;color:#ccc;padding:4px 0;display:flex;align-items:flex-start;gap:8px;}
+.scan-history{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;}
+.scan-history-title{font-size:11px;font-weight:800;letter-spacing:0.15em;color:#777;font-family:'Share Tech Mono',monospace;margin-bottom:12px;}
+.scan-history-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #141414;font-size:12px;}
+.scan-history-row:last-child{border-bottom:none;}
+.scan-history-target{color:#eaeaea;font-weight:600;flex:1;}
+.scan-history-type{color:#a78bfa;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.08em;width:70px;}
+.scan-history-date{color:#666;font-size:11px;width:90px;text-align:right;}
+.scan-history-status{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px;font-family:'Share Tech Mono',monospace;width:80px;text-align:center;}
+.scan-history-status.completed{color:#37e0a0;background:rgba(55,224,160,0.08);border:1px solid rgba(55,224,160,0.2);}
+.scan-history-status.running{color:#ffcf4a;background:rgba(255,207,74,0.08);border:1px solid rgba(255,207,74,0.2);}
+.scan-history-status.failed{color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);}
+
 /* ═══ BUTTONS ═══ */
 .btn-start{width:100%;padding:15px;border-radius:11px;border:none;cursor:pointer;background:linear-gradient(135deg,#ff7f27,#ffa052);color:#000;font-weight:800;font-size:15px;letter-spacing:0.02em;box-shadow:0 4px 24px rgba(255,127,39,0.35);display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Rajdhani',sans-serif;transition:transform 0.15s,box-shadow 0.15s;}
 .btn-start:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(255,127,39,0.45);}
@@ -193,6 +247,7 @@ button{font-family:inherit;border:none;outline:none;}
 <div class="tabs">
   <button id="tabCentre" class="tab-btn active" onclick="switchTab('centre')">&#x1f6e1; Centre INDAR</button>
   <button id="tabPentest" class="tab-btn" onclick="switchTab('pentest')">&#x1f3af; PHANTOM-RED</button>
+  <button id="tabScan" class="tab-btn" onclick="switchTab('scan')">&#x1f50d; Scan INDAR</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -264,6 +319,46 @@ button{font-family:inherit;border:none;outline:none;}
 
   <!-- Report -->
   <div id="reportArea" style="display:none;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB: SCAN INDAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="panelScan" class="wrap" style="display:none;">
+
+  <!-- Legal banner -->
+  <div class="legal-banner">
+    &#x1f6e1; <b>Mode SIMULATION</b> — Les scans sont educatifs. Aucun systeme externe n'est attaque. 100% legal.
+  </div>
+
+  <!-- Admin badge -->
+  <div id="scanAdminBadge" class="scan-admin-badge" style="display:none;">
+    &#x2b50; ACCES COMMANDEMENT · Scans illimites
+  </div>
+
+  <!-- Scan form -->
+  <div class="scan-form">
+    <div class="scan-form-title">&#x2b22; MOTEUR DE SCAN PHANTOM-RED</div>
+    <input id="scanTarget" class="scan-input" type="text" placeholder="Domaine, courriel ou URL a scanner (ex. exemple.com)" autocomplete="off">
+    <div class="scan-type-row">
+      <button class="scan-type-btn active" data-type="osint" onclick="setScanType(this)">OSINT</button>
+      <button class="scan-type-btn" data-type="hibp" onclick="setScanType(this)">BRECHES (HIBP)</button>
+      <button class="scan-type-btn" data-type="darkweb" onclick="setScanType(this)">DARK WEB</button>
+    </div>
+    <button id="btnScanReal" class="btn-scan-real" onclick="lancerScanReel()">&#x26a1; LANCER LE SCAN</button>
+  </div>
+
+  <!-- Scan terminal -->
+  <div id="scanTerminal" class="scan-terminal" style="display:none;"></div>
+
+  <!-- Scan result -->
+  <div id="scanResult" style="display:none;"></div>
+
+  <!-- Scan history -->
+  <div id="scanHistory" class="scan-history" style="display:none;">
+    <div class="scan-history-title">&#x1f4cb; HISTORIQUE DES SCANS</div>
+    <div id="scanHistoryBody"></div>
+  </div>
 </div>
 
 <script>
@@ -387,8 +482,11 @@ function switchTab(t) {
   currentTab = t;
   document.getElementById("tabCentre").className = "tab-btn" + (t === "centre" ? " active" : "");
   document.getElementById("tabPentest").className = "tab-btn" + (t === "pentest" ? " active" : "");
+  document.getElementById("tabScan").className = "tab-btn" + (t === "scan" ? " active" : "");
   document.getElementById("panelCentre").style.display = t === "centre" ? "" : "none";
   document.getElementById("panelPentest").style.display = t === "pentest" ? "" : "none";
+  document.getElementById("panelScan").style.display = t === "scan" ? "" : "none";
+  if (t === "scan" && !scanHistoryLoaded) loadScanHistory();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -816,12 +914,267 @@ function renderReport(rapport) {
 }
 
 /* ════════════════════════════════════════════════════════════
+   SCAN ENGINE
+   ════════════════════════════════════════════════════════════ */
+var scanType = "osint";
+var scanRunning = false;
+var scanHistoryLoaded = false;
+var scanIsAdmin = false;
+
+var SCAN_LOGS = {
+  osint: [
+    "Initialisation du moteur OSINT...",
+    "Connexion au reseau PHANTOM-RED...",
+    "Resolution DNS en cours...",
+    "Interrogation WHOIS...",
+    "Analyse des certificats TLS...",
+    "Cartographie des sous-domaines...",
+    "Detection des technologies (Wappalyzer)...",
+    "Analyse des headers HTTP...",
+    "Verification des enregistrements SPF/DKIM/DMARC...",
+    "Recherche dans les bases de donnees publiques...",
+    "Scan des ports courants...",
+    "Analyse des reseaux sociaux...",
+    "Correlation des resultats..."
+  ],
+  hibp: [
+    "Initialisation du moteur HIBP...",
+    "Connexion aux bases de breches...",
+    "Verification Have I Been Pwned...",
+    "Recherche dans les bases de fuites connues...",
+    "Analyse des paste sites...",
+    "Verification des combolists...",
+    "Croisement avec les breches recentes...",
+    "Analyse des types de donnees exposees...",
+    "Verification des mots de passe compromis...",
+    "Correlation des resultats..."
+  ],
+  darkweb: [
+    "Initialisation du moteur Dark Web...",
+    "Connexion au reseau Tor (simulee)...",
+    "Interrogation des forums underground...",
+    "Recherche dans les marketplaces...",
+    "Analyse des paste sites .onion...",
+    "Verification des fuites recentes...",
+    "Croisement avec les bases de menaces...",
+    "Analyse de la surface d'exposition...",
+    "Correlation des resultats..."
+  ]
+};
+
+function setScanType(btn) {
+  var btns = document.querySelectorAll(".scan-type-btn");
+  for (var i = 0; i < btns.length; i++) btns[i].className = "scan-type-btn";
+  btn.className = "scan-type-btn active";
+  scanType = btn.getAttribute("data-type");
+}
+
+function scanLog(terminal, text, cls) {
+  var line = document.createElement("div");
+  line.className = "scan-log" + (cls ? " " + cls : "");
+  line.textContent = "[" + now() + "] " + text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+async function lancerScanReel() {
+  var target = document.getElementById("scanTarget").value.trim();
+  if (!target) { alert("Entre une cible a scanner."); return; }
+  if (scanRunning) return;
+  scanRunning = true;
+
+  var btn = document.getElementById("btnScanReal");
+  btn.disabled = true;
+  btn.innerHTML = spinnerHTML("#a78bfa") + " SCAN EN COURS...";
+
+  var terminal = document.getElementById("scanTerminal");
+  terminal.innerHTML = "";
+  terminal.style.display = "";
+  document.getElementById("scanResult").style.display = "none";
+
+  var logs = SCAN_LOGS[scanType] || SCAN_LOGS.osint;
+  var logIdx = 0;
+
+  var logInterval = setInterval(function() {
+    if (logIdx < logs.length) {
+      scanLog(terminal, logs[logIdx], "phantom");
+      logIdx++;
+    } else {
+      scanLog(terminal, "Attente de la reponse IA...", "warn");
+    }
+  }, 800);
+
+  try {
+    var tk = getToken();
+    var res = await fetch(SB_URL + "/functions/v1/scan-engine", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json" },
+      body: JSON.stringify({ target: target, scan_type: scanType })
+    });
+    clearInterval(logInterval);
+
+    var data = await res.json();
+    if (!res.ok || data.error) {
+      scanLog(terminal, "ERREUR : " + (data.error || "Echec du scan"), "error");
+      scanRunning = false;
+      btn.disabled = false;
+      btn.innerHTML = "&#x26a1; LANCER LE SCAN";
+      return;
+    }
+
+    scanLog(terminal, "Scan termine — " + (data.total_findings || 0) + " resultats trouves", "success");
+    scanLog(terminal, "Score de risque : " + data.risk_score + "/100 (" + data.risk_level + ")", "success");
+
+    renderScanResult(data);
+    scanHistoryLoaded = false;
+    loadScanHistory();
+  } catch (err) {
+    clearInterval(logInterval);
+    scanLog(terminal, "ERREUR : " + err.message, "error");
+  }
+
+  scanRunning = false;
+  btn.disabled = false;
+  btn.innerHTML = "&#x26a1; LANCER LE SCAN";
+}
+
+function riskColor(score) {
+  if (score >= 75) return "#f87171";
+  if (score >= 50) return "#ff7f27";
+  if (score >= 25) return "#ffcf4a";
+  return "#37e0a0";
+}
+
+function renderScanResult(data) {
+  var area = document.getElementById("scanResult");
+  var col = riskColor(data.risk_score || 0);
+
+  var html = '<div class="scan-result">';
+
+  // Score
+  html += '<div class="scan-score-row">';
+  html += '<div class="scan-score-box" style="border-color:' + col + ';box-shadow:0 0 20px ' + col + '33;">';
+  html += '<div class="scan-score-val" style="color:' + col + ';">' + (data.risk_score || 0) + '</div>';
+  html += '<div class="scan-score-max">/ 100</div></div>';
+  html += '<div><div class="scan-risk-label">NIVEAU DE RISQUE</div>';
+  html += '<div class="scan-risk-level" style="color:' + col + ';">' + (data.risk_level || "N/A") + '</div>';
+
+  // Count badges
+  if (data.critical_count || data.high_count || data.medium_count || data.low_count || data.info_count) {
+    html += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
+    if (data.critical_count) html += '<span class="sev-badge sev-CRITIQUE">' + data.critical_count + ' CRITIQUE</span>';
+    if (data.high_count) html += '<span class="sev-badge sev-HAUTE">' + data.high_count + ' HAUTE</span>';
+    if (data.medium_count) html += '<span class="sev-badge sev-MOYENNE">' + data.medium_count + ' MOYENNE</span>';
+    if (data.low_count) html += '<span class="sev-badge sev-FAIBLE">' + data.low_count + ' FAIBLE</span>';
+    if (data.info_count) html += '<span class="sev-badge sev-INFO">' + data.info_count + ' INFO</span>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // Summary
+  if (data.executive_summary) {
+    html += '<div class="scan-summary">' + escapeHtml(data.executive_summary) + '</div>';
+  }
+
+  // Findings
+  var findings = data.findings || [];
+  for (var i = 0; i < findings.length; i++) {
+    var f = findings[i];
+    var sev = (f.severity || "INFO").toUpperCase();
+    html += '<div class="finding-card">';
+    html += '<div class="finding-head"><div class="finding-title">' + escapeHtml(f.title || "") + '</div>';
+    html += '<span class="sev-badge sev-' + sev + '">' + sev + '</span></div>';
+    if (f.description) html += '<div class="finding-desc">' + escapeHtml(f.description) + '</div>';
+    if (f.remediation) html += '<div class="finding-remed"><span style="color:#37e0a0;">&#x25b8;</span> ' + escapeHtml(f.remediation) + '</div>';
+    html += '</div>';
+  }
+
+  // Recommendations
+  var recs = data.recommendations || [];
+  if (recs.length > 0) {
+    html += '<div class="scan-recs"><div class="scan-recs-title">&#x2713; RECOMMANDATIONS</div>';
+    for (var j = 0; j < recs.length; j++) {
+      html += '<div class="scan-rec-item"><span style="color:#37e0a0;">&#x25b8;</span> ' + escapeHtml(recs[j]) + '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+  area.style.display = "";
+}
+
+function escapeHtml(s) {
+  var d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function loadScanHistory() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) { scanHistoryLoaded = true; return; }
+
+    var res = await fetch(SB_URL + "/rest/v1/cyber_scans?select=id,target,scan_type,status,queued_at,risk_score:metadata->>risk_score&order=queued_at.desc&limit=10", {
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON }
+    });
+    if (!res.ok) { scanHistoryLoaded = true; return; }
+    var rows = await res.json();
+
+    if (rows.length === 0) {
+      scanHistoryLoaded = true;
+      document.getElementById("scanHistory").style.display = "none";
+      return;
+    }
+
+    var body = document.getElementById("scanHistoryBody");
+    var html = "";
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var d = new Date(r.queued_at);
+      var dateStr = d.toLocaleDateString("fr-CA", { day:"2-digit", month:"short" }) + " " + d.toLocaleTimeString("fr-CA", { hour:"2-digit", minute:"2-digit" });
+      var statusCls = r.status === "completed" ? "completed" : r.status === "running" ? "running" : "failed";
+      html += '<div class="scan-history-row">';
+      html += '<div class="scan-history-type">' + (r.scan_type || "").toUpperCase() + '</div>';
+      html += '<div class="scan-history-target">' + escapeHtml(r.target || "") + '</div>';
+      html += '<div class="scan-history-status ' + statusCls + '">' + (r.status || "").toUpperCase() + '</div>';
+      html += '<div class="scan-history-date">' + dateStr + '</div>';
+      html += '</div>';
+    }
+    body.innerHTML = html;
+    document.getElementById("scanHistory").style.display = "";
+    scanHistoryLoaded = true;
+  } catch (e) {
+    scanHistoryLoaded = true;
+  }
+}
+
+async function checkScanAdmin() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return;
+    var res = await fetch(SB_URL + "/rest/v1/user_roles?select=role&role=eq.admin&limit=1", {
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON }
+    });
+    if (res.ok) {
+      var rows = await res.json();
+      if (rows.length > 0) {
+        scanIsAdmin = true;
+        var badge = document.getElementById("scanAdminBadge");
+        if (badge) badge.style.display = "";
+      }
+    }
+  } catch (e) {}
+}
+
+/* ════════════════════════════════════════════════════════════
    INIT
    ════════════════════════════════════════════════════════════ */
 (function init() {
   renderAgentGrid();
   renderPlatformBtns();
   updateAgentCount();
+  checkScanAdmin();
 })();
 </script>
 </body>
