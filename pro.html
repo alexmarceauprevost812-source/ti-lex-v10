@@ -5697,7 +5697,15 @@ async function verifierAccesIA(){
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON}
     });
-    return await res.json();
+    var data=await res.json();
+    return{
+      autorise:data.allowed!==undefined?data.allowed:data.autorise,
+      raison:data.reason!==undefined?data.reason:(data.raison||null),
+      plan:data.plan||null,
+      message:data.message||null,
+      messages_used:data.messages_used,
+      messages_remaining:data.messages_remaining
+    };
   }catch(e){
     return{autorise:false,raison:"erreur",message:"Erreur de connexion. Réessaie."};
   }
@@ -5708,10 +5716,12 @@ function afficherMessageBlocage(raison){
   if(!msgs)return;
   var el=document.createElement("div");
   el.className="message-blocage";
-  if(raison==="non_connecte"){
+  if(raison==="non_connecte"||raison==="not_connected"){
     el.innerHTML='<div class="blocage-icone">🔒</div><div class="blocage-texte"><strong>Connexion requise</strong>Connecte-toi pour utiliser ti-lex-al.</div><button class="blocage-btn" onclick="showTab(\'settings\')">Se connecter</button>';
-  }else if(raison==="sans_abonnement"){
+  }else if(raison==="sans_abonnement"||raison==="no_subscription"){
     el.innerHTML='<div class="blocage-icone">⭐</div><div class="blocage-texte"><strong>Abonnement requis</strong>Choisis un forfait pour accéder à l\'IA.</div><a href="/forfaits" class="blocage-btn blocage-btn-or">Voir les forfaits</a>';
+  }else if(raison==="rate_limited"||raison==="limite_atteinte"){
+    el.innerHTML='<div class="blocage-icone">⏳</div><div class="blocage-texte"><strong>Limite atteinte</strong>Tu as utilisé tous tes messages. Recharge bientôt.</div>';
   }else{
     el.innerHTML='<div class="blocage-icone">⚠️</div><div class="blocage-texte"><strong>Erreur</strong>Réessaie dans un moment.</div>';
   }
