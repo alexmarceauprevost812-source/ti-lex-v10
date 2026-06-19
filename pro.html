@@ -1346,13 +1346,10 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 
   <!-- AGENT MARCEAU -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
-    <span class="sb-icon" style="color:#ff7f27;">
-      <svg width="14" height="16" viewBox="0 0 22 26" fill="none" style="vertical-align:middle">
-        <defs><linearGradient id="nav-flame" x1="11" y1="2" x2="11" y2="26" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#ffe566"/><stop offset="40%" stop-color="#ff7f27"/><stop offset="100%" stop-color="#bb1500"/>
-        </linearGradient></defs>
-        <path d="M11 26C11 26 3 20 3 12.5C3 8 7 5.5 9 7C8.5 4.5 10 2.5 11 2C12 2.5 13.5 4.5 13 7C15 5.5 19 8 19 12.5C19 20 11 26 11 26Z" fill="url(#nav-flame)"/>
-      </svg>
+    <span class="sb-icon" style="color:#ff7f27;position:relative;">
+      <img src="https://rnuripmfozlxenryxhdc.supabase.co/storage/v1/object/public/agents-avatars/marceau-avatar.png"
+        alt="M" style="width:18px;height:18px;border-radius:50%;object-fit:contain;vertical-align:middle;border:1px solid #ff7f27;background:#111118;"
+        onerror="this.onerror=null;this.outerHTML='<svg width=&quot;14&quot; height=&quot;16&quot; viewBox=&quot;0 0 22 26&quot; fill=&quot;none&quot; style=&quot;vertical-align:middle&quot;><defs><linearGradient id=&quot;nav-flame&quot; x1=&quot;11&quot; y1=&quot;2&quot; x2=&quot;11&quot; y2=&quot;26&quot; gradientUnits=&quot;userSpaceOnUse&quot;><stop offset=&quot;0%&quot; stop-color=&quot;#ffe566&quot;/><stop offset=&quot;40%&quot; stop-color=&quot;#ff7f27&quot;/><stop offset=&quot;100%&quot; stop-color=&quot;#bb1500&quot;/></linearGradient></defs><path d=&quot;M11 26C11 26 3 20 3 12.5C3 8 7 5.5 9 7C8.5 4.5 10 2.5 11 2C12 2.5 13.5 4.5 13 7C15 5.5 19 8 19 12.5C19 20 11 26 11 26Z&quot; fill=&quot;url(#nav-flame)&quot;/></svg>';" loading="lazy"/>
     </span><span class="sb-label" data-txt="MARCEAU"></span>
   </div>
 
@@ -1477,6 +1474,23 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             <div class="ag-model">claude-sonnet-4-6</div>
             <div class="ag-stat"><div class="sdot g"></div> PRÊT</div>
             <div class="ag-tags"><span class="atag og">JS</span><span class="atag">PYTHON</span><span class="atag">SQL</span></div>
+          </div>
+          <div class="ag-card" id="ag-card-marceau" onclick="showTab('marceau')">
+            <div class="ag-top">
+              <div class="ag-ico dark has-media" style="position:relative;">
+                <img src="https://rnuripmfozlxenryxhdc.supabase.co/storage/v1/object/public/agents-avatars/marceau-avatar.png"
+                  alt="Agent Marceau" class="marceau-card-avatar" style="width:38px;height:38px;padding:1px;"
+                  onerror="this.onerror=null;this.style.display='none';this.parentElement.textContent='🔥';" loading="lazy"/>
+                <div class="marceau-avatar-glow" style="inset:-3px;"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
+                <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
+            </div>
+            <div class="ag-name" style="color:#ff7f27;">MARCEAU</div>
+            <div class="ag-role">DIALOGUE MULTI-AGENTS · 4 PHASES</div>
+            <div class="ag-model">claude-sonnet-4-6</div>
+            <div class="ag-stat"><div class="sdot g"></div> MARCEAU × CLAUDE-AL</div>
+            <div class="ag-tags"><span class="atag og">RÉFLEXION</span><span class="atag">DÉBAT</span></div>
           </div>
           <div class="add-card" onclick="openModal()">
             <div style="font-size:22px;opacity:.45;">＋</div>

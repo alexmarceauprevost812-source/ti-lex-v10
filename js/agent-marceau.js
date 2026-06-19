@@ -17,6 +17,9 @@
     blue: "#4f8ef7",
   };
 
+  var MARCEAU_AVATAR_URL = "https://rnuripmfozlxenryxhdc.supabase.co/storage/v1/object/public/agents-avatars/marceau-avatar.png";
+  var MARCEAU_AVATAR_LOCAL = "assets/agents/marceau-avatar.png";
+
   // ── System Prompts 4 phases + NEXUS ──
   var SYS = {
     M1:
@@ -218,14 +221,25 @@
   };
 
   // ── SVG Avatars ──
-  function svgMarceauAvatar(size, gid) {
+  function svgMarceauFallback(size, gid) {
     return (
-      '<div style="width:' + size + "px;height:" + size +
-      'px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 50% 65%,#1e0800,#0a0300);border:1.5px solid #3a1200;display:flex;align-items:center;justify-content:center;overflow:hidden;" id="avatar-marceau-' +
-      gid + '"><svg width="' + Math.round(size * 0.56) + '" height="' + Math.round(size * 0.62) +
+      '<svg width="' + Math.round(size * 0.56) + '" height="' + Math.round(size * 0.62) +
       '" viewBox="0 0 22 26" fill="none"><defs><linearGradient id="gm-' + gid +
       '" x1="11" y1="2" x2="11" y2="26" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffe566"/><stop offset="40%" stop-color="#ff7f27"/><stop offset="100%" stop-color="#bb1500"/></linearGradient></defs><path d="M11 26C11 26 3 20 3 12.5C3 8 7 5.5 9 7C8.5 4.5 10 2.5 11 2C12 2.5 13.5 4.5 13 7C15 5.5 19 8 19 12.5C19 20 11 26 11 26Z" fill="url(#gm-' +
-      gid + ')" opacity=".92"/><path d="M11 21C11 21 7.5 17.5 7.5 14C7.5 11.5 9.5 10.5 11 12C12.5 10.5 14.5 11.5 14.5 14C14.5 17.5 11 21 11 21Z" fill="#ffee88" opacity=".55"/></svg></div>'
+      gid + ')" opacity=".92"/><path d="M11 21C11 21 7.5 17.5 7.5 14C7.5 11.5 9.5 10.5 11 12C12.5 10.5 14.5 11.5 14.5 14C14.5 17.5 11 21 11 21Z" fill="#ffee88" opacity=".55"/></svg>'
+    );
+  }
+
+  function svgMarceauAvatar(size, gid) {
+    return (
+      '<div class="marceau-avatar-wrap" style="width:' + size + "px;height:" + size +
+      'px;position:relative;flex-shrink:0;" id="avatar-marceau-' + gid + '">' +
+      '<img src="' + MARCEAU_AVATAR_URL + '" alt="Marceau" class="marceau-avatar-img" style="width:' + size + "px;height:" + size +
+      'px;object-fit:contain;border-radius:50%;border:2px solid #ff7f27;background:#111118;padding:2px;display:block;" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';" loading="lazy"/>' +
+      '<div style="display:none;width:' + size + "px;height:" + size +
+      'px;border-radius:50%;background:radial-gradient(circle at 50% 65%,#1e0800,#0a0300);border:1.5px solid #3a1200;align-items:center;justify-content:center;overflow:hidden;">' +
+      svgMarceauFallback(size, gid) + '</div>' +
+      '<div class="marceau-avatar-glow"></div></div>'
     );
   }
 
@@ -571,8 +585,8 @@
     return (
       '<div id="agent-marceau-container">' +
       '<div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border,#23232c)">' +
-      '<div style="display:flex;gap:4px">' +
-      svgMarceauAvatar(34, "hm") + svgClaudeAvatar(34, "hc") + svgNexusAvatar(34, "hn") +
+      '<div style="display:flex;gap:4px;align-items:center;">' +
+      svgMarceauAvatar(42, "hm") + svgClaudeAvatar(34, "hc") + svgNexusAvatar(34, "hn") +
       "</div>" +
       '<div style="flex:1">' +
       '<div style="font-size:19px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,#ff7f27,#ffcf4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent">AGENT MARCEAU</div>' +
