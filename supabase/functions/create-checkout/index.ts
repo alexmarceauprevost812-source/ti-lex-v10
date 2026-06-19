@@ -86,6 +86,9 @@ Deno.serve(async (req) => {
     const CYBER_PLANS = ["cyber_recon", "cyber_guardian", "cyber_sentinel"];
 
     const PRICE_TO_PLAN: Record<string, string> = {
+      "price_1Tk0ylFu0d9mAEdCMHuDGik6": "ti",
+      "price_1Tk1BqFu0d9mAEdC1Ti7zHG0": "surge",
+      "price_1Tk1O3Fu0d9mAEdCbKUV25kJ": "apex",
       "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
       "price_1TiN0tFu0d9mAEdCVQtmwR7t": "surge",
       "price_1TiMuYFu0d9mAEdCGONgQKBH": "apex",

@@ -1382,14 +1382,14 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="sb-submenu" id="sm-forfait">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item sb-tier flux" onclick="setPlan('flux')" style="cursor:pointer;">
-        <span class="tier-name">FLUX</span><span class="tier-badge">$19</span>
+      <div class="sb-sub-item sb-tier flux" onclick="setPlan('ti')" style="cursor:pointer;">
+        <span class="tier-name">TI</span><span class="tier-badge">29,99$</span>
       </div>
       <div class="sb-sub-item sb-tier surge" onclick="setPlan('surge')" style="cursor:pointer;">
-        <span class="tier-name">SURGE</span><span class="tier-badge">$60</span>
+        <span class="tier-name">TI-LEX</span><span class="tier-badge">89,99$</span>
       </div>
       <div class="sb-sub-item sb-tier apex" onclick="setPlan('apex')" style="cursor:pointer;">
-        <span class="tier-name">APEX</span><span class="tier-badge">$125</span>
+        <span class="tier-name">TI-LEX-AL</span><span class="tier-badge">149,99$</span>
       </div>
 
       <!-- Cybersécurité — admin-only, masqué pour les autres -->
@@ -2086,47 +2086,52 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="plan-sel-title">CHOISIR UN FORFAIT</div>
     <div class="plan-sel-sub">CHOISIS LE FORFAIT QUI TE CONVIENT</div>
     <div class="plans-grid" id="plans-grid">
-      <div class="plan-card" id="pc-flux" onclick="setPlan('flux')">
+      <div class="plan-card" id="pc-ti" data-plan="ti" onclick="setPlan('ti')">
         <div class="plan-ico">⚡</div>
-        <div class="plan-name">FLUX</div>
-        <div class="plan-price">19$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">BASE</div>
+        <div class="plan-name">TI</div>
+        <div class="plan-price">29,99$/mois</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;">+ taxes (TPS/TVQ)</div>
         <ul class="plan-feats">
-          <li><strong>40</strong> messages / jour</li>
-          <li><strong>5</strong> agents IA · Sonnet 4.6</li>
-          <li><strong>2</strong> projets Codex · GitHub</li>
-          <li><strong>10</strong> sessions Codex</li>
-          <li>Marketplace agents</li>
+          <li><strong>80</strong> messages / jour</li>
+          <li>Recharge à 8h00 et 20h00</li>
+          <li><strong>5</strong> agents IA personnalisés</li>
+          <li><strong>1</strong> projet Codex</li>
+          <li>Conversations sauvegardées</li>
+          <li>Support par courriel</li>
         </ul>
-        <button class="btn-orange plan-subscribe-btn" data-plan="flux" onclick="event.stopPropagation();handleSubscribeClick('flux')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER</button>
+        <button class="btn-orange plan-subscribe-btn" data-plan="ti" onclick="event.stopPropagation();handleSubscribeClick('ti')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER À TI</button>
       </div>
-      <div class="plan-card" id="pc-surge" onclick="setPlan('surge')">
+      <div class="plan-card" id="pc-surge" data-plan="surge" onclick="setPlan('surge')">
+        <div class="plan-badge" style="position:absolute;top:-10px;right:12px;background:var(--orange);color:#000;font-size:8px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:1px;">POPULAIRE</div>
         <div class="plan-ico">🔥</div>
-        <div class="plan-name">SURGE</div>
-        <div class="plan-price">60$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--orange);letter-spacing:1px;margin-bottom:8px;">LE PLUS POPULAIRE</div>
+        <div class="plan-name" style="color:#ff7f27;">TI-LEX</div>
+        <div class="plan-price">89,99$/mois</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--orange);letter-spacing:1px;margin-bottom:4px;">+ taxes (TPS/TVQ)</div>
         <ul class="plan-feats">
-          <li><strong>100</strong> messages / jour</li>
-          <li><strong>15</strong> agents IA · Sonnet 4.6</li>
-          <li><strong>5</strong> projets Codex · Vercel</li>
-          <li><strong>50</strong> sessions Codex</li>
-          <li>Publier ses agents</li>
-        </ul>
-        <button class="btn-orange plan-subscribe-btn" data-plan="surge" onclick="event.stopPropagation();handleSubscribeClick('surge')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER</button>
-      </div>
-      <div class="plan-card" id="pc-apex" onclick="setPlan('apex')">
-        <div class="plan-ico">🚀</div>
-        <div class="plan-name">APEX</div>
-        <div class="plan-price" style="color:var(--or);">125$/mois</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:8px;">SUR MESURE</div>
-        <ul class="plan-feats">
-          <li><strong>250</strong> messages / jour</li>
-          <li>Agents IA <strong>illimités</strong></li>
-          <li><strong>100</strong> messages Opus 4.8</li>
-          <li><strong>20</strong> projets Codex illimités</li>
+          <li><strong>200</strong> messages / jour</li>
+          <li>Recharge à 8h00 et 20h00</li>
+          <li><strong>20</strong> agents IA personnalisés</li>
+          <li><strong>5</strong> projets Codex</li>
+          <li>Publier sur la marketplace</li>
           <li>Support prioritaire</li>
         </ul>
-        <button class="btn-orange plan-subscribe-btn" data-plan="apex" onclick="event.stopPropagation();handleSubscribeClick('apex')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER</button>
+        <button class="btn-orange plan-subscribe-btn" data-plan="surge" onclick="event.stopPropagation();handleSubscribeClick('surge')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER À TI-LEX</button>
+      </div>
+      <div class="plan-card" id="pc-apex" data-plan="apex" onclick="setPlan('apex')">
+        <div class="plan-badge" style="position:absolute;top:-10px;right:12px;background:var(--or);color:#000;font-size:8px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:1px;">MEILLEUR</div>
+        <div class="plan-ico">🚀</div>
+        <div class="plan-name" style="color:#ffcf4a;">TI-LEX-AL</div>
+        <div class="plan-price" style="color:var(--or);">149,99$/mois</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--or);letter-spacing:1px;margin-bottom:4px;">+ taxes (TPS/TVQ)</div>
+        <ul class="plan-feats">
+          <li><strong>400</strong> messages / jour</li>
+          <li>Recharge à 8h00 et 20h00</li>
+          <li>Agents IA <strong>illimités</strong></li>
+          <li>Agent AL premium</li>
+          <li><strong>15</strong> projets Codex</li>
+          <li>Marketplace — accès complet</li>
+        </ul>
+        <button class="btn-orange plan-subscribe-btn" data-plan="apex" onclick="event.stopPropagation();handleSubscribeClick('apex')" style="width:100%;margin-top:10px;padding:9px;font-size:11px;">S'ABONNER À TI-LEX-AL</button>
       </div>
     </div>
     <div style="display:flex;gap:12px;justify-content:center;">
@@ -2295,15 +2300,16 @@ function cycleHeat(){setHeat(HCYCLE[(HCYCLE.indexOf(curHeat)+1)%HCYCLE.length]);
 function setPlan(plan){
   localStorage.setItem("tilex-plan",plan);
   document.documentElement.setAttribute("data-plan",plan);
-  var pd=getPlanData();
-  if(pd._plan&&pd._plan!==plan){pd=PLAN_DATA[plan]||PLAN_DATA.flux;}
+  _planCache=null;
+  var pd=PLAN_DATA[plan]||PLAN_DATA.ti;
+  var displayName=getPlanDisplayName(plan);
   var badge=document.getElementById("plan-badge-tb");
   if(badge)badge.className="plan-badge plan-"+plan;
-  var ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=(pd.name||plan).toUpperCase();
-  var mn=document.getElementById("m-plan-name");if(mn)mn.textContent=(pd.name||plan).toUpperCase();
+  var ptxt=document.getElementById("plan-badge-txt");if(ptxt)ptxt.textContent=displayName;
+  var mn=document.getElementById("m-plan-name");if(mn)mn.textContent=displayName;
   var mp=document.getElementById("m-plan-price");if(mp)mp.textContent=pd.price||"";
   var ml=document.getElementById("m-msg-limit");if(ml)ml.textContent=pd.msgWindow===-1?"∞":pd.msgWindow;
-  var ms=document.getElementById("m-msg-sub");if(ms)ms.textContent=pd.msgWindow===-1?"Illimité":"par jour";
+  var ms=document.getElementById("m-msg-sub");if(ms)ms.textContent=pd.msgWindow===-1?"Illimité":"par fenêtre";
   closePlanSel();
   document.querySelectorAll(".plan-card").forEach(function(c){c.classList.remove("selected");});
   var pc=document.getElementById("pc-"+plan);if(pc)pc.classList.add("selected");
@@ -2315,6 +2321,7 @@ function openPlanSel(){
   document.getElementById("plan-sel").style.display="flex";
   loadPlanPricesFromDB();
   updatePlanButtons(getPlan());
+  highlightCurrentPlan();
 }
 function closePlanSel(){document.getElementById("plan-sel").style.display="none";}
 
@@ -2345,9 +2352,10 @@ async function loadPlanPricesFromDB(){
 }
 
 var PLAN_PRICE_FALLBACK={
-  flux:"price_1TiA8fFu0d9mAEdCaIBd9Z5v",
-  surge:"price_1TiN0tFu0d9mAEdCVQtmwR7t",
-  apex:"price_1TiMuYFu0d9mAEdCGONgQKBH",
+  ti:"price_1Tk0ylFu0d9mAEdCMHuDGik6",
+  flux:"price_1Tk0ylFu0d9mAEdCMHuDGik6",
+  surge:"price_1Tk1BqFu0d9mAEdC1Ti7zHG0",
+  apex:"price_1Tk1O3Fu0d9mAEdCbKUV25kJ",
   cyber_recon:"price_1TiNFrFu0d9mAEdCDOok74WK",
   cyber_guardian:"price_1TiUGRFu0d9mAEdCl3S7d8Hz",
   cyber_sentinel:"price_1TiNS9Fu0d9mAEdC3YfrwmWl"
@@ -2718,11 +2726,15 @@ function addMsg(role,txt){
 /* ── FORFAITS — source de vérité : profiles.plan + plan_limits ── */
 var _planCache=null;
 var PLAN_DATA={
-  free:{name:"FREE",price:"$0",msgWindow:10,agents:1,models:"Sonnet 4.6",codexProjects:0,codexSessions:0,storage:"0"},
-  flux:{name:"FLUX",price:"$19 CAD/mois",msgWindow:40,agents:5,models:"Sonnet 4.6",codexProjects:2,codexSessions:10,storage:"1 GB"},
-  surge:{name:"SURGE",price:"$60 CAD/mois",msgWindow:100,agents:15,models:"Sonnet 4.6",codexProjects:5,codexSessions:50,storage:"5 GB"},
-  apex:{name:"APEX",price:"$125 CAD/mois",msgWindow:250,agents:-1,models:"Sonnet 4.6 + Opus 4.8",opusMessages:100,codexProjects:20,codexSessions:-1,storage:"10 GB"}
+  free:{name:"GRATUIT",price:"0$",msgWindow:10,agents:1,models:"Sonnet 4.6",codexProjects:0,codexSessions:0,storage:"0"},
+  ti:{name:"TI",price:"29,99$/mois",msgWindow:40,msgsDay:80,agents:5,models:"Sonnet 4.6",codexProjects:1,codexSessions:10,storage:"1 GB"},
+  flux:{name:"TI",price:"29,99$/mois",msgWindow:40,msgsDay:80,agents:5,models:"Sonnet 4.6",codexProjects:1,codexSessions:10,storage:"1 GB"},
+  surge:{name:"TI-LEX",price:"89,99$/mois",msgWindow:100,msgsDay:200,agents:20,models:"Sonnet 4.6",codexProjects:5,codexSessions:50,storage:"5 GB"},
+  apex:{name:"TI-LEX-AL",price:"149,99$/mois",msgWindow:200,msgsDay:400,agents:-1,models:"Sonnet 4.6 + Opus 4.8",opusMessages:100,codexProjects:15,codexSessions:-1,storage:"10 GB"}
 };
+var PLAN_NAMES={free:"Gratuit",flux:"TI",ti:"TI",surge:"TI-LEX",apex:"TI-LEX-AL",cyber_recon:"CYBER RECON",cyber_guardian:"CYBER GUARDIAN",cyber_sentinel:"CYBER SENTINEL"};
+var PLAN_COLORS={ti:"#37e0a0",surge:"#ff7f27",apex:"#ffcf4a"};
+function getPlanDisplayName(plan){return PLAN_NAMES[plan]||plan?.toUpperCase()||"Gratuit";}
 async function getUserPlanAndLimits(){
   try{
     var s=await supabase.auth.getUser();
@@ -2734,10 +2746,10 @@ async function getUserPlanAndLimits(){
     localStorage.setItem("tilex-plan",planName);
     document.documentElement.setAttribute("data-plan",planName);
     var lr=await supabase.from("plan_limits").select("*").eq("plan",planName).maybeSingle();
-    if(lr.error||!lr.data){_planCache=PLAN_DATA[planName]||PLAN_DATA.flux;_planCache._plan=planName;return _planCache;}
+    if(lr.error||!lr.data){_planCache=PLAN_DATA[planName]||PLAN_DATA.free;_planCache._plan=planName;return _planCache;}
     var lim=lr.data;
     _planCache={
-      name:planName.toUpperCase(),_plan:planName,
+      name:getPlanDisplayName(planName),_plan:planName,
       msgWindow:lim.messages_per_day||40,
       msgPerMonth:lim.messages_per_month||1200,
       agents:lim.agents_max||5,
@@ -2755,19 +2767,38 @@ async function getUserPlanAndLimits(){
     return _planCache;
   }catch(e){console.error("getUserPlanAndLimits:",e);return null;}
 }
-function getPlan(){if(_planCache&&_planCache._plan)return _planCache._plan;return(localStorage.getItem("tilex-plan")||"flux").toLowerCase();}
-function getPlanData(){if(_planCache)return _planCache;return PLAN_DATA[getPlan()]||PLAN_DATA.flux;}
+function getPlan(){if(_planCache&&_planCache._plan)return _planCache._plan;return(localStorage.getItem("tilex-plan")||"free").toLowerCase();}
+function getPlanData(){if(_planCache)return _planCache;return PLAN_DATA[getPlan()]||PLAN_DATA.free;}
 
 /* ── SUIVI UTILISATION (synchro avec app.js) ── */
+function getEasternHour(){
+  var s=new Date().toLocaleString("en-US",{timeZone:"America/Toronto",hour:"numeric",hour12:false});
+  return parseInt(s,10);
+}
 function getTranche(){
   var now=new Date();
-  var y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();
-  var slot=h<12?"am":"pm";
+  var y=now.getFullYear(),m=now.getMonth(),d=now.getDate();
+  var h=getEasternHour();
+  var slot=(h>=8&&h<20)?"jour":"nuit";
+  if(h<8){d=d-1;if(d<1){m=m-1;if(m<0){m=11;y=y-1;}d=new Date(y,m+1,0).getDate();}}
   return y+"-"+(m+1)+"-"+d+"-"+slot;
 }
 function getTrancheLabel(){
-  var h=new Date().getHours();
-  return h<12?"MINUIT → MIDI (00h-12h)":"MIDI → MINUIT (12h-00h)";
+  var h=getEasternHour();
+  return(h>=8&&h<20)?"08h00 → 20h00 (jour)":"20h00 → 08h00 (nuit)";
+}
+function getNextRechargeTime(){
+  var now=new Date();
+  var est=new Date(now.toLocaleString("en-US",{timeZone:"America/Toronto"}));
+  var h=est.getHours();
+  var next=new Date(est);
+  if(h<8){next.setHours(8,0,0,0);}
+  else if(h<20){next.setHours(20,0,0,0);}
+  else{next.setDate(next.getDate()+1);next.setHours(8,0,0,0);}
+  var diff=next-est;
+  var rh=Math.floor(diff/3600000);
+  var rm=Math.floor((diff%3600000)/60000);
+  return rh+"h"+rm.toString().padStart(2,"0");
 }
 function getUsageData(){
   try{var d=JSON.parse(localStorage.getItem("tilex-usage")||"{}");return d;}catch(e){return{};}
@@ -2809,11 +2840,47 @@ function renderUsage(){
     if(pct>80)barEl.style.background="linear-gradient(90deg,var(--orange),var(--red))";
     else barEl.style.background="linear-gradient(90deg,var(--green),var(--or2))";}
   if(cntEl)cntEl.textContent=sent+" / "+limit+" msgs · "+remain+" restants";
-  if(moEl)moEl.textContent="📅 "+mNames[now.getMonth()]+" : "+mCount+" msgs ce mois · "+plan.name+" ("+plan.price+")";
+  if(moEl)moEl.textContent="📅 "+mNames[now.getMonth()]+" : "+mCount+" msgs ce mois · "+getPlanDisplayName(plan._plan||getPlan())+" ("+plan.price+")";
   var planEl=document.getElementById("usage-plan");
-  if(planEl)planEl.textContent="FORFAIT "+plan.name+" · "+limit+" msgs / fenêtre 12h";
+  if(planEl)planEl.textContent="FORFAIT "+getPlanDisplayName(plan._plan||getPlan())+" · "+limit+" msgs / fenêtre · Recharge dans "+getNextRechargeTime();
 }
 renderUsage();
+
+/* ── RETOUR STRIPE CHECKOUT ── */
+(function(){
+  var urlParams=new URLSearchParams(window.location.search);
+  var checkoutStatus=urlParams.get("checkout");
+  var planParam=urlParams.get("plan");
+  if(checkoutStatus==="success"){
+    var planName=getPlanDisplayName(planParam||"");
+    showToastMsg("✅ Bienvenue sur "+planName+"! Ton forfait est actif.");
+    getUserPlanAndLimits();
+    window.history.replaceState({},"",window.location.pathname);
+  }else if(checkoutStatus==="cancelled"){
+    showToastMsg("Paiement annulé.");
+    window.history.replaceState({},"",window.location.pathname);
+  }
+})();
+
+/* ── HIGHLIGHT PLAN ACTUEL ── */
+async function highlightCurrentPlan(){
+  try{
+    var s=await supabase.auth.getUser();
+    if(!s.data||!s.data.user)return;
+    var pr=await supabase.from("profiles").select("plan").eq("id",s.data.user.id).maybeSingle();
+    var currentPlan=pr?.data?.plan;
+    if(!currentPlan)return;
+    var currentCard=document.querySelector('[data-plan="'+currentPlan+'"]');
+    if(currentCard){
+      var btn=currentCard.querySelector(".plan-subscribe-btn");
+      if(btn){
+        btn.disabled=true;btn.textContent="✓ PLAN ACTUEL";
+        btn.style.background="rgba(55,224,160,0.1)";btn.style.color="#37e0a0";btn.style.border="1px solid #37e0a044";
+      }
+      currentCard.style.borderColor="#37e0a044";
+    }
+  }catch(e){console.error("highlightCurrentPlan:",e);}
+}
 
 /* ── CONVERSATION SYNC ── */
 var chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
@@ -5548,7 +5615,7 @@ function applyPlanVisibility(){
 
 silexCheckAccess();
 applyPlanVisibility();
-supabase.auth.onAuthStateChange(function(){silexCheckAccess();applyPlanVisibility();});
+supabase.auth.onAuthStateChange(function(){silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();});
 
 /* ══ PLAN INIT (load from Supabase) ══ */
 (function(){getUserPlanAndLimits().catch(function(){});})();

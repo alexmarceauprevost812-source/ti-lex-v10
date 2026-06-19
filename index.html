@@ -706,6 +706,19 @@
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(255,107,0,0.3);
     }
+    /* FORFAITS ACCUEIL */
+    .home-plans{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:28px;width:100%;max-width:900px;margin-left:auto;margin-right:auto;}
+    .home-plan{flex:1;min-width:240px;max-width:280px;background:rgba(15,15,20,0.85);border:1px solid rgba(255,127,39,0.15);border-radius:14px;padding:22px 18px;text-align:center;position:relative;transition:all .3s ease;}
+    .home-plan:hover{border-color:#ff7f27;transform:translateY(-4px);box-shadow:0 8px 30px rgba(255,127,39,0.15);}
+    .home-plan .hp-badge{position:absolute;top:-10px;right:12px;font-size:8px;font-weight:700;padding:3px 10px;border-radius:10px;letter-spacing:1px;}
+    .home-plan .hp-emoji{font-size:28px;margin-bottom:6px;}
+    .home-plan .hp-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#fff;}
+    .home-plan .hp-price{font-family:'Share Tech Mono',monospace;font-size:22px;color:#ff7f27;margin:6px 0 2px;}
+    .home-plan .hp-tax{font-family:'Share Tech Mono',monospace;font-size:9px;color:#888;margin-bottom:10px;}
+    .home-plan .hp-feats{list-style:none;padding:0;margin:0 0 14px;font-size:12px;color:#ccc;line-height:1.9;text-align:left;}
+    .home-plan .hp-feats li::before{content:"✓ ";color:#37e0a0;}
+    .home-plan .hp-btn{display:block;width:100%;padding:10px;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;transition:all .2s ease;color:#000;}
+    .home-plan .hp-btn:hover{transform:translateY(-2px);}
     /* OVERLAY MODALE DÉMO */
     #tilexDemoOverlay {
       display: none;
@@ -978,6 +991,54 @@
       <button class="btn btn-cyber" onclick="window.location.href='cyber.html'" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);color:#fff;border:1px solid #a78bfa;">
         🔰 Cybersécurité
       </button>
+
+      <!-- FORFAITS -->
+      <div class="home-plans">
+        <div class="home-plan">
+          <div class="hp-emoji">⚡</div>
+          <div class="hp-name">TI</div>
+          <div class="hp-price">29,99$/mois</div>
+          <div class="hp-tax">+ taxes (TPS/TVQ)</div>
+          <ul class="hp-feats">
+            <li>80 messages par jour</li>
+            <li>Recharge à 8h00 et 20h00</li>
+            <li>5 agents IA personnalisés</li>
+            <li>1 projet Codex</li>
+            <li>Support par courriel</li>
+          </ul>
+          <button class="hp-btn" style="background:#37e0a0;" onclick="window.location.href='pro.html#forfaits'">S'ABONNER À TI</button>
+        </div>
+        <div class="home-plan" style="border-color:rgba(255,127,39,0.3);">
+          <div class="hp-badge" style="background:#ff7f27;color:#000;">POPULAIRE</div>
+          <div class="hp-emoji">🔥</div>
+          <div class="hp-name" style="color:#ff7f27;">TI-LEX</div>
+          <div class="hp-price">89,99$/mois</div>
+          <div class="hp-tax">+ taxes (TPS/TVQ)</div>
+          <ul class="hp-feats">
+            <li>200 messages par jour</li>
+            <li>Recharge à 8h00 et 20h00</li>
+            <li>20 agents IA personnalisés</li>
+            <li>5 projets Codex</li>
+            <li>Support prioritaire</li>
+          </ul>
+          <button class="hp-btn" style="background:#ff7f27;" onclick="window.location.href='pro.html#forfaits'">S'ABONNER À TI-LEX</button>
+        </div>
+        <div class="home-plan" style="border-color:rgba(255,207,74,0.3);">
+          <div class="hp-badge" style="background:#ffcf4a;color:#000;">MEILLEUR</div>
+          <div class="hp-emoji">🚀</div>
+          <div class="hp-name" style="color:#ffcf4a;">TI-LEX-AL</div>
+          <div class="hp-price" style="color:#ffcf4a;">149,99$/mois</div>
+          <div class="hp-tax">+ taxes (TPS/TVQ)</div>
+          <ul class="hp-feats">
+            <li>400 messages par jour</li>
+            <li>Recharge à 8h00 et 20h00</li>
+            <li>Agents IA illimités</li>
+            <li>Agent AL premium</li>
+            <li>Marketplace — accès complet</li>
+          </ul>
+          <button class="hp-btn" style="background:#ffcf4a;" onclick="window.location.href='pro.html#forfaits'">S'ABONNER À TI-LEX-AL</button>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ VUE CONNEXION ═══ -->
