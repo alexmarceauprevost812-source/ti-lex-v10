@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forfaits — ti-lex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0a0a0a;color:#e0e0e0;font-family:'Inter','Segoe UI',sans-serif;min-height:100vh;}
+    a{color:#ff7f27;text-decoration:none;}
+    a:hover{text-decoration:underline;}
+
+    .forfaits-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid #23232c;}
+    .forfaits-nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#ff7f27;letter-spacing:2px;cursor:pointer;}
+    .forfaits-nav-logo span{color:#ffcf4a;}
+    .forfaits-nav-links{display:flex;gap:16px;align-items:center;}
+    .forfaits-nav-links a{color:#888;font-size:13px;transition:color .2s;}
+    .forfaits-nav-links a:hover{color:#fff;text-decoration:none;}
+    .btn-nav{padding:8px 18px;background:#ff7f27;color:#0a0a0a;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;transition:all .2s;}
+    .btn-nav:hover{background:#ff9a40;transform:translateY(-1px);}
+
+    .forfaits-header{text-align:center;padding:60px 20px 40px;}
+    .forfaits-badge{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#ff7f27;border:1px solid rgba(255,127,39,0.3);padding:4px 14px;border-radius:20px;margin-bottom:18px;}
+    .forfaits-titre{font-size:clamp(28px,5vw,46px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:14px;}
+    .forfaits-titre span{background:linear-gradient(135deg,#ff7f27,#ffcf4a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .forfaits-sous-titre{font-size:16px;color:#888;max-width:520px;margin:0 auto;line-height:1.6;}
+
+    .forfaits-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;max-width:1020px;margin:0 auto;padding:0 20px 80px;}
+
+    .forfait-carte{background:#0f0f13;border:1px solid #23232c;border-radius:16px;padding:30px 26px;position:relative;transition:border-color .2s,transform .2s;display:flex;flex-direction:column;}
+    .forfait-carte:hover{border-color:#333;transform:translateY(-4px);}
+    .forfait-carte.populaire{border-color:#ff7f27;background:linear-gradient(180deg,rgba(255,127,39,0.06) 0%,#0f0f13 100%);}
+    .forfait-carte.meilleur{border-color:#ffcf4a;background:linear-gradient(180deg,rgba(255,207,74,0.06) 0%,#0f0f13 100%);}
+
+    .badge-carte{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:4px 18px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;color:#0a0a0a;}
+    .badge-populaire{background:linear-gradient(135deg,#ff7f27,#ff9a4a);}
+    .badge-meilleur{background:linear-gradient(135deg,#ffcf4a,#ffdf7a);}
+
+    .forfait-emoji{font-size:32px;margin-bottom:8px;}
+    .forfait-nom{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#fff;margin-bottom:4px;}
+    .forfait-prix{display:flex;align-items:flex-end;gap:4px;margin-bottom:4px;}
+    .prix-montant{font-size:42px;font-weight:800;color:#fff;line-height:1;font-family:'Share Tech Mono',monospace;}
+    .prix-dollar{font-size:18px;color:#888;margin-bottom:6px;}
+    .prix-periode{font-size:13px;color:#555;margin-bottom:6px;}
+    .forfait-tax{font-size:10px;color:#555;margin-bottom:12px;font-family:'Share Tech Mono',monospace;}
+    .forfait-tagline{font-size:12px;color:#666;margin-bottom:18px;line-height:1.5;}
+
+    .forfait-features{list-style:none;margin-bottom:28px;flex:1;display:flex;flex-direction:column;gap:10px;}
+    .feature-item{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#bbb;line-height:1.4;}
+    .feature-check{color:#37e0a0;font-size:14px;flex-shrink:0;margin-top:1px;}
+
+    .btn-abonner{width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .2s;letter-spacing:.3px;font-family:'Inter',sans-serif;}
+    .btn-ti{background:#37e0a0;color:#0a0a0a;}
+    .btn-ti:hover{background:#4aeaae;transform:translateY(-2px);box-shadow:0 6px 20px rgba(55,224,160,0.3);}
+    .btn-tilex{background:linear-gradient(135deg,#ff7f27,#ff9a4a);color:#0a0a0a;box-shadow:0 4px 20px rgba(255,127,39,0.35);}
+    .btn-tilex:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,127,39,0.5);}
+    .btn-tilexal{background:linear-gradient(135deg,#ffcf4a,#ffdf7a);color:#0a0a0a;box-shadow:0 4px 20px rgba(255,207,74,0.3);}
+    .btn-tilexal:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,207,74,0.45);}
+    .btn-abonner:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+    .btn-plan-actuel{width:100%;padding:12px;border-radius:10px;text-align:center;font-size:14px;font-weight:600;color:#37e0a0;border:1px solid rgba(55,224,160,0.3);background:rgba(55,224,160,0.08);}
+
+    .forfaits-garantie{text-align:center;padding:0 20px 60px;color:#555;font-size:13px;max-width:600px;margin:0 auto;}
+    .garantie-icones{display:flex;justify-content:center;gap:30px;margin-bottom:14px;flex-wrap:wrap;}
+    .garantie-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:#555;}
+    .garantie-icone{font-size:22px;}
+
+    .forfaits-recharge{text-align:center;padding:20px;margin:0 auto 40px;max-width:500px;background:rgba(255,127,39,0.05);border:1px solid rgba(255,127,39,0.15);border-radius:12px;}
+    .forfaits-recharge-titre{font-family:'Bebas Neue',sans-serif;font-size:16px;color:#ff7f27;letter-spacing:1px;margin-bottom:8px;}
+    .forfaits-recharge-desc{font-size:12px;color:#888;line-height:1.6;}
+
+    .toast{position:fixed;bottom:30px;right:30px;padding:14px 22px;border-radius:10px;font-weight:700;font-size:15px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);animation:toastIn .3s ease;}
+    .toast-success{background:#37e0a0;color:#0a0a0a;}
+    .toast-error{background:#ff4444;color:#fff;}
+    @keyframes toastIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    @media(max-width:680px){
+      .forfaits-grille{grid-template-columns:1fr;padding:0 14px 60px;}
+      .forfaits-nav{padding:12px 16px;}
+      .forfaits-header{padding:40px 16px 30px;}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="forfaits-nav">
+  <div class="forfaits-nav-logo" onclick="window.location.href='index.html'">TI-LEX<span>-AL</span></div>
+  <div class="forfaits-nav-links">
+    <a href="index.html">Accueil</a>
+    <a href="pro.html">Plateforme</a>
+    <a href="cyber.html">Cybersécurité</a>
+    <button class="btn-nav" onclick="window.location.href='pro.html'">Ouvrir ti-lex</button>
+  </div>
+</nav>
+
+<div class="forfaits-header">
+  <div class="forfaits-badge">Produit du Québec</div>
+  <h1 class="forfaits-titre">Choisir ton forfait <span>ti-lex</span></h1>
+  <p class="forfaits-sous-titre">Construis, génère et déploie ton code plus vite avec l'IA. Recharge automatique à 8h00 et 20h00 (heure de l'Est).</p>
+</div>
+
+<div class="forfaits-recharge">
+  <div class="forfaits-recharge-titre">FENÊTRES DE RECHARGE</div>
+  <div class="forfaits-recharge-desc">
+    Chaque forfait offre 2 fenêtres de messages par jour.<br>
+    <strong>08h00 → 20h00</strong> (fenêtre jour) &nbsp;·&nbsp; <strong>20h00 → 08h00</strong> (fenêtre nuit)<br>
+    Tes messages se rechargent automatiquement à chaque fenêtre.
+  </div>
+</div>
+
+<div class="forfaits-grille">
+
+  <!-- TI -->
+  <div class="forfait-carte" data-plan="ti">
+    <div class="forfait-emoji">⚡</div>
+    <div class="forfait-nom">TI</div>
+    <div class="forfait-prix">
+      <span class="prix-dollar">$</span>
+      <span class="prix-montant">29,99</span>
+      <span class="prix-periode">/mois</span>
+    </div>
+    <div class="forfait-tax">+ taxes (TPS/TVQ)</div>
+    <div class="forfait-tagline">80 messages/jour · Produit du Québec</div>
+    <ul class="forfait-features">
+      <li class="feature-item"><span class="feature-check">✓</span> 80 messages par jour (2 × 40)</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Recharge à 8h00 et 20h00</li>
+      <li class="feature-item"><span class="feature-check">✓</span> 5 agents IA personnalisés</li>
+      <li class="feature-item"><span class="feature-check">✓</span> 1 projet Codex</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Conversations sauvegardées</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Support par courriel</li>
+    </ul>
+    <div id="btn-ti-container">
+      <button class="btn-abonner btn-ti" onclick="abonner('ti')">S'abonner à TI</button>
+    </div>
+  </div>
+
+  <!-- TI-LEX -->
+  <div class="forfait-carte populaire" data-plan="surge">
+    <div class="badge-carte badge-populaire">POPULAIRE</div>
+    <div class="forfait-emoji">🔥</div>
+    <div class="forfait-nom" style="color:#ff7f27;">TI-LEX</div>
+    <div class="forfait-prix">
+      <span class="prix-dollar">$</span>
+      <span class="prix-montant">89,99</span>
+      <span class="prix-periode">/mois</span>
+    </div>
+    <div class="forfait-tax">+ taxes (TPS/TVQ)</div>
+    <div class="forfait-tagline">200 messages/jour · 20 agents IA · Produit du Québec</div>
+    <ul class="forfait-features">
+      <li class="feature-item"><span class="feature-check">✓</span> 200 messages par jour (2 × 100)</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Recharge à 8h00 et 20h00</li>
+      <li class="feature-item"><span class="feature-check">✓</span> 20 agents IA personnalisés</li>
+      <li class="feature-item"><span class="feature-check">✓</span> 5 projets Codex</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Publier sur la marketplace</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Support prioritaire</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Conversations sauvegardées</li>
+    </ul>
+    <div id="btn-surge-container">
+      <button class="btn-abonner btn-tilex" onclick="abonner('surge')">S'abonner à TI-LEX</button>
+    </div>
+  </div>
+
+  <!-- TI-LEX-AL -->
+  <div class="forfait-carte meilleur" data-plan="apex">
+    <div class="badge-carte badge-meilleur">MEILLEUR</div>
+    <div class="forfait-emoji">🚀</div>
+    <div class="forfait-nom" style="color:#ffcf4a;">TI-LEX-AL</div>
+    <div class="forfait-prix">
+      <span class="prix-dollar">$</span>
+      <span class="prix-montant">149,99</span>
+      <span class="prix-periode">/mois</span>
+    </div>
+    <div class="forfait-tax">+ taxes (TPS/TVQ)</div>
+    <div class="forfait-tagline">400 messages/jour · Agents illimités · Produit du Québec</div>
+    <ul class="forfait-features">
+      <li class="feature-item"><span class="feature-check">✓</span> 400 messages par jour (2 × 200)</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Recharge à 8h00 et 20h00</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Agents IA illimités</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Agent AL premium</li>
+      <li class="feature-item"><span class="feature-check">✓</span> 15 projets Codex</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Marketplace — accès complet</li>
+      <li class="feature-item"><span class="feature-check">✓</span> Support prioritaire</li>
+    </ul>
+    <div id="btn-apex-container">
+      <button class="btn-abonner btn-tilexal" onclick="abonner('apex')">S'abonner à TI-LEX-AL</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="forfaits-garantie">
+  <div class="garantie-icones">
+    <div class="garantie-item"><span class="garantie-icone">🔒</span><span>Paiement sécurisé</span></div>
+    <div class="garantie-item"><span class="garantie-icone">🔄</span><span>Annuler en tout temps</span></div>
+    <div class="garantie-item"><span class="garantie-icone">⚜️</span><span>Produit du Québec</span></div>
+    <div class="garantie-item"><span class="garantie-icone">💬</span><span>Support en français</span></div>
+  </div>
+  <p>Aucun engagement. Annule quand tu veux. Facturation sécurisée via Stripe.</p>
+</div>
+
+<script>
+var SB_URL="https://rnuripmfozlxenryxhdc.supabase.co";
+var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
+
+var PLAN_PRICE_FALLBACK={
+  ti:"price_1Tk0ylFu0d9mAEdCMHuDGik6",
+  surge:"price_1Tk1BqFu0d9mAEdC1Ti7zHG0",
+  apex:"price_1Tk1O3Fu0d9mAEdCbKUV25kJ"
+};
+
+var _planPriceIds={};
+
+async function loadPricesFromDB(){
+  try{
+    var res=await fetch(SB_URL+"/rest/v1/plan_limits?select=plan,stripe_price_id&stripe_price_id=not.is.null",{
+      headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON}
+    });
+    var data=await res.json();
+    if(Array.isArray(data)){
+      data.forEach(function(r){_planPriceIds[r.plan]=r.stripe_price_id;});
+    }
+  }catch(e){console.error("loadPricesFromDB:",e);}
+}
+loadPricesFromDB();
+
+function getToken(){
+  try{
+    var raw=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if(raw){var d=JSON.parse(raw);return d.access_token||SB_ANON;}
+  }catch(e){}
+  return SB_ANON;
+}
+
+function getSession(){
+  try{
+    var raw=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if(raw)return JSON.parse(raw);
+  }catch(e){}
+  return null;
+}
+
+function showToast(msg,type){
+  var t=document.createElement("div");
+  t.className="toast toast-"+(type||"success");
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},4000);
+}
+
+async function abonner(planSlug){
+  var session=getSession();
+  if(!session||!session.access_token){
+    window.location.href="pro.html";
+    return;
+  }
+  var priceId=_planPriceIds[planSlug]||PLAN_PRICE_FALLBACK[planSlug];
+  if(!priceId){
+    showToast("Forfait non disponible.","error");
+    return;
+  }
+  var btn=document.querySelector('[data-plan="'+planSlug+'"] .btn-abonner');
+  if(btn){btn.disabled=true;btn.textContent="Chargement...";}
+  try{
+    var res=await fetch(SB_URL+"/functions/v1/create-checkout",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token,"apikey":SB_ANON},
+      body:JSON.stringify({priceId:priceId})
+    });
+    var data=await res.json();
+    if(res.status===403){
+      showToast(data.error||"Forfait non disponible.","error");
+      if(btn){btn.disabled=false;btn.textContent="S'abonner";}
+      return;
+    }
+    if(!res.ok||!data.url){
+      throw new Error(data.error||"Erreur lors du checkout");
+    }
+    window.location.href=data.url;
+  }catch(e){
+    console.error("[forfaits] checkout:",e);
+    showToast("Erreur : "+e.message,"error");
+    if(btn){btn.disabled=false;btn.textContent="S'abonner";}
+  }
+}
+
+async function highlightCurrentPlan(){
+  try{
+    var session=getSession();
+    if(!session||!session.access_token)return;
+    var res=await fetch(SB_URL+"/rest/v1/profiles?select=plan&id=eq."+session.user.id,{
+      headers:{"apikey":SB_ANON,"Authorization":"Bearer "+session.access_token}
+    });
+    var data=await res.json();
+    var plan=data&&data[0]&&data[0].plan;
+    if(!plan)return;
+    var slugMap={ti:"ti",flux:"ti",surge:"surge",apex:"apex"};
+    var s=slugMap[plan]||plan;
+    var container=document.getElementById("btn-"+s+"-container");
+    if(container){
+      container.innerHTML='<div class="btn-plan-actuel">✓ Ton forfait actuel</div>';
+    }
+    var carte=document.querySelector('[data-plan="'+s+'"]');
+    if(carte)carte.style.borderColor="#37e0a044";
+  }catch(e){console.error("highlightCurrentPlan:",e);}
+}
+highlightCurrentPlan();
+
+var urlParams=new URLSearchParams(window.location.search);
+if(urlParams.get("checkout")==="success"){
+  var planParam=urlParams.get("plan");
+  var planNames={ti:"TI",surge:"TI-LEX",apex:"TI-LEX-AL"};
+  showToast("Bienvenue sur "+(planNames[planParam]||planParam)+"! Ton forfait est actif.","success");
+  window.history.replaceState({},"",window.location.pathname);
+}else if(urlParams.get("checkout")==="cancelled"){
+  showToast("Paiement annulé.","error");
+  window.history.replaceState({},"",window.location.pathname);
+}
+</script>
+
+</body>
+</html>

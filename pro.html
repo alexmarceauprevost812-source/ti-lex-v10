@@ -1349,7 +1349,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')">Conversations</div>
+      <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')" data-hide-in-chat="true">Conversations</div>
       <div class="sb-sub-item" id="sub-favs" onclick="showSub('favs')">Favoris</div>
       <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
       <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
@@ -1425,6 +1425,10 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="sb-item" id="si-settings" onclick="showTab('settings')">
     <span class="sb-icon">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
+  </div>
+  <div class="sb-item" onclick="window.location.href='forfaits.html'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ffcf4a;">🏆</span><span class="sb-label" data-txt="FORFAITS"></span>
+    <span class="sb-label" style="font-size:8px;background:linear-gradient(135deg,#ff7f27,#ffcf4a);color:#0a0a0a;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px;margin-left:auto;">UPGRADE</span>
   </div>
 
   <!-- STATS UTILISATION -->
@@ -2237,6 +2241,9 @@ function showTab(name){
   document.querySelectorAll(".mqb-btn").forEach(function(b,i){
     var tabs=["chat","codex","studio","settings"];
     b.classList.toggle("active",tabs[i]===name);
+  });
+  document.querySelectorAll("[data-hide-in-chat]").forEach(function(el){
+    el.style.display=(name==="chat")?"none":"";
   });
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab){
@@ -5769,7 +5776,7 @@ window.envoyerMsgVersCodex=envoyerMsgVersCodex;
 <!-- FAB Nouvelle conversation — Interface Pro -->
 <button id="fab-new-conv-pro" class="fab-new-conv-pro" onclick="newConversation();showTab('chat');" aria-label="Nouvelle conversation">
   <span class="fab-icon">+</span>
-  <span class="fab-label" data-i18n="new-conv-fab">NOUVELLE</span>
+  <span class="fab-label" data-i18n="new-conv-fab">Nouvelle conv.</span>
 </button>
 
 </body>
