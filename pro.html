@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ti-lex-AL v10 — Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="css/agent-marceau.css">
 <style>
 :root{
@@ -2158,7 +2159,9 @@ renderNotifs();
 
 /* ── SUPABASE + AI PROXY ── */
 const AI_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
+const SB_URL="https://rnuripmfozlxenryxhdc.supabase.co";
 const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
+const supabase=window.supabase.createClient(SB_URL,SB_ANON);window.supabase=supabase;
 function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
 
 async function readSSE(res){
