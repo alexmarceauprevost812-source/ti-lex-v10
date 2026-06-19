@@ -335,6 +335,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 
 /* CARDS */
 .card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:background .35s;margin-bottom:12px;position:relative;}
+.admin-only-section{display:none;}
 .card-hd{padding:11px 17px;background:transparent;border-bottom:1px solid var(--border);
   font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:2px;
   display:flex;align-items:center;justify-content:space-between;}
@@ -1819,7 +1820,7 @@ Comment puis-je t'aider aujourd'hui?</div>
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
+    <div class="card admin-only-section" style="margin-bottom:14px;">
       <div class="card-hd" id="lbl-conn-hd" data-i18n="conn-hd">🔗 CONNEXIONS</div>
       <div class="card-body">
         <!-- ─── SECTION GITHUB PAT ─── -->
@@ -1920,7 +1921,7 @@ Comment puis-je t'aider aujourd'hui?</div>
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
+    <div class="card admin-only-section" style="margin-bottom:14px;">
       <div class="card-hd">🗄️ <span data-i18n="supabase-title">CONNEXION SUPABASE</span></div>
       <div class="card-body">
         <div class="settings-field">
@@ -5670,10 +5671,26 @@ function applyPlanVisibility(){
   });
 }
 
+function checkAdminStatus(){
+  supabase.auth.getUser().then(function(res){
+    var user=res.data&&res.data.user;
+    if(!user){applyAdminVisibility(false);return;}
+    supabase.rpc("is_admin").then(function(rpcRes){
+      applyAdminVisibility(rpcRes.data===true);
+    }).catch(function(){applyAdminVisibility(false);});
+  }).catch(function(){applyAdminVisibility(false);});
+}
+function applyAdminVisibility(isAdmin){
+  document.querySelectorAll(".admin-only-section").forEach(function(el){
+    el.style.display=isAdmin?"":"none";
+  });
+}
+
 silexCheckAccess();
 applyPlanVisibility();
+checkAdminStatus();
 supabase.auth.onAuthStateChange(function(event,session){
-  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){demarrerConversation(session.user.id).catch(function(){});}
 });
