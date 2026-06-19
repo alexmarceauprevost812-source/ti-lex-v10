@@ -901,6 +901,12 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
 100%{color:#E8C24A;text-shadow:0 0 4px rgba(232,194,74,.27);}
 }
 [data-theme="day"] .proj-char{color:#0A0A0A;animation:none;text-shadow:none;}
+.cmsg-bbl.gold-flash{animation:goldFlashPulse 2.5s ease-out forwards;}
+@keyframes goldFlashPulse{
+  0%{box-shadow:0 0 12px rgba(255,207,74,0.6),inset 0 0 8px rgba(255,207,74,0.15);border-color:#ffcf4a;}
+  20%{box-shadow:0 0 20px rgba(255,207,74,0.8),inset 0 0 12px rgba(255,207,74,0.2);border-color:#ffdf7a;}
+  100%{box-shadow:none;border-color:transparent;}
+}
 
 /* ════════════════════════════════════════════════════════════
    data-interface="serious" — animations calmées, RIEN caché
@@ -2545,7 +2551,47 @@ function applyGoldProjection(container){
 /* ── CHAT ── */
 let chatBusy=false;
 let chatHistory=[];
-const SYSTEM_PROMPT="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. Ton style est intense, direct et confiant. Tu donnes des réponses tranchées, complètes et actionnables, en français québécois. Quand l'utilisateur demande du code, fournis le code complet dans un bloc markdown avec le langage (```javascript, ```python, etc.), puis explique ce que fait chaque partie importante. Utilise le gras **...** pour les concepts clés.";
+var ADMIN_EMAIL="alexmarceauprevost812@gmail.com";
+var _currentUserEmail=null;
+function isModeMaitre(){return _currentUserEmail===ADMIN_EMAIL;}
+var SYSTEM_PROMPT_MAITRE="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE MAÎTRE : Tu réponds directement et efficacement sans poser de questions sauf si vraiment nécessaire. Tu connais bien l'utilisateur, son projet ti-lex, son stack (Supabase + Vercel + vanilla JS). Tu vas droit au but. Tu génères le code demandé immédiatement. Ton style est intense, direct et confiant. Quand l'utilisateur demande du code, fournis le code complet dans un bloc markdown avec le langage (```javascript, ```python, etc.), puis explique ce que fait chaque partie importante. Utilise le gras **...** pour les concepts clés.";
+var SYSTEM_PROMPT_STANDARD="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE STANDARD : Avant de répondre, évalue si la demande est claire. Si la demande est vague ou incomplète, pose 1 à 2 questions courtes et précises pour bien comprendre. Ne génère PAS le code avant d'avoir les informations suffisantes. Si la demande est claire et précise, réponds directement sans poser de question. Ton style est direct et confiant, en français québécois. Quand tu fournis du code, utilise un bloc markdown avec le langage. Utilise le gras **...** pour les concepts clés.";
+function getSystemPrompt(){return isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;}
+var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
+
+/* ── CONVERSATION MANAGER (Supabase) ── */
+var _convActiveId=null;
+async function demarrerConversation(userId){
+  try{
+    var res=await supabase.from("conversations").select("id").eq("user_id",userId).eq("archived",false).order("updated_at",{ascending:false}).limit(1).maybeSingle();
+    if(res.data){_convActiveId=res.data.id;return res.data.id;}
+    return await creerNouvelleConv(userId);
+  }catch(e){console.error("demarrerConversation:",e);return null;}
+}
+async function creerNouvelleConv(userId,titre){
+  try{
+    var res=await supabase.from("conversations").insert({user_id:userId,titre:titre||"Nouvelle conversation"}).select().single();
+    if(res.data){_convActiveId=res.data.id;}
+    return res.data?.id||null;
+  }catch(e){console.error("creerNouvelleConv:",e);return null;}
+}
+async function sauvegarderMsgEnDB(role,contenu){
+  if(!contenu)return;
+  try{
+    var u=await supabase.auth.getUser();
+    if(!u.data?.user)return;
+    var userId=u.data.user.id;
+    if(!_convActiveId)await demarrerConversation(userId);
+    if(!_convActiveId)return;
+    await supabase.from("messages").insert({conversation_id:_convActiveId,user_id:userId,role:role,contenu:contenu});
+    await supabase.from("conversations").update({updated_at:new Date().toISOString()}).eq("id",_convActiveId);
+  }catch(e){console.error("sauvegarderMsgEnDB:",e);}
+}
+async function renommerConvAuto(convId,premierMsg){
+  if(!convId||!premierMsg)return;
+  var titre=premierMsg.slice(0,50).trim()+(premierMsg.length>50?"...":"");
+  await supabase.from("conversations").update({titre:titre}).eq("id",convId);
+}
 
 async function sendChat(){
   if(chatBusy)return;
@@ -2598,7 +2644,7 @@ async function sendChat(){
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
-      system:SYSTEM_PROMPT,
+      system:getSystemPrompt(),
       messages:chatHistory.slice(-20)
     })});
     if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
@@ -2615,7 +2661,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à Codex" style="color:#ff7f27;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"":"#FFFFFF";
@@ -2653,6 +2699,10 @@ async function sendChat(){
         }
       }
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
+      bblText.classList.add("gold-flash");
+      setTimeout(function(){bblText.classList.remove("gold-flash");},2600);
+      sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
+      sauvegarderMsgEnDB("assistant",reply||"");
     }
   }catch(e){td.remove();console.error("[ti-lex] sendChat error:",e);addMsg("a","⚠️ "+e.message);}
   chatBusy=false;
@@ -5615,10 +5665,23 @@ function applyPlanVisibility(){
 
 silexCheckAccess();
 applyPlanVisibility();
-supabase.auth.onAuthStateChange(function(){silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();});
+supabase.auth.onAuthStateChange(function(event,session){
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();
+  _currentUserEmail=session?.user?.email||null;
+  if(session?.user){demarrerConversation(session.user.id).catch(function(){});}
+});
 
-/* ══ PLAN INIT (load from Supabase) ══ */
-(function(){getUserPlanAndLimits().catch(function(){});})();
+/* ══ PLAN INIT + MODE AGENT INIT ══ */
+(async function(){
+  getUserPlanAndLimits().catch(function(){});
+  try{
+    var u=await supabase.auth.getUser();
+    if(u.data?.user){
+      _currentUserEmail=u.data.user.email||null;
+      demarrerConversation(u.data.user.id).catch(function(){});
+    }
+  }catch(e){}
+})();
 
 /* ══ MOTEUR COMMUNICATION CHAT → CODEX ══ */
 async function envoyerVersCodex(titre,instruction,fichiers){
