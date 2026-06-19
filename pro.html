@@ -1248,6 +1248,35 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .param-input{background:#f5f0e8;border-color:#D4C5A4;color:#1a1a1a;}
 [data-theme="day"] .param-toggle-btn{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
 
+/* USER CONNECTIONS */
+.uc-bloc{border:1px solid #23232c;border-radius:10px;padding:16px;margin-bottom:12px;background:#0d0d12;transition:border-color .2s;}
+.uc-bloc.connected{border-color:#37e0a044;}
+.uc-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.uc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.uc-icon.github{background:rgba(255,255,255,.08);}
+.uc-icon.supa{background:rgba(55,224,160,.08);}
+.uc-title{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--txt);flex:1;}
+.uc-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.8px;padding:3px 8px;border-radius:4px;background:#1a1a20;border:1px solid #23232c;color:#6c6c78;}
+.uc-badge.on{background:rgba(55,224,160,.1);border-color:#37e0a0;color:#37e0a0;}
+.uc-connected-info{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(55,224,160,.04);border:1px solid #37e0a022;border-radius:8px;margin-bottom:10px;}
+.uc-avatar{width:28px;height:28px;border-radius:50%;border:1px solid #37e0a044;}
+.uc-username{font-family:'Share Tech Mono',monospace;font-size:12px;color:#37e0a0;font-weight:600;}
+.uc-field{margin-bottom:10px;}
+.uc-field label{display:block;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:#6c6c78;margin-bottom:5px;}
+.uc-input{width:100%;padding:9px 12px;background:#0a0a0a;border:1px solid #23232c;border-radius:6px;color:#e0e0e0;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;box-sizing:border-box;}
+.uc-input:focus{border-color:var(--orange);}
+.uc-actions{display:flex;gap:8px;margin-top:10px;}
+.uc-btn{padding:8px 16px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:opacity .2s;border:none;}
+.uc-btn.primary{background:var(--orange);color:#0a0a0a;}
+.uc-btn.primary:disabled{opacity:.4;cursor:not-allowed;}
+.uc-btn.danger{background:transparent;color:#e05555;border:1px solid #e05555;}
+.uc-btn.danger:hover{background:rgba(224,85,85,.08);}
+.uc-feedback{font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:8px;min-height:14px;}
+.uc-feedback.ok{color:#37e0a0;}
+.uc-feedback.err{color:#e05555;}
+[data-theme="day"] .uc-bloc{background:#f5f0e8;border-color:#D4C5A4;}
+[data-theme="day"] .uc-input{background:#fff;border-color:#D4C5A4;color:#1a1a1a;}
+
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1918,6 +1947,63 @@ Comment puis-je t'aider aujourd'hui?</div>
         <div style="margin-top:10px;display:flex;gap:8px;">
           <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;" onclick="loadConvsInfo()">↻ ACTUALISER</button>
           <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="if(confirm('Effacer toutes les conversations?')){localStorage.removeItem('tilex-chat-convs');loadConvsInfo();}">EFFACER TOUT</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="user-connexions-card" style="margin-bottom:14px;display:none;">
+      <div class="card-hd">🔗 MES CONNEXIONS</div>
+      <div class="card-body">
+        <div class="uc-bloc" id="uc-github-bloc">
+          <div class="uc-header">
+            <div class="uc-icon github"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></div>
+            <div class="uc-title">GITHUB</div>
+            <span class="uc-badge" id="uc-gh-badge">NON CONNECTÉ</span>
+          </div>
+          <div id="uc-gh-connected" style="display:none;">
+            <div class="uc-connected-info">
+              <img class="uc-avatar" id="uc-gh-avatar" src="" alt="">
+              <span class="uc-username" id="uc-gh-username"></span>
+            </div>
+          </div>
+          <div id="uc-gh-form">
+            <div class="uc-field">
+              <label>PERSONAL ACCESS TOKEN (PAT)</label>
+              <input type="password" id="uc-gh-pat" class="uc-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="uc-actions">
+            <button class="uc-btn primary" id="uc-gh-connect-btn" onclick="ucConnectGitHub()">CONNECTER</button>
+            <button class="uc-btn danger" id="uc-gh-disconnect-btn" onclick="ucDisconnectGitHub()" style="display:none;">DÉCONNECTER</button>
+          </div>
+          <div class="uc-feedback" id="uc-gh-feedback"></div>
+        </div>
+        <div class="uc-bloc" id="uc-supa-bloc">
+          <div class="uc-header">
+            <div class="uc-icon supa"><svg width="18" height="18" viewBox="0 0 109 113" fill="none"><path d="M63.7 110.3c-2.7 3.3-8.2 1.5-8.3-2.8l-1-56.8h37.8c6.8 0 10.6 8 6.1 13.2L63.7 110.3z" fill="#3ECF8E"/><path d="M63.7 110.3c-2.7 3.3-8.2 1.5-8.3-2.8l-1-56.8h37.8c6.8 0 10.6 8 6.1 13.2L63.7 110.3z" fill="url(#a)" fill-opacity=".2"/><path d="M45.3 2.7c2.7-3.3 8.2-1.5 8.3 2.8l.4 56.8H16.7c-6.8 0-10.6-8-6.1-13.2L45.3 2.7z" fill="#3ECF8E"/><defs><linearGradient id="a" x1="54" y1="55" x2="87" y2="107" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient></defs></svg></div>
+            <div class="uc-title">SUPABASE</div>
+            <span class="uc-badge" id="uc-sb-badge">NON CONNECTÉ</span>
+          </div>
+          <div id="uc-sb-connected" style="display:none;">
+            <div class="uc-connected-info">
+              <span style="font-size:18px;">🗄️</span>
+              <span class="uc-username" id="uc-sb-project"></span>
+            </div>
+          </div>
+          <div id="uc-sb-form">
+            <div class="uc-field">
+              <label>URL DU PROJET</label>
+              <input type="url" id="uc-sb-url" class="uc-input" placeholder="https://xxxx.supabase.co" autocomplete="off">
+            </div>
+            <div class="uc-field">
+              <label>CLÉ ANON PUBLIQUE</label>
+              <input type="password" id="uc-sb-key" class="uc-input" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off">
+            </div>
+          </div>
+          <div class="uc-actions">
+            <button class="uc-btn primary" id="uc-sb-connect-btn" onclick="ucConnectSupabase()">CONNECTER</button>
+            <button class="uc-btn danger" id="uc-sb-disconnect-btn" onclick="ucDisconnectSupabase()" style="display:none;">DÉCONNECTER</button>
+          </div>
+          <div class="uc-feedback" id="uc-sb-feedback"></div>
         </div>
       </div>
     </div>
@@ -3388,6 +3474,167 @@ async function getGithubToken(){
   }catch(e){console.error("getGithubToken error:",e);}
   return null;
 }
+
+/* ── USER CONNECTIONS (per-user GitHub + Supabase via user_connections table) ── */
+async function initUserConnexions(){
+  try{
+    var authRes=await supabase.auth.getUser();
+    if(!authRes.data||!authRes.data.user){document.getElementById("user-connexions-card").style.display="none";return;}
+    document.getElementById("user-connexions-card").style.display="";
+    await chargerConnexions();
+  }catch(e){console.error("[UC] initUserConnexions:",e);}
+}
+
+async function chargerConnexions(){
+  try{
+    var authRes=await supabase.auth.getUser();
+    if(!authRes.data||!authRes.data.user)return;
+    var uid=authRes.data.user.id;
+    var res=await supabase.from("user_connections").select("*").eq("user_id",uid).maybeSingle();
+    if(res.error){console.error("[UC] chargerConnexions:",res.error);return;}
+    var d=res.data;
+    if(d&&d.github_connected){
+      ucSetGitHubConnected(true,d.github_username,d.github_avatar_url);
+    }else{
+      ucSetGitHubConnected(false);
+    }
+    if(d&&d.supabase_connected){
+      ucSetSupabaseConnected(true,d.supabase_project_name,d.supabase_project_id);
+    }else{
+      ucSetSupabaseConnected(false);
+    }
+  }catch(e){console.error("[UC] chargerConnexions:",e);}
+}
+
+function ucSetGitHubConnected(connected,username,avatarUrl){
+  var badge=document.getElementById("uc-gh-badge");
+  var connInfo=document.getElementById("uc-gh-connected");
+  var form=document.getElementById("uc-gh-form");
+  var bloc=document.getElementById("uc-github-bloc");
+  var connectBtn=document.getElementById("uc-gh-connect-btn");
+  var disconnectBtn=document.getElementById("uc-gh-disconnect-btn");
+  if(badge){badge.textContent=connected?"CONNECTÉ":"NON CONNECTÉ";badge.className="uc-badge"+(connected?" on":"");}
+  if(connInfo)connInfo.style.display=connected?"":"none";
+  if(connected){
+    var av=document.getElementById("uc-gh-avatar");if(av)av.src=avatarUrl||"";
+    var un=document.getElementById("uc-gh-username");if(un)un.textContent="@"+(username||"");
+  }
+  if(bloc){if(connected)bloc.classList.add("connected");else bloc.classList.remove("connected");}
+  if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER";
+  if(disconnectBtn)disconnectBtn.style.display=connected?"inline-flex":"none";
+}
+
+function ucSetSupabaseConnected(connected,projectName,projectId){
+  var badge=document.getElementById("uc-sb-badge");
+  var connInfo=document.getElementById("uc-sb-connected");
+  var bloc=document.getElementById("uc-supa-bloc");
+  var connectBtn=document.getElementById("uc-sb-connect-btn");
+  var disconnectBtn=document.getElementById("uc-sb-disconnect-btn");
+  if(badge){badge.textContent=connected?"CONNECTÉ":"NON CONNECTÉ";badge.className="uc-badge"+(connected?" on":"");}
+  if(connInfo)connInfo.style.display=connected?"":"none";
+  if(connected){
+    var pn=document.getElementById("uc-sb-project");if(pn)pn.textContent=projectName||(projectId?"Projet "+projectId:"Supabase");
+  }
+  if(bloc){if(connected)bloc.classList.add("connected");else bloc.classList.remove("connected");}
+  if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER";
+  if(disconnectBtn)disconnectBtn.style.display=connected?"inline-flex":"none";
+}
+
+function ucFeedback(elId,msg,type){
+  var el=document.getElementById(elId);
+  if(!el)return;
+  el.textContent=msg;el.className="uc-feedback "+(type||"");
+  if(type!=="err")setTimeout(function(){el.textContent="";el.className="uc-feedback";},5000);
+}
+
+async function ucConnectGitHub(){
+  var pat=document.getElementById("uc-gh-pat").value.trim();
+  if(!pat){ucFeedback("uc-gh-feedback","Entre ton PAT GitHub.","err");return;}
+  var btn=document.getElementById("uc-gh-connect-btn");
+  if(btn){btn.disabled=true;btn.textContent="VÉRIFICATION...";}
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session){ucFeedback("uc-gh-feedback","Non authentifié.","err");return;}
+    var token=sess.data.session.access_token;
+    var res=await fetch(SB_URL+"/functions/v1/validate-github",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON},
+      body:JSON.stringify({pat:pat})
+    });
+    var data=await res.json();
+    if(data.valide){
+      ucSetGitHubConnected(true,data.username,data.avatar_url);
+      ucFeedback("uc-gh-feedback","@"+data.username+" connecté!","ok");
+      document.getElementById("uc-gh-pat").value="";
+    }else{
+      ucFeedback("uc-gh-feedback",data.error||"PAT invalide.","err");
+    }
+  }catch(e){
+    ucFeedback("uc-gh-feedback","Erreur: "+e.message,"err");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="CONNECTER";}
+    chargerConnexions();
+  }
+}
+
+async function ucDisconnectGitHub(){
+  if(!confirm("Déconnecter GitHub?"))return;
+  try{
+    var authRes=await supabase.auth.getUser();
+    if(!authRes.data||!authRes.data.user)return;
+    await supabase.from("user_connections").update({github_connected:false,github_username:null,github_pat:null,github_avatar_url:null,github_connected_at:null}).eq("user_id",authRes.data.user.id);
+    ucSetGitHubConnected(false);
+    ucFeedback("uc-gh-feedback","GitHub déconnecté.","ok");
+  }catch(e){ucFeedback("uc-gh-feedback","Erreur: "+e.message,"err");}
+}
+
+async function ucConnectSupabase(){
+  var url=document.getElementById("uc-sb-url").value.trim();
+  var key=document.getElementById("uc-sb-key").value.trim();
+  if(!url||!key){ucFeedback("uc-sb-feedback","URL et clé requises.","err");return;}
+  var btn=document.getElementById("uc-sb-connect-btn");
+  if(btn){btn.disabled=true;btn.textContent="VÉRIFICATION...";}
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session){ucFeedback("uc-sb-feedback","Non authentifié.","err");return;}
+    var token=sess.data.session.access_token;
+    var res=await fetch(SB_URL+"/functions/v1/validate-supabase",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON},
+      body:JSON.stringify({supabase_url:url,supabase_anon_key:key})
+    });
+    var data=await res.json();
+    if(data.valide){
+      ucSetSupabaseConnected(true,data.project_name,data.project_id);
+      ucFeedback("uc-sb-feedback","Projet connecté!","ok");
+      document.getElementById("uc-sb-url").value="";
+      document.getElementById("uc-sb-key").value="";
+    }else{
+      ucFeedback("uc-sb-feedback",data.error||"Credentials invalides.","err");
+    }
+  }catch(e){
+    ucFeedback("uc-sb-feedback","Erreur: "+e.message,"err");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="CONNECTER";}
+    chargerConnexions();
+  }
+}
+
+async function ucDisconnectSupabase(){
+  if(!confirm("Déconnecter Supabase?"))return;
+  try{
+    var authRes=await supabase.auth.getUser();
+    if(!authRes.data||!authRes.data.user)return;
+    await supabase.from("user_connections").update({supabase_connected:false,supabase_url:null,supabase_anon_key:null,supabase_project_id:null,supabase_project_name:null,supabase_connected_at:null}).eq("user_id",authRes.data.user.id);
+    ucSetSupabaseConnected(false);
+    ucFeedback("uc-sb-feedback","Supabase déconnecté.","ok");
+  }catch(e){ucFeedback("uc-sb-feedback","Erreur: "+e.message,"err");}
+}
+
+window.ucConnectGitHub=ucConnectGitHub;
+window.ucDisconnectGitHub=ucDisconnectGitHub;
+window.ucConnectSupabase=ucConnectSupabase;
+window.ucDisconnectSupabase=ucDisconnectSupabase;
 
 /* ── SAVE TO CERVEAU + TTS ── */
 function saveToCerveau(btn){
@@ -5689,8 +5936,9 @@ function applyAdminVisibility(isAdmin){
 silexCheckAccess();
 applyPlanVisibility();
 checkAdminStatus();
+initUserConnexions();
 supabase.auth.onAuthStateChange(function(event,session){
-  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){demarrerConversation(session.user.id).catch(function(){});}
 });
