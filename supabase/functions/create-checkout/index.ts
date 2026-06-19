@@ -82,6 +82,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    const ADMIN_USER_ID = "d9a1985a-e106-4ea5-9ada-cac775c0b820";
+    const CYBER_PLANS = ["cyber_recon", "cyber_guardian", "cyber_sentinel"];
+
     const PRICE_TO_PLAN: Record<string, string> = {
       "price_1TiA8fFu0d9mAEdCaIBd9Z5v": "flux",
       "price_1TiN0tFu0d9mAEdCVQtmwR7t": "surge",
@@ -92,13 +95,22 @@ Deno.serve(async (req) => {
     };
     const planId = PRICE_TO_PLAN[priceId] || "unknown";
 
+    if (CYBER_PLANS.includes(planId) && user.id !== ADMIN_USER_ID) {
+      return new Response(
+        JSON.stringify({
+          error: "Les forfaits cybersécurité ne sont pas encore disponibles. Restez à l'affût!",
+        }),
+        { status: 403, headers: { ...CORS, "Content-Type": "application/json" } }
+      );
+    }
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html?checkout=success&plan=${planId}`,
-      cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/app.html`,
+      success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/pro.html?checkout=success&plan=${planId}`,
+      cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/pro.html`,
       locale: "fr",
       metadata: { user_id: user.id, plan_id: planId },
       subscription_data: {

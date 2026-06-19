@@ -1392,18 +1392,17 @@ body.sb-open .composer-bar{left:var(--sb-w);}
         <span class="tier-name">APEX</span><span class="tier-badge">$125</span>
       </div>
 
-      <!-- Cybersécurité VERROUILLÉE — lecture seule -->
-      <div class="sb-locked" id="sb-locked-cyber">
+      <!-- Cybersécurité — admin-only, masqué pour les autres -->
+      <div class="sb-locked cyber-plan-card" id="sb-locked-cyber" style="display:none;">
         <div class="lk-head">
           🔒 FORFAITS CYBERSÉCURITÉ
           <span class="lk-tag">EN ATTENTE</span>
         </div>
         <p>Autorisation légale requise · mandat / SOW signé par avocat avant activation.</p>
         <div class="lk-list">
-          <span class="lk-chip">CYBER SHIELD</span>
+          <span class="lk-chip">CYBER RECON</span>
           <span class="lk-chip">CYBER GUARDIAN</span>
           <span class="lk-chip">CYBER SENTINEL</span>
-          <span class="lk-chip">CYBER FORTRESS</span>
         </div>
       </div>
     </div>
@@ -2377,6 +2376,11 @@ async function handleSubscribeClick(planName){
       body:JSON.stringify({priceId:priceId})
     });
     var data=await res.json();
+    if(res.status===403){
+      alert(data.error||"Ce forfait n'est pas encore disponible. Restez à l'affût!");
+      if(btn){btn.disabled=false;btn.textContent="S'ABONNER";}
+      return;
+    }
     if(!res.ok||!data.url){
       throw new Error(data.error||"Erreur lors de la creation du checkout");
     }
@@ -5530,8 +5534,21 @@ async function silexLoadHistory(){
   }
 }
 
+function applyPlanVisibility(){
+  supabase.auth.getUser().then(function(res){
+    var user=res.data&&res.data.user;
+    var isAdmin=user&&user.email===SILEX_ADMIN_EMAIL;
+    document.querySelectorAll('.cyber-plan-card').forEach(function(el){
+      el.style.display=isAdmin?'':'none';
+    });
+  }).catch(function(){
+    document.querySelectorAll('.cyber-plan-card').forEach(function(el){el.style.display='none';});
+  });
+}
+
 silexCheckAccess();
-supabase.auth.onAuthStateChange(function(){silexCheckAccess();});
+applyPlanVisibility();
+supabase.auth.onAuthStateChange(function(){silexCheckAccess();applyPlanVisibility();});
 
 /* ══ PLAN INIT (load from Supabase) ══ */
 (function(){getUserPlanAndLimits().catch(function(){});})();
