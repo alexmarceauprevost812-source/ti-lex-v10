@@ -1685,10 +1685,6 @@ Comment puis-je t'aider aujourd'hui?</div>
           </div>
           <div class="param-section-body">
             <div class="param-field-group">
-              <label class="param-label" for="github-username-input">USERNAME GITHUB</label>
-              <input type="text" id="github-username-input" class="param-input" placeholder="ex: alexmarceau" autocomplete="off"/>
-            </div>
-            <div class="param-field-group">
               <label class="param-label" for="github-pat-input">
                 PERSONAL ACCESS TOKEN (PAT)
                 <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=ti-lex" target="_blank" rel="noopener" class="param-link">↗ Générer un token</a>
@@ -2820,7 +2816,6 @@ function _ghGetUserId(){
 
 function initGithubSettings(){
   var badge=document.getElementById("github-status-badge");
-  var usernameIn=document.getElementById("github-username-input");
   var patIn=document.getElementById("github-pat-input");
   var connectBtn=document.getElementById("github-save-btn");
   var disconnectBtn=document.getElementById("github-disconnect-btn");
@@ -2836,7 +2831,7 @@ function initGithubSettings(){
   }
 
   function setConnectedState(connected,username){
-    if(badge){badge.textContent=connected?"CONNECTÉ":"NON CONNECTÉ";badge.className="github-status-badge"+(connected?" connected":"");}
+    if(badge){badge.textContent=connected?(username?"CONNECTÉ · @"+username:"CONNECTÉ"):"NON CONNECTÉ";badge.className="github-status-badge"+(connected?" connected":"");}
     if(disconnectBtn)disconnectBtn.style.display=connected?"inline-flex":"none";
     if(connectBtn)connectBtn.textContent=connected?"METTRE À JOUR":"CONNECTER GITHUB";
   }
@@ -2849,11 +2844,9 @@ function initGithubSettings(){
       var profRes=await supabase.from("profiles").select("github_username,github_pat").eq("id",uid).single();
       console.log("[GitHub] Données chargées depuis profiles:",profRes.data,profRes.error);
       if(!profRes.error&&profRes.data&&profRes.data.github_pat&&profRes.data.github_username){
-        if(usernameIn)usernameIn.value=profRes.data.github_username;
         patIn.value=profRes.data.github_pat;
         setConnectedState(true,profRes.data.github_username);
       }else{
-        if(usernameIn)usernameIn.value="";
         patIn.value="";
         setConnectedState(false);
       }
@@ -2900,7 +2893,6 @@ function initGithubSettings(){
         return;
       }
 
-      if(usernameIn)usernameIn.value=ghUser.login;
       setConnectedState(true,ghUser.login);
       showFeedback("@"+ghUser.login+" connecté avec succès!","success");
       window._githubSession={token:pat,username:ghUser.login,avatar:ghUser.avatar_url,name:ghUser.name||ghUser.login};
@@ -2919,7 +2911,7 @@ function initGithubSettings(){
       if(authRes.error||!authRes.data.user)return;
       var uid=authRes.data.user.id;
       await supabase.from("profiles").update({github_username:null,github_pat:null}).eq("id",uid);
-      if(usernameIn)usernameIn.value="";patIn.value="";
+      patIn.value="";
       setConnectedState(false);
       window._githubSession=null;
       showFeedback("GitHub déconnecté.","success");
