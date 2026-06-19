@@ -2717,7 +2717,7 @@ function addMsg(role,txt){
   if(role==="a"){content=projHtml(txt);}
   else{content=escHtml(txt).replace(/\n/g,"<br>");}
   var icoHtml=role==="u"?"👤":'<img src="assets/tilex-logo.png" alt="AL">';
-  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>':"";
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à Codex" style="color:#ff7f27;">📤</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl&&typeof applySyntaxHL==="function")applySyntaxHL(bbl);}
@@ -5619,6 +5619,42 @@ supabase.auth.onAuthStateChange(function(){silexCheckAccess();applyPlanVisibilit
 
 /* ══ PLAN INIT (load from Supabase) ══ */
 (function(){getUserPlanAndLimits().catch(function(){});})();
+
+/* ══ MOTEUR COMMUNICATION CHAT → CODEX ══ */
+async function envoyerVersCodex(titre,instruction,fichiers){
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session){showToastMsg("Connecte-toi d'abord.");return null;}
+    var token=sess.data.session.access_token;
+    var res=await fetch(SB_URL+"/functions/v1/receive-codex-instruction",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON},
+      body:JSON.stringify({titre:titre,instruction:instruction,fichiers:fichiers||[]})
+    });
+    var data=await res.json();
+    if(data.succes){
+      showToastMsg("📤 Instruction envoyée à Codex!");
+      console.log("Codex queue ID:",data.id);
+    }else{
+      showToastMsg("❌ Erreur Codex : "+(data.error||"inconnue"));
+    }
+    return data;
+  }catch(err){
+    console.error("envoyerVersCodex:",err);
+    showToastMsg("❌ Connexion Codex échouée");
+    return null;
+  }
+}
+function envoyerMsgVersCodex(btnEl){
+  var bbl=btnEl.closest(".cmsg")?.querySelector(".cmsg-bbl");
+  if(!bbl)return;
+  var contenu=bbl.innerText||bbl.textContent;
+  var titre=prompt("Titre de la tâche Codex :","Instruction depuis chat ti-lex");
+  if(!titre)return;
+  envoyerVersCodex(titre,contenu);
+}
+window.envoyerVersCodex=envoyerVersCodex;
+window.envoyerMsgVersCodex=envoyerMsgVersCodex;
 
 /* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
 (function(){
