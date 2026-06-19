@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forfaits Cybersecurite — ti-lex v10 · Centre INDAR</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff7f27">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #ff7f27;
+      --gold: #ffcf4a;
+      --green: #37e0a0;
+      --dark: #000;
+      --dark2: #070707;
+      --dark3: #0a0a0a;
+      --border: #1c1c1c;
+      --text: #eaeaea;
+      --muted: #999;
+      --radius: 16px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Rajdhani', 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--orange); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── BACKGROUND ATMOSPHERE ── */
+    .bg-atmosphere {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,127,39,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 30% 30% at 20% 80%, rgba(55,224,160,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 30% 30% at 80% 70%, rgba(167,139,250,0.04) 0%, transparent 60%),
+        var(--dark);
+    }
+    .bg-atmosphere::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,127,39,0.02) 60px),
+        repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,127,39,0.02) 60px);
+    }
+
+    /* ── CONTENT WRAPPER ── */
+    .page-wrap {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      padding: 0 24px 60px;
+    }
+
+    /* ── RETOUR LINK ── */
+    .retour {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 18px 0 0;
+      font-size: 13px;
+      font-family: 'Share Tech Mono', monospace;
+      color: #666;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+    .retour:hover { color: var(--orange); text-decoration: none; }
+
+    /* ── HEADER ── */
+    .cyber-header {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 0 44px;
+      text-align: center;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 0.18em;
+      color: var(--orange);
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .eyebrow-logo {
+      width: 26px; height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #000;
+      box-shadow: 0 0 14px rgba(255,127,39,0.45);
+      flex-shrink: 0;
+    }
+    .cyber-h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(30px, 5vw, 42px);
+      font-weight: 700;
+      margin: 0 0 14px;
+      letter-spacing: -0.01em;
+      color: #fff;
+      line-height: 1.1;
+    }
+    .cyber-h1 .accent { color: var(--orange); }
+    .cyber-sub {
+      font-size: 15px;
+      color: #aaa;
+      max-width: 520px;
+      margin: 0 auto 30px;
+      line-height: 1.65;
+    }
+
+    /* ── TOGGLE ── */
+    .toggle-wrap {
+      display: inline-flex;
+      gap: 4px;
+      background: var(--dark3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .toggle-btn {
+      padding: 9px 20px;
+      font-size: 13px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      border-radius: 7px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.18s;
+      background: transparent;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      letter-spacing: 0.02em;
+    }
+    .toggle-btn.active {
+      background: linear-gradient(135deg, var(--orange), #ffa052);
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 2px 12px rgba(255,127,39,0.3);
+    }
+    .toggle-badge {
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .toggle-btn.active .toggle-badge { color: #000; }
+    .toggle-btn:not(.active) .toggle-badge { color: var(--green); }
+
+    /* ── GRID ── */
+    .plans-grid {
+      max-width: 1020px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ── CARD ── */
+    .plan-card {
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      position: relative;
+      transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+    }
+    .plan-card:hover {
+      transform: translateY(-4px);
+      border-color: #333;
+    }
+    .plan-card.populaire {
+      border-color: var(--orange);
+      box-shadow: 0 0 50px rgba(255,127,39,0.09);
+      transform: scale(1.03);
+      z-index: 2;
+      background: linear-gradient(175deg, rgba(255,127,39,0.05) 0%, var(--dark2) 50%);
+    }
+    .plan-card.populaire:hover {
+      transform: scale(1.03) translateY(-4px);
+    }
+
+    /* ── BADGE POPULAIRE ── */
+    .badge-pop {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 800;
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 0.1em;
+      color: #000;
+      background: linear-gradient(135deg, var(--orange), var(--gold));
+      padding: 5px 16px;
+      border-radius: 100px;
+      white-space: nowrap;
+      box-shadow: 0 2px 14px rgba(255,127,39,0.45);
+    }
+
+    /* ── PLAN NAME ── */
+    .plan-name {
+      font-size: 19px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.04em;
+    }
+    .plan-subtitle {
+      font-size: 12px;
+      color: #777;
+      margin-top: 3px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* ── PRIX ── */
+    .plan-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin: 18px 0 6px;
+    }
+    .plan-price {
+      font-size: 44px;
+      font-weight: 800;
+      font-family: 'Share Tech Mono', monospace;
+      line-height: 1;
+    }
+    .plan-period {
+      font-size: 13px;
+      color: #666;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .plan-annual-note {
+      font-size: 11px;
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      margin-bottom: 4px;
+      display: none;
+    }
+    .plan-annual-note.visible { display: block; }
+    .plan-accroche {
+      font-size: 13px;
+      color: #bbb;
+      margin: 8px 0 20px;
+      line-height: 1.55;
+      min-height: 38px;
+    }
+
+    /* ── AGENT BADGES ── */
+    .agents-label {
+      font-size: 9px;
+      color: #666;
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .agents-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .agent-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'Share Tech Mono', monospace;
+      padding: 3px 9px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .agent-pill-icon { font-size: 11px; }
+
+    /* ── CTA BUTTON ── */
+    .plan-cta {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.18s;
+      text-transform: uppercase;
+    }
+    .plan-cta:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+    .plan-cta.selected {
+      background: var(--green) !important;
+      color: #000 !important;
+      border-color: var(--green) !important;
+      box-shadow: 0 4px 20px rgba(55,224,160,0.3) !important;
+    }
+
+    /* ── FEATURES ── */
+    .features-list {
+      margin-top: 22px;
+      border-top: 1px solid #141414;
+      padding-top: 18px;
+    }
+    .feature-row {
+      display: flex;
+      gap: 10px;
+      font-size: 13px;
+      color: #ccc;
+      margin-bottom: 11px;
+      line-height: 1.45;
+    }
+    .feature-check {
+      color: var(--green);
+      flex-shrink: 0;
+      font-weight: 800;
+    }
+
+    /* ── FOOTER ── */
+    .cyber-footer {
+      max-width: 1000px;
+      margin: 48px auto 0;
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.7;
+    }
+    .cyber-footer b { color: #ccc; }
+    .cyber-footer .muted-line { color: #444; margin-top: 6px; }
+
+    /* ── TOAST ── */
+    .toast-confirm {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #0d0d0d;
+      border: 1px solid rgba(255,127,39,0.25);
+      border-radius: 12px;
+      padding: 13px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-size: 13px;
+      font-family: 'Rajdhani', sans-serif;
+      box-shadow: 0 8px 36px rgba(0,0,0,0.7);
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.22,1,0.36,1);
+      flex-wrap: wrap;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .toast-confirm.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .toast-confirm .plan-label { color: var(--orange); font-weight: 700; }
+    .toast-confirm .toast-sub {
+      color: #666;
+      font-size: 11px;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .plans-grid {
+        grid-template-columns: 1fr;
+        max-width: 420px;
+        gap: 24px;
+      }
+      .plan-card.populaire {
+        transform: none;
+      }
+      .plan-card.populaire:hover {
+        transform: translateY(-4px);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page-wrap { padding: 0 14px 40px; }
+      .cyber-header { padding: 30px 0 36px; }
+      .plan-card { padding: 24px 18px; }
+      .toggle-btn { padding: 8px 14px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-atmosphere"></div>
+
+<div class="page-wrap">
+
+  <!-- Retour -->
+  <a href="/" class="retour">&larr; Retour</a>
+
+  <!-- ══ HEADER ══ -->
+  <div class="cyber-header">
+    <div class="eyebrow">
+      <span class="eyebrow-logo">&#9884;</span>
+      ti-lex v10 &middot; Centre INDAR
+    </div>
+    <h1 class="cyber-h1">Choisis ta <span class="accent">protection</span></h1>
+    <p class="cyber-sub">
+      Des agents IA qui surveillent tes plateformes en continu.
+      Active le Centre INDAR et roule l'esprit tranquille.
+    </p>
+
+    <!-- Toggle mensuel / annuel -->
+    <div class="toggle-wrap">
+      <button class="toggle-btn active" id="btn-mensuel" onclick="setMode(false)">Mensuel</button>
+      <button class="toggle-btn" id="btn-annuel" onclick="setMode(true)">
+        Annuel <span class="toggle-badge">&minus;20%</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ GRILLE DES FORFAITS ══ -->
+  <div class="plans-grid" id="plans-grid">
+    <!-- Cards are rendered by JS -->
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <div class="cyber-footer">
+    <p>
+      &#128737; Tous les forfaits incluent le <b>mode SIMULATION legal</b> pour PHANTOM-RED.
+      Aucun systeme reel n'est attaque sans ton autorisation.
+    </p>
+    <p class="muted-line">
+      Prix en CAD. Annule en tout temps. &middot; ti-lex v10 &middot; Produit du Quebec &#9884;&#65039;
+    </p>
+  </div>
+
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast-confirm" id="toast">
+  <span>Forfait <span class="plan-label" id="toast-plan"></span> selectionne</span>
+  <span class="toast-sub">&rarr; on branche le paiement a la prochaine etape</span>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   FORFAITS CYBERSECURITE · ti-lex v10 / Centre INDAR
+   Vanilla JS — converted from React
+   ════════════════════════════════════════════════════════════ */
+
+var ORANGE = "#ff7f27";
+
+var AGENTS_INFO = {
+  nexus:    { nom:"NEXUS-AL",    couleur:"#ffcf4a", icone:"◈" },
+  marceau:  { nom:"MARCEAU",     couleur:"#ff7f27", icone:"⬡" },
+  cipher:   { nom:"CIPHER",      couleur:"#4f8ef7", icone:"⊞" },
+  sentinel: { nom:"SENTINEL",    couleur:"#f87171", icone:"⊕" },
+  oracle:   { nom:"ORACLE",      couleur:"#37e0a0", icone:"◉" },
+  phantom:  { nom:"PHANTOM-RED", couleur:"#a78bfa", icone:"⬢" }
+};
+
+var FORFAITS = [
+  {
+    id:"sentinelle",
+    nom:"SENTINELLE",
+    sousTitre:"Surveillance essentielle",
+    prix:97,
+    couleur:"#37e0a0",
+    populaire:false,
+    agents:["sentinel","cipher"],
+    accroche:"Pour démarrer avec une vraie surveillance.",
+    inclus:[
+      "Surveillance 24/7 en continu",
+      "Audit de conformité de base",
+      "Alertes par courriel",
+      "1 plateforme surveillée",
+      "Rapport mensuel"
+    ]
+  },
+  {
+    id:"forteresse",
+    nom:"FORTERESSE",
+    sousTitre:"Protection complète",
+    prix:297,
+    couleur:ORANGE,
+    populaire:true,
+    agents:["sentinel","cipher","marceau","oracle"],
+    accroche:"Le choix de la majorité. Couverture solide.",
+    inclus:[
+      "Tout le forfait SENTINELLE",
+      "Architecture Zero Trust",
+      "Sécurité IA & gouvernance LLM",
+      "Réponse aux incidents avancée",
+      "Jusqu’à 5 plateformes",
+      "Alertes temps réel",
+      "Rapports hebdomadaires"
+    ]
+  },
+  {
+    id:"commandement",
+    nom:"COMMANDEMENT",
+    sousTitre:"Centre INDAR complet",
+    prix:697,
+    couleur:"#ffcf4a",
+    populaire:false,
+    agents:["nexus","marceau","cipher","sentinel","oracle","phantom"],
+    accroche:"La puissance totale. Les 6 agents.",
+    inclus:[
+      "Tout le forfait FORTERESSE",
+      "Supervision globale (NEXUS-AL)",
+      "Pentest simulé illimité",
+      "Plateformes illimitées",
+      "Mode EN MARCHE autonome",
+      "Support expert dédié"
+    ]
+  }
+];
+
+/* ── State ── */
+var annuel = false;
+var choisi = null;
+
+/* ── DOM refs ── */
+var grid = document.getElementById("plans-grid");
+var toast = document.getElementById("toast");
+var toastPlan = document.getElementById("toast-plan");
+var btnMensuel = document.getElementById("btn-mensuel");
+var btnAnnuel = document.getElementById("btn-annuel");
+
+/* ── Price helper ── */
+function prixAffiche(p) {
+  return annuel ? Math.round(p * 0.8) : p;
+}
+
+/* ── Toggle mode ── */
+function setMode(isAnnuel) {
+  annuel = isAnnuel;
+  btnMensuel.className = "toggle-btn" + (annuel ? "" : " active");
+  btnAnnuel.className = "toggle-btn" + (annuel ? " active" : "");
+  renderCards();
+}
+
+/* ── Select plan ── */
+function selectPlan(id) {
+  choisi = id;
+  var f = FORFAITS.find(function(x) { return x.id === id; });
+  toastPlan.textContent = f.nom;
+
+  /* Show toast */
+  toast.classList.add("visible");
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(function() {
+    toast.classList.remove("visible");
+  }, 4000);
+
+  renderCards();
+}
+
+/* ── Build agent pill HTML ── */
+function pillHTML(agentId) {
+  var a = AGENTS_INFO[agentId];
+  var bg = a.couleur + "14";
+  var border = a.couleur + "33";
+  return '<span class="agent-pill" title="' + a.nom + '" style="' +
+    'color:' + a.couleur + ';' +
+    'background:' + bg + ';' +
+    'border:1px solid ' + border + ';">' +
+    '<span class="agent-pill-icon">' + a.icone + '</span>' + a.nom +
+    '</span>';
+}
+
+/* ── Render all cards ── */
+function renderCards() {
+  var html = "";
+
+  for (var i = 0; i < FORFAITS.length; i++) {
+    var f = FORFAITS[i];
+    var pop = f.populaire;
+    var prix = prixAffiche(f.prix);
+    var isSelected = choisi === f.id;
+
+    /* Card open */
+    html += '<div class="plan-card' + (pop ? ' populaire' : '') + '">';
+
+    /* Populaire badge */
+    if (pop) {
+      html += '<div class="badge-pop">★ LE PLUS POPULAIRE</div>';
+    }
+
+    /* Name + subtitle */
+    html += '<div style="margin-bottom:2px">';
+    html += '<div class="plan-name">' + f.nom + '</div>';
+    html += '<div class="plan-subtitle">' + f.sousTitre + '</div>';
+    html += '</div>';
+
+    /* Price */
+    html += '<div class="plan-price-row">';
+    html += '<span class="plan-price" style="color:' + f.couleur + '">' + prix + '$</span>';
+    html += '<span class="plan-period">/mois</span>';
+    html += '</div>';
+
+    /* Annual note */
+    html += '<div class="plan-annual-note' + (annuel ? ' visible' : '') + '">';
+    html += 'Facturé ' + (prix * 12) + '$/an';
+    html += '</div>';
+
+    /* Accroche */
+    html += '<p class="plan-accroche">' + f.accroche + '</p>';
+
+    /* Agent count label */
+    var nb = f.agents.length;
+    html += '<div class="agents-label">' + nb + ' AGENT' + (nb > 1 ? 'S' : '') + ' ACTIF' + (nb > 1 ? 'S' : '') + '</div>';
+
+    /* Agent pills */
+    html += '<div class="agents-pills">';
+    for (var j = 0; j < f.agents.length; j++) {
+      html += pillHTML(f.agents[j]);
+    }
+    html += '</div>';
+
+    /* CTA button */
+    var btnClass = "plan-cta" + (isSelected ? " selected" : "");
+    var btnLabel = isSelected ? "✓ Sélectionné" : "Choisir " + f.nom;
+
+    if (pop && !isSelected) {
+      html += '<button class="' + btnClass + '" onclick="selectPlan(\'' + f.id + '\')" style="' +
+        'background:linear-gradient(135deg,' + ORANGE + ',#ffa052);' +
+        'color:#000;border:none;' +
+        'box-shadow:0 4px 20px rgba(255,127,39,0.35);">' +
+        btnLabel + '</button>';
+    } else if (!isSelected) {
+      html += '<button class="' + btnClass + '" onclick="selectPlan(\'' + f.id + '\')" style="' +
+        'background:transparent;' +
+        'color:' + f.couleur + ';' +
+        'border:1px solid ' + f.couleur + '55;">' +
+        btnLabel + '</button>';
+    } else {
+      html += '<button class="' + btnClass + '" onclick="selectPlan(\'' + f.id + '\')">' +
+        btnLabel + '</button>';
+    }
+
+    /* Features list */
+    html += '<div class="features-list">';
+    for (var k = 0; k < f.inclus.length; k++) {
+      html += '<div class="feature-row">';
+      html += '<span class="feature-check">✓</span>';
+      html += '<span>' + f.inclus[k] + '</span>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    /* Card close */
+    html += '</div>';
+  }
+
+  grid.innerHTML = html;
+}
+
+/* ── Initial render ── */
+renderCards();
+</script>
+
+</body>
+</html>

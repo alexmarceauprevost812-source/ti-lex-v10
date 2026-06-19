@@ -49,6 +49,13 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 - Scans : reconnaissance passive, audit web, config, vulnerabilites, dark web
 - Dashboard et historique — admin uniquement
 
+### Centre INDAR
+- Systeme de cybersecurite autonome avec 6 agents IA
+- NEXUS-AL (supervision), MARCEAU (architecture), CIPHER (conformite), SENTINEL (incidents), ORACLE (securite IA), PHANTOM-RED (pentest simule)
+- Mode EN MARCHE : surveillance continue autonome avec flux d'evenements en temps reel
+- PHANTOM-RED : pentester en mode SIMULATION (100% legal, aucun systeme reel touche)
+- 3 forfaits cyber : SENTINELLE (97$/mois), FORTERESSE (297$/mois), COMMANDEMENT (697$/mois)
+
 ### Image Studio
 - Generation via OpenAI (gpt-image-1)
 - Suivi d'utilisation par plan
@@ -64,8 +71,10 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 ti-lex-v10/
 ├── index.html                  # Page d'accueil + connexion
 ├── pro.html                    # Application principale (~5800 lignes inline)
-├── forfaits.html               # Page forfaits (Stripe Payment Links)
-├── cyber.html                  # Page cybersecurite
+├── forfaits.html               # Page forfaits IA (Stripe Payment Links)
+├── forfaits-cyber.html         # Page forfaits cybersecurite (SENTINELLE/FORTERESSE/COMMANDEMENT)
+├── centre-indar.html           # Centre INDAR — dashboard cybersecurite 6 agents
+├── cyber.html                  # Page cybersecurite (landing)
 ├── choose.html                 # Ecran de choix d'interface
 ├── sw.js                       # Service Worker PWA
 ├── manifest.json               # Manifest PWA
@@ -182,6 +191,8 @@ Le `vercel.json` configure les rewrites :
 - `/` → `index.html`
 - `/app` → `pro.html`
 - `/forfaits` → `forfaits.html`
+- `/forfaits-cyber` → `forfaits-cyber.html`
+- `/centre-indar` → `centre-indar.html`
 
 ### Edge Functions
 
