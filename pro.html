@@ -563,6 +563,63 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cgb-action-btn:hover{border-color:#ff7f27;color:#ff7f27;}
 .cgb-action-btn.cgb-push{background:#ff7f27;color:#000;border-color:#ff7f27;font-weight:700;}
 .cgb-action-btn.cgb-push:hover{filter:brightness(1.1);}
+.cgb-action-btn.cgb-media{background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;border-color:#7c3aed;font-weight:700;}
+.cgb-action-btn.cgb-media:hover{filter:brightness(1.15);}
+
+/* ── Media Upload Modal ── */
+.media-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;}
+.media-overlay.visible{display:flex;}
+.media-modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;width:90%;max-width:520px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;}
+.media-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.media-header h3{margin:0;font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--or);letter-spacing:1.5px;}
+.media-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;}
+.media-close:hover{color:var(--red);}
+.media-body{padding:18px;overflow-y:auto;flex:1;}
+.media-dropzone{border:2px dashed var(--border);border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.media-dropzone:hover,.media-dropzone.drag-over{border-color:var(--orange);background:rgba(255,127,39,.04);}
+.media-dropzone-ico{font-size:32px;}
+.media-dropzone-txt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.5px;}
+.media-dropzone-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+.media-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:14px;}
+.media-preview-item{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--bg3);}
+.media-preview-item img,.media-preview-item video{width:100%;height:80px;object-fit:cover;display:block;}
+.media-preview-name{font-family:'Share Tech Mono',monospace;font-size:8px;padding:4px 6px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.media-preview-remove{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.media-preview-remove:hover{background:var(--red);}
+.media-preview-size{position:absolute;bottom:22px;left:4px;background:rgba(0,0,0,.7);color:#fff;font-family:'Share Tech Mono',monospace;font-size:8px;padding:1px 5px;border-radius:3px;}
+.media-compress-badge{position:absolute;top:2px;left:2px;background:var(--orange);color:#000;font-family:'Share Tech Mono',monospace;font-size:7px;padding:1px 4px;border-radius:3px;font-weight:700;}
+.media-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.media-path-input{flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;}
+.media-path-input:focus{border-color:var(--orange);}
+.media-upload-btn{padding:8px 18px;background:var(--orange);border:none;border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:all .15s;}
+.media-upload-btn:hover{filter:brightness(1.15);}
+.media-upload-btn:disabled{opacity:.4;cursor:not-allowed;}
+.media-progress{margin-top:10px;display:none;}
+.media-progress-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.media-progress-fill{height:100%;background:var(--orange);border-radius:2px;width:0%;transition:width .3s;}
+.media-progress-text{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+
+/* ── Error Studio AI Scan ── */
+.es-ai-btn{padding:5px 12px;font-size:12px;background:linear-gradient(135deg,#7c3aed,#c084fc);border:none;border-radius:6px;color:#fff;font-family:'Share Tech Mono',monospace;cursor:pointer;letter-spacing:.5px;transition:all .2s;}
+.es-ai-btn:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.es-ai-badge{display:inline-block;background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;font-family:'Share Tech Mono',monospace;font-size:7px;padding:1px 5px;border-radius:3px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;}
+.scan-result.critical{border-left:3px solid #ff0040;background:rgba(255,0,64,.06);}
+.scan-result.info{border-left:3px solid #60a5fa;background:rgba(96,165,250,.06);}
+
+/* ── Mobile UX ── */
+.mobile-quick-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:350;background:var(--bg);border-top:1px solid var(--border);padding:6px 8px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px));}
+.mobile-quick-bar.visible{display:flex;align-items:center;gap:6px;}
+.mqb-btn{flex:1;padding:8px 4px;border:none;border-radius:8px;background:var(--bg2);color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .15s;}
+.mqb-btn:hover,.mqb-btn.active{background:rgba(255,127,39,.1);color:var(--orange);}
+.mqb-ico{font-size:16px;}
+@media(max-width:680px){
+  .composer-bar{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;}
+  .mobile-quick-bar.visible~.composer-bar{bottom:calc(52px + env(safe-area-inset-bottom,0px));}
+  .fab-new-conv-pro{bottom:calc(120px + env(safe-area-inset-bottom,0px))!important;}
+  body{-webkit-overflow-scrolling:touch;}
+  .media-modal{width:95%;max-width:none;}
+  .media-preview-grid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));}
+}
 .gh-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
 .gh-files{max-height:200px;overflow-y:auto;border-bottom:1px solid var(--border);flex-shrink:0;display:none;}
 .gh-file{display:flex;align-items:center;gap:8px;padding:6px 14px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--txt);cursor:pointer;transition:background .15s;border-bottom:1px solid rgba(255,255,255,.03);}
@@ -1606,6 +1663,7 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="cx-scan-bar" id="cx-scan-bar">
         <button class="btn-orange cx-scan-btn" id="cx-scan-btn" onclick="cxScanProject()">SCANNER LE PROJET</button>
         <button class="btn-orange cx-scan-btn" id="cx-code-btn" onclick="cxStartCoding()" style="display:none;">COMMENCER À CODER</button>
+        <button class="cgb-action-btn cgb-media" id="cx-media-btn" onclick="openMediaModal()" style="display:none;">MEDIA</button>
       </div>
       <div class="cx-scan-results" id="cx-scan-results" style="display:none;">
         <div class="cx-scan-summary" id="cx-scan-summary"></div>
@@ -1630,6 +1688,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="card" style="margin-bottom:14px;">
       <div class="card-hd">🔍 SCANNER DE CODE
         <div style="display:flex;gap:6px;margin-left:auto;">
+          <button class="es-ai-btn" onclick="studioAIScan()">🤖 SCAN IA</button>
           <button class="btn-ghost" style="padding:5px 12px;font-size:12px;" onclick="studioScanAll()">⚡ SCANNER TOUT</button>
         </div>
       </div>
@@ -2068,6 +2127,10 @@ function showTab(name){
   if(name==="conversations")cvpLoad();
   if(name==="settings")initGithubSettings();
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
+  document.querySelectorAll(".mqb-btn").forEach(function(b,i){
+    var tabs=["chat","codex","studio","settings"];
+    b.classList.toggle("active",tabs[i]===name);
+  });
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab){
     if(name==="chat"||name==="conversations")fab.classList.add("visible");
@@ -2476,14 +2539,48 @@ function addMsg(role,txt){
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl&&typeof applySyntaxHL==="function")applySyntaxHL(bbl);}
 }
 
-/* ── FORFAITS (mêmes données que app.js) ── */
-const PLAN_DATA={
+/* ── FORFAITS — source de vérité : profiles.plan + plan_limits ── */
+var _planCache=null;
+var PLAN_DATA={
+  free:{name:"FREE",price:"$0",msgWindow:10,agents:1,models:"Sonnet 4.6",codexProjects:0,codexSessions:0,storage:"0"},
   flux:{name:"FLUX",price:"$19 CAD/mois",msgWindow:40,agents:5,models:"Sonnet 4.6",codexProjects:2,codexSessions:10,storage:"1 GB"},
   surge:{name:"SURGE",price:"$60 CAD/mois",msgWindow:100,agents:15,models:"Sonnet 4.6",codexProjects:5,codexSessions:50,storage:"5 GB"},
   apex:{name:"APEX",price:"$125 CAD/mois",msgWindow:250,agents:-1,models:"Sonnet 4.6 + Opus 4.8",opusMessages:100,codexProjects:20,codexSessions:-1,storage:"10 GB"}
 };
-function getPlan(){return(localStorage.getItem("tilex-plan")||"flux").toLowerCase();}
-function getPlanData(){return PLAN_DATA[getPlan()]||PLAN_DATA.flux;}
+async function getUserPlanAndLimits(){
+  try{
+    var s=await supabase.auth.getUser();
+    if(s.error||!s.data.user)return null;
+    var uid=s.data.user.id;
+    var pr=await supabase.from("profiles").select("plan").eq("id",uid).maybeSingle();
+    if(pr.error||!pr.data||!pr.data.plan)return null;
+    var planName=pr.data.plan;
+    localStorage.setItem("tilex-plan",planName);
+    document.documentElement.setAttribute("data-plan",planName);
+    var lr=await supabase.from("plan_limits").select("*").eq("plan",planName).maybeSingle();
+    if(lr.error||!lr.data){_planCache=PLAN_DATA[planName]||PLAN_DATA.flux;_planCache._plan=planName;return _planCache;}
+    var lim=lr.data;
+    _planCache={
+      name:planName.toUpperCase(),_plan:planName,
+      msgWindow:lim.messages_per_day||40,
+      msgPerMonth:lim.messages_per_month||1200,
+      agents:lim.agents_max||5,
+      models:(lim.allowed_models||[]).join(", "),
+      allowedModels:lim.allowed_models||[],
+      thinking:lim.thinking_enabled||false,
+      maxThinkingTokens:lim.max_thinking_tokens_per_message||3000,
+      codexProjects:lim.codex_projects_max||2,
+      codexSessions:lim.codex_sessions_per_day||3,
+      codexSessionsMonth:lim.codex_sessions_per_month||20,
+      codexCommits:lim.codex_commits_per_day||5,
+      description:lim.description||""
+    };
+    renderUsage();enforceModelGating();
+    return _planCache;
+  }catch(e){console.error("getUserPlanAndLimits:",e);return null;}
+}
+function getPlan(){if(_planCache&&_planCache._plan)return _planCache._plan;return(localStorage.getItem("tilex-plan")||"flux").toLowerCase();}
+function getPlanData(){if(_planCache)return _planCache;return PLAN_DATA[getPlan()]||PLAN_DATA.flux;}
 
 /* ── SUIVI UTILISATION (synchro avec app.js) ── */
 function getTranche(){
@@ -3455,6 +3552,8 @@ async function vercelCall(body){
     ghConnected=true;
     if(filesBtn)filesBtn.style.display="";
     if(pushBtn)pushBtn.style.display="";
+    var mediaBtn=document.getElementById("cx-media-btn");
+    if(mediaBtn)mediaBtn.style.display="";
   }
 
   async function loadGithubSession(){
@@ -3877,6 +3976,9 @@ async function studioAutoFix(file,line,errMsg){
 
 /* ── SETTINGS FUNCTIONS ── */
 function canUseOpus(){
+  if(_planCache&&_planCache.allowedModels){
+    return _planCache.allowedModels.some(function(m){return m.indexOf("opus")!==-1;});
+  }
   var p=getPlan();
   return p==="apex"||p.indexOf("cyber")===0;
 }
@@ -4816,16 +4918,316 @@ function closeReflexion(event,btn){
   setTimeout(function(){block.remove();},250);
 }
 
+/* ══ MEDIA UPLOAD ══ */
+var _mediaFiles=[];
+
+function sanitizeFilenameForGithub(name){
+  return name.replace(/[^a-zA-Z0-9._\-\/]/g,"_").replace(/__+/g,"_");
+}
+function fileToBase64(file){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    reader.onload=function(){resolve(reader.result.split(",")[1]);};
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadFileToGithub(file,targetPath){
+  var repo=ghGetRepo();
+  if(!repo)throw new Error("Aucun repo sélectionné");
+  var pat=await ghGetPat();
+  var b64=await fileToBase64(file);
+  var sha;
+  try{var existing=await ghApiFetch("/repos/"+repo+"/contents/"+encodeURIComponent(targetPath)+"?ref="+encodeURIComponent(ghCurrentBranch));sha=existing.sha;}catch(e){}
+  var body={message:"[ti-lex] Upload "+targetPath,content:b64,branch:ghCurrentBranch};
+  if(sha)body.sha=sha;
+  var r=await fetch("https://api.github.com/repos/"+repo+"/contents/"+encodeURIComponent(targetPath),{
+    method:"PUT",
+    headers:{"Authorization":"Bearer "+pat,"Accept":"application/vnd.github+json","Content-Type":"application/json","X-GitHub-Api-Version":"2022-11-28"},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){var errData;try{errData=await r.json();}catch(x){errData={};}throw new Error(errData.message||"Erreur upload ("+r.status+")");}
+  return await r.json();
+}
+function openMediaModal(){
+  if(!ghConnected||!ghGetRepo()){
+    if(typeof pushNotif==="function")pushNotif("⚠️","GitHub requis","Connecte un repo GitHub d'abord.","warning");
+    return;
+  }
+  _mediaFiles=[];
+  var ov=document.getElementById("media-overlay");
+  if(ov){
+    document.getElementById("media-preview-grid").innerHTML="";
+    document.getElementById("media-progress").style.display="none";
+    document.getElementById("media-upload-btn").disabled=true;
+    document.getElementById("media-path-input").value="assets/";
+    ov.classList.add("visible");
+  }
+}
+function closeMediaModal(){
+  var ov=document.getElementById("media-overlay");
+  if(ov)ov.classList.remove("visible");
+  _mediaFiles=[];
+}
+function handleMediaDrop(e){
+  e.preventDefault();e.stopPropagation();
+  var dz=document.getElementById("media-dropzone");
+  if(dz)dz.classList.remove("drag-over");
+  var files=e.dataTransfer?e.dataTransfer.files:e.target.files;
+  if(files&&files.length)handleMediaFiles(files);
+}
+function handleMediaDragOver(e){e.preventDefault();var dz=document.getElementById("media-dropzone");if(dz)dz.classList.add("drag-over");}
+function handleMediaDragLeave(){var dz=document.getElementById("media-dropzone");if(dz)dz.classList.remove("drag-over");}
+
+async function handleMediaFiles(files){
+  var maxSize=100*1024*1024;var compressThreshold=50*1024*1024;
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    if(f.size>maxSize){if(typeof pushNotif==="function")pushNotif("⚠️","Trop gros",f.name+" dépasse 100 Mo.","warning");continue;}
+    var isVideo=/^video\//.test(f.type);
+    var item={file:f,name:f.name,size:f.size,type:f.type,compressed:false};
+    if(isVideo&&f.size>compressThreshold){
+      try{var compressed=await compressVideo(f,25);item.file=compressed;item.size=compressed.size;item.compressed=true;item.name=compressed.name;}
+      catch(err){console.error("Compression échouée:",err);}
+    }
+    _mediaFiles.push(item);
+  }
+  renderMediaPreviews();
+}
+function renderMediaPreviews(){
+  var grid=document.getElementById("media-preview-grid");if(!grid)return;
+  grid.innerHTML="";
+  for(var i=0;i<_mediaFiles.length;i++){
+    var item=_mediaFiles[i];
+    var sizeLabel=item.size>1048576?(item.size/1048576).toFixed(1)+" Mo":(item.size/1024).toFixed(0)+" Ko";
+    var isVideo=/^video\//.test(item.type);
+    var mediaEl=isVideo?'<video src="'+URL.createObjectURL(item.file)+'" muted></video>':'<img src="'+URL.createObjectURL(item.file)+'" alt="">';
+    var div=document.createElement("div");div.className="media-preview-item";
+    div.innerHTML=mediaEl+'<div class="media-preview-size">'+sizeLabel+'</div>'+(item.compressed?'<div class="media-compress-badge">COMPRESSÉ</div>':'')+
+      '<div class="media-preview-name">'+escHtml(item.name)+'</div><button class="media-preview-remove" onclick="mediaRemoveItem('+i+')">✕</button>';
+    grid.appendChild(div);
+  }
+  var btn=document.getElementById("media-upload-btn");
+  if(btn)btn.disabled=_mediaFiles.length===0;
+}
+function mediaRemoveItem(idx){_mediaFiles.splice(idx,1);renderMediaPreviews();}
+
+async function mediaUploadAll(){
+  if(_mediaFiles.length===0)return;
+  var repo=ghGetRepo();if(!repo)return;
+  var basePath=(document.getElementById("media-path-input").value||"assets/").trim();
+  if(!basePath.endsWith("/"))basePath+="/";
+  var btn=document.getElementById("media-upload-btn");
+  var progress=document.getElementById("media-progress");
+  var fill=document.getElementById("media-progress-fill");
+  var ptxt=document.getElementById("media-progress-text");
+  if(btn)btn.disabled=true;
+  if(progress)progress.style.display="block";
+  var success=0,failed=0;
+  for(var i=0;i<_mediaFiles.length;i++){
+    var item=_mediaFiles[i];
+    var targetPath=basePath+sanitizeFilenameForGithub(item.name);
+    if(fill)fill.style.width=Math.round((i/_mediaFiles.length)*100)+"%";
+    if(ptxt)ptxt.textContent="Upload "+(i+1)+"/"+_mediaFiles.length+" — "+item.name;
+    try{await uploadFileToGithub(item.file,targetPath);success++;}
+    catch(e){failed++;console.error("Upload failed:",item.name,e);}
+  }
+  if(fill)fill.style.width="100%";
+  if(ptxt)ptxt.textContent=success+" uploadé(s)"+(failed>0?", "+failed+" échoué(s)":"")+" — terminé!";
+  if(typeof pushNotif==="function")pushNotif("📁","Upload terminé",success+" fichier(s) sur "+repo,"ok");
+  cxAddReply("📁 **"+success+" fichier(s)** uploadé(s) dans `"+basePath+"` sur "+repo+"@"+ghCurrentBranch+(failed>0?"\n⚠️ "+failed+" échec(s)":""));
+  setTimeout(function(){closeMediaModal();if(ghConnected)ghLoadFiles();},1500);
+}
+
+/* ══ VIDEO COMPRESSION ══ */
+function compressVideo(file,maxSizeMB){
+  return new Promise(function(resolve,reject){
+    var video=document.createElement("video");
+    video.muted=true;video.playsInline=true;
+    var url=URL.createObjectURL(file);
+    video.src=url;
+    video.onloadedmetadata=function(){
+      video.currentTime=0;
+      video.oncanplay=function(){
+        video.oncanplay=null;
+        var canvas=document.createElement("canvas");
+        var scale=Math.min(1,1280/Math.max(video.videoWidth,video.videoHeight));
+        canvas.width=Math.round(video.videoWidth*scale);
+        canvas.height=Math.round(video.videoHeight*scale);
+        var ctx=canvas.getContext("2d");
+        var targetBitrate=Math.min(Math.round((maxSizeMB*8*1024*1024)/Math.max(video.duration,1)),2500000);
+        var mimeType=MediaRecorder.isTypeSupported("video/webm;codecs=vp8")?"video/webm;codecs=vp8":"video/webm";
+        var stream=canvas.captureStream(24);
+        var recorder;
+        try{recorder=new MediaRecorder(stream,{mimeType:mimeType,videoBitsPerSecond:targetBitrate});}
+        catch(e){URL.revokeObjectURL(url);reject(e);return;}
+        var chunks=[];
+        recorder.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+        recorder.onstop=function(){
+          URL.revokeObjectURL(url);
+          var blob=new Blob(chunks,{type:"video/webm"});
+          resolve(new File([blob],file.name.replace(/\.[^.]+$/,"")+"_compressed.webm",{type:"video/webm"}));
+        };
+        recorder.onerror=function(e){URL.revokeObjectURL(url);reject(e);};
+        recorder.start(100);video.play();
+        (function drawFrame(){
+          if(video.paused||video.ended){recorder.stop();return;}
+          ctx.drawImage(video,0,0,canvas.width,canvas.height);
+          requestAnimationFrame(drawFrame);
+        })();
+      };
+    };
+    video.onerror=function(){URL.revokeObjectURL(url);reject(new Error("Impossible de charger la vidéo"));};
+  });
+}
+
+/* ══ ERROR STUDIO AI SCAN ══ */
+async function studioAIScan(){
+  if(!ghConnected||!ghCurrentBranch){
+    document.getElementById("scan-results").innerHTML='<div class="scan-result warning"><span class="scan-msg">Connecte GitHub dans le Codex pour le scan IA.</span></div>';
+    return;
+  }
+  var container=document.getElementById("scan-results");
+  var summary=document.getElementById("scan-summary");
+  container.innerHTML='<div class="scan-result ok"><span class="scan-msg">🤖 Scan IA en cours… Analyse approfondie par Claude…</span></div>';
+  summary.textContent="";
+  var codeExts=/\.(js|ts|html|css|json|py|jsx|tsx|sql)$/i;
+  var toScan=ghFiles.filter(function(f){return codeExts.test(f.path)&&f.size<100000;});
+  if(toScan.length===0){container.innerHTML='<div class="scan-result warning"><span class="scan-msg">Aucun fichier code trouvé.</span></div>';return;}
+  var allCode="";var scanned=0;
+  for(var i=0;i<Math.min(toScan.length,15);i++){
+    var f=toScan[i];var cacheKey=ghCurrentBranch+"/"+f.path;
+    var content=ghFileCache[cacheKey];
+    if(!content){
+      try{var data=await ghProxyCall({action:"readFile",path:f.path,branch:ghCurrentBranch});
+        if(data&&data.content){content=atob(data.content.replace(/\n/g,""));ghFileCache[cacheKey]=content;}}catch(e){}
+    }
+    if(content){
+      var truncated=content.length>3000?content.substring(0,3000)+"\n[…tronqué]":content;
+      allCode+="=== "+f.path+" ===\n"+truncated+"\n\n";scanned++;
+    }
+  }
+  if(scanned===0){container.innerHTML='<div class="scan-result warning"><span class="scan-msg">Aucun fichier lisible.</span></div>';return;}
+  container.innerHTML='<div class="scan-result ok"><span class="scan-msg">🤖 Analyse de '+scanned+' fichiers par Claude…</span></div>';
+  var sysPrompt="Tu es un expert en revue de code. Analyse le code fourni et trouve les erreurs, bugs, vulnérabilités de sécurité et problèmes de performance. "+
+    "Pour chaque problème retourne un JSON: {\"errors\":[{\"file\":\"chemin.ext\",\"line\":42,\"severity\":\"critical|error|warning|info\",\"type\":\"Type\",\"message\":\"Description\"}]} "+
+    "critical=faille de sécurité/crash, error=bug certain, warning=problème potentiel, info=amélioration. Réponds UNIQUEMENT avec le JSON.";
+  try{
+    var tk=getToken();var h={"Content-Type":"application/json"};
+    if(tk)h["Authorization"]="Bearer "+tk;
+    var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+      kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
+      messages:[{role:"user",content:"Analyse ces fichiers:\n\n"+allCode}]
+    })});
+    if(!res.ok){var errData=await res.json().catch(function(){return{};});
+      container.innerHTML='<div class="scan-result error"><span class="scan-msg">Erreur IA: '+escHtml(errData.error||"Erreur")+'</span></div>';return;}
+    var reply=await readSSE(res);
+    var jsonMatch=reply.match(/\{[\s\S]*\}/);
+    if(!jsonMatch){
+      container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Aucune erreur détectée par l\'IA dans '+scanned+' fichiers! <span class="es-ai-badge">SCAN IA</span></span></div>';
+      summary.textContent=scanned+" fichiers analysés par IA · 0 erreurs · Prêt ✓";summary.style.color="var(--green)";return;
+    }
+    var result;try{result=JSON.parse(jsonMatch[0]);}catch(e){
+      container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Analyse IA terminée. <span class="es-ai-badge">SCAN IA</span></span></div>';
+      summary.textContent=scanned+" fichiers analysés";summary.style.color="var(--or)";return;
+    }
+    var errors=result.errors||[];container.innerHTML="";
+    if(errors.length===0){
+      container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Aucune erreur détectée dans '+scanned+' fichiers! <span class="es-ai-badge">SCAN IA</span></span></div>';
+      summary.textContent=scanned+" fichiers · 0 erreurs · Prêt ✓";summary.style.color="var(--green)";
+    }else{
+      var sevClass={critical:"critical",error:"error",warning:"warning",info:"info"};
+      for(var k=0;k<errors.length;k++){
+        var err=errors[k];var cls=sevClass[err.severity]||"warning";
+        var div=document.createElement("div");div.className="scan-result "+cls;
+        div.innerHTML='<div class="scan-file">'+escHtml(err.file||"?")+' <span class="es-ai-badge">IA</span></div>'+
+          '<div class="scan-line">'+(err.line?"Ligne "+err.line+" · ":"")+escHtml(err.type||err.severity)+'</div>'+
+          '<div class="scan-msg">'+escHtml(err.message)+'</div>'+
+          (err.file?'<button class="scan-fix-btn" onclick="studioAutoFix(\''+escHtml(err.file).replace(/'/g,"\\'")+"',"+(err.line||1)+",'"+escHtml(err.message).replace(/'/g,"\\'")+"')\">⚡ CORRIGER</button>":"");
+        container.appendChild(div);
+      }
+      var crit=errors.filter(function(e){return e.severity==="critical";}).length;
+      var errs=errors.filter(function(e){return e.severity==="error";}).length;
+      var warns=errors.filter(function(e){return e.severity==="warning";}).length;
+      summary.textContent=scanned+" fichiers · "+errors.length+" problème(s) ["+crit+" critique(s), "+errs+" erreur(s), "+warns+" avert.]";
+      summary.style.color=crit>0?"var(--red)":errs>0?"var(--orange)":"var(--or)";
+    }
+  }catch(e){container.innerHTML='<div class="scan-result error"><span class="scan-msg">Erreur: '+escHtml(e.message)+'</span></div>';}
+}
+
+/* ══ MOBILE UX ══ */
+function initMobileUX(){
+  var input=document.getElementById("composer-input");
+  if(input){input.addEventListener("input",function(){this.style.height="38px";this.style.height=Math.min(this.scrollHeight,120)+"px";});}
+  if(window.innerWidth<=680){
+    var tabOrder=["chat","codex","studio","settings"];
+    var touchStartX=0,touchStartY=0;
+    document.addEventListener("touchstart",function(e){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;},{passive:true});
+    document.addEventListener("touchend",function(e){
+      var dx=e.changedTouches[0].clientX-touchStartX;
+      var dy=e.changedTouches[0].clientY-touchStartY;
+      if(Math.abs(dx)<80||Math.abs(dy)>Math.abs(dx))return;
+      if(e.target.closest(".codex-feed,.chat-msgs,.gh-files,.cx-scan-tree"))return;
+      var activeView=document.querySelector(".view.active");
+      var currentIdx=0;
+      if(activeView){var vid=activeView.id.replace("view-","");currentIdx=tabOrder.indexOf(vid);if(currentIdx===-1)currentIdx=0;}
+      if(dx>0&&currentIdx>0)showTab(tabOrder[currentIdx-1]);
+      else if(dx<0&&currentIdx<tabOrder.length-1)showTab(tabOrder[currentIdx+1]);
+    },{passive:true});
+    var mqb=document.getElementById("mobile-quick-bar");
+    if(mqb)mqb.classList.add("visible");
+  }
+}
+
+/* ══ PLAN INIT (load from Supabase) ══ */
+(function(){getUserPlanAndLimits().catch(function(){});})();
+
 /* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
 (function(){
   showTab("chat");
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab)fab.classList.add("visible");
+  initMobileUX();
 })();
 
 </script>
 
 <script src="js/agent-marceau.js"></script>
+
+<!-- MEDIA UPLOAD MODAL -->
+<div class="media-overlay" id="media-overlay" onclick="if(event.target===this)closeMediaModal()">
+  <div class="media-modal">
+    <div class="media-header">
+      <h3>UPLOAD MEDIA</h3>
+      <button class="media-close" onclick="closeMediaModal()">✕</button>
+    </div>
+    <div class="media-body">
+      <div class="media-dropzone" id="media-dropzone" onclick="document.getElementById('media-file-input').click()" ondrop="handleMediaDrop(event)" ondragover="handleMediaDragOver(event)" ondragleave="handleMediaDragLeave(event)">
+        <div class="media-dropzone-ico">📁</div>
+        <div class="media-dropzone-txt">Glisse tes fichiers ici</div>
+        <div class="media-dropzone-sub">ou clique pour sélectionner · Images & Vidéos · Max 100 Mo</div>
+      </div>
+      <input type="file" id="media-file-input" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaDrop(event)">
+      <div class="media-preview-grid" id="media-preview-grid"></div>
+      <div class="media-progress" id="media-progress">
+        <div class="media-progress-bar"><div class="media-progress-fill" id="media-progress-fill"></div></div>
+        <div class="media-progress-text" id="media-progress-text"></div>
+      </div>
+    </div>
+    <div class="media-footer">
+      <input type="text" class="media-path-input" id="media-path-input" value="assets/" placeholder="Dossier de destination...">
+      <button class="media-upload-btn" id="media-upload-btn" onclick="mediaUploadAll()" disabled>UPLOAD</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE QUICK BAR -->
+<div class="mobile-quick-bar" id="mobile-quick-bar">
+  <button class="mqb-btn" onclick="showTab('chat')"><span class="mqb-ico">💬</span>CHAT</button>
+  <button class="mqb-btn" onclick="showTab('codex')"><span class="mqb-ico">⌨️</span>CODEX</button>
+  <button class="mqb-btn" onclick="showTab('studio')"><span class="mqb-ico">🚀</span>STUDIO</button>
+  <button class="mqb-btn" onclick="showTab('settings')"><span class="mqb-ico">⚙️</span>CONFIG</button>
+</div>
 
 <!-- FAB Nouvelle conversation — Interface Pro -->
 <button id="fab-new-conv-pro" class="fab-new-conv-pro" onclick="newConversation();showTab('chat');" aria-label="Nouvelle conversation">
