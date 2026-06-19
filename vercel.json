@@ -4,7 +4,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/app", "destination": "/app.html" }
+    { "source": "/app", "destination": "/pro.html" }
   ],
   "headers": [
     {

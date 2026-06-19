@@ -1725,15 +1725,7 @@ Comment puis-je t'aider aujourd'hui?</div>
         </div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd">🎨 INTERFACE</div>
-      <div class="card-body">
-        <div style="display:flex;gap:8px;">
-          <button class="btn-orange" style="width:auto;padding:8px 20px;font-size:13px;" onclick="localStorage.removeItem('tilex-interface-mode');window.location.href='choose.html'">CHANGER D'INTERFACE</button>
-        </div>
-        <div class="settings-hint" style="margin-top:8px;">Retourne au choix entre l'interface animée et l'interface pro. Toutes tes conversations, agents et paramètres sont partagés entre les deux.</div>
-      </div>
-    </div>
+    <!-- Interface animée supprimée — interface pro uniquement -->
   </div>
 
   <!-- CONVERSATIONS PAGE -->
@@ -3567,8 +3559,8 @@ function applyLang(lang){applyLanguage(lang);}
 function acctLogout(){
   var msg=typeof t==="function"?t("logout")+" ?":"Déconnexion ?";
   if(!confirm(msg))return;
-  if(typeof SB!=="undefined"&&SB&&SB.auth)SB.auth.signOut().then(function(){window.location.href="choose.html";});
-  else window.location.href="choose.html";
+  if(typeof SB!=="undefined"&&SB&&SB.auth)SB.auth.signOut().then(function(){window.location.href="index.html";});
+  else window.location.href="index.html";
 }
 function saveSettingMemory(){
   var v=document.getElementById("set-memory").value;

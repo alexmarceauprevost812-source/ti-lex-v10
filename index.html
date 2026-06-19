@@ -972,7 +972,7 @@
       <button class="tilex-btn-demo" onclick="tilexOuvrirDemo()">
         🎬 DÉMO
       </button>
-      <button class="btn btn-pricing" onclick="window.location.href='app.html#forfaits'">
+      <button class="btn btn-pricing" onclick="window.location.href='pro.html#forfaits'">
         💎 Voir les forfaits
       </button>
     </div>
@@ -1262,7 +1262,7 @@
           email: document.getElementById('register-email').value.trim(),
           password,
           options: { data: { full_name: document.getElementById('register-name').value.trim() },
-            emailRedirectTo: window.location.origin + '/choose.html' }
+            emailRedirectTo: window.location.origin + '/pro.html' }
         });
         if (error) showError('register-error', error.message);
         else {
@@ -1281,7 +1281,7 @@
       showToast('Redirection vers ' + label + '...');
       try {
         const { error } = await supabase.auth.signInWithOAuth({
-          provider, options: { redirectTo: window.location.origin + '/choose.html' }
+          provider, options: { redirectTo: window.location.origin + '/pro.html' }
         });
         if (error) showToast('Erreur: ' + error.message);
       } catch (err) { showToast('Erreur: ' + err.message); }
@@ -1396,7 +1396,7 @@
       if (splash.classList.contains('fade-out')) return;
       splash.classList.add('fade-out');
       video.pause();
-      setTimeout(() => { window.location.href = 'choose.html'; }, 800);
+      setTimeout(() => { window.location.href = 'pro.html'; }, 800);
     }
     function skipIntro() {
       const splash = document.getElementById('introSplash');

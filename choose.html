@@ -134,14 +134,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 
   const saved = localStorage.getItem('tilex-interface-mode');
-  if (saved === 'animated') {
-    window.location.href = 'app.html';
-    return;
-  }
-  if (saved === 'pro') {
-    window.location.href = 'pro.html';
-    return;
-  }
+  window.location.href = 'pro.html';
+  return;
 })();
 
 async function chooseInterface(mode) {
@@ -156,11 +150,7 @@ async function chooseInterface(mode) {
     }
   } catch (e) { console.error(e); }
 
-  if (mode === 'animated') {
-    window.location.href = 'app.html';
-  } else {
-    window.location.href = 'pro.html';
-  }
+  window.location.href = 'pro.html';
 }
 </script>
 </body>
