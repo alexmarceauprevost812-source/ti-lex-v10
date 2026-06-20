@@ -288,7 +288,9 @@
   }
 
   function enrichPrompt(base) {
-    return base + getTiEtudeContext();
+    var ctx = base + getTiEtudeContext();
+    if (window._memoireContexteCache) ctx += "\n" + window._memoireContexteCache;
+    return ctx;
   }
 
   // ── État du dialogue ──
@@ -592,6 +594,19 @@
 
       if (typeof addTiEtudeNote === "function") {
         addTiEtudeNote("Sujet exploré: " + question.slice(0, 120) + " | Score: " + synth.score);
+      }
+
+      if (window.MemoireIA) {
+        MemoireIA._getUserId().then(function(uid) {
+          if (uid) {
+            MemoireIA.memoriser(uid, "projet", "dernier_sujet_marceau", question.slice(0, 200), "Dialogue Marceau", "conversation");
+            if (synth.reponse_finale) {
+              MemoireIA.extraireDeConversation(uid, question, synth.reponse_finale).then(function() {
+                if (typeof chargerMemoireContexte === "function") chargerMemoireContexte();
+              });
+            }
+          }
+        });
       }
 
       dialogueState.step = "done";

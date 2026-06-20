@@ -730,6 +730,16 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .syn-op{color:rgba(255,248,231,.5);}
 .syn-var{color:#ff7f27;}
 .syn-secret{color:#ff4d6d;font-weight:600;}
+.memoire-categorie{margin-bottom:14px;}
+.memoire-cat-titre{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#ff7f27;margin-bottom:6px;font-weight:700;}
+.memoire-fait{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#111;border-radius:6px;margin-bottom:4px;border-left:2px solid #23232c;}
+.memoire-cle{color:#ffcf4a;font-size:12px;min-width:100px;font-weight:600;font-family:'Share Tech Mono',monospace;}
+.memoire-valeur{color:#e2e2ea;font-size:12px;flex:1;}
+.memoire-src{font-size:9px;color:#6c6c78;min-width:50px;text-align:right;}
+.btn-oublier{background:none;border:none;color:#555;cursor:pointer;padding:2px 6px;border-radius:4px;font-size:12px;transition:color .2s;}
+.btn-oublier:hover{color:#ff4444;}
+.diag-result{font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.6;padding:10px;background:#0a0a0a;border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;margin-top:8px;}
+.diag-ok{color:#37e0a0;}.diag-err{color:#ff4d6d;}.diag-warn{color:#ffcf4a;}
 .cx-typing{display:flex;gap:4px;padding:6px 0;}
 .cx-typing .tyd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:tybounce .6s ease-in-out infinite alternate;}
 .cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
@@ -1951,6 +1961,10 @@ Comment puis-je t'aider aujourd'hui?</div>
             <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);">Connecté (rnuripmfozlxenryxhdc)</span>
           </div>
         </div>
+        <div class="settings-section" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;" onclick="lancerDiagnostic()">🔍 DIAGNOSTIC CONNEXIONS</button>
+          <div class="diag-result" id="diag-results" style="display:none;"></div>
+        </div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
@@ -1984,13 +1998,22 @@ Comment puis-je t'aider aujourd'hui?</div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
-      <div class="card-hd">🧠 MÉMOIRE IA</div>
+      <div class="card-hd">🧠 MÉMOIRE IA <span style="font-size:9px;color:var(--muted);margin-left:8px;font-weight:400;">INTELLIGENTE</span></div>
       <div class="card-body">
         <div class="settings-section">
           <div class="settings-label">FAITS MÉMORISÉS</div>
-          <textarea class="settings-input" id="set-memory" rows="4" placeholder="L'IA se souvient de ces informations entre les sessions…" style="resize:vertical;font-family:'Rajdhani',sans-serif;"></textarea>
-          <div class="settings-hint">Un fait par ligne. Partagé entre les deux interfaces.</div>
-          <div style="margin-top:8px;"><button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="saveSettingMemory()">SAUVEGARDER MÉMOIRE</button></div>
+          <div id="faits-memorises" style="min-height:40px;"><span style="color:var(--muted);font-size:11px;">Chargement…</span></div>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;" onclick="afficherMemoireUtilisateur()">↻ ACTUALISER</button>
+            <button class="btn-ghost" style="width:auto;padding:6px 16px;font-size:12px;color:var(--red);border-color:var(--red);" onclick="if(confirm('Effacer toute la mémoire IA?'))effacerMemoireIA()">EFFACER MÉMOIRE</button>
+          </div>
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+            <div class="settings-label" style="margin-bottom:6px;">AJOUTER UN FAIT MANUELLEMENT</div>
+            <div style="display:flex;gap:6px;">
+              <input type="text" id="memoire-add-input" class="settings-input" placeholder="Ex: Je préfère le thème sombre" style="flex:1;margin-bottom:0;">
+              <button class="btn-orange" style="width:auto;padding:6px 16px;font-size:12px;" onclick="ajouterFaitManuel()">AJOUTER</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2377,7 +2400,7 @@ function showTab(name){
   const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
-  if(name==="settings")initGithubSettings();
+  if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
   if(name==="silex"&&typeof silexLoadHistory==="function"){silexLoadHistory();}
   document.querySelectorAll(".mqb-btn").forEach(function(b,i){
@@ -2705,7 +2728,17 @@ var _currentUserEmail=null;
 function isModeMaitre(){return _currentUserEmail===ADMIN_EMAIL;}
 var SYSTEM_PROMPT_MAITRE="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE MAÎTRE : Tu réponds directement et efficacement sans poser de questions sauf si vraiment nécessaire. Tu connais bien l'utilisateur, son projet ti-lex, son stack (Supabase + Vercel + vanilla JS). Tu vas droit au but. Tu génères le code demandé immédiatement. Ton style est intense, direct et confiant. Quand l'utilisateur demande du code, fournis le code complet dans un bloc markdown avec le langage (```javascript, ```python, etc.), puis explique ce que fait chaque partie importante. Utilise le gras **...** pour les concepts clés.";
 var SYSTEM_PROMPT_STANDARD="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE STANDARD : Avant de répondre, évalue si la demande est claire. Si la demande est vague ou incomplète, pose 1 à 2 questions courtes et précises pour bien comprendre. Ne génère PAS le code avant d'avoir les informations suffisantes. Si la demande est claire et précise, réponds directement sans poser de question. Ton style est direct et confiant, en français québécois. Quand tu fournis du code, utilise un bloc markdown avec le langage. Utilise le gras **...** pour les concepts clés.";
-function getSystemPrompt(){return isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;}
+var _memoireContexteCache="";
+async function chargerMemoireContexte(){
+  if(!window.MemoireIA)return;
+  var uid=await MemoireIA._getUserId();if(!uid)return;
+  _memoireContexteCache=await MemoireIA.construireContexte(uid);
+}
+function getSystemPrompt(){
+  var base=isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;
+  if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
+  return base;
+}
 var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
 
 /* ── CONVERSATION MANAGER (Supabase) ── */
@@ -2854,6 +2887,12 @@ async function sendChat(){
       setTimeout(function(){bblText.classList.remove("gold-flash");},2600);
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
+      if(window.MemoireIA&&reply){
+        var _userMsg=chatHistory[chatHistory.length-2]?.content||"";
+        MemoireIA._getUserId().then(function(uid){
+          if(uid)MemoireIA.extraireDeConversation(uid,_userMsg,reply).then(function(){chargerMemoireContexte();});
+        });
+      }
     }
   }catch(e){td.remove();console.error("[ti-lex] sendChat error:",e);addMsg("a","⚠️ "+e.message);}
   chatBusy=false;
@@ -4695,8 +4734,97 @@ function acctLogout(){
   else window.location.href="index.html";
 }
 function saveSettingMemory(){
-  var v=document.getElementById("set-memory").value;
-  localStorage.setItem("tilex-al-memory",v);
+  var v=document.getElementById("set-memory");
+  if(v)localStorage.setItem("tilex-al-memory",v.value);
+}
+
+/* ══ MÉMOIRE IA — UI Functions ══ */
+async function afficherMemoireUtilisateur(){
+  var container=document.getElementById("faits-memorises");
+  if(!container||!window.MemoireIA)return;
+  var uid=await MemoireIA._getUserId();
+  if(!uid){container.innerHTML='<span style="color:var(--muted);font-size:11px;">Connecte-toi pour voir ta mémoire IA.</span>';return;}
+  var memoire=await MemoireIA.tout(uid);
+  if(!memoire.length){container.innerHTML='<span style="color:var(--muted);font-size:11px;">Aucun souvenir mémorisé. L\'IA apprend au fil de tes conversations.</span>';return;}
+  var categories={identite:"👤 Identité",preference:"⚙️ Préférences",projet:"📁 Projets",habitude:"🔄 Habitudes",contexte:"🕐 Contexte récent",fait:"💡 Faits importants",erreur_recente:"⚠️ Erreurs récentes",succes:"✅ Succès"};
+  var grouped={};
+  for(var i=0;i<memoire.length;i++){var m=memoire[i];if(!grouped[m.categorie])grouped[m.categorie]=[];grouped[m.categorie].push(m);}
+  var html="";
+  for(var cat in categories){
+    if(!grouped[cat]||!grouped[cat].length)continue;
+    html+='<div class="memoire-categorie"><div class="memoire-cat-titre">'+categories[cat]+'</div>';
+    for(var j=0;j<grouped[cat].length;j++){
+      var f=grouped[cat][j];
+      html+='<div class="memoire-fait"><span class="memoire-cle">'+escHtml(f.cle)+'</span><span class="memoire-valeur">'+escHtml(f.valeur)+'</span><span class="memoire-src">'+escHtml(f.source||"")+'</span><button class="btn-oublier" onclick="oublierFait(\''+f.categorie+'\',\''+escHtml(f.cle.replace(/'/g,"\\'"))+'\')" title="Oublier">✕</button></div>';
+    }
+    html+='</div>';
+  }
+  container.innerHTML=html;
+}
+async function oublierFait(categorie,cle){
+  var uid=await MemoireIA._getUserId();if(!uid)return;
+  await MemoireIA.oublier(uid,categorie,cle);
+  afficherMemoireUtilisateur();
+  showToastMsg("Fait oublié");
+}
+async function effacerMemoireIA(){
+  var uid=await MemoireIA._getUserId();if(!uid)return;
+  var sb=window.supabase;if(!sb)return;
+  await sb.from("memoire_ia").delete().eq("user_id",uid);
+  afficherMemoireUtilisateur();
+  showToastMsg("Mémoire IA effacée");
+}
+async function ajouterFaitManuel(){
+  var input=document.getElementById("memoire-add-input");if(!input)return;
+  var val=input.value.trim();if(!val)return;
+  var uid=await MemoireIA._getUserId();if(!uid){showToastMsg("Connecte-toi d'abord");return;}
+  await MemoireIA.memoriser(uid,"fait","note_"+Date.now(),val,"Ajouté manuellement","explicite");
+  input.value="";
+  afficherMemoireUtilisateur();
+  showToastMsg("Fait mémorisé");
+}
+
+/* ══ DIAGNOSTIC CONNEXIONS ══ */
+async function testerConnexionSupabase(){
+  var out=[];
+  try{
+    out.push('<span class="diag-ok">Testing Supabase...</span>');
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session){out.push('<span class="diag-warn">⚠️ Aucune session active — connecte-toi d\'abord</span>');return out.join("<br>");}
+    out.push('<span class="diag-ok">✅ Session active: '+sess.data.session.user.email+'</span>');
+    var res=await supabase.from("profiles").select("id,plan").eq("id",sess.data.session.user.id).maybeSingle();
+    if(res.error){out.push('<span class="diag-err">❌ Profiles: '+escHtml(res.error.message)+'</span>');if(res.error.code==="PGRST301")out.push('<span class="diag-warn">→ RLS bloque la requête</span>');}
+    else{out.push('<span class="diag-ok">✅ Profiles OK — Plan: '+(res.data?res.data.plan:"aucun")+'</span>');}
+    var res2=await supabase.from("ti_etude").select("id").eq("user_id",sess.data.session.user.id).maybeSingle();
+    if(res2.error){out.push('<span class="diag-err">❌ ti_etude: '+escHtml(res2.error.message)+'</span>');}
+    else{out.push('<span class="diag-ok">✅ ti_etude '+(res2.data?"trouvé":"sera créé au besoin")+'</span>');}
+    var res3=await supabase.from("memoire_ia").select("id").eq("user_id",sess.data.session.user.id).limit(1);
+    if(res3.error){out.push('<span class="diag-err">❌ memoire_ia: '+escHtml(res3.error.message)+'</span>');}
+    else{out.push('<span class="diag-ok">✅ memoire_ia OK ('+(res3.data?res3.data.length:0)+' entrées)</span>');}
+  }catch(e){out.push('<span class="diag-err">❌ CRASH: '+escHtml(e.message)+'</span>');}
+  return out.join("<br>");
+}
+async function testerConnexionGitHub(){
+  var out=[];
+  try{
+    if(!ghConnected){out.push('<span class="diag-warn">⚠️ GitHub non connecté — connecte-toi dans les paramètres</span>');return out.join("<br>");}
+    out.push('<span class="diag-ok">✅ GitHub marqué connecté côté client</span>');
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session){out.push('<span class="diag-warn">⚠️ Session Supabase manquante</span>');return out.join("<br>");}
+    var uc=await supabase.from("user_connections").select("github_connected,github_username").eq("user_id",sess.data.session.user.id).maybeSingle();
+    if(uc.error){out.push('<span class="diag-err">❌ user_connections: '+escHtml(uc.error.message)+'</span>');}
+    else if(uc.data){out.push('<span class="diag-ok">✅ GitHub username: '+(uc.data.github_username||"non défini")+'</span>');out.push('<span class="diag-ok">✅ Connecté: '+(uc.data.github_connected?"oui":"non")+'</span>');}
+    else{out.push('<span class="diag-warn">⚠️ Aucune entrée user_connections</span>');}
+  }catch(e){out.push('<span class="diag-err">❌ CRASH: '+escHtml(e.message)+'</span>');}
+  return out.join("<br>");
+}
+async function lancerDiagnostic(){
+  var el=document.getElementById("diag-results");if(!el)return;
+  el.style.display="block";
+  el.innerHTML='<span style="color:var(--muted)">Diagnostic en cours…</span>';
+  var sb=await testerConnexionSupabase();
+  var gh=await testerConnexionGitHub();
+  el.innerHTML='<strong style="color:#ff7f27">SUPABASE</strong><br>'+sb+'<br><br><strong style="color:#ff7f27">GITHUB</strong><br>'+gh;
 }
 function loadConvsInfo(){
   var el=document.getElementById("set-convs-info");if(!el)return;
@@ -6044,7 +6172,11 @@ verifierEtatChat();
 supabase.auth.onAuthStateChange(function(event,session){
   silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();
   _currentUserEmail=session?.user?.email||null;
-  if(session?.user){demarrerConversation(session.user.id).catch(function(){});}
+  if(session?.user){
+    demarrerConversation(session.user.id).catch(function(){});
+    chargerMemoireContexte().catch(function(){});
+    if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
+  }
 });
 
 /* ══ PLAN INIT + MODE AGENT INIT ══ */
@@ -6055,6 +6187,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     if(u.data?.user){
       _currentUserEmail=u.data.user.email||null;
       demarrerConversation(u.data.user.id).catch(function(){});
+      chargerMemoireContexte().catch(function(){});
     }
   }catch(e){}
 })();
@@ -6213,6 +6346,7 @@ var _typingDebounce=null;
 
 </script>
 
+<script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
 
 <!-- MEDIA UPLOAD MODAL -->
