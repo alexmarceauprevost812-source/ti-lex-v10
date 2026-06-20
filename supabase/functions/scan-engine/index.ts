@@ -5,7 +5,7 @@ import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const SCAN_MODEL = "claude-opus-4-8";
+const SCAN_MODEL = "claude-sonnet-4-6";
 
 let _cors: Record<string, string>;
 
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: SCAN_MODEL,
-        max_tokens: 1500,
+        max_tokens: 4096,
         system: `Tu es PHANTOM-RED, le moteur de scan du Centre INDAR.
 Tu génères des rapports de sécurité SIMULÉS et éducatifs.
 RÉPONDS UNIQUEMENT EN JSON VALIDE, aucun backtick, aucun texte avant ou après.
@@ -209,7 +209,47 @@ Format :
     const aiText =
       aiData.content?.find((c: { type: string }) => c.type === "text")?.text ||
       "{}";
-    const result = JSON.parse(aiText.replace(/```json|```/g, "").trim());
+    const cleanedText = aiText.replace(/```json|```/g, "").trim();
+
+    let result: {
+      risk_score?: number;
+      risk_level?: string;
+      executive_summary?: string;
+      technical_summary?: string;
+      findings?: Array<{
+        finding_type: string;
+        title: string;
+        description: string;
+        severity: string;
+        source: string;
+        remediation: string;
+        remediation_priority: string;
+      }>;
+      recommendations?: string[];
+    };
+
+    try {
+      result = JSON.parse(cleanedText);
+    } catch (parseErr) {
+      console.error("[scan-engine] JSON parse failed:", parseErr, "raw length:", aiText.length, "stop_reason:", aiData.stop_reason);
+      const truncated = aiData.stop_reason === "max_tokens";
+      await supabase
+        .from("cyber_scans")
+        .update({
+          status: "failed",
+          completed_at: new Date().toISOString(),
+          error_message: truncated
+            ? "Réponse IA tronquée (max_tokens atteint)"
+            : "Réponse IA invalide (JSON malformé)",
+        })
+        .eq("id", scanRow.id);
+      return json({
+        error: truncated
+          ? "Le rapport IA a été tronqué. Relancez le scan."
+          : "Erreur de parsing du rapport IA.",
+      }, 502);
+    }
+
     const duration = Math.floor((Date.now() - scanStart) / 1000);
 
     // Save findings
