@@ -1172,7 +1172,7 @@
 
   <script>
     const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
     let supabase = null, currentUser = null;
 
     function initSupabase() {
@@ -1211,8 +1211,8 @@
         if (el) { el.classList.add('hidden'); el.textContent = ''; }
       });
     }
-    function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
-    function showSuccess(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
+    function showError(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg; el.classList.remove('hidden'); }
+    function showSuccess(id, msg) { const el = document.getElementById(id); if (!el) return; el.textContent = msg; el.classList.remove('hidden'); }
 
     /* ── Toast ── */
     function showToast(msg) {
