@@ -354,6 +354,9 @@ button{font-family:inherit;border:none;outline:none;}
   <!-- Scan result -->
   <div id="scanResult" style="display:none;"></div>
 
+  <!-- Guide de protection — apparaît après le scan -->
+  <div id="guide-protection-result" style="display:none; padding:0 16px;"></div>
+
   <!-- Scan history -->
   <div id="scanHistory" class="scan-history" style="display:none;">
     <div class="scan-history-title">&#x1f4cb; HISTORIQUE DES SCANS</div>
@@ -1025,6 +1028,7 @@ async function lancerScanReel() {
     scanLog(terminal, "Score de risque : " + data.risk_score + "/100 (" + data.risk_level + ")", "success");
 
     renderScanResult(data);
+    if(typeof onScanTermine==='function')onScanTermine(scanType);
     scanHistoryLoaded = false;
     loadScanHistory();
   } catch (err) {
@@ -1176,5 +1180,6 @@ async function checkScanAdmin() {
   checkScanAdmin();
 })();
 </script>
+<script src="/js/guide-protection.js"></script>
 </body>
 </html>

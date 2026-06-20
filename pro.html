@@ -2331,6 +2331,7 @@ Comment puis-je t'aider aujourd'hui?</div>
           <button id="silex-launch-btn" onclick="silexLaunchScan()" style="width:100%;background:linear-gradient(135deg,#a78bfa,#7c3aed);border:none;border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:opacity .2s,transform .1s;font-family:'Share Tech Mono',monospace;">🔰 LANCER LE SCAN</button>
         </div>
         <div id="silex-results" style="display:none;"></div>
+        <div id="guide-protection-result" style="display:none;padding:0 4px;"></div>
       </div>
       <div id="silex-panel-chat" style="display:none;">
         <div style="display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:400px;">
@@ -6367,6 +6368,7 @@ async function silexLaunchScan(){
     var data=await res.json();
     if(!res.ok||!data.success)throw new Error(data.error||'Erreur scan');
     silexRenderResults(data,resultsEl);
+    if(typeof onScanTermine==='function')onScanTermine(scanType);
   }catch(err){
     resultsEl.innerHTML='<div style="background:#0d0d12;border:1px solid #ff3a5c44;border-radius:12px;padding:16px;color:#ff3a5c;font-family:\'Share Tech Mono\',monospace;">⚠️ Erreur : '+escHtml(err.message)+'</div>';
   }finally{
@@ -6687,6 +6689,7 @@ var _typingDebounce=null;
 </script>
 
 <script src="js/security-guard.js"></script>
+<script src="js/guide-protection.js"></script>
 <script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
