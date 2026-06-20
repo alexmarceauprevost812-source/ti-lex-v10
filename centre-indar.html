@@ -354,6 +354,9 @@ button{font-family:inherit;border:none;outline:none;}
   <!-- Scan result -->
   <div id="scanResult" style="display:none;"></div>
 
+  <!-- Résumé sécurisé (mots-clés seulement) -->
+  <div id="scan-resume-container" style="padding:0 16px;"></div>
+
   <!-- Guide de protection — apparaît après le scan -->
   <div id="guide-protection-result" style="display:none; padding:0 16px;"></div>
 
@@ -764,9 +767,56 @@ function startTick() {
 }
 
 /* ════════════════════════════════════════════════════════════
+   FLUSH SUPABASE AVANT ARRÊT
+   ════════════════════════════════════════════════════════════ */
+async function flushScanDataBeforeStop() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return { success: true, flushed: 0 };
+    if (events.length === 0 && stats.menaces === 0) return { success: true, flushed: 0 };
+    var payload = {
+      session_stats: {
+        menaces: stats.menaces,
+        bloquees: stats.bloquees,
+        scans: stats.scans,
+        uptime_ticks: stats.uptime,
+        events_count: events.length
+      },
+      events_summary: events.slice(-20).map(function(e) { return { agent: e.a, type: e.t, message: e.m }; }),
+      stopped_at: new Date().toISOString()
+    };
+    var res = await fetch(SB_URL + "/rest/v1/scan_resumes", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify({ resume: payload })
+    });
+    if (!res.ok) {
+      var errTxt = await res.text().catch(function() { return ""; });
+      return { success: false, error: "HTTP " + res.status + " " + errTxt };
+    }
+    return { success: true, flushed: events.length };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
    STOP
    ════════════════════════════════════════════════════════════ */
-function arreter() {
+async function arreter() {
+  var btnArea = document.getElementById("btnArea");
+  var stopBtn = btnArea ? btnArea.querySelector(".btn-stop") : null;
+  if (stopBtn) { stopBtn.disabled = true; stopBtn.textContent = "⏳ Sauvegarde..."; }
+
+  var flushResult = await flushScanDataBeforeStop();
+  if (!flushResult.success) {
+    var continuer = confirm("⚠️ Erreur de sauvegarde : " + flushResult.error + "\n\nArrêter quand même?");
+    if (!continuer) {
+      if (stopBtn) { stopBtn.disabled = false; stopBtn.innerHTML = "&#x23f9; Arreter"; }
+      return;
+    }
+  }
+
   if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
   phase = "offline";
   agentStates = AGENTS.map(function(a){ return { id:a.id, status:"offline", data:null, detection:0 }; });
@@ -867,6 +917,7 @@ async function lancerScan() {
     var rawText = await res.text();
     var data = parseScanJSON(rawText);
     if (!res.ok || data.error) throw new Error(data.error || "Erreur scan");
+    data.target = pentCible;
     rapport = {
       score: data.risk_score || 0,
       niveau: (data.risk_level || "FAIBLE").replace("ÉLEVÉ","ELEVE"),
@@ -874,6 +925,9 @@ async function lancerScan() {
       vulnerabilites: (data.findings || []).map(function(f){ return f.title + " — " + (f.severity || ""); }),
       recommandations: data.recommendations || []
     };
+    var _pentResume = genererResumeScan(data);
+    afficherResumeScan(_pentResume);
+    sauvegarderResumeScan(_pentResume);
   } catch(e) {
     console.log("[INDAR] AI fallback for pentest:", e.message || e);
     var score = 40 + Math.floor(Math.random() * 55);
@@ -1064,6 +1118,9 @@ async function lancerScanReel() {
     scanLog(terminal, "Score de risque : " + data.risk_score + "/100 (" + data.risk_level + ")", "success");
 
     renderScanResult(data);
+    var _resume = genererResumeScan(data);
+    afficherResumeScan(_resume);
+    sauvegarderResumeScan(_resume);
     if(typeof onScanTermine==='function')onScanTermine(scanType);
     scanHistoryLoaded = false;
     loadScanHistory();
@@ -1147,6 +1204,81 @@ function escapeHtml(s) {
   var d = document.createElement("div");
   d.textContent = s;
   return d.innerHTML;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RÉSUMÉ SÉCURISÉ (mots-clés seulement, sans valeurs)
+   ════════════════════════════════════════════════════════════ */
+function maskCible(cible) {
+  if (!cible) return "***";
+  var parts = cible.split(".");
+  return parts.map(function(p, i) { return i === 0 ? p.slice(0, 2) + "***" : p.slice(-2); }).join(".");
+}
+
+function genererResumeScan(scanData) {
+  var categories = [];
+  var findings = scanData.findings || [];
+  var typeMap = {};
+  for (var i = 0; i < findings.length; i++) {
+    var ft = (findings[i].finding_type || "vulnerability").toUpperCase();
+    typeMap[ft] = (typeMap[ft] || 0) + 1;
+  }
+  var labels = {
+    BREACH: "BRÈCHES DE DONNÉES", OSINT: "INTELLIGENCE OUVERTE", DARKWEB: "DARK WEB",
+    VULNERABILITY: "VULNÉRABILITÉS", CONFIG: "CONFIG INCORRECTE"
+  };
+  for (var key in typeMap) {
+    categories.push({ label: labels[key] || key, count: typeMap[key] });
+  }
+  if (scanData.critical_count > 0) categories.push({ label: "CRITIQUES", count: scanData.critical_count });
+  if (scanData.high_count > 0) categories.push({ label: "SÉVÉRITÉ HAUTE", count: scanData.high_count });
+
+  return {
+    timestamp: new Date().toISOString(),
+    cible_masquee: maskCible(scanData.target),
+    duree_scan: scanData.duration_seconds ? scanData.duration_seconds * 1000 : null,
+    categories_detectees: categories,
+    score_posture: scanData.risk_score || 0,
+    statut: categories.length === 0 ? "PROPRE" : "ANOMALIES DÉTECTÉES"
+  };
+}
+
+function afficherResumeScan(resume) {
+  var container = document.getElementById("scan-resume-container");
+  if (!container) return;
+  var statutColor = resume.statut === "PROPRE" ? "#37e0a0" : "#ff7f27";
+  var catsHtml = "";
+  if (resume.categories_detectees.length === 0) {
+    catsHtml = '<div style="color:#37e0a0;font-size:11px;">✔ Aucune anomalie détectée</div>';
+  } else {
+    catsHtml = '<div style="color:#ff7f27;font-size:10px;letter-spacing:1px;margin-bottom:6px;">CATÉGORIES DÉTECTÉES :</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    for (var i = 0; i < resume.categories_detectees.length; i++) {
+      var cat = resume.categories_detectees[i];
+      catsHtml += '<span style="background:#1a0a00;border:1px solid #ff7f27;border-radius:6px;padding:3px 8px;font-size:10px;color:#ff7f27;letter-spacing:1px;">' +
+        escapeHtml(cat.label) + (cat.count !== null ? " (" + cat.count + ")" : "") + "</span>";
+    }
+    catsHtml += "</div>";
+  }
+  container.innerHTML =
+    '<div style="background:#111118;border:1px solid #23232c;border-radius:12px;padding:16px;font-family:\'JetBrains Mono\',monospace;margin-top:16px;">' +
+    '<div style="color:#ffcf4a;font-size:11px;margin-bottom:12px;letter-spacing:2px;">▸ RÉSUMÉ SCAN — ' + new Date(resume.timestamp).toLocaleTimeString("fr-CA") + "</div>" +
+    '<div style="color:#4f8ef7;font-size:11px;margin-bottom:8px;">CIBLE : ' + escapeHtml(resume.cible_masquee) +
+    " | DURÉE : " + (resume.duree_scan ? (resume.duree_scan / 1000).toFixed(1) + "s" : "N/A") + "</div>" +
+    '<div style="color:' + statutColor + ';font-size:13px;font-weight:bold;margin-bottom:12px;">STATUT : ' + resume.statut + "</div>" +
+    catsHtml +
+    '<div style="color:#23232c;font-size:9px;margin-top:12px;text-align:right;">Valeurs masquées — Centre INDAR ti-lex v10</div></div>';
+}
+
+async function sauvegarderResumeScan(resume) {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return;
+    await fetch(SB_URL + "/rest/v1/scan_resumes", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify({ resume: resume })
+    });
+  } catch (e) { console.warn("[INDAR] Sauvegarde résumé échouée:", e.message); }
 }
 
 async function loadScanHistory() {
