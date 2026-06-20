@@ -14,6 +14,8 @@
 <link rel="stylesheet" href="css/fichiers-selection.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
 <link rel="stylesheet" href="css/fichiers-preview.css">
+<link rel="stylesheet" href="css/fichiers-partage.css">
+<link rel="stylesheet" href="css/fichiers-historique.css">
 <style>
 :root{
   --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
@@ -2047,6 +2049,9 @@ Comment puis-je t'aider aujourd'hui?</div>
 
       <div class="fichiers-actions" id="fichiers-actions" style="display:none;">
         <button class="btn-ghost" id="btn-tout-supprimer">🗑 TOUT EFFACER</button>
+        <button class="btn-ghost" id="btn-historique" title="Voir l'historique des ZIPs">🗄️ HISTORIQUE</button>
+        <button class="btn-outline" id="btn-partager-structure" title="Générer un lien pour partager cette structure">🔗 PARTAGER</button>
+        <button class="btn-outline tilex-btn-cli" id="btn-script-cli" title="Générer un script bash pour recréer cette structure en terminal">⌨️ SCRIPT CLI</button>
         <button class="btn-orange" id="btn-telecharger-zip" style="width:auto;padding:10px 20px;">⬇ TÉLÉCHARGER .ZIP</button>
       </div>
     </section>
@@ -6614,9 +6619,13 @@ var _typingDebounce=null;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+<script src="js/fichiers-templates.js"></script>
 <script src="js/fichiers.js"></script>
 <script src="js/fichiers-selection.js"></script>
 <script src="js/fichiers-preview.js"></script>
+<script src="js/fichiers-partage.js"></script>
+<script src="js/fichiers-historique.js"></script>
+<script src="js/fichiers-cli.js"></script>
 <script>
 (async function(){
   try{

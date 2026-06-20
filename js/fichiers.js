@@ -267,6 +267,11 @@
       a.download = nomZip;
       a.click();
       URL.revokeObjectURL(url);
+
+      if (window.tilexHistorique) {
+        window.tilexHistorique.sauvegarder(nomZip, state.fichiers, blob.size);
+      }
+
       afficherToast('⬇ "' + nomZip + '" téléchargé (' + state.fichiers.length + ' fichier(s))');
     }).catch(function (err) {
       console.error('[ti-lex] Erreur ZIP :', err);
@@ -303,8 +308,85 @@
   btnZip.addEventListener('click', telechargerZip);
   btnEffacer.addEventListener('click', toutEffacer);
 
+  function initContenuPrerempli() {
+    if (!nomInput || !contenuInput) return;
+
+    var dernierModele = null;
+
+    var badge = creerBadgeModele(contenuInput);
+
+    nomInput.addEventListener('input', function () {
+      clearTimeout(nomInput._templateTimer);
+      nomInput._templateTimer = setTimeout(function () {
+        appliquerTemplate(nomInput.value);
+      }, 350);
+    });
+
+    function appliquerTemplate(nomFichier) {
+      if (!window.tilexTemplates) return;
+
+      var modele = window.tilexTemplates.obtenir(nomFichier);
+      if (!modele) return;
+
+      var contenuActuel = contenuInput.value;
+      var estVide       = contenuActuel.trim() === '';
+      var estModele     = contenuActuel === dernierModele;
+
+      if (estVide || estModele) {
+        contenuInput.value = modele;
+        dernierModele      = modele;
+        badge.afficher(nomFichier, function () {
+          contenuInput.value = modele;
+          dernierModele      = modele;
+        });
+      }
+    }
+
+    contenuInput.addEventListener('input', function () {
+      if (contenuInput.value !== dernierModele) {
+        badge.marquerModifie();
+      }
+    });
+  }
+
+  function creerBadgeModele(textarea) {
+    var badge = document.createElement('div');
+    badge.className = 'template-badge';
+    badge.id        = 'template-badge';
+    badge.style.display = 'none';
+    badge.innerHTML =
+      '<span class="template-badge-icone">✨</span>' +
+      '<span class="template-badge-texte">Modèle auto · <em id="template-badge-ext"></em></span>' +
+      '<button class="template-badge-reset" id="template-badge-reset" type="button">Réinitialiser</button>';
+
+    textarea.parentNode.insertBefore(badge, textarea.nextSibling);
+
+    return {
+      afficher: function (nomFichier, onReset) {
+        var ext = document.getElementById('template-badge-ext');
+        var btn = document.getElementById('template-badge-reset');
+        if (ext) ext.textContent = nomFichier;
+        badge.style.display = 'flex';
+        badge.classList.remove('modifie');
+        if (btn) {
+          btn.onclick = onReset;
+          btn.style.display = 'inline-block';
+        }
+      },
+      marquerModifie: function () {
+        badge.classList.add('modifie');
+        var btn = document.getElementById('template-badge-reset');
+        if (btn) btn.style.display = 'inline-block';
+      },
+      cacher: function () {
+        badge.style.display = 'none';
+      }
+    };
+  }
+
   rendreListe();
   initNomProjet();
+  initContenuPrerempli();
 
   window.tilexFichiers = {
     ajouter: function (nom, contenu) {
