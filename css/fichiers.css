@@ -1,0 +1,219 @@
+/* ===== MODULE FICHIERS + ZIP — ti-lex ===== */
+
+.tilex-fichiers-module {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+.fichiers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fichiers-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fichiers-compteur {
+  font-size: 11px;
+  color: var(--muted);
+  background: rgba(255,106,0,0.1);
+  border: 1px solid rgba(255,106,0,0.2);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+.fichier-new-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fichier-nom-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fich-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--txt);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fich-input:focus {
+  border-color: var(--orange);
+}
+
+.fich-input::placeholder {
+  color: var(--muted);
+}
+
+.fich-textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--txt);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  min-height: 160px;
+}
+
+.fich-textarea:focus {
+  border-color: var(--orange);
+}
+
+.fich-textarea::placeholder {
+  color: var(--muted);
+}
+
+.fichiers-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.fichiers-vide {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.fichier-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.fichier-card:hover {
+  border-color: rgba(255,106,0,0.4);
+}
+
+.fichier-card-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fichier-card-icon {
+  color: var(--or2);
+  flex-shrink: 0;
+}
+
+.fichier-card-nom {
+  font-size: 13px;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.fichier-card-taille {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.fichier-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.fichier-btn-action {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-family: 'Share Tech Mono', monospace;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fichier-btn-action:hover {
+  color: var(--txt);
+  border-color: var(--orange);
+}
+
+.fichier-btn-action.copie-ok {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.fichier-btn-action.supprimer:hover {
+  color: #e05555;
+  border-color: #e05555;
+}
+
+.fichiers-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  gap: 10px;
+}
+
+.tilex-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--bg2);
+  border: 1px solid var(--green);
+  border-radius: var(--radius);
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  padding: 10px 18px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.tilex-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

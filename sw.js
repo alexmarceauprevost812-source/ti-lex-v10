@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-289";
+const CACHE_VERSION = "tilex-v10-290";
 const ASSETS = [
   "/",
   "/index.html",
@@ -23,6 +23,8 @@ const ASSETS = [
   "/js/al-memory.js",
   "/js/memoire-ia.js",
   "/js/agent-marceau.js",
+  "/css/fichiers.css",
+  "/js/fichiers.js",
 ];
 
 self.addEventListener("install", (e) => {

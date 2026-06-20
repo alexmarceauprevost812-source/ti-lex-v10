@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="css/agent-marceau.css">
+<link rel="stylesheet" href="css/fichiers.css">
 <style>
 :root{
   --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
@@ -1539,6 +1540,11 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
   </div>
 
+  <!-- FICHIERS -->
+  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
+    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIERS"></span>
+  </div>
+
   <!-- AGENT MARCEAU -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
     <span class="sb-icon" style="color:#ff7f27;position:relative;">
@@ -1989,6 +1995,45 @@ Comment puis-je t'aider aujourd'hui?</div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- FICHIERS + ZIP -->
+  <div id="view-fichiers" class="view">
+    <div class="sec-title">📁 <span class="accent">FICHIERS</span></div>
+
+    <section class="tilex-fichiers-module" id="fichiers-module">
+      <div class="fichiers-header">
+        <span class="fichiers-titre">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+          Fichiers générés
+        </span>
+        <span class="fichiers-compteur" id="fichiers-compteur">0 fichier(s)</span>
+      </div>
+
+      <div class="fichier-new-form" id="fichier-new-form">
+        <div class="fichier-nom-row">
+          <input type="text" id="fichier-nom-input" class="fich-input" placeholder="nom-du-fichier.js" spellcheck="false"/>
+          <button class="btn-outline" id="btn-ajouter-fichier" style="width:auto;padding:8px 14px;font-size:13px;">
+            <span class="s">+ AJOUTER</span>
+          </button>
+        </div>
+        <textarea id="fichier-contenu-input" class="fich-textarea" placeholder="Colle ou écris le contenu du fichier ici..." rows="8" spellcheck="false"></textarea>
+      </div>
+
+      <div class="fichiers-liste" id="fichiers-liste">
+        <div class="fichiers-vide" id="fichiers-vide">
+          <span>Aucun fichier pour l'instant.</span>
+        </div>
+      </div>
+
+      <div class="fichiers-actions" id="fichiers-actions" style="display:none;">
+        <button class="btn-ghost" id="btn-tout-supprimer">🗑 TOUT EFFACER</button>
+        <button class="btn-orange" id="btn-telecharger-zip" style="width:auto;padding:10px 20px;">⬇ TÉLÉCHARGER .ZIP</button>
+      </div>
+    </section>
   </div>
 
   <!-- PARAMÈTRES -->
@@ -2485,12 +2530,12 @@ document.addEventListener("click",function(e){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau","si-silex"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau","si-silex","si-fichiers"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
@@ -6550,6 +6595,8 @@ var _typingDebounce=null;
 <script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="js/fichiers.js"></script>
 <script>
 (async function(){
   try{
