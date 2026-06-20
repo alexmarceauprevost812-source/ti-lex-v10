@@ -22,9 +22,9 @@
 }
 [data-theme="day"]{
   --bg:#E6DAC4;--bg2:#EFE7D7;--bg3:#DED1B8;--bg4:#D4C9B0;
-  --txt:#1A1A1A;--muted:rgba(26,26,26,.45);
+  --txt:#111111;--muted:#4a4540;
   --border:rgba(180,155,100,.25);--grid:rgba(180,155,100,.08);
-  --or:#7A5800;--or2:#9A7200;--or3:#5A4000;
+  --or:#5A4000;--or2:#7A5800;--or3:#3D2B00;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
@@ -322,7 +322,8 @@ body.sb-open .content{margin-left:var(--sb-w);}
   color:var(--or);display:flex;align-items:center;gap:14px;margin-bottom:20px;}
 .sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,106,0,.4),transparent);}
 .sec-title .accent{color:var(--orange);}
-[data-theme="day"] .sec-title{color:var(--or3);}
+[data-theme="day"] .sec-title{color:var(--or3);font-weight:800;}
+[data-theme="day"] .sec-title .accent{color:#c4540f;}
 
 /* MÉTRIQUES */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:18px;}
@@ -1192,6 +1193,25 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .status-error{color:#ff4444;}
 .status-warn{color:#ffcf4a;}
 [data-theme="day"] .settings-input-cfg{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
+
+/* ══ MODE JOUR — lisibilité texte paramètres ══ */
+[data-theme="day"] .card-hd{color:#3d3526;font-weight:700;}
+[data-theme="day"] .settings-label{color:#2a1f00;font-weight:700;font-size:11px;}
+[data-theme="day"] .settings-hint{color:#3a352a;font-weight:500;font-size:10px;}
+[data-theme="day"] .settings-section select,
+[data-theme="day"] .settings-section input{color:#111;font-weight:600;}
+[data-theme="day"] .settings-section{color:#1a1a1a;}
+[data-theme="day"] #view-settings .card-body{color:#1a1a1a;}
+[data-theme="day"] #view-settings .card-body *{color:#1a1a1a;}
+[data-theme="day"] #view-settings .card-body .settings-label{color:#2a1f00;}
+[data-theme="day"] #view-settings .card-body .settings-hint{color:#3a352a;}
+[data-theme="day"] #view-settings .btn-orange{color:#fff;}
+[data-theme="day"] #view-settings .btn-ghost{color:#3d2b00;border-color:#a0906a;}
+[data-theme="day"] #view-settings .gh-status.on{background:#2d8a5e;}
+[data-theme="day"] .memoire-cle{color:#5A4000;}
+[data-theme="day"] .memoire-valeur{color:#1a1a1a;}
+[data-theme="day"] .memoire-cat-titre{color:#5A4000;}
+[data-theme="day"] .diag-result{background:#EFE7D7;border-color:#D4C5A4;color:#1a1a1a;}
 
 /* ══ #2 PROFILE EDIT ══ */
 .profile-edit-section{margin-top:16px;}
