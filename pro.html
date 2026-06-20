@@ -2729,14 +2729,34 @@ function isModeMaitre(){return _currentUserEmail===ADMIN_EMAIL;}
 var SYSTEM_PROMPT_MAITRE="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE MAÎTRE : Tu réponds directement et efficacement sans poser de questions sauf si vraiment nécessaire. Tu connais bien l'utilisateur, son projet ti-lex, son stack (Supabase + Vercel + vanilla JS). Tu vas droit au but. Tu génères le code demandé immédiatement. Ton style est intense, direct et confiant. Quand l'utilisateur demande du code, fournis le code complet dans un bloc markdown avec le langage (```javascript, ```python, etc.), puis explique ce que fait chaque partie importante. Utilise le gras **...** pour les concepts clés.";
 var SYSTEM_PROMPT_STANDARD="Tu es ti-lex-AL, l'agent signature de la plateforme québécoise ti-lex-AL v10. Interface Pro. MODE STANDARD : Avant de répondre, évalue si la demande est claire. Si la demande est vague ou incomplète, pose 1 à 2 questions courtes et précises pour bien comprendre. Ne génère PAS le code avant d'avoir les informations suffisantes. Si la demande est claire et précise, réponds directement sans poser de question. Ton style est direct et confiant, en français québécois. Quand tu fournis du code, utilise un bloc markdown avec le langage. Utilise le gras **...** pour les concepts clés.";
 var _memoireContexteCache="";
+var _alSummaryCache="";
+var _alHistoryLoaded=false;
 async function chargerMemoireContexte(){
   if(!window.MemoireIA)return;
   var uid=await MemoireIA._getUserId();if(!uid)return;
   _memoireContexteCache=await MemoireIA.construireContexte(uid);
 }
+async function initAlMemoryRecall(){
+  if(!window.AlMemory||_alHistoryLoaded)return;
+  _alHistoryLoaded=true;
+  try{
+    var mem=await AlMemory.initAlMemory();
+    if(mem.summary&&mem.summary.summary){
+      _alSummaryCache=mem.summary.summary;
+      addMsg("a","💡 "+_alSummaryCache);
+    }
+    if(mem.history&&mem.history.length>0){
+      var recent=mem.history.slice(-20);
+      for(var i=0;i<recent.length;i++){
+        chatHistory.push({role:recent[i].role,content:recent[i].content});
+      }
+    }
+  }catch(e){console.error("[AL memory] initAlMemoryRecall:",e);}
+}
 function getSystemPrompt(){
   var base=isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
+  if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
   return base;
 }
 var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
@@ -2887,6 +2907,11 @@ async function sendChat(){
       setTimeout(function(){bblText.classList.remove("gold-flash");},2600);
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
+      if(window.AlMemory){
+        var _um=chatHistory[chatHistory.length-2]?.content||"";
+        AlMemory.saveMessage("user",_um);
+        AlMemory.saveMessage("assistant",reply||"");
+      }
       if(window.MemoireIA&&reply){
         var _userMsg=chatHistory[chatHistory.length-2]?.content||"";
         MemoireIA._getUserId().then(function(uid){
@@ -6176,6 +6201,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     demarrerConversation(session.user.id).catch(function(){});
     chargerMemoireContexte().catch(function(){});
     if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
+    if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
   }
 });
 
@@ -6188,6 +6214,7 @@ supabase.auth.onAuthStateChange(function(event,session){
       _currentUserEmail=u.data.user.email||null;
       demarrerConversation(u.data.user.id).catch(function(){});
       chargerMemoireContexte().catch(function(){});
+      if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
     }
   }catch(e){}
 })();
@@ -6346,8 +6373,20 @@ var _typingDebounce=null;
 
 </script>
 
+<script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
+<script>
+(async function(){
+  try{
+    var u=await supabase.auth.getUser();
+    if(u.data&&u.data.user){
+      if(window.AlMemory)initAlMemoryRecall().catch(function(){});
+      if(window.MemoireIA)MemoireIA.initialiser(u.data.user.id,{email:u.data.user.email}).catch(function(){});
+    }
+  }catch(e){}
+})();
+</script>
 
 <!-- MEDIA UPLOAD MODAL -->
 <div class="media-overlay" id="media-overlay" onclick="if(event.target===this)closeMediaModal()">
