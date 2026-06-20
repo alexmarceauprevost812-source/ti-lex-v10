@@ -73,11 +73,15 @@
         '<span class="fichier-card-taille">' + formatBytes(fichier.taille) + '</span>' +
       '</div>' +
       '<div class="fichier-card-actions">' +
+        '<button class="fichier-btn-action voir" data-id="' + fichier.id + '">👁 Voir</button>' +
         '<button class="fichier-btn-action copier" data-id="' + fichier.id + '">Copier</button>' +
         '<button class="fichier-btn-action telecharger" data-id="' + fichier.id + '">&#11015;</button>' +
         '<button class="fichier-btn-action supprimer" data-id="' + fichier.id + '">&#10005;</button>' +
       '</div>';
 
+    card.querySelector('.voir').addEventListener('click', function () {
+      if (window.tilexPreview) window.tilexPreview.ouvrir(fichier);
+    });
     card.querySelector('.copier').addEventListener('click', function (e) {
       copierContenu(fichier.id, e.currentTarget);
     });
