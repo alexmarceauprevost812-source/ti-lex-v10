@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="css/fichiers-preview.css">
 <link rel="stylesheet" href="css/fichiers-partage.css">
 <link rel="stylesheet" href="css/fichiers-historique.css">
+<link rel="stylesheet" href="css/security.css">
 <style>
 :root{
   --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
@@ -1778,7 +1779,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
         <div class="chat-hd">
           <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
           <div><div class="c-name">TI-LEX-AL · AGENT AL</div>
-            <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active</div></div>
+            <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active · <span class="tilex-security-badge">IA Sécurisée</span></div></div>
         </div>
       <div class="chat-msgs" id="chat-msgs">
         <div class="cmsg a">
@@ -3018,6 +3019,15 @@ async function sendChat(){
   if(chatBusy)return;
   const inp=document.getElementById("chat-in");
   const txt=inp.value.trim();if(!txt)return;
+  if(window.TilexSecurityGuard){
+    var secCheck=TilexSecurityGuard.checkMessage(txt);
+    if(!secCheck.safe){
+      TilexSecurityGuard.showSecurityAlert(secCheck.warning||"Message bloqué.",secCheck.reason==="sensitive_content"?"warning":"blocked");
+      var uid=null;try{var _u=await supabase.auth.getUser();uid=_u.data?.user?.id;}catch(e){}
+      TilexSecurityGuard.logToSupabase(uid,"input_blocked",secCheck.reason,"high",txt);
+      return;
+    }
+  }
   addMsg("u",txt);inp.value="";chatBusy=true;
   trackMsg();
   chatHistory.push({role:"user",content:txt});
@@ -6676,6 +6686,7 @@ var _typingDebounce=null;
 
 </script>
 
+<script src="js/security-guard.js"></script>
 <script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
