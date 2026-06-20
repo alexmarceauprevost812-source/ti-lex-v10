@@ -217,3 +217,75 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ── Nom de projet custom ── */
+
+.projet-nom-bloc {
+  padding-bottom: 4px;
+}
+
+.projet-nom-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.projet-nom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.projet-nom-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+.projet-nom-input {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.projet-nom-apercu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 106, 0, 0.05);
+  border: 1px dashed rgba(255, 106, 0, 0.25);
+  border-radius: var(--radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 280px;
+  overflow: hidden;
+}
+
+.apercu-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.apercu-valeur {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--orange);
+  font-family: 'Share Tech Mono', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .projet-nom-row    { flex-direction: column; align-items: stretch; }
+  .projet-nom-apercu { max-width: 100%; }
+}

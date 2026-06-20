@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="css/agent-marceau.css">
 <link rel="stylesheet" href="css/fichiers.css">
+<link rel="stylesheet" href="css/fichiers-selection.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
 <link rel="stylesheet" href="css/fichiers-preview.css">
 <style>
@@ -2028,6 +2029,19 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="fichiers-liste" id="fichiers-liste">
         <div class="fichiers-vide" id="fichiers-vide">
           <span>Aucun fichier pour l'instant.</span>
+        </div>
+      </div>
+
+      <div class="projet-nom-bloc" id="projet-nom-bloc" style="display:none;">
+        <div class="projet-nom-row">
+          <div class="projet-nom-field">
+            <label class="projet-nom-label" for="projet-nom-input">📁 Nom du projet</label>
+            <input type="text" id="projet-nom-input" class="fich-input projet-nom-input" placeholder="mon-projet" maxlength="60" spellcheck="false" autocomplete="off"/>
+          </div>
+          <div class="projet-nom-apercu" id="projet-nom-apercu">
+            <span class="apercu-label">ZIP :</span>
+            <span class="apercu-valeur" id="apercu-valeur">ti-lex-fichiers.zip</span>
+          </div>
         </div>
       </div>
 
@@ -6601,6 +6615,7 @@ var _typingDebounce=null;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
 <script src="js/fichiers.js"></script>
+<script src="js/fichiers-selection.js"></script>
 <script src="js/fichiers-preview.js"></script>
 <script>
 (async function(){

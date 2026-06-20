@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  var LS_KEY_PROJET = 'tilex_projet_nom';
   var state = { fichiers: [] };
 
   var nomInput        = document.getElementById('fichier-nom-input');
@@ -37,7 +38,58 @@
     toast._tid = setTimeout(function () { toast.classList.remove('visible'); }, 2200);
   }
 
+  function slugifier(valeur) {
+    return valeur.trim().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/[^a-z0-9.\-]/g, '')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function getNomZip() {
+    var input = document.getElementById('projet-nom-input');
+    var slug = input ? slugifier(input.value) : '';
+    if (slug) return slug.endsWith('.zip') ? slug : slug + '.zip';
+    var ts = new Date().toISOString().slice(0, 10);
+    return 'ti-lex-fichiers-' + ts + '.zip';
+  }
+
+  function getNomBase() {
+    var input = document.getElementById('projet-nom-input');
+    var slug = input ? slugifier(input.value) : '';
+    if (slug) return slug.endsWith('.zip') ? slug.slice(0, -4) : slug;
+    return 'ti-lex-' + new Date().toISOString().slice(0, 10);
+  }
+
+  function initNomProjet() {
+    var input = document.getElementById('projet-nom-input');
+    var apercu = document.getElementById('apercu-valeur');
+    var bloc = document.getElementById('projet-nom-bloc');
+    if (!input || !apercu || !bloc) return;
+
+    var nomSauve = localStorage.getItem(LS_KEY_PROJET) || '';
+    input.value = nomSauve;
+    apercu.textContent = getNomZip();
+
+    input.addEventListener('input', function () {
+      apercu.textContent = getNomZip();
+      clearTimeout(input._saveTimer);
+      input._saveTimer = setTimeout(function () {
+        localStorage.setItem(LS_KEY_PROJET, input.value.trim());
+      }, 600);
+    });
+
+    input.addEventListener('blur', function () {
+      var slug = slugifier(input.value);
+      input.value = slug;
+      apercu.textContent = getNomZip();
+      if (slug) localStorage.setItem(LS_KEY_PROJET, slug);
+    });
+  }
+
   function rendreListe() {
+    if (window.tilexSelection) window.tilexSelection.reinitialiser();
     fichiersList.innerHTML = '';
 
     if (state.fichiers.length === 0) {
@@ -46,8 +98,12 @@
       vide.innerHTML = '<span>Aucun fichier pour l\'instant.</span>';
       fichiersList.appendChild(vide);
       fichiersActions.style.display = 'none';
+      var bloc = document.getElementById('projet-nom-bloc');
+      if (bloc) bloc.style.display = 'none';
     } else {
       fichiersActions.style.display = 'flex';
+      var bloc = document.getElementById('projet-nom-bloc');
+      if (bloc) bloc.style.display = 'block';
       state.fichiers.forEach(function (f) {
         fichiersList.appendChild(creerCarteHTML(f));
       });
@@ -62,6 +118,10 @@
     card.dataset.id = fichier.id;
 
     card.innerHTML =
+      '<label class="fichier-checkbox-wrap" title="Sélectionner ce fichier">' +
+        '<input type="checkbox" class="fichier-checkbox" data-id="' + fichier.id + '" autocomplete="off"/>' +
+        '<span class="fichier-checkbox-custom"></span>' +
+      '</label>' +
       '<div class="fichier-card-info">' +
         '<span class="fichier-card-icon">' +
           '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
@@ -90,6 +150,21 @@
     });
     card.querySelector('.supprimer').addEventListener('click', function () {
       supprimerFichier(fichier.id);
+    });
+
+    var checkbox = card.querySelector('.fichier-checkbox');
+    checkbox.addEventListener('change', function () {
+      if (window.tilexSelection) {
+        window.tilexSelection.toggle(fichier.id, checkbox.checked, card);
+      }
+    });
+    card.addEventListener('click', function (e) {
+      var isAction = e.target.closest('.fichier-card-actions');
+      var isLabel = e.target.closest('.fichier-checkbox-wrap');
+      if (!isAction && !isLabel) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change'));
+      }
     });
 
     return card;
@@ -127,6 +202,7 @@
 
   function supprimerFichier(id) {
     state.fichiers = state.fichiers.filter(function (f) { return f.id !== id; });
+    if (window.tilexSelection) window.tilexSelection.retirerDeLaSelection(id);
     rendreListe();
   }
 
@@ -184,8 +260,7 @@
     state.fichiers.forEach(function (f) { zip.file(f.nom, f.contenu); });
 
     zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }).then(function (blob) {
-      var ts = new Date().toISOString().slice(0, 10);
-      var nomZip = 'ti-lex-fichiers-' + ts + '.zip';
+      var nomZip = getNomZip();
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
@@ -229,6 +304,7 @@
   btnEffacer.addEventListener('click', toutEffacer);
 
   rendreListe();
+  initNomProjet();
 
   window.tilexFichiers = {
     ajouter: function (nom, contenu) {
@@ -237,6 +313,10 @@
       ajouterFichier();
     },
     getAll: function () { return state.fichiers.slice(); },
-    zip: telechargerZip
+    zip: telechargerZip,
+    supprimer: function (id) {
+      state.fichiers = state.fichiers.filter(function (f) { return f.id !== id; });
+    },
+    getNomBase: getNomBase
   };
 })();
