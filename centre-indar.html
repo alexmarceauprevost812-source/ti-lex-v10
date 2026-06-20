@@ -125,10 +125,26 @@ button{font-family:inherit;border:none;outline:none;}
 .btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 18px;}
 
 /* ═══ STATS ═══ */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
 .stat-box{background:#070707;border:1px solid #1a1a1a;border-radius:10px;padding:12px 14px;}
 .stat-label{font-size:9px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-bottom:4px;}
 .stat-val{font-size:22px;font-weight:800;font-family:'Share Tech Mono',monospace;}
+
+/* ═══ MENACES/MIN WIDGET ═══ */
+#card-menaces-min{position:relative;overflow:hidden;transition:border-color .3s ease;}
+#card-menaces-min::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,#ff7f2710 0%,transparent 70%);opacity:0;transition:opacity .5s ease;pointer-events:none;}
+#card-menaces-min.spike::before{opacity:1;}
+#card-menaces-min.spike{border-color:#ff7f27;box-shadow:0 0 12px #ff7f2730;}
+#menaces-par-minute.calme{color:#37e0a0;}
+#menaces-par-minute.actif{color:#ffcf4a;}
+#menaces-par-minute.spike{color:#ff7f27;}
+.mpm-unit{font-size:11px;color:#4a4a5a;margin-left:2px;font-weight:400;}
+.mpm-barre-container{height:3px;background:#1a1a24;border-radius:2px;margin:10px 0 6px;overflow:hidden;}
+.mpm-barre{height:100%;width:0%;background:linear-gradient(90deg,#37e0a0,#ffcf4a,#ff7f27);border-radius:2px;transition:width .8s ease,filter .3s ease;}
+.mpm-barre.spike{filter:drop-shadow(0 0 4px #ff7f27);}
+.mpm-statut{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:#4a4a5a;margin-top:2px;}
+@keyframes mpm-pulse{0%{opacity:1;}50%{opacity:.4;}100%{opacity:1;}}
+#card-menaces-min.spike .mpm-statut{color:#ff7f27;animation:mpm-pulse 1s ease infinite;}
 
 /* ═══ AGENT GRID ═══ */
 .agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:13px;margin-bottom:18px;}
@@ -280,6 +296,14 @@ button{font-family:inherit;border:none;outline:none;}
   <div id="statsArea" class="stats-row" style="display:none;">
     <div class="stat-box"><div class="stat-label">MENACES DETECTEES</div><div id="statMenaces" class="stat-val" style="color:#f87171;">0</div></div>
     <div class="stat-box"><div class="stat-label">BLOQUEES</div><div id="statBloquees" class="stat-val" style="color:#37e0a0;">0</div></div>
+    <div class="stat-box" id="card-menaces-min">
+      <div class="stat-label">MENACES/MIN</div>
+      <div id="menaces-par-minute" class="stat-val calme" style="line-height:1;">
+        <span id="mpm-valeur">0</span><span class="mpm-unit">/min</span>
+      </div>
+      <div class="mpm-barre-container"><div class="mpm-barre" id="mpm-barre"></div></div>
+      <div class="mpm-statut" id="mpm-statut">EN ATTENTE</div>
+    </div>
     <div class="stat-box"><div class="stat-label">SCANS AUTO</div><div id="statScans" class="stat-val" style="color:#4f8ef7;">0</div></div>
     <div class="stat-box"><div class="stat-label">POSTURE</div><div id="statPosture" class="stat-val" style="color:#ff7f27;">98%</div></div>
   </div>
@@ -422,6 +446,11 @@ var stats = { menaces:0, bloquees:0, scans:0, uptime:0 };
 var tickInterval = null;
 var currentTab = "centre";
 
+/* ── Compteur menaces/minute ── */
+var historiqueBloquees = [];
+var menacesParMinute = 0;
+var intervalCompteur = null;
+
 /* Pentester state */
 var pentCible = PLATEFORMES[0];
 var pentScanning = false;
@@ -545,6 +574,61 @@ function updateAgentCount() {
   var el = document.getElementById("agentCount");
   el.innerHTML = count + '<span>/6</span>';
   el.style.color = count === 6 ? "#37e0a0" : ORANGE;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMPTEUR MENACES/MIN
+   ════════════════════════════════════════════════════════════ */
+function calculerMenacesParMinute(countActuel) {
+  var maintenant = Date.now();
+  historiqueBloquees.push({ timestamp: maintenant, count: countActuel });
+  var limite = maintenant - 60000;
+  historiqueBloquees = historiqueBloquees.filter(function(s) { return s.timestamp >= limite; });
+  if (historiqueBloquees.length < 2) return 0;
+  var plusAncien = historiqueBloquees[0];
+  var plusRecent = historiqueBloquees[historiqueBloquees.length - 1];
+  var deltaCount = plusRecent.count - plusAncien.count;
+  var deltaTemps = (plusRecent.timestamp - plusAncien.timestamp) / 60000;
+  if (deltaTemps === 0) return 0;
+  return Math.round(deltaCount / deltaTemps);
+}
+
+function mettreAJourAffichageCompteur(mpm) {
+  var valeurEl = document.getElementById("mpm-valeur");
+  var valueEl = document.getElementById("menaces-par-minute");
+  var barreEl = document.getElementById("mpm-barre");
+  var statutEl = document.getElementById("mpm-statut");
+  var cardEl = document.getElementById("card-menaces-min");
+  if (!valeurEl) return;
+  valeurEl.textContent = mpm;
+  valueEl.classList.remove("calme", "actif", "spike");
+  cardEl.classList.remove("spike");
+  barreEl.classList.remove("spike");
+  var statut = "EN ATTENTE";
+  var largeur = 0;
+  if (mpm === 0) { valueEl.classList.add("calme"); statut = "CALME"; largeur = 2; }
+  else if (mpm <= 2) { valueEl.classList.add("calme"); statut = "ACTIVITÉ NORMALE"; largeur = Math.min(mpm * 15, 30); }
+  else if (mpm <= 5) { valueEl.classList.add("actif"); statut = "ACTIVITÉ ÉLEVÉE"; largeur = Math.min(30 + mpm * 8, 65); }
+  else { valueEl.classList.add("spike"); cardEl.classList.add("spike"); barreEl.classList.add("spike"); statut = "⚠ SPIKE DÉTECTÉ"; largeur = Math.min(65 + mpm * 3, 100); }
+  barreEl.style.width = largeur + "%";
+  statutEl.textContent = statut;
+}
+
+function demarrerCompteur() {
+  historiqueBloquees = [];
+  menacesParMinute = 0;
+  mettreAJourAffichageCompteur(0);
+  intervalCompteur = setInterval(function() {
+    menacesParMinute = calculerMenacesParMinute(stats.bloquees);
+    mettreAJourAffichageCompteur(menacesParMinute);
+  }, 5000);
+}
+
+function arreterCompteur() {
+  if (intervalCompteur) { clearInterval(intervalCompteur); intervalCompteur = null; }
+  historiqueBloquees = [];
+  menacesParMinute = 0;
+  mettreAJourAffichageCompteur(0);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -701,6 +785,7 @@ async function demarrer() {
 
   genererFiches();
   startTick();
+  demarrerCompteur();
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -804,6 +889,7 @@ async function flushScanDataBeforeStop() {
    STOP
    ════════════════════════════════════════════════════════════ */
 async function arreter() {
+  arreterCompteur();
   var btnArea = document.getElementById("btnArea");
   var stopBtn = btnArea ? btnArea.querySelector(".btn-stop") : null;
   if (stopBtn) { stopBtn.disabled = true; stopBtn.textContent = "⏳ Sauvegarde..."; }
