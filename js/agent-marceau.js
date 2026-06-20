@@ -23,9 +23,10 @@
   // ── System Prompts 4 phases + NEXUS ──
   var SYS = {
     M1:
-      "Tu es MARCEAU, agent créatif de ti-lex (Produit du Québec).\n" +
+      "Tu es MARCEAU, agent principal et créatif de ti-lex (Produit du Québec).\n" +
       "Tu OUVRES le débat sur le sujet de l'utilisateur.\n" +
       "Lance tes idées les plus créatives et audacieuses.\n" +
+      "Tu apprends à connaître ton humain au fil des échanges — sois chaleureux.\n" +
       "Adresse-toi à CLAUDE-AL directement.\n" +
       "Lignes courtes (≤65 car.), max 90 mots, français québécois, sans introduction.",
 
@@ -37,10 +38,10 @@
       "Lignes courtes (≤65 car.), max 90 mots, français québécois professionnel, sans introduction.",
 
     M2:
-      "Tu es MARCEAU, agent créatif de ti-lex (Produit du Québec).\n" +
+      "Tu es MARCEAU, agent principal et créatif de ti-lex (Produit du Québec).\n" +
       "CLAUDE-AL vient de réagir. Réponds-lui directement.\n" +
       "Défends ce qui est valide, intègre les bons points, mais reste créatif.\n" +
-      "Pousse l'idée encore plus loin.\n" +
+      "Pousse l'idée encore plus loin. Pense à ce qui serait le mieux pour ton humain.\n" +
       "Lignes courtes (≤65 car.), max 90 mots, français québécois, sans introduction.",
 
     C2:
@@ -266,6 +267,28 @@
       '" x1="11" y1="1" x2="11" y2="25" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#fff0a0"/><stop offset="100%" stop-color="#ff9500"/></linearGradient></defs><path d="M13 1L4 14 10 14 9 25 18 12 12 12Z" fill="url(#gn-' +
       gid + ')"/></svg></div>'
     );
+  }
+
+  // ── Ti-Étude context injection ──
+  function getTiEtudeContext() {
+    var etude = window._tiEtude;
+    if (!etude) return "";
+    var parts = [];
+    if (etude.langue_preferee) parts.push("Langue préférée: " + etude.langue_preferee);
+    if (etude.style_ecriture) parts.push("Style d'écriture: " + etude.style_ecriture);
+    if (etude.theme_prefere) parts.push("Thème préféré: " + etude.theme_prefere);
+    if (Array.isArray(etude.interets) && etude.interets.length) parts.push("Intérêts: " + etude.interets.join(", "));
+    if (Array.isArray(etude.couleurs_preferees) && etude.couleurs_preferees.length) parts.push("Couleurs préférées: " + etude.couleurs_preferees.join(", "));
+    if (Array.isArray(etude.notes_agent) && etude.notes_agent.length) {
+      var recent = etude.notes_agent.slice(-5);
+      parts.push("Notes récentes: " + recent.map(function(n) { return n.text; }).join(" | "));
+    }
+    if (!parts.length) return "";
+    return "\n\n[PROFIL UTILISATEUR (ti-étude)]:\n" + parts.join("\n");
+  }
+
+  function enrichPrompt(base) {
+    return base + getTiEtudeContext();
   }
 
   // ── État du dialogue ──
@@ -497,7 +520,7 @@
       updateStep("phase1");
 
       var m1 = await streamFromEdge(
-        SYS.M1,
+        enrichPrompt(SYS.M1),
         [{ role: "user", content: 'SUJET: "' + question + '"' }],
         function (t) { streamers[0].update(t); }
       );
@@ -513,7 +536,7 @@
       updateStep("phase2");
 
       var c1 = await streamFromEdge(
-        SYS.C1,
+        enrichPrompt(SYS.C1),
         [{ role: "user", content: buildContext(dialogueState.phases, question) }],
         function (t) { streamers[1].update(t); }
       );
@@ -529,7 +552,7 @@
       updateStep("phase3");
 
       var m2 = await streamFromEdge(
-        SYS.M2,
+        enrichPrompt(SYS.M2),
         [{ role: "user", content: buildContext(dialogueState.phases, question) }],
         function (t) { streamers[2].update(t); }
       );
@@ -545,7 +568,7 @@
       updateStep("phase4");
 
       var c2 = await streamFromEdge(
-        SYS.C2,
+        enrichPrompt(SYS.C2),
         [{ role: "user", content: buildContext(dialogueState.phases, question) }],
         function (t) { streamers[3].update(t); }
       );
@@ -566,6 +589,10 @@
       showSynthesisPanel(synth);
 
       await saveToSupabase(question, dialogueState.phases, synth);
+
+      if (typeof addTiEtudeNote === "function") {
+        addTiEtudeNote("Sujet exploré: " + question.slice(0, 120) + " | Score: " + synth.score);
+      }
 
       dialogueState.step = "done";
       updateStep("done");

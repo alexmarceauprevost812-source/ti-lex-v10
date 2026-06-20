@@ -720,14 +720,16 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cx-expand-btn{display:block;padding:6px 14px;background:rgba(255,106,0,.08);border:none;border-top:1px solid var(--border);
   color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;text-align:center;transition:background .2s;}
 .cx-expand-btn:hover{background:rgba(255,106,0,.15);}
-.syn-kw{color:#ff6a00;font-weight:600;}
-.syn-str{color:#28c840;}
-.syn-num{color:#F0C040;}
-.syn-fn{color:#00aaff;}
-.syn-cm{color:rgba(255,248,231,.25);font-style:italic;}
-.syn-tag{color:#ff6a00;}
-.syn-attr{color:#F0C040;}
+.syn-kw{color:#b67aff;}
+.syn-str{color:#ffcf4a;}
+.syn-num{color:#4dd4ff;}
+.syn-fn{color:#37e0a0;}
+.syn-cm{color:#7a8290;font-style:italic;}
+.syn-tag{color:#ff7f27;}
+.syn-attr{color:#ffcf4a;}
 .syn-op{color:rgba(255,248,231,.5);}
+.syn-var{color:#ff7f27;}
+.syn-secret{color:#ff4d6d;font-weight:600;}
 .cx-typing{display:flex;gap:4px;padding:6px 0;}
 .cx-typing .tyd{width:6px;height:6px;border-radius:50%;background:var(--or);animation:tybounce .6s ease-in-out infinite alternate;}
 .cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
@@ -2186,6 +2188,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
     <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
   </div>
+  <button id="btn-web-search-toggle" class="reflexion-toggle" onclick="toggleWebSearch()" title="Recherche web" style="margin-right:2px;">🌐</button>
   <button id="btn-reflexion-toggle" class="reflexion-toggle" onclick="toggleReflexionMode()" title="Mode réflexion">🧠</button>
   <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Écris un message…"></textarea>
   <button class="composer-send" id="composer-send-btn" title="Envoyer">
@@ -3767,8 +3770,11 @@ function cxHighlight(code,lang){
     h=h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="syn-cm">$1</span>');
     h=h.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g,'<span class="syn-str">$1</span>');
     h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b(var|let|const|function|return|if|else|for|while|switch|case|break|default|try|catch|throw|new|this|class|import|export|from|async|await|typeof|instanceof|of|in|true|false|null|undefined|void)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b(var|let|const)\b/g,'<span class="syn-var">$1</span>');
+    h=h.replace(/\b(function|return|if|else|for|while|switch|case|break|default|try|catch|throw|new|this|class|import|export|from|async|await|typeof|instanceof|of|in|void)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b(true|false|null|undefined)\b/g,'<span class="syn-num">$1</span>');
     h=h.replace(/\b([a-zA-Z_$]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
+    h=h.replace(/\b(API_KEY|SECRET|TOKEN|PASSWORD|PRIVATE_KEY|ACCESS_TOKEN|ANON_KEY|SERVICE_ROLE|SUPABASE_KEY|ANTHROPIC_API_KEY|STRIPE_SECRET|OPENAI_KEY)\b/gi,'<span class="syn-secret">$1</span>');
   }else if(lang==="html"||lang==="htm"){
     h=h.replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="syn-cm">$1</span>');
     h=h.replace(/(&lt;\/?[a-zA-Z][a-zA-Z0-9]*)/g,'<span class="syn-tag">$1</span>');
@@ -3782,7 +3788,8 @@ function cxHighlight(code,lang){
     h=h.replace(/(#[^\n]*)/g,'<span class="syn-cm">$1</span>');
     h=h.replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
     h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b(def|class|return|if|elif|else|for|while|try|except|finally|with|as|import|from|in|not|and|or|is|True|False|None|pass|break|continue|lambda|yield|raise|async|await)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b(def|class|return|if|elif|else|for|while|try|except|finally|with|as|import|from|in|not|and|or|is|pass|break|continue|lambda|yield|raise|async|await)\b/g,'<span class="syn-kw">$1</span>');
+    h=h.replace(/\b(True|False|None)\b/g,'<span class="syn-num">$1</span>');
     h=h.replace(/\b([a-zA-Z_]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
   }else if(lang==="sql"){
     h=h.replace(/(--[^\n]*)/g,'<span class="syn-cm">$1</span>');
@@ -3866,9 +3873,12 @@ async function genCode(){
   document.getElementById("codex-txt").value="";
   cxAddTyping();
 
-  var sysPrompt="Tu es le Codex de ti-lex-AL, un assistant de code expert. Génère du code propre et production-ready en "+
-    (LANG_N[lang]||lang)+". Réponds avec le code dans des blocs ```"+lang+" et de courtes explications en français québécois. "+
-    "Pour chaque bloc de code, ajoute en première ligne un commentaire indiquant le chemin du fichier.";
+  var sysPrompt=getCodexSysPrompt();
+  if(codexValidated){
+    sysPrompt+=" Génère du code propre et production-ready en "+(LANG_N[lang]||lang)+
+      ". Réponds avec le code dans des blocs ```"+lang+" et de courtes explications en français québécois. "+
+      "Pour chaque bloc de code, ajoute en première ligne un commentaire indiquant le chemin du fichier.";
+  }
 
   codexHistory.push({role:"user",content:prompt});
 
@@ -3896,6 +3906,7 @@ async function genCode(){
     });
     cxFinalizeStream(streamEl,reply||"(réponse vide)");
     codexHistory.push({role:"assistant",content:reply});
+    if(!codexValidated)showCodexValidateBtn();
     if(typeof pushNotif==="function")pushNotif("⌨️","Code généré · Codex","Génération terminée, prête à pousser sur GitHub.","ok");
   }catch(e){
     cxRemoveTyping();
@@ -3921,6 +3932,7 @@ function cxFinalizeStream(el,fullText){
   }
 }
 function clearCx(){
+  codexValidated=false;
   document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   codexHistory=[];genBusy=false;
 }
@@ -6082,6 +6094,114 @@ function envoyerMsgVersCodex(btnEl){
 }
 window.envoyerVersCodex=envoyerVersCodex;
 window.envoyerMsgVersCodex=envoyerMsgVersCodex;
+
+/* ══ TI-ÉTUDE — profil utilisateur ══ */
+var _tiEtude=null;
+async function loadTiEtude(){
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session)return;
+    var uid=sess.data.session.user.id;
+    var res=await supabase.from("ti_etude").select("*").eq("user_id",uid).maybeSingle();
+    if(res.data){_tiEtude=res.data;}
+    else{
+      var ins=await supabase.from("ti_etude").insert({user_id:uid}).select("*").single();
+      if(ins.data)_tiEtude=ins.data;
+    }
+  }catch(e){console.error("loadTiEtude:",e);}
+}
+async function saveTiEtude(updates){
+  if(!_tiEtude)return;
+  try{
+    updates.updated_at=new Date().toISOString();
+    await supabase.from("ti_etude").update(updates).eq("id",_tiEtude.id);
+    Object.assign(_tiEtude,updates);
+  }catch(e){console.error("saveTiEtude:",e);}
+}
+async function addTiEtudeNote(note){
+  if(!_tiEtude)return;
+  var notes=Array.isArray(_tiEtude.notes_agent)?_tiEtude.notes_agent.slice():[];
+  notes.push({text:note,date:new Date().toISOString()});
+  if(notes.length>50)notes=notes.slice(-50);
+  await saveTiEtude({notes_agent:notes});
+}
+loadTiEtude();
+
+/* ══ WEB SEARCH TOGGLE ══ */
+var webSearchMode=localStorage.getItem("tilex-web-search")==="true";
+(function(){var btn=document.getElementById("btn-web-search-toggle");if(btn&&webSearchMode)btn.classList.add("active");})();
+function toggleWebSearch(){
+  webSearchMode=!webSearchMode;
+  localStorage.setItem("tilex-web-search",webSearchMode);
+  var btn=document.getElementById("btn-web-search-toggle");
+  if(btn)btn.classList.toggle("active",webSearchMode);
+  showToastMsg(webSearchMode?"🌐 Recherche web activée":"Recherche web désactivée");
+}
+
+/* ══ CODEX VALIDATION FLOW ══ */
+var codexValidated=false;
+function getCodexSysPrompt(){
+  var etude="";
+  if(_tiEtude){
+    var parts=[];
+    if(_tiEtude.langue_preferee)parts.push("Langue: "+_tiEtude.langue_preferee);
+    if(_tiEtude.style_ecriture)parts.push("Style: "+_tiEtude.style_ecriture);
+    if(Array.isArray(_tiEtude.couleurs_preferees)&&_tiEtude.couleurs_preferees.length)parts.push("Couleurs: "+_tiEtude.couleurs_preferees.join(", "));
+    if(Array.isArray(_tiEtude.interets)&&_tiEtude.interets.length)parts.push("Intérêts: "+_tiEtude.interets.join(", "));
+    if(parts.length)etude="\n\n[Profil utilisateur]: "+parts.join(" | ");
+  }
+  if(!codexValidated){
+    return "Tu es l'agent ti-lex-AL en mode cadrage de projet. Tu NE génères PAS de code. "+
+      "Tu poses des questions pour bien comprendre le projet de l'utilisateur : but, fonctionnalités, style visuel, couleurs, technologies. "+
+      "Sois chaleureux, en français québécois professionnel. "+
+      "Quand tu as assez d'information, dis-le clairement et invite l'utilisateur à cliquer le bouton « ✅ Valider le projet » pour passer en mode génération de code."+etude;
+  }
+  return "Tu es le Codex de ti-lex-AL, un assistant de code expert."+etude;
+}
+function validateCodexProject(){
+  codexValidated=true;
+  var vb=document.getElementById("codex-validate-btn");
+  if(vb)vb.style.display="none";
+  cxAddReply("✅ Projet validé! Je suis maintenant en mode génération de code. Décris ce que tu veux coder!");
+  showToastMsg("✅ Projet validé — mode code activé");
+}
+function resetCodexProject(){
+  codexValidated=false;
+  codexHistory=[];
+  var feed=document.getElementById("codex-feed");
+  if(feed)feed.innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
+  showCodexValidateBtn();
+}
+function showCodexValidateBtn(){
+  var existing=document.getElementById("codex-validate-btn");
+  if(existing)existing.remove();
+  if(codexValidated)return;
+  var feed=document.getElementById("codex-feed");
+  if(!feed)return;
+  var btn=document.createElement("div");
+  btn.id="codex-validate-btn";
+  btn.style.cssText="text-align:center;padding:10px;";
+  btn.innerHTML='<button onclick="validateCodexProject()" style="background:#37e0a0;color:#0a0a0a;border:none;border-radius:8px;padding:10px 24px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;letter-spacing:.5px;">✅ Valider le projet</button><div style="font-size:10px;color:#6c6c78;margin-top:6px;">Clique pour passer en mode génération de code</div>';
+  feed.appendChild(btn);
+}
+
+/* ══ LIVE TYPING WATCHER ══ */
+var _typingDrafts=[];
+var _typingDebounce=null;
+(function(){
+  var input=document.getElementById("composer-input");
+  if(!input)return;
+  input.addEventListener("input",function(){
+    clearTimeout(_typingDebounce);
+    _typingDebounce=setTimeout(function(){
+      var val=input.value.trim();
+      if(val.length>3){
+        _typingDrafts.push({text:val,ts:Date.now()});
+        if(_typingDrafts.length>20)_typingDrafts.shift();
+      }
+    },300);
+  });
+})();
 
 /* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
 (function(){
