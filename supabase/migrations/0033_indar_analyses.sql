@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS indar_analyses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   agent_id TEXT NOT NULL,
-  analyse TEXT NOT NULL,
+  "analyse" TEXT NOT NULL,
   scan_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, agent_id)
