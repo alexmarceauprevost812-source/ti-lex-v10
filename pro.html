@@ -244,29 +244,6 @@ body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min
 .sb-sub-item:hover{background:rgba(255,106,0,.05);color:#fff;}
 .sidebar.collapsed .sb-submenu{display:none;}
 
-/* ══ FORFAIT TIERS ══ */
-.sb-tier{display:flex;align-items:center;gap:8px;}
-.sb-tier .tier-badge{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
-  padding:2px 7px;border-radius:5px;border:1px solid;}
-.sb-tier.flux .tier-name{color:#00d9ff;}
-.sb-tier.flux .tier-badge{color:#00d9ff;border-color:rgba(0,217,255,.4);}
-.sb-tier.surge .tier-name{color:var(--orange);}
-.sb-tier.surge .tier-badge{color:var(--orange);border-color:rgba(255,106,0,.5);background:rgba(255,106,0,.08);}
-.sb-tier.apex .tier-name{color:#ffd000;}
-.sb-tier.apex .tier-badge{color:#0a0a0a;background:#ffd000;border-color:#ffd000;}
-
-/* ══ CYBERSÉCURITÉ VERROUILLÉE ══ */
-.sb-locked{margin:8px 4px;padding:12px;border-radius:10px;
-  background:repeating-linear-gradient(45deg,rgba(20,16,20,.8),rgba(20,16,20,.8) 10px,rgba(23,18,26,.8) 10px,rgba(23,18,26,.8) 20px);
-  border:1px dashed rgba(255,106,0,.35);opacity:.85;cursor:default;}
-.sb-locked .lk-head{display:flex;align-items:center;gap:9px;color:#d8a24a;font-weight:700;font-size:12px;letter-spacing:.6px;}
-.sb-locked .lk-tag{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;
-  color:#ffae5e;border:1px solid rgba(255,106,0,.4);border-radius:4px;padding:2px 6px;}
-.sb-locked p{font-family:'Share Tech Mono',monospace;font-size:9px;line-height:1.5;color:var(--muted);margin-top:8px;letter-spacing:.3px;}
-.sb-locked .lk-list{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
-.sb-locked .lk-chip{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.5px;color:rgba(138,138,147,.8);
-  border:1px solid var(--border);border-radius:4px;padding:3px 6px;}
-.sidebar.collapsed .sb-locked{display:none;}
 
 /* ══ STATS UTILISATION SIDEBAR ══ */
 .sb-usage{margin:8px 10px;padding:10px 12px;border-radius:10px;
@@ -1581,39 +1558,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
-  <!-- FORFAIT (accordéon) -->
-  <div class="sb-item" data-toggle="sm-forfait" aria-expanded="false">
-    <span class="sb-icon">◈</span><span class="sb-label" data-txt="FORFAIT"></span>
-    <span class="chev sb-label">▶</span>
-  </div>
-  <div class="sb-submenu" id="sm-forfait">
-    <div class="sb-sub-inner">
-      <div class="sb-sub-item sb-tier flux" onclick="setPlan('ti')" style="cursor:pointer;">
-        <span class="tier-name">TI</span><span class="tier-badge">29,99$</span>
-      </div>
-      <div class="sb-sub-item sb-tier surge" onclick="setPlan('surge')" style="cursor:pointer;">
-        <span class="tier-name">TI-LEX</span><span class="tier-badge">89,99$</span>
-      </div>
-      <div class="sb-sub-item sb-tier apex" onclick="setPlan('apex')" style="cursor:pointer;">
-        <span class="tier-name">TI-LEX-AL</span><span class="tier-badge">149,99$</span>
-      </div>
-
-      <!-- Cybersécurité — admin-only, masqué pour les autres -->
-      <div class="sb-locked cyber-plan-card" id="sb-locked-cyber" style="display:none;">
-        <div class="lk-head">
-          🔒 FORFAITS CYBERSÉCURITÉ
-          <span class="lk-tag">EN ATTENTE</span>
-        </div>
-        <p>Autorisation légale requise · mandat / SOW signé par avocat avant activation.</p>
-        <div class="lk-list">
-          <span class="lk-chip">CYBER RECON</span>
-          <span class="lk-chip">CYBER GUARDIAN</span>
-          <span class="lk-chip">CYBER SENTINEL</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div style="flex:1"></div>
 
   <!-- COMPTE (bas du menu) -->
@@ -2600,15 +2544,6 @@ document.querySelectorAll("[data-toggle]").forEach(function(btn){
     if(tabId==="si-chat")showTab("chat");
   });
 });
-
-/* ── GARDE-FOU : cybersécurité verrouillée — aucune action ── */
-(function(){
-  var locked=document.getElementById("sb-locked-cyber");
-  if(locked){
-    locked.addEventListener("click",function(e){e.stopPropagation();});
-    locked.addEventListener("mousedown",function(e){e.stopPropagation();});
-  }
-})();
 
 /* ── CHALEUR LOGO (heat glow DERRIÈRE le logo) ── */
 const HEAT={
@@ -4953,7 +4888,7 @@ function applyLanguage(lang){
   labels.forEach(function(el){
     var key=el.getAttribute("data-txt");
     var map={"CHAT":"chat","CODEX":"codex","CRÉER AGENT IA":"create-agent","CREATE AI AGENT":"create-agent",
-      "COMPTE":"account","ACCOUNT":"account","PARAMÈTRES":"settings","SETTINGS":"settings","FORFAIT":"forfait"};
+      "COMPTE":"account","ACCOUNT":"account","PARAMÈTRES":"settings","SETTINGS":"settings"};
     var trKey=map[key];
     if(trKey&&TRANSLATIONS[lang][trKey]){
       var newTxt=TRANSLATIONS[lang][trKey];
