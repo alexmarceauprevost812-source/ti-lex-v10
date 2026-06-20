@@ -311,7 +311,7 @@
 .template-badge.modifie {
   background: rgba(212, 175, 55, 0.05);
   border-color: rgba(212, 175, 55, 0.2);
-  color: var(--or, #D4AF37);
+  color: var(--or, #ff7f27);
 }
 
 .template-badge-icone { flex-shrink: 0; }
