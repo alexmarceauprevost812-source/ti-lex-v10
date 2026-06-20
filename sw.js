@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-294";
+const CACHE_VERSION = "tilex-v10-295";
 const ASSETS = [
   "/",
   "/index.html",
@@ -35,6 +35,15 @@ const ASSETS = [
   "/js/fichiers-partage.js",
   "/js/fichiers-historique.js",
   "/js/fichiers-cli.js",
+  "/tilex-zip-generator/index.html",
+  "/tilex-zip-generator/css/tilex.css",
+  "/tilex-zip-generator/js/tilex-templates.js",
+  "/tilex-zip-generator/js/tilex-core.js",
+  "/tilex-zip-generator/js/tilex-preview.js",
+  "/tilex-zip-generator/js/tilex-zip.js",
+  "/tilex-zip-generator/js/tilex-share.js",
+  "/tilex-zip-generator/js/tilex-history.js",
+  "/tilex-zip-generator/js/tilex-theme.js",
 ];
 
 self.addEventListener("install", (e) => {
