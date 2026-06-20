@@ -447,6 +447,35 @@ function getToken() {
   return SB_ANON;
 }
 
+function salvageTruncatedJSON(s){
+  var inStr=false,esc=false,stack=[];
+  for(var ci=0;ci<s.length;ci++){
+    var ch=s[ci];
+    if(esc){esc=false;continue;}
+    if(ch==="\\"){esc=true;continue;}
+    if(ch==='"'){inStr=!inStr;continue;}
+    if(inStr)continue;
+    if(ch==="{"||ch==="[")stack.push(ch);
+    else if(ch==="}"||ch==="]")stack.pop();
+  }
+  var fixed=s;
+  if(inStr)fixed+='"';
+  while(stack.length){var open=stack.pop();fixed+=(open==="{"?"}":"]");}
+  try{return JSON.parse(fixed);}catch(e){return null;}
+}
+function parseScanJSON(raw){
+  if(typeof raw!=="string"||raw.trim()==="")throw new Error("Réponse de scan vide.");
+  var cleaned=raw.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"");
+  try{return JSON.parse(cleaned);}catch(e){
+    if(/Unterminated string|Unexpected end of (JSON|input)/i.test(e.message)){
+      console.warn("[scan] JSON tronqué — tentative de récupération.");
+      var salvaged=salvageTruncatedJSON(cleaned);
+      if(salvaged)return salvaged;
+    }
+    throw new Error("Résultat de scan illisible (JSON invalide). "+e.message);
+  }
+}
+
 function spinnerHTML(color) {
   return '<span class="spinner" style="border:2px solid ' + color + '40;border-top:2px solid ' + color + ';"></span>';
 }
@@ -690,8 +719,7 @@ async function genererFiches() {
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
     var txt = await readSSE(res);
-    txt = txt.replace(/```json|```/g, "").trim();
-    var parsed = JSON.parse(txt);
+    var parsed = parseScanJSON(txt);
     var agentsList = parsed.agents || [];
     for (var i = 0; i < agentsList.length; i++) {
       var f = agentsList[i];
@@ -836,7 +864,8 @@ async function lancerScan() {
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": SB_ANON },
       body: JSON.stringify({ target: pentCible, scan_type: "osint" })
     });
-    var data = await res.json();
+    var rawText = await res.text();
+    var data = parseScanJSON(rawText);
     if (!res.ok || data.error) throw new Error(data.error || "Erreur scan");
     rapport = {
       score: data.risk_score || 0,
@@ -1015,7 +1044,14 @@ async function lancerScanReel() {
     });
     clearInterval(logInterval);
 
-    var data = await res.json();
+    var rawText = await res.text();
+    var data;
+    try { data = parseScanJSON(rawText); } catch(pe) {
+      if (!res.ok) { scanLog(terminal, "ERREUR HTTP " + res.status, "error"); }
+      else { scanLog(terminal, "ERREUR : " + pe.message, "error"); }
+      scanRunning = false; btn.disabled = false;
+      btn.innerHTML = "&#x26a1; LANCER LE SCAN"; return;
+    }
     if (!res.ok || data.error) {
       scanLog(terminal, "ERREUR : " + (data.error || "Echec du scan"), "error");
       scanRunning = false;

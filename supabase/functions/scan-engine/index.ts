@@ -7,6 +7,26 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SCAN_MODEL = "claude-sonnet-4-6";
 
+function salvageTruncatedJSON(s: string): unknown | null {
+  let inStr = false, esc = false;
+  const stack: string[] = [];
+  for (const ch of s) {
+    if (esc) { esc = false; continue; }
+    if (ch === "\\") { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === "{" || ch === "[") stack.push(ch);
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  let fixed = s;
+  if (inStr) fixed += '"';
+  while (stack.length) {
+    const open = stack.pop();
+    fixed += open === "{" ? "}" : "]";
+  }
+  try { return JSON.parse(fixed); } catch { return null; }
+}
+
 let _cors: Record<string, string>;
 
 function json(data: unknown, status = 200) {
@@ -163,10 +183,12 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: SCAN_MODEL,
-        max_tokens: 4096,
+        max_tokens: 8192,
         system: `Tu es PHANTOM-RED, le moteur de scan du Centre INDAR.
 Tu génères des rapports de sécurité SIMULÉS et éducatifs.
-RÉPONDS UNIQUEMENT EN JSON VALIDE, aucun backtick, aucun texte avant ou après.
+RÉPONDS UNIQUEMENT EN JSON VALIDE, compact, sans indentation inutile.
+Aucun backtick, aucun texte avant ou après le JSON.
+Limite les descriptions à 2 phrases maximum par finding.
 Format :
 {
   "risk_score": 0-100,
@@ -228,26 +250,36 @@ Format :
       recommendations?: string[];
     };
 
+    const truncated = aiData.stop_reason === "max_tokens";
+    if (truncated) {
+      console.warn("[scan-engine] stop_reason=max_tokens, payload length:", aiText.length);
+    }
+
     try {
       result = JSON.parse(cleanedText);
     } catch (parseErr) {
       console.error("[scan-engine] JSON parse failed:", parseErr, "raw length:", aiText.length, "stop_reason:", aiData.stop_reason);
-      const truncated = aiData.stop_reason === "max_tokens";
-      await supabase
-        .from("cyber_scans")
-        .update({
-          status: "failed",
-          completed_at: new Date().toISOString(),
-          error_message: truncated
-            ? "Réponse IA tronquée (max_tokens atteint)"
-            : "Réponse IA invalide (JSON malformé)",
-        })
-        .eq("id", scanRow.id);
-      return json({
-        error: truncated
-          ? "Le rapport IA a été tronqué. Relancez le scan."
-          : "Erreur de parsing du rapport IA.",
-      }, 502);
+      const salvaged = salvageTruncatedJSON(cleanedText);
+      if (salvaged && typeof salvaged === "object" && !Array.isArray(salvaged)) {
+        console.warn("[scan-engine] Salvaged truncated JSON successfully");
+        result = salvaged as typeof result;
+      } else {
+        await supabase
+          .from("cyber_scans")
+          .update({
+            status: "failed",
+            completed_at: new Date().toISOString(),
+            error_message: truncated
+              ? "Réponse IA tronquée (max_tokens atteint)"
+              : "Réponse IA invalide (JSON malformé)",
+          })
+          .eq("id", scanRow.id);
+        return json({
+          error: truncated
+            ? "Le rapport IA a été tronqué. Relancez le scan."
+            : "Erreur de parsing du rapport IA.",
+        }, 502);
+      }
     }
 
     const duration = Math.floor((Date.now() - scanStart) / 1000);

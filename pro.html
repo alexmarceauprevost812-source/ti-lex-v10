@@ -668,6 +668,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .scan-result.error{background:rgba(255,68,68,.06);border-color:rgba(255,68,68,.25);color:var(--red);}
 .scan-result.warning{background:rgba(255,166,0,.06);border-color:rgba(255,166,0,.25);color:#ffa600;}
 .scan-result.ok{background:rgba(0,204,102,.06);border-color:rgba(0,204,102,.25);color:var(--green);}
+.scan-error{background:#0a0a0a;color:#ffcf4a;border-left:3px solid #ff7f27;padding:12px 16px;border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.6;}
 .scan-file{font-weight:600;margin-bottom:2px;}.scan-line{color:var(--muted);font-size:9px;}
 .scan-msg{margin-top:2px;}
 .scan-fix-btn{margin-top:6px;padding:4px 12px;border:1px solid var(--orange);border-radius:5px;background:rgba(255,106,0,.08);color:var(--orange);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;letter-spacing:.5px;transition:all .2s;}
@@ -3133,6 +3134,35 @@ function syncChatToStorage(){
     localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
   }catch(e){}
 }
+function salvageTruncatedJSON(s){
+  var inStr=false,esc=false,stack=[];
+  for(var ci=0;ci<s.length;ci++){
+    var ch=s[ci];
+    if(esc){esc=false;continue;}
+    if(ch==="\\"){esc=true;continue;}
+    if(ch==='"'){inStr=!inStr;continue;}
+    if(inStr)continue;
+    if(ch==="{"||ch==="[")stack.push(ch);
+    else if(ch==="}"||ch==="]")stack.pop();
+  }
+  var fixed=s;
+  if(inStr)fixed+='"';
+  while(stack.length){var open=stack.pop();fixed+=(open==="{"?"}":"]");}
+  try{return JSON.parse(fixed);}catch(e){return null;}
+}
+function parseScanJSON(raw){
+  if(typeof raw!=="string"||raw.trim()==="")throw new Error("Réponse de scan vide.");
+  var cleaned=raw.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"");
+  try{return JSON.parse(cleaned);}catch(e){
+    if(/Unterminated string|Unexpected end of (JSON|input)/i.test(e.message)){
+      console.warn("[scan] JSON tronqué — tentative de récupération.");
+      var salvaged=salvageTruncatedJSON(cleaned);
+      if(salvaged)return salvaged;
+    }
+    throw new Error("Résultat de scan illisible (JSON invalide). "+e.message);
+  }
+}
+function isValidScanResult(obj){return obj&&typeof obj==="object"&&("findings" in obj||"risk_score" in obj||"errors" in obj||"agents" in obj);}
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
 function renderMd(txt){
   var safe=escHtml(txt);
@@ -6124,7 +6154,8 @@ async function studioAIScan(){
       container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Aucune erreur détectée par l\'IA dans '+scanned+' fichiers! <span class="es-ai-badge">SCAN IA</span></span></div>';
       summary.textContent=scanned+" fichiers analysés par IA · 0 erreurs · Prêt ✓";summary.style.color="var(--green)";return;
     }
-    var result;try{result=JSON.parse(jsonMatch[0]);}catch(e){
+    var result;try{result=parseScanJSON(jsonMatch[0]);}catch(e){
+      console.warn("[studio] scan JSON parse failed:",e.message);
       container.innerHTML='<div class="scan-result ok"><span class="scan-msg">✅ Analyse IA terminée. <span class="es-ai-badge">SCAN IA</span></span></div>';
       summary.textContent=scanned+" fichiers analysés";summary.style.color="var(--or)";return;
     }
@@ -6321,12 +6352,21 @@ async function silexLaunchScan(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
       body:JSON.stringify({target:target,scan_type:scanType,authorization_id:SILEX_SOW_ID})
     });
-    var data=await res.json();
+    var rawText=await res.text();
+    var data;
+    try{data=parseScanJSON(rawText);}catch(pe){
+      if(!res.ok)throw new Error('Erreur HTTP '+res.status);
+      throw pe;
+    }
     if(!res.ok||!data.success)throw new Error(data.error||'Erreur scan');
+    if(!isValidScanResult(data))throw new Error('Résultat de scan incomplet ou invalide.');
     silexRenderResults(data,resultsEl);
     if(typeof onScanTermine==='function')onScanTermine(scanType);
   }catch(err){
-    resultsEl.innerHTML='<div style="background:#0d0d12;border:1px solid #ff3a5c44;border-radius:12px;padding:16px;color:#ff3a5c;font-family:\'Share Tech Mono\',monospace;">⚠️ Erreur : '+escHtml(err.message)+'</div>';
+    resultsEl.innerHTML='<div class="scan-error"><div style="font-weight:700;margin-bottom:8px;">⚠️ Le scan n\'a pas pu se terminer</div>'+
+      '<div style="color:#e2e2ea;font-size:12px;margin-bottom:8px;">Réessaie ou réduis la portée du scan.</div>'+
+      '<details style="cursor:pointer;"><summary style="font-size:11px;color:#6c6c78;">Détail technique</summary>'+
+      '<pre style="font-size:10px;color:#6c6c78;margin:6px 0 0;white-space:pre-wrap;">'+escHtml(err.message)+'</pre></details></div>';
   }finally{
     btn.disabled=false;btn.textContent='🔰 LANCER LE SCAN';
   }
