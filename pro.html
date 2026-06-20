@@ -2922,6 +2922,7 @@ var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
 
 /* ── CONVERSATION MANAGER (Supabase) ── */
 var _convActiveId=null;
+var chatSessionId=null;
 async function demarrerConversation(userId){
   try{
     var res=await supabase.from("conversations").select("id").eq("user_id",userId).eq("archived",false).order("updated_at",{ascending:false}).limit(1).maybeSingle();
@@ -2952,6 +2953,65 @@ async function renommerConvAuto(convId,premierMsg){
   if(!convId||!premierMsg)return;
   var titre=premierMsg.slice(0,50).trim()+(premierMsg.length>50?"...":"");
   await supabase.from("conversations").update({titre:titre}).eq("id",convId);
+}
+
+async function chargerSessionAgentAL(){
+  try{
+    var u=await supabase.auth.getUser();
+    if(!u.data?.user)return;
+    var userId=u.data.user.id;
+    var res=await supabase.from("conversations")
+      .select("id,metadata")
+      .eq("user_id",userId)
+      .eq("agent_name","AGENT-AL")
+      .order("updated_at",{ascending:false})
+      .limit(1)
+      .maybeSingle();
+    if(res.data&&res.data.metadata&&res.data.metadata.messages&&res.data.metadata.messages.length>0){
+      chatSessionId=res.data.id;
+      var msgs=res.data.metadata.messages;
+      chatHistory=msgs.slice();
+      var container=document.getElementById("chat-msgs");
+      if(container){
+        container.innerHTML="";
+        for(var i=0;i<msgs.length;i++){
+          addMsg(msgs[i].role==="user"?"u":"a",msgs[i].content);
+        }
+      }
+      var activeConv=chatConvs.find(function(c){return c.active;});
+      if(activeConv){activeConv.messages=msgs.slice();activeConv.ts=Date.now();}
+      else{
+        chatConvs.push({id:Date.now(),title:msgs[0].content.slice(0,40),messages:msgs.slice(),active:true,ts:Date.now()});
+        activeChatConv=chatConvs.length-1;
+      }
+      localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
+      console.log("[ti-lex] Session AGENT-AL restaurée ✓ ("+msgs.length+" msgs)");
+    }
+  }catch(e){console.error("[ti-lex] chargerSessionAgentAL:",e);}
+}
+
+async function upsertSessionAgentAL(){
+  try{
+    var u=await supabase.auth.getUser();
+    if(!u.data?.user||chatHistory.length===0)return;
+    var userId=u.data.user.id;
+    var fullMsgs=chatHistory.slice(-50);
+    if(chatSessionId){
+      await supabase.from("conversations").update({
+        metadata:{messages:fullMsgs},
+        updated_at:new Date().toISOString()
+      }).eq("id",chatSessionId);
+    }else{
+      var titre=fullMsgs[0].content.slice(0,50).trim()+(fullMsgs[0].content.length>50?"...":"");
+      var res=await supabase.from("conversations").insert({
+        user_id:userId,
+        agent_name:"AGENT-AL",
+        titre:titre,
+        metadata:{messages:fullMsgs}
+      }).select("id").single();
+      if(res.data)chatSessionId=res.data.id;
+    }
+  }catch(e){console.error("[ti-lex] upsertSessionAgentAL:",e);}
 }
 
 async function sendChat(){
@@ -3067,6 +3127,7 @@ async function sendChat(){
       setTimeout(function(){bblText.classList.remove("gold-flash");},2600);
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
+      upsertSessionAgentAL();
       if(window.AlMemory){
         var _um=chatHistory[chatHistory.length-2]?.content||"";
         AlMemory.saveMessage("user",_um);
@@ -3361,7 +3422,7 @@ function timeAgo(ts){
 function newConversation(){
   var current=chatConvs.find(function(c){return c.active;});
   if(current&&(!current.messages||current.messages.length===0)){
-    chatHistory=[];
+    chatHistory=[];chatSessionId=null;
     document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
     return;
   }
@@ -3369,7 +3430,7 @@ function newConversation(){
   var nc={id:Date.now(),title:"Nouvelle conversation",messages:[],active:true,ts:Date.now()};
   chatConvs.push(nc);
   activeChatConv=chatConvs.length-1;
-  chatHistory=[];
+  chatHistory=[];chatSessionId=null;
   document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
   localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
   renderConvList();
@@ -6439,6 +6500,7 @@ supabase.auth.onAuthStateChange(function(event,session){
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){
     demarrerConversation(session.user.id).catch(function(){});
+    chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
     if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
     if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
@@ -6453,6 +6515,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     if(u.data?.user){
       _currentUserEmail=u.data.user.email||null;
       demarrerConversation(u.data.user.id).catch(function(){});
+      chargerSessionAgentAL().catch(function(){});
       chargerMemoireContexte().catch(function(){});
       if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
     }
