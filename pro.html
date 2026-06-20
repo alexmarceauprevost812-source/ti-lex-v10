@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="css/fichiers-partage.css">
 <link rel="stylesheet" href="css/fichiers-historique.css">
 <link rel="stylesheet" href="css/security.css">
+<link rel="stylesheet" href="css/tilex-typewriter.css">
 <style>
 :root{
   --bg:#000;--bg2:#000;--bg3:#000;--bg4:#111;
@@ -3034,13 +3035,26 @@ async function sendChat(){
       bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à Codex" style="color:#ff7f27;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
-      bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"":"#FFFFFF";
+      var _twActive=window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer();
+      if(_twActive){bblText.classList.add("tx-typewriter","ecrit","phase-1");}
+      else{bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"":"#FFFFFF";}
+      var _twCursor=null;
+      if(_twActive){_twCursor=document.createElement("span");_twCursor.className="tx-cursor";bblText.appendChild(_twCursor);}
       var queue=[];var streaming=true;
       async function drainQueue(){
         while(streaming||queue.length>0){
           if(queue.length>0){
             var ch=queue.shift();
-            bblText.textContent+=ch;
+            if(_twActive){
+              var prev=bblText.querySelector(".tx-glitch");
+              if(prev){prev.replaceWith(document.createTextNode(prev.textContent));}
+              if(_twCursor&&_twCursor.parentNode)_twCursor.remove();
+              var g=document.createElement("span");g.className="tx-glitch";g.textContent=ch;
+              bblText.appendChild(g);
+              if(_twCursor)bblText.appendChild(_twCursor);
+            }else{
+              bblText.textContent+=ch;
+            }
             msgs.scrollTop=msgs.scrollHeight;
             var isPunct='.!?,;:'.indexOf(ch)!==-1;
             var delay=isPunct?66:22;
@@ -3058,19 +3072,26 @@ async function sendChat(){
       });
       streaming=false;
       await drain;
+      if(_twActive){
+        var _pg=bblText.querySelector(".tx-glitch");if(_pg)_pg.replaceWith(document.createTextNode(_pg.textContent));
+        if(_twCursor&&_twCursor.parentNode)_twCursor.remove();
+        bblText.classList.remove("phase-1","ecrit");
+      }
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
-      if(reply&&(/```/.test(reply)||/\*\*/.test(reply))){
-        bblText.innerHTML=renderMd(reply);
-      }else{
-        applySyntaxHL(bblText);
-        if(document.documentElement.getAttribute("data-theme")!=="day"){
-          setTimeout(function(){applyGoldProjection(bblText);},4000);
-        }
+      var _replyPlain=reply||"";
+      var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain));
+      function _finalizeBbl(){
+        if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);}
+        else{applySyntaxHL(bblText);if(document.documentElement.getAttribute("data-theme")!=="day"){setTimeout(function(){applyGoldProjection(bblText);},4000);}}
+        var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       }
-      var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
-      bblText.classList.add("gold-flash");
-      setTimeout(function(){bblText.classList.remove("gold-flash");},2600);
+      if(window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer()&&_replyPlain){
+        var _twCtrl=TILEX.phase2Seulement(bblText,_replyPlain,function(){_finalizeBbl();});
+        bbl.addEventListener("click",function(){_twCtrl.annuler();},{once:true});
+      }else{
+        _finalizeBbl();
+      }
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
       upsertSessionAgentAL();
@@ -6623,6 +6644,7 @@ var _typingDebounce=null;
 
 </script>
 
+<script src="js/tilex-typewriter.js"></script>
 <script src="js/security-guard.js"></script>
 <script src="js/guide-protection.js"></script>
 <script src="js/al-memory.js"></script>
