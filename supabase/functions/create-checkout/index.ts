@@ -1,5 +1,6 @@
 import Stripe from "https://esm.sh/stripe@18?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2026-05-27.dahlia" as Stripe.LatestApiVersion,
@@ -50,6 +51,9 @@ Deno.serve(async (req) => {
         headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "create-checkout", max: 30, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
 
     const { priceId } = await req.json();
     if (!priceId) {

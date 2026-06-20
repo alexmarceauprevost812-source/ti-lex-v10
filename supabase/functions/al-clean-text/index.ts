@@ -1,5 +1,6 @@
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,6 +21,9 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "al-clean-text", max: 10, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
 
     const { texte } = await req.json();
     if (!texte || typeof texte !== "string" || texte.trim().length === 0) {

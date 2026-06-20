@@ -1,3 +1,5 @@
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 
 const CORS = {
@@ -7,6 +9,9 @@ const CORS = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  const rl = await checkRateLimit(getIdentifier(req), { prefix: "test-key", max: 5, windowSec: 60 });
+  if (!rl.allowed) return tooManyRequests(rl, CORS);
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {

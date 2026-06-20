@@ -14,6 +14,7 @@
 import Stripe from "npm:stripe@^17";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   // apiVersion omise volontairement -> utilise la version par défaut de ton compte.
@@ -52,6 +53,9 @@ Deno.serve(async (req) => {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError || !user) return json({ error: "Session invalide" }, 401);
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "create-checkout-session", max: 30, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
 
     // 2) Lire l'input : soit un price_id direct, soit un tier ('pro' | 'ultra'…)
     const body = await req.json().catch(() => ({}));

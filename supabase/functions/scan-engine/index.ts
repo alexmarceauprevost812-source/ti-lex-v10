@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -45,6 +46,9 @@ Deno.serve(async (req) => {
       data: { user },
     } = await supabase.auth.getUser(token);
     if (!user) return json({ error: "Session invalide" }, 401);
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "scan-engine", max: 10, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
 
     const body = await req.json();
     const { target, scan_type, mandate_id, company_id } = body;

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -33,6 +34,9 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
+
+    const rl = await checkRateLimit(getIdentifier(req, userId), { prefix: "billing-status", max: 60, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
 
     const { data: profile } = await sb
       .from("profiles")

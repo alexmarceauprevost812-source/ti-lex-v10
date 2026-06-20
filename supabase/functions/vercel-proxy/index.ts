@@ -2,6 +2,7 @@
 // Token Vercel cote serveur uniquement.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const VERCEL_TOKEN = Deno.env.get("VERCEL_TOKEN") || "";
 const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") || "";
@@ -29,6 +30,9 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
   if (!token) return json({ error: "Non autorise" }, 401);
+
+  const rl = await checkRateLimit(getIdentifier(req), { prefix: "vercel-proxy", max: 30, windowSec: 60 });
+  if (!rl.allowed) return tooManyRequests(rl, CORS);
 
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);

@@ -2947,6 +2947,7 @@ async function sendChat(){
     if(!res.ok){
       if(res.status===401){afficherMessageBlocage("non_connecte");chatBusy=false;return;}
       if(res.status===403){afficherMessageBlocage("sans_abonnement");chatBusy=false;return;}
+      if(res.status===429){var ra=res.headers.get("Retry-After")||"30";addMsg("a","⏳ Trop de requêtes. Réessaie dans "+ra+" secondes.");chatBusy=false;return;}
       let errMsg="Erreur de connexion.";
       try{
         var ct=res.headers.get("content-type")||"";

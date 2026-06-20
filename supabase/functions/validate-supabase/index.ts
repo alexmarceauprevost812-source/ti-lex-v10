@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +30,9 @@ Deno.serve(async (req) => {
         headers: { ...CORS, "Content-Type": "application/json" },
       });
     }
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-supabase", max: 5, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
 
     const { supabase_url, supabase_anon_key } = await req.json();
     if (!supabase_url || !supabase_anon_key) {

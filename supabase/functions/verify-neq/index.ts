@@ -7,6 +7,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -117,6 +118,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "verify-neq", max: 30, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
 
     const body = await req.json();
     const { action } = body;

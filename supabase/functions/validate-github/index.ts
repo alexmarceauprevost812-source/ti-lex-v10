@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +32,9 @@ Deno.serve(async (req) => {
     error: authError,
   } = await supabase.auth.getUser(token!);
   if (authError || !user) return json({ error: "Non authentifié" }, 401);
+
+  const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-github", max: 5, windowSec: 60 });
+  if (!rl.allowed) return tooManyRequests(rl, CORS);
 
   try {
     // DELETE = disconnect (clear Vault + metadata)

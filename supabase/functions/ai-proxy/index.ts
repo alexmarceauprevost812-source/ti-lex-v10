@@ -2,6 +2,7 @@
 // Cles API cote serveur. Valide le body, limite l'usage.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests, rateLimitHeaders } from "../_shared/rate-limit.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") || "";
@@ -50,6 +51,9 @@ Deno.serve(async (req) => {
       return json({ error: "non_connecte", message: "Session expirée. Reconnecte-toi." }, 401);
     }
     const userId = userData.user.id;
+
+    const rl = await checkRateLimit(getIdentifier(req, userId), { prefix: "ai-proxy", max: 10, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
 
     const { data: profile } = await sb
       .from("profiles")

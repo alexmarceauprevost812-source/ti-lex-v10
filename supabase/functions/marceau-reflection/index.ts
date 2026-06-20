@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -27,7 +28,8 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
-    // Auth optionnelle — comme ai-proxy
+    const rl = await checkRateLimit(getIdentifier(req, userId !== "anonymous" ? userId : null), { prefix: "marceau-reflection", max: 10, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
 
     let body: any;
     try { body = await req.json(); }

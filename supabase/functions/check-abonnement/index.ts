@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +47,11 @@ function getWindow(): { name: string; start: Date; end: Date; nextRechargeLabel:
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  {
+    const rl = await checkRateLimit(getIdentifier(req), { prefix: "check-abonnement", max: 60, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
+  }
 
   try {
     const supabase = createClient(
