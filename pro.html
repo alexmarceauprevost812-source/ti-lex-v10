@@ -3566,18 +3566,26 @@ function timeAgo(ts){
 function newConversation(){
   var current=chatConvs.find(function(c){return c.active;});
   if(current&&(!current.messages||current.messages.length===0)){
-    chatHistory=[];chatSessionId=null;
+    chatHistory=[];chatSessionId=null;cvpActiveConvId=null;
     document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+    newConvCreateSupabase();
     return;
   }
   chatConvs.forEach(function(c){c.active=false;});
   var nc={id:Date.now(),title:"Nouvelle conversation",messages:[],active:true,ts:Date.now()};
   chatConvs.push(nc);
   activeChatConv=chatConvs.length-1;
-  chatHistory=[];chatSessionId=null;
+  chatHistory=[];chatSessionId=null;cvpActiveConvId=null;
   document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
   localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
   renderConvList();
+  newConvCreateSupabase();
+}
+async function newConvCreateSupabase(){
+  try{
+    var row=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{title:"Nouvelle conversation",type:"chat"}});
+    if(row&&row[0])cvpActiveConvId=row[0].id;
+  }catch(e){}
 }
 function loadConv(idx){
   if(idx<0||idx>=chatConvs.length)return;
