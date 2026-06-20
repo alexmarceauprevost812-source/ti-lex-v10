@@ -2621,7 +2621,7 @@ function showTab(name){
   });
   var fab=document.getElementById("fab-new-conv-pro");
   if(fab){
-    if(name==="chat"||name==="conversations")fab.classList.add("visible");
+    if(name==="conversations")fab.classList.add("visible");
     else fab.classList.remove("visible");
   }
 }
@@ -6799,8 +6799,6 @@ var _typingDebounce=null;
 /* ══ #1 FORCE CHAT VIEW ON LOAD ══ */
 (function(){
   showTab("chat");
-  var fab=document.getElementById("fab-new-conv-pro");
-  if(fab)fab.classList.add("visible");
   initMobileUX();
 })();
 
