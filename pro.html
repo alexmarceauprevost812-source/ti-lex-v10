@@ -444,7 +444,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .lang-btn:hover{border-color:var(--orange);color:var(--orange);}
 
 /* CHAT */
-.chat-wrap{height:calc(100vh - var(--tb));min-height:420px;display:flex;flex-direction:column;
+.chat-wrap{height:calc(100dvh - var(--tb));min-height:420px;display:flex;flex-direction:column;
   background:var(--bg);border:none;border-radius:0;overflow:hidden;min-width:0;max-width:100%;width:100%;}
 .chat-hd{padding:11px 15px;background:transparent;border-bottom:none;display:flex;align-items:center;gap:10px;}
 [data-theme="day"] .chat-hd{background:var(--bg3);border-bottom:1px solid var(--border);}
@@ -452,7 +452,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .c-ava img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
-.chat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 10px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-width:0;}
+.chat-msgs{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:14px 10px 72px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-height:0;min-width:0;}
 .cmsg{display:flex;gap:8px;max-width:92%;min-width:0;align-items:flex-start;}
 .cmsg>div:not(.cmsg-ico){min-width:0;flex:1;}
 .cmsg.u{align-self:flex-end;flex-direction:row-reverse;}
@@ -802,9 +802,9 @@ body.sb-open .content{margin-left:var(--sb-w);}
   .content{margin-left:0!important;padding:0 0 60px;}
   .view{padding:10px 8px;}
   #view-chat{padding:0;}
-  .chat-wrap{height:calc(100vh - var(--tb));min-height:320px;}
+  .chat-wrap{height:calc(100dvh - var(--tb));min-height:320px;}
   .cmsg{max-width:98%;}
-  .chat-msgs{padding:6px 4px;}
+  .chat-msgs{padding:6px 4px 72px;min-height:0;}
   .cmsg-bbl{font-size:15px;}
   .sec-title{font-size:22px;letter-spacing:1.5px;}
 }
@@ -1021,6 +1021,9 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   letter-spacing:.5px;transition:background .15s;}
 .composer-menu-item:hover{background:rgba(255,106,0,.08);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
+.al-fix-btn{background:transparent;color:#ffcf4a;border:1px solid #23232c;border-radius:8px;padding:6px 10px;font:inherit;cursor:pointer;transition:all .15s ease;font-size:12px;flex-shrink:0;white-space:nowrap;}
+.al-fix-btn:hover{border-color:#ff7f27;color:#ff7f27;}
+.al-fix-btn:disabled{opacity:.5;cursor:wait;}
 @media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px;}}
 
 /* FAB — Nouvelle conversation — ORANGE */
@@ -2117,6 +2120,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="cvp-tabs">
       <button class="cvp-tab active" id="cvp-tab-chat" onclick="cvpSwitchTab('chat')">💬 CHAT</button>
       <button class="cvp-tab" id="cvp-tab-project" onclick="cvpSwitchTab('project')">📁 PROJETS</button>
+      <button class="cvp-tab" id="cvp-tab-sessions" onclick="cvpSwitchTab('sessions')">🕐 SESSIONS</button>
     </div>
     <div id="cvp-content">
       <div class="cvp-empty" id="cvp-loading">
@@ -2214,6 +2218,7 @@ Comment puis-je t'aider aujourd'hui?</div>
   <button id="btn-web-search-toggle" class="reflexion-toggle" onclick="toggleWebSearch()" title="Recherche web" style="margin-right:2px;">🌐</button>
   <button id="btn-reflexion-toggle" class="reflexion-toggle" onclick="toggleReflexionMode()" title="Mode réflexion">🧠</button>
   <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Écris un message…"></textarea>
+  <button id="btn-corriger" class="al-fix-btn" onclick="corrigerTexteComposer()" title="Corriger le texte">✨</button>
   <button class="composer-send" id="composer-send-btn" title="Envoyer">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
   </button>
@@ -5142,6 +5147,29 @@ async function composerSend(){
   }
 }
 
+async function corrigerTexteComposer(){
+  var inp=document.getElementById("composer-input");
+  var btn=document.getElementById("btn-corriger");
+  var texte=inp.value.trim();
+  if(!texte){showToastMsg("Écris quelque chose d'abord");return;}
+  if(btn)btn.disabled=true;
+  try{
+    var tk=getToken();
+    var h={"Content-Type":"application/json"};
+    if(tk)h["Authorization"]="Bearer "+tk;
+    var res=await fetch(SB_URL+"/functions/v1/al-clean-text",{method:"POST",headers:h,body:JSON.stringify({texte:texte})});
+    if(!res.ok){showToastMsg("Erreur de correction");return;}
+    var data=await res.json();
+    if(data.corrige){
+      inp.value=data.corrige;
+      inp.style.height="auto";
+      inp.style.height=Math.min(inp.scrollHeight,120)+"px";
+      showToastMsg("✨ Texte corrigé");
+    }
+  }catch(e){console.error("[AL] corrigerTexte:",e);showToastMsg("Erreur: "+e.message);}
+  finally{if(btn)btn.disabled=false;inp.focus();}
+}
+
 document.getElementById("composer-plus-btn").addEventListener("click",function(){
   document.getElementById("composer-menu").classList.toggle("open");
 });
@@ -5290,7 +5318,64 @@ function cvpSwitchTab(tab){
   cvpTab=tab;
   document.getElementById("cvp-tab-chat").classList.toggle("active",tab==="chat");
   document.getElementById("cvp-tab-project").classList.toggle("active",tab==="project");
+  var sessTab=document.getElementById("cvp-tab-sessions");
+  if(sessTab)sessTab.classList.toggle("active",tab==="sessions");
+  if(tab==="sessions"){cvpRenderSessions();return;}
   cvpRender();
+}
+
+async function cvpRenderSessions(){
+  var content=document.getElementById("cvp-content");if(!content)return;
+  content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">⏳</div><div class="cvp-empty-txt">Chargement des sessions…</div></div>';
+  if(!window.AlMemory){content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">💬</div><div class="cvp-empty-txt">Mémoire AL non disponible.</div></div>';return;}
+  try{
+    var uid=await AlMemory.getUserId();
+    if(!uid){content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">🔒</div><div class="cvp-empty-txt">Connecte-toi pour voir tes sessions.</div></div>';return;}
+    var data=await supabase.from("al_messages").select("session_id,role,content,created_at").eq("user_id",uid).order("created_at",{ascending:false}).limit(300);
+    if(data.error)throw new Error(data.error.message);
+    var sessions=new Map();
+    var msgs=data.data||[];
+    for(var i=0;i<msgs.length;i++){
+      var m=msgs[i];
+      if(!sessions.has(m.session_id)){
+        sessions.set(m.session_id,{apercu:m.content.slice(0,100),date:m.created_at,count:0});
+      }
+      sessions.get(m.session_id).count++;
+    }
+    if(!sessions.size){content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">💬</div><div class="cvp-empty-txt">Aucune session mémorisée.</div></div>';return;}
+    var html='<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">';
+    sessions.forEach(function(val,sid){
+      var d=new Date(val.date);
+      var dateStr=d.toLocaleDateString("fr-CA")+" "+d.toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+      html+='<div class="cvp-card" onclick="cvpLoadSession(\''+sid+'\')" style="cursor:pointer;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:12px;color:var(--txt);font-weight:600;">'+escHtml(val.apercu)+'</div>'+
+        '<span style="font-size:9px;color:var(--muted);white-space:nowrap;margin-left:8px;">'+dateStr+'</span></div>'+
+        '<div style="font-size:10px;color:var(--muted);margin-top:4px;">'+val.count+' messages</div></div>';
+    });
+    html+='</div>';
+    content.innerHTML=html;
+  }catch(e){content.innerHTML='<div class="cvp-empty"><div class="cvp-empty-ico">⚠️</div><div class="cvp-empty-txt">Erreur: '+escHtml(e.message)+'</div></div>';}
+}
+async function cvpLoadSession(sessionId){
+  if(!window.AlMemory)return;
+  try{
+    var uid=await AlMemory.getUserId();if(!uid)return;
+    var res=await supabase.from("al_messages").select("role,content,created_at").eq("user_id",uid).eq("session_id",sessionId).order("created_at",{ascending:true});
+    if(res.error)throw new Error(res.error.message);
+    var msgs=res.data||[];
+    if(!msgs.length){showToastMsg("Session vide");return;}
+    chatHistory=[];
+    var chatMsgs=document.getElementById("chat-msgs");
+    if(chatMsgs)chatMsgs.innerHTML="";
+    for(var i=0;i<msgs.length;i++){
+      var m=msgs[i];
+      chatHistory.push({role:m.role,content:m.content});
+      addMsg(m.role==="user"?"u":"a",m.content);
+    }
+    showTab("chat");
+    showToastMsg("Session chargée ("+msgs.length+" messages)");
+  }catch(e){showToastMsg("Erreur: "+e.message);}
 }
 
 function cvpToggleMenu(btn,id){
