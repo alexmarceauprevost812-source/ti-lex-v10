@@ -1,6 +1,6 @@
 import Stripe from "npm:stripe@^17";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -9,21 +9,20 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://ti-lex-v10.vercel.app";
 
-function json(payload: unknown, status = 200) {
+function json(req: Request, payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Non authentifié" }, 401);
+    if (!authHeader) return json(req, { error: "Non authentifié" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -35,10 +34,10 @@ Deno.serve(async (req) => {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) return json({ error: "Session invalide" }, 401);
+    if (userError || !user) return json(req, { error: "Session invalide" }, 401);
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "create-portal", max: 30, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders(req));
 
     const adminDb = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -52,7 +51,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!customer?.stripe_customer_id) {
-      return json({ error: "Aucun abonnement trouvé" }, 404);
+      return json(req, { error: "Aucun abonnement trouvé" }, 404);
     }
 
     const session = await stripe.billingPortal.sessions.create({
@@ -60,9 +59,9 @@ Deno.serve(async (req) => {
       return_url: `${SITE_URL}/app.html`,
     });
 
-    return json({ url: session.url });
+    return json(req, { url: session.url });
   } catch (err) {
     console.error("portal error:", err);
-    return json({ error: (err as Error).message }, 500);
+    return json(req, { error: (err as Error).message }, 500);
   }
 });

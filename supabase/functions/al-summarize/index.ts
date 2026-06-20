@@ -1,11 +1,10 @@
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
@@ -24,12 +23,12 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "al-summarize", max: 10, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders(req));
 
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: msgs } = await supabase
@@ -42,7 +41,7 @@ Deno.serve(async (req) => {
 
     if (!msgs?.length) {
       return new Response(JSON.stringify({ summary: null }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -56,7 +55,7 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "ANTHROPIC_API_KEY not set" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -95,12 +94,12 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ summary }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

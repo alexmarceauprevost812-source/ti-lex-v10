@@ -1,22 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SCAN_MODEL = "claude-opus-4-8";
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+let _cors: Record<string, string>;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json" },
+    headers: { ..._cors, "Content-Type": "application/json" },
   });
 }
 
@@ -33,7 +29,9 @@ function buildScanPrompt(target: string, scanType: string): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+  _cors = corsHeaders(req);
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
@@ -48,7 +46,7 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "Session invalide" }, 401);
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "scan-engine", max: 10, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, _cors);
 
     const body = await req.json();
     const { target, scan_type, mandate_id, company_id } = body;

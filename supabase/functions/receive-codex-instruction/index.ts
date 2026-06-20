@@ -1,23 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+  const cors = corsHeaders(req);
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), {
         status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -36,12 +31,12 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Session invalide" }), {
         status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "receive-codex", max: 30, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -55,7 +50,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "titre et instruction requis" }),
         {
           status: 400,
-          headers: { ...CORS, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         }
       );
     }
@@ -74,12 +69,12 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     return new Response(JSON.stringify({ succes: true, id: data.id }), {
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });

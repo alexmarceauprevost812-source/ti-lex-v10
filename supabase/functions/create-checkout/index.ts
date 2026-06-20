@@ -1,6 +1,7 @@
 import Stripe from "https://esm.sh/stripe@18?target=denonext";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2026-05-27.dahlia" as Stripe.LatestApiVersion,
@@ -13,23 +14,17 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
-  }
+  const cors = corsHeaders(req);
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), {
         status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -48,18 +43,18 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Session invalide" }), {
         status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "create-checkout", max: 30, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const { priceId } = await req.json();
     if (!priceId) {
       return new Response(JSON.stringify({ error: "priceId requis" }), {
         status: 400,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -107,7 +102,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           error: "Les forfaits cybersécurité ne sont pas encore disponibles. Restez à l'affût!",
         }),
-        { status: 403, headers: { ...CORS, "Content-Type": "application/json" } }
+        { status: 403, headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -129,14 +124,14 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (err) {
     return new Response(
       JSON.stringify({ error: (err as Error).message }),
       {
         status: 500,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       }
     );
   }

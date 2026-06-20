@@ -1,23 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
-}
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+
+  const cors = corsHeaders(req);
+
+  function json(data: unknown, status = 200) {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
   }
 
   const supabase = createClient(
@@ -34,7 +29,7 @@ Deno.serve(async (req) => {
   if (authError || !user) return json({ error: "Non authentifié" }, 401);
 
   const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-github", max: 5, windowSec: 60 });
-  if (!rl.allowed) return tooManyRequests(rl, CORS);
+  if (!rl.allowed) return tooManyRequests(rl, cors);
 
   try {
     // DELETE = disconnect (clear Vault + metadata)

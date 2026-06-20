@@ -1,42 +1,31 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
-
-function json(obj: unknown, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
-}
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "GET") return json({ error: "Methode non autorisee" }, 405);
+  const cors = corsHeaders(req);
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+  if (req.method !== "GET") return json({ error: "Methode non autorisee" }, 405, cors);
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return json({ error: "Non authentifie" }, 401);
+    if (!token) return json({ error: "Non authentifie" }, 401, cors);
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
     const { data: userData, error: authErr } = await sb.auth.getUser(token);
     if (authErr || !userData?.user) {
-      return json({ error: "Session invalide" }, 401);
+      return json({ error: "Session invalide" }, 401, cors);
     }
 
     const userId = userData.user.id;
 
     const rl = await checkRateLimit(getIdentifier(req, userId), { prefix: "billing-status", max: 60, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const { data: profile } = await sb
       .from("profiles")
@@ -83,9 +72,16 @@ Deno.serve(async (req) => {
           }
         : null,
       limits: limits || null,
-    });
+    }, 200, cors);
   } catch (err) {
     console.error("billing-status error:", (err as Error).message);
-    return json({ error: (err as Error).message || "Erreur serveur" }, 500);
+    return json({ error: (err as Error).message || "Erreur serveur" }, 500, cors);
   }
 });
+
+function json(obj: unknown, status: number, hdrs: Record<string, string>) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { ...hdrs, "Content-Type": "application/json" },
+  });
+}

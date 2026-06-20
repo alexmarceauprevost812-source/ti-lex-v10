@@ -1,11 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const PLANS_VALIDES = new Set([
   "free", "ti", "flux", "surge", "apex",
@@ -46,11 +41,13 @@ function getWindow(): { name: string; start: Date; end: Date; nextRechargeLabel:
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const cors = corsHeaders(req);
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   {
     const rl = await checkRateLimit(getIdentifier(req), { prefix: "check-abonnement", max: 60, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
   }
 
   try {
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
           reason: "not_connected",
           plan: null,
         }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -84,7 +81,7 @@ Deno.serve(async (req) => {
           reason: "not_connected",
           plan: null,
         }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -105,7 +102,7 @@ Deno.serve(async (req) => {
           reason: "no_subscription",
           plan: null,
         }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -136,7 +133,7 @@ Deno.serve(async (req) => {
           next_recharge: win.nextRechargeLabel,
           next_recharge_at: win.end.toISOString(),
         }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -153,7 +150,7 @@ Deno.serve(async (req) => {
         next_recharge: win.nextRechargeLabel,
         next_recharge_at: win.end.toISOString(),
       }),
-      { headers: { ...CORS, "Content-Type": "application/json" } }
+      { headers: { ...cors, "Content-Type": "application/json" } }
     );
   } catch (err) {
     return new Response(
@@ -164,7 +161,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       }
     );
   }

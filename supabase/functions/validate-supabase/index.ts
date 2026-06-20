@@ -1,16 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+
+  const cors = corsHeaders(req);
 
   try {
     const mainSupabase = createClient(
@@ -27,12 +23,12 @@ Deno.serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Non authentifié" }), {
         status: 401,
-        headers: { ...CORS, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-supabase", max: 5, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const { supabase_url, supabase_anon_key } = await req.json();
     if (!supabase_url || !supabase_anon_key) {
@@ -40,7 +36,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "URL et clé requises" }),
         {
           status: 400,
-          headers: { ...CORS, "Content-Type": "application/json" },
+          headers: { ...cors, "Content-Type": "application/json" },
         }
       );
     }
@@ -65,7 +61,7 @@ Deno.serve(async (req) => {
             valide: false,
             error: "Credentials Supabase invalides",
           }),
-          { headers: { ...CORS, "Content-Type": "application/json" } }
+          { headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
@@ -78,7 +74,7 @@ Deno.serve(async (req) => {
           valide: false,
           error: "URL Supabase invalide ou inaccessible",
         }),
-        { headers: { ...CORS, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -106,12 +102,12 @@ Deno.serve(async (req) => {
         project_id: projectId,
         project_name: projectName,
       }),
-      { headers: { ...CORS, "Content-Type": "application/json" } }
+      { headers: { ...cors, "Content-Type": "application/json" } }
     );
   } catch (err) {
     return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });

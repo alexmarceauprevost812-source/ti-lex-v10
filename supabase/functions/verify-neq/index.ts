@@ -8,11 +8,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 // ---- Vérification NEQ via Registraire des entreprises du Québec ----
 async function verifyNEQWithREQ(neq: string) {
@@ -89,9 +85,10 @@ const DPA_TEXT_FR = `Je déclare être le propriétaire légal, l'administrateur
 // ---- Serveur principal ----
 serve(async (req) => {
   // Preflight CORS
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+
+  const cors = corsHeaders(req);
 
   try {
     // Authentification obligatoire
@@ -99,7 +96,7 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Non autorisé — JWT requis" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -115,12 +112,12 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Token invalide ou expiré" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "verify-neq", max: 30, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const body = await req.json();
     const { action } = body;
@@ -142,7 +139,7 @@ serve(async (req) => {
       if (!neq || !/^\d{10}$/.test(neq.trim())) {
         return new Response(
           JSON.stringify({ valid: false, error: "Le NEQ doit être exactement 10 chiffres" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
@@ -168,7 +165,7 @@ serve(async (req) => {
       });
 
       return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -183,7 +180,7 @@ serve(async (req) => {
       if (!domains || !Array.isArray(domains) || domains.length === 0) {
         return new Response(
           JSON.stringify({ error: "Au moins un domaine est requis" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
@@ -194,7 +191,7 @@ serve(async (req) => {
       if (validDomains.length === 0) {
         return new Response(
           JSON.stringify({ error: "Domaines invalides" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
@@ -210,7 +207,7 @@ serve(async (req) => {
       if (!verif) {
         return new Response(
           JSON.stringify({ error: "Vérification NEQ requise avant signature DPA" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...cors, "Content-Type": "application/json" } }
         );
       }
 
@@ -273,7 +270,7 @@ serve(async (req) => {
           neq: verif.neq,
           message: "DPA signée et archivée pour 5 ans. Scans activés pour les domaines déclarés.",
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
@@ -304,20 +301,20 @@ serve(async (req) => {
           consent: consent ?? null,
           enterprise: verif ?? null,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...cors, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(JSON.stringify({ error: "Action non reconnue" }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
 
   } catch (error) {
     console.error("verify-neq error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 });

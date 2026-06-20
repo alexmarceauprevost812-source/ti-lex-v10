@@ -1,11 +1,10 @@
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     const supabase = createClient(
@@ -18,17 +17,17 @@ Deno.serve(async (req) => {
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
     const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "al-clean-text", max: 10, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, corsHeaders);
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders(req));
 
     const { texte } = await req.json();
     if (!texte || typeof texte !== "string" || texte.trim().length === 0) {
       return new Response(JSON.stringify({ corrige: null }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -36,7 +35,7 @@ Deno.serve(async (req) => {
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
@@ -68,12 +67,12 @@ Deno.serve(async (req) => {
       .trim();
 
     return new Response(JSON.stringify({ corrige }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

@@ -3,19 +3,12 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests, rateLimitHeaders } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
-
-const CORS = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, content-type, x-anthropic-key",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 const PLANS_VALIDES = new Set([
   "ti", "flux", "surge", "apex",
@@ -33,8 +26,10 @@ const ALLOWED_MODELS = new Set([
 const ALLOWED_SIZES = new Set(["1024x1024", "1024x1536", "1536x1024", "auto"]);
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405);
+  const cors = corsHeaders(req);
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+  if (req.method !== "POST") return json({ error: "Methode non autorisee" }, 405, cors);
 
   try {
     // ---- 1. Auth obligatoire + vérification abonnement ----
@@ -42,18 +37,18 @@ Deno.serve(async (req) => {
     const token = authHeader.replace(/^Bearer\s+/i, "");
 
     if (!token) {
-      return json({ error: "non_connecte", message: "Connecte-toi pour utiliser ti-lex-al." }, 401);
+      return json({ error: "non_connecte", message: "Connecte-toi pour utiliser ti-lex-al." }, 401, cors);
     }
 
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
     const { data: userData, error: authError } = await sb.auth.getUser(token);
     if (authError || !userData?.user?.id) {
-      return json({ error: "non_connecte", message: "Session expirée. Reconnecte-toi." }, 401);
+      return json({ error: "non_connecte", message: "Session expirée. Reconnecte-toi." }, 401, cors);
     }
     const userId = userData.user.id;
 
     const rl = await checkRateLimit(getIdentifier(req, userId), { prefix: "ai-proxy", max: 10, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, CORS);
+    if (!rl.allowed) return tooManyRequests(rl, cors);
 
     const { data: profile } = await sb
       .from("profiles")
@@ -63,13 +58,13 @@ Deno.serve(async (req) => {
     const userPlan = profile?.plan || "";
 
     if (!PLANS_VALIDES.has(userPlan)) {
-      return json({ error: "sans_abonnement", message: "Abonne-toi pour accéder à ti-lex-al." }, 403);
+      return json({ error: "sans_abonnement", message: "Abonne-toi pour accéder à ti-lex-al." }, 403, cors);
     }
 
     // ---- 2. Parse + valide le body ----
     let body: any;
     try { body = await req.json(); }
-    catch { return json({ error: "JSON invalide" }, 400); }
+    catch { return json({ error: "JSON invalide" }, 400, cors); }
 
     const kind = body.kind === "image" ? "image" : "chat";
 
@@ -86,7 +81,7 @@ Deno.serve(async (req) => {
 
         const current = (usage as any)?.[col] ?? 0;
         if (current >= LIMITS[kind]) {
-          return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
+          return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429, cors);
         }
 
         await sb.from("ai_usage").upsert(
@@ -102,12 +97,12 @@ Deno.serve(async (req) => {
 
     // ===================== IMAGE =====================
     if (kind === "image") {
-      if (!OPENAI_KEY) return json({ error: "OPENAI_API_KEY non configuree" }, 500);
+      if (!OPENAI_KEY) return json({ error: "OPENAI_API_KEY non configuree" }, 500, cors);
 
       const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
-      if (!prompt) return json({ error: "Prompt vide" }, 400);
+      if (!prompt) return json({ error: "Prompt vide" }, 400, cors);
       if (prompt.length > MAX_PROMPT_LEN)
-        return json({ error: `Prompt trop long (max ${MAX_PROMPT_LEN})` }, 400);
+        return json({ error: `Prompt trop long (max ${MAX_PROMPT_LEN})` }, 400, cors);
 
       const size = ALLOWED_SIZES.has(body.size) ? body.size : "1024x1024";
 
@@ -121,9 +116,9 @@ Deno.serve(async (req) => {
         const msg = data?.error?.message?.includes("safety") || data?.error?.code === "moderation_blocked"
           ? "Image refusee par la moderation."
           : "Erreur de generation d'image.";
-        return json({ error: msg }, r.status);
+        return json({ error: msg }, r.status, cors);
       }
-      return json({ b64: data.data?.[0]?.b64_json }, 200);
+      return json({ b64: data.data?.[0]?.b64_json }, 200, cors);
     }
 
     // ===================== CHAT =====================
@@ -140,19 +135,19 @@ Deno.serve(async (req) => {
     const model = requestedModel;
 
     if (!Array.isArray(body.messages) || body.messages.length === 0)
-      return json({ error: "messages requis" }, 400);
+      return json({ error: "messages requis" }, 400, cors);
     if (body.messages.length > MAX_MESSAGES)
-      return json({ error: "Historique trop long" }, 400);
+      return json({ error: "Historique trop long" }, 400, cors);
 
     const totalChars = JSON.stringify(body.messages).length;
     if (totalChars > MAX_MSG_CHARS)
-      return json({ error: `Contenu trop volumineux (${(totalChars / 1_000_000).toFixed(1)} Mo, max ${(MAX_MSG_CHARS / 1_000_000).toFixed(0)} Mo)` }, 400);
+      return json({ error: `Contenu trop volumineux (${(totalChars / 1_000_000).toFixed(1)} Mo, max ${(MAX_MSG_CHARS / 1_000_000).toFixed(0)} Mo)` }, 400, cors);
 
     const maxTokens = Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS_CAP);
 
     const userKey = req.headers.get("x-anthropic-key");
     const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
-    if (!apiKey) return json({ error: "Aucune cle API configuree. Ajoute ta cle Anthropic dans les Parametres ou en secret Supabase." }, 500);
+    if (!apiKey) return json({ error: "Aucune cle API configuree. Ajoute ta cle Anthropic dans les Parametres ou en secret Supabase." }, 500, cors);
 
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -173,15 +168,15 @@ Deno.serve(async (req) => {
     if (!r.ok) {
       try {
         const errData = await r.json();
-        return json({ error: errData.error?.message || `Erreur Claude (${r.status})` }, r.status);
+        return json({ error: errData.error?.message || `Erreur Claude (${r.status})` }, r.status, cors);
       } catch {
-        return json({ error: `Erreur du modele (${r.status})` }, r.status);
+        return json({ error: `Erreur du modele (${r.status})` }, r.status, cors);
       }
     }
 
     return new Response(r.body, {
       headers: {
-        ...CORS,
+        ...cors,
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
@@ -197,13 +192,14 @@ Deno.serve(async (req) => {
     return json(
       { error: `HTTP ${error.status ?? 500}: ${error.message ?? "Erreur serveur"}` },
       error.status ?? 500,
+      cors,
     );
   }
 });
 
-function json(obj: unknown, status: number) {
+function json(obj: unknown, status: number, hdrs: Record<string, string>) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json" },
+    headers: { ...hdrs, "Content-Type": "application/json" },
   });
 }

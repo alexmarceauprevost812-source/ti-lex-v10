@@ -3,21 +3,17 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
 
-const CORS = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+let _cors: Record<string, string>;
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json" },
+    headers: { ..._cors, "Content-Type": "application/json" },
   });
 }
 
@@ -40,7 +36,9 @@ async function ghFetch(pat: string, path: string, opts?: RequestInit) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+  _cors = corsHeaders(req);
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
@@ -54,7 +52,7 @@ Deno.serve(async (req) => {
   if (!user) return json({ error: "Session invalide" }, 401);
 
   const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "github-proxy", max: 30, windowSec: 60 });
-  if (!rl.allowed) return tooManyRequests(rl, CORS);
+  if (!rl.allowed) return tooManyRequests(rl, _cors);
 
   const { data: patData, error: patErr } = await sb.rpc("get_github_pat", {
     p_user_id: user.id,

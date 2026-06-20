@@ -3,28 +3,26 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const VERCEL_TOKEN = Deno.env.get("VERCEL_TOKEN") || "";
 const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") || "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
-
-const CORS = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
-}
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+
+  const cors = corsHeaders(req);
+
+  function json(data: unknown, status = 200) {
+    return new Response(JSON.stringify(data), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+  }
+
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
@@ -32,7 +30,7 @@ Deno.serve(async (req) => {
   if (!token) return json({ error: "Non autorise" }, 401);
 
   const rl = await checkRateLimit(getIdentifier(req), { prefix: "vercel-proxy", max: 30, windowSec: 60 });
-  if (!rl.allowed) return tooManyRequests(rl, CORS);
+  if (!rl.allowed) return tooManyRequests(rl, cors);
 
   try {
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
