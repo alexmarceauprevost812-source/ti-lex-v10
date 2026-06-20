@@ -2319,43 +2319,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     align-items:center;
     gap:12px;
   ">
-    <!-- Drapeau du Québec SVG -->
-    <svg width="48" height="32" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"
-         style="border:2px solid #FFD700;border-radius:3px;flex-shrink:0;">
-      <rect width="300" height="200" fill="#002395"/>
-      <rect x="0" y="86" width="300" height="28" fill="white"/>
-      <rect x="136" y="0" width="28" height="200" fill="white"/>
-      <g transform="translate(68,50)">
-        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
-        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
-        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
-        <rect x="-6" y="8" width="12" height="14" fill="white"/>
-        <rect x="-14" y="20" width="28" height="5" fill="white"/>
-      </g>
-      <g transform="translate(232,50)">
-        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
-        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
-        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
-        <rect x="-6" y="8" width="12" height="14" fill="white"/>
-        <rect x="-14" y="20" width="28" height="5" fill="white"/>
-      </g>
-      <g transform="translate(68,150)">
-        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
-        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
-        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
-        <rect x="-6" y="8" width="12" height="14" fill="white"/>
-        <rect x="-14" y="20" width="28" height="5" fill="white"/>
-      </g>
-      <g transform="translate(232,150)">
-        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
-        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
-        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
-        <rect x="-6" y="8" width="12" height="14" fill="white"/>
-        <rect x="-14" y="20" width="28" height="5" fill="white"/>
-      </g>
-    </svg>
-
-    <!-- Icône ti-lex -->
+    <!-- Logo ti-lex orange -->
     <div style="
       width:42px;height:42px;background:#ff7f27;
       border-radius:10px;display:flex;align-items:center;
@@ -6500,6 +6464,7 @@ async function silexLaunchScan(){
     '<div style="color:#a78bfa;font-size:32px;margin-bottom:12px;animation:silexPulse 1s ease-in-out infinite;">🔰</div>'+
     '<p style="color:#a78bfa;font-weight:700;letter-spacing:2px;margin:0;font-family:\'Share Tech Mono\',monospace;">SILEX analyse '+escHtml(target)+'...</p>'+
     '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+'</p></div>';
+  if(typeof scanDemarrerTimer==='function')scanDemarrerTimer(scanType);
   try{
     var session=(await supabase.auth.getSession()).data.session;
     if(!session)throw new Error('Non authentifié');
@@ -6516,9 +6481,20 @@ async function silexLaunchScan(){
     }
     if(!res.ok||!data.success)throw new Error(data.error||'Erreur scan');
     if(!isValidScanResult(data))throw new Error('Résultat de scan incomplet ou invalide.');
+    if(typeof scanArreterTimer==='function')scanArreterTimer();
     silexRenderResults(data,resultsEl);
+    if(typeof scanAnalyserClesSensibles==='function'){
+      var cles=scanAnalyserClesSensibles(data);
+      var vulnCount=(data.severity_counts&&data.severity_counts.critical||0)+(data.severity_counts&&data.severity_counts.high||0);
+      var score=scanCalculerScoreRisque(cles,vulnCount);
+      var rapportDiv=document.createElement('div');
+      resultsEl.appendChild(rapportDiv);
+      scanAfficherRapportCles(rapportDiv,cles,score);
+    }
     if(typeof onScanTermine==='function')onScanTermine(scanType);
+    if(typeof indarResumerScan==='function'){setTimeout(function(){indarResumerScan(data,scanType);},1500);}
   }catch(err){
+    if(typeof scanArreterTimer==='function')scanArreterTimer();
     resultsEl.innerHTML='<div class="scan-error"><div style="font-weight:700;margin-bottom:8px;">⚠️ Le scan n\'a pas pu se terminer</div>'+
       '<div style="color:#e2e2ea;font-size:12px;margin-bottom:8px;">Réessaie ou réduis la portée du scan.</div>'+
       '<details style="cursor:pointer;"><summary style="font-size:11px;color:#6c6c78;">Détail technique</summary>'+
@@ -6847,6 +6823,7 @@ var _typingDebounce=null;
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
 <script src="js/centre-indar.js"></script>
+<script src="js/scan-engine.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
