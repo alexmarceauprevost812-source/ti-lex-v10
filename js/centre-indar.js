@@ -229,15 +229,15 @@ function indarOuvrirAgent(id) {
         </div>
 
         <!-- Bouton activer -->
-        <button onclick="indarActiverAgent('${agent.id}')" style="
+        <button onclick="indarActiverAgent('${agent.id}')"
+          data-activer="${agent.id}"
+          style="
           background:${agent.couleur};color:#000;border:none;
           border-radius:8px;padding:12px;font-weight:bold;
           font-size:12px;letter-spacing:2px;cursor:pointer;
-          font-family:monospace;
+          font-family:monospace;width:100%;
           box-shadow:0 0 16px ${agent.couleur}40;margin-top:4px;
-          transition:box-shadow 0.2s;"
-          onmouseover="this.style.boxShadow='0 0 28px ${agent.couleur}80'"
-          onmouseout="this.style.boxShadow='0 0 16px ${agent.couleur}40'">
+          transition:all 0.2s;">
           ⚡ ACTIVER ${agent.nom}
         </button>
       </div>
@@ -276,23 +276,232 @@ function indarDemarrer() {
   indarRendreAgents();
 }
 
-// ── Activer un agent individuel ────────────────────────────────────────────
-function indarActiverAgent(id) {
-  const agent = INDAR_AGENTS.find(a => a.id === id);
+// ── Activer un agent + appel Claude API ──────────────────────────────────
+async function indarActiverAgent(agentId) {
+  const agent = INDAR_AGENTS.find(a => a.id === agentId);
   if (!agent) return;
-  agent.status = agent.status === 'ONLINE' ? 'OFFLINE' : 'ONLINE';
 
-  const actifs = INDAR_AGENTS.filter(a => a.status === 'ONLINE').length;
-  const compteur = document.getElementById('indar-agents-actifs');
-  if (compteur) {
-    compteur.textContent = actifs;
-    compteur.style.color = actifs > 0 ? '#37e0a0' : '#ff3b3b';
+  const btn = document.querySelector(`[data-activer="${agentId}"]`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ ANALYSE EN COURS...';
+    btn.style.opacity = '0.7';
   }
 
-  // Ré-afficher le détail mis à jour
-  indarOuvrirAgent(id);
+  let scanData = null;
+  try {
+    const { data: scans, error } = await supabase
+      .from('scans')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (!error && scans && scans.length > 0) scanData = scans;
+  } catch (e) {
+    console.warn('Impossible de récupérer les scans:', e);
+  }
+
+  indarAfficherReponse(agent, null, true);
+
+  try {
+    const response = await fetch('/api/indar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        agentId,
+        scanData,
+        userMessage: scanData
+          ? `Analyse les ${scanData.length} dernier(s) scan(s) ti-lex.`
+          : 'Présente-toi et explique ta mission INDAR.'
+      })
+    });
+
+    if (!response.ok) throw new Error('Erreur API: ' + response.status);
+    const result = await response.json();
+
+    agent.status = 'ONLINE';
+    indarAfficherReponse(agent, result.reponse, false);
+
+    const actifs = INDAR_AGENTS.filter(a => a.status === 'ONLINE').length;
+    const compteur = document.getElementById('indar-agents-actifs');
+    if (compteur) { compteur.textContent = actifs; compteur.style.color = '#37e0a0'; }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('indar_analyses').upsert({
+          user_id: user.id,
+          agent_id: agentId,
+          analyse: result.reponse,
+          scan_count: scanData ? scanData.length : 0,
+          created_at: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.warn('Sauvegarde analyse:', e);
+    }
+
+    indarRendreAgents();
+  } catch (error) {
+    indarAfficherReponse(agent, `❌ Erreur: ${error.message}`, false);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = `⚡ ACTIVER ${agent.nom}`;
+      btn.style.opacity = '1';
+    }
+  }
 }
 
+// ── Afficher la réponse de l'agent ───────────────────────────────────────
+function indarAfficherReponse(agent, texte, isLoading) {
+  const detail = document.getElementById('indar-agent-detail');
+  if (!detail) return;
+
+  const corps = detail.querySelector('[data-indar-corps]');
+  if (corps) {
+    corps.innerHTML = isLoading
+      ? `<div style="padding:24px;text-align:center;font-family:monospace;">
+           <div style="color:${agent.couleur};font-size:13px;letter-spacing:2px;margin-bottom:12px;">
+             ⏳ ${agent.nom} ANALYSE EN COURS...
+           </div>
+           <div style="color:#444;font-size:11px;">
+             Connexion Claude API · Traitement des données de scan
+           </div>
+         </div>`
+      : `<div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px;">
+           <div>
+             <div style="color:${agent.couleur};font-size:10px;letter-spacing:2px;
+                         margin-bottom:8px;font-family:monospace;">
+               📊 ANALYSE ${agent.nom} — ${new Date().toLocaleTimeString('fr-CA')}
+             </div>
+             <div style="
+               color:#ccc;font-size:12px;line-height:1.8;
+               font-family:monospace;white-space:pre-wrap;
+               background:#0a0a0a;border:1px solid #23232c;
+               border-radius:8px;padding:14px;
+               max-height:400px;overflow-y:auto;">
+               ${texte ? texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}
+             </div>
+           </div>
+           <div style="display:flex;gap:8px;flex-wrap:wrap;">
+             <button onclick="indarActiverAgent('${agent.id}')"
+               data-activer="${agent.id}" style="
+               background:${agent.couleur};color:#000;border:none;
+               border-radius:8px;padding:10px 16px;font-weight:bold;
+               font-size:11px;letter-spacing:2px;cursor:pointer;
+               font-family:monospace;flex:1;">
+               🔄 RELANCER L'ANALYSE
+             </button>
+             <button onclick="indarCopierAnalyse()" style="
+               background:#23232c;color:#fff;border:1px solid #333;
+               border-radius:8px;padding:10px 16px;
+               font-size:11px;cursor:pointer;font-family:monospace;">
+               📋 COPIER
+             </button>
+           </div>
+         </div>`;
+    return;
+  }
+
+  // Premier affichage: construire tout le panneau
+  detail.innerHTML = `
+    <div style="
+      background:#0d0d0d;border:1px solid ${agent.couleur};
+      border-radius:12px;overflow:hidden;margin-top:16px;
+      box-shadow:0 0 20px ${agent.couleur}18;">
+      <div data-indar-header style="
+        background:#111;border-bottom:2px solid ${agent.couleur};
+        padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="
+          width:48px;height:48px;border-radius:10px;
+          border:2px solid ${agent.couleur};overflow:hidden;
+          flex-shrink:0;background:#0a0a0a;
+          display:flex;align-items:center;justify-content:center;">
+          ${agent.logoKey === 'marceau'
+            ? `<img src="${typeof MARCEAU_LOGO !== 'undefined' ? MARCEAU_LOGO : ''}"
+                    style="width:48px;height:48px;object-fit:cover;" alt="Marceau"/>`
+            : `<div style="transform:scale(1.3);">${INDAR_LOGOS[agent.logoKey]}</div>`
+          }
+        </div>
+        <div style="flex:1;">
+          <div style="color:${agent.couleur};font-size:9px;letter-spacing:3px;
+                      font-family:monospace;margin-bottom:2px;">AGENT IA ACTIF · CENTRE INDAR</div>
+          <div style="color:#fff;font-size:16px;font-weight:bold;font-family:monospace;">${agent.nom}</div>
+          <div style="color:#777;font-size:11px;font-family:monospace;">${agent.role}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div style="
+            background:${agent.couleur}22;border:1px solid ${agent.couleur};
+            border-radius:6px;padding:4px 10px;
+            color:${agent.couleur};font-size:9px;
+            letter-spacing:2px;font-family:monospace;">
+            ${isLoading ? '⏳ ANALYSE' : '✅ ONLINE'}
+          </div>
+          <button onclick="indarFermerDetail()" style="
+            background:transparent;border:1px solid #333;border-radius:6px;
+            color:#555;font-size:11px;padding:3px 8px;
+            cursor:pointer;font-family:monospace;">✕</button>
+        </div>
+      </div>
+      <div data-indar-corps>
+        ${isLoading
+          ? `<div style="padding:24px;text-align:center;font-family:monospace;">
+               <div style="color:${agent.couleur};font-size:13px;letter-spacing:2px;margin-bottom:12px;">
+                 ⏳ ${agent.nom} ANALYSE EN COURS...
+               </div>
+               <div style="color:#444;font-size:11px;">
+                 Connexion Claude API · Traitement des données de scan
+               </div>
+             </div>`
+          : `<div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px;">
+               <div>
+                 <div style="color:${agent.couleur};font-size:10px;letter-spacing:2px;
+                             margin-bottom:8px;font-family:monospace;">
+                   📊 ANALYSE — ${new Date().toLocaleTimeString('fr-CA')}
+                 </div>
+                 <div style="
+                   color:#ccc;font-size:12px;line-height:1.8;font-family:monospace;
+                   white-space:pre-wrap;background:#0a0a0a;
+                   border:1px solid #23232c;border-radius:8px;padding:14px;
+                   max-height:400px;overflow-y:auto;">
+                   ${texte ? texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}
+                 </div>
+               </div>
+               <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                 <button onclick="indarActiverAgent('${agent.id}')"
+                   data-activer="${agent.id}" style="
+                   background:${agent.couleur};color:#000;border:none;
+                   border-radius:8px;padding:10px 16px;font-weight:bold;
+                   font-size:11px;letter-spacing:2px;cursor:pointer;
+                   font-family:monospace;flex:1;">
+                   🔄 RELANCER L'ANALYSE
+                 </button>
+                 <button onclick="indarCopierAnalyse()" style="
+                   background:#23232c;color:#fff;border:1px solid #333;
+                   border-radius:8px;padding:10px 16px;font-size:11px;
+                   cursor:pointer;font-family:monospace;">
+                   📋 COPIER
+                 </button>
+               </div>
+             </div>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ── Copier l'analyse dans le presse-papier ──────────────────────────────
+function indarCopierAnalyse() {
+  const texte = document.querySelector('[data-indar-corps] div[style*="pre-wrap"]');
+  if (!texte) return;
+  navigator.clipboard.writeText(texte.innerText).then(() => {
+    const btn = document.querySelector('[data-indar-corps] button:last-child');
+    if (btn) {
+      btn.textContent = '✅ COPIÉ';
+      setTimeout(() => { btn.textContent = '📋 COPIER'; }, 2000);
+    }
+  });
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // FIN CENTRE INDAR
