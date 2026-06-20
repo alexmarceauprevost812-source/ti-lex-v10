@@ -1546,7 +1546,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
 
   <!-- Centre INDAR — admin only -->
-  <div class="sb-item silex-admin-only" id="si-indar" onclick="window.location.href='centre-indar.html'" style="display:none;cursor:pointer;">
+  <div class="sb-item silex-admin-only" id="si-indar" onclick="showTab('indar')" style="display:none;cursor:pointer;">
     <span class="sb-icon" style="color:#ff7f27;">🛡</span><span class="sb-label" data-txt="CENTRE INDAR"></span>
   </div>
 
@@ -2304,6 +2304,152 @@ Comment puis-je t'aider aujourd'hui?</div>
     </div>
   </div>
 
+<!-- ════════════════════════════════════════════════
+     CENTRE INDAR — Section Agents IA
+     ════════════════════════════════════════════════ -->
+<div id="view-indar" class="view silex-admin-only" style="display:none;">
+
+  <!-- Header Centre INDAR -->
+  <div style="
+    background:#0d0d0d;
+    border-bottom:2px solid #ff7f27;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  ">
+    <!-- Drapeau du Québec SVG -->
+    <svg width="48" height="32" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg"
+         style="border:2px solid #FFD700;border-radius:3px;flex-shrink:0;">
+      <rect width="300" height="200" fill="#002395"/>
+      <rect x="0" y="86" width="300" height="28" fill="white"/>
+      <rect x="136" y="0" width="28" height="200" fill="white"/>
+      <g transform="translate(68,50)">
+        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
+        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
+        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
+        <rect x="-6" y="8" width="12" height="14" fill="white"/>
+        <rect x="-14" y="20" width="28" height="5" fill="white"/>
+      </g>
+      <g transform="translate(232,50)">
+        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
+        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
+        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
+        <rect x="-6" y="8" width="12" height="14" fill="white"/>
+        <rect x="-14" y="20" width="28" height="5" fill="white"/>
+      </g>
+      <g transform="translate(68,150)">
+        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
+        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
+        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
+        <rect x="-6" y="8" width="12" height="14" fill="white"/>
+        <rect x="-14" y="20" width="28" height="5" fill="white"/>
+      </g>
+      <g transform="translate(232,150)">
+        <polygon points="0,-28 -8,-8 0,-4 8,-8" fill="white"/>
+        <polygon points="-28,-8 -8,-8 -10,8 -14,8" fill="white"/>
+        <polygon points="28,-8 8,-8 10,8 14,8" fill="white"/>
+        <rect x="-6" y="8" width="12" height="14" fill="white"/>
+        <rect x="-14" y="20" width="28" height="5" fill="white"/>
+      </g>
+    </svg>
+
+    <!-- Icône ti-lex -->
+    <div style="
+      width:42px;height:42px;background:#ff7f27;
+      border-radius:10px;display:flex;align-items:center;
+      justify-content:center;font-size:22px;flex-shrink:0;">⚜️</div>
+
+    <div style="flex:1;">
+      <div style="font-size:18px;font-weight:bold;letter-spacing:1px;font-family:monospace;">
+        <span style="color:#fff;">CENTRE </span>
+        <span style="color:#ff7f27;">INDAR</span>
+      </div>
+      <div style="color:#555;font-size:10px;letter-spacing:2px;font-family:monospace;">
+        ti-lex v10 · cybersécurité autonome · Produit du Québec 🍁
+      </div>
+    </div>
+
+    <div style="
+      background:#1a1a1a;border:1px solid #333;border-radius:8px;
+      padding:8px 14px;display:flex;align-items:center;gap:6px;">
+      <div id="indar-status-dot" style="
+        width:7px;height:7px;border-radius:50%;background:#333;"></div>
+      <span id="indar-status-label" style="
+        color:#666;font-size:10px;font-weight:bold;
+        letter-spacing:2px;font-family:monospace;">HORS LIGNE</span>
+    </div>
+  </div>
+
+  <!-- Corps -->
+  <div style="padding:18px 16px;max-width:600px;margin:0 auto;">
+
+    <!-- Commandant LEX -->
+    <div style="
+      background:#111;border:1px solid #23232c;border-radius:10px;
+      padding:14px 16px;margin-bottom:16px;
+      display:flex;align-items:center;gap:12px;">
+      <div style="
+        width:42px;height:42px;background:#1a1a1a;border-radius:50%;
+        border:2px solid #ff7f27;
+        display:flex;align-items:center;justify-content:center;
+        font-size:20px;flex-shrink:0;">👤</div>
+      <div style="flex:1;">
+        <div style="font-size:9px;color:#ff7f27;letter-spacing:2px;
+                    margin-bottom:2px;font-family:monospace;">COMMANDANT HUMAIN</div>
+        <div style="font-size:20px;font-weight:bold;color:#fff;font-family:monospace;">LEX</div>
+        <div style="font-size:11px;color:#666;font-family:monospace;">
+          Fondateur · Opérateur unique du Centre INDAR</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:#555;font-size:9px;letter-spacing:1px;
+                    margin-bottom:2px;font-family:monospace;">AGENTS ACTIFS</div>
+        <div style="font-size:22px;font-weight:bold;font-family:monospace;">
+          <span id="indar-agents-actifs" style="color:#ff3b3b;">0</span>
+          <span style="color:#444;">/6</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton Démarrer -->
+    <div onclick="indarDemarrer()" style="
+      background:#ff7f27;border-radius:10px;padding:14px 18px;
+      margin-bottom:16px;display:flex;align-items:center;
+      justify-content:space-between;cursor:pointer;
+      box-shadow:0 0 20px rgba(255,127,39,0.3);
+      transition:box-shadow 0.2s;"
+      onmouseover="this.style.boxShadow='0 0 30px rgba(255,127,39,0.6)'"
+      onmouseout="this.style.boxShadow='0 0 20px rgba(255,127,39,0.3)'">
+      <span style="color:#000;font-weight:bold;font-size:14px;
+                   letter-spacing:2px;font-family:monospace;">
+        ⚡ DÉMARRER LE CENTRE INDAR
+      </span>
+      <span style="color:#00000088;font-size:11px;font-family:monospace;">
+        — roule tout seul
+      </span>
+    </div>
+
+    <!-- Label agents -->
+    <div style="color:#444;font-size:10px;letter-spacing:3px;
+                margin-bottom:10px;padding-left:2px;font-family:monospace;">
+      AGENTS IA · 6 DISPONIBLES
+    </div>
+
+    <!-- Liste agents (injectée par JS) -->
+    <div id="indar-agents-liste"></div>
+
+    <!-- Panneau détail agent (injecté par JS) -->
+    <div id="indar-agent-detail"></div>
+
+    <!-- Footer -->
+    <div style="margin-top:24px;text-align:center;color:#222;
+                font-size:10px;letter-spacing:2px;font-family:monospace;">
+      TI-LEX-AL · PRODUIT DU QUÉBEC 🍁 · ti-lex.ca
+    </div>
+  </div>
+</div>
+<!-- ════════════ FIN CENTRE INDAR ════════════ -->
+
 </main>
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
@@ -2499,17 +2645,18 @@ document.addEventListener("click",function(e){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau","si-silex","si-fichiers"].forEach(id=>{
+  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau","si-silex","si-fichiers","si-indar"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers"};
+  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers",indar:"si-indar"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
   if(name==="silex"&&typeof silexLoadHistory==="function"){silexLoadHistory();}
+  if(name==="indar"&&typeof indarRendreAgents==="function"){indarRendreAgents();}
   document.querySelectorAll(".mqb-btn").forEach(function(b,i){
     var tabs=["chat","codex","studio","settings"];
     b.classList.toggle("active",tabs[i]===name);
@@ -6690,6 +6837,7 @@ var _typingDebounce=null;
 <script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
+<script src="js/centre-indar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
