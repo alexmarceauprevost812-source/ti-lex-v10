@@ -1549,9 +1549,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
       <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')" data-hide-in-chat="true">Conversations</div>
-      <div class="sb-sub-item" id="sub-favs" onclick="showSub('favs')">Favoris</div>
       <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
-      <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
     </div>
   </div>
 
@@ -1744,7 +1742,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <!-- 3-dot menu -->
     <button class="chat-dots-btn" id="chat-dots-btn" onclick="toggleDots()">⋮</button>
     <div class="dots-dropdown" id="dots-dropdown">
-      <div class="dots-item" onclick="dotAction('fav')"><span class="di-ico">★</span> <span id="dot-fav-txt">Ajouter aux favoris</span></div>
       <div class="dots-item" onclick="dotAction('proj')"><span class="di-ico">📁</span> <span id="dot-proj-txt">Ajouter au projet</span></div>
       <div class="dots-item" onclick="dotAction('rename')"><span class="di-ico">✎</span> Renommer</div>
       <div class="dots-item" onclick="dotAction('save')"><span class="di-ico">💾</span> Sauvegarder</div>
@@ -1773,12 +1770,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     </div><!-- /sv-convos -->
 
     <!-- Sub-view: Favoris -->
-    <div class="sub-view" id="sv-favs">
-      <div class="sub-header">★ FAVORIS</div>
-      <div id="favs-list"></div>
-      <div class="sub-empty" id="favs-empty">Aucun favori pour l'instant.<br>Utilise le menu ⋮ pour ajouter des conversations en favoris.</div>
-    </div>
-
     <!-- Sub-view: Projets -->
     <div class="sub-view" id="sv-projs">
       <div class="sub-header">📁 PROJETS</div>
@@ -1802,27 +1793,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       </div>
     </div>
 
-    <!-- Sub-view: Cerveau -->
-    <div class="sub-view" id="sv-cerveau">
-      <div class="sub-header">🧠 DEUXIÈME CERVEAU</div>
-      <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
-        <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="cervNewNote()">+ NOUVELLE NOTE</button>
-        <input type="text" id="cerv-search" placeholder="Rechercher…" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:11px;" oninput="cervRenderList()">
-      </div>
-      <div class="cerv-note-tags" id="cerv-tags-bar" style="margin-bottom:10px;"></div>
-      <div id="cerv-notes-list"></div>
-      <div class="sub-empty" id="cerv-empty">Aucune note.<br>Ton deuxième cerveau stocke tes idées, faits et connaissances.</div>
-      <div id="cerv-editor-wrap" class="cerv-editor" style="display:none;">
-        <input type="text" id="cerv-title" placeholder="Titre de la note…">
-        <input type="text" id="cerv-tags" class="cerv-tags-input" placeholder="Tags (séparés par des virgules)">
-        <textarea id="cerv-content" placeholder="Contenu de la note…"></textarea>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-orange" style="width:auto;padding:6px 14px;font-size:12px;" onclick="cervSaveNote()">SAUVEGARDER</button>
-          <button class="btn-ghost" style="font-size:11px;padding:4px 12px;" onclick="cervCancelEdit()">ANNULER</button>
-          <button class="btn-ghost" style="font-size:11px;padding:4px 12px;color:var(--red);border-color:var(--red);" id="cerv-del-btn" onclick="cervDeleteNote()" style="display:none;">SUPPRIMER</button>
-        </div>
-      </div>
-    </div>
 
   </div>
 

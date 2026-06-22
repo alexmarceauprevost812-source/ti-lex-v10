@@ -1,6 +1,17 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
 
 const PLANS_VALIDES = new Set([
   "free", "ti", "flux", "surge", "apex",
@@ -15,8 +26,7 @@ const PLAN_LIMITS: Record<string, { window: number; day: number }> = {
   apex:  { window: 200, day: 400 },
 };
 
-// EDT (UTC-4) : 8h ET = 12h UTC, 20h ET = 0h UTC
-function getWindow(): { name: string; start: Date; end: Date; nextRechargeLabel: string } {
+function getWindow() {
   const now = new Date();
   const utcHour = now.getUTCHours();
   const today = new Date(now);
@@ -41,78 +51,41 @@ function getWindow(): { name: string; start: Date; end: Date; nextRechargeLabel:
 }
 
 Deno.serve(async (req) => {
-  const cors = corsHeaders(req);
-  const preflight = handlePreflight(req);
-  if (preflight) return preflight;
-
-  {
-    const rl = await checkRateLimit(getIdentifier(req), { prefix: "check-abonnement", max: 60, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, cors);
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-    if (!token) {
-      return new Response(
-        JSON.stringify({
-          allowed: false,
-          reason: "not_connected",
-          plan: null,
-        }),
-        { headers: { ...cors, "Content-Type": "application/json" } }
-      );
-    }
+    if (!token) return json({ allowed: false, reason: "not_connected", plan: null });
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return json({ allowed: false, reason: "not_connected", plan: null });
 
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({
-          allowed: false,
-          reason: "not_connected",
-          plan: null,
-        }),
-        { headers: { ...cors, "Content-Type": "application/json" } }
-      );
-    }
-
-    const { data: profil, error: profilError } = await supabase
+    const { data: profil } = await supabase
       .from("profiles")
       .select("plan")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profilError) throw profilError;
-
     const plan = profil?.plan || null;
 
     if (!plan || !PLANS_VALIDES.has(plan)) {
-      return new Response(
-        JSON.stringify({
-          allowed: false,
-          reason: "no_subscription",
-          plan: null,
-        }),
-        { headers: { ...cors, "Content-Type": "application/json" } }
-      );
+      return json({ allowed: false, reason: "no_subscription", plan: null });
     }
 
     const limits = PLAN_LIMITS[plan] || { window: 200, day: 400 };
     const win = getWindow();
 
     const { count: windowCount } = await supabase
-      .from("chat_messages")
+      .from("messages")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
+      .eq("role", "user")
       .gte("created_at", win.start.toISOString())
       .lt("created_at", win.end.toISOString());
 
@@ -120,49 +93,24 @@ Deno.serve(async (req) => {
     const remaining = Math.max(0, limits.window - used);
 
     if (remaining <= 0) {
-      return new Response(
-        JSON.stringify({
-          allowed: false,
-          reason: "rate_limited",
-          plan,
-          messages_used: used,
-          messages_remaining: 0,
-          messages_window: limits.window,
-          messages_day: limits.day,
-          window: win.name,
-          next_recharge: win.nextRechargeLabel,
-          next_recharge_at: win.end.toISOString(),
-        }),
-        { headers: { ...cors, "Content-Type": "application/json" } }
-      );
+      return json({
+        allowed: false, reason: "rate_limited", plan,
+        messages_used: used, messages_remaining: 0,
+        messages_window: limits.window, messages_day: limits.day,
+        window: win.name, next_recharge: win.nextRechargeLabel,
+        next_recharge_at: win.end.toISOString(),
+      });
     }
 
-    return new Response(
-      JSON.stringify({
-        allowed: true,
-        reason: null,
-        plan,
-        messages_used: used,
-        messages_remaining: remaining,
-        messages_window: limits.window,
-        messages_day: limits.day,
-        window: win.name,
-        next_recharge: win.nextRechargeLabel,
-        next_recharge_at: win.end.toISOString(),
-      }),
-      { headers: { ...cors, "Content-Type": "application/json" } }
-    );
+    return json({
+      allowed: true, reason: null, plan,
+      messages_used: used, messages_remaining: remaining,
+      messages_window: limits.window, messages_day: limits.day,
+      window: win.name, next_recharge: win.nextRechargeLabel,
+      next_recharge_at: win.end.toISOString(),
+    });
   } catch (err) {
-    return new Response(
-      JSON.stringify({
-        allowed: false,
-        reason: "server_error",
-        plan: null,
-      }),
-      {
-        status: 500,
-        headers: { ...cors, "Content-Type": "application/json" },
-      }
-    );
+    console.error("[check-abonnement]", err);
+    return json({ allowed: false, reason: "server_error", plan: null }, 500);
   }
 });
