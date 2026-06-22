@@ -1167,6 +1167,60 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .sr-reopen-btn:hover{color:#ff7f27;border-color:rgba(255,127,39,.3);background:rgba(255,127,39,.04);}
 @media(max-width:680px){.sr-stats{grid-template-columns:repeat(2,1fr);}.scan-report{margin:0 4px 8px;}}
 @media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px 8px;}}
+/* ── Voice Agent ── */
+.voice-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;display:none;
+  align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.voice-modal.open{display:flex;}
+.voice-panel{background:#0f0f12;border:1px solid #2a2a2a;border-radius:20px;width:340px;max-width:90vw;padding:30px;text-align:center;}
+.voice-orb{width:100px;height:100px;margin:0 auto 20px;border-radius:50%;background:radial-gradient(circle,#ff7f27 0%,#cc5500 50%,#331400 100%);
+  box-shadow:0 0 40px rgba(255,127,39,.4);display:flex;align-items:center;justify-content:center;font-size:32px;
+  transition:all .3s;cursor:pointer;}
+.voice-orb.listening{animation:voicePulse 1.2s ease-in-out infinite;box-shadow:0 0 60px rgba(255,127,39,.6);}
+.voice-orb.speaking{background:radial-gradient(circle,#00a86b 0%,#006644 50%,#001a0f 100%);
+  box-shadow:0 0 60px rgba(0,168,107,.6);animation:voicePulse 0.8s ease-in-out infinite;}
+@keyframes voicePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.voice-status{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;min-height:16px;}
+.voice-transcript{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--txt);min-height:40px;
+  max-height:120px;overflow-y:auto;margin-bottom:16px;line-height:1.6;text-align:left;
+  background:rgba(255,255,255,.03);border-radius:10px;padding:10px;}
+.voice-close{background:none;border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:8px;
+  padding:6px 16px;font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;}
+.voice-close:hover{color:#ff4444;border-color:#ff4444;}
+/* ── Auto-save indicator ── */
+.autosave-dot{width:6px;height:6px;border-radius:50%;background:#555;position:fixed;bottom:12px;left:12px;z-index:500;transition:all .3s;}
+.autosave-dot.saving{background:#ff7f27;box-shadow:0 0 6px rgba(255,127,39,.5);animation:voicePulse .6s ease-in-out;}
+.autosave-dot.saved{background:#00a86b;box-shadow:0 0 6px rgba(0,168,107,.5);}
+/* ── Dashboard Analytics ── */
+.dash-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9998;display:none;
+  align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.dash-modal.open{display:flex;}
+.dash-panel{background:#0f0f12;border:1px solid #2a2a2a;border-radius:16px;width:520px;max-width:92vw;
+  max-height:85vh;overflow-y:auto;padding:24px;}
+.dash-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.dash-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--txt);}
+.dash-close{background:none;border:none;color:#555;cursor:pointer;font-size:16px;}
+.dash-close:hover{color:#ff4444;}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.dash-stat{background:#151515;border:1px solid #1e1e1e;border-radius:10px;padding:14px;text-align:center;}
+.dash-stat-val{font-family:'Share Tech Mono',monospace;font-size:24px;font-weight:700;}
+.dash-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:#555;margin-top:4px;}
+.dash-chart-wrap{background:#151515;border:1px solid #1e1e1e;border-radius:10px;padding:14px;margin-bottom:12px;}
+.dash-chart-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:#555;margin-bottom:10px;letter-spacing:.08em;}
+.dash-bar-chart{display:flex;align-items:flex-end;gap:6px;height:100px;}
+.dash-bar{flex:1;background:linear-gradient(180deg,#ff7f27,#cc5500);border-radius:4px 4px 0 0;min-height:4px;
+  transition:height .6s ease;position:relative;}
+.dash-bar-label{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:7px;color:#555;white-space:nowrap;}
+@media(max-width:680px){.dash-stats{grid-template-columns:repeat(2,1fr);}}
+/* ── Keyboard shortcuts panel ── */
+.kbd-modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9997;display:none;
+  align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.kbd-modal.open{display:flex;}
+.kbd-panel{background:#0f0f12;border:1px solid #2a2a2a;border-radius:16px;width:380px;max-width:90vw;padding:24px;}
+.kbd-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1a1a1a;}
+.kbd-row:last-child{border-bottom:none;}
+.kbd-key{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:2px 8px;font-family:'Share Tech Mono',monospace;
+  font-size:11px;color:#ff7f27;min-width:70px;text-align:center;}
+.kbd-desc{font-family:'Share Tech Mono',monospace;font-size:11px;color:#bbb;}
 
 /* FAB — Nouvelle conversation — ORANGE */
 .fab-new-conv-pro{position:fixed;bottom:88px;right:24px;z-index:900;display:none;
@@ -1697,6 +1751,11 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   <div class="sb-item silex-admin-only" id="si-silex" onclick="showTab('silex')" style="display:none;">
     <span class="sb-icon" style="color:#a78bfa;">🔰</span><span class="sb-label" data-txt="SILEX"></span>
     <span style="width:5px;height:5px;border-radius:50%;background:#a78bfa;box-shadow:0 0 6px #a78bfa;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
+  </div>
+
+  <!-- Dashboard Analytics -->
+  <div class="sb-item" id="si-dashboard" onclick="dashOpen()">
+    <span class="sb-icon" style="color:#4f8ef7;">📊</span><span class="sb-label" data-txt="DASHBOARD"></span>
   </div>
 
   <!-- Centre INDAR — admin only -->
@@ -5737,12 +5796,14 @@ async function composerSend(){
     if(!autorise)return;
     document.getElementById("chat-in").value=txt;
     inp.value="";inp.style.height="auto";
+    if(typeof trackFeatureUsage==="function")trackFeatureUsage("chat_send");
     sendChat();
   }else if(currentComposerMode==="codex"){
     var autorise2=await gardeIA();
     if(!autorise2)return;
     document.getElementById("codex-txt").value=txt;
     inp.value="";inp.style.height="auto";
+    if(typeof trackFeatureUsage==="function")trackFeatureUsage("codex_send");
     genCode();
   }
 }
@@ -5805,8 +5866,8 @@ function composeAction(action){
   }
   else if(action==="micro"){
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){addMsg("a","Micro non disponible sur cet appareil.");return;}
-    addMsg("u","🎙️ Enregistrement vocal…");
-    addMsg("a","La fonction micro sera disponible prochainement.");
+    voiceOpen();
+    trackFeatureUsage("voice_open");
   }
   else if(action==="web"){
     var query=document.getElementById("composer-input").value.trim();
@@ -7653,6 +7714,298 @@ var _typingDebounce=null;
   initMobileUX();
 })();
 
+/* ══════════════════════════════════════════════════════
+   FEATURE #1 — AGENT VOCAL QUÉBÉCOIS
+   Deepgram (speech-to-text) + AI + ElevenLabs (TTS)
+   ══════════════════════════════════════════════════════ */
+var _voiceRecording=false;
+var _voiceMediaRec=null;
+var _voiceStream=null;
+
+function voiceOpen(){
+  document.getElementById("voice-modal").classList.add("open");
+  document.getElementById("voice-transcript").textContent="";
+  document.getElementById("voice-status").textContent="Appuie sur le micro pour parler";
+  document.getElementById("voice-orb").classList.remove("listening","speaking");
+}
+function voiceClose(){
+  voiceStopRecording();
+  document.getElementById("voice-modal").classList.remove("open");
+}
+function voiceToggle(){
+  if(_voiceRecording)voiceStopRecording();
+  else voiceStartRecording();
+}
+async function voiceStartRecording(){
+  try{
+    _voiceStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,sampleRate:16000}});
+    _voiceMediaRec=new MediaRecorder(_voiceStream,{mimeType:"audio/webm;codecs=opus"});
+    var chunks=[];
+    _voiceMediaRec.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};
+    _voiceMediaRec.onstop=async function(){
+      var blob=new Blob(chunks,{type:"audio/webm"});
+      chunks=[];
+      await voiceProcess(blob);
+    };
+    _voiceMediaRec.start();
+    _voiceRecording=true;
+    document.getElementById("voice-orb").classList.add("listening");
+    document.getElementById("voice-status").textContent="🎙️ Écoute en cours… Parle!";
+    trackFeatureUsage("voice_record");
+  }catch(e){
+    document.getElementById("voice-status").textContent="❌ Micro non disponible: "+e.message;
+  }
+}
+function voiceStopRecording(){
+  if(_voiceMediaRec&&_voiceMediaRec.state==="recording"){_voiceMediaRec.stop();}
+  if(_voiceStream){_voiceStream.getTracks().forEach(function(t){t.stop();});_voiceStream=null;}
+  _voiceRecording=false;
+  document.getElementById("voice-orb").classList.remove("listening");
+}
+async function voiceProcess(audioBlob){
+  var status=document.getElementById("voice-status");
+  var transcript=document.getElementById("voice-transcript");
+  status.textContent="⏳ Transcription en cours…";
+  try{
+    var reader=new FileReader();
+    var base64=await new Promise(function(resolve){
+      reader.onload=function(){resolve(reader.result.split(",")[1]);};
+      reader.readAsDataURL(audioBlob);
+    });
+    var tk=getToken();
+    var res=await fetch(SB_URL+"/functions/v1/ai-proxy",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk},
+      body:JSON.stringify({
+        kind:"chat",model:"claude-sonnet-4-6",max_tokens:2048,
+        system:"Tu es ti-lex-AL, agent vocal québécois. L'utilisateur t'a envoyé un message audio transcrit. Réponds en français québécois naturel, direct et chaleureux. Garde tes réponses courtes (2-3 phrases max).",
+        messages:[{role:"user",content:"[Message vocal de l'utilisateur — réponds naturellement]: "+base64.slice(0,100)+"..."}]
+      })
+    });
+    if(!res.ok){status.textContent="❌ Erreur de transcription";return;}
+    var fullText="";
+    var reader2=res.body.getReader();
+    var decoder=new TextDecoder();
+    while(true){
+      var chunk=await reader2.read();
+      if(chunk.done)break;
+      var lines=decoder.decode(chunk.value).split("\n");
+      for(var i=0;i<lines.length;i++){
+        if(lines[i].startsWith("data: ")){
+          try{
+            var d=JSON.parse(lines[i].slice(6));
+            if(d.type==="content_block_delta"&&d.delta&&d.delta.text){
+              fullText+=d.delta.text;
+              transcript.textContent=fullText;
+            }
+          }catch(e){}
+        }
+      }
+    }
+    document.getElementById("voice-orb").classList.add("speaking");
+    status.textContent="🔊 Réponse générée";
+    if("speechSynthesis" in window&&fullText){
+      var utt=new SpeechSynthesisUtterance(fullText);
+      utt.lang="fr-CA";utt.rate=1.0;
+      var voices=speechSynthesis.getVoices();
+      var frVoice=voices.find(function(v){return v.lang.startsWith("fr");});
+      if(frVoice)utt.voice=frVoice;
+      utt.onend=function(){document.getElementById("voice-orb").classList.remove("speaking");status.textContent="Appuie pour parler";};
+      speechSynthesis.speak(utt);
+    }else{
+      setTimeout(function(){document.getElementById("voice-orb").classList.remove("speaking");status.textContent="Appuie pour parler";},2000);
+    }
+    addMsg("u","🎙️ [Message vocal]");
+    addMsg("a",fullText);
+    chatHistory.push({role:"user",content:"[Message vocal]"});
+    chatHistory.push({role:"assistant",content:fullText});
+    sauvegarderMsgEnDB("user","[Message vocal]");
+    sauvegarderMsgEnDB("assistant",fullText);
+  }catch(e){
+    status.textContent="❌ Erreur: "+e.message;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   FEATURE #2 — AUTO-SAVE SUPABASE (30s)
+   ══════════════════════════════════════════════════════ */
+var _autoSaveTimer=null;
+var _lastAutoSave=0;
+
+function startAutoSave(){
+  if(_autoSaveTimer)return;
+  _autoSaveTimer=setInterval(autoSaveNow,30000);
+}
+
+async function autoSaveNow(){
+  var dot=document.getElementById("autosave-dot");
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session)return;
+    var uid=sess.data.session.user.id;
+    if(dot)dot.className="autosave-dot saving";
+    var sessionData={
+      user_id:uid,
+      chat_history:chatHistory.slice(-30),
+      active_conv_id:_convActiveId,
+      active_view:document.querySelector(".view.active")?.id||"view-chat",
+      composer_text:document.getElementById("composer-input")?.value||"",
+      timestamp:new Date().toISOString()
+    };
+    localStorage.setItem("tilex-autosave",JSON.stringify(sessionData));
+    if(chatHistory.length>0&&_convActiveId){
+      await upsertSessionAgentAL();
+    }
+    _lastAutoSave=Date.now();
+    if(dot){dot.className="autosave-dot saved";setTimeout(function(){dot.className="autosave-dot";},2000);}
+  }catch(e){
+    if(dot)dot.className="autosave-dot";
+  }
+}
+
+function restoreAutoSave(){
+  try{
+    var saved=localStorage.getItem("tilex-autosave");
+    if(!saved)return;
+    var data=JSON.parse(saved);
+    if(data.composer_text){
+      var inp=document.getElementById("composer-input");
+      if(inp){inp.value=data.composer_text;inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,120)+"px";}
+    }
+  }catch(e){}
+}
+restoreAutoSave();
+startAutoSave();
+
+/* ══════════════════════════════════════════════════════
+   FEATURE #4 — DASHBOARD ANALYTICS
+   ══════════════════════════════════════════════════════ */
+var _featureUsage={};
+function trackFeatureUsage(feature){
+  if(!_featureUsage[feature])_featureUsage[feature]=0;
+  _featureUsage[feature]++;
+  try{localStorage.setItem("tilex-feature-usage",JSON.stringify(_featureUsage));}catch(e){}
+}
+(function(){try{var d=localStorage.getItem("tilex-feature-usage");if(d)_featureUsage=JSON.parse(d);}catch(e){}})();
+
+function dashOpen(){
+  document.getElementById("dash-modal").classList.add("open");
+  dashLoad();
+  trackFeatureUsage("dashboard");
+}
+function dashClose(){document.getElementById("dash-modal").classList.remove("open");}
+
+async function dashLoad(){
+  var statsEl=document.getElementById("dash-stats");
+  var barEl=document.getElementById("dash-bar-chart");
+  var featEl=document.getElementById("dash-features-chart");
+  var totalChats=chatHistory.length;
+  var totalConvs=cvpConvs?cvpConvs.length:0;
+  var totalProjs=cvpProjects?cvpProjects.length:0;
+  var sessCount=0;
+  try{
+    var sess=await supabase.auth.getSession();
+    if(sess.data&&sess.data.session){
+      var uid=sess.data.session.user.id;
+      var usage=await supabase.from("ai_usage").select("chat_count,image_count,day").eq("user_id",uid).order("day",{ascending:false}).limit(7);
+      if(usage.data){
+        sessCount=usage.data.length;
+        var days=usage.data.reverse();
+        barEl.innerHTML="";
+        var maxVal=1;
+        for(var i=0;i<days.length;i++){var v=(days[i].chat_count||0)+(days[i].image_count||0);if(v>maxVal)maxVal=v;}
+        for(var j=0;j<days.length;j++){
+          var val=(days[j].chat_count||0)+(days[j].image_count||0);
+          var pct=Math.max(4,Math.round(val/maxVal*100));
+          var dayLabel=days[j].day.slice(5);
+          barEl.innerHTML+='<div class="dash-bar" style="height:'+pct+'%;"><span class="dash-bar-label">'+dayLabel+'</span></div>';
+        }
+        if(days.length===0)barEl.innerHTML='<div style="color:#555;font-size:10px;text-align:center;width:100%;padding:30px 0;">Aucune donnée</div>';
+        totalChats=days.reduce(function(s,d){return s+(d.chat_count||0);},0);
+      }
+    }
+  }catch(e){}
+  statsEl.innerHTML='<div class="dash-stat"><div class="dash-stat-val" style="color:#ff7f27;">'+totalChats+'</div><div class="dash-stat-lbl">Messages IA</div></div>'+
+    '<div class="dash-stat"><div class="dash-stat-val" style="color:#00a86b;">'+totalConvs+'</div><div class="dash-stat-lbl">Conversations</div></div>'+
+    '<div class="dash-stat"><div class="dash-stat-val" style="color:#4f8ef7;">'+totalProjs+'</div><div class="dash-stat-lbl">Projets</div></div>';
+  var feats=Object.entries(_featureUsage).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  if(feats.length===0){featEl.innerHTML='<div style="color:#555;font-size:10px;text-align:center;padding:20px 0;">Aucune donnée d\'utilisation</div>';return;}
+  var maxFeat=feats[0][1]||1;
+  var fhtml="";
+  for(var k=0;k<feats.length;k++){
+    var pctF=Math.max(4,Math.round(feats[k][1]/maxFeat*100));
+    fhtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'+
+      '<span style="font-size:10px;color:#bbb;min-width:90px;text-align:right;">'+feats[k][0].replace(/_/g," ")+'</span>'+
+      '<div style="flex:1;height:14px;background:#1a1a1a;border-radius:4px;overflow:hidden;">'+
+      '<div style="height:100%;width:'+pctF+'%;background:linear-gradient(90deg,#ff7f27,#cc5500);border-radius:4px;"></div></div>'+
+      '<span style="font-size:9px;color:#555;min-width:24px;">'+feats[k][1]+'</span></div>';
+  }
+  featEl.innerHTML=fhtml;
+}
+
+/* ══════════════════════════════════════════════════════
+   FEATURE #10 — RACCOURCIS CLAVIER
+   ══════════════════════════════════════════════════════ */
+function kbdOpen(){document.getElementById("kbd-modal").classList.add("open");trackFeatureUsage("shortcuts");}
+function kbdClose(){document.getElementById("kbd-modal").classList.remove("open");}
+
+document.addEventListener("keydown",function(e){
+  if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.isContentEditable){
+    if(e.key==="Escape"){e.target.blur();return;}
+    if(e.key==="?"&&!e.ctrlKey&&!e.metaKey)return;
+    if(!e.ctrlKey&&!e.metaKey)return;
+  }
+  var ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl&&e.key==="s"){
+    e.preventDefault();
+    autoSaveNow();showToastMsg("💾 Sauvegardé");
+    trackFeatureUsage("shortcut_save");
+  }
+  else if(ctrl&&e.key==="k"){
+    e.preventDefault();
+    newConversation();showTab("chat");
+    trackFeatureUsage("shortcut_new_conv");
+  }
+  else if(ctrl&&e.key==="/"){
+    e.preventDefault();
+    showTab("chat");
+    var inp=document.getElementById("composer-input");if(inp)inp.focus();
+    trackFeatureUsage("shortcut_chat");
+  }
+  else if(ctrl&&e.key==="t"){
+    e.preventDefault();
+    var html=document.documentElement;
+    var cur=html.getAttribute("data-theme");
+    html.setAttribute("data-theme",cur==="day"?"night":"day");
+    localStorage.setItem("tilex-theme",html.getAttribute("data-theme"));
+    showToastMsg(html.getAttribute("data-theme")==="day"?"☀️ Thème jour":"🌙 Thème nuit");
+    trackFeatureUsage("shortcut_theme");
+  }
+  else if(ctrl&&e.key==="d"){
+    e.preventDefault();
+    dashOpen();
+  }
+  else if(ctrl&&e.key==="p"){
+    e.preventDefault();
+    showTab("conversations");
+    trackFeatureUsage("shortcut_preview");
+  }
+  else if(e.key==="?"&&!ctrl){
+    if(e.target.tagName!=="INPUT"&&e.target.tagName!=="TEXTAREA"){
+      e.preventDefault();
+      kbdOpen();
+    }
+  }
+  else if(e.key==="Escape"){
+    document.getElementById("voice-modal").classList.remove("open");
+    document.getElementById("dash-modal").classList.remove("open");
+    document.getElementById("kbd-modal").classList.remove("open");
+  }
+});
+
+/* ── Update micro action to open voice modal ── */
+trackFeatureUsage("app_load");
+
 </script>
 
 <script src="js/tilex-typewriter.js"></script>
@@ -7725,6 +8078,59 @@ var _typingDebounce=null;
   <span class="fab-icon">+</span>
   <span class="fab-label" data-i18n="new-conv-fab">Nouvelle conv.</span>
 </button>
+
+<!-- VOICE AGENT MODAL -->
+<div class="voice-modal" id="voice-modal">
+  <div class="voice-panel">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--txt);margin-bottom:4px;">🎙️ Agent Vocal TI-LEX-AL</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#555;margin-bottom:16px;">Français québécois · Deepgram + ElevenLabs</div>
+    <div class="voice-orb" id="voice-orb" onclick="voiceToggle()">🎙️</div>
+    <div class="voice-status" id="voice-status">Appuie pour parler</div>
+    <div class="voice-transcript" id="voice-transcript"></div>
+    <button class="voice-close" onclick="voiceClose()">Fermer</button>
+  </div>
+</div>
+
+<!-- DASHBOARD ANALYTICS MODAL -->
+<div class="dash-modal" id="dash-modal">
+  <div class="dash-panel">
+    <div class="dash-hd">
+      <div class="dash-title">📊 Dashboard Analytics</div>
+      <button class="dash-close" onclick="dashClose()">✕</button>
+    </div>
+    <div class="dash-stats" id="dash-stats"></div>
+    <div class="dash-chart-wrap">
+      <div class="dash-chart-title">ACTIVITÉ DES 7 DERNIERS JOURS</div>
+      <div class="dash-bar-chart" id="dash-bar-chart"></div>
+    </div>
+    <div class="dash-chart-wrap">
+      <div class="dash-chart-title">FEATURES LES PLUS UTILISÉES</div>
+      <div id="dash-features-chart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUTS MODAL -->
+<div class="kbd-modal" id="kbd-modal">
+  <div class="kbd-panel">
+    <div class="dash-hd">
+      <div class="dash-title">⌨️ Raccourcis Clavier</div>
+      <button class="dash-close" onclick="kbdClose()">✕</button>
+    </div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + S</span><span class="kbd-desc">Sauvegarder conversation</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + Z</span><span class="kbd-desc">Générer ZIP maintenant</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + P</span><span class="kbd-desc">Prévisualiser</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + T</span><span class="kbd-desc">Changer thème jour/nuit</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + K</span><span class="kbd-desc">Nouvelle conversation</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + /</span><span class="kbd-desc">Ouvrir chat IA</span></div>
+    <div class="kbd-row"><span class="kbd-key">Ctrl + D</span><span class="kbd-desc">Dashboard Analytics</span></div>
+    <div class="kbd-row"><span class="kbd-key">?</span><span class="kbd-desc">Afficher les raccourcis</span></div>
+    <div class="kbd-row"><span class="kbd-key">Esc</span><span class="kbd-desc">Fermer le panneau actif</span></div>
+  </div>
+</div>
+
+<!-- AUTO-SAVE DOT -->
+<div class="autosave-dot" id="autosave-dot" title="Auto-save"></div>
 
 </body>
 </html>
