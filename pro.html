@@ -4158,6 +4158,76 @@ function cervRenderList(){
   });
 }
 
+/* ══ CONFIG CENTRALE — TilexConfig ══ */
+var TilexConfig={
+  _cache:{},_chargee:false,
+  async charger(){
+    try{
+      var authRes=await supabase.auth.getUser();
+      if(authRes.error||!authRes.data.user)return;
+      var res=await supabase.from("tilex_config").select("cle,valeur").eq("user_id",authRes.data.user.id);
+      if(res.error)throw res.error;
+      (res.data||[]).forEach(function(row){TilexConfig._cache[row.cle]=row.valeur;});
+      TilexConfig._chargee=true;
+      document.dispatchEvent(new CustomEvent("tilex-config-chargee",{detail:TilexConfig._cache}));
+    }catch(err){console.error("[TilexConfig] charger:",err);}
+  },
+  get:function(cle){return TilexConfig._cache[cle]||null;},
+  set:async function(cle,valeur){
+    TilexConfig._cache[cle]=valeur;
+    try{
+      var authRes=await supabase.auth.getUser();
+      if(authRes.error||!authRes.data.user)return false;
+      var res=await supabase.from("tilex_config").upsert({user_id:authRes.data.user.id,cle:cle,valeur:valeur,updated_at:new Date().toISOString()},{onConflict:"user_id,cle"});
+      if(res.error)throw res.error;
+      document.dispatchEvent(new CustomEvent("tilex-config-update",{detail:{cle:cle,valeur:valeur}}));
+      return true;
+    }catch(err){console.error("[TilexConfig] set:",err);return false;}
+  },
+  supprimer:async function(cle){
+    delete TilexConfig._cache[cle];
+    try{
+      var authRes=await supabase.auth.getUser();
+      if(authRes.error||!authRes.data.user)return;
+      await supabase.from("tilex_config").delete().eq("user_id",authRes.data.user.id).eq("cle",cle);
+      document.dispatchEvent(new CustomEvent("tilex-config-update",{detail:{cle:cle,valeur:null}}));
+    }catch(err){console.error("[TilexConfig] supprimer:",err);}
+  }
+};
+Object.defineProperty(TilexConfig,"githubToken",{get:function(){return TilexConfig.get("github_token");}});
+Object.defineProperty(TilexConfig,"githubUser",{get:function(){return TilexConfig.get("github_user");}});
+Object.defineProperty(TilexConfig,"githubRepo",{get:function(){return TilexConfig.get("github_repo");}});
+Object.defineProperty(TilexConfig,"githubBranch",{get:function(){return TilexConfig.get("github_branch")||"main";}});
+
+var TilexGitHub={
+  listerFichiers:async function(chemin){
+    var token=TilexConfig.githubToken;var repo=TilexConfig.githubRepo;var user=TilexConfig.githubUser;
+    if(!token||!repo||!user)return{erreur:"GitHub non configuré. Va dans Paramètres."};
+    var url="https://api.github.com/repos/"+user+"/"+repo+"/contents/"+(chemin||"");
+    var resp=await fetch(url,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github.v3+json"}});
+    if(!resp.ok){var err=await resp.json();return{erreur:"GitHub API: "+err.message};}
+    return await resp.json();
+  },
+  lireFichier:async function(chemin){
+    var token=TilexConfig.githubToken;var repo=TilexConfig.githubRepo;var user=TilexConfig.githubUser;
+    if(!token||!repo||!user)return{erreur:"GitHub non configuré."};
+    var url="https://api.github.com/repos/"+user+"/"+repo+"/contents/"+chemin;
+    var resp=await fetch(url,{headers:{Authorization:"Bearer "+token,Accept:"application/vnd.github.v3+json"}});
+    if(!resp.ok)return{erreur:"Fichier introuvable: "+chemin};
+    var data=await resp.json();
+    var contenu=atob(data.content.replace(/\n/g,""));
+    return{contenu:contenu,taille:data.size,sha:data.sha};
+  },
+  testerConnexion:async function(){
+    var token=TilexConfig.githubToken;
+    if(!token)return{ok:false,message:"Token GitHub manquant"};
+    var resp=await fetch("https://api.github.com/user",{headers:{Authorization:"Bearer "+token}});
+    if(!resp.ok)return{ok:false,message:"Token invalide ou expiré"};
+    var user=await resp.json();
+    return{ok:true,message:"Connecté: @"+user.login,login:user.login};
+  }
+};
+
 /* ── GitHub PAT Settings ── */
 function _ghGetUserId(){
   try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.user&&s.user.id)return s.user.id;}}catch(e){}return null;
@@ -4224,6 +4294,10 @@ function initGithubSettings(){
       showFeedback("@"+data.username+" connecté avec succès!","success");
       window._githubSession={username:data.username,avatar:data.avatar_url,name:data.nom||data.username};
       ghConnected=true;
+      TilexConfig.set("github_token",pat);
+      TilexConfig.set("github_user",data.username);
+      _alGhToken=pat;_alGhConnected=true;
+      var _ghIco=document.getElementById("chat-gh-icon");if(_ghIco)_ghIco.style.display="inline-flex";
     }catch(err){
       showFeedback("Erreur inattendue: "+err.message,"error");
     }finally{
@@ -4240,6 +4314,10 @@ function initGithubSettings(){
       window._githubSession=null;
       window._codexGithub=null;
       ghConnected=false;
+      TilexConfig.supprimer("github_token");
+      TilexConfig.supprimer("github_user");
+      _alGhToken="";_alGhConnected=false;
+      localStorage.removeItem("tilex-al-gh-token");
       showFeedback("GitHub déconnecté.","success");
     }catch(e){showFeedback("Erreur: "+e.message,"error");}
   }
@@ -6177,6 +6255,7 @@ var _alProjectContext=null;
 var _alPendingFiles={};
 
 function alInitGhStatus(){
+  if(!_alGhToken&&TilexConfig.githubToken){_alGhToken=TilexConfig.githubToken;localStorage.setItem("tilex-al-gh-token",_alGhToken);}
   if(_alGhToken){
     fetch("https://api.github.com/user",{headers:{Authorization:"Bearer "+_alGhToken}})
     .then(function(r){
@@ -6188,12 +6267,16 @@ function alInitGhStatus(){
       var txt=document.getElementById("al-gh-status-text");if(txt)txt.textContent="@"+user.login;
       var ico=document.getElementById("chat-gh-icon");if(ico)ico.style.display="inline-flex";
       var btn=document.getElementById("al-gh-toggle-btn");if(btn)btn.textContent="✓ Connecté";
+      if(!TilexConfig.githubToken){TilexConfig.set("github_token",_alGhToken);TilexConfig.set("github_user",user.login);}
     }).catch(function(){
       _alGhConnected=false;_alGhToken="";localStorage.removeItem("tilex-al-gh-token");
     });
   }
 }
 alInitGhStatus();
+document.addEventListener("tilex-config-chargee",function(){
+  if(!_alGhToken&&TilexConfig.githubToken){_alGhToken=TilexConfig.githubToken;localStorage.setItem("tilex-al-gh-token",_alGhToken);alInitGhStatus();}
+});
 
 function alToggleGhConfig(){
   var wrap=document.getElementById("al-gh-config-wrap");
@@ -6211,6 +6294,8 @@ async function alConnectGithub(){
     var user=await r.json();
     _alGhToken=token;_alGhConnected=true;
     localStorage.setItem("tilex-al-gh-token",token);
+    TilexConfig.set("github_token",token);
+    TilexConfig.set("github_user",user.login);
     var dot=document.getElementById("al-gh-dot");if(dot)dot.className="conn-dot on";
     var txt=document.getElementById("al-gh-status-text");if(txt)txt.textContent="@"+user.login;
     var ico=document.getElementById("chat-gh-icon");if(ico)ico.style.display="inline-flex";
@@ -7677,10 +7762,12 @@ applyPlanVisibility();
 checkAdminStatus();
 initUserConnexions();
 verifierEtatChat();
+TilexConfig.charger().catch(function(){});
 supabase.auth.onAuthStateChange(function(event,session){
   silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();updateChatConnStatus();updateChatSbIcon();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){
+    if(!TilexConfig._chargee)TilexConfig.charger().catch(function(){});
     demarrerConversation(session.user.id).catch(function(){});
     chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
