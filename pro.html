@@ -497,6 +497,9 @@ body.sb-open .content{margin-left:var(--sb-w);}
 [data-theme="day"] .curseur-agent{background:#cc5500;box-shadow:0 0 4px rgba(204,85,0,.4);}
 .kw-copy:hover{background:rgba(255,255,255,.08)!important;text-decoration:none!important;}
 [data-theme="day"] .kw-copy:hover{background:rgba(0,0,0,.06)!important;}
+.composer-scan-btn{background:linear-gradient(135deg,#ff7f27,#cc5500);color:#fff;border:none;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:opacity .2s,transform .1s;}
+.composer-scan-btn:hover{opacity:.85;transform:scale(1.03);}
+.composer-scan-btn:active{transform:scale(.97);}
 .c-inp-area{padding:10px;background:transparent;border-top:none;}
 [data-theme="day"] .c-inp-area{background:var(--bg3);}
 .c-row{display:flex;gap:8px;}
@@ -2761,6 +2764,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             <span class="csd-ico">🧠</span> Réflexion <span class="csd-toggle-dot" id="csd-reflexion-dot"></span></div>
         </div>
       </div>
+      <button class="composer-scan-btn" id="composer-scan-btn" onclick="composerScanAction()" style="display:none;" title="Scanner le projet">🔰 SCAN</button>
       <div class="composer-spacer"></div>
     </div>
   </div>
@@ -6079,16 +6083,25 @@ function updateComposer(){
     var el=document.getElementById(id);
     if(el&&el.classList.contains("active"))activeView=id;
   });
+  var scanBtn=document.getElementById("composer-scan-btn");
   if(activeView==="view-chat"){
     bar.classList.add("visible");currentComposerMode="chat";
     document.getElementById("composer-input").placeholder="Discuter avec Agent AL…";
+    if(scanBtn)scanBtn.style.display="none";
   }else if(activeView==="view-codex"){
     bar.classList.add("visible");currentComposerMode="codex";
     document.getElementById("composer-input").placeholder="Décris ce que tu veux coder…";
+    if(scanBtn)scanBtn.style.display="inline-block";
   }else{
     bar.classList.remove("visible");
+    if(scanBtn)scanBtn.style.display="none";
   }
   closeComposerMenu();
+}
+
+function composerScanAction(){
+  if(typeof cxScanProject==="function")cxScanProject();
+  else showTab("silex");
 }
 
 var origShowTab=showTab;
