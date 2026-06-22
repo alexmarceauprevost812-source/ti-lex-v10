@@ -4007,8 +4007,8 @@ function renderProjsList(){
   var empty=document.getElementById("projs-empty");
   var detail=document.getElementById("proj-detail");
   if(!list)return;
-  if(activeProjectId){detail.style.display="block";list.style.display="none";if(empty)empty.style.display="none";return;}
-  detail.style.display="none";list.style.display="block";list.innerHTML="";
+  if(activeProjectId){if(detail)detail.style.display="block";list.style.display="none";if(empty)empty.style.display="none";return;}
+  if(detail)detail.style.display="none";list.style.display="block";list.innerHTML="";
   if(projects.length===0){if(empty)empty.style.display="block";return;}
   if(empty)empty.style.display="none";
   for(var i=0;i<projects.length;i++){
