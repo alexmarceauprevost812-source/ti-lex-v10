@@ -8,7 +8,7 @@
   margin: 12px 16px;
   animation: tilex-alert-in 0.25s ease-out;
   position: relative;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   z-index: 50;
 }
 
@@ -64,7 +64,7 @@
   font-size: 11px;
   color: #37e0a0;
   opacity: 0.7;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
 }
 
 .tilex-security-badge::before { content: "🛡️"; }

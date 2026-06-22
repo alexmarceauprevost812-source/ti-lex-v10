@@ -2,7 +2,7 @@
    Effet machine à écrire 2 phases (blanc → vert) */
 
 .tx-typewriter {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-family: var(--font-tilex);
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.6;

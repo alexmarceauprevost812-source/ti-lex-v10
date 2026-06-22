@@ -84,7 +84,7 @@
   background: rgba(255, 127, 39, 0.06);
   border: 1px solid rgba(255, 127, 39, 0.25);
   border-radius: var(--radius, 6px);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   margin-bottom: 8px;
   flex-wrap: wrap;
 }
@@ -130,7 +130,7 @@
   border: 1px solid var(--border, #23232c);
   border-radius: 4px;
   color: var(--muted, #6b6b80);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 11px;
   padding: 4px 10px;
   cursor: pointer;
@@ -159,7 +159,7 @@
   border: 1px solid rgba(224, 85, 85, 0.35);
   border-radius: 4px;
   color: #e05555;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 11px;
   padding: 4px 12px;
   cursor: pointer;
@@ -177,7 +177,7 @@
   border: none;
   border-radius: 4px;
   color: #0a0a0a;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 11px;
   font-weight: 700;
   padding: 4px 14px;

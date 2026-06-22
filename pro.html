@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#ff7f27">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ti-lex-AL v10 — Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="css/agent-marceau.css">
 <link rel="stylesheet" href="css/fichiers.css">
@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="css/tilex-typewriter.css">
 <style>
 :root{
+  --font-tilex:'JetBrains Mono','Courier New','Consolas',monospace;
   --bg:#0a0a0a;--bg2:#0d0d0d;--bg3:#111111;--bg4:#1a1a1a;
   --or:#ff7f27;--or2:#ff9a3c;--or3:#cc6520;
   --orange:#ff7f27;--orange2:#ff9a3c;--og:rgba(255,127,39,.2);
@@ -35,10 +36,13 @@
   --border:rgba(180,155,100,.25);--grid:rgba(180,155,100,.08);
   --or:#5A4000;--or2:#7A5800;--or3:#3D2B00;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-tilex)!important;}
 html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
-body{background:var(--bg);color:var(--txt);font-family:'Rajdhani',sans-serif;min-height:100vh;
+body{background:var(--bg);color:var(--txt);font-family:var(--font-tilex);min-height:100vh;
   overflow-x:hidden;transition:background .25s ease,color .25s ease;}
+h1,h2,h3{font-weight:700!important;}
+h4,h5,h6{font-weight:500!important;}
+pre,code,pre code,kbd,samp{font-family:var(--font-tilex)!important;}
 
 /* ══ BOUTONS ORANGE ══ */
 .btn-orange{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -1708,7 +1712,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 

@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-family: var(--font-tilex);
 }
 
 .fichiers-header {
@@ -55,7 +55,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--txt);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 13px;
   padding: 8px 12px;
   outline: none;
@@ -75,7 +75,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--txt);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 12px;
   line-height: 1.6;
   padding: 12px;
@@ -165,7 +165,7 @@
   border-radius: 4px;
   color: var(--muted);
   font-size: 11px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   padding: 4px 10px;
   cursor: pointer;
   transition: all 0.15s;
@@ -203,7 +203,7 @@
   border: 1px solid var(--green);
   border-radius: var(--radius);
   color: var(--green);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 12px;
   padding: 10px 18px;
   z-index: 9999;
@@ -280,7 +280,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--orange);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -300,7 +300,7 @@
   background: rgba(55, 224, 160, 0.06);
   border: 1px solid rgba(55, 224, 160, 0.2);
   border-radius: var(--radius, 6px);
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 11px;
   color: var(--green, #37e0a0);
   margin-top: 6px;
@@ -333,7 +333,7 @@
   border: 1px solid currentColor;
   border-radius: 4px;
   color: inherit;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
   font-size: 10px;
   padding: 3px 9px;
   cursor: pointer;
@@ -350,7 +350,7 @@
 .tilex-btn-cli {
   border-color: rgba(55, 224, 160, 0.4) !important;
   color: var(--green, #37e0a0) !important;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: var(--font-tilex);
 }
 
 .tilex-btn-cli:hover {
