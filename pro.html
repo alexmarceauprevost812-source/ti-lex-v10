@@ -437,7 +437,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .c-ava img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
-.chat-msgs{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:14px 10px 72px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-height:0;min-width:0;}
+.chat-msgs{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:14px 10px 140px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-height:0;min-width:0;}
 .cmsg{display:flex;gap:8px;max-width:92%;min-width:0;align-items:flex-start;}
 .cmsg>div:not(.cmsg-ico){min-width:0;flex:1;}
 .cmsg.u{align-self:flex-end;flex-direction:row-reverse;}
@@ -600,7 +600,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .mqb-ico{font-size:16px;}
 @media(max-width:680px){
   .composer-bar{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;}
-  .mobile-quick-bar.visible~.composer-bar{bottom:calc(52px + env(safe-area-inset-bottom,0px));}
+  .composer-bar.mqb-offset{bottom:calc(52px + env(safe-area-inset-bottom,0px));}
   .fab-new-conv-pro{bottom:calc(120px + env(safe-area-inset-bottom,0px))!important;}
   body{-webkit-overflow-scrolling:touch;}
   .media-modal{width:95%;max-width:none;}
@@ -790,7 +790,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
   #view-chat{padding:0;}
   .chat-wrap{height:calc(100dvh - var(--tb));min-height:320px;}
   .cmsg{max-width:98%;}
-  .chat-msgs{padding:6px 4px 72px;min-height:0;}
+  .chat-msgs{padding:6px 4px 140px;min-height:0;}
   .cmsg-bbl{font-size:15px;}
   .sec-title{font-size:22px;letter-spacing:1.5px;}
 }
@@ -3620,6 +3620,10 @@ function loadConv(idx){
   chatConvs[idx].active=true;
   activeChatConv=idx;
   chatHistory=chatConvs[idx].messages.slice();
+  var bar=document.getElementById("composer-bar");
+  if(bar)bar.classList.add("visible");
+  var welcome=document.getElementById("chat-welcome");
+  if(welcome)welcome.style.display="none";
   var msgs=document.getElementById("chat-msgs");
   msgs.innerHTML="";
   for(var i=0;i<chatHistory.length;i++){
@@ -5834,6 +5838,10 @@ async function cvpOpenInChat(id){
   cvpActiveConvId=id;
   _convActiveId=id;
   showTab("chat");showSub("convos");
+  var bar=document.getElementById("composer-bar");
+  if(bar)bar.classList.add("visible");
+  var welcome=document.getElementById("chat-welcome");
+  if(welcome)welcome.style.display="none";
   var msgs=document.getElementById("chat-msgs");
   msgs.innerHTML='<div class="cmsg a"><div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
   setTimeout(function(){var dots=msgs.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
@@ -5850,6 +5858,7 @@ async function cvpOpenInChat(id){
         addMsg(rows[i].role==="user"?"u":"a",rows[i].content);
       }
     }
+    msgs.scrollTop=msgs.scrollHeight;
   }catch(e){
     msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Erreur chargement: '+escHtml(e.message)+'</div><div class="cmsg-time">Maintenant</div></div></div>';
   }
@@ -6443,7 +6452,9 @@ function initMobileUX(){
       else if(dx<0&&currentIdx<tabOrder.length-1)showTab(tabOrder[currentIdx+1]);
     },{passive:true});
     var mqb=document.getElementById("mobile-quick-bar");
-    if(mqb)mqb.classList.add("visible");
+    if(mqb){mqb.classList.add("visible");
+      var cbar=document.getElementById("composer-bar");if(cbar)cbar.classList.add("mqb-offset");
+    }
   }
 }
 
