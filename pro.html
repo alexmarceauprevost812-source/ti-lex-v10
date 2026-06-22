@@ -2973,7 +2973,7 @@ async function demarrerConversation(userId){
 }
 async function creerNouvelleConv(userId,titre){
   try{
-    var res=await supabase.from("conversations").insert({user_id:userId,titre:titre||"Nouvelle conversation"}).select().single();
+    var res=await supabase.from("conversations").insert({user_id:userId,title:titre||"Nouvelle conversation"}).select().single();
     if(res.data){_convActiveId=res.data.id;}
     return res.data?.id||null;
   }catch(e){console.error("creerNouvelleConv:",e);return null;}
@@ -2986,14 +2986,17 @@ async function sauvegarderMsgEnDB(role,contenu){
     var userId=u.data.user.id;
     if(!_convActiveId)await demarrerConversation(userId);
     if(!_convActiveId)return;
-    await supabase.from("messages").insert({conversation_id:_convActiveId,user_id:userId,role:role,contenu:contenu});
-    await supabase.from("conversations").update({updated_at:new Date().toISOString()}).eq("id",_convActiveId);
+    await supabase.from("messages").insert({conversation_id:_convActiveId,user_id:userId,role:role,content:contenu});
+    var convUpdate={updated_at:new Date().toISOString()};
+    if(role==="assistant")convUpdate.last_preview=contenu.slice(0,120);
+    await supabase.from("conversations").update(convUpdate).eq("id",_convActiveId);
+    if(cvpActiveConvId!==_convActiveId)cvpActiveConvId=_convActiveId;
   }catch(e){console.error("sauvegarderMsgEnDB:",e);}
 }
 async function renommerConvAuto(convId,premierMsg){
   if(!convId||!premierMsg)return;
   var titre=premierMsg.slice(0,50).trim()+(premierMsg.length>50?"...":"");
-  await supabase.from("conversations").update({titre:titre}).eq("id",convId);
+  await supabase.from("conversations").update({title:titre}).eq("id",convId);
 }
 
 async function chargerSessionAgentAL(){
@@ -5759,6 +5762,7 @@ async function cvpOpen(id){
 
 async function cvpOpenInChat(id){
   cvpActiveConvId=id;
+  _convActiveId=id;
   showTab("chat");showSub("convos");
   var msgs=document.getElementById("chat-msgs");
   msgs.innerHTML='<div class="cmsg a"><div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
@@ -5818,33 +5822,21 @@ async function cvpDeleteProject(id){
   }catch(e){alert("Erreur: "+e.message);}
 }
 
-/* ── HOOK sendChat to persist in Supabase ── */
+/* ── HOOK sendChat to sync cvpActiveConvId with _convActiveId ── */
 var _origSendChat=sendChat;
 sendChat=async function(){
   var inp=document.getElementById("chat-in");
   var txt=inp.value.trim();
   if(!txt)return;
-  if(!cvpActiveConvId){
+  if(!cvpActiveConvId&&!_convActiveId){
     try{
       var row=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{title:txt.slice(0,40),type:"chat"}});
-      if(row&&row[0])cvpActiveConvId=row[0].id;
+      if(row&&row[0]){cvpActiveConvId=row[0].id;_convActiveId=row[0].id;}
     }catch(e){}
   }
-  var convId=cvpActiveConvId;
+  if(cvpActiveConvId&&!_convActiveId)_convActiveId=cvpActiveConvId;
+  if(_convActiveId&&!cvpActiveConvId)cvpActiveConvId=_convActiveId;
   await _origSendChat();
-  if(convId&&chatHistory.length>=2){
-    var last2=chatHistory.slice(-2);
-    try{
-      var userMsg=last2[0];var agentMsg=last2[1];
-      if(userMsg.role==="user"){
-        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:convId,role:"user",content:userMsg.content}});
-      }
-      if(agentMsg.role==="assistant"){
-        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:convId,role:"assistant",content:agentMsg.content}});
-        await sbRest("/conversations?id=eq."+convId,{method:"PATCH",prefer:"return=minimal",body:{last_preview:agentMsg.content.slice(0,120),updated_at:new Date().toISOString()}});
-      }
-    }catch(e){}
-  }
 };
 
 /* ══ #1 SUPABASE CONFIG ══ */
