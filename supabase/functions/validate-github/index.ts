@@ -1,19 +1,20 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
-  const preflight = handlePreflight(req);
-  if (preflight) return preflight;
-
-  const cors = corsHeaders(req);
-
-  function json(data: unknown, status = 200) {
-    return new Response(JSON.stringify(data), {
-      status,
-      headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -28,20 +29,14 @@ Deno.serve(async (req) => {
   } = await supabase.auth.getUser(token!);
   if (authError || !user) return json({ error: "Non authentifié" }, 401);
 
-  const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-github", max: 5, windowSec: 60 });
-  if (!rl.allowed) return tooManyRequests(rl, cors);
-
   try {
-    // DELETE = disconnect (clear Vault + metadata)
     if (req.method === "DELETE") {
-      await supabase.rpc("delete_github_pat", { p_user_id: user.id });
-
       await supabase
         .from("user_connections")
         .update({
           github_connected: false,
           github_username: null,
-          github_pat: null,
+          github_access_token: null,
           github_avatar_url: null,
           github_connected_at: null,
           updated_at: new Date().toISOString(),
@@ -50,13 +45,12 @@ Deno.serve(async (req) => {
 
       await supabase
         .from("profiles")
-        .update({ github_username: null, github_pat: null })
+        .update({ github_username: null })
         .eq("id", user.id);
 
       return json({ ok: true });
     }
 
-    // POST = validate PAT + store in Vault
     const { pat } = await req.json();
     if (!pat) return json({ error: "PAT manquant" }, 400);
 
@@ -69,26 +63,11 @@ Deno.serve(async (req) => {
     });
 
     if (!githubRes.ok) {
-      return json({
-        valide: false,
-        error: "PAT GitHub invalide ou expiré",
-      });
+      return json({ valide: false, error: "PAT GitHub invalide ou expiré" });
     }
 
     const githubUser = await githubRes.json();
 
-    // Store PAT in Vault (encrypted at rest)
-    const { error: vaultErr } = await supabase.rpc("store_github_pat", {
-      p_user_id: user.id,
-      p_pat: pat,
-    });
-
-    if (vaultErr) {
-      console.error("Vault store error:", vaultErr);
-      return json({ error: "Erreur stockage sécurisé" }, 500);
-    }
-
-    // Store metadata (no PAT) in user_connections
     await supabase
       .from("user_connections")
       .upsert(
@@ -96,7 +75,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           github_connected: true,
           github_username: githubUser.login,
-          github_pat: null,
+          github_access_token: pat,
           github_avatar_url: githubUser.avatar_url,
           github_connected_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -104,13 +83,9 @@ Deno.serve(async (req) => {
         { onConflict: "user_id" },
       );
 
-    // Keep profiles username in sync
     await supabase
       .from("profiles")
-      .update({
-        github_username: githubUser.login,
-        github_pat: null,
-      })
+      .update({ github_username: githubUser.login })
       .eq("id", user.id);
 
     return json({

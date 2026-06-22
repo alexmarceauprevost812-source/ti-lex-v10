@@ -1,18 +1,26 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
 
 Deno.serve(async (req) => {
-  const preflight = handlePreflight(req);
-  if (preflight) return preflight;
-
-  const cors = corsHeaders(req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
   try {
     const mainSupabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
@@ -20,25 +28,11 @@ Deno.serve(async (req) => {
       data: { user },
       error: authError,
     } = await mainSupabase.auth.getUser(token!);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Non authentifié" }), {
-        status: 401,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-
-    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "validate-supabase", max: 5, windowSec: 60 });
-    if (!rl.allowed) return tooManyRequests(rl, cors);
+    if (authError || !user) return json({ error: "Non authentifié" }, 401);
 
     const { supabase_url, supabase_anon_key } = await req.json();
     if (!supabase_url || !supabase_anon_key) {
-      return new Response(
-        JSON.stringify({ error: "URL et clé requises" }),
-        {
-          status: 400,
-          headers: { ...cors, "Content-Type": "application/json" },
-        }
-      );
+      return json({ error: "URL et clé requises" }, 400);
     }
 
     let projectId: string | null = null;
@@ -56,26 +50,14 @@ Deno.serve(async (req) => {
       });
 
       if (!testRes.ok && testRes.status !== 200 && testRes.status !== 404) {
-        return new Response(
-          JSON.stringify({
-            valide: false,
-            error: "Credentials Supabase invalides",
-          }),
-          { headers: { ...cors, "Content-Type": "application/json" } }
-        );
+        return json({ valide: false, error: "Credentials Supabase invalides" });
       }
 
       projectName = projectId
         ? `Projet ${projectId.slice(0, 8)}...`
         : "Projet Supabase";
     } catch {
-      return new Response(
-        JSON.stringify({
-          valide: false,
-          error: "URL Supabase invalide ou inaccessible",
-        }),
-        { headers: { ...cors, "Content-Type": "application/json" } }
-      );
+      return json({ valide: false, error: "URL Supabase invalide ou inaccessible" });
     }
 
     const { error: dbError } = await mainSupabase
@@ -91,23 +73,17 @@ Deno.serve(async (req) => {
           supabase_connected_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
-        { onConflict: "user_id" }
+        { onConflict: "user_id" },
       );
 
     if (dbError) throw dbError;
 
-    return new Response(
-      JSON.stringify({
-        valide: true,
-        project_id: projectId,
-        project_name: projectName,
-      }),
-      { headers: { ...cors, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500,
-      headers: { ...cors, "Content-Type": "application/json" },
+    return json({
+      valide: true,
+      project_id: projectId,
+      project_name: projectName,
     });
+  } catch (err) {
+    return json({ error: (err as Error).message }, 500);
   }
 });

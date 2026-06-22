@@ -1,19 +1,15 @@
-// ti-lex-AL — GitHub Proxy (Codex + Studio)
-// PAT chiffré dans Vault. Jamais exposé au frontend.
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
-import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-let _cors: Record<string, string>;
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ..._cors, "Content-Type": "application/json" },
+    headers: { ...CORS, "Content-Type": "application/json" },
   });
 }
 
@@ -36,34 +32,36 @@ async function ghFetch(pat: string, path: string, opts?: RequestInit) {
 }
 
 Deno.serve(async (req) => {
-  const preflight = handlePreflight(req);
-  if (preflight) return preflight;
-  _cors = corsHeaders(req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405);
 
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
   if (!token) return json({ error: "Non autorisé" }, 401);
 
-  const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+  const sb = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
   const {
     data: { user },
   } = await sb.auth.getUser(token);
   if (!user) return json({ error: "Session invalide" }, 401);
 
-  const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "github-proxy", max: 30, windowSec: 60 });
-  if (!rl.allowed) return tooManyRequests(rl, _cors);
+  const { data: connData, error: connErr } = await sb
+    .from("user_connections")
+    .select("github_access_token")
+    .eq("user_id", user.id)
+    .single();
 
-  const { data: patData, error: patErr } = await sb.rpc("get_github_pat", {
-    p_user_id: user.id,
-  });
-  if (patErr || !patData) {
+  if (connErr || !connData?.github_access_token) {
     return json(
       { error: "Aucun PAT GitHub. Connecte ton compte dans Paramètres." },
       404,
     );
   }
-  const pat = patData as string;
+  const pat = connData.github_access_token;
 
   let body: Record<string, unknown>;
   try {
@@ -90,10 +88,7 @@ Deno.serve(async (req) => {
 
     case "listBranches": {
       if (!repo) return json({ error: "repo requis" }, 400);
-      const data = await ghFetch(
-        pat,
-        `/repos/${repo}/branches?per_page=50`,
-      );
+      const data = await ghFetch(pat, `/repos/${repo}/branches?per_page=50`);
       if ((data as any)._error)
         return json({ error: (data as any).message }, (data as any).status);
       const branches = (data as any[]).map((b: any) => b.name);
