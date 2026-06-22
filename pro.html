@@ -5083,8 +5083,13 @@ function applyLang(lang){applyLanguage(lang);}
 function acctLogout(){
   var msg=typeof t==="function"?t("logout")+" ?":"Déconnexion ?";
   if(!confirm(msg))return;
-  if(typeof SB!=="undefined"&&SB&&SB.auth)SB.auth.signOut().then(function(){window.location.href="index.html";});
-  else window.location.href="index.html";
+  supabase.auth.signOut().then(function(){
+    localStorage.removeItem("tilex-al-memory");
+    localStorage.removeItem("tilex-chat-history");
+    window.location.href="index.html";
+  }).catch(function(){
+    window.location.href="index.html";
+  });
 }
 function saveSettingMemory(){
   var v=document.getElementById("set-memory");
