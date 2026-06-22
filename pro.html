@@ -665,6 +665,29 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .silex-badge-attention{background:rgba(255,207,74,.12);color:#ffcf4a;border:1px solid rgba(255,207,74,.4);}
 .silex-badge-critique{background:rgba(255,59,59,.15);color:#ff3b3b;border:1px solid rgba(255,59,59,.5);font-weight:800;}
 @keyframes silexPulseRouge{0%,100%{box-shadow:none;}50%{box-shadow:-2px 0 8px rgba(255,59,59,.4);}}
+/* ── Scan en cours — indicateur flottant top-right ── */
+#scan-floating-indicator{
+  position:fixed;top:10px;right:16px;z-index:9999;
+  display:none;align-items:center;gap:10px;
+  background:#0d0d12;border:1px solid rgba(255,127,39,.45);border-radius:12px;
+  padding:8px 16px 8px 12px;cursor:pointer;
+  box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 12px rgba(255,127,39,.15);
+  font-family:'Share Tech Mono',monospace;transition:opacity .3s,transform .3s;
+  animation:scanFloatPulse 2s ease-in-out infinite;
+}
+#scan-floating-indicator:hover{border-color:#ff7f27;transform:scale(1.03);}
+#scan-floating-indicator .sfi-icon{font-size:18px;animation:silexPulse 1s ease-in-out infinite;}
+#scan-floating-indicator .sfi-label{color:#ff7f27;font-size:11px;font-weight:700;letter-spacing:1.5px;}
+#scan-floating-indicator .sfi-timer{color:#e2e2ea;font-size:13px;font-weight:600;min-width:42px;text-align:right;}
+#scan-floating-indicator .sfi-target{color:#6c6c78;font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@keyframes scanFloatPulse{0%,100%{box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 12px rgba(255,127,39,.15);}50%{box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 20px rgba(255,127,39,.3);}}
+#scan-floating-indicator.sfi-done{animation:none;border-color:#37e0a0;box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 12px rgba(55,224,160,.2);}
+#scan-floating-indicator.sfi-done .sfi-label{color:#37e0a0;}
+#scan-floating-indicator.sfi-done .sfi-timer{color:#37e0a0;}
+#scan-floating-indicator.sfi-error{animation:none;border-color:#ff3b3b;box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 12px rgba(255,59,59,.2);}
+#scan-floating-indicator.sfi-error .sfi-label{color:#ff3b3b;}
+[data-theme="day"] #scan-floating-indicator{background:#fff;border-color:rgba(255,127,39,.35);box-shadow:0 4px 16px rgba(0,0,0,.1),0 0 8px rgba(255,127,39,.1);}
+[data-theme="day"] #scan-floating-indicator .sfi-timer{color:#1a1a1a;}
 
 .gh-sep{width:1px;height:18px;background:var(--border);flex-shrink:0;}
 .gh-files{max-height:200px;overflow-y:auto;border-bottom:1px solid var(--border);flex-shrink:0;display:none;}
@@ -1755,6 +1778,16 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
   </div>
 </nav>
+
+<!-- Scan en cours — indicateur flottant -->
+<div id="scan-floating-indicator" onclick="scanRetourSilex()">
+  <span class="sfi-icon">🔰</span>
+  <div style="display:flex;flex-direction:column;gap:1px;">
+    <span class="sfi-label">SCAN EN COURS</span>
+    <span class="sfi-target" id="sfi-target-name"></span>
+  </div>
+  <span class="sfi-timer" id="sfi-timer">0:00</span>
+</div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
@@ -7487,6 +7520,50 @@ function silexTab(tab){
 var DOMAINES_EXCLUS=["ti-lex.ca","tilex.ca"];
 function estCibleAutorisee(c){return!DOMAINES_EXCLUS.some(function(e){return c.indexOf(e)!==-1;});}
 
+/* ── Timer flottant — scan en arrière-plan ── */
+var _scanTimerInterval=null;
+var _scanStartTime=0;
+var _scanEnCours=false;
+
+function scanDemarrerTimer(scanType){
+  _scanEnCours=true;_scanStartTime=Date.now();
+  var indicator=document.getElementById('scan-floating-indicator');
+  var timerEl=document.getElementById('sfi-timer');
+  indicator.className='';indicator.style.display='flex';
+  timerEl.textContent='0:00';
+  _scanTimerInterval=setInterval(function(){
+    var elapsed=Math.floor((Date.now()-_scanStartTime)/1000);
+    var m=Math.floor(elapsed/60);var s=elapsed%60;
+    timerEl.textContent=m+':'+(s<10?'0':'')+s;
+  },1000);
+}
+
+function scanArreterTimer(statut){
+  _scanEnCours=false;
+  if(_scanTimerInterval){clearInterval(_scanTimerInterval);_scanTimerInterval=null;}
+  var indicator=document.getElementById('scan-floating-indicator');
+  var label=indicator.querySelector('.sfi-label');
+  if(statut==='error'){
+    indicator.className='sfi-error';
+    label.textContent='SCAN ÉCHOUÉ';
+    indicator.querySelector('.sfi-icon').textContent='⚠️';
+  }else{
+    indicator.className='sfi-done';
+    label.textContent='SCAN TERMINÉ';
+    indicator.querySelector('.sfi-icon').textContent='✅';
+  }
+  setTimeout(function(){
+    indicator.style.display='none';
+    indicator.className='';
+    indicator.querySelector('.sfi-icon').textContent='🔰';
+    label.textContent='SCAN EN COURS';
+  },8000);
+}
+
+function scanRetourSilex(){
+  showTab('silex');
+}
+
 async function silexLaunchScan(){
   var btn=document.getElementById('silex-launch-btn');
   var target=document.getElementById('silex-target').value;
@@ -7494,14 +7571,17 @@ async function silexLaunchScan(){
   var scanType=scanTypeEl?scanTypeEl.value:'passive_recon';
   if(!target)return;
   if(!estCibleAutorisee(target)){alert('Cible hors mandat. Seuls Supabase et Vercel sont autorisés.');return;}
+  if(_scanEnCours){showToastMsg('Un scan est déjà en cours…');return;}
   btn.disabled=true;btn.textContent='🔰 Scan en cours...';
   var resultsEl=document.getElementById('silex-results');
   resultsEl.style.display='block';
   resultsEl.innerHTML='<div style="background:#0d0d12;border:1px solid rgba(255,127,39,.27);border-radius:16px;padding:24px;text-align:center;">'+
     '<div style="color:#ff7f27;font-size:32px;margin-bottom:12px;animation:silexPulse 1s ease-in-out infinite;">🔰</div>'+
     '<p style="color:#ff7f27;font-weight:700;letter-spacing:2px;margin:0;font-family:\'Share Tech Mono\',monospace;">SILEX analyse '+escHtml(target)+'...</p>'+
-    '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+'</p></div>';
-  if(typeof scanDemarrerTimer==='function')scanDemarrerTimer(scanType);
+    '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+'</p>'+
+    '<p style="color:#6c6c78;font-size:11px;margin:12px 0 0;">Tu peux changer de page — le scan continue en arrière-plan.</p></div>';
+  document.getElementById('sfi-target-name').textContent=target;
+  scanDemarrerTimer(scanType);
   try{
     var session=(await supabase.auth.getSession()).data.session;
     if(!session)throw new Error('Non authentifié');
@@ -7518,7 +7598,7 @@ async function silexLaunchScan(){
     }
     if(!res.ok||!data.success)throw new Error(data.error||'Erreur scan');
     if(!isValidScanResult(data))throw new Error('Résultat de scan incomplet ou invalide.');
-    if(typeof scanArreterTimer==='function')scanArreterTimer();
+    scanArreterTimer('ok');
     silexRenderResults(data,resultsEl);
     if(typeof scanAnalyserClesSensibles==='function'){
       var cles=scanAnalyserClesSensibles(data);
@@ -7530,8 +7610,9 @@ async function silexLaunchScan(){
     }
     if(typeof onScanTermine==='function')onScanTermine(scanType);
     if(typeof indarResumerScan==='function'){setTimeout(function(){indarResumerScan(data,scanType);},1500);}
+    showToastMsg('✅ Scan SILEX terminé — résultats disponibles');
   }catch(err){
-    if(typeof scanArreterTimer==='function')scanArreterTimer();
+    scanArreterTimer('error');
     resultsEl.innerHTML='<div class="scan-error"><div style="font-weight:700;margin-bottom:8px;">⚠️ Le scan n\'a pas pu se terminer</div>'+
       '<div style="color:#e2e2ea;font-size:12px;margin-bottom:8px;">Réessaie ou réduis la portée du scan.</div>'+
       '<details style="cursor:pointer;"><summary style="font-size:11px;color:#6c6c78;">Détail technique</summary>'+
