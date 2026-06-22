@@ -1046,6 +1046,19 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   min-height:60vh;text-align:center;gap:16px;padding:40px 20px;}
 .chat-welcome-logo{width:56px;height:56px;}
 .chat-welcome-text{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--txt);letter-spacing:.5px;}
+.chat-conn-status{margin-top:18px;display:flex;flex-direction:column;gap:6px;align-items:center;width:100%;max-width:340px;}
+.conn-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px 14px;
+  border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.5px;color:var(--muted);}
+.conn-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.conn-dot.on{background:#37e0a0;box-shadow:0 0 6px rgba(55,224,160,.5);}
+.conn-dot.off{background:#ff4444;box-shadow:0 0 6px rgba(255,68,68,.4);}
+.conn-label{flex:1;color:#ffffff;font-weight:600;}
+.conn-val{font-size:10px;}
+.conn-val.on{color:#37e0a0;}
+.conn-val.off{color:#ff4444;}
+.conn-row.clickable{cursor:pointer;transition:background .15s;}
+.conn-row.clickable:hover{background:rgba(255,127,39,.08);}
 @media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px 8px;}}
 
 /* FAB — Nouvelle conversation — ORANGE */
@@ -1763,6 +1776,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
         <div class="chat-welcome" id="chat-welcome">
           <img src="assets/tilex-logo.png" alt="TI-LEX" class="chat-welcome-logo">
           <div class="chat-welcome-text" id="chat-welcome-text">Bonjour</div>
+          <div class="chat-conn-status" id="chat-conn-status"></div>
         </div>
       </div>
     </div>
@@ -6736,13 +6750,46 @@ function applyAdminVisibility(isAdmin){
   });
 }
 
+async function updateChatConnStatus(){
+  var panel=document.getElementById("chat-conn-status");if(!panel)return;
+  var auth=false,ghConn=false,ghUser="",sbConn=false,sbName="",inet=true;
+  try{
+    var sess=await supabase.auth.getSession();
+    auth=!!(sess.data&&sess.data.session);
+    if(auth){
+      var uid=sess.data.session.user.id;
+      var uc=await supabase.from("user_connections").select("github_connected,github_username,supabase_connected,supabase_project_name").eq("user_id",uid).maybeSingle();
+      if(uc.data){
+        ghConn=!!uc.data.github_connected;ghUser=uc.data.github_username||"";
+        sbConn=!!uc.data.supabase_connected;sbName=uc.data.supabase_project_name||"";
+      }
+    }
+  }catch(e){inet=false;}
+  try{await fetch(SB_URL+"/rest/v1/",{method:"HEAD",mode:"no-cors"});}catch(e){inet=false;}
+  var rows=[
+    {label:"Compte",on:auth,val:auth?"Connecté":"Non connecté",click:!auth?"showTab('settings')":""},
+    {label:"GitHub",on:ghConn,val:ghConn?"@"+ghUser:"Non connecté",click:!ghConn?"showTab('settings')":""},
+    {label:"Supabase",on:sbConn,val:sbConn?(sbName||"Connecté"):"Non connecté",click:!sbConn?"showTab('settings')":""},
+    {label:"Internet",on:inet,val:inet?"En ligne":"Hors ligne",click:""},
+  ];
+  var html="";
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    var cls="conn-row"+(r.click?" clickable":"");
+    var oc=r.click?' onclick="'+r.click+'"':"";
+    html+='<div class="'+cls+'"'+oc+'><div class="conn-dot '+(r.on?"on":"off")+'"></div><span class="conn-label">'+r.label+'</span><span class="conn-val '+(r.on?"on":"off")+'">'+(r.val)+'</span></div>';
+  }
+  panel.innerHTML=html;
+}
+updateChatConnStatus();
+
 silexCheckAccess();
 applyPlanVisibility();
 checkAdminStatus();
 initUserConnexions();
 verifierEtatChat();
 supabase.auth.onAuthStateChange(function(event,session){
-  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();updateChatConnStatus();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){
     demarrerConversation(session.user.id).catch(function(){});
