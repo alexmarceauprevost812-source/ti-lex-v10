@@ -3532,70 +3532,20 @@ async function sendChat(){
       bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à tilexcode" style="color:#ff7f27;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
-      var _twActive=window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer();
-      if(_twActive){bblText.classList.add("tx-typewriter","ecrit","phase-1");}
-      else{
-        var _isDay=document.documentElement.getAttribute("data-theme")==="day";
-        bblText.style.color=_isDay?"#1a1a1a":"#e8b830";
-        if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
-      }
-      var _twCursor=null;
-      if(_twActive){_twCursor=document.createElement("span");_twCursor.className="tx-cursor";bblText.appendChild(_twCursor);}
-      var queue=[];var streaming=true;
-      async function drainQueue(){
-        while(streaming||queue.length>0){
-          if(queue.length>0){
-            var ch=queue.shift();
-            if(_twActive){
-              var prev=bblText.querySelector(".tx-glitch");
-              if(prev){prev.replaceWith(document.createTextNode(prev.textContent));}
-              if(_twCursor&&_twCursor.parentNode)_twCursor.remove();
-              var g=document.createElement("span");g.className="tx-glitch";g.textContent=ch;
-              bblText.appendChild(g);
-              if(_twCursor)bblText.appendChild(_twCursor);
-            }else if(!_isDay){
-              var ls=document.createElement("span");ls.className="al-letter-glow";ls.textContent=ch;
-              bblText.appendChild(ls);
-            }else{
-              bblText.textContent+=ch;
-            }
-            msgs.scrollTop=msgs.scrollHeight;
-            var isPunct='.!?,;:'.indexOf(ch)!==-1;
-            var delay=isPunct?66:22;
-            if(queue.length>200)delay=4;
-            else if(queue.length>80)delay=10;
-            await new Promise(function(r){setTimeout(r,delay);});
-          }else{
-            await new Promise(function(r){setTimeout(r,30);});
-          }
-        }
-      }
-      var drain=drainQueue();
+      var _isDay=document.documentElement.getAttribute("data-theme")==="day";
+      bblText.style.color=_isDay?"#1a1a1a":"#e8b830";
+      if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
       var reply=await readSSEStream(res,function(delta){
-        for(var ci=0;ci<delta.length;ci++)queue.push(delta[ci]);
+        bblText.textContent+=delta;
+        msgs.scrollTop=msgs.scrollHeight;
       });
-      streaming=false;
-      await drain;
-      if(_twActive){
-        var _pg=bblText.querySelector(".tx-glitch");if(_pg)_pg.replaceWith(document.createTextNode(_pg.textContent));
-        if(_twCursor&&_twCursor.parentNode)_twCursor.remove();
-        bblText.classList.remove("phase-1","ecrit");
-      }
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       var _replyPlain=reply||"";
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain));
-      function _finalizeBbl(){
-        if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
-        else{applySyntaxHL(bblText);}
-        var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
-      }
-      if(window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer()&&_replyPlain){
-        var _twCtrl=TILEX.phase2Seulement(bblText,_replyPlain,function(){_finalizeBbl();});
-        bbl.addEventListener("click",function(){_twCtrl.annuler();},{once:true});
-      }else{
-        _finalizeBbl();
-      }
+      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
+      else{applySyntaxHL(bblText);}
+      var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
       upsertSessionAgentAL();
