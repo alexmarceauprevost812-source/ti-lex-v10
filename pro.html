@@ -456,7 +456,7 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.6;white-space:pre-wrap;
   overflow-wrap:break-word;word-break:normal;word-wrap:break-word;min-width:0;max-width:100%;}
 .cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:#ffffff;border-bottom-right-radius:3px;}
-.cmsg-bbl.a{background:none;border:none;color:#e8b830;padding:4px 0;
+.cmsg-bbl.a{background:none;border:none;color:var(--agent-text-color,#e8b830);padding:4px 0;
   text-shadow:0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2);}
 .al-letter-glow{animation:alGlow .6s ease-out forwards;}
 @keyframes alGlow{
@@ -497,6 +497,15 @@ body.sb-open .content{margin-left:var(--sb-w);}
 [data-theme="day"] .curseur-agent{background:#cc5500;box-shadow:0 0 4px rgba(204,85,0,.4);}
 .kw-copy:hover{background:rgba(255,255,255,.08)!important;text-decoration:none!important;}
 [data-theme="day"] .kw-copy:hover{background:rgba(0,0,0,.06)!important;}
+.cmi-section{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1.5px;padding:6px 14px 2px;text-transform:uppercase;}
+.cmi-row{display:flex;gap:6px;padding:4px 14px 8px;flex-wrap:wrap;}
+.cmi-chip{border:1px solid var(--border);background:var(--bg3);color:var(--txt);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;transition:all .15s;min-width:36px;text-align:center;}
+.cmi-chip:hover,.cmi-chip.active{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.1);}
+.cmi-color-dot{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .15s;padding:0;}
+.cmi-color-dot:hover,.cmi-color-dot.active{border-color:var(--orange);transform:scale(1.2);box-shadow:0 0 8px rgba(255,127,39,.4);}
+[data-theme="day"] .cmi-section{color:#8a7a5a;}
+[data-theme="day"] .cmi-chip{background:#DED1B8;border-color:#D4C5A4;color:#1a1a1a;}
+[data-theme="day"] .cmi-chip:hover,[data-theme="day"] .cmi-chip.active{border-color:#5A4000;color:#5A4000;background:rgba(90,64,0,.1);}
 .composer-scan-btn{background:linear-gradient(135deg,#ff7f27,#cc5500);color:#fff;border:none;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:opacity .2s,transform .1s;}
 .composer-scan-btn:hover{opacity:.85;transform:scale(1.03);}
 .composer-scan-btn:active{transform:scale(.97);}
@@ -2727,6 +2736,25 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
       <div class="composer-menu-sep"></div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
+      <div class="composer-menu-sep"></div>
+      <div class="cmi-section">🔤 POLICE</div>
+      <div class="cmi-row" id="cmi-fonts">
+        <button class="cmi-chip" onclick="setPolice('system')" data-font="system" title="Système">Aa</button>
+        <button class="cmi-chip" onclick="setPolice('mono')" data-font="mono" title="Monospace" style="font-family:ui-monospace,monospace;">Aa</button>
+        <button class="cmi-chip" onclick="setPolice('serif')" data-font="serif" title="Serif" style="font-family:Georgia,serif;">Aa</button>
+        <button class="cmi-chip" onclick="setPolice('round')" data-font="round" title="Arrondi" style="font-family:'Comic Sans MS',cursive;">Aa</button>
+        <button class="cmi-chip" onclick="setPolice('elegant')" data-font="elegant" title="Élégant" style="font-family:'Palatino Linotype',Palatino,serif;">Aa</button>
+        <button class="cmi-chip" onclick="setPolice('compact')" data-font="compact" title="Compact" style="font-family:'Arial Narrow',Arial,sans-serif;">Aa</button>
+      </div>
+      <div class="cmi-section">🎨 COULEUR TEXTE AGENT</div>
+      <div class="cmi-row" id="cmi-colors">
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#ff3b3b')" style="background:#ff3b3b;" title="Rouge"></button>
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#ffcf4a')" style="background:#ffcf4a;" title="Jaune"></button>
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#1a1a1a')" style="background:#1a1a1a;border:1px solid #666;" title="Noir"></button>
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#ffffff')" style="background:#ffffff;" title="Blanc"></button>
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#4a9eff')" style="background:#4a9eff;" title="Bleu"></button>
+        <button class="cmi-color-dot" onclick="setCouleurAgent('#37e0a0')" style="background:#37e0a0;" title="Vert"></button>
+      </div>
     </div>
     <div class="composer-input-row">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
@@ -3665,7 +3693,8 @@ async function sendChat(){
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
-      bblText.style.color=_isDay?"#1a1a1a":"#e8b830";
+      var _agentColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#1a1a1a":"#e8b830");
+      bblText.style.color=_agentColor;
       if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
       EcritureFluide.demarrer(bblText,msgs);
       var reply=await readSSEStream(res,function(delta){
@@ -6238,6 +6267,55 @@ function composeAction(action){
   }
 }
 
+var POLICES_MAP={
+  system:"system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif",
+  mono:"ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace",
+  serif:"Georgia,'Times New Roman',Times,serif",
+  round:"'Comic Sans MS','Chalkboard SE','Comic Neue',cursive",
+  elegant:"'Palatino Linotype',Palatino,'Book Antiqua',serif",
+  compact:"'Arial Narrow',Arial,'Helvetica Neue',sans-serif"
+};
+
+function setPolice(nom){
+  var font=POLICES_MAP[nom]||POLICES_MAP.system;
+  document.documentElement.style.setProperty('--font-tilex',font);
+  localStorage.setItem('tilex-police',nom);
+  document.querySelectorAll('#cmi-fonts .cmi-chip').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-font')===nom);
+  });
+  showToastMsg('🔤 Police : '+nom);
+}
+
+function setCouleurAgent(couleur){
+  document.documentElement.style.setProperty('--agent-text-color',couleur);
+  localStorage.setItem('tilex-agent-color',couleur);
+  document.querySelectorAll('#cmi-colors .cmi-color-dot').forEach(function(d){
+    d.classList.toggle('active',d.style.background===couleur||d.style.backgroundColor===couleur);
+  });
+  showToastMsg('🎨 Couleur agent : '+couleur);
+}
+
+(function(){
+  var savedFont=localStorage.getItem('tilex-police');
+  if(savedFont&&POLICES_MAP[savedFont]){
+    document.documentElement.style.setProperty('--font-tilex',POLICES_MAP[savedFont]);
+    var btn=document.querySelector('#cmi-fonts .cmi-chip[data-font="'+savedFont+'"]');
+    if(btn)btn.classList.add('active');
+  }
+  var savedColor=localStorage.getItem('tilex-agent-color');
+  if(savedColor){
+    document.documentElement.style.setProperty('--agent-text-color',savedColor);
+  }
+  var savedTheme=localStorage.getItem('tilex-theme');
+  var themeLabel=document.getElementById('menu-theme-label');
+  if(themeLabel){
+    var isDay=document.documentElement.getAttribute('data-theme')==='day';
+    themeLabel.textContent=isDay?'Nuit':'Jour';
+    var ico=document.querySelector('#menu-theme-btn .cmi-ico');
+    if(ico)ico.textContent=isDay?'🌙':'☀️';
+  }
+})();
+
 /* ══ SUPABASE CHAT INTEGRATION ══ */
 async function getSbUserConn(){
   try{
@@ -6550,7 +6628,7 @@ function alRenderAgentReply(text,data){
   var injectRegex=/```INJECT:([\w.\-\/]+)\n([\s\S]*?)```/g;
   var injects=[];var m;
   while((m=injectRegex.exec(text))!==null){injects.push({path:m[1],content:m[2]});}
-  var textColor=_isDay?"#1a1a1a":"#e8b830";
+  var textColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#1a1a1a":"#e8b830");
   var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
   var htmlContent='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>';
   htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[0]||"");
