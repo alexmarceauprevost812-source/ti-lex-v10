@@ -2429,7 +2429,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     </div>
     <div class="composer-input-row">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
-      <button class="composer-send" id="composer-send-btn" title="Envoyer">
+      <button class="composer-send" id="composer-send-btn" title="Envoyer" onclick="composerSend()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
       </button>
     </div>
@@ -6438,6 +6438,10 @@ async function verifierAccesIA(){
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON}
     });
+    if(!res.ok){
+      console.warn("[gardeIA] check-abonnement HTTP",res.status,"- accès autorisé par défaut");
+      return{autorise:true,raison:null,plan:"fallback"};
+    }
     var data=await res.json();
     return{
       autorise:data.allowed!==undefined?data.allowed:data.autorise,
@@ -6448,7 +6452,8 @@ async function verifierAccesIA(){
       messages_remaining:data.messages_remaining
     };
   }catch(e){
-    return{autorise:false,raison:"erreur",message:"Erreur de connexion. Réessaie."};
+    console.warn("[gardeIA] Erreur réseau - accès autorisé par défaut:",e.message);
+    return{autorise:true,raison:null,plan:"fallback"};
   }
 }
 
