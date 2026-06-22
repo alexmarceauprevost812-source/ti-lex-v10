@@ -449,8 +449,8 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cmsg-ico.a img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
 .cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.6;white-space:pre-wrap;
   overflow-wrap:break-word;word-break:normal;word-wrap:break-word;min-width:0;max-width:100%;}
-.cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:var(--txt);border-bottom-right-radius:3px;}
-.cmsg-bbl.a{background:none;border:none;color:var(--txt);padding:4px 0;}
+.cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:#ffffff;border-bottom-right-radius:3px;}
+.cmsg-bbl.a{background:none;border:none;color:#00a86b;padding:4px 0;}
 [data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;color:#1a1a1a;}
 [data-theme="day"] .cmsg-bbl.u{background:rgba(255,106,0,.1);border-color:rgba(255,106,0,.18);color:#1a1a1a;}
 .cmsg-actions{display:flex;gap:6px;margin-top:4px;}
@@ -3199,7 +3199,7 @@ async function sendChat(){
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _twActive=window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer();
       if(_twActive){bblText.classList.add("tx-typewriter","ecrit","phase-1");}
-      else{bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"#1a1a1a":"#FFFFFF";}
+      else{bblText.style.color=document.documentElement.getAttribute("data-theme")==="day"?"#1a1a1a":"#00a86b";}
       var _twCursor=null;
       if(_twActive){_twCursor=document.createElement("span");_twCursor.className="tx-cursor";bblText.appendChild(_twCursor);}
       var queue=[];var streaming=true;
