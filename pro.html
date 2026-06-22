@@ -1517,7 +1517,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 
   <!-- CODEX -->
   <div class="sb-item" id="si-codex" onclick="showTab('codex')">
-    <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="CODEX"></span>
+    <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="TILEXCODE"></span>
   </div>
 
   <!-- FICHIERS -->
@@ -1636,7 +1636,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
               <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
             </div>
-            <div class="ag-name">CODEX</div>
+            <div class="ag-name">TILEXCODE</div>
             <div class="ag-role">GÉNÉRATION DE CODE</div>
             <div class="ag-model">claude-sonnet-4-6</div>
             <div class="ag-stat"><div class="sdot g"></div> PRÊT</div>
@@ -1796,7 +1796,7 @@ Comment puis-je t'aider aujourd'hui?</div>
     <div class="codex-wrap">
       <div class="codex-topbar">
         <span class="cx-dot r"></span><span class="cx-dot y"></span><span class="cx-dot g"></span>
-        <span class="codex-title">CODEX · TI-LEX-AL</span>
+        <span class="codex-title">TILEXCODE · TI-LEX-AL</span>
         <select class="cx-lang" id="codex-lang">
           <option value="js">JavaScript</option>
           <option value="py">Python</option>
@@ -1851,7 +1851,7 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="codex-feed" id="codex-feed">
         <div class="codex-empty" id="codex-empty">
           <div class="codex-empty-ico">⌨️</div>
-          <div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.<br><br>🔗 Connecte GitHub dans la barre ci-haut<br>pour travailler sur tes projets.</div>
+          <div class="codex-empty-txt">TILEXCODE PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.<br><br>🔗 Connecte GitHub dans la barre ci-haut<br>pour travailler sur tes projets.</div>
         </div>
       </div>
     </div>
@@ -1873,7 +1873,7 @@ Comment puis-je t'aider aujourd'hui?</div>
       <div class="card-body">
         <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;">VÉRIFIE TOUTES LES ERREURS AVANT DÉPLOIEMENT</div>
         <div id="scan-results">
-          <div class="scan-result ok"><span class="scan-msg">Aucun fichier scanné. Connecte GitHub dans le Codex pour scanner ton projet.</span></div>
+          <div class="scan-result ok"><span class="scan-msg">Aucun fichier scanné. Connecte GitHub dans le tilexcode pour scanner ton projet.</span></div>
         </div>
         <div id="scan-summary" style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);"></div>
       </div>
@@ -3135,7 +3135,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à Codex" style="color:#ff7f27;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à tilexcode" style="color:#ff7f27;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _twActive=window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer();
@@ -3302,7 +3302,7 @@ function addMsg(role,txt){
   if(role==="a"){content=projHtml(txt);}
   else{content=escHtml(txt).replace(/\n/g,"<br>");}
   var icoHtml=role==="u"?"👤":'<img src="assets/tilex-logo.png" alt="AL">';
-  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à Codex" style="color:#ff7f27;">📤</button></div>':"";
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à tilexcode" style="color:#ff7f27;">📤</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl&&typeof applySyntaxHL==="function")applySyntaxHL(bbl);}
@@ -4325,7 +4325,7 @@ function cxFinalizeStream(el,fullText){
 }
 function clearCx(){
   codexValidated=false;
-  document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
+  document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">TILEXCODE PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   codexHistory=[];genBusy=false;
 }
 
@@ -4652,7 +4652,7 @@ async function vercelCall(body){
     closeAllDropdowns();
     if(isOpen)return;
     if(!ghToken){
-      var s=document.getElementById("si-parametres");
+      var s=document.getElementById("si-settings");
       if(s)s.click();
       return;
     }
@@ -4987,7 +4987,7 @@ var TRANSLATIONS={
     "conn-hd":"🔗 CONNEXIONS","model-hd":"MODÈLE IA","lang-label":"Langue de la plateforme",
     "lang-french":"Français","lang-english":"Anglais",
     "memory-hd":"MÉMOIRE IA","convs-hd":"CONVERSATIONS","interface-hd":"INTERFACE",
-    "chat":"CHAT","codex":"CODEX","studio":"STUDIO","account":"COMPTE",
+    "chat":"CHAT","codex":"TILEXCODE","studio":"STUDIO","account":"COMPTE",
     "cerveau":"Cerveau","conversations":"Conversations","favoris":"Favoris","projet":"Projet",
     "logout":"Déconnexion","online":"En ligne","offline":"Hors ligne","memory-active":"Mémoire active",
     "new-conversation":"+ NOUVELLE CONVERSATION","no-saved-conv":"Aucune conversation sauvegardée.",
@@ -5010,7 +5010,7 @@ var TRANSLATIONS={
     "conn-hd":"🔗 CONNECTIONS","model-hd":"AI MODEL","lang-label":"Platform language",
     "lang-french":"French","lang-english":"English",
     "memory-hd":"AI MEMORY","convs-hd":"CONVERSATIONS","interface-hd":"INTERFACE",
-    "chat":"CHAT","codex":"CODEX","studio":"STUDIO","account":"ACCOUNT",
+    "chat":"CHAT","codex":"TILEXCODE","studio":"STUDIO","account":"ACCOUNT",
     "cerveau":"Brain","conversations":"Conversations","favoris":"Favorites","projet":"Project",
     "logout":"Log out","online":"Online","offline":"Offline","memory-active":"Memory active",
     "new-conversation":"+ NEW CONVERSATION","no-saved-conv":"No saved conversations.",
@@ -5048,7 +5048,7 @@ function applyLanguage(lang){
   var labels=document.querySelectorAll(".sb-label[data-txt]");
   labels.forEach(function(el){
     var key=el.getAttribute("data-txt");
-    var map={"CHAT":"chat","CODEX":"codex","CRÉER AGENT IA":"create-agent","CREATE AI AGENT":"create-agent",
+    var map={"CHAT":"chat","TILEXCODE":"codex","CRÉER AGENT IA":"create-agent","CREATE AI AGENT":"create-agent",
       "COMPTE":"account","ACCOUNT":"account","PARAMÈTRES":"settings","SETTINGS":"settings"};
     var trKey=map[key];
     if(trKey&&TRANSLATIONS[lang][trKey]){

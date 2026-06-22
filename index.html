@@ -1176,9 +1176,19 @@
     let supabase = null, currentUser = null;
 
     function initSupabase() {
-      if (!window.supabase) return;
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        setTimeout(initSupabase, 200);
+        return;
+      }
       try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabase.auth.onAuthStateChange(function(event, session) {
+          if (event === 'SIGNED_IN' && session?.user) {
+            currentUser = session.user;
+            updateUIBadges();
+            playLoginAnimation();
+          }
+        });
         checkSession();
       } catch (e) { console.error('initSupabase error:', e); }
     }
