@@ -5985,9 +5985,18 @@ function applyProfileToUI(name,avatar){
 loadProfile();
 function updateChatWelcome(){
   var el=document.getElementById("chat-welcome-text");if(!el)return;
-  var name=localStorage.getItem("tilex-profile-name")||"";
-  if(!name){try{var u=supabase?.auth;if(u)u.getUser().then(function(r){if(r.data?.user){var m=r.data.user.user_metadata;name=m?.display_name||m?.full_name||m?.name||r.data.user.email?.split("@")[0]||"";if(name){el.textContent="Bonjour, "+name;localStorage.setItem("tilex-profile-name",name);}}});}catch(e){}}
-  else{el.textContent="Bonjour, "+name;}
+  try{
+    supabase.auth.getUser().then(function(r){
+      if(!r.data?.user)return;
+      var uid=r.data.user.id;
+      supabase.from("profiles").select("username,display_name").eq("id",uid).single().then(function(p){
+        var name="";
+        if(p.data)name=p.data.username||p.data.display_name||"";
+        if(!name){var m=r.data.user.user_metadata;name=m?.display_name||m?.full_name||m?.name||r.data.user.email?.split("@")[0]||"";}
+        if(name)el.textContent="Bonjour, "+name;
+      });
+    });
+  }catch(e){}
 }
 updateChatWelcome();
 
