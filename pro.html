@@ -981,33 +981,54 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
    BARRE COMPOSITEUR FIXE (bas de l'écran) — Chat + Codex
    ════════════════════════════════════════════════════════════ */
 .composer-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;
-  padding:10px 16px;background:var(--bg);border-top:none;
-  backdrop-filter:blur(14px);display:none;transition:left .42s cubic-bezier(.22,1,.36,1);}
+  padding:12px 16px 10px;background:transparent;border-top:none;
+  display:none;transition:left .42s cubic-bezier(.22,1,.36,1);flex-direction:column;gap:0;}
 body.sb-open .composer-bar{left:var(--sb-w);}
-[data-theme="day"] .composer-bar{background:var(--bg);border-top:1px solid var(--border);}
-.composer-bar.visible{display:flex;align-items:flex-end;gap:8px;}
-.composer-plus{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);
-  background:var(--bg3);color:var(--or);cursor:pointer;font-size:18px;flex-shrink:0;
+.composer-bar.visible{display:flex;}
+.composer-glass{background:rgba(40,40,44,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:8px;}
+.composer-input-row{display:flex;align-items:flex-end;gap:0;}
+.composer-input{flex:1;padding:8px 0;background:transparent;border:none;
+  color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:15px;
+  outline:none;resize:none;min-height:24px;max-height:120px;line-height:1.4;}
+.composer-input:focus{box-shadow:none;}
+.composer-input::placeholder{color:rgba(255,255,255,.35);}
+.composer-actions-row{display:flex;align-items:center;gap:8px;padding-top:2px;}
+.composer-plus{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer;font-size:18px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;transition:all .2s;}
-.composer-plus:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.08);}
-.composer-input{flex:1;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);
-  border-radius:var(--radius);color:var(--txt);font-family:'Rajdhani',sans-serif;font-size:14px;
-  outline:none;resize:none;min-height:38px;max-height:120px;line-height:1.4;transition:border-color .2s;}
-.composer-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,0,.1);}
-.composer-input::placeholder{color:var(--muted);}
-.composer-send{width:38px;height:38px;border-radius:var(--radius);border:none;flex-shrink:0;
-  background:linear-gradient(135deg,#cc6520,var(--orange),var(--orange2));color:#fff;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.composer-plus:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.1);}
+.composer-model-chip{display:flex;align-items:center;gap:6px;padding:7px 14px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;
+  cursor:pointer;transition:all .2s;white-space:nowrap;}
+.composer-model-chip:hover{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.1);}
+.composer-model-name{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--txt);letter-spacing:.3px;}
+.composer-model-badge{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--orange);letter-spacing:.3px;}
+.composer-model-chip.reflexion-on .composer-model-badge{color:#37e0a0;}
+.composer-action-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer;font-size:16px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.composer-action-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.1);}
+.composer-action-btn.active{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.12);}
+.composer-spacer{flex:1;}
+.composer-send{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+  background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:auto;}
 .composer-send:hover{filter:brightness(1.1);transform:scale(1.05);}
-.composer-menu{position:absolute;bottom:56px;left:16px;background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:6px;display:none;min-width:180px;box-shadow:0 -8px 30px rgba(0,0,0,.5);}
+.composer-menu{position:absolute;bottom:90px;left:16px;background:rgba(30,30,34,.92);backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:6px;display:none;min-width:190px;box-shadow:0 -8px 30px rgba(0,0,0,.6);}
 .composer-menu.open{display:block;}
-.composer-menu-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;
+.composer-menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
   cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--txt);
   letter-spacing:.5px;transition:background .15s;}
-.composer-menu-item:hover{background:rgba(255,106,0,.08);}
+.composer-menu-item:hover{background:rgba(255,127,39,.1);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
-@media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px;}}
+.chat-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;text-align:center;gap:16px;padding:40px 20px;}
+.chat-welcome-logo{width:56px;height:56px;}
+.chat-welcome-text{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--txt);letter-spacing:.5px;}
+@media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px 8px;}}
 
 /* FAB — Nouvelle conversation — ORANGE */
 .fab-new-conv-pro{position:fixed;bottom:88px;right:24px;z-index:900;display:none;
@@ -1307,9 +1328,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .code-block{color:#1a1a1a;}
 
 /* ══ #4 REFLEXION MODE ══ */
-.reflexion-toggle{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--or);font-size:12px;cursor:pointer;transition:all .2s;font-family:'Rajdhani',sans-serif;white-space:nowrap;}
-.reflexion-toggle:hover{border-color:var(--orange);color:var(--orange);}
-.reflexion-toggle.active{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.08);}
 .reflexion-block{margin:10px 0;border-radius:10px;border:1px solid #2a2a35;background:#0e0e14;overflow:hidden;}
 .reflexion-header{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s;}
 .reflexion-header:hover{background:#16161e;}
@@ -1406,6 +1424,10 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .banniere-btn:hover{opacity:.85;}
 .composer-input:disabled{opacity:.4;cursor:not-allowed!important;}
 .composer-send:disabled{opacity:.3;cursor:not-allowed!important;}
+[data-theme="day"] .composer-glass{background:rgba(230,225,215,.75);border-color:rgba(0,0,0,.08);}
+[data-theme="day"] .composer-input::placeholder{color:rgba(0,0,0,.35);}
+[data-theme="day"] .composer-plus,.composer-action-btn{border-color:rgba(0,0,0,.1);}
+[data-theme="day"] .composer-model-chip{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);}
 
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1723,14 +1745,9 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active · <span class="tilex-security-badge">IA Sécurisée</span></div></div>
         </div>
       <div class="chat-msgs" id="chat-msgs">
-        <div class="cmsg a">
-          <div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div>
-          <div><div class="cmsg-bbl a">Salut! Je suis Agent AL.
-
-Plan actif — je coordonne avec Codex pour le code et tous les autres agents disponibles.
-
-Comment puis-je t'aider aujourd'hui?</div>
-            <div class="cmsg-time">Maintenant</div></div>
+        <div class="chat-welcome" id="chat-welcome">
+          <img src="assets/tilex-logo.png" alt="TI-LEX" class="chat-welcome-logo">
+          <div class="chat-welcome-text" id="chat-welcome-text">Bonjour</div>
         </div>
       </div>
     </div>
@@ -2413,21 +2430,31 @@ Comment puis-je t'aider aujourd'hui?</div>
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
 <div class="composer-bar" id="composer-bar">
-  <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
-  <div class="composer-menu" id="composer-menu">
-    <div class="composer-menu-item" onclick="composeAction('file')"><span class="cmi-ico">📄</span> Fichier</div>
-    <div class="composer-menu-item" onclick="composeAction('zip')"><span class="cmi-ico">📦</span> Fichier ZIP</div>
-    <div class="composer-menu-item" onclick="composeAction('image')"><span class="cmi-ico">🖼️</span> Image</div>
-    <div class="composer-menu-item" onclick="composeAction('micro')"><span class="cmi-ico">🎙️</span> Micro</div>
-    <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
-    <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
+  <div class="composer-glass">
+    <div class="composer-menu" id="composer-menu">
+      <div class="composer-menu-item" onclick="composeAction('file')"><span class="cmi-ico">📄</span> Fichier</div>
+      <div class="composer-menu-item" onclick="composeAction('zip')"><span class="cmi-ico">📦</span> Fichier ZIP</div>
+      <div class="composer-menu-item" onclick="composeAction('image')"><span class="cmi-ico">🖼️</span> Image</div>
+      <div class="composer-menu-item" onclick="composeAction('micro')"><span class="cmi-ico">🎙️</span> Micro</div>
+      <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
+      <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
+    </div>
+    <div class="composer-input-row">
+      <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
+      <button class="composer-send" id="composer-send-btn" title="Envoyer">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+      </button>
+    </div>
+    <div class="composer-actions-row">
+      <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
+      <div class="composer-model-chip" id="composer-model-chip" onclick="toggleReflexionMode()" title="Mode réflexion">
+        <span class="composer-model-name" id="composer-model-label">Sonnet 4.6</span>
+        <span class="composer-model-badge" id="composer-reflexion-badge" style="display:none;">Réflexion</span>
+      </div>
+      <button class="composer-action-btn" id="btn-web-search-toggle" onclick="toggleWebSearch()" title="Recherche web">🌐</button>
+      <div class="composer-spacer"></div>
+    </div>
   </div>
-  <button id="btn-web-search-toggle" class="reflexion-toggle" onclick="toggleWebSearch()" title="Recherche web" style="margin-right:2px;">🌐</button>
-  <button id="btn-reflexion-toggle" class="reflexion-toggle" onclick="toggleReflexionMode()" title="Mode réflexion">🧠</button>
-  <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Écris un message…"></textarea>
-  <button class="composer-send" id="composer-send-btn" title="Envoyer">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-  </button>
 </div>
 
 <!-- MODAL AGENT -->
@@ -3299,6 +3326,7 @@ function projHtml(txt){
 }
 function addMsg(role,txt){
   const msgs=document.getElementById("chat-msgs");
+  var welcome=document.getElementById("chat-welcome");if(welcome)welcome.style.display="none";
   const t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
   const d=document.createElement("div");d.className="cmsg "+role;
   var content;
@@ -4982,6 +5010,7 @@ function saveSettingModel(){
     enforceModelGating();return;
   }
   localStorage.setItem("tilex-al-model",v);
+  if(typeof updateModelChip==="function")updateModelChip();
 }
 var TRANSLATIONS={
   fr:{
@@ -5433,10 +5462,10 @@ function updateComposer(){
   });
   if(activeView==="view-chat"){
     bar.classList.add("visible");currentComposerMode="chat";
-    document.getElementById("composer-input").placeholder=typeof t==="function"?t("type-message"):"Écris un message…";
+    document.getElementById("composer-input").placeholder="Discuter avec Agent AL…";
   }else if(activeView==="view-codex"){
     bar.classList.add("visible");currentComposerMode="codex";
-    document.getElementById("composer-input").placeholder=typeof t==="function"?t("codex-ph"):"Décris ce que tu veux coder…";
+    document.getElementById("composer-input").placeholder="Décris ce que tu veux coder…";
   }else{
     bar.classList.remove("visible");
   }
@@ -5913,6 +5942,13 @@ function applyProfileToUI(name,avatar){
   }
 }
 loadProfile();
+function updateChatWelcome(){
+  var el=document.getElementById("chat-welcome-text");if(!el)return;
+  var name=localStorage.getItem("tilex-profile-name")||"";
+  if(!name){try{var u=supabase?.auth;if(u)u.getUser().then(function(r){if(r.data?.user){var m=r.data.user.user_metadata;name=m?.display_name||m?.full_name||m?.name||r.data.user.email?.split("@")[0]||"";if(name){el.textContent="Bonjour, "+name;localStorage.setItem("tilex-profile-name",name);}}});}catch(e){}}
+  else{el.textContent="Bonjour, "+name;}
+}
+updateChatWelcome();
 
 /* ══ #3 CONVERSATION SEARCH ══ */
 function cvpFilterSearch(q){
@@ -6032,13 +6068,22 @@ function copyCodeBlock(cid){
 
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
-(function(){var btn=document.getElementById("btn-reflexion-toggle");if(btn&&reflexionMode)btn.classList.add("active");})();
+function updateModelChip(){
+  var chip=document.getElementById("composer-model-chip");
+  var label=document.getElementById("composer-model-label");
+  var badge=document.getElementById("composer-reflexion-badge");
+  var model=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
+  var names={"claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
+  if(label)label.textContent=names[model]||model.replace("claude-","").replace(/-/g," ");
+  if(badge)badge.style.display=reflexionMode?"inline":"none";
+  if(chip){chip.classList.toggle("reflexion-on",reflexionMode);}
+}
+(function(){updateModelChip();})();
 
 function toggleReflexionMode(){
   reflexionMode=!reflexionMode;
   localStorage.setItem("tilex-reflexion",reflexionMode);
-  var btn=document.getElementById("btn-reflexion-toggle");
-  if(btn)btn.classList.toggle("active",reflexionMode);
+  updateModelChip();
   showToastMsg(reflexionMode?"🧠 Mode réflexion activé":"Mode réflexion désactivé");
 }
 
@@ -6727,6 +6772,7 @@ function toggleWebSearch(){
   if(btn)btn.classList.toggle("active",webSearchMode);
   showToastMsg(webSearchMode?"🌐 Recherche web activée":"Recherche web désactivée");
 }
+(function(){var btn=document.getElementById("btn-web-search-toggle");if(btn&&webSearchMode)btn.classList.add("active");})();
 
 /* ══ CODEX VALIDATION FLOW ══ */
 var codexValidated=false;
