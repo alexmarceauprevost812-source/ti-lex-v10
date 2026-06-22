@@ -438,6 +438,8 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .c-name{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--txt);}
 .c-sub{font-family:'Share Tech Mono',monospace;font-size:8.5px;color:var(--muted);display:flex;align-items:center;gap:5px;}
 .tilex-security-badge{color:var(--green);font-weight:700;}
+.sb-conn-icon{display:inline-flex;align-items:center;vertical-align:middle;margin-left:6px;
+  animation:sbIconPop .4s ease-out;}
 .chat-msgs{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:14px 10px 140px;display:flex;flex-direction:column;gap:10px;background:var(--bg);min-height:0;min-width:0;}
 .cmsg{display:flex;gap:8px;max-width:92%;min-width:0;align-items:flex-start;}
 .cmsg>div:not(.cmsg-ico){min-width:0;flex:1;}
@@ -1051,6 +1053,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   letter-spacing:.5px;transition:background .15s;}
 .composer-menu-item:hover{background:rgba(255,127,39,.1);}
 .composer-menu-item .cmi-ico{font-size:15px;width:20px;text-align:center;}
+.composer-menu-sep{height:1px;background:rgba(255,255,255,.08);margin:4px 8px;}
 .chat-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;
   min-height:60vh;text-align:center;gap:16px;padding:40px 20px;}
 .chat-welcome-logo{width:56px;height:56px;}
@@ -1779,7 +1782,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="chat-wrap">
         <div class="chat-hd">
           <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
-          <div><div class="c-name">TI-LEX-AL · AGENT AL</div>
+          <div><div class="c-name">TI-LEX-AL · AGENT AL <span class="sb-conn-icon" id="chat-sb-icon" style="display:none;" title="Supabase connecté"><svg width="16" height="16" viewBox="0 0 109 113" fill="none"><path d="M63.7 110.3c-2.7 3.5-8.3.8-7.8-3.8l4.5-50.5H17.8c-4.4 0-6.8-5.1-4-8.5L52.4 2.7c2.7-3.5 8.3-.8 7.8 3.8l-4.5 50.5h42.6c4.4 0 6.8 5.1 4 8.5L63.7 110.3z" fill="#3ECF8E"/></svg></span></div>
             <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active · <span class="tilex-security-badge">IA Sécurisée</span></div></div>
         </div>
       <div class="chat-msgs" id="chat-msgs">
@@ -2450,6 +2453,10 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="composer-menu-item" onclick="composeAction('micro')"><span class="cmi-ico">🎙️</span> Micro</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
       <div class="composer-menu-item" onclick="composeAction('codex')"><span class="cmi-ico">⌨️</span> Générer du code</div>
+      <div class="composer-menu-sep"></div>
+      <div class="composer-menu-item" onclick="composeAction('sb-read')"><span class="cmi-ico">📊</span> Lire projet Supabase</div>
+      <div class="composer-menu-item" onclick="composeAction('sb-send')"><span class="cmi-ico">📤</span> Envoyer code à Supabase</div>
+      <div class="composer-menu-item" onclick="composeAction('to-codex')"><span class="cmi-ico">🔄</span> Envoyer à TILEXCODE</div>
     </div>
     <div class="composer-input-row">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
@@ -5622,7 +5629,143 @@ function composeAction(action){
     document.getElementById("composer-input").style.height="auto";
     sendChat();
   }
+  else if(action==="sb-read"){sbChatRead();}
+  else if(action==="sb-send"){sbChatSend();}
+  else if(action==="to-codex"){
+    var code=document.getElementById("composer-input").value.trim();
+    if(!code){addMsg("a","Écris du code dans la barre, puis clique 🔄 Envoyer à TILEXCODE.");return;}
+    document.getElementById("codex-txt").value=code;
+    document.getElementById("composer-input").value="";
+    document.getElementById("composer-input").style.height="auto";
+    showTab("codex");
+    addMsg("a","📤 Code envoyé à TILEXCODE.");
+  }
 }
+
+/* ══ SUPABASE CHAT INTEGRATION ══ */
+async function getSbUserConn(){
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data.session)return null;
+    var uid=sess.data.session.user.id;
+    var r=await supabase.from("user_connections").select("supabase_connected,supabase_url,supabase_anon_key,supabase_project_name").eq("user_id",uid).maybeSingle();
+    if(r.error||!r.data||!r.data.supabase_connected)return null;
+    return r.data;
+  }catch(e){return null;}
+}
+
+async function sbChatRead(){
+  var conn=await getSbUserConn();
+  if(!conn){addMsg("a","⚠️ Supabase non connecté. Va dans ⚙️ Paramètres pour te connecter.");return;}
+  addMsg("u","📊 Lire projet Supabase");
+  addMsg("a","⏳ Lecture du projet Supabase...");
+  try{
+    var url=conn.supabase_url.replace(/\/+$/,"");
+    var res=await fetch(url+"/rest/v1/",{headers:{apikey:conn.supabase_anon_key,Authorization:"Bearer "+conn.supabase_anon_key}});
+    if(!res.ok){addMsg("a","❌ Erreur "+res.status+" — impossible de lire le projet.");return;}
+    var schema=await res.json();
+    var tables=Object.keys(schema.definitions||schema.paths||{});
+    if(tables.length===0&&schema.paths){tables=Object.keys(schema.paths).map(function(p){return p.replace(/^\//,"").split("?")[0];}).filter(function(t){return t&&t!=="";});}
+    if(tables.length===0){addMsg("a","📋 Projet connecté ("+conn.supabase_project_name+") mais aucune table visible avec la clé anon.");return;}
+    var html="📋 **Projet: "+conn.supabase_project_name+"**\n\n";
+    html+="**"+tables.length+" tables trouvées :**\n";
+    for(var i=0;i<tables.length;i++){html+="• `"+tables[i]+"`\n";}
+    html+="\nÉcris le nom d'une table dans le chat pour la requêter, ex:\n`SELECT * FROM profiles LIMIT 5`";
+    addMsg("a",html);
+  }catch(e){addMsg("a","❌ Erreur: "+e.message);}
+}
+
+async function sbChatSend(){
+  var conn=await getSbUserConn();
+  if(!conn){addMsg("a","⚠️ Supabase non connecté. Va dans ⚙️ Paramètres pour te connecter.");return;}
+  var inp=document.getElementById("composer-input");
+  var code=inp.value.trim();
+  if(!code){addMsg("a","📤 Écris du code SQL ou JSON dans la barre, puis clique 📤 Envoyer code à Supabase.");return;}
+  addMsg("u","📤 Envoyer à Supabase:\n```\n"+code+"\n```");
+  inp.value="";inp.style.height="auto";
+  var confirmHtml='<div class="sb-send-confirm" id="sb-send-confirm">';
+  confirmHtml+='<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:var(--muted);margin-bottom:8px;">⚠️ CONFIRMER L\'ENVOI À SUPABASE</div>';
+  confirmHtml+='<pre style="background:#0e0e14;border:1px solid #23232c;border-radius:8px;padding:10px;font-size:11px;color:#f0e0c0;max-height:150px;overflow:auto;margin-bottom:10px;">'+escHtml(code)+'</pre>';
+  confirmHtml+='<div style="display:flex;gap:8px;">';
+  confirmHtml+='<button class="btn-orange" style="padding:6px 16px;font-size:12px;" onclick="sbConfirmSend(true)">✅ Confirmer</button>';
+  confirmHtml+='<button class="btn-ghost" style="padding:6px 16px;font-size:12px;" onclick="sbConfirmSend(false)">❌ Annuler</button>';
+  confirmHtml+='</div></div>';
+  window._sbPendingCode=code;
+  window._sbPendingConn=conn;
+  var msgs=document.getElementById("chat-msgs");
+  var d=document.createElement("div");d.className="cmsg a";d.id="sb-confirm-block";
+  d.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>'+confirmHtml+'</div>';
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function sbConfirmSend(confirmed){
+  var block=document.getElementById("sb-confirm-block");
+  if(block)block.remove();
+  if(!confirmed){addMsg("a","❌ Envoi annulé.");window._sbPendingCode=null;return;}
+  var code=window._sbPendingCode;
+  var conn=window._sbPendingConn;
+  window._sbPendingCode=null;window._sbPendingConn=null;
+  if(!code||!conn){addMsg("a","❌ Erreur: données perdues.");return;}
+  addMsg("a","⏳ Envoi en cours...");
+  try{
+    var url=conn.supabase_url.replace(/\/+$/,"");
+    var isInsert=code.trim().match(/^\{/)||code.trim().match(/^\[/);
+    if(isInsert){
+      var tableName=prompt("Nom de la table pour insérer les données:");
+      if(!tableName){addMsg("a","❌ Annulé.");return;}
+      var body=JSON.parse(code);
+      var res=await fetch(url+"/rest/v1/"+encodeURIComponent(tableName),{
+        method:"POST",
+        headers:{apikey:conn.supabase_anon_key,Authorization:"Bearer "+conn.supabase_anon_key,"Content-Type":"application/json",Prefer:"return=representation"},
+        body:JSON.stringify(body)
+      });
+      if(!res.ok){var err=await res.text();addMsg("a","❌ Erreur "+res.status+": "+err.slice(0,200));return;}
+      var data=await res.json();
+      addMsg("a","✅ Données insérées dans `"+tableName+"` !\n```json\n"+JSON.stringify(data,null,2).slice(0,500)+"\n```");
+    }else{
+      var tk=null;try{var sess=await supabase.auth.getSession();tk=sess.data.session?.access_token;}catch(e){}
+      var res2=await fetch(SB_URL+"/functions/v1/execute-sql",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+(tk||""),"apikey":SB_ANON},
+        body:JSON.stringify({sql:code})
+      });
+      if(!res2.ok){var err2=await res2.text();addMsg("a","❌ Erreur "+res2.status+": "+(err2.slice(0,300)||"Échec"));return;}
+      var data2=await res2.json();
+      addMsg("a","✅ SQL exécuté avec succès !\n```json\n"+JSON.stringify(data2,null,2).slice(0,800)+"\n```");
+    }
+  }catch(e){addMsg("a","❌ Erreur: "+e.message);}
+}
+
+async function sbChatQuery(table,limit){
+  var conn=await getSbUserConn();
+  if(!conn){addMsg("a","⚠️ Supabase non connecté.");return;}
+  limit=limit||10;
+  try{
+    var url=conn.supabase_url.replace(/\/+$/,"");
+    var res=await fetch(url+"/rest/v1/"+encodeURIComponent(table)+"?select=*&limit="+limit,{
+      headers:{apikey:conn.supabase_anon_key,Authorization:"Bearer "+conn.supabase_anon_key}
+    });
+    if(!res.ok){addMsg("a","❌ Erreur "+res.status+" sur la table `"+table+"`");return;}
+    var rows=await res.json();
+    if(rows.length===0){addMsg("a","📋 Table `"+table+"` — 0 lignes.");return;}
+    var cols=Object.keys(rows[0]);
+    var html="📋 **"+table+"** ("+rows.length+" lignes)\n\n";
+    html+="| "+cols.join(" | ")+" |\n";
+    html+="| "+cols.map(function(){return "---";}).join(" | ")+" |\n";
+    for(var i=0;i<Math.min(rows.length,10);i++){
+      html+="| "+cols.map(function(c){var v=rows[i][c];return v===null?"null":String(v).slice(0,30);}).join(" | ")+" |\n";
+    }
+    addMsg("a",html);
+  }catch(e){addMsg("a","❌ "+e.message);}
+}
+
+function updateChatSbIcon(){
+  getSbUserConn().then(function(conn){
+    var ico=document.getElementById("chat-sb-icon");
+    if(ico)ico.style.display=conn?"inline-flex":"none";
+  });
+}
+updateChatSbIcon();
 
 /* ══════════════════════════════════════════════════════
    CONVERSATIONS PAGE — Supabase-backed CRUD
@@ -6806,7 +6949,7 @@ checkAdminStatus();
 initUserConnexions();
 verifierEtatChat();
 supabase.auth.onAuthStateChange(function(event,session){
-  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();updateChatConnStatus();
+  silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();updateChatConnStatus();updateChatSbIcon();
   _currentUserEmail=session?.user?.email||null;
   if(session?.user){
     demarrerConversation(session.user.id).catch(function(){});
