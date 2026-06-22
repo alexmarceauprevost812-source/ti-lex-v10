@@ -1010,6 +1010,24 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .composer-action-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.1);}
 .composer-action-btn.active{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.12);}
+.composer-selector-wrap{position:relative;}
+.composer-selector-dropdown{display:none;position:absolute;bottom:44px;left:0;min-width:200px;
+  background:rgba(25,25,30,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:6px;
+  box-shadow:0 -8px 30px rgba(0,0,0,.6);}
+.composer-selector-dropdown.open{display:block;}
+.csd-section{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);
+  padding:8px 12px 4px;letter-spacing:1.5px;}
+.csd-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;
+  cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--txt);
+  letter-spacing:.3px;transition:background .15s;}
+.csd-item:hover{background:rgba(255,127,39,.1);}
+.csd-item.selected{background:rgba(255,127,39,.12);color:var(--orange);}
+.csd-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.csd-ico-img{width:18px;height:18px;border-radius:50%;flex-shrink:0;}
+.csd-toggle{justify-content:flex-start;}
+.csd-toggle-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);margin-left:auto;transition:background .2s;}
+.csd-toggle-dot.on{background:#37e0a0;box-shadow:0 0 6px rgba(55,224,160,.5);}
 .composer-spacer{flex:1;}
 .composer-send{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
@@ -2447,11 +2465,34 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     </div>
     <div class="composer-actions-row">
       <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
-      <div class="composer-model-chip" id="composer-model-chip" onclick="toggleReflexionMode()" title="Mode réflexion">
-        <span class="composer-model-name" id="composer-model-label">Sonnet 4.6</span>
-        <span class="composer-model-badge" id="composer-reflexion-badge" style="display:none;">Réflexion</span>
+      <div class="composer-selector-wrap" id="composer-selector-wrap">
+        <div class="composer-model-chip" id="composer-model-chip" onclick="toggleComposerSelector()">
+          <span class="composer-model-name" id="composer-model-label">TI-LEX-AL</span>
+          <span class="composer-model-badge" id="composer-reflexion-badge" style="display:none;">Réflexion</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-left:2px;"><path d="M2 4l3 3 3-3"/></svg>
+        </div>
+        <div class="composer-selector-dropdown" id="composer-selector-dropdown">
+          <div class="csd-section">AGENTS</div>
+          <div class="csd-item selected" data-agent="ti-lex-al" onclick="selectComposerAgent('ti-lex-al','TI-LEX-AL')">
+            <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL</div>
+          <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Agent Marceau')">
+            <span class="csd-ico">🧑‍💻</span> Agent Marceau</div>
+          <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
+            <span class="csd-ico">🛡️</span> SILEX</div>
+          <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
+            <span class="csd-ico">🔍</span> INDAR</div>
+          <div class="csd-section">MODÈLE</div>
+          <div class="csd-item" data-model="claude-sonnet-4-6" onclick="selectComposerModel('claude-sonnet-4-6')">
+            <span class="csd-ico">⚡</span> Sonnet 4.6</div>
+          <div class="csd-item" data-model="claude-opus-4-8" onclick="selectComposerModel('claude-opus-4-8')">
+            <span class="csd-ico">🧠</span> Opus 4.8</div>
+          <div class="csd-item" data-model="claude-haiku-4-5" onclick="selectComposerModel('claude-haiku-4-5')">
+            <span class="csd-ico">💨</span> Haiku 4.5</div>
+          <div class="csd-section">MODE</div>
+          <div class="csd-item csd-toggle" id="csd-reflexion-toggle" onclick="toggleReflexionMode()">
+            <span class="csd-ico">🧠</span> Réflexion <span class="csd-toggle-dot" id="csd-reflexion-dot"></span></div>
+        </div>
       </div>
-      <button class="composer-action-btn" id="btn-web-search-toggle" onclick="toggleWebSearch()" title="Recherche web">🌐</button>
       <div class="composer-spacer"></div>
     </div>
   </div>
@@ -6068,18 +6109,56 @@ function copyCodeBlock(cid){
 
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
+var composerAgent=localStorage.getItem("tilex-composer-agent")||"ti-lex-al";
+var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Agent Marceau","silex":"SILEX","indar":"INDAR"};
+
 function updateModelChip(){
-  var chip=document.getElementById("composer-model-chip");
   var label=document.getElementById("composer-model-label");
   var badge=document.getElementById("composer-reflexion-badge");
+  var chip=document.getElementById("composer-model-chip");
   var model=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
-  var names={"claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
-  if(label)label.textContent=names[model]||model.replace("claude-","").replace(/-/g," ");
+  var modelNames={"claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
+  var agentName=AGENT_NAMES[composerAgent]||"TI-LEX-AL";
+  var modelShort=modelNames[model]||"Sonnet 4.6";
+  if(label)label.textContent=agentName+" · "+modelShort;
   if(badge)badge.style.display=reflexionMode?"inline":"none";
-  if(chip){chip.classList.toggle("reflexion-on",reflexionMode);}
+  if(chip)chip.classList.toggle("reflexion-on",reflexionMode);
+  var dot=document.getElementById("csd-reflexion-dot");
+  if(dot)dot.classList.toggle("on",reflexionMode);
+  var dd=document.getElementById("composer-selector-dropdown");
+  if(dd){
+    dd.querySelectorAll(".csd-item[data-model]").forEach(function(el){el.classList.toggle("selected",el.getAttribute("data-model")===model);});
+    dd.querySelectorAll(".csd-item[data-agent]").forEach(function(el){el.classList.toggle("selected",el.getAttribute("data-agent")===composerAgent);});
+  }
 }
 (function(){updateModelChip();})();
 
+function toggleComposerSelector(){
+  var dd=document.getElementById("composer-selector-dropdown");
+  if(dd)dd.classList.toggle("open");
+}
+function closeComposerSelector(){
+  var dd=document.getElementById("composer-selector-dropdown");
+  if(dd)dd.classList.remove("open");
+}
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#composer-selector-wrap"))closeComposerSelector();
+});
+
+function selectComposerAgent(agent,name){
+  composerAgent=agent;
+  localStorage.setItem("tilex-composer-agent",agent);
+  updateModelChip();
+  var inp=document.getElementById("composer-input");
+  if(inp)inp.placeholder="Discuter avec "+name+"…";
+  closeComposerSelector();
+}
+function selectComposerModel(model){
+  localStorage.setItem("tilex-al-model",model);
+  var sel=document.getElementById("model-select");if(sel)sel.value=model;
+  updateModelChip();
+  closeComposerSelector();
+}
 function toggleReflexionMode(){
   reflexionMode=!reflexionMode;
   localStorage.setItem("tilex-reflexion",reflexionMode);
@@ -6768,11 +6847,8 @@ var webSearchMode=localStorage.getItem("tilex-web-search")==="true";
 function toggleWebSearch(){
   webSearchMode=!webSearchMode;
   localStorage.setItem("tilex-web-search",webSearchMode);
-  var btn=document.getElementById("btn-web-search-toggle");
-  if(btn)btn.classList.toggle("active",webSearchMode);
   showToastMsg(webSearchMode?"🌐 Recherche web activée":"Recherche web désactivée");
 }
-(function(){var btn=document.getElementById("btn-web-search-toggle");if(btn&&webSearchMode)btn.classList.add("active");})();
 
 /* ══ CODEX VALIDATION FLOW ══ */
 var codexValidated=false;
