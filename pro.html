@@ -7,7 +7,6 @@
 <meta name="theme-color" content="#ff7f27">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ti-lex-AL v10 — Pro</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="css/agent-marceau.css">
 <link rel="stylesheet" href="css/fichiers.css">
@@ -20,7 +19,8 @@
 <link rel="stylesheet" href="css/tilex-typewriter.css">
 <style>
 :root{
-  --font-tilex:'JetBrains Mono','Courier New','Consolas',monospace;
+  --font-tilex:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Helvetica Neue',sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
   --bg:#0a0a0a;--bg2:#0d0d0d;--bg3:#111111;--bg4:#1a1a1a;
   --or:#ff7f27;--or2:#ff9a3c;--or3:#cc6520;
   --orange:#ff7f27;--orange2:#ff9a3c;--og:rgba(255,127,39,.2);
@@ -42,7 +42,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--font-tilex);min-hei
   overflow-x:hidden;transition:background .25s ease,color .25s ease;}
 h1,h2,h3{font-weight:700!important;}
 h4,h5,h6{font-weight:500!important;}
-pre,code,pre code,kbd,samp{font-family:var(--font-tilex)!important;}
+pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 
 /* ══ BOUTONS ORANGE ══ */
 .btn-orange{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -495,6 +495,8 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .curseur-agent{display:inline-block;width:2px;height:1em;background:#ff7f27;margin-left:2px;vertical-align:text-bottom;animation:curseurClignote .7s ease-in-out infinite;border-radius:1px;box-shadow:0 0 6px rgba(255,127,39,.6);}
 .cmsg-bbl.ecriture-active{border-left:2px solid #ff7f27!important;transition:border-color .3s;}
 [data-theme="day"] .curseur-agent{background:#cc5500;box-shadow:0 0 4px rgba(204,85,0,.4);}
+.kw-copy:hover{background:rgba(255,255,255,.08)!important;text-decoration:none!important;}
+[data-theme="day"] .kw-copy:hover{background:rgba(0,0,0,.06)!important;}
 .c-inp-area{padding:10px;background:transparent;border-top:none;}
 [data-theme="day"] .c-inp-area{background:var(--bg3);}
 .c-row{display:flex;gap:8px;}
@@ -1710,9 +1712,6 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .composer-model-chip{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);}
 
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -3182,121 +3181,124 @@ const supabase=window.supabase.createClient(SB_URL,SB_ANON);window.supabase=supa
 function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
 
 /* ═══════════════════════════════════════════════════════════════
-   ✍️ ÉCRITURE FLUIDE — Typewriter pour streaming SSE Agent AL
-   Buffer les chunks SSE et les écrit lettre par lettre
+   ✍️ ÉCRITURE FLUIDE — Lent au début, accélère progressivement
+   Plus le texte avance, plus ça va vite (comme un vrai humain)
    ═══════════════════════════════════════════════════════════════ */
 var EcritureFluide={
-  vitesseBase:15,
-  variation:10,
-  pausePonctuation:{'.':150,'!':120,'?':120,',':45,':':60,';':50,'\n':80},
-  _buffer:'',
-  _affiche:'',
-  _raf:null,
-  _curseur:null,
-  _element:null,
-  _container:null,
-  _resolve:null,
-  _lastCharTime:0,
-  _fini:false,
+  _buffer:'',_affiche:'',_raf:null,_curseur:null,
+  _element:null,_container:null,_totalChars:0,
+  _lastTime:0,_fini:false,_skipMode:false,
 
-  demarrer:function(element,chatContainer){
-    EcritureFluide._element=element;
-    EcritureFluide._container=chatContainer;
-    EcritureFluide._buffer='';
-    EcritureFluide._affiche='';
-    EcritureFluide._fini=false;
-    EcritureFluide._lastCharTime=0;
-    element.classList.add('ecriture-active');
-    element.textContent='';
+  demarrer:function(el,container){
+    var E=EcritureFluide;
+    E._element=el;E._container=container;
+    E._buffer='';E._affiche='';E._totalChars=0;
+    E._fini=false;E._lastTime=0;
+    el.classList.add('ecriture-active');
+    el.textContent='';
     var c=document.createElement('span');
     c.className='curseur-agent';
-    EcritureFluide._curseur=c;
-    element.appendChild(c);
+    E._curseur=c;el.appendChild(c);
     if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      EcritureFluide._skipMode=true;
+      E._skipMode=true;
     }else{
-      EcritureFluide._skipMode=false;
-      EcritureFluide._boucle();
+      E._skipMode=false;
+      E._raf=requestAnimationFrame(E._boucle);
     }
   },
 
   ajouterTexte:function(delta){
-    if(EcritureFluide._skipMode){
-      EcritureFluide._affiche+=delta;
-      EcritureFluide._buffer='';
-      if(EcritureFluide._element){
-        EcritureFluide._element.textContent=EcritureFluide._affiche;
-        if(EcritureFluide._curseur)EcritureFluide._element.appendChild(EcritureFluide._curseur);
-        if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+    var E=EcritureFluide;
+    if(E._skipMode){
+      E._affiche+=delta;E._buffer='';
+      if(E._element){
+        E._element.textContent=E._affiche;
+        if(E._curseur)E._element.appendChild(E._curseur);
+        if(E._container)E._container.scrollTop=E._container.scrollHeight;
       }
       return;
     }
-    EcritureFluide._buffer+=delta;
+    E._buffer+=delta;
+  },
+
+  _calculerDelai:function(char){
+    var E=EcritureFluide;
+    var n=E._totalChars;
+    var base;
+    if(n<10)base=45;
+    else if(n<30)base=30;
+    else if(n<80)base=18;
+    else if(n<200)base=10;
+    else if(n<500)base=5;
+    else base=2;
+    base+=(Math.random()*6)-3;
+    if(char==='.'||char==='!'||char==='?')base+=Math.max(60-n*0.3,8);
+    else if(char===','||char===';')base+=Math.max(25-n*0.15,4);
+    else if(char==='\n')base+=Math.max(40-n*0.2,5);
+    else if(char===' ')base*=0.4;
+    if(E._buffer.length>100)base=1;
+    else if(E._buffer.length>50)base=Math.min(base,3);
+    return Math.max(base,1);
   },
 
   _boucle:function(){
+    var E=EcritureFluide;
     var now=performance.now();
-    var buf=EcritureFluide._buffer;
+    var buf=E._buffer;
     if(buf.length>0){
       var char=buf[0];
-      var delaiMin=EcritureFluide.vitesseBase+(Math.random()*EcritureFluide.variation);
-      var pause=EcritureFluide.pausePonctuation[char]||0;
-      if(char===' ')delaiMin*=0.3;
-      var delai=delaiMin+pause;
-      if(buf.length>80)delai=2;
-      else if(buf.length>40)delai=Math.min(delai,6);
-      else if(buf.length>20)delai=Math.min(delai,10);
-      if(now-EcritureFluide._lastCharTime>=delai){
-        EcritureFluide._affiche+=char;
-        EcritureFluide._buffer=buf.slice(1);
-        EcritureFluide._lastCharTime=now;
-        var el=EcritureFluide._element;
+      var delai=E._calculerDelai(char);
+      if(now-E._lastTime>=delai){
+        var chunk=1;
+        if(E._totalChars>300&&buf.length>20)chunk=Math.min(3,buf.length);
+        else if(E._totalChars>150&&buf.length>10)chunk=Math.min(2,buf.length);
+        E._affiche+=buf.slice(0,chunk);
+        E._buffer=buf.slice(chunk);
+        E._totalChars+=chunk;
+        E._lastTime=now;
+        var el=E._element;
         if(el){
-          el.textContent=EcritureFluide._affiche;
-          if(EcritureFluide._curseur)el.appendChild(EcritureFluide._curseur);
-          if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+          el.textContent=E._affiche;
+          if(E._curseur)el.appendChild(E._curseur);
+          if(E._container)E._container.scrollTop=E._container.scrollHeight;
         }
       }
-    }else if(EcritureFluide._fini){
-      EcritureFluide._terminer();
-      return;
+    }else if(E._fini){
+      E._terminer();return;
     }
-    EcritureFluide._raf=requestAnimationFrame(EcritureFluide._boucle);
+    E._raf=requestAnimationFrame(E._boucle);
   },
 
   finStream:function(){
-    EcritureFluide._fini=true;
-    if(EcritureFluide._skipMode)EcritureFluide._terminer();
+    var E=EcritureFluide;E._fini=true;
+    if(E._skipMode)E._terminer();
   },
 
   _terminer:function(){
-    if(EcritureFluide._raf){cancelAnimationFrame(EcritureFluide._raf);EcritureFluide._raf=null;}
-    var el=EcritureFluide._element;
-    if(el){
-      el.classList.remove('ecriture-active');
-      if(EcritureFluide._curseur)EcritureFluide._curseur.remove();
+    var E=EcritureFluide;
+    if(E._raf){cancelAnimationFrame(E._raf);E._raf=null;}
+    if(E._element){
+      E._element.classList.remove('ecriture-active');
+      if(E._curseur)E._curseur.remove();
     }
-    EcritureFluide._element=null;
-    EcritureFluide._curseur=null;
-    EcritureFluide._container=null;
+    E._element=null;E._curseur=null;E._container=null;
   },
 
   skip:function(){
-    if(EcritureFluide._raf){cancelAnimationFrame(EcritureFluide._raf);EcritureFluide._raf=null;}
-    EcritureFluide._affiche+=EcritureFluide._buffer;
-    EcritureFluide._buffer='';
-    var el=EcritureFluide._element;
-    if(el){
-      el.textContent=EcritureFluide._affiche;
-      el.classList.remove('ecriture-active');
-      if(EcritureFluide._curseur)EcritureFluide._curseur.remove();
-      if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+    var E=EcritureFluide;
+    if(E._raf){cancelAnimationFrame(E._raf);E._raf=null;}
+    E._affiche+=E._buffer;E._buffer='';
+    if(E._element){
+      E._element.textContent=E._affiche;
+      E._element.classList.remove('ecriture-active');
+      if(E._curseur)E._curseur.remove();
+      if(E._container)E._container.scrollTop=E._container.scrollHeight;
     }
   }
 };
 document.addEventListener('click',function(e){
-  var active=document.querySelector('.ecriture-active');
-  if(active&&active.contains(e.target))EcritureFluide.skip();
+  var a=document.querySelector('.ecriture-active');
+  if(a&&a.contains(e.target))EcritureFluide.skip();
 });
 
 async function readSSE(res){
@@ -7174,9 +7176,17 @@ function applySyntaxHL(el){
   allRules.forEach(function(r){
     var escaped=r.keyword.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
     var regex=new RegExp("\\b("+escaped+")\\b","gi");
-    html=html.replace(regex,'<span class="syntax-hl" style="color:'+r.color+';font-weight:600;">$1</span>');
+    html=html.replace(regex,'<span class="syntax-hl kw-copy" style="color:'+r.color+';font-weight:600;cursor:pointer;border-bottom:1px dotted '+r.color+'40;padding:0 2px;border-radius:2px;transition:background .15s;" onclick="copierMotCle(this)" title="Cliquer pour copier">$1</span>');
   });
   el.innerHTML=html;
+}
+function copierMotCle(el){
+  var txt=el.textContent;
+  navigator.clipboard.writeText(txt).then(function(){
+    el.style.background='rgba(55,224,160,.2)';
+    showToastMsg('📋 «'+txt+'» copié');
+    setTimeout(function(){el.style.background='';},800);
+  }).catch(function(){showToastMsg('❌ Impossible de copier');});
 }
 
 /* ══ #3 COPY CODE BLOCK ══ */
