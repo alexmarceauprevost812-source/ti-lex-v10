@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     const githubUser = await githubRes.json();
 
-    await supabase
+    const { error: ucErr } = await supabase
       .from("user_connections")
       .upsert(
         {
@@ -82,6 +82,11 @@ Deno.serve(async (req) => {
         },
         { onConflict: "user_id" },
       );
+
+    if (ucErr) {
+      console.error("user_connections upsert error:", ucErr);
+      return json({ error: "Erreur sauvegarde connexion: " + ucErr.message }, 500);
+    }
 
     await supabase
       .from("profiles")

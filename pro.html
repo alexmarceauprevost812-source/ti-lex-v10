@@ -4651,7 +4651,7 @@ async function vercelCall(body){
     var isOpen=repoDropdown.style.display!=="none";
     closeAllDropdowns();
     if(isOpen)return;
-    if(!ghToken){
+    if(!ghUsername){
       var s=document.getElementById("si-settings");
       if(s)s.click();
       return;
@@ -4682,7 +4682,7 @@ async function vercelCall(body){
   });
 
   connectBtn.addEventListener("click",function(){
-    var s=document.getElementById("si-parametres");
+    var s=document.getElementById("si-settings");
     if(s)s.click();
   });
 
