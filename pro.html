@@ -1071,6 +1071,50 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .conn-val.off{color:#ff4444;}
 .conn-row.clickable{cursor:pointer;transition:background .15s;}
 .conn-row.clickable:hover{background:rgba(255,127,39,.08);}
+/* ── GitHub panel in chat ── */
+.gh-conn-icon{display:inline-flex;align-items:center;margin-left:6px;vertical-align:middle;}
+.al-github-panel{margin-top:14px;width:100%;max-width:340px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;}
+.al-gh-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.al-gh-status{display:flex;align-items:center;gap:6px;font-family:'Share Tech Mono',monospace;font-size:11px;}
+.al-gh-status .conn-dot{width:6px;height:6px;}
+.al-gh-btn{padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;}
+.al-gh-btn:hover{background:rgba(255,127,39,.15);border-color:#ff7f27;}
+.al-gh-config{margin-top:8px;display:flex;gap:6px;}
+.al-gh-config input{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:6px 8px;
+  color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:10px;}
+.al-gh-config input:focus{outline:none;border-color:#ff7f27;}
+.al-gh-config button{padding:6px 12px;border-radius:6px;border:none;background:#ff7f27;color:#fff;
+  font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;}
+.al-gh-config button:hover{filter:brightness(1.1);}
+.al-gh-project{margin-top:8px;padding:8px 10px;background:rgba(0,168,107,.06);border:1px solid rgba(0,168,107,.15);
+  border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);}
+.al-gh-project .al-gh-project-clear{color:var(--muted);cursor:pointer;font-size:9px;margin-top:4px;display:inline-block;}
+.al-gh-project .al-gh-project-clear:hover{color:#ff4444;}
+/* ── INJECT cards in chat ── */
+.al-inject-card{margin-top:8px;background:rgba(0,168,107,.04);border:1px solid rgba(0,168,107,.15);border-radius:10px;overflow:hidden;}
+.al-inject-hd{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(0,168,107,.06);}
+.al-inject-hd span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);}
+.al-inject-hd button{padding:2px 8px;border-radius:4px;border:none;background:rgba(0,168,107,.15);
+  color:var(--green);font-family:'Share Tech Mono',monospace;font-size:9px;cursor:pointer;transition:all .15s;}
+.al-inject-hd button:hover{background:rgba(0,168,107,.3);}
+.al-inject-pre{padding:6px 10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);
+  max-height:100px;overflow:auto;white-space:pre-wrap;word-break:break-all;}
+/* ── Pending inject bar ── */
+.al-pending-bar{margin-top:8px;padding:10px 14px;background:rgba(255,127,39,.05);border:1px solid rgba(255,127,39,.15);
+  border-radius:12px;}
+.al-pending-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.al-pending-hd span{font-family:'Share Tech Mono',monospace;font-size:11px;color:#ff7f27;font-weight:700;}
+.al-pending-list{max-height:80px;overflow-y:auto;}
+.al-pending-file{display:flex;align-items:center;justify-content:space-between;padding:2px 0;
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);}
+.al-pending-file button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:10px;}
+.al-pending-file button:hover{color:#ff4444;}
+.al-pending-actions{display:flex;gap:6px;margin-top:8px;}
+.al-pending-actions input{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:6px;
+  padding:6px 8px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:10px;}
+.al-pending-actions button{padding:6px 14px;border-radius:6px;border:none;background:var(--green);color:#fff;
+  font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;}
 @media(max-width:680px){.composer-bar{left:0!important;padding:8px 10px 8px;}}
 
 /* FAB — Nouvelle conversation — ORANGE */
@@ -1782,7 +1826,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="chat-wrap">
         <div class="chat-hd">
           <div class="c-ava"><img src="assets/tilex-logo.png" alt="TI-LEX-AL"></div>
-          <div><div class="c-name">TI-LEX-AL · AGENT AL <span class="sb-conn-icon" id="chat-sb-icon" style="display:none;" title="Supabase connecté"><svg width="16" height="16" viewBox="0 0 109 113" fill="none"><path d="M63.7 110.3c-2.7 3.5-8.3.8-7.8-3.8l4.5-50.5H17.8c-4.4 0-6.8-5.1-4-8.5L52.4 2.7c2.7-3.5 8.3-.8 7.8 3.8l-4.5 50.5h42.6c4.4 0 6.8 5.1 4 8.5L63.7 110.3z" fill="#3ECF8E"/></svg></span></div>
+          <div><div class="c-name">TI-LEX-AL · AGENT AL <span class="gh-conn-icon" id="chat-gh-icon" style="display:none;" title="GitHub connecté"><svg width="16" height="16" viewBox="0 0 16 16" fill="#e2e2ea"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></span><span class="sb-conn-icon" id="chat-sb-icon" style="display:none;" title="Supabase connecté"><svg width="16" height="16" viewBox="0 0 109 113" fill="none"><path d="M63.7 110.3c-2.7 3.5-8.3.8-7.8-3.8l4.5-50.5H17.8c-4.4 0-6.8-5.1-4-8.5L52.4 2.7c2.7-3.5 8.3-.8 7.8 3.8l-4.5 50.5h42.6c4.4 0 6.8 5.1 4 8.5L63.7 110.3z" fill="#3ECF8E"/></svg></span></div>
             <div class="c-sub"><div class="sdot g"></div> En ligne · Mémoire active · <span class="tilex-security-badge">IA Sécurisée</span></div></div>
         </div>
       <div class="chat-msgs" id="chat-msgs">
@@ -1790,9 +1834,28 @@ body.sb-open .composer-bar{left:var(--sb-w);}
           <img src="assets/tilex-logo.png" alt="TI-LEX" class="chat-welcome-logo">
           <div class="chat-welcome-text" id="chat-welcome-text">Bonjour</div>
           <div class="chat-conn-status" id="chat-conn-status"></div>
+          <!-- GitHub Agent Panel -->
+          <div class="al-github-panel" id="al-github-panel">
+            <div class="al-gh-header">
+              <div class="al-gh-status">
+                <div class="conn-dot off" id="al-gh-dot"></div>
+                <span id="al-gh-status-text">GitHub non connecté</span>
+              </div>
+              <button class="al-gh-btn" id="al-gh-toggle-btn" onclick="alToggleGhConfig()">⚙️ Config</button>
+            </div>
+            <div id="al-gh-config-wrap" style="display:none;">
+              <div class="al-gh-config">
+                <input type="password" id="al-gh-token-input" placeholder="ghp_xxxx — Personal Access Token">
+                <button onclick="alConnectGithub()">Connecter</button>
+              </div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;">🔒 Stocké en localStorage · Permission requise: <code style="color:#ff7f27;">repo</code></div>
+            </div>
+            <div id="al-gh-project-info" style="display:none;"></div>
+          </div>
         </div>
       </div>
     </div>
+    <div class="al-pending-bar" id="al-pending-bar" style="display:none;margin:0 12px 8px;"></div>
     <input type="hidden" id="chat-in">
     </div><!-- /sv-convos -->
 
@@ -2457,6 +2520,10 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="composer-menu-item" onclick="composeAction('sb-read')"><span class="cmi-ico">📊</span> Lire projet Supabase</div>
       <div class="composer-menu-item" onclick="composeAction('sb-send')"><span class="cmi-ico">📤</span> Envoyer code à Supabase</div>
       <div class="composer-menu-item" onclick="composeAction('to-codex')"><span class="cmi-ico">🔄</span> Envoyer à TILEXCODE</div>
+      <div class="composer-menu-sep"></div>
+      <div class="composer-menu-item" onclick="composeAction('gh-scan')"><span class="cmi-ico">🔍</span> Scanner repo GitHub</div>
+      <div class="composer-menu-item" onclick="composeAction('gh-repos')"><span class="cmi-ico">📋</span> Lister mes repos</div>
+      <div class="composer-menu-item" onclick="composeAction('gh-inject')"><span class="cmi-ico">🚀</span> Injecter dans GitHub</div>
     </div>
     <div class="composer-input-row">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
@@ -3127,10 +3194,23 @@ async function upsertSessionAgentAL(){
   }catch(e){console.error("[ti-lex] upsertSessionAgentAL:",e);}
 }
 
+function _isGithubRequest(txt){
+  var lc=txt.toLowerCase();
+  var ghKeywords=["scanne","scanner","scan","repo","github","branche","branch","inject","injecte","push","commit",
+    "mon repo","mes repos","liste mes","scan mon","mon projet github","fichier github","read file"];
+  for(var i=0;i<ghKeywords.length;i++){if(lc.includes(ghKeywords[i]))return true;}
+  return false;
+}
+
 async function sendChat(){
   if(chatBusy)return;
   const inp=document.getElementById("chat-in");
   const txt=inp.value.trim();if(!txt)return;
+  if(_alGhConnected&&_isGithubRequest(txt)){
+    inp.value="";
+    alSendToAgent(txt);
+    return;
+  }
   if(window.TilexSecurityGuard){
     var secCheck=TilexSecurityGuard.checkMessage(txt);
     if(!secCheck.safe){
@@ -5683,6 +5763,21 @@ function composeAction(action){
     document.getElementById("composer-input").style.height="auto";
     sendChat();
   }
+  else if(action==="gh-scan"){
+    if(!_alGhConnected||!_alGhToken){addMsg("a","⚠️ GitHub non connecté. Clique ⚙️ Config dans le panel GitHub pour te connecter.");return;}
+    var scanQ=document.getElementById("composer-input").value.trim();
+    if(scanQ){document.getElementById("composer-input").value="";document.getElementById("composer-input").style.height="auto";alSendToAgent("Scanne le repo "+scanQ);}
+    else{alSendToAgent("Liste mes repos GitHub pour que je puisse choisir lequel scanner.");}
+  }
+  else if(action==="gh-repos"){
+    if(!_alGhConnected||!_alGhToken){addMsg("a","⚠️ GitHub non connecté.");return;}
+    alSendToAgent("Liste tous mes repos GitHub.");
+  }
+  else if(action==="gh-inject"){
+    if(!_alGhConnected||!_alGhToken){addMsg("a","⚠️ GitHub non connecté.");return;}
+    if(Object.keys(_alPendingFiles).length>0){alInjectPending();}
+    else{addMsg("a","Aucun fichier en attente d'injection. Demande à AL de générer du code d'abord.");}
+  }
   else if(action==="sb-read"){sbChatRead();}
   else if(action==="sb-send"){sbChatSend();}
   else if(action==="to-codex"){
@@ -5820,6 +5915,208 @@ function updateChatSbIcon(){
   });
 }
 updateChatSbIcon();
+
+/* ══ AGENT AL — GitHub Tool Use Integration ══ */
+var _alGhToken=localStorage.getItem("tilex-al-gh-token")||"";
+var _alGhConnected=false;
+var _alProjectContext=null;
+var _alPendingFiles={};
+
+function alInitGhStatus(){
+  if(_alGhToken){
+    fetch("https://api.github.com/user",{headers:{Authorization:"Bearer "+_alGhToken}})
+    .then(function(r){
+      if(r.ok)return r.json();
+      throw new Error("invalid");
+    }).then(function(user){
+      _alGhConnected=true;
+      var dot=document.getElementById("al-gh-dot");if(dot){dot.className="conn-dot on";}
+      var txt=document.getElementById("al-gh-status-text");if(txt)txt.textContent="@"+user.login;
+      var ico=document.getElementById("chat-gh-icon");if(ico)ico.style.display="inline-flex";
+      var btn=document.getElementById("al-gh-toggle-btn");if(btn)btn.textContent="✓ Connecté";
+    }).catch(function(){
+      _alGhConnected=false;_alGhToken="";localStorage.removeItem("tilex-al-gh-token");
+    });
+  }
+}
+alInitGhStatus();
+
+function alToggleGhConfig(){
+  var wrap=document.getElementById("al-gh-config-wrap");
+  if(!wrap)return;
+  wrap.style.display=wrap.style.display==="none"?"block":"none";
+}
+
+async function alConnectGithub(){
+  var inp=document.getElementById("al-gh-token-input");
+  var token=inp?inp.value.trim():"";
+  if(!token){showToastMsg("Entre ton token GitHub");return;}
+  try{
+    var r=await fetch("https://api.github.com/user",{headers:{Authorization:"Bearer "+token}});
+    if(!r.ok)throw new Error("Token invalide");
+    var user=await r.json();
+    _alGhToken=token;_alGhConnected=true;
+    localStorage.setItem("tilex-al-gh-token",token);
+    var dot=document.getElementById("al-gh-dot");if(dot)dot.className="conn-dot on";
+    var txt=document.getElementById("al-gh-status-text");if(txt)txt.textContent="@"+user.login;
+    var ico=document.getElementById("chat-gh-icon");if(ico)ico.style.display="inline-flex";
+    var btn=document.getElementById("al-gh-toggle-btn");if(btn)btn.textContent="✓ Connecté";
+    var wrap=document.getElementById("al-gh-config-wrap");if(wrap)wrap.style.display="none";
+    showToastMsg("✅ GitHub connecté: @"+user.login);
+    updateChatConnStatus();
+  }catch(e){showToastMsg("❌ Token GitHub invalide");}
+}
+
+function alUpdateProjectInfo(){
+  var el=document.getElementById("al-gh-project-info");if(!el)return;
+  if(!_alProjectContext){el.style.display="none";return;}
+  el.style.display="block";
+  el.innerHTML='<div class="al-gh-project">📁 <strong>'+escHtml(_alProjectContext.owner+"/"+_alProjectContext.repo)+'</strong> ('+escHtml(_alProjectContext.branch)+') · '+(_alProjectContext.file_tree?_alProjectContext.file_tree.length:0)+' fichiers<br><span class="al-gh-project-clear" onclick="alClearProject()">✕ Effacer contexte</span></div>';
+}
+
+function alClearProject(){
+  _alProjectContext=null;_alPendingFiles={};
+  alUpdateProjectInfo();alUpdatePendingBar();
+  showToastMsg("Contexte projet effacé");
+}
+
+function alAddPendingFile(path,content){
+  _alPendingFiles[path]=content;
+  alUpdatePendingBar();
+}
+
+function alRemovePendingFile(path){
+  delete _alPendingFiles[path];
+  alUpdatePendingBar();
+}
+
+function alUpdatePendingBar(){
+  var bar=document.getElementById("al-pending-bar");if(!bar)return;
+  var keys=Object.keys(_alPendingFiles);
+  if(keys.length===0){bar.style.display="none";return;}
+  bar.style.display="block";
+  var html='<div class="al-pending-hd"><span>🚀 '+keys.length+' fichier(s) prêts</span><button class="al-gh-btn" onclick="_alPendingFiles={};alUpdatePendingBar();">✕ Vider</button></div>';
+  html+='<div class="al-pending-list">';
+  for(var i=0;i<keys.length;i++){
+    html+='<div class="al-pending-file"><span>'+escHtml(keys[i])+'</span><button onclick="alRemovePendingFile(\''+escHtml(keys[i])+'\')">✕</button></div>';
+  }
+  html+='</div>';
+  html+='<div class="al-pending-actions"><input type="text" id="al-commit-msg" placeholder="Message du commit (optionnel)"><button onclick="alInjectPending()">🚀 Injecter</button></div>';
+  bar.innerHTML=html;
+}
+
+async function alInjectPending(){
+  var keys=Object.keys(_alPendingFiles);
+  if(keys.length===0){showToastMsg("Aucun fichier à injecter");return;}
+  if(!_alProjectContext||!_alGhToken){showToastMsg("Token GitHub et projet requis");return;}
+  var commitMsg=document.getElementById("al-commit-msg");
+  var msg=(commitMsg&&commitMsg.value.trim())||("AL injection — "+keys.length+" fichier(s)");
+  addMsg("u","🚀 Injection de "+keys.length+" fichier(s) dans "+_alProjectContext.branch);
+  addMsg("a","⏳ Injection en cours...");
+  try{
+    var tk=getToken();
+    var res=await fetch(SB_URL+"/functions/v1/agent-al",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk},
+      body:JSON.stringify({
+        action:"chat",
+        question:"Injecte ces fichiers dans "+_alProjectContext.branch+" avec le message: \""+msg+"\". Fichiers: "+keys.join(", "),
+        history:[],
+        github_token:_alGhToken,
+        conversation_id:_convActiveId,
+        project_context:_alProjectContext?{owner:_alProjectContext.owner,repo:_alProjectContext.repo,branch:_alProjectContext.branch,file_tree:_alProjectContext.file_tree}:null
+      })
+    });
+    var data=await res.json();
+    if(data.error){addMsg("a","❌ "+data.error);return;}
+    addMsg("a",data.result||"✅ Injection terminée");
+    _alPendingFiles={};alUpdatePendingBar();
+  }catch(e){addMsg("a","❌ Erreur: "+e.message);}
+}
+
+async function alSendToAgent(question){
+  if(chatBusy)return;
+  chatBusy=true;
+  addMsg("u",question);
+  chatHistory.push({role:"user",content:question});
+  var msgs=document.getElementById("chat-msgs");
+  var td=document.createElement("div");td.className="cmsg a";td.id="tyd-al";
+  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div></div></div>';
+  msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  try{
+    var tk=getToken();
+    var res=await fetch(SB_URL+"/functions/v1/agent-al",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk},
+      body:JSON.stringify({
+        action:"chat",
+        question:question,
+        history:chatHistory.slice(-20),
+        github_token:_alGhToken||undefined,
+        conversation_id:_convActiveId,
+        project_context:_alProjectContext?{owner:_alProjectContext.owner,repo:_alProjectContext.repo,branch:_alProjectContext.branch,file_tree:_alProjectContext.file_tree}:null
+      })
+    });
+    td.remove();
+    var data=await res.json();
+    if(data.error){addMsg("a","❌ "+data.error);chatBusy=false;return;}
+    var reply=data.result||"Pas de réponse.";
+    chatHistory.push({role:"assistant",content:reply});
+    // Render reply with INJECT blocks
+    alRenderAgentReply(reply,data);
+    if(data.project_context_updated){
+      _alProjectContext=data.project_context_updated;
+      alUpdateProjectInfo();
+    }
+    if(data.proposed_files){
+      for(var f in data.proposed_files){_alPendingFiles[f]=data.proposed_files[f];}
+      alUpdatePendingBar();
+    }
+    sauvegarderMsgEnDB("user",question);
+    sauvegarderMsgEnDB("assistant",reply);
+    upsertSessionAgentAL();
+  }catch(e){
+    td.remove();
+    addMsg("a","❌ Erreur: "+e.message);
+  }
+  chatBusy=false;
+}
+
+function alRenderAgentReply(text,data){
+  var msgs=document.getElementById("chat-msgs");
+  var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
+  var bbl=document.createElement("div");bbl.className="cmsg a";
+  var _isDay=document.documentElement.getAttribute("data-theme")==="day";
+  // Split text on INJECT blocks
+  var parts=text.split(/```INJECT:[\w.\-\/]+\n[\s\S]*?```/g);
+  var injectRegex=/```INJECT:([\w.\-\/]+)\n([\s\S]*?)```/g;
+  var injects=[];var m;
+  while((m=injectRegex.exec(text))!==null){injects.push({path:m[1],content:m[2]});}
+  var textColor=_isDay?"#1a1a1a":"#e8b830";
+  var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
+  var htmlContent='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>';
+  htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[0]||"");
+  for(var i=0;i<injects.length;i++){
+    htmlContent+='</div>';
+    htmlContent+='<div class="al-inject-card"><div class="al-inject-hd"><span>📄 '+escHtml(injects[i].path)+'</span>';
+    htmlContent+='<button onclick="alAddPendingFile(\''+escHtml(injects[i].path).replace(/'/g,"\\'")+'\',this.dataset.code)" data-code="'+escHtml(injects[i].content).replace(/"/g,"&quot;")+'">+ Ajouter</button></div>';
+    htmlContent+='<div class="al-inject-pre">'+escHtml(injects[i].content.slice(0,300))+(injects[i].content.length>300?"\n…":"")+'</div></div>';
+    if(parts[i+1]){htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[i+1]);}
+  }
+  htmlContent+='</div>';
+  // Actions
+  if(data&&data.actions_performed&&data.actions_performed.length>0){
+    var acts=data.actions_performed.map(function(a){return(a.status==="success"?"✅":"❌")+" "+a.tool;}).join(" · ");
+    htmlContent+='<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);margin-top:4px;">Outils: '+acts+'</div>';
+  }
+  if(data&&data.duration_ms){
+    htmlContent+='<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);">⏱ '+(data.duration_ms/1000).toFixed(1)+'s</div>';
+  }
+  htmlContent+='<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>';
+  htmlContent+='<div class="cmsg-time">'+t+'</div></div>';
+  bbl.innerHTML=htmlContent;
+  msgs.appendChild(bbl);msgs.scrollTop=msgs.scrollHeight;
+}
 
 /* ══════════════════════════════════════════════════════
    CONVERSATIONS PAGE — Supabase-backed CRUD
@@ -6978,6 +7275,7 @@ async function updateChatConnStatus(){
         sbConn=!!uc.data.supabase_connected;sbName=uc.data.supabase_project_name||"";
       }
     }
+    if(!ghConn&&_alGhConnected){ghConn=true;ghUser="via token local";}
   }catch(e){inet=false;}
   try{await fetch(SB_URL+"/rest/v1/",{method:"HEAD",mode:"no-cors"});}catch(e){inet=false;}
   var rows=[
