@@ -3335,6 +3335,9 @@ function getSystemPrompt(){
   var base=isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
+  if(TilexConfig.githubToken&&TilexConfig.githubRepo){
+    base+="\n\nProjet GitHub connecté: "+TilexConfig.githubUser+"/"+TilexConfig.githubRepo+" (branche: "+TilexConfig.githubBranch+"). L'utilisateur peut demander de lire des fichiers du projet.";
+  }
   return base;
 }
 var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
@@ -3464,6 +3467,10 @@ async function sendChat(){
   }
   addMsg("u",txt);inp.value="";chatBusy=true;
   trackMsg();
+  if(TilexConfig.githubToken){
+    var ghReply=await chatIntercepterCommandeGitHub(txt);
+    if(ghReply){addMsg("a",ghReply);chatBusy=false;return;}
+  }
   chatHistory.push({role:"user",content:txt});
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
@@ -4227,6 +4234,29 @@ var TilexGitHub={
     return{ok:true,message:"Connecté: @"+user.login,login:user.login};
   }
 };
+
+/* ══ Chat — Commandes GitHub directes ══ */
+async function chatIntercepterCommandeGitHub(message){
+  if(!TilexConfig.githubToken)return null;
+  var msg=message.toLowerCase();
+  if(msg.indexOf("liste")!==-1&&(msg.indexOf("fichier")!==-1||msg.indexOf("file")!==-1)){
+    var chMatch=msg.match(/dans\s+(\S+)/);
+    var chemin=chMatch?chMatch[1]:"";
+    var fichiers=await TilexGitHub.listerFichiers(chemin);
+    if(fichiers.erreur)return fichiers.erreur;
+    if(!Array.isArray(fichiers))return null;
+    return "📁 Fichiers GitHub"+(chemin?" ("+chemin+")":"")+":\n"+fichiers.map(function(f){return(f.type==="dir"?"📂 ":"📄 ")+f.name;}).join("\n");
+  }
+  var matchFichier=msg.match(/(?:lis|lire|read|ouvre|open)\s+(\S+\.\w+)/);
+  if(matchFichier){
+    var fpath=matchFichier[1];
+    var res=await TilexGitHub.lireFichier(fpath);
+    if(res.erreur)return res.erreur;
+    var extrait=res.contenu.slice(0,2000);
+    return "📄 **"+fpath+"** ("+res.taille+" bytes):\n```\n"+extrait+(res.contenu.length>2000?"\n...[tronqué]":"")+"\n```";
+  }
+  return null;
+}
 
 /* ── GitHub PAT Settings ── */
 function _ghGetUserId(){
