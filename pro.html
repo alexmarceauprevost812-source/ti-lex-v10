@@ -1564,11 +1564,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .lettre-projection.projected{animation:none;text-shadow:none;}
 [data-theme="day"] .projection-scan-line{display:none;}
 
-/* ══ SÉLECTEUR COULEUR POLICE — Chat ══ */
-.couleur-police-bar{display:flex;align-items:center;gap:6px;padding:6px 10px;
-  border-bottom:1px solid rgba(35,35,44,.4);flex-wrap:wrap;}
-.couleur-police-label{color:#555;font-size:8px;letter-spacing:1.5px;
-  font-family:'Share Tech Mono',monospace;flex-shrink:0;}
+/* ══ SÉLECTEUR COULEUR POLICE — dans menu composer ══ */
 .couleur-pastille{width:20px;height:20px;border-radius:50%;cursor:pointer;
   border:2px solid transparent;transition:transform .15s,border-color .15s;flex-shrink:0;}
 .couleur-pastille:hover{transform:scale(1.2);border-color:rgba(255,255,255,.3);}
@@ -1591,10 +1587,8 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .msg-couleur-rouge{color:#ff3b3b!important;}
 .msg-couleur-cyan{color:#37e0a0!important;}
 .msg-couleur-violet{color:#c084fc!important;}
-[data-theme="day"] .couleur-police-bar{border-bottom-color:rgba(180,155,100,.2);}
-[data-theme="day"] .couleur-police-label{color:#8a7d60;}
-[data-theme="day"] .couleur-reset-btn{border-color:#b9a87c;color:#8a7d60;}
 [data-theme="day"] .couleur-pastille:hover{border-color:rgba(0,0,0,.3);}
+[data-theme="day"] .couleur-reset-btn{border-color:#b9a87c;color:#8a7d60;}
 
 /* ══ #4 REFLEXION MODE ══ */
 .reflexion-block{margin:10px 0;border-radius:10px;border:1px solid #2a2a35;background:#0e0e14;overflow:hidden;}
@@ -2713,20 +2707,23 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <div class="composer-menu-item" onclick="composeAction('gh-scan')"><span class="cmi-ico">🔍</span> Scanner repo GitHub</div>
       <div class="composer-menu-item" onclick="composeAction('gh-repos')"><span class="cmi-ico">📋</span> Lister mes repos</div>
       <div class="composer-menu-item" onclick="composeAction('gh-inject')"><span class="cmi-ico">🚀</span> Injecter dans GitHub</div>
-    </div>
-    <div class="couleur-police-bar" id="couleur-police-bar">
-      <span class="couleur-police-label">POLICE</span>
-      <button class="couleur-reset-btn" onclick="couleurReset()" title="Couleur par défaut">A</button>
-      <div class="couleur-pastille" data-couleur="#ffffff" data-id="blanc" style="background:#ffffff;" onclick="couleurSelectionner('blanc')" title="Blanc — #ffffff"></div>
-      <div class="couleur-pastille" data-couleur="#000000" data-id="noir" style="background:#000000;" onclick="couleurSelectionner('noir')" title="Noir — #000000"></div>
-      <div class="couleur-pastille" data-couleur="#00ff42" data-id="vert" style="background:#00ff42;" onclick="couleurSelectionner('vert')" title="Vert — #00ff42"></div>
-      <div class="couleur-pastille" data-couleur="#1a3a6b" data-id="bleu" style="background:#1a3a6b;" onclick="couleurSelectionner('bleu')" title="Bleu Foncé — #1a3a6b"></div>
-      <div class="couleur-pastille" data-couleur="#ffcf4a" data-id="or" style="background:#ffcf4a;" onclick="couleurSelectionner('or')" title="Or — #ffcf4a"></div>
-      <div class="couleur-pastille" data-couleur="#ff7f27" data-id="orange" style="background:#ff7f27;" onclick="couleurSelectionner('orange')" title="Orange — #ff7f27"></div>
-      <div class="couleur-pastille" data-couleur="#ff3b3b" data-id="rouge" style="background:#ff3b3b;" onclick="couleurSelectionner('rouge')" title="Rouge — #ff3b3b"></div>
-      <div class="couleur-pastille" data-couleur="#37e0a0" data-id="cyan" style="background:#37e0a0;" onclick="couleurSelectionner('cyan')" title="Cyan — #37e0a0"></div>
-      <div class="couleur-pastille" data-couleur="#c084fc" data-id="violet" style="background:#c084fc;" onclick="couleurSelectionner('violet')" title="Violet — #c084fc"></div>
-      <span id="couleur-active-label" style="margin-left:auto;color:#444;font-size:8px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;">Défaut</span>
+      <div class="composer-menu-sep"></div>
+      <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
+      <div class="composer-menu-sep"></div>
+      <div class="csd-section" style="padding:6px 14px 2px;font-size:9px;letter-spacing:2px;color:#555;">COULEUR POLICE</div>
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 14px 10px;flex-wrap:wrap;">
+        <button class="couleur-reset-btn" onclick="couleurReset()" title="Couleur par défaut">A</button>
+        <div class="couleur-pastille" data-couleur="#ffffff" data-id="blanc" style="background:#ffffff;" onclick="couleurSelectionner('blanc')" title="Blanc"></div>
+        <div class="couleur-pastille" data-couleur="#000000" data-id="noir" style="background:#000000;" onclick="couleurSelectionner('noir')" title="Noir"></div>
+        <div class="couleur-pastille" data-couleur="#00ff42" data-id="vert" style="background:#00ff42;" onclick="couleurSelectionner('vert')" title="Vert"></div>
+        <div class="couleur-pastille" data-couleur="#1a3a6b" data-id="bleu" style="background:#1a3a6b;" onclick="couleurSelectionner('bleu')" title="Bleu Foncé"></div>
+        <div class="couleur-pastille" data-couleur="#ffcf4a" data-id="or" style="background:#ffcf4a;" onclick="couleurSelectionner('or')" title="Or"></div>
+        <div class="couleur-pastille" data-couleur="#ff7f27" data-id="orange" style="background:#ff7f27;" onclick="couleurSelectionner('orange')" title="Orange"></div>
+        <div class="couleur-pastille" data-couleur="#ff3b3b" data-id="rouge" style="background:#ff3b3b;" onclick="couleurSelectionner('rouge')" title="Rouge"></div>
+        <div class="couleur-pastille" data-couleur="#37e0a0" data-id="cyan" style="background:#37e0a0;" onclick="couleurSelectionner('cyan')" title="Cyan"></div>
+        <div class="couleur-pastille" data-couleur="#c084fc" data-id="violet" style="background:#c084fc;" onclick="couleurSelectionner('violet')" title="Violet"></div>
+        <span id="couleur-active-label" style="margin-left:auto;color:#555;font-size:8px;font-family:'Share Tech Mono',monospace;">Défaut</span>
+      </div>
     </div>
     <div class="composer-input-row">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
@@ -2881,8 +2878,15 @@ function toggleTheme(){
   if(btn&&typeof t==="function")btn.textContent=night?("🌙 "+t("theme-night")):("☀️ "+t("theme-day"));
   else if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";
   localStorage.setItem("tilex-al-theme",night?"night":"day");
+  updateMenuThemeBtn();
 }
-(function(){var btn=document.getElementById("theme-toggle-btn");if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";})();
+function updateMenuThemeBtn(){
+  var ico=document.querySelector("#menu-theme-btn .cmi-ico");
+  var lbl=document.getElementById("menu-theme-label");
+  if(ico)ico.textContent=night?"🌙":"☀️";
+  if(lbl)lbl.textContent=night?"Nuit":"Jour";
+}
+(function(){var btn=document.getElementById("theme-toggle-btn");if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";setTimeout(updateMenuThemeBtn,50);})();
 
 /* ── CHOIX D'INTERFACE (animé vs sérieux) ── */
 function chooseMode(mode){
@@ -3584,7 +3588,6 @@ async function sendChat(){
       function _finalizeBbl(){
         if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
         else{applySyntaxHL(bblText);}
-        if(document.documentElement.getAttribute("data-theme")!=="day"){setTimeout(function(){projeterLettres(bblText,16);},200);}
         var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       }
       if(window.TILEX&&TILEX.doitAnimer&&TILEX.doitAnimer()&&_replyPlain){
@@ -3713,7 +3716,7 @@ function addMsg(role,txt){
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="u"&&couleurPoliceActive){var uc=COULEURS_POLICE.find(function(c){return c.id===couleurPoliceActive;});if(uc){var ub=d.querySelector(".cmsg-bbl");if(ub)ub.classList.add(uc.classe);}}
-  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);setTimeout(function(){projeterLettres(bbl,16);},200);}}
+  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);}}
 }
 
 /* ── FORFAITS — source de vérité : profiles.plan + plan_limits ── */
@@ -6421,7 +6424,7 @@ function alRenderAgentReply(text,data){
   htmlContent+='<div class="cmsg-time">'+t+'</div></div>';
   bbl.innerHTML=htmlContent;
   msgs.appendChild(bbl);msgs.scrollTop=msgs.scrollHeight;
-  bbl.querySelectorAll(".cmsg-bbl").forEach(function(b){tiLexHighlightCode(b);setTimeout(function(){projeterLettres(b,16);},200);});
+  bbl.querySelectorAll(".cmsg-bbl").forEach(function(b){tiLexHighlightCode(b);});
 }
 
 function alRenderScanReport(ctx){
