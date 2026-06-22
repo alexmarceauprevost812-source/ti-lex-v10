@@ -486,6 +486,11 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .tyd.tyd-loop:nth-child(2){animation-delay:.2s}
 .tyd.tyd-loop:nth-child(3){animation-delay:.4s}
 @keyframes tdPulse{0%,100%{transform:translateY(0) scale(1);}30%{transform:translateY(-10px) scale(1.2);}60%{transform:translateY(2px) scale(.9);}}
+/* ═══ Écriture fluide — curseur clignotant + bulle active ═══ */
+@keyframes curseurClignote{0%,49%{opacity:1}50%,100%{opacity:0}}
+.curseur-agent{display:inline-block;width:2px;height:1em;background:#ff7f27;margin-left:2px;vertical-align:text-bottom;animation:curseurClignote .7s ease-in-out infinite;border-radius:1px;box-shadow:0 0 6px rgba(255,127,39,.6);}
+.cmsg-bbl.ecriture-active{border-left:2px solid #ff7f27!important;transition:border-color .3s;}
+[data-theme="day"] .curseur-agent{background:#cc5500;box-shadow:0 0 4px rgba(204,85,0,.4);}
 .c-inp-area{padding:10px;background:transparent;border-top:none;}
 [data-theme="day"] .c-inp-area{background:var(--bg3);}
 .c-row{display:flex;gap:8px;}
@@ -3172,6 +3177,124 @@ const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 const supabase=window.supabase.createClient(SB_URL,SB_ANON);window.supabase=supabase;
 function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
 
+/* ═══════════════════════════════════════════════════════════════
+   ✍️ ÉCRITURE FLUIDE — Typewriter pour streaming SSE Agent AL
+   Buffer les chunks SSE et les écrit lettre par lettre
+   ═══════════════════════════════════════════════════════════════ */
+var EcritureFluide={
+  vitesseBase:15,
+  variation:10,
+  pausePonctuation:{'.':150,'!':120,'?':120,',':45,':':60,';':50,'\n':80},
+  _buffer:'',
+  _affiche:'',
+  _raf:null,
+  _curseur:null,
+  _element:null,
+  _container:null,
+  _resolve:null,
+  _lastCharTime:0,
+  _fini:false,
+
+  demarrer:function(element,chatContainer){
+    EcritureFluide._element=element;
+    EcritureFluide._container=chatContainer;
+    EcritureFluide._buffer='';
+    EcritureFluide._affiche='';
+    EcritureFluide._fini=false;
+    EcritureFluide._lastCharTime=0;
+    element.classList.add('ecriture-active');
+    element.textContent='';
+    var c=document.createElement('span');
+    c.className='curseur-agent';
+    EcritureFluide._curseur=c;
+    element.appendChild(c);
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      EcritureFluide._skipMode=true;
+    }else{
+      EcritureFluide._skipMode=false;
+      EcritureFluide._boucle();
+    }
+  },
+
+  ajouterTexte:function(delta){
+    if(EcritureFluide._skipMode){
+      EcritureFluide._affiche+=delta;
+      EcritureFluide._buffer='';
+      if(EcritureFluide._element){
+        EcritureFluide._element.textContent=EcritureFluide._affiche;
+        if(EcritureFluide._curseur)EcritureFluide._element.appendChild(EcritureFluide._curseur);
+        if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+      }
+      return;
+    }
+    EcritureFluide._buffer+=delta;
+  },
+
+  _boucle:function(){
+    var now=performance.now();
+    var buf=EcritureFluide._buffer;
+    if(buf.length>0){
+      var char=buf[0];
+      var delaiMin=EcritureFluide.vitesseBase+(Math.random()*EcritureFluide.variation);
+      var pause=EcritureFluide.pausePonctuation[char]||0;
+      if(char===' ')delaiMin*=0.3;
+      var delai=delaiMin+pause;
+      if(buf.length>80)delai=2;
+      else if(buf.length>40)delai=Math.min(delai,6);
+      else if(buf.length>20)delai=Math.min(delai,10);
+      if(now-EcritureFluide._lastCharTime>=delai){
+        EcritureFluide._affiche+=char;
+        EcritureFluide._buffer=buf.slice(1);
+        EcritureFluide._lastCharTime=now;
+        var el=EcritureFluide._element;
+        if(el){
+          el.textContent=EcritureFluide._affiche;
+          if(EcritureFluide._curseur)el.appendChild(EcritureFluide._curseur);
+          if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+        }
+      }
+    }else if(EcritureFluide._fini){
+      EcritureFluide._terminer();
+      return;
+    }
+    EcritureFluide._raf=requestAnimationFrame(EcritureFluide._boucle);
+  },
+
+  finStream:function(){
+    EcritureFluide._fini=true;
+    if(EcritureFluide._skipMode)EcritureFluide._terminer();
+  },
+
+  _terminer:function(){
+    if(EcritureFluide._raf){cancelAnimationFrame(EcritureFluide._raf);EcritureFluide._raf=null;}
+    var el=EcritureFluide._element;
+    if(el){
+      el.classList.remove('ecriture-active');
+      if(EcritureFluide._curseur)EcritureFluide._curseur.remove();
+    }
+    EcritureFluide._element=null;
+    EcritureFluide._curseur=null;
+    EcritureFluide._container=null;
+  },
+
+  skip:function(){
+    if(EcritureFluide._raf){cancelAnimationFrame(EcritureFluide._raf);EcritureFluide._raf=null;}
+    EcritureFluide._affiche+=EcritureFluide._buffer;
+    EcritureFluide._buffer='';
+    var el=EcritureFluide._element;
+    if(el){
+      el.textContent=EcritureFluide._affiche;
+      el.classList.remove('ecriture-active');
+      if(EcritureFluide._curseur)EcritureFluide._curseur.remove();
+      if(EcritureFluide._container)EcritureFluide._container.scrollTop=EcritureFluide._container.scrollHeight;
+    }
+  }
+};
+document.addEventListener('click',function(e){
+  var active=document.querySelector('.ecriture-active');
+  if(active&&active.contains(e.target))EcritureFluide.skip();
+});
+
 async function readSSE(res){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
@@ -3534,10 +3657,13 @@ async function sendChat(){
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
       bblText.style.color=_isDay?"#1a1a1a":"#e8b830";
       if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
+      EcritureFluide.demarrer(bblText,msgs);
       var reply=await readSSEStream(res,function(delta){
-        bblText.textContent+=delta;
-        msgs.scrollTop=msgs.scrollHeight;
+        EcritureFluide.ajouterTexte(delta);
       });
+      EcritureFluide.finStream();
+      await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
+      EcritureFluide._terminer();
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       var _replyPlain=reply||"";
