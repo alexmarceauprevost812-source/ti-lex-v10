@@ -42,15 +42,15 @@ Deno.serve(async (req) => {
       const match = supabase_url.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
       if (match) projectId = match[1];
 
-      const testRes = await fetch(`${supabase_url}/rest/v1/`, {
+      const testRes = await fetch(`${supabase_url.replace(/\/+$/,"")}/rest/v1/`, {
         headers: {
           apikey: supabase_anon_key,
           Authorization: `Bearer ${supabase_anon_key}`,
         },
       });
 
-      if (!testRes.ok && testRes.status !== 200 && testRes.status !== 404) {
-        return json({ valide: false, error: "Credentials Supabase invalides" });
+      if (testRes.status === 401 || testRes.status === 403) {
+        return json({ valide: false, error: "Clé Supabase invalide ou expirée" });
       }
 
       projectName = projectId
