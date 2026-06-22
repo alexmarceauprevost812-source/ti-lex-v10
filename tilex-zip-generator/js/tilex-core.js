@@ -1,287 +1,199 @@
-// =============================================================
-// tilex-core.js — Génération du contenu de fichier
-// ti-lex-AL v10 | Vanilla JS pur
-// =============================================================
+/* ============================================================
+   ti-lex-AL v10 — tilex-core.js
+   Rôle : Génération du contenu de fichier selon le type choisi
+   Vanilla JS pur — aucune dépendance import/export
+   ============================================================ */
 
+/* ----------  Toast partagé (défini une seule fois)  ---------- */
+/* Chaque module est indépendant : le premier chargé définit le toast,
+   les autres réutilisent la même fonction sans conflit. */
+window.showToast = window.showToast || function (message, type) {
+  try {
+    type = type || "info";
+    var toast = document.getElementById("toast");
+    if (!toast) {
+      // Sécurité : si le #toast n'existe pas dans le DOM, on log au lieu de planter
+      console.log("[ti-lex][toast][" + type + "] " + message);
+      return;
+    }
+    toast.textContent = message;
+    toast.setAttribute("data-type", type); // dark/light styling via CSS
+    toast.classList.add("show");
+    // On nettoie un éventuel timer précédent
+    if (toast._tilexTimer) clearTimeout(toast._tilexTimer);
+    toast._tilexTimer = setTimeout(function () {
+      toast.classList.remove("show");
+    }, 2600);
+  } catch (e) {
+    console.error("Erreur showToast :", e);
+  }
+};
+
+/* ----------  CoreManager  ---------- */
 window.CoreManager = {
 
-  // ----------------------------------------------------------
-  // Génère le contenu du fichier selon le type sélectionné
-  // ----------------------------------------------------------
-  generateFile: async function () {
-    try {
-      const fileName    = document.getElementById('fileName')?.value?.trim();
-      const fileType    = document.getElementById('fileType')?.value?.trim();
-      const fileDesc    = document.getElementById('fileDescription')?.value?.trim();
+  /* Dernier fichier généré, gardé en mémoire pour addToZip() */
+  lastFile: null,
 
-      // Validation de base
-      if (!fileName) {
-        CoreManager._toast('⚠️ Entrez un nom de fichier.', 'warning');
-        return;
-      }
-      if (!fileType) {
-        CoreManager._toast('⚠️ Choisissez un type de fichier.', 'warning');
-        return;
-      }
+  /* ----------  Templates de contenu par type de fichier  ---------- */
+  _builders: {
+    html: function (name, desc) {
+      return '<!DOCTYPE html>\n' +
+        '<html lang="fr" data-theme="dark">\n' +
+        '<head>\n' +
+        '  <meta charset="UTF-8">\n' +
+        '  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+        '  <title>' + (name || "ti-lex") + '</title>\n' +
+        '  <!-- ' + (desc || "Généré par ti-lex-AL v10") + ' -->\n' +
+        '</head>\n' +
+        '<body>\n' +
+        '  <h1>' + (name || "ti-lex") + '</h1>\n' +
+        '  <p>' + (desc || "Produit du Québec — ti-lex-AL v10") + '</p>\n' +
+        '</body>\n' +
+        '</html>\n';
+    },
 
-      // Nom complet avec extension si absente
-      const fullName = fileName.includes('.') ? fileName : `${fileName}.${fileType}`;
+    css: function (name, desc) {
+      return '/* ' + (name || "styles") + ' — ' + (desc || "ti-lex-AL v10") + ' */\n' +
+        ':root {\n' +
+        '  --noir: #0a0a0a;\n' +
+        '  --orange: #ff7f27;\n' +
+        '  --or: #ffcf4a;\n' +
+        '  --vert: #37e0a0;\n' +
+        '  --bordure: #23232c;\n' +
+        '  --texte: #ffffff;\n' +
+        '}\n\n' +
+        '* { margin: 0; padding: 0; box-sizing: border-box; }\n\n' +
+        'body {\n' +
+        '  background: var(--noir);\n' +
+        '  color: var(--texte);\n' +
+        '  font-family: system-ui, sans-serif;\n' +
+        '}\n';
+    },
 
-      CoreManager._toast('⏳ Génération en cours…', 'info');
+    js: function (name, desc) {
+      var safe = (name || "module").replace(/[^a-zA-Z0-9_]/g, "_");
+      return '/* ' + (name || "module") + ' — ' + (desc || "ti-lex-AL v10") + ' */\n' +
+        '(function () {\n' +
+        '  "use strict";\n\n' +
+        '  // ' + (desc || "Logique du module") + '\n' +
+        '  window.' + safe + ' = {\n' +
+        '    init: function () {\n' +
+        '      console.log("' + safe + ' initialisé");\n' +
+        '    }\n' +
+        '  };\n\n' +
+        '  document.addEventListener("DOMContentLoaded", function () {\n' +
+        '    window.' + safe + '.init();\n' +
+        '  });\n' +
+        '})();\n';
+    },
 
-      // Génération du contenu selon le type
-      const content = CoreManager._buildContent(fullName, fileType, fileDesc || 'Fichier ti-lex-AL v10');
+    md: function (name, desc) {
+      return '# ' + (name || "Document") + '\n\n' +
+        '> ' + (desc || "Généré par ti-lex-AL v10 — Produit du Québec") + '\n\n' +
+        '## Description\n\n' +
+        (desc || "À compléter.") + '\n\n' +
+        '## Notes\n\n' +
+        '- \n';
+    },
 
-      // Affichage dans PreviewManager
-      if (window.PreviewManager) {
-        PreviewManager.show(fullName, content);
-      }
+    json: function (name, desc) {
+      var obj = {
+        nom: name || "ti-lex",
+        description: desc || "Généré par ti-lex-AL v10",
+        version: "1.0.0",
+        date: new Date().toISOString()
+      };
+      return JSON.stringify(obj, null, 2) + "\n";
+    },
 
-      // Sauvegarde dans HistoryManager
-      if (window.HistoryManager) {
-        await HistoryManager.add(fullName, fileType, content);
-      }
+    py: function (name, desc) {
+      return '#!/usr/bin/env python3\n' +
+        '# -*- coding: utf-8 -*-\n' +
+        '"""' + (name || "script") + ' — ' + (desc || "ti-lex-AL v10") + '"""\n\n\n' +
+        'def main():\n' +
+        '    # ' + (desc || "Logique principale") + '\n' +
+        '    print("ti-lex-AL v10")\n\n\n' +
+        'if __name__ == "__main__":\n' +
+        '    main()\n';
+    },
 
-      CoreManager._toast(`✅ Fichier ${fullName} généré !`, 'success');
-
-    } catch (err) {
-      console.error('[CoreManager] generateFile:', err);
-      CoreManager._toast('❌ Erreur lors de la génération.', 'error');
+    sql: function (name, desc) {
+      var table = (name || "ma_table").replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase();
+      return '-- ' + (name || "table") + ' — ' + (desc || "ti-lex-AL v10") + '\n' +
+        'create table if not exists public.' + table + ' (\n' +
+        '  id uuid primary key default gen_random_uuid(),\n' +
+        '  created_at timestamptz default now()\n' +
+        ');\n\n' +
+        'alter table public.' + table + ' enable row level security;\n';
     }
   },
 
-  // ----------------------------------------------------------
-  // Ajoute le fichier actuellement prévisualisé au ZIP
-  // ----------------------------------------------------------
+  /* ----------  Génère le fichier selon les champs du formulaire  ---------- */
+  generateFile: function () {
+    try {
+      var nameEl = document.getElementById("fileName");
+      var typeEl = document.getElementById("fileType");
+      var descEl = document.getElementById("fileDescription");
+
+      var rawName = nameEl ? nameEl.value.trim() : "";
+      var type = typeEl ? typeEl.value.trim().toLowerCase() : "txt";
+      var desc = descEl ? descEl.value.trim() : "";
+
+      if (!rawName) {
+        window.showToast("Entre un nom de fichier", "error");
+        return null;
+      }
+
+      // On retire une extension déjà présente pour éviter "fichier.js.js"
+      var baseName = rawName.replace(/\.[a-zA-Z0-9]+$/, "");
+      var filename = baseName + "." + type;
+
+      // Choix du générateur, fallback texte simple
+      var builder = this._builders[type];
+      var content = builder
+        ? builder(baseName, desc)
+        : (desc || baseName) + "\n";
+
+      // On garde en mémoire pour addToZip()
+      this.lastFile = { name: filename, type: type, content: content };
+
+      // Aperçu
+      if (window.PreviewManager && typeof window.PreviewManager.show === "function") {
+        window.PreviewManager.show(filename, content);
+      }
+
+      // Historique Supabase
+      if (window.HistoryManager && typeof window.HistoryManager.add === "function") {
+        window.HistoryManager.add(filename, type, content);
+      }
+
+      window.showToast("Fichier généré : " + filename, "success");
+      return this.lastFile;
+
+    } catch (e) {
+      console.error("Erreur generateFile :", e);
+      window.showToast("Erreur lors de la génération", "error");
+      return null;
+    }
+  },
+
+  /* ----------  Ajoute le dernier fichier généré au ZIP  ---------- */
   addToZip: function () {
     try {
-      const fileName = document.getElementById('fileName')?.value?.trim();
-      const fileType = document.getElementById('fileType')?.value?.trim();
-      const fileDesc = document.getElementById('fileDescription')?.value?.trim();
-
-      if (!fileName || !fileType) {
-        CoreManager._toast('⚠️ Générez d\'abord un fichier.', 'warning');
+      if (!this.lastFile) {
+        window.showToast("Génère d'abord un fichier", "error");
         return;
       }
-
-      const fullName = fileName.includes('.') ? fileName : `${fileName}.${fileType}`;
-      const content  = CoreManager._buildContent(fullName, fileType, fileDesc || 'Fichier ti-lex-AL v10');
-
-      if (window.ZipManager) {
-        ZipManager.add(fullName, content);
-        CoreManager._toast(`📦 ${fullName} ajouté au ZIP !`, 'success');
+      if (window.ZipManager && typeof window.ZipManager.add === "function") {
+        window.ZipManager.add(this.lastFile.name, this.lastFile.content);
+        window.showToast("Ajouté au ZIP : " + this.lastFile.name, "success");
       } else {
-        CoreManager._toast('❌ ZipManager introuvable.', 'error');
+        window.showToast("ZipManager indisponible", "error");
       }
-
-    } catch (err) {
-      console.error('[CoreManager] addToZip:', err);
-      CoreManager._toast('❌ Erreur lors de l\'ajout au ZIP.', 'error');
+    } catch (e) {
+      console.error("Erreur addToZip :", e);
+      window.showToast("Erreur ajout au ZIP", "error");
     }
-  },
-
-  // ----------------------------------------------------------
-  // Construction du contenu selon le type de fichier
-  // ----------------------------------------------------------
-  _buildContent: function (filename, type, description) {
-    const date = new Date().toLocaleDateString('fr-CA');
-
-    switch (type) {
-      case 'html':
-        return `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${filename}</title>
-  <!-- ${description} -->
-  <!-- Créé par ti-lex-AL v10 — ${date} -->
-  <style>
-    body { font-family: sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 2rem; }
-    h1   { color: #ff7f27; }
-  </style>
-</head>
-<body>
-  <h1>${filename}</h1>
-  <p>${description}</p>
-</body>
-</html>`;
-
-      case 'css':
-        return `/* ==============================================
-   ${filename}
-   ${description}
-   Créé par ti-lex-AL v10 — ${date}
-   ============================================== */
-
-:root {
-  --color-bg      : #0a0a0a;
-  --color-surface : #141414;
-  --color-border  : #23232c;
-  --color-orange  : #ff7f27;
-  --color-gold    : #ffcf4a;
-  --color-green   : #37e0a0;
-  --color-text    : #ffffff;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Segoe UI', sans-serif;
-}`;
-
-      case 'js':
-        return `// ==============================================
-// ${filename}
-// ${description}
-// Créé par ti-lex-AL v10 — ${date}
-// ==============================================
-
-'use strict';
-
-(function () {
-
-  // Initialisation au chargement du DOM
-  document.addEventListener('DOMContentLoaded', function () {
-    console.log('[${filename}] Chargé avec succès');
-    init();
-  });
-
-  // Fonction principale
-  function init() {
-    // TODO: Ajouter votre logique ici
   }
-
-})();`;
-
-      case 'json':
-        return JSON.stringify({
-          nom: filename,
-          description: description,
-          version: '1.0.0',
-          cree_par: 'ti-lex-AL v10',
-          date: date,
-          config: {}
-        }, null, 2);
-
-      case 'md':
-        return `# ${filename.replace('.md', '')}
-
-> ${description}
-
----
-
-## Description
-
-Ce fichier a été généré par **ti-lex-AL v10** le ${date}.
-
-## Installation
-
-\`\`\`bash
-# Cloner le dépôt
-git clone https://github.com/votre-repo
-cd votre-repo
-\`\`\`
-
-## Utilisation
-
-\`\`\`bash
-# Démarrer le projet
-npm install
-npm start
-\`\`\`
-
-## Licence
-
-Produit du Québec 🔶
-`;
-
-      case 'py':
-        return `# ==============================================
-# ${filename}
-# ${description}
-# Créé par ti-lex-AL v10 — ${date}
-# ==============================================
-
-import os
-import json
-from datetime import datetime
-
-
-def main():
-    """Point d'entrée principal."""
-    print(f"[${filename}] Démarrage — {datetime.now()}")
-    # TODO: Ajouter votre logique ici
-
-
-if __name__ == "__main__":
-    main()`;
-
-      case 'sql':
-        return `-- ==============================================
--- ${filename}
--- ${description}
--- Créé par ti-lex-AL v10 — ${date}
--- ==============================================
-
--- Exemple de table
-CREATE TABLE IF NOT EXISTS exemple (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nom          TEXT NOT NULL,
-    description  TEXT,
-    date_creation TIMESTAMPTZ DEFAULT NOW(),
-    user_id      UUID REFERENCES auth.users(id)
-);
-
--- Activer RLS
-ALTER TABLE exemple ENABLE ROW LEVEL SECURITY;
-
--- Politique : lecture pour l'utilisateur connecté
-CREATE POLICY "lecture_propre" ON exemple
-    FOR SELECT USING (auth.uid() = user_id);
-
--- Politique : insertion pour l'utilisateur connecté
-CREATE POLICY "insertion_propre" ON exemple
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Index sur date_creation
-CREATE INDEX idx_exemple_date ON exemple(date_creation DESC);`;
-
-      default:
-        return `// ${filename}
-// ${description}
-// Créé par ti-lex-AL v10 — ${date}
-// Type : ${type}`;
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Affichage d'un toast de notification
-  // ----------------------------------------------------------
-  _toast: function (message, type = 'info') {
-    try {
-      const toast = document.getElementById('toast');
-      if (!toast) return;
-
-      toast.textContent = message;
-      toast.className   = `toast toast-${type} toast-visible`;
-
-      // Cache le toast après 3 secondes
-      clearTimeout(CoreManager._toastTimer);
-      CoreManager._toastTimer = setTimeout(() => {
-        toast.className = 'toast';
-      }, 3000);
-
-    } catch (err) {
-      console.warn('[CoreManager] _toast:', err);
-    }
-  },
-
-  _toastTimer: null
 };

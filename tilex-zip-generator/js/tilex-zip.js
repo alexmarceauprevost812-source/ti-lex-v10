@@ -1,244 +1,196 @@
-// =============================================================
-// tilex-zip.js — Gestion complète du ZIP
-// ti-lex-AL v10 | Vanilla JS pur
-// Dépendances : JSZip 3.10.1, FileSaver.js 2.0.5
-// =============================================================
+/* ============================================================
+   ti-lex-AL v10 — tilex-zip.js
+   Rôle : Gestion complète du ZIP (JSZip + FileSaver)
+   ============================================================ */
+
+window.showToast = window.showToast || function (message, type) {
+  try {
+    var t = document.getElementById("toast");
+    if (!t) { console.log("[toast] " + message); return; }
+    t.textContent = message;
+    t.setAttribute("data-type", type || "info");
+    t.classList.add("show");
+    if (t._tilexTimer) clearTimeout(t._tilexTimer);
+    t._tilexTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  } catch (e) { console.error(e); }
+};
 
 window.ZipManager = {
 
-  // Tableau des fichiers dans le ZIP { name, content }
+  /* Tableau des fichiers ajoutés : { name, content } */
   files: [],
 
-  // ----------------------------------------------------------
-  // Ajoute un fichier au ZIP
-  // ----------------------------------------------------------
+  /* ----------  Ajoute un fichier au ZIP  ---------- */
   add: function (filename, content) {
     try {
-      if (!filename || content === undefined) {
-        ZipManager._toast('⚠️ Nom ou contenu manquant.', 'warning');
+      if (!filename) {
+        window.showToast("Nom de fichier manquant", "error");
         return;
       }
-
-      // Vérifie si le fichier existe déjà
-      const existant = ZipManager.files.findIndex(f => f.name === filename);
-      if (existant !== -1) {
-        ZipManager.files[existant].content = content;
-        ZipManager._toast(`🔄 ${filename} mis à jour dans le ZIP.`, 'info');
+      // Si un fichier du même nom existe déjà, on le remplace
+      var existing = this.files.findIndex(function (f) { return f.name === filename; });
+      if (existing !== -1) {
+        this.files[existing].content = content || "";
+        window.showToast("Fichier remplacé : " + filename, "info");
       } else {
-        ZipManager.files.push({ name: filename, content: content });
-        ZipManager._toast(`📦 ${filename} ajouté au ZIP !`, 'success');
+        this.files.push({ name: filename, content: content || "" });
       }
-
-      ZipManager._renderList();
-
-    } catch (err) {
-      console.error('[ZipManager] add:', err);
-      ZipManager._toast('❌ Erreur lors de l\'ajout.', 'error');
+      this._render();
+    } catch (e) {
+      console.error("Erreur zip add :", e);
+      window.showToast("Erreur ajout ZIP", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Retire un fichier du ZIP par son index
-  // ----------------------------------------------------------
+  /* ----------  Retire un fichier par index  ---------- */
   remove: function (index) {
     try {
-      if (index < 0 || index >= ZipManager.files.length) return;
-      const nom = ZipManager.files[index].name;
-      ZipManager.files.splice(index, 1);
-      ZipManager._renderList();
-      ZipManager._toast(`🗑️ ${nom} retiré du ZIP.`, 'info');
-    } catch (err) {
-      console.error('[ZipManager] remove:', err);
+      if (index >= 0 && index < this.files.length) {
+        var removed = this.files.splice(index, 1)[0];
+        this._render();
+        window.showToast("Retiré : " + removed.name, "info");
+      }
+    } catch (e) {
+      console.error("Erreur zip remove :", e);
+      window.showToast("Erreur retrait", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Génère et télécharge le ZIP complet
-  // ----------------------------------------------------------
-  download: async function () {
-    try {
-      if (ZipManager.files.length === 0) {
-        ZipManager._toast('⚠️ Le ZIP est vide — ajoutez des fichiers d\'abord.', 'warning');
-        return;
-      }
-
-      if (typeof JSZip === 'undefined') {
-        ZipManager._toast('❌ JSZip non chargé.', 'error');
-        return;
-      }
-
-      ZipManager._toast('⏳ Génération du ZIP…', 'info');
-
-      const zip = new JSZip();
-
-      // Ajoute chaque fichier au ZIP
-      ZipManager.files.forEach(function (fichier) {
-        zip.file(fichier.name, fichier.content);
-      });
-
-      // Génère le blob et déclenche le téléchargement
-      const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-      const nomZip = `tilex-export-${Date.now()}.zip`;
-
-      if (typeof saveAs === 'function') {
-        saveAs(blob, nomZip);
-      } else {
-        // Fallback sans FileSaver
-        const url  = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href     = url;
-        link.download = nomZip;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-      }
-
-      ZipManager._toast(`✅ ZIP téléchargé : ${nomZip}`, 'success');
-
-    } catch (err) {
-      console.error('[ZipManager] download:', err);
-      ZipManager._toast('❌ Erreur lors de la génération du ZIP.', 'error');
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Ouvre le modal d'aperçu du ZIP (#zipPreviewModal)
-  // ----------------------------------------------------------
-  preview: function () {
-    try {
-      const modal = document.getElementById('zipPreviewModal');
-      if (!modal) {
-        ZipManager._toast('⚠️ Modal ZIP introuvable dans le DOM.', 'warning');
-        return;
-      }
-
-      ZipManager._renderModalList();
-      modal.style.display = 'flex';
-      modal.classList.add('modal-open');
-
-    } catch (err) {
-      console.error('[ZipManager] preview:', err);
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Ferme le modal d'aperçu
-  // ----------------------------------------------------------
-  closePreview: function () {
-    try {
-      const modal = document.getElementById('zipPreviewModal');
-      if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('modal-open');
-      }
-    } catch (err) {
-      console.error('[ZipManager] closePreview:', err);
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Vide tous les fichiers du ZIP
-  // ----------------------------------------------------------
+  /* ----------  Vide la liste  ---------- */
   clear: function () {
     try {
-      if (ZipManager.files.length === 0) {
-        ZipManager._toast('ℹ️ Le ZIP est déjà vide.', 'info');
-        return;
-      }
-
-      ZipManager.files = [];
-      ZipManager._renderList();
-      ZipManager._toast('🗑️ ZIP vidé — tous les fichiers ont été retirés.', 'success');
-
-    } catch (err) {
-      console.error('[ZipManager] clear:', err);
+      this.files = [];
+      this._render();
+      window.showToast("Liste ZIP vidée", "info");
+    } catch (e) {
+      console.error("Erreur zip clear :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Mise à jour de la liste #zipFileList dans le DOM
-  // ----------------------------------------------------------
-  _renderList: function () {
+  /* ----------  Génère et télécharge le ZIP  ---------- */
+  download: function () {
     try {
-      const liste = document.getElementById('zipFileList');
-      if (!liste) return;
-
-      // Compteur de fichiers
-      const compteur = document.getElementById('zipCount');
-      if (compteur) {
-        compteur.textContent = `${ZipManager.files.length} fichier(s)`;
+      if (this.files.length === 0) {
+        window.showToast("Aucun fichier dans le ZIP", "error");
+        return;
       }
-
-      if (ZipManager.files.length === 0) {
-        liste.innerHTML = '<li class="zip-empty">Aucun fichier dans le ZIP.</li>';
+      if (typeof JSZip === "undefined") {
+        window.showToast("JSZip non chargé", "error");
         return;
       }
 
-      liste.innerHTML = ZipManager.files.map(function (fichier, index) {
-        const ext   = fichier.name.split('.').pop().toUpperCase();
-        const taille = new Blob([fichier.content]).size;
-        const ko    = taille < 1024 ? `${taille} o` : `${(taille / 1024).toFixed(1)} Ko`;
+      var zip = new JSZip();
+      this.files.forEach(function (f) {
+        zip.file(f.name, f.content);
+      });
 
-        return `
-          <li class="zip-file-item" data-index="${index}">
-            <span class="zip-file-ext zip-ext-${ext.toLowerCase()}">${ext}</span>
-            <span class="zip-file-name">${fichier.name}</span>
-            <span class="zip-file-size">${ko}</span>
-            <button class="zip-remove-btn" onclick="ZipManager.remove(${index})" title="Retirer du ZIP">🗑️</button>
-          </li>`;
-      }).join('');
+      window.showToast("Génération du ZIP…", "info");
 
-    } catch (err) {
-      console.error('[ZipManager] _renderList:', err);
+      zip.generateAsync({ type: "blob" }).then(function (blob) {
+        var name = "tilex-projet-" + Date.now() + ".zip";
+        if (typeof saveAs === "function") {
+          saveAs(blob, name);
+        } else {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+        window.showToast("ZIP téléchargé (" + window.ZipManager.files.length + " fichiers)", "success");
+      }).catch(function (err) {
+        console.error("Erreur génération ZIP :", err);
+        window.showToast("Erreur génération ZIP", "error");
+      });
+
+    } catch (e) {
+      console.error("Erreur zip download :", e);
+      window.showToast("Erreur ZIP", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Mise à jour de la liste dans le modal d'aperçu
-  // ----------------------------------------------------------
-  _renderModalList: function () {
+  /* ----------  Ouvre le modal d'aperçu du ZIP  ---------- */
+  preview: function () {
     try {
-      const liste = document.getElementById('zipModalFileList');
-      if (!liste) return;
-
-      if (ZipManager.files.length === 0) {
-        liste.innerHTML = '<p class="zip-modal-empty">Aucun fichier dans le ZIP.</p>';
-        return;
+      this._render();
+      var modal = document.getElementById("zipPreviewModal");
+      if (modal) {
+        modal.style.display = "flex";
+        modal.classList.add("active");
       }
-
-      liste.innerHTML = `
-        <p class="zip-modal-count">${ZipManager.files.length} fichier(s) dans le ZIP</p>
-        <ul class="zip-modal-list">
-          ${ZipManager.files.map(function (f, i) {
-            const taille = new Blob([f.content]).size;
-            const ko     = taille < 1024 ? `${taille} o` : `${(taille / 1024).toFixed(1)} Ko`;
-            return `
-              <li>
-                <span class="zip-modal-name">📄 ${f.name}</span>
-                <span class="zip-modal-size">${ko}</span>
-                <button onclick="ZipManager.remove(${i}); ZipManager._renderModalList();">🗑️</button>
-              </li>`;
-          }).join('')}
-        </ul>`;
-
-    } catch (err) {
-      console.error('[ZipManager] _renderModalList:', err);
+    } catch (e) {
+      console.error("Erreur zip preview :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Toast de notification
-  // ----------------------------------------------------------
-  _toast: function (message, type = 'info') {
-    if (window.CoreManager && CoreManager._toast) {
-      CoreManager._toast(message, type);
-      return;
+  /* ----------  Ferme le modal d'aperçu  ---------- */
+  closePreview: function () {
+    try {
+      var modal = document.getElementById("zipPreviewModal");
+      if (modal) {
+        modal.style.display = "none";
+        modal.classList.remove("active");
+      }
+    } catch (e) {
+      console.error("Erreur zip closePreview :", e);
     }
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className   = `toast toast-${type} toast-visible`;
-    setTimeout(() => { toast.className = 'toast'; }, 3000);
+  },
+
+  /* ----------  Met à jour #zipFileList dans le DOM  ---------- */
+  _render: function () {
+    try {
+      var list = document.getElementById("zipFileList");
+      if (!list) return;
+
+      list.innerHTML = "";
+
+      if (this.files.length === 0) {
+        var vide = document.createElement("div");
+        vide.className = "zip-empty";
+        vide.textContent = "Aucun fichier ajouté";
+        list.appendChild(vide);
+        return;
+      }
+
+      this.files.forEach(function (f, i) {
+        var row = document.createElement("div");
+        row.className = "zip-file-item";
+
+        var nameSpan = document.createElement("span");
+        nameSpan.className = "zip-file-name";
+        nameSpan.textContent = f.name;
+
+        var sizeSpan = document.createElement("span");
+        sizeSpan.className = "zip-file-size";
+        sizeSpan.textContent = (new Blob([f.content]).size) + " o";
+
+        var del = document.createElement("button");
+        del.className = "zip-file-del";
+        del.type = "button";
+        del.textContent = "🗑️";
+        del.title = "Retirer ce fichier";
+        // Closure sur l'index courant
+        del.addEventListener("click", function () {
+          window.ZipManager.remove(i);
+        });
+
+        row.appendChild(nameSpan);
+        row.appendChild(sizeSpan);
+        row.appendChild(del);
+        list.appendChild(row);
+      });
+    } catch (e) {
+      console.error("Erreur zip render :", e);
+    }
   }
 };
+
+/* Premier rendu au chargement */
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.ZipManager && typeof window.ZipManager._render === "function") {
+    window.ZipManager._render();
+  }
+});

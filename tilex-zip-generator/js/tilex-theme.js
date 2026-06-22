@@ -1,134 +1,83 @@
-// =============================================================
-// tilex-theme.js — Gestion des 4 thèmes CSS
-// ti-lex-AL v10 | Vanilla JS pur
-// =============================================================
+/* ============================================================
+   ti-lex-AL v10 — tilex-theme.js
+   Rôle : Gestion des 4 thèmes (dark → light → purple → ocean)
+   Persistance via localStorage
+   ============================================================ */
+
+window.showToast = window.showToast || function (message, type) {
+  try {
+    var t = document.getElementById("toast");
+    if (!t) { console.log("[toast] " + message); return; }
+    t.textContent = message;
+    t.setAttribute("data-type", type || "info");
+    t.classList.add("show");
+    if (t._tilexTimer) clearTimeout(t._tilexTimer);
+    t._tilexTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  } catch (e) { console.error(e); }
+};
 
 window.ThemeManager = {
 
-  // Ordre du cycle des thèmes
-  _themes : ['dark', 'light', 'purple', 'ocean'],
-  _current: null,
-  _storageKey: 'tilex-theme',
+  /* Ordre du cycle */
+  themes: ["dark", "light", "purple", "ocean"],
 
-  // ----------------------------------------------------------
-  // Initialisation au chargement — applique le thème sauvegardé
-  // ----------------------------------------------------------
-  init: function () {
-    try {
-      const sauvegarde = localStorage.getItem(ThemeManager._storageKey);
-      const theme = sauvegarde && ThemeManager._themes.includes(sauvegarde)
-        ? sauvegarde
-        : 'dark'; // Thème par défaut : dark
+  /* Clé localStorage */
+  STORAGE_KEY: "tilex_theme",
 
-      ThemeManager.set(theme);
-      console.log(`[ThemeManager] Thème chargé : ${theme}`);
-
-    } catch (err) {
-      console.error('[ThemeManager] init:', err);
-      ThemeManager.set('dark'); // Fallback
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Cycle entre les thèmes : dark → light → purple → ocean → dark
-  // ----------------------------------------------------------
-  toggle: function () {
-    try {
-      const themes  = ThemeManager._themes;
-      const current = ThemeManager._current || 'dark';
-      const index   = themes.indexOf(current);
-      const next    = themes[(index + 1) % themes.length];
-
-      ThemeManager.set(next);
-
-      const labels = {
-        dark  : '🌑 Sombre',
-        light : '☀️ Clair',
-        purple: '🟣 Violet',
-        ocean : '🌊 Océan'
-      };
-      ThemeManager._toast(`Thème : ${labels[next] || next}`, 'info');
-
-    } catch (err) {
-      console.error('[ThemeManager] toggle:', err);
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Applique un thème spécifique et le sauvegarde
-  // ----------------------------------------------------------
+  /* ----------  Applique un thème  ---------- */
   set: function (theme) {
     try {
-      if (!ThemeManager._themes.includes(theme)) {
-        console.warn(`[ThemeManager] Thème "${theme}" inconnu.`);
-        theme = 'dark';
+      if (this.themes.indexOf(theme) === -1) {
+        theme = "dark"; // fallback
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+
+      try {
+        localStorage.setItem(this.STORAGE_KEY, theme);
+      } catch (storageErr) {
+        // localStorage peut être bloqué (mode privé) — on ne plante pas
+        console.warn("localStorage indisponible :", storageErr);
       }
 
-      // Applique l'attribut sur <html>
-      document.documentElement.setAttribute('data-theme', theme);
-      ThemeManager._current = theme;
+      // Met à jour un éventuel bouton d'affichage du thème courant
+      var label = document.getElementById("themeLabel");
+      if (label) label.textContent = theme;
 
-      // Sauvegarde dans localStorage
-      localStorage.setItem(ThemeManager._storageKey, theme);
-
-      // Met à jour le bouton de thème si présent
-      ThemeManager._updateButton(theme);
-
-    } catch (err) {
-      console.error('[ThemeManager] set:', err);
+    } catch (e) {
+      console.error("Erreur theme set :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Retourne le thème actif
-  // ----------------------------------------------------------
-  get: function () {
-    return ThemeManager._current || 'dark';
-  },
-
-  // ----------------------------------------------------------
-  // Met à jour l'affichage du bouton de thème
-  // ----------------------------------------------------------
-  _updateButton: function (theme) {
+  /* ----------  Cycle vers le thème suivant  ---------- */
+  toggle: function () {
     try {
-      const btn = document.getElementById('themeBtn');
-      if (!btn) return;
-
-      const icones = {
-        dark  : '🌑',
-        light : '☀️',
-        purple: '🟣',
-        ocean : '🌊'
-      };
-      btn.textContent = `${icones[theme] || '🎨'} Thème`;
-      btn.setAttribute('data-theme', theme);
-
-    } catch (err) {
-      // Silencieux — le bouton est optionnel
+      var current = document.documentElement.getAttribute("data-theme") || "dark";
+      var idx = this.themes.indexOf(current);
+      var next = this.themes[(idx + 1) % this.themes.length];
+      this.set(next);
+      window.showToast("Thème : " + next, "info");
+    } catch (e) {
+      console.error("Erreur theme toggle :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Toast de notification
-  // ----------------------------------------------------------
-  _toast: function (message, type = 'info') {
-    if (window.CoreManager && CoreManager._toast) {
-      CoreManager._toast(message, type);
-      return;
+  /* ----------  Charge le thème sauvegardé au démarrage  ---------- */
+  init: function () {
+    try {
+      var saved = "dark";
+      try {
+        saved = localStorage.getItem(this.STORAGE_KEY) || "dark";
+      } catch (storageErr) {
+        console.warn("localStorage indisponible :", storageErr);
+      }
+      this.set(saved);
+    } catch (e) {
+      console.error("Erreur theme init :", e);
     }
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className   = `toast toast-${type} toast-visible`;
-    setTimeout(() => { toast.className = 'toast'; }, 3000);
   }
 };
 
-// ----------------------------------------------------------
-// Auto-initialisation dès que le DOM est prêt
-// ----------------------------------------------------------
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', ThemeManager.init);
-} else {
-  ThemeManager.init();
-}
+/* Application immédiate du thème sauvegardé au chargement */
+document.addEventListener("DOMContentLoaded", function () {
+  window.ThemeManager.init();
+});

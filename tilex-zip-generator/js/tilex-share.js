@@ -1,213 +1,181 @@
-// =============================================================
-// tilex-share.js — Partage et export du projet
-// ti-lex-AL v10 | Vanilla JS pur
-// =============================================================
+/* ============================================================
+   ti-lex-AL v10 — tilex-share.js
+   Rôle : Partage et export/import du projet (JSON)
+   ============================================================ */
+
+window.showToast = window.showToast || function (message, type) {
+  try {
+    var t = document.getElementById("toast");
+    if (!t) { console.log("[toast] " + message); return; }
+    t.textContent = message;
+    t.setAttribute("data-type", type || "info");
+    t.classList.add("show");
+    if (t._tilexTimer) clearTimeout(t._tilexTimer);
+    t._tilexTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  } catch (e) { console.error(e); }
+};
 
 window.ShareManager = {
 
-  // ----------------------------------------------------------
-  // Ouvre le modal de partage (#shareModal)
-  // ----------------------------------------------------------
+  /* ----------  Ouvre le modal de partage  ---------- */
   open: function () {
     try {
-      const modal = document.getElementById('shareModal');
-      if (!modal) {
-        ShareManager._toast('⚠️ Modal de partage introuvable.', 'warning');
-        return;
+      var modal = document.getElementById("shareModal");
+      if (modal) {
+        modal.style.display = "flex";
+        modal.classList.add("active");
       }
-
-      // Génère le lien de partage (URL actuelle)
-      const shareLink = document.getElementById('shareLink');
-      if (shareLink) {
-        shareLink.value = window.location.href;
-      }
-
-      modal.style.display = 'flex';
-      modal.classList.add('modal-open');
-
-    } catch (err) {
-      console.error('[ShareManager] open:', err);
+      // Pré-remplit le champ lien avec l'URL courante
+      var link = document.getElementById("shareLink");
+      if (link && !link.value) link.value = window.location.href;
+    } catch (e) {
+      console.error("Erreur share open :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Ferme le modal de partage
-  // ----------------------------------------------------------
+  /* ----------  Ferme le modal de partage  ---------- */
   close: function () {
     try {
-      const modal = document.getElementById('shareModal');
+      var modal = document.getElementById("shareModal");
       if (modal) {
-        modal.style.display = 'none';
-        modal.classList.remove('modal-open');
+        modal.style.display = "none";
+        modal.classList.remove("active");
       }
-    } catch (err) {
-      console.error('[ShareManager] close:', err);
+    } catch (e) {
+      console.error("Erreur share close :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Copie le lien de partage dans le presse-papier
-  // ----------------------------------------------------------
-  copy: async function () {
+  /* ----------  Copie le lien (#shareLink)  ---------- */
+  copy: function () {
     try {
-      const shareLink = document.getElementById('shareLink');
-      const lien = shareLink ? shareLink.value : window.location.href;
+      var link = document.getElementById("shareLink");
+      var text = link ? link.value : window.location.href;
 
-      await navigator.clipboard.writeText(lien);
-      ShareManager._toast('🔗 Lien copié dans le presse-papier !', 'success');
-
-    } catch (err) {
-      // Fallback pour les navigateurs sans Clipboard API
-      try {
-        const shareLink = document.getElementById('shareLink');
-        if (shareLink) {
-          shareLink.select();
-          document.execCommand('copy');
-          ShareManager._toast('🔗 Lien copié !', 'success');
-        }
-      } catch (fallbackErr) {
-        console.error('[ShareManager] copy fallback:', fallbackErr);
-        ShareManager._toast('❌ Impossible de copier le lien.', 'error');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () {
+          window.showToast("Lien copié", "success");
+        }).catch(function () {
+          window.ShareManager._fallbackCopy(text);
+        });
+      } else {
+        this._fallbackCopy(text);
       }
+    } catch (e) {
+      console.error("Erreur share copy :", e);
+      window.showToast("Erreur de copie", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Exporte tous les fichiers ZIP en JSON téléchargeable
-  // ----------------------------------------------------------
+  _fallbackCopy: function (text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      window.showToast("Lien copié", "success");
+    } catch (e) {
+      window.showToast("Copie impossible", "error");
+    }
+  },
+
+  /* ----------  Exporte tous les fichiers ZIP en JSON  ---------- */
   exportJSON: function () {
     try {
-      if (!window.ZipManager || ZipManager.files.length === 0) {
-        ShareManager._toast('⚠️ Aucun fichier à exporter.', 'warning');
+      var files = (window.ZipManager && window.ZipManager.files) ? window.ZipManager.files : [];
+      if (!files.length) {
+        window.showToast("Aucun fichier à exporter", "error");
         return;
       }
 
-      const exportData = {
-        version   : 'tilex-AL-v10',
-        date      : new Date().toISOString(),
-        source    : 'Produit du Québec',
-        fichiers  : ZipManager.files.map(function (f) {
-          return {
-            name   : f.name,
-            content: f.content,
-            size   : new Blob([f.content]).size
-          };
-        })
+      var data = {
+        app: "ti-lex-AL v10",
+        version: "1.0.0",
+        date: new Date().toISOString(),
+        files: files
       };
 
-      const json    = JSON.stringify(exportData, null, 2);
-      const blob    = new Blob([json], { type: 'application/json;charset=utf-8' });
-      const url     = URL.createObjectURL(blob);
-      const nomFich = `tilex-export-${Date.now()}.json`;
+      var json = JSON.stringify(data, null, 2);
+      var blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      var name = "tilex-export-" + Date.now() + ".json";
 
-      const link    = document.createElement('a');
-      link.href     = url;
-      link.download = nomFich;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (typeof saveAs === "function") {
+        saveAs(blob, name);
+      } else {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
 
-      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      window.showToast("Export JSON (" + files.length + " fichiers)", "success");
 
-      ShareManager._toast(`✅ Export JSON téléchargé : ${nomFich}`, 'success');
-
-    } catch (err) {
-      console.error('[ShareManager] exportJSON:', err);
-      ShareManager._toast('❌ Erreur lors de l\'export JSON.', 'error');
+    } catch (e) {
+      console.error("Erreur exportJSON :", e);
+      window.showToast("Erreur d'export", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Importe un JSON et recharge les fichiers dans ZipManager
-  // ----------------------------------------------------------
+  /* ----------  Importe un JSON et recharge les fichiers dans ZipManager  ----------
+     Ouvre un sélecteur de fichier, lit le JSON, et réinjecte les fichiers. */
   importJSON: function () {
     try {
-      // Crée un input file invisible
-      const input   = document.createElement('input');
-      input.type    = 'file';
-      input.accept  = '.json';
+      var input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json,.json";
 
-      input.addEventListener('change', function (evt) {
-        const fichier = evt.target.files[0];
-        if (!fichier) return;
+      input.addEventListener("change", function (ev) {
+        var file = ev.target.files && ev.target.files[0];
+        if (!file) return;
 
-        const reader = new FileReader();
-
+        var reader = new FileReader();
         reader.onload = function (e) {
           try {
-            const donnees = JSON.parse(e.target.result);
+            var data = JSON.parse(e.target.result);
+            var files = data.files || data; // tolère un tableau brut
 
-            // Validation de la structure
-            if (!donnees.fichiers || !Array.isArray(donnees.fichiers)) {
-              ShareManager._toast('❌ Format JSON invalide — structure "fichiers" manquante.', 'error');
+            if (!Array.isArray(files)) {
+              window.showToast("JSON invalide", "error");
               return;
             }
 
-            // Vider le ZIP actuel si demandé
-            const vider = confirm(
-              `📦 Importer ${donnees.fichiers.length} fichier(s) ?\n\n` +
-              `Cliquez OK pour remplacer le ZIP actuel, Annuler pour ajouter aux fichiers existants.`
-            );
-
-            if (vider && window.ZipManager) {
-              ZipManager.files = [];
+            if (!window.ZipManager) {
+              window.showToast("ZipManager indisponible", "error");
+              return;
             }
 
-            // Ajouter chaque fichier importé
-            let compteur = 0;
-            donnees.fichiers.forEach(function (f) {
-              if (f.name && f.content !== undefined) {
-                if (window.ZipManager) {
-                  ZipManager.add(f.name, f.content);
-                  compteur++;
-                }
+            files.forEach(function (f) {
+              if (f && f.name) {
+                window.ZipManager.add(f.name, f.content || "");
               }
             });
 
-            ShareManager._toast(
-              `✅ ${compteur} fichier(s) importé(s) depuis le JSON.`,
-              'success'
-            );
-
-            // Ferme le modal de partage
-            ShareManager.close();
+            window.showToast("Import réussi (" + files.length + " fichiers)", "success");
 
           } catch (parseErr) {
-            console.error('[ShareManager] importJSON parse:', parseErr);
-            ShareManager._toast('❌ Fichier JSON invalide ou corrompu.', 'error');
+            console.error("Erreur parsing JSON :", parseErr);
+            window.showToast("Fichier JSON illisible", "error");
           }
         };
-
         reader.onerror = function () {
-          ShareManager._toast('❌ Impossible de lire le fichier.', 'error');
+          window.showToast("Erreur de lecture du fichier", "error");
         };
-
-        reader.readAsText(fichier, 'utf-8');
+        reader.readAsText(file);
       });
 
-      // Déclenche l'ouverture du sélecteur de fichier
-      document.body.appendChild(input);
       input.click();
-      document.body.removeChild(input);
 
-    } catch (err) {
-      console.error('[ShareManager] importJSON:', err);
-      ShareManager._toast('❌ Erreur lors de l\'import JSON.', 'error');
+    } catch (e) {
+      console.error("Erreur importJSON :", e);
+      window.showToast("Erreur d'import", "error");
     }
-  },
-
-  // ----------------------------------------------------------
-  // Toast de notification
-  // ----------------------------------------------------------
-  _toast: function (message, type = 'info') {
-    if (window.CoreManager && CoreManager._toast) {
-      CoreManager._toast(message, type);
-      return;
-    }
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className   = `toast toast-${type} toast-visible`;
-    setTimeout(() => { toast.className = 'toast'; }, 3000);
   }
 };

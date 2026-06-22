@@ -1,115 +1,58 @@
--- =============================================================
--- sql/zip_historique.sql
--- Table Supabase : historique des fichiers créés par ti-lex-AL v10
--- Projet : rnuripmfozlxenryxhdc
--- =============================================================
+-- ============================================================
+-- ti-lex-AL v10 — sql/zip_historique.sql
+-- Table d'historique des fichiers créés par le générateur ZIP
+-- À exécuter dans l'éditeur SQL Supabase (projet rnuripmfozlxenryxhdc)
+-- ============================================================
 
--- Supprime la table si elle existe déjà (pour re-déploiement propre)
-DROP TABLE IF EXISTS zip_historique CASCADE;
-
--- ======================
--- Création de la table
--- ======================
-CREATE TABLE zip_historique (
-    -- Clé primaire UUID auto-générée
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    -- Nom du fichier créé (ex : app.js, schema.sql)
-    nom_fichier   TEXT NOT NULL,
-
-    -- Type / extension du fichier (html, css, js, json, md, py, sql)
-    type_fichier  TEXT NOT NULL,
-
-    -- Contenu complet du fichier généré
-    contenu       TEXT,
-
-    -- Timestamp de création (UTC)
-    date_creation TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-    -- Référence à l'utilisateur Supabase Auth (optionnel si non connecté)
-    user_id       UUID REFERENCES auth.users(id) ON DELETE CASCADE
+-- ----------  Table  ----------
+create table if not exists public.zip_historique (
+  id            uuid        primary key default gen_random_uuid(),
+  nom_fichier   text        not null,
+  type_fichier  text        not null,
+  contenu       text,
+  date_creation timestamptz not null default now(),
+  user_id       uuid        references auth.users (id) on delete cascade
 );
 
--- ======================
--- Activation de RLS
--- ======================
-ALTER TABLE zip_historique ENABLE ROW LEVEL SECURITY;
+-- ----------  Index sur la date de création (tri rapide du plus récent)  ----------
+create index if not exists idx_zip_historique_date
+  on public.zip_historique (date_creation desc);
 
--- ======================
--- Politiques RLS
--- ======================
+-- Index secondaire sur user_id (filtrage RLS performant)
+create index if not exists idx_zip_historique_user
+  on public.zip_historique (user_id);
 
--- Politique 1 : Lecture — uniquement ses propres fichiers
-CREATE POLICY "historique_lecture_propre" ON zip_historique
-    FOR SELECT
-    USING (auth.uid() = user_id);
+-- ----------  Row Level Security  ----------
+alter table public.zip_historique enable row level security;
 
--- Politique 2 : Insertion — utilisateur connecté seulement
-CREATE POLICY "historique_insertion_propre" ON zip_historique
-    FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
+-- Lecture : chaque utilisateur voit uniquement ses propres entrées
+drop policy if exists "zip_historique_select_own" on public.zip_historique;
+create policy "zip_historique_select_own"
+  on public.zip_historique
+  for select
+  using (auth.uid() = user_id);
 
--- Politique 3 : Suppression — uniquement ses propres fichiers
-CREATE POLICY "historique_suppression_propre" ON zip_historique
-    FOR DELETE
-    USING (auth.uid() = user_id);
+-- Insertion : un utilisateur ne peut insérer que pour lui-même
+drop policy if exists "zip_historique_insert_own" on public.zip_historique;
+create policy "zip_historique_insert_own"
+  on public.zip_historique
+  for insert
+  with check (auth.uid() = user_id);
 
--- Note : Pas de UPDATE — les entrées d'historique sont immuables
+-- Suppression : un utilisateur ne peut effacer que ses propres entrées
+drop policy if exists "zip_historique_delete_own" on public.zip_historique;
+create policy "zip_historique_delete_own"
+  on public.zip_historique
+  for delete
+  using (auth.uid() = user_id);
 
--- ======================
--- Index pour performance
--- ======================
-
--- Index principal : date décroissante (requête par défaut)
-CREATE INDEX idx_zip_historique_date
-    ON zip_historique(date_creation DESC);
-
--- Index secondaire : recherche par utilisateur
-CREATE INDEX idx_zip_historique_user
-    ON zip_historique(user_id);
-
--- Index tertiaire : filtrage par type de fichier
-CREATE INDEX idx_zip_historique_type
-    ON zip_historique(type_fichier);
-
--- ======================
--- Commentaires de table
--- ======================
-COMMENT ON TABLE zip_historique IS
-    'Historique des fichiers créés par ti-lex-AL v10 via le générateur ZIP';
-
-COMMENT ON COLUMN zip_historique.nom_fichier   IS 'Nom complet du fichier avec extension';
-COMMENT ON COLUMN zip_historique.type_fichier  IS 'Extension : html | css | js | json | md | py | sql';
-COMMENT ON COLUMN zip_historique.contenu       IS 'Contenu complet généré par ti-lex-AL v10';
-COMMENT ON COLUMN zip_historique.date_creation IS 'Timestamp UTC de création';
-COMMENT ON COLUMN zip_historique.user_id       IS 'UUID de l'utilisateur Supabase Auth';
-
--- ======================
--- Vue optionnelle : résumé sans le contenu (pour performances)
--- ======================
-CREATE OR REPLACE VIEW v_zip_historique_resume AS
-    SELECT
-        id,
-        nom_fichier,
-        type_fichier,
-        date_creation,
-        user_id,
-        length(contenu) AS taille_octets
-    FROM zip_historique
-    ORDER BY date_creation DESC;
-
--- ======================
--- Vérification finale
--- ======================
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'public'
-          AND table_name   = 'zip_historique'
-    ) THEN
-        RAISE NOTICE '[ti-lex] Table zip_historique créée avec succès ✓';
-    ELSE
-        RAISE EXCEPTION '[ti-lex] ERREUR : Table zip_historique non créée !';
-    END IF;
-END $$;
+-- ============================================================
+-- Note : si tu veux autoriser les entrées anonymes (sans Auth),
+-- remplace les policies ci-dessus par une policy ouverte, p. ex. :
+--
+--   create policy "zip_historique_public"
+--     on public.zip_historique for all
+--     using (true) with check (true);
+--
+-- ⚠️ À éviter en production — n'importe qui pourrait tout lire/effacer.
+-- ============================================================

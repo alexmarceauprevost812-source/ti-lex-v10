@@ -1,141 +1,131 @@
-// =============================================================
-// tilex-preview.js — Aperçu du fichier généré
-// ti-lex-AL v10 | Vanilla JS pur
-// =============================================================
+/* ============================================================
+   ti-lex-AL v10 — tilex-preview.js
+   Rôle : Aperçu du fichier généré (#previewContent / #previewSection)
+   ============================================================ */
+
+/* Toast partagé (sécurité si ce fichier est chargé en premier) */
+window.showToast = window.showToast || function (message, type) {
+  try {
+    var t = document.getElementById("toast");
+    if (!t) { console.log("[toast] " + message); return; }
+    t.textContent = message;
+    t.setAttribute("data-type", type || "info");
+    t.classList.add("show");
+    if (t._tilexTimer) clearTimeout(t._tilexTimer);
+    t._tilexTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  } catch (e) { console.error(e); }
+};
 
 window.PreviewManager = {
 
-  // Fichier actuellement prévisualisé
-  _currentFilename : null,
-  _currentContent  : null,
+  /* Fichier actuellement affiché, gardé pour copy() / download() */
+  current: { filename: null, content: null },
 
-  // ----------------------------------------------------------
-  // Affiche le contenu dans la section #previewSection
-  // ----------------------------------------------------------
+  /* ----------  Affiche le contenu dans l'aperçu  ---------- */
   show: function (filename, content) {
     try {
-      const section       = document.getElementById('previewSection');
-      const previewContent = document.getElementById('previewContent');
-      const previewTitle  = document.getElementById('previewTitle');
+      this.current = { filename: filename, content: content };
 
-      if (!section || !previewContent) {
-        console.warn('[PreviewManager] Éléments DOM introuvables.');
-        return;
+      var pre = document.getElementById("previewContent");
+      var section = document.getElementById("previewSection");
+
+      if (pre) {
+        // textContent => pas d'injection HTML, le code s'affiche tel quel
+        pre.textContent = content;
       }
-
-      // Sauvegarde en mémoire
-      PreviewManager._currentFilename = filename;
-      PreviewManager._currentContent  = content;
-
-      // Titre de l'aperçu
-      if (previewTitle) {
-        previewTitle.textContent = `📄 ${filename}`;
+      if (section) {
+        section.style.display = "block";
+        section.classList.add("active");
+        // Petit scroll vers l'aperçu pour le rendre visible
+        section.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
-
-      // Coloration syntaxique basique selon l'extension
-      const ext = filename.split('.').pop().toLowerCase();
-      previewContent.className = `language-${ext}`;
-
-      // Échappe le HTML pour affichage sécuritaire
-      previewContent.textContent = content;
-
-      // Affiche la section
-      section.style.display = 'block';
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    } catch (err) {
-      console.error('[PreviewManager] show:', err);
+    } catch (e) {
+      console.error("Erreur preview show :", e);
+      window.showToast("Erreur d'aperçu", "error");
     }
   },
 
-  // ----------------------------------------------------------
-  // Copie le contenu dans le presse-papier
-  // ----------------------------------------------------------
-  copy: async function () {
-    try {
-      if (!PreviewManager._currentContent) {
-        PreviewManager._toast('⚠️ Aucun contenu à copier.', 'warning');
-        return;
-      }
-
-      await navigator.clipboard.writeText(PreviewManager._currentContent);
-      PreviewManager._toast('📋 Contenu copié dans le presse-papier !', 'success');
-
-    } catch (err) {
-      // Fallback pour les navigateurs sans Clipboard API
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = PreviewManager._currentContent;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        PreviewManager._toast('📋 Contenu copié !', 'success');
-      } catch (fallbackErr) {
-        console.error('[PreviewManager] copy fallback:', fallbackErr);
-        PreviewManager._toast('❌ Impossible de copier.', 'error');
-      }
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Télécharge le fichier seul (sans ZIP)
-  // ----------------------------------------------------------
-  download: function () {
-    try {
-      if (!PreviewManager._currentContent || !PreviewManager._currentFilename) {
-        PreviewManager._toast('⚠️ Aucun fichier à télécharger.', 'warning');
-        return;
-      }
-
-      const blob = new Blob([PreviewManager._currentContent], { type: 'text/plain;charset=utf-8' });
-      const url  = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-
-      link.href     = url;
-      link.download = PreviewManager._currentFilename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Libère la mémoire
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-      PreviewManager._toast(`⬇️ ${PreviewManager._currentFilename} téléchargé !`, 'success');
-
-    } catch (err) {
-      console.error('[PreviewManager] download:', err);
-      PreviewManager._toast('❌ Erreur lors du téléchargement.', 'error');
-    }
-  },
-
-  // ----------------------------------------------------------
-  // Cache la section d'aperçu
-  // ----------------------------------------------------------
+  /* ----------  Cache la section d'aperçu  ---------- */
   hide: function () {
     try {
-      const section = document.getElementById('previewSection');
-      if (section) section.style.display = 'none';
-      PreviewManager._currentFilename = null;
-      PreviewManager._currentContent  = null;
-    } catch (err) {
-      console.error('[PreviewManager] hide:', err);
+      var section = document.getElementById("previewSection");
+      if (section) {
+        section.style.display = "none";
+        section.classList.remove("active");
+      }
+    } catch (e) {
+      console.error("Erreur preview hide :", e);
     }
   },
 
-  // ----------------------------------------------------------
-  // Toast de notification (délégué à CoreManager si disponible)
-  // ----------------------------------------------------------
-  _toast: function (message, type = 'info') {
-    if (window.CoreManager && CoreManager._toast) {
-      CoreManager._toast(message, type);
-      return;
+  /* ----------  Copie le contenu dans le presse-papier  ---------- */
+  copy: function () {
+    try {
+      if (!this.current.content) {
+        window.showToast("Aucun aperçu à copier", "error");
+        return;
+      }
+      var content = this.current.content;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(content).then(function () {
+          window.showToast("Contenu copié", "success");
+        }).catch(function () {
+          window.PreviewManager._fallbackCopy(content);
+        });
+      } else {
+        this._fallbackCopy(content);
+      }
+    } catch (e) {
+      console.error("Erreur preview copy :", e);
+      window.showToast("Erreur de copie", "error");
     }
-    // Fallback autonome
-    const toast = document.getElementById('toast');
-    if (!toast) return;
-    toast.textContent = message;
-    toast.className   = `toast toast-${type} toast-visible`;
-    setTimeout(() => { toast.className = 'toast'; }, 3000);
+  },
+
+  /* Copie de secours pour navigateurs sans clipboard API */
+  _fallbackCopy: function (text) {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      window.showToast("Contenu copié", "success");
+    } catch (e) {
+      window.showToast("Copie impossible", "error");
+    }
+  },
+
+  /* ----------  Télécharge le fichier seul  ---------- */
+  download: function () {
+    try {
+      if (!this.current.content) {
+        window.showToast("Aucun fichier à télécharger", "error");
+        return;
+      }
+      var blob = new Blob([this.current.content], { type: "text/plain;charset=utf-8" });
+      var name = this.current.filename || "fichier.txt";
+
+      // FileSaver si dispo, sinon lien temporaire
+      if (typeof saveAs === "function") {
+        saveAs(blob, name);
+      } else {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      window.showToast("Téléchargé : " + name, "success");
+    } catch (e) {
+      console.error("Erreur preview download :", e);
+      window.showToast("Erreur de téléchargement", "error");
+    }
   }
 };
