@@ -4326,6 +4326,10 @@ function cxAddReply(txt){
       content.appendChild(tmp.firstChild);
     }
   }
+  var actRow=document.createElement("div");
+  actRow.style.cssText="display:flex;gap:6px;margin-top:6px;";
+  actRow.innerHTML='<button class="btn-ghost" style="font-size:10px;padding:4px 10px;" onclick="cxSendToChat()" title="Continuer dans le chat">💬 Chat</button>';
+  content.appendChild(actRow);
   feed.appendChild(wrapper);feed.scrollTop=feed.scrollHeight;
 }
 
@@ -4505,17 +4509,26 @@ function cxScanOpenFile(path){
   if(typeof ghOpenFile==="function")ghOpenFile(path);
 }
 
-function cxStartCoding(){
-  if(!cxScanData){cxAddReply("Scanne le projet d'abord.");return;}
-  var scanContext="Arbre du projet ti-lex-v10:\n";
+function cxBuildScanContext(){
+  if(!cxScanData)return null;
+  var scanContext="Arbre du projet:\n";
+  var gh=window._codexGithub;
+  var repoName=gh&&gh.repo?gh.repo.owner+"/"+gh.repo.name:"projet";
   for(var i=0;i<cxScanData.length;i++){
     scanContext+=(cxScanData[i].type==="tree"?"[DIR] ":"      ")+cxScanData[i].path+"\n";
     if(i>200){scanContext+="... et "+(cxScanData.length-i)+" autres fichiers\n";break;}
   }
-  codexHistory=[{role:"user",content:"[CONTEXTE PROJET]\n"+scanContext+"\n[FIN CONTEXTE]\nJe suis prêt à coder. Dis-moi ce que tu vois dans le projet."}];
+  return{context:scanContext,repoName:repoName,fileCount:cxScanData.length};
+}
+
+function cxStartCoding(){
+  if(!cxScanData){cxAddReply("Scanne le projet d'abord.");return;}
+  var scan=cxBuildScanContext();
+  codexHistory=[{role:"user",content:"[CONTEXTE PROJET]\n"+scan.context+"\n[FIN CONTEXTE]\nJe suis prêt à coder. Dis-moi ce que tu vois dans le projet."}];
   cxAddUser("[Scan du projet injecté comme contexte]");
   cxAddTyping();
   genBusy=true;
+  cxSaveProjectToSidebar(scan.repoName,scan.fileCount);
   var sysPrompt="Tu es le Codex de ti-lex-AL. Le scan du projet a été chargé. Tu connais la structure complète. Aide l'usager à coder, modifier ou expliquer le code du projet. Réponds en français québécois.";
   (async function(){
     try{
@@ -4531,6 +4544,47 @@ function cxStartCoding(){
     }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
     genBusy=false;
   })();
+}
+
+async function cxSaveProjectToSidebar(repoName,fileCount){
+  try{
+    var proj=await sbRest("/projects",{method:"POST",prefer:"return=representation",body:{name:repoName}});
+    var projId=proj&&proj[0]?proj[0].id:null;
+    if(!projId)return;
+    window._codexProjectId=projId;
+    var conv=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{
+      title:"TILEXCODE · "+repoName,type:"project",project_id:projId
+    }});
+    if(conv&&conv[0]){
+      window._codexConvId=conv[0].id;
+      var scan=cxBuildScanContext();
+      if(scan){
+        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{
+          conversation_id:conv[0].id,role:"assistant",
+          content:"📊 Projet scanné: **"+repoName+"**\n"+fileCount+" fichiers trouvés.\n\nUtilise ce chat pour demander de l'aide sur ton code."
+        }});
+      }
+    }
+    if(typeof cvpLoad==="function")cvpLoad();
+    if(typeof pushNotif==="function")pushNotif("📁","Projet sauvegardé",repoName,"ok");
+  }catch(e){console.error("[codex] save project:",e);}
+}
+
+function cxSendToChat(){
+  if(!codexHistory||codexHistory.length===0){addMsg("a","Aucun contexte codex à envoyer. Scanne un projet d'abord.");return;}
+  var scan=cxBuildScanContext();
+  var lastCodex=codexHistory.filter(function(m){return m.role==="assistant";}).slice(-1);
+  var context="📦 **Contexte TILEXCODE importé**\n\n";
+  if(scan)context+="**Projet:** "+scan.repoName+" ("+scan.fileCount+" fichiers)\n\n";
+  if(lastCodex.length>0)context+="**Dernière analyse codex:**\n"+lastCodex[0].content.slice(0,800);
+  showTab("chat");
+  var bar=document.getElementById("composer-bar");if(bar)bar.classList.add("visible");
+  chatHistory.push({role:"assistant",content:context});
+  addMsg("a",context);
+  if(window._codexConvId){
+    cvpActiveConvId=window._codexConvId;
+    _convActiveId=window._codexConvId;
+  }
 }
 
 /* ── GITHUB INTEGRATION (dynamic repo/branch via PAT from profiles) ── */
@@ -7004,9 +7058,12 @@ function envoyerMsgVersCodex(btnEl){
   var bbl=btnEl.closest(".cmsg")?.querySelector(".cmsg-bbl");
   if(!bbl)return;
   var contenu=bbl.innerText||bbl.textContent;
-  var titre=prompt("Titre de la tâche Codex :","Instruction depuis chat ti-lex");
-  if(!titre)return;
-  envoyerVersCodex(titre,contenu);
+  var codexTxt=document.getElementById("codex-txt");
+  if(codexTxt){
+    codexTxt.value=contenu;
+    showTab("codex");
+    showToastMsg("📤 Code envoyé à TILEXCODE");
+  }
 }
 window.envoyerVersCodex=envoyerVersCodex;
 window.envoyerMsgVersCodex=envoyerMsgVersCodex;
