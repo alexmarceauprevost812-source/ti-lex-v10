@@ -2501,7 +2501,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
         <p style="margin:0;color:#6c6c78;font-size:11px;font-family:'Share Tech Mono',monospace;">Cybersécurité défensive · ti-lex-v10 · Admin uniquement</p>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-        <span style="background:rgba(255,127,39,.1);border:1px solid rgba(255,127,39,.27);color:#ff7f27;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">SOW ACTIF · ti-lex.ca</span>
+        <span style="background:rgba(255,127,39,.1);border:1px solid rgba(255,127,39,.27);color:#ff7f27;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">SOW ACTIF · Supabase + Vercel</span>
       </div>
     </div>
     <div style="display:flex;border-bottom:1px solid #23232c;padding:0 24px;">
@@ -2516,9 +2516,8 @@ body.sb-open .composer-bar{left:var(--sb-w);}
           <div style="margin-bottom:12px;">
             <label style="color:#6c6c78;font-size:11px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">CIBLE</label>
             <select id="silex-target" style="width:100%;margin-top:6px;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:10px 12px;color:#e2e2ea;font-size:13px;cursor:pointer;font-family:'Share Tech Mono',monospace;">
-              <option value="ti-lex.ca">ti-lex.ca (production)</option>
               <option value="rnuripmfozlxenryxhdc.supabase.co">Supabase (rnuripmfozlxenryxhdc)</option>
-              <option value="vercel.app">Vercel deployment</option>
+              <option value="ti-lex-v10.vercel.app">Vercel (ti-lex-v10)</option>
             </select>
           </div>
           <div style="margin-bottom:16px;">
@@ -2549,7 +2548,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             </div>
           </div>
           <div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid #23232c;">
-            <input id="silex-chat-input" type="text" placeholder="Demande à SILEX... (ex: analyse les headers HTTP de ti-lex.ca)" onkeydown="if(event.key==='Enter')silexSendChat()" style="flex:1;background:#0d0d12;border:1px solid rgba(255,127,39,.2);border-radius:10px;padding:12px 16px;color:#e2e2ea;font-size:13px;outline:none;font-family:'Share Tech Mono',monospace;">
+            <input id="silex-chat-input" type="text" placeholder="Demande à SILEX... (ex: analyse les headers HTTP de Supabase)" onkeydown="if(event.key==='Enter')silexSendChat()" style="flex:1;background:#0d0d12;border:1px solid rgba(255,127,39,.2);border-radius:10px;padding:12px 16px;color:#e2e2ea;font-size:13px;outline:none;font-family:'Share Tech Mono',monospace;">
             <button onclick="silexSendChat()" style="background:linear-gradient(135deg,#ff7f27,#cc5500);border:none;border-radius:10px;padding:12px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Share Tech Mono',monospace;">Envoyer</button>
           </div>
         </div>
@@ -7485,12 +7484,16 @@ function silexTab(tab){
   if(tab==='history')silexLoadHistory();
 }
 
+var DOMAINES_EXCLUS=["ti-lex.ca","tilex.ca"];
+function estCibleAutorisee(c){return!DOMAINES_EXCLUS.some(function(e){return c.indexOf(e)!==-1;});}
+
 async function silexLaunchScan(){
   var btn=document.getElementById('silex-launch-btn');
   var target=document.getElementById('silex-target').value;
   var scanTypeEl=document.querySelector('input[name="scan_type"]:checked');
   var scanType=scanTypeEl?scanTypeEl.value:'passive_recon';
   if(!target)return;
+  if(!estCibleAutorisee(target)){alert('Cible hors mandat. Seuls Supabase et Vercel sont autorisés.');return;}
   btn.disabled=true;btn.textContent='🔰 Scan en cours...';
   var resultsEl=document.getElementById('silex-results');
   resultsEl.style.display='block';
@@ -7596,7 +7599,7 @@ async function silexSendChat(){
   try{
     var session=(await supabase.auth.getSession()).data.session;
     if(!session)throw new Error('Non authentifié');
-    var target=(document.getElementById('silex-target')||{}).value||'ti-lex.ca';
+    var target=(document.getElementById('silex-target')||{}).value||'rnuripmfozlxenryxhdc.supabase.co';
     var res=await fetch(SB_URL+'/functions/v1/security-agent',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
