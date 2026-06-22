@@ -42,15 +42,28 @@ Deno.serve(async (req) => {
       const match = supabase_url.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
       if (match) projectId = match[1];
 
-      const testRes = await fetch(`${supabase_url.replace(/\/+$/,"")}/rest/v1/`, {
-        headers: {
-          apikey: supabase_anon_key,
-          Authorization: `Bearer ${supabase_anon_key}`,
-        },
-      });
+      const testClient = createClient(
+        supabase_url.replace(/\/+$/, ""),
+        supabase_anon_key,
+        { auth: { persistSession: false } },
+      );
 
-      if (testRes.status === 401 || testRes.status === 403) {
-        return json({ valide: false, error: "Clé Supabase invalide ou expirée" });
+      const { error: testError } = await testClient
+        .from("_tilex_connectivity_check")
+        .select("id")
+        .limit(1);
+
+      if (testError) {
+        const msg = testError.message?.toLowerCase() || "";
+        const code = testError.code || "";
+        if (
+          msg.includes("invalid api key") ||
+          msg.includes("invalid claim") ||
+          msg.includes("jwt") ||
+          code === "PGRST301"
+        ) {
+          return json({ valide: false, error: "Clé Supabase invalide ou expirée" });
+        }
       }
 
       projectName = projectId
