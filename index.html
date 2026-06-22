@@ -1251,7 +1251,7 @@
           showSuccess('login-success', 'Connexion réussie!');
           showToast('Bienvenue!');
           updateUIBadges();
-          setTimeout(() => { playLoginAnimation(); }, 800);
+          playLoginAnimation();
         }
       } catch (err) { showError('login-error', 'Erreur: ' + err.message); }
       finally { btn.disabled = false; btn.innerHTML = 'SE CONNECTER'; }
@@ -1398,22 +1398,10 @@
 
     /* ── Splash screens ── */
     function playLoginAnimation() {
-      const splash = document.getElementById('loginSplash');
-      const video = document.getElementById('loginVideo');
-      splash.classList.remove('hidden');
-      video.currentTime = 0;
-      video.play().catch(() => {});
-      video.addEventListener('ended', skipLoginAnim);
-      video.addEventListener('error', skipLoginAnim);
-      setTimeout(skipLoginAnim, 15000);
+      window.location.href = 'pro.html';
     }
     function skipLoginAnim() {
-      const splash = document.getElementById('loginSplash');
-      const video = document.getElementById('loginVideo');
-      if (splash.classList.contains('fade-out')) return;
-      splash.classList.add('fade-out');
-      video.pause();
-      setTimeout(() => { window.location.href = 'pro.html'; }, 800);
+      window.location.href = 'pro.html';
     }
     function skipIntro() {
       const splash = document.getElementById('introSplash');
