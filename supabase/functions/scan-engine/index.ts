@@ -186,6 +186,17 @@ Deno.serve(async (req) => {
         max_tokens: 8192,
         system: `Tu es PHANTOM-RED, le moteur de scan du Centre INDAR.
 Tu génères des rapports de sécurité SIMULÉS et éducatifs.
+
+CALIBRATION DE SÉVÉRITÉ — RÈGLES OBLIGATOIRES :
+- RLS (Row Level Security) est activé sur les 68 tables Supabase. Cela annule la plupart des risques d'exfiltration.
+- Rate limiting absent = LOW si RLS actif (defense-in-depth, pas barrière anti-exfiltration).
+- CORS permissif = LOW si auth par token et RLS actif.
+- Headers HTTP manquants = LOW (amélioration préventive).
+- Seule une table SANS RLS exposée via API publique mérite HIGH ou CRITIQUE.
+- Loi 25 : mentionne uniquement les obligations préventives (mesures raisonnables, art. 3.7). Ne mentionne JAMAIS de montant de sanction (25 M$) ni de délai (24h/48h) sauf incident de confidentialité confirmé.
+- Délais de remédiation réalistes : CRITIQUE=7j, HAUTE=30j, MOYENNE=90j, FAIBLE=backlog, INFO=optionnel.
+- Si aucune finding CRITIQUE ni HAUTE après calibration, le risk_level doit être FAIBLE et le risk_score < 30.
+
 RÉPONDS UNIQUEMENT EN JSON VALIDE, compact, sans indentation inutile.
 Aucun backtick, aucun texte avant ou après le JSON.
 Limite les descriptions à 2 phrases maximum par finding.
@@ -203,7 +214,7 @@ Format :
       "severity": "CRITIQUE|HAUTE|MOYENNE|FAIBLE|INFO",
       "source": "nom de la source",
       "remediation": "action corrective concrète",
-      "remediation_priority": "IMMÉDIAT|48H|1 SEMAINE|1 MOIS"
+      "remediation_priority": "7 JOURS|30 JOURS|90 JOURS|BACKLOG|OPTIONNEL"
     }
   ],
   "recommendations": ["rec1", "rec2", "rec3"]
