@@ -1,291 +1,213 @@
-/* ════════════════════════════════════════════
-   TILEX-HISTORY.JS — ti-lex-AL v10
-   Feature 6 : Historique des ZIPs dans Supabase
-════════════════════════════════════════════ */
-'use strict';
+// =============================================================
+// tilex-history.js — Historique des fichiers créés (Supabase)
+// ti-lex-AL v10 | Vanilla JS pur
+// Table : zip_historique
+// =============================================================
 
-window.TILEX = window.TILEX || {};
+window.HistoryManager = {
 
-/* ════════════════════════════════════════════
-   CONFIG SUPABASE
-════════════════════════════════════════════ */
-const SUPA_URL  = 'https://rnuripmfozlxenryxhdc.supabase.co';
-const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
+  // Configuration Supabase ti-lex
+  _supabaseUrl : 'https://rnuripmfozlxenryxhdc.supabase.co',
+  _supabaseKey : 'VOTRE_SUPABASE_ANON_KEY', // Remplacer par votre clé anon
+  _table       : 'zip_historique',
 
-// Initialiser Supabase si la lib est chargée
-let SB = null;
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    if (typeof supabase !== 'undefined' && supabase.createClient) {
-      SB = supabase.createClient(SUPA_URL, SUPA_KEY);
-      console.log('[ti-lex] Supabase connecté ✓');
-    }
-  } catch (e) {
-    console.warn('[ti-lex] Supabase non disponible :', e.message);
-  }
-});
-
-/* ════════════════════════════════════════════
-   SAUVEGARDER (appelé après chaque ZIP)
-════════════════════════════════════════════ */
-TILEX.sauvegarderHistorique = async function(nomZip, fichiers, tailleBytes) {
-  if (!SB) return;
-
-  try {
-    const { data: { session } } = await SB.auth.getSession();
-    if (!session) return; // Non connecté = on skip silencieusement
-
-    const nomProjet = TILEX.state.nomProjet || 'sans-titre';
-    const structure = fichiers.map(f => ({ n: f.nom, c: f.contenu }));
-
-    const { error } = await SB.from('zip_historique').insert({
-      user_id:      session.user.id,
-      nom_projet:   nomProjet,
-      nom_zip:      nomZip,
-      nb_fichiers:  fichiers.length,
-      taille_bytes: tailleBytes || 0,
-      structure,
-    });
-
-    if (error) console.error('[ti-lex] Erreur sauvegarde historique :', error);
-    else       console.log('[ti-lex] Historique sauvegardé ✓');
-  } catch (e) {
-    console.warn('[ti-lex] Historique ignoré :', e.message);
-  }
-};
-
-/* ════════════════════════════════════════════
-   CHARGER L'HISTORIQUE
-════════════════════════════════════════════ */
-TILEX.chargerHistorique = async function() {
-  if (!SB) return [];
-
-  try {
-    const { data: { session } } = await SB.auth.getSession();
-    if (!session) return [];
-
-    const { data, error } = await SB
-      .from('zip_historique')
-      .select('id, nom_projet, nom_zip, nb_fichiers, taille_bytes, created_at')
-      .order('created_at', { ascending: false })
-      .limit(25);
-
-    if (error) throw error;
-    return data || [];
-  } catch (e) {
-    console.error('[ti-lex] Erreur chargement historique :', e);
-    return [];
-  }
-};
-
-/* ════════════════════════════════════════════
-   RÉIMPORTER DEPUIS HISTORIQUE
-════════════════════════════════════════════ */
-TILEX.reimporterEntree = async function(id) {
-  if (!SB) return;
-
-  try {
-    const { data, error } = await SB
-      .from('zip_historique')
-      .select('structure, nom_projet, nom_zip')
-      .eq('id', id)
-      .single();
-
-    if (error || !data) { TILEX.toast('⚠ Structure introuvable', 'alerte'); return; }
-
-    const { structure, nom_projet, nom_zip } = data;
-    const actuels = TILEX.getAll();
-
-    if (actuels.length > 0) {
-      if (!confirm(`Remplacer les ${actuels.length} fichier(s) actuels par "${nom_zip}" ?`)) return;
-      TILEX.state.fichiers  = [];
-      TILEX.state.selection = new Set();
-      const listEl = document.getElementById('file-list');
-      if (listEl) listEl.innerHTML = '';
-    }
-
-    let n = 0;
-    (structure || []).forEach(f => {
-      if (f.n && typeof f.c === 'string') {
-        TILEX.ajouterFichier(f.n, f.c, true);
-        n++;
+  // ----------------------------------------------------------
+  // Ouvre le modal d'historique et charge les données
+  // ----------------------------------------------------------
+  open: async function () {
+    try {
+      const modal = document.getElementById('historyModal');
+      if (!modal) {
+        HistoryManager._toast('⚠️ Modal historique introuvable.', 'warning');
+        return;
       }
-    });
 
-    if (nom_projet) {
-      const inp = document.getElementById('input-nom-projet');
-      if (inp) { inp.value = nom_projet; inp.dispatchEvent(new Event('input')); }
+      modal.style.display = 'flex';
+      modal.classList.add('modal-open');
+
+      // Charge l'historique depuis Supabase
+      await HistoryManager.load();
+
+    } catch (err) {
+      console.error('[HistoryManager] open:', err);
     }
+  },
 
-    TILEX.fermerHistorique();
-    TILEX.toast(`📥 ${n} fichier(s) réimportés depuis "${nom_zip}"`);
-  } catch (e) {
-    TILEX.toast('❌ Erreur : ' + e.message, 'err');
+  // ----------------------------------------------------------
+  // Ferme le modal d'historique
+  // ----------------------------------------------------------
+  close: function () {
+    try {
+      const modal = document.getElementById('historyModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('modal-open');
+      }
+    } catch (err) {
+      console.error('[HistoryManager] close:', err);
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Sauvegarde un fichier dans Supabase
+  // ----------------------------------------------------------
+  add: async function (nomFichier, typeFichier, contenu) {
+    try {
+      const reponse = await fetch(
+        `${HistoryManager._supabaseUrl}/rest/v1/${HistoryManager._table}`,
+        {
+          method : 'POST',
+          headers: {
+            'Content-Type' : 'application/json',
+            'apikey'       : HistoryManager._supabaseKey,
+            'Authorization': `Bearer ${HistoryManager._supabaseKey}`,
+            'Prefer'       : 'return=minimal'
+          },
+          body: JSON.stringify({
+            nom_fichier  : nomFichier,
+            type_fichier : typeFichier,
+            contenu      : contenu,
+            date_creation: new Date().toISOString()
+            // user_id est géré par Supabase Auth (RLS)
+          })
+        }
+      );
+
+      if (!reponse.ok) {
+        const erreur = await reponse.text();
+        throw new Error(`Supabase : ${reponse.status} — ${erreur}`);
+      }
+
+      console.log(`[HistoryManager] Sauvegardé : ${nomFichier}`);
+
+    } catch (err) {
+      // Erreur non-bloquante — l'historique est secondaire
+      console.warn('[HistoryManager] add (non-bloquant):', err.message);
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Charge et affiche l'historique depuis Supabase
+  // ----------------------------------------------------------
+  load: async function () {
+    try {
+      const liste = document.getElementById('historyList');
+      if (!liste) return;
+
+      liste.innerHTML = '<li class="history-loading">⏳ Chargement…</li>';
+
+      const reponse = await fetch(
+        `${HistoryManager._supabaseUrl}/rest/v1/${HistoryManager._table}?select=*&order=date_creation.desc&limit=50`,
+        {
+          headers: {
+            'apikey'       : HistoryManager._supabaseKey,
+            'Authorization': `Bearer ${HistoryManager._supabaseKey}`
+          }
+        }
+      );
+
+      if (!reponse.ok) {
+        throw new Error(`Supabase : ${reponse.status}`);
+      }
+
+      const donnees = await reponse.json();
+
+      if (!donnees || donnees.length === 0) {
+        liste.innerHTML = '<li class="history-empty">Aucun fichier dans l\'historique.</li>';
+        return;
+      }
+
+      liste.innerHTML = donnees.map(function (item) {
+        const date = new Date(item.date_creation).toLocaleString('fr-CA');
+        const ext  = item.type_fichier?.toUpperCase() || '?';
+        return `
+          <li class="history-item">
+            <span class="history-ext">${ext}</span>
+            <span class="history-nom">${item.nom_fichier}</span>
+            <span class="history-date">${date}</span>
+            <button class="history-load-btn" onclick="HistoryManager._restorer('${item.nom_fichier}', '${item.type_fichier}', ${JSON.stringify(item.contenu || '').replace(/'/g, "\\'")})">
+              📂 Charger
+            </button>
+          </li>`;
+      }).join('');
+
+    } catch (err) {
+      console.error('[HistoryManager] load:', err);
+      const liste = document.getElementById('historyList');
+      if (liste) {
+        liste.innerHTML = `<li class="history-error">❌ Erreur de chargement : ${err.message}</li>`;
+      }
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Efface tout l'historique (avec confirmation)
+  // ----------------------------------------------------------
+  clear: async function () {
+    try {
+      const confirmation = confirm('⚠️ Effacer tout l\'historique ? Cette action est irréversible.');
+      if (!confirmation) return;
+
+      const reponse = await fetch(
+        `${HistoryManager._supabaseUrl}/rest/v1/${HistoryManager._table}?id=neq.00000000-0000-0000-0000-000000000000`,
+        {
+          method : 'DELETE',
+          headers: {
+            'apikey'       : HistoryManager._supabaseKey,
+            'Authorization': `Bearer ${HistoryManager._supabaseKey}`
+          }
+        }
+      );
+
+      if (!reponse.ok) {
+        throw new Error(`Supabase : ${reponse.status}`);
+      }
+
+      // Recharge la liste vide
+      await HistoryManager.load();
+      HistoryManager._toast('🗑️ Historique effacé.', 'success');
+
+    } catch (err) {
+      console.error('[HistoryManager] clear:', err);
+      HistoryManager._toast('❌ Erreur lors de l\'effacement.', 'error');
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Restore un fichier de l'historique dans le Preview
+  // ----------------------------------------------------------
+  _restorer: function (nom, type, contenu) {
+    try {
+      if (window.PreviewManager) {
+        PreviewManager.show(nom, contenu);
+      }
+
+      // Pré-remplir les champs du formulaire
+      const fieldName = document.getElementById('fileName');
+      const fieldType = document.getElementById('fileType');
+      if (fieldName) fieldName.value = nom;
+      if (fieldType) fieldType.value = type;
+
+      HistoryManager.close();
+      HistoryManager._toast(`📂 ${nom} restauré.`, 'success');
+
+    } catch (err) {
+      console.error('[HistoryManager] _restorer:', err);
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Toast de notification
+  // ----------------------------------------------------------
+  _toast: function (message, type = 'info') {
+    if (window.CoreManager && CoreManager._toast) {
+      CoreManager._toast(message, type);
+      return;
+    }
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className   = `toast toast-${type} toast-visible`;
+    setTimeout(() => { toast.className = 'toast'; }, 3000);
   }
 };
-
-/* ════════════════════════════════════════════
-   RE-TÉLÉCHARGER UN ZIP
-════════════════════════════════════════════ */
-TILEX.retelechargerEntree = async function(id) {
-  if (!SB || typeof JSZip === 'undefined') {
-    TILEX.toast('⚠ JSZip ou Supabase non disponible', 'alerte');
-    return;
-  }
-
-  try {
-    const { data, error } = await SB
-      .from('zip_historique')
-      .select('structure, nom_zip')
-      .eq('id', id)
-      .single();
-
-    if (error || !data) { TILEX.toast('⚠ Introuvable', 'alerte'); return; }
-
-    const zip = new JSZip();
-    (data.structure || []).forEach(f => { if (f.n) zip.file(f.n, f.c || ''); });
-
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = data.nom_zip; a.click();
-    URL.revokeObjectURL(url);
-
-    TILEX.toast(`⬇ "${data.nom_zip}" re-téléchargé`);
-  } catch (e) {
-    TILEX.toast('❌ ' + e.message, 'err');
-  }
-};
-
-/* ════════════════════════════════════════════
-   SUPPRIMER UNE ENTRÉE
-════════════════════════════════════════════ */
-TILEX.supprimerEntreeHistorique = async function(id, cardEl) {
-  if (!SB || !confirm('Supprimer cette entrée de l\'historique ?')) return;
-
-  const { error } = await SB.from('zip_historique').delete().eq('id', id);
-  if (error) { TILEX.toast('❌ ' + error.message, 'err'); return; }
-
-  if (cardEl) { cardEl.style.opacity = '0'; setTimeout(() => cardEl.remove(), 200); }
-  TILEX.toast('🗑 Entrée supprimée');
-};
-
-/* ════════════════════════════════════════════
-   MODAL HISTORIQUE
-════════════════════════════════════════════ */
-TILEX.ouvrirHistorique = async function() {
-  const overlay = document.getElementById('modal-historique');
-  const body    = document.getElementById('historique-body');
-  if (!overlay || !body) return;
-
-  body.innerHTML = '<div class="tx-loading">⏳ Chargement...</div>';
-  overlay.classList.remove('hidden');
-
-  if (!SB) {
-    body.innerHTML = `
-      <div class="tx-hist-vide">
-        <p>🔌 Supabase non connecté</p>
-        <p style="font-size:10px;margin-top:8px;">
-          Connecte-toi via l'auth Supabase<br>pour accéder à l'historique.
-        </p>
-      </div>`;
-    return;
-  }
-
-  const { data: { session } } = await SB.auth.getSession();
-  if (!session) {
-    body.innerHTML = `
-      <div class="tx-hist-vide" style="padding:30px 20px;">
-        <p>🔐 Connexion requise</p>
-        <p style="font-size:10px;margin-top:8px;color:var(--muted)">L'historique est lié à ton compte Supabase.</p>
-        <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;max-width:280px;margin:16px auto 0">
-          <input id="hist-email" type="email" class="tx-input" placeholder="courriel@exemple.com" />
-          <input id="hist-pwd" type="password" class="tx-input" placeholder="Mot de passe" />
-          <div style="display:flex;gap:8px">
-            <button class="tx-btn-primary" style="flex:1" id="hist-login">Connexion</button>
-            <button class="tx-btn-ghost" style="flex:1" id="hist-signup">Créer compte</button>
-          </div>
-          <div id="hist-auth-msg" style="font-size:10px;color:var(--gold);text-align:center"></div>
-        </div>
-      </div>`;
-
-    document.getElementById('hist-login')?.addEventListener('click', async () => {
-      const email = document.getElementById('hist-email')?.value;
-      const pwd   = document.getElementById('hist-pwd')?.value;
-      const { error } = await SB.auth.signInWithPassword({ email, password: pwd });
-      if (error) { document.getElementById('hist-auth-msg').textContent = '⚠ ' + error.message; }
-      else TILEX.ouvrirHistorique();
-    });
-
-    document.getElementById('hist-signup')?.addEventListener('click', async () => {
-      const email = document.getElementById('hist-email')?.value;
-      const pwd   = document.getElementById('hist-pwd')?.value;
-      const { error } = await SB.auth.signUp({ email, password: pwd });
-      const msg = error ? '⚠ ' + error.message : '✓ Vérifie tes courriels !';
-      document.getElementById('hist-auth-msg').textContent = msg;
-    });
-
-    return;
-  }
-
-  const entrees = await TILEX.chargerHistorique();
-
-  if (!entrees.length) {
-    body.innerHTML = '<div class="tx-hist-vide">📭 Aucun ZIP dans l\'historique.<br>Télécharge un ZIP pour commencer.</div>';
-    return;
-  }
-
-  const liste = document.createElement('div');
-  liste.className = 'tx-hist-liste';
-
-  entrees.forEach(e => {
-    const card = document.createElement('div');
-    card.className = 'tx-hist-card';
-    const date    = new Date(e.created_at).toLocaleDateString('fr-CA', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    const taille  = TILEX.formatBytes(e.taille_bytes);
-
-    card.innerHTML = `
-      <div class="tx-hist-info">
-        <div class="tx-hist-nom">${e.nom_zip}</div>
-        <div class="tx-hist-meta">
-          <span>📁 ${e.nb_fichiers} fichier(s)</span>
-          <span>⚖ ${taille}</span>
-          <span>📅 ${date}</span>
-          ${e.nom_projet && e.nom_projet !== 'sans-titre'
-            ? `<span class="tx-hist-badge">${e.nom_projet}</span>`
-            : ''}
-        </div>
-      </div>
-      <div class="tx-hist-btns">
-        <button class="tx-btn-sm btn-reimp" data-id="${e.id}">📥 Importer</button>
-        <button class="tx-btn-sm btn-redl"  data-id="${e.id}">⬇ ZIP</button>
-        <button class="tx-btn-sm tx-btn-danger btn-del" data-id="${e.id}">✕</button>
-      </div>
-    `;
-
-    card.querySelector('.btn-reimp').addEventListener('click', () => TILEX.reimporterEntree(e.id));
-    card.querySelector('.btn-redl').addEventListener('click',  () => TILEX.retelechargerEntree(e.id));
-    card.querySelector('.btn-del').addEventListener('click',   () => TILEX.supprimerEntreeHistorique(e.id, card));
-
-    liste.appendChild(card);
-  });
-
-  body.innerHTML = `<p style="font-size:10px;color:var(--muted);padding:10px 18px 4px">${entrees.length} entrée(s) · Sauvegardes automatiques</p>`;
-  body.appendChild(liste);
-};
-
-TILEX.fermerHistorique = function() {
-  const overlay = document.getElementById('modal-historique');
-  if (overlay) overlay.classList.add('hidden');
-};
-
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  const fermer  = document.getElementById('historique-fermer');
-  const overlay = document.getElementById('modal-historique');
-  if (fermer)  fermer.addEventListener('click', TILEX.fermerHistorique);
-  if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) TILEX.fermerHistorique(); });
-  console.log('[ti-lex] Historique initialisé ✓');
-});

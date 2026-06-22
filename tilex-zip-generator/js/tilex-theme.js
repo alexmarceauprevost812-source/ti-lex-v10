@@ -1,164 +1,134 @@
-/* ════════════════════════════════════════════
-   TILEX-THEME.JS — ti-lex-AL v10
-   Feature 8 : Thème personnalisable
-════════════════════════════════════════════ */
-'use strict';
+// =============================================================
+// tilex-theme.js — Gestion des 4 thèmes CSS
+// ti-lex-AL v10 | Vanilla JS pur
+// =============================================================
 
-window.TILEX = window.TILEX || {};
+window.ThemeManager = {
 
-const LS_KEY_THEME  = 'tilex_theme';
-const LS_KEY_COLORS = 'tilex_custom_colors';
+  // Ordre du cycle des thèmes
+  _themes : ['dark', 'light', 'purple', 'ocean'],
+  _current: null,
+  _storageKey: 'tilex-theme',
 
-/* ════════════════════════════════════════════
-   DÉFINITIONS DES THÈMES
-════════════════════════════════════════════ */
-const THEMES = {
-  dark: {
-    label:    'Cyberpunk',
-    hljs:     'github-dark',
-    hljsUrl:  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
+  // ----------------------------------------------------------
+  // Initialisation au chargement — applique le thème sauvegardé
+  // ----------------------------------------------------------
+  init: function () {
+    try {
+      const sauvegarde = localStorage.getItem(ThemeManager._storageKey);
+      const theme = sauvegarde && ThemeManager._themes.includes(sauvegarde)
+        ? sauvegarde
+        : 'dark'; // Thème par défaut : dark
+
+      ThemeManager.set(theme);
+      console.log(`[ThemeManager] Thème chargé : ${theme}`);
+
+    } catch (err) {
+      console.error('[ThemeManager] init:', err);
+      ThemeManager.set('dark'); // Fallback
+    }
   },
-  light: {
-    label:    'Lumière',
-    hljs:     'github',
-    hljsUrl:  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css',
+
+  // ----------------------------------------------------------
+  // Cycle entre les thèmes : dark → light → purple → ocean → dark
+  // ----------------------------------------------------------
+  toggle: function () {
+    try {
+      const themes  = ThemeManager._themes;
+      const current = ThemeManager._current || 'dark';
+      const index   = themes.indexOf(current);
+      const next    = themes[(index + 1) % themes.length];
+
+      ThemeManager.set(next);
+
+      const labels = {
+        dark  : '🌑 Sombre',
+        light : '☀️ Clair',
+        purple: '🟣 Violet',
+        ocean : '🌊 Océan'
+      };
+      ThemeManager._toast(`Thème : ${labels[next] || next}`, 'info');
+
+    } catch (err) {
+      console.error('[ThemeManager] toggle:', err);
+    }
   },
-  monokai: {
-    label:    'Monokai',
-    hljs:     'monokai',
-    hljsUrl:  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai.min.css',
-  },
-  custom: {
-    label:    'Custom',
-    hljs:     'github-dark',
-    hljsUrl:  'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css',
-  },
-};
 
-/* ════════════════════════════════════════════
-   APPLIQUER UN THÈME
-════════════════════════════════════════════ */
-TILEX.appliquerTheme = function(theme, couleurs = null) {
-  const html   = document.documentElement;
-  const hljsCss = document.getElementById('hljs-theme-css');
-
-  html.setAttribute('data-theme', theme);
-  TILEX.state.theme = theme;
-
-  // Changer le CSS de highlight.js
-  if (hljsCss && THEMES[theme]) {
-    hljsCss.href = THEMES[theme].hljsUrl;
-  }
-
-  // Couleurs custom
-  if (theme === 'custom' && couleurs) {
-    Object.entries(couleurs).forEach(([k, v]) => {
-      html.style.setProperty('--custom-' + k, v);
-    });
-    localStorage.setItem(LS_KEY_COLORS, JSON.stringify(couleurs));
-  }
-
-  // Mettre à jour les boutons actifs
-  document.querySelectorAll('.tx-theme-choice').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === theme);
-  });
-
-  localStorage.setItem(LS_KEY_THEME, theme);
-};
-
-/* ════════════════════════════════════════════
-   MODAL THÈME
-════════════════════════════════════════════ */
-TILEX.ouvrirModalTheme = function() {
-  const overlay = document.getElementById('modal-theme');
-  if (overlay) overlay.classList.remove('hidden');
-
-  // Marquer le thème actif
-  document.querySelectorAll('.tx-theme-choice').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.theme === (TILEX.state.theme || 'dark'));
-  });
-
-  // Charger les couleurs custom
-  const couleurs = JSON.parse(localStorage.getItem(LS_KEY_COLORS) || 'null');
-  if (couleurs) {
-    Object.entries(couleurs).forEach(([k, v]) => {
-      const inp = document.getElementById('color-' + k);
-      const lbl = document.getElementById('color-' + k + '-val');
-      if (inp) inp.value   = v;
-      if (lbl) lbl.textContent = v;
-    });
-  }
-
-  // Montrer/cacher les couleurs custom
-  const customColors = document.getElementById('custom-colors');
-  if (customColors) {
-    customColors.style.display = TILEX.state.theme === 'custom' ? 'flex' : 'none';
-  }
-};
-
-TILEX.fermerModalTheme = function() {
-  const overlay = document.getElementById('modal-theme');
-  if (overlay) overlay.classList.add('hidden');
-};
-
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  const overlay   = document.getElementById('modal-theme');
-  const fermer    = document.getElementById('theme-fermer');
-  const appliquer = document.getElementById('btn-appliquer-theme');
-  const custom    = document.getElementById('custom-colors');
-
-  // Fermer
-  if (fermer) fermer.addEventListener('click', TILEX.fermerModalTheme);
-  if (overlay) overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) TILEX.fermerModalTheme();
-  });
-
-  // Boutons de thème prédéfinis
-  document.querySelectorAll('.tx-theme-choice').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const theme = btn.dataset.theme;
-      TILEX.appliquerTheme(theme);
-
-      // Afficher/cacher les couleurs custom
-      if (custom) {
-        custom.style.display = theme === 'custom' ? 'flex' : 'none';
+  // ----------------------------------------------------------
+  // Applique un thème spécifique et le sauvegarde
+  // ----------------------------------------------------------
+  set: function (theme) {
+    try {
+      if (!ThemeManager._themes.includes(theme)) {
+        console.warn(`[ThemeManager] Thème "${theme}" inconnu.`);
+        theme = 'dark';
       }
-    });
-  });
 
-  // Color pickers live
-  ['accent', 'bg', 'surface', 'text'].forEach(key => {
-    const inp = document.getElementById('color-' + key);
-    const lbl = document.getElementById('color-' + key + '-val');
-    if (!inp) return;
+      // Applique l'attribut sur <html>
+      document.documentElement.setAttribute('data-theme', theme);
+      ThemeManager._current = theme;
 
-    inp.addEventListener('input', () => {
-      if (lbl) lbl.textContent = inp.value;
-      // Aperçu live si custom actif
-      if (TILEX.state.theme === 'custom') {
-        document.documentElement.style.setProperty('--custom-' + key, inp.value);
-      }
-    });
-  });
+      // Sauvegarde dans localStorage
+      localStorage.setItem(ThemeManager._storageKey, theme);
 
-  // Bouton Appliquer (theme custom)
-  if (appliquer) appliquer.addEventListener('click', () => {
-    const couleurs = {};
-    ['accent', 'bg', 'surface', 'text'].forEach(key => {
-      const inp = document.getElementById('color-' + key);
-      if (inp) couleurs[key] = inp.value;
-    });
-    TILEX.appliquerTheme('custom', couleurs);
-    TILEX.toast('🎨 Thème custom appliqué !');
-  });
+      // Met à jour le bouton de thème si présent
+      ThemeManager._updateButton(theme);
 
-  // Charger le thème sauvegardé
-  const themeSauve   = localStorage.getItem(LS_KEY_THEME) || 'dark';
-  const couleursSauv = JSON.parse(localStorage.getItem(LS_KEY_COLORS) || 'null');
-  TILEX.appliquerTheme(themeSauve, couleursSauv);
+    } catch (err) {
+      console.error('[ThemeManager] set:', err);
+    }
+  },
 
-  console.log('[ti-lex] Thème initialisé ✓ (' + themeSauve + ')');
-});
+  // ----------------------------------------------------------
+  // Retourne le thème actif
+  // ----------------------------------------------------------
+  get: function () {
+    return ThemeManager._current || 'dark';
+  },
+
+  // ----------------------------------------------------------
+  // Met à jour l'affichage du bouton de thème
+  // ----------------------------------------------------------
+  _updateButton: function (theme) {
+    try {
+      const btn = document.getElementById('themeBtn');
+      if (!btn) return;
+
+      const icones = {
+        dark  : '🌑',
+        light : '☀️',
+        purple: '🟣',
+        ocean : '🌊'
+      };
+      btn.textContent = `${icones[theme] || '🎨'} Thème`;
+      btn.setAttribute('data-theme', theme);
+
+    } catch (err) {
+      // Silencieux — le bouton est optionnel
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Toast de notification
+  // ----------------------------------------------------------
+  _toast: function (message, type = 'info') {
+    if (window.CoreManager && CoreManager._toast) {
+      CoreManager._toast(message, type);
+      return;
+    }
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className   = `toast toast-${type} toast-visible`;
+    setTimeout(() => { toast.className = 'toast'; }, 3000);
+  }
+};
+
+// ----------------------------------------------------------
+// Auto-initialisation dès que le DOM est prêt
+// ----------------------------------------------------------
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', ThemeManager.init);
+} else {
+  ThemeManager.init();
+}

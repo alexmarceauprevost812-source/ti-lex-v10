@@ -1,117 +1,213 @@
-/* ════════════════════════════════════════════
-   TILEX-SHARE.JS — ti-lex-AL v10
-   Feature 5 : Partage via lien URL unique
-════════════════════════════════════════════ */
-'use strict';
+// =============================================================
+// tilex-share.js — Partage et export du projet
+// ti-lex-AL v10 | Vanilla JS pur
+// =============================================================
 
-window.TILEX = window.TILEX || {};
+window.ShareManager = {
 
-/* ════════════════════════════════════════════
-   ENCODAGE
-════════════════════════════════════════════ */
-TILEX.encoderStructure = function(fichiers, nomProjet) {
-  const payload = {
-    v:       2,
-    nom:     nomProjet || '',
-    date:    new Date().toISOString().slice(0, 10),
-    fichiers: fichiers.map(f => ({ n: f.nom, c: f.contenu })),
-  };
-  const json = JSON.stringify(payload);
-  const b64  = btoa(unescape(encodeURIComponent(json)));
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-};
-
-TILEX.genererLienPartage = function() {
-  const fichiers    = TILEX.getAll();
-  if (!fichiers.length) return null;
-
-  const nomProjet   = TILEX.state.nomProjet;
-  const encoded     = TILEX.encoderStructure(fichiers, nomProjet);
-  const url         = new URL(window.location.href);
-  url.searchParams.set('structure', encoded);
-  if (nomProjet) url.searchParams.set('projet', nomProjet);
-  return url.toString();
-};
-
-/* ════════════════════════════════════════════
-   MODAL PARTAGE
-════════════════════════════════════════════ */
-TILEX.ouvrirModalPartage = function() {
-  const lien = TILEX.genererLienPartage();
-  if (!lien) {
-    TILEX.toast('⚠ Aucun fichier à partager', 'alerte');
-    return;
-  }
-
-  const overlay   = document.getElementById('modal-partage');
-  const lienInput = document.getElementById('partage-lien');
-  const descEl    = document.getElementById('partage-desc');
-  const statsEl   = document.getElementById('partage-stats');
-  const alerteEl  = document.getElementById('partage-alerte');
-
-  if (!overlay) return;
-
-  const fichiers  = TILEX.getAll();
-  const estLong   = lien.length > 8000;
-
-  if (lienInput) lienInput.value = lien;
-  if (descEl) descEl.innerHTML = `Ce lien encode <strong>${fichiers.length} fichier(s)</strong> dans l'URL. La personne qui l'ouvre verra les fichiers importés automatiquement.`;
-  if (statsEl) statsEl.innerHTML = `<span>📁 ${fichiers.length} fichier(s)</span><span>⚖ ${lien.length} caractères</span><span>📅 ${new Date().toLocaleDateString('fr-CA')}</span>`;
-  if (alerteEl) alerteEl.classList.toggle('hidden', !estLong);
-
-  overlay.classList.remove('hidden');
-
-  setTimeout(() => {
-    if (lienInput) { lienInput.select(); }
-  }, 100);
-};
-
-TILEX.fermerModalPartage = function() {
-  const overlay = document.getElementById('modal-partage');
-  if (overlay) overlay.classList.add('hidden');
-};
-
-/* ════════════════════════════════════════════
-   COPIER LE LIEN
-════════════════════════════════════════════ */
-TILEX.copierLienPartage = function() {
-  const lien = TILEX.genererLienPartage();
-  if (!lien) return;
-  navigator.clipboard.writeText(lien).then(() => {
-    TILEX.toast('🔗 Lien copié !');
-    ['partage-copier', 'partage-copier2'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) {
-        const orig = btn.textContent;
-        btn.textContent = '✓ Copié!';
-        setTimeout(() => { btn.textContent = orig; }, 1800);
+  // ----------------------------------------------------------
+  // Ouvre le modal de partage (#shareModal)
+  // ----------------------------------------------------------
+  open: function () {
+    try {
+      const modal = document.getElementById('shareModal');
+      if (!modal) {
+        ShareManager._toast('⚠️ Modal de partage introuvable.', 'warning');
+        return;
       }
-    });
-  });
+
+      // Génère le lien de partage (URL actuelle)
+      const shareLink = document.getElementById('shareLink');
+      if (shareLink) {
+        shareLink.value = window.location.href;
+      }
+
+      modal.style.display = 'flex';
+      modal.classList.add('modal-open');
+
+    } catch (err) {
+      console.error('[ShareManager] open:', err);
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Ferme le modal de partage
+  // ----------------------------------------------------------
+  close: function () {
+    try {
+      const modal = document.getElementById('shareModal');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('modal-open');
+      }
+    } catch (err) {
+      console.error('[ShareManager] close:', err);
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Copie le lien de partage dans le presse-papier
+  // ----------------------------------------------------------
+  copy: async function () {
+    try {
+      const shareLink = document.getElementById('shareLink');
+      const lien = shareLink ? shareLink.value : window.location.href;
+
+      await navigator.clipboard.writeText(lien);
+      ShareManager._toast('🔗 Lien copié dans le presse-papier !', 'success');
+
+    } catch (err) {
+      // Fallback pour les navigateurs sans Clipboard API
+      try {
+        const shareLink = document.getElementById('shareLink');
+        if (shareLink) {
+          shareLink.select();
+          document.execCommand('copy');
+          ShareManager._toast('🔗 Lien copié !', 'success');
+        }
+      } catch (fallbackErr) {
+        console.error('[ShareManager] copy fallback:', fallbackErr);
+        ShareManager._toast('❌ Impossible de copier le lien.', 'error');
+      }
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Exporte tous les fichiers ZIP en JSON téléchargeable
+  // ----------------------------------------------------------
+  exportJSON: function () {
+    try {
+      if (!window.ZipManager || ZipManager.files.length === 0) {
+        ShareManager._toast('⚠️ Aucun fichier à exporter.', 'warning');
+        return;
+      }
+
+      const exportData = {
+        version   : 'tilex-AL-v10',
+        date      : new Date().toISOString(),
+        source    : 'Produit du Québec',
+        fichiers  : ZipManager.files.map(function (f) {
+          return {
+            name   : f.name,
+            content: f.content,
+            size   : new Blob([f.content]).size
+          };
+        })
+      };
+
+      const json    = JSON.stringify(exportData, null, 2);
+      const blob    = new Blob([json], { type: 'application/json;charset=utf-8' });
+      const url     = URL.createObjectURL(blob);
+      const nomFich = `tilex-export-${Date.now()}.json`;
+
+      const link    = document.createElement('a');
+      link.href     = url;
+      link.download = nomFich;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+      ShareManager._toast(`✅ Export JSON téléchargé : ${nomFich}`, 'success');
+
+    } catch (err) {
+      console.error('[ShareManager] exportJSON:', err);
+      ShareManager._toast('❌ Erreur lors de l\'export JSON.', 'error');
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Importe un JSON et recharge les fichiers dans ZipManager
+  // ----------------------------------------------------------
+  importJSON: function () {
+    try {
+      // Crée un input file invisible
+      const input   = document.createElement('input');
+      input.type    = 'file';
+      input.accept  = '.json';
+
+      input.addEventListener('change', function (evt) {
+        const fichier = evt.target.files[0];
+        if (!fichier) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          try {
+            const donnees = JSON.parse(e.target.result);
+
+            // Validation de la structure
+            if (!donnees.fichiers || !Array.isArray(donnees.fichiers)) {
+              ShareManager._toast('❌ Format JSON invalide — structure "fichiers" manquante.', 'error');
+              return;
+            }
+
+            // Vider le ZIP actuel si demandé
+            const vider = confirm(
+              `📦 Importer ${donnees.fichiers.length} fichier(s) ?\n\n` +
+              `Cliquez OK pour remplacer le ZIP actuel, Annuler pour ajouter aux fichiers existants.`
+            );
+
+            if (vider && window.ZipManager) {
+              ZipManager.files = [];
+            }
+
+            // Ajouter chaque fichier importé
+            let compteur = 0;
+            donnees.fichiers.forEach(function (f) {
+              if (f.name && f.content !== undefined) {
+                if (window.ZipManager) {
+                  ZipManager.add(f.name, f.content);
+                  compteur++;
+                }
+              }
+            });
+
+            ShareManager._toast(
+              `✅ ${compteur} fichier(s) importé(s) depuis le JSON.`,
+              'success'
+            );
+
+            // Ferme le modal de partage
+            ShareManager.close();
+
+          } catch (parseErr) {
+            console.error('[ShareManager] importJSON parse:', parseErr);
+            ShareManager._toast('❌ Fichier JSON invalide ou corrompu.', 'error');
+          }
+        };
+
+        reader.onerror = function () {
+          ShareManager._toast('❌ Impossible de lire le fichier.', 'error');
+        };
+
+        reader.readAsText(fichier, 'utf-8');
+      });
+
+      // Déclenche l'ouverture du sélecteur de fichier
+      document.body.appendChild(input);
+      input.click();
+      document.body.removeChild(input);
+
+    } catch (err) {
+      console.error('[ShareManager] importJSON:', err);
+      ShareManager._toast('❌ Erreur lors de l\'import JSON.', 'error');
+    }
+  },
+
+  // ----------------------------------------------------------
+  // Toast de notification
+  // ----------------------------------------------------------
+  _toast: function (message, type = 'info') {
+    if (window.CoreManager && CoreManager._toast) {
+      CoreManager._toast(message, type);
+      return;
+    }
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className   = `toast toast-${type} toast-visible`;
+    setTimeout(() => { toast.className = 'toast'; }, 3000);
+  }
 };
-
-/* ════════════════════════════════════════════
-   INIT
-════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  const fermer  = document.getElementById('partage-fermer');
-  const copier1 = document.getElementById('partage-copier');
-  const copier2 = document.getElementById('partage-copier2');
-  const ouvrir  = document.getElementById('partage-ouvrir');
-  const overlay = document.getElementById('modal-partage');
-
-  if (fermer)  fermer.addEventListener('click', TILEX.fermerModalPartage);
-  if (copier1) copier1.addEventListener('click', TILEX.copierLienPartage);
-  if (copier2) copier2.addEventListener('click', TILEX.copierLienPartage);
-
-  if (ouvrir) ouvrir.addEventListener('click', () => {
-    const lien = TILEX.genererLienPartage();
-    if (lien) window.open(lien, '_blank', 'noopener');
-  });
-
-  if (overlay) overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) TILEX.fermerModalPartage();
-  });
-
-  console.log('[ti-lex] Partage initialisé ✓');
-});

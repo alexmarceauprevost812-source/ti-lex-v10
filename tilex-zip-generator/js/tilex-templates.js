@@ -1,582 +1,556 @@
-/* ════════════════════════════════════════════
-   TILEX-TEMPLATES.JS — ti-lex-AL v10
-   Contenu pré-rempli intelligent + Templates projets
-════════════════════════════════════════════ */
-'use strict';
+// =============================================================
+// tilex-templates.js — Templates de projets prêts à l'emploi
+// ti-lex-AL v10 | Vanilla JS pur
+// =============================================================
 
-window.TILEX = window.TILEX || {};
+window.TemplateManager = {
 
-const today = () => new Date().toISOString().slice(0, 10);
+  // ----------------------------------------------------------
+  // Charge et applique le template sélectionné dans #templateSelect
+  // ----------------------------------------------------------
+  load: function () {
+    try {
+      const select = document.getElementById('templateSelect');
+      if (!select || !select.value) {
+        TemplateManager._toast('⚠️ Sélectionnez un template.', 'warning');
+        return;
+      }
 
-/* ════════════════════════════════════════════
-   1. CONTENU PAR EXTENSION
-════════════════════════════════════════════ */
-TILEX.contentTemplates = {
+      const template = select.value;
+      const fichiers = TemplateManager._getTemplate(template);
 
-  js: (nom) => `// ──────────────────────────────────────
-// Module : ${nom}
-// Créé   : ${today()}
-// ──────────────────────────────────────
-'use strict';
+      if (!fichiers || fichiers.length === 0) {
+        TemplateManager._toast('⚠️ Template introuvable.', 'warning');
+        return;
+      }
 
-// ── Configuration ──
-const CONFIG = {};
+      // Ajoute chaque fichier dans ZipManager
+      fichiers.forEach(function (fichier) {
+        if (window.ZipManager) {
+          ZipManager.add(fichier.name, fichier.content);
+        }
+      });
 
-/**
- * Fonction principale.
- * @param {Object} options
- * @returns {*}
- */
-function main(options = {}) {
-  console.log('[${nom}] démarrage', options);
-  // TODO : implémenter
-  return null;
-}
+      TemplateManager._toast(
+        `🚀 Template "${template}" chargé — ${fichiers.length} fichier(s) ajouté(s) au ZIP !`,
+        'success'
+      );
 
-export { main, CONFIG };
-`,
-
-  ts: (nom) => `// ──────────────────────────────────────
-// Module TypeScript : ${nom}
-// Créé : ${today()}
-// ──────────────────────────────────────
-
-export interface Options {
-  debug?: boolean;
-  [key: string]: unknown;
-}
-
-export interface Resultat<T = unknown> {
-  succes: boolean;
-  donnees?: T;
-  erreur?: string;
-}
-
-export function main<T>(options: Options = {}): Resultat<T> {
-  try {
-    if (options.debug) console.log('[${nom}]', options);
-    return { succes: true };
-  } catch (err) {
-    return { succes: false, erreur: String(err) };
-  }
-}
-`,
-
-  jsx: (nom) => {
-    const C = toPascal(nom);
-    return `import { useState, useEffect } from 'react';
-
-/**
- * Composant : ${C}
- */
-export default function ${C}({ /* props */ }) {
-  const [etat, setEtat] = useState(null);
-
-  useEffect(() => {
-    // TODO : charger les données
-  }, []);
-
-  return (
-    <div className="${C.toLowerCase()}">
-      <h2>${C}</h2>
-    </div>
-  );
-}
-`;
+    } catch (err) {
+      console.error('[TemplateManager] load:', err);
+      TemplateManager._toast('❌ Erreur lors du chargement du template.', 'error');
+    }
   },
 
-  tsx: (nom) => {
-    const C = toPascal(nom);
-    return `import { useState, useEffect } from 'react';
+  // ----------------------------------------------------------
+  // Retourne les fichiers du template demandé
+  // ----------------------------------------------------------
+  _getTemplate: function (type) {
+    const date = new Date().toLocaleDateString('fr-CA');
 
-interface Props {
-  titre?: string;
-  className?: string;
-}
+    switch (type) {
 
-export default function ${C}({ titre = '${C}', className = '' }: Props) {
-  const [etat, setEtat] = useState<string | null>(null);
-
-  useEffect(() => {
-    // TODO
-  }, []);
-
-  return (
-    <div className={\`${C.toLowerCase()} \${className}\`}>
-      <h2>{titre}</h2>
-      {etat && <p>{etat}</p>}
-    </div>
-  );
-}
-`;
-  },
-
-  html: (nom) => `<!DOCTYPE html>
+      // --- Template : Application Web ---
+      case 'webapp':
+        return [
+          {
+            name: 'index.html',
+            content: `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${nom.replace(/\.html?$/, '')}</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Mon Application</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Titre</h1>
+    <h1>Mon Application</h1>
   </header>
-  <main>
-    <section>
-      <h2>Section</h2>
-      <p>Contenu</p>
-    </section>
+  <main id="app">
+    <p>Bienvenue dans votre application web.</p>
   </main>
-  <footer>
-    <p>&copy; ${new Date().getFullYear()}</p>
-  </footer>
-  <script src="js/app.js" type="module"></script>
+  <script src="app.js"></script>
 </body>
-</html>
-`,
+</html>`
+          },
+          {
+            name: 'style.css',
+            content: `/* style.css — Application Web
+   Généré par ti-lex-AL v10 — ${date} */
 
-  css: (nom) => `/* ──────────────────────────────────────
-   Styles : ${nom} · ${today()}
-   ────────────────────────────────────── */
-
-/* ── Variables ── */
 :root {
-  --accent:   #ff7f27;
-  --bg:       #0a0a0a;
-  --surface:  #111118;
-  --text:     #e8e8f0;
-  --muted:    #6b6b80;
-  --font:     system-ui, sans-serif;
-  --radius:   6px;
+  --bg      : #0a0a0a;
+  --surface : #141414;
+  --border  : #23232c;
+  --accent  : #ff7f27;
+  --text    : #ffffff;
 }
 
-/* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Base ── */
 body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.65;
+  background : var(--bg);
+  color      : var(--text);
+  font-family: 'Segoe UI', sans-serif;
+  min-height : 100vh;
 }
 
-h1, h2, h3 { line-height: 1.25; }
-a { color: var(--accent); text-decoration: none; }
-
-.conteneur { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
-`,
-
-  scss: (nom) => `// ──────────────────────────────────────
-// SCSS : ${nom} · ${today()}
-// ──────────────────────────────────────
-
-$accent:  #ff7f27;
-$bg:      #0a0a0a;
-$surface: #111118;
-$text:    #e8e8f0;
-$radius:  6px;
-
-@mixin flex-centre {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+header {
+  background   : var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding      : 1rem 2rem;
 }
 
-@mixin responsive($bp) {
-  @if $bp == mobile { @media (max-width: 640px) { @content; } }
-}
+header h1 { color: var(--accent); font-size: 1.5rem; }
 
-.conteneur {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 20px;
+main { padding: 2rem; }`
+          },
+          {
+            name: 'app.js',
+            content: `// app.js — Application Web
+// Généré par ti-lex-AL v10 — ${date}
 
-  @include responsive(mobile) { padding: 0 12px; }
-}
-`,
+'use strict';
 
-  json: (nom) => `{
-  "nom": "${nom.replace('.json', '')}",
-  "version": "1.0.0",
-  "cree_le": "${today()}"
-}
-`,
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('[App] Démarrage');
+  init();
+});
 
-  'package.json': () => `{
-  "name": "mon-projet",
-  "version": "1.0.0",
-  "description": "",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev":   "node --watch index.js",
-    "test":  "node --test"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {}
-}
-`,
+function init() {
+  // TODO: Initialiser votre application ici
+}`
+          }
+        ];
 
-  'tsconfig.json': () => `{
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "sourceMap": true,
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-`,
+      // --- Template : API Node.js ---
+      case 'api':
+        return [
+          {
+            name: 'server.js',
+            content: `// server.js — Serveur API Node.js
+// Généré par ti-lex-AL v10 — ${date}
 
-  md: (nom) => {
-    const titre = nom.replace('.md', '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    return `# ${titre}
+const express = require('express');
+const cors    = require('cors');
+require('dotenv').config();
 
-> Description courte en une phrase.
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({ message: 'API ti-lex opérationnelle', version: '1.0.0' });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Démarrage
+app.listen(PORT, () => {
+  console.log(\`[Server] Démarré sur le port \${PORT}\`);
+});`
+          },
+          {
+            name: 'package.json',
+            content: JSON.stringify({
+              name    : 'tilex-api',
+              version : '1.0.0',
+              description: `API générée par ti-lex-AL v10 — ${date}`,
+              main    : 'server.js',
+              scripts : { start: 'node server.js', dev: 'nodemon server.js' },
+              dependencies: { express: '^4.18.2', cors: '^2.8.5', dotenv: '^16.0.0' },
+              devDependencies: { nodemon: '^3.0.0' }
+            }, null, 2)
+          },
+          {
+            name: '.env.example',
+            content: `# Variables d'environnement — Copier en .env
+# Généré par ti-lex-AL v10 — ${date}
+
+PORT=3000
+NODE_ENV=development
+SUPABASE_URL=https://votre-projet.supabase.co
+SUPABASE_ANON_KEY=votre_clé_anon
+API_SECRET=votre_secret_api`
+          }
+        ];
+
+      // --- Template : Supabase ---
+      case 'supabase':
+        return [
+          {
+            name: 'schema.sql',
+            content: `-- schema.sql — Structure Supabase
+-- Généré par ti-lex-AL v10 — ${date}
+
+-- Table principale
+CREATE TABLE IF NOT EXISTS projets (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nom          TEXT NOT NULL,
+    description  TEXT,
+    statut       TEXT DEFAULT 'actif',
+    date_creation TIMESTAMPTZ DEFAULT NOW(),
+    user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+-- RLS activé
+ALTER TABLE projets ENABLE ROW LEVEL SECURITY;
+
+-- Politiques RLS
+CREATE POLICY "Lecture : utilisateur propriétaire" ON projets
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Insertion : utilisateur connecté" ON projets
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Mise à jour : utilisateur propriétaire" ON projets
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Suppression : utilisateur propriétaire" ON projets
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Index
+CREATE INDEX idx_projets_user    ON projets(user_id);
+CREATE INDEX idx_projets_date    ON projets(date_creation DESC);
+CREATE INDEX idx_projets_statut  ON projets(statut);`
+          },
+          {
+            name: 'config.js',
+            content: `// config.js — Configuration Supabase
+// Généré par ti-lex-AL v10 — ${date}
+
+const SUPABASE_URL     = 'https://rnuripmfozlxenryxhdc.supabase.co';
+const SUPABASE_ANON_KEY = 'VOTRE_SUPABASE_ANON_KEY';
+
+// Initialisation du client Supabase
+// (requiert la librairie @supabase/supabase-js dans votre HTML)
+window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+console.log('[Supabase] Client initialisé');`
+          },
+          {
+            name: 'README.md',
+            content: `# Projet Supabase
+
+> Généré par **ti-lex-AL v10** — ${date}
+
+## Configuration
+
+1. Copiez votre URL et votre clé anon Supabase dans \`config.js\`
+2. Exécutez \`schema.sql\` dans l'éditeur SQL de Supabase
+3. Activez l'authentification dans le dashboard Supabase
+
+## Structure
+
+- \`schema.sql\` — Tables et politiques RLS
+- \`config.js\`  — Connexion au client Supabase
+- \`README.md\`  — Ce fichier
+
+---
+Produit du Québec 🔶`
+          }
+        ];
+
+      // --- Template : Python ---
+      case 'python':
+        return [
+          {
+            name: 'main.py',
+            content: `#!/usr/bin/env python3
+# main.py — Application Python
+# Généré par ti-lex-AL v10 — ${date}
+
+import os
+import json
+import logging
+from datetime import datetime
+
+# Configuration du logger
+logging.basicConfig(
+    level   = logging.INFO,
+    format  = '[%(asctime)s] %(levelname)s — %(message)s',
+    datefmt = '%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    """Point d'entrée principal de l'application."""
+    logger.info("Démarrage de l'application ti-lex")
+    
+    # TODO: Ajouter votre logique ici
+    data = {
+        "nom"    : "ti-lex-AL v10",
+        "statut" : "actif",
+        "date"   : datetime.now().isoformat()
+    }
+    
+    logger.info(f"Config : {json.dumps(data, ensure_ascii=False)}")
+    return data
+
+
+if __name__ == "__main__":
+    result = main()
+    print(json.dumps(result, ensure_ascii=False, indent=2))`
+          },
+          {
+            name: 'requirements.txt',
+            content: `# requirements.txt — Dépendances Python
+# Généré par ti-lex-AL v10 — ${date}
+
+requests>=2.31.0
+python-dotenv>=1.0.0
+supabase>=1.0.0`
+          },
+          {
+            name: 'README.md',
+            content: `# Projet Python
+
+> Généré par **ti-lex-AL v10** — ${date}
 
 ## Installation
 
 \`\`\`bash
-npm install
+# Créer un environnement virtuel
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\\Scripts\\activate  # Windows
+
+# Installer les dépendances
+pip install -r requirements.txt
 \`\`\`
 
 ## Utilisation
 
 \`\`\`bash
-npm start
+python main.py
 \`\`\`
 
-## API
+---
+Produit du Québec 🔶`
+          }
+        ];
 
-| Méthode | Description |
-|---------|-------------|
-| \`main()\` | Fonction principale |
+      // --- Template : ti-lex complet ---
+      case 'tilex':
+        return [
+          {
+            name: 'app.html',
+            content: `<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ti-lex-AL v10</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-logo">
+      <span class="logo-icon">🛡️</span>
+      <span class="logo-text">ti<span class="logo-accent">-lex</span></span>
+      <span class="logo-version">AL v10</span>
+    </div>
+    <nav class="header-nav">
+      <button onclick="ThemeManager.toggle()">🎨 Thème</button>
+      <button onclick="HistoryManager.open()">📋 Historique</button>
+    </nav>
+  </header>
 
-## Licence
+  <main class="app-main">
+    <!-- Formulaire de génération -->
+    <section class="gen-section">
+      <h2>Générer un fichier</h2>
+      <input id="fileName"        type="text"   placeholder="Nom du fichier" />
+      <select id="fileType">
+        <option value="html">HTML</option>
+        <option value="css">CSS</option>
+        <option value="js">JavaScript</option>
+        <option value="json">JSON</option>
+        <option value="md">Markdown</option>
+        <option value="py">Python</option>
+        <option value="sql">SQL</option>
+      </select>
+      <textarea id="fileDescription" placeholder="Description du fichier…"></textarea>
+      <button onclick="CoreManager.generateFile()">⚡ Générer</button>
+      <button onclick="CoreManager.addToZip()">📦 Ajouter au ZIP</button>
+    </section>
 
-MIT · ${new Date().getFullYear()}
-`;
-  },
+    <!-- Aperçu -->
+    <section id="previewSection" style="display:none">
+      <div id="previewTitle"></div>
+      <pre id="previewContent"></pre>
+      <button onclick="PreviewManager.copy()">📋 Copier</button>
+      <button onclick="PreviewManager.download()">⬇️ Télécharger</button>
+    </section>
 
-  py: (nom) => `#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""Module : ${nom} · ${today()}"""
+    <!-- ZIP -->
+    <section class="zip-section">
+      <h3>Fichiers ZIP <span id="zipCount">0 fichier(s)</span></h3>
+      <ul id="zipFileList"></ul>
+      <button onclick="ZipManager.preview()">👁 Aperçu ZIP</button>
+      <button onclick="ZipManager.download()">📥 Télécharger ZIP</button>
+      <button onclick="ZipManager.clear()">🗑️ Vider</button>
+    </section>
+  </main>
 
-import os
-import sys
-import logging
-from typing import Optional, Dict, Any
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="js/tilex-theme.js"></script>
+  <script src="js/tilex-core.js"></script>
+  <script src="js/tilex-preview.js"></script>
+  <script src="js/tilex-zip.js"></script>
+  <script src="js/tilex-templates.js"></script>
+  <script src="js/tilex-history.js"></script>
+  <script src="js/tilex-share.js"></script>
+</body>
+</html>`
+          },
+          {
+            name: 'styles.css',
+            content: `/* styles.css — ti-lex-AL v10
+   Généré par ti-lex-AL v10 — ${date} */
 
-CONFIG: Dict[str, Any] = {}
-
-
-def traiter(donnees: Optional[Dict] = None) -> Dict[str, Any]:
-    """Traiter les données."""
-    if donnees is None:
-        donnees = {}
-    log.info("Traitement démarré")
-    return {"succes": True, "donnees": donnees}
-
-
-def main() -> None:
-    log.info("Démarrage")
-    resultat = traiter()
-    log.info("Résultat : %s", resultat)
-
-
-if __name__ == "__main__":
-    main()
-`,
-
-  sql: (nom) => {
-    const t = nom.replace('.sql', '').replace(/[-]/g, '_').toLowerCase();
-    return `-- ──────────────────────────────────────
--- SQL : ${nom} · ${today()}
--- ──────────────────────────────────────
-
-CREATE TABLE IF NOT EXISTS ${t} (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  nom         TEXT        NOT NULL,
-  description TEXT,
-  actif       BOOLEAN     NOT NULL DEFAULT true,
-  metadonnees JSONB       DEFAULT '{}',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ
-);
-
-CREATE INDEX IF NOT EXISTS idx_${t}_created ON ${t} (created_at DESC);
-
--- RLS
-ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
-
--- CREATE POLICY "..." ON ${t} FOR SELECT USING (auth.uid() = user_id);
-`;
-  },
-
-  sh: (nom) => `#!/usr/bin/env bash
-# ──────────────────────────────────────
-# Script : ${nom} · ${today()}
-# Usage  : ./${nom} [--aide]
-# ──────────────────────────────────────
-set -euo pipefail
-
-VERT='\\033[0;32m'; ROUGE='\\033[0;31m'; RESET='\\033[0m'
-log()    { echo -e "\${VERT}[OK]\${RESET}  $*"; }
-erreur() { echo -e "\${ROUGE}[ERR]\${RESET} $*" >&2; exit 1; }
-
-main() {
-  log "Démarrage ${nom}"
-  # TODO
-  log "Terminé ✓"
+:root {
+  --bg      : #0a0a0a;
+  --surface : #141414;
+  --border  : #23232c;
+  --orange  : #ff7f27;
+  --gold    : #ffcf4a;
+  --green   : #37e0a0;
+  --text    : #ffffff;
 }
 
-main "$@"
-`,
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+.app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+.logo-accent { color: var(--orange); }
+.logo-version { font-size: 0.75rem; color: var(--gold); margin-left: 0.5rem; }`
+          },
+          {
+            name: 'api/indar.js',
+            content: `// api/indar.js — Vercel Edge Function — Centre INDAR
+// Généré par ti-lex-AL v10 — ${date}
 
-  yml: (nom) => `# Config : ${nom} · ${today()}
-version: '1.0'
+export const config = { runtime: 'edge' };
 
-application:
-  nom: mon-projet
-  version: 1.0.0
-  env: developpement
-
-base_de_donnees:
-  hote: localhost
-  port: 5432
-  nom: ma_base
-`,
-
-  env: () => `# Variables d'environnement — NE PAS COMMITTER
-NODE_ENV=development
-PORT=3000
-APP_URL=http://localhost:3000
-
-DATABASE_URL=postgresql://user:password@localhost:5432/mabase
-
-ANTHROPIC_API_KEY=
-SUPABASE_URL=https://rnuripmfozlxenryxhdc.supabase.co
-SUPABASE_ANON_KEY=
-`,
-
-  gitignore: () => `node_modules/
-dist/
-build/
-.env
-.env.local
-*.log
-.DS_Store
-.next/
-.nuxt/
-coverage/
-`,
-
-  'index.ts': (nom) => `// Edge Function Supabase : ${nom} · ${today()}
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
-
-const CORS = {
-  'Access-Control-Allow-Origin':  '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const AGENTS = {
+  'NEXUS-AL'   : 'Tu es NEXUS-AL, analyste réseau cybersécurité expert.',
+  'MARCEAU'    : 'Tu es MARCEAU, agent de renseignement stratégique.',
+  'CIPHER'     : 'Tu es CIPHER, expert en cryptographie et chiffrement.',
+  'SENTINEL'   : 'Tu es SENTINEL, gardien des politiques de sécurité.',
+  'ORACLE'     : 'Tu es ORACLE, analyste prédictif des menaces.',
+  'PHANTOM-RED': 'Tu es PHANTOM-RED, expert en tests d\'intrusion offensifs.'
 };
 
-serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
+export default async function handler(req) {
+  if (req.method !== 'POST') {
+    return new Response('Méthode non autorisée', { status: 405 });
+  }
+
   try {
-    const body = await req.json();
-    return repondre({ recu: true, body });
+    const { agent, prompt } = await req.json();
+    const systemPrompt = AGENTS[agent] || AGENTS['NEXUS-AL'];
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method  : 'POST',
+      headers : {
+        'Content-Type'      : 'application/json',
+        'x-api-key'         : process.env.ANTHROPIC_API_KEY,
+        'anthropic-version' : '2023-06-01'
+      },
+      body: JSON.stringify({
+        model      : 'claude-sonnet-4-6',
+        max_tokens : 1024,
+        system     : systemPrompt,
+        messages   : [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
   } catch (err) {
-    return repondre({ erreur: String(err) }, 500);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status  : 500,
+      headers : { 'Content-Type': 'application/json' }
+    });
   }
-});
+}`
+          },
+          {
+            name: 'README.md',
+            content: `# ti-lex-AL v10
 
-function repondre(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
-  });
-}
-`,
-};
+> Plateforme québécoise de cybersécurité défensive alimentée par l'IA
+> Généré le ${date}
 
-/* Alias */
-TILEX.contentTemplates.mjs    = TILEX.contentTemplates.js;
-TILEX.contentTemplates.cjs    = TILEX.contentTemplates.js;
-TILEX.contentTemplates.htm    = TILEX.contentTemplates.html;
-TILEX.contentTemplates.sass   = TILEX.contentTemplates.scss;
-TILEX.contentTemplates.yaml   = TILEX.contentTemplates.yml;
-TILEX.contentTemplates.bash   = TILEX.contentTemplates.sh;
-TILEX.contentTemplates.mdx    = TILEX.contentTemplates.md;
+## Stack technique
+- Vanilla HTML/CSS/JS
+- Supabase (base de données + Auth)
+- Vercel (déploiement + Edge Functions)
+- Claude API (via Centre INDAR)
 
-/* Noms exacts prioritaires */
-TILEX.exactTemplates = {
-  'package.json':  TILEX.contentTemplates['package.json'],
-  'tsconfig.json': TILEX.contentTemplates['tsconfig.json'],
-  '.gitignore':    TILEX.contentTemplates['gitignore'],
-  '.env':          TILEX.contentTemplates['env'],
-  '.env.local':    TILEX.contentTemplates['env'],
-  'index.ts':      TILEX.contentTemplates['index.ts'],
-};
+## Structure
+\`\`\`
+├── app.html           → Interface principale
+├── styles.css         → Thème dark ti-lex
+├── js/                → Modules JavaScript
+│   ├── tilex-core.js
+│   ├── tilex-preview.js
+│   ├── tilex-zip.js
+│   ├── tilex-templates.js
+│   ├── tilex-theme.js
+│   ├── tilex-history.js
+│   └── tilex-share.js
+└── api/
+    └── indar.js       → Edge Function Centre INDAR
+\`\`\`
 
-/* Obtenir le template pour un nom de fichier */
-TILEX.getContentTemplate = function(nomFichier) {
-  const nom = nomFichier.trim();
-  if (!nom) return null;
-  if (TILEX.exactTemplates[nom]) return TILEX.exactTemplates[nom](nom);
-  const ext = nom.includes('.') ? nom.split('.').pop().toLowerCase() : null;
-  if (ext && TILEX.contentTemplates[ext]) return TILEX.contentTemplates[ext](nom);
-  return null;
-};
+## Agents Centre INDAR
+| Agent       | Rôle |
+|-------------|------|
+| NEXUS-AL    | Analyste réseau |
+| MARCEAU     | Renseignement stratégique |
+| CIPHER      | Cryptographie |
+| SENTINEL    | Politiques sécurité |
+| ORACLE      | Analyse prédictive |
+| PHANTOM-RED | Tests d'intrusion |
 
-/* ════════════════════════════════════════════
-   2. TEMPLATES DE PROJETS COMPLETS
-════════════════════════════════════════════ */
-TILEX.projectTemplates = {
+---
+**Produit du Québec** 🔶`
+          }
+        ];
 
-  'tilex-al': {
-    nom:  'ti-lex-AL',
-    icone: '⚡',
-    desc: 'Structure complète ti-lex-AL v10',
-    fichiers: [
-      { nom: 'index.html',              ext: 'html' },
-      { nom: 'css/style.css',           ext: 'css'  },
-      { nom: 'js/app.js',               ext: 'js'   },
-      { nom: 'js/agents/marceau.js',    ext: 'js'   },
-      { nom: 'js/agents/claude-al.js',  ext: 'js'   },
-      { nom: 'js/utils/streaming.js',   ext: 'js'   },
-      { nom: '.env.example',            ext: 'env'  },
-      { nom: 'supabase/functions/marceau-reflection/index.ts', ext: 'index.ts' },
-      { nom: 'README.md',               ext: 'md'   },
-    ],
+      default:
+        return [];
+    }
   },
 
-  'api': {
-    nom:  'API Pure',
-    icone: '🔌',
-    desc: 'API Node.js avec routes et auth',
-    fichiers: [
-      { nom: 'index.js',                 ext: 'js'           },
-      { nom: 'routes/api.js',            ext: 'js'           },
-      { nom: 'routes/auth.js',           ext: 'js'           },
-      { nom: 'middleware/auth.js',       ext: 'js'           },
-      { nom: 'middleware/logger.js',     ext: 'js'           },
-      { nom: 'config/db.js',             ext: 'js'           },
-      { nom: 'package.json',             ext: 'package.json' },
-      { nom: '.env',                     ext: 'env'          },
-      { nom: '.gitignore',               ext: 'gitignore'    },
-      { nom: 'README.md',                ext: 'md'           },
-    ],
-  },
-
-  'landing': {
-    nom:  'Landing Page',
-    icone: '🌐',
-    desc: 'Page d\'atterrissage moderne',
-    fichiers: [
-      { nom: 'index.html',       ext: 'html' },
-      { nom: 'css/landing.css',  ext: 'css'  },
-      { nom: 'css/animations.css', ext: 'css' },
-      { nom: 'js/main.js',       ext: 'js'   },
-      { nom: 'js/animations.js', ext: 'js'   },
-      { nom: 'README.md',        ext: 'md'   },
-    ],
-  },
-
-  'supabase': {
-    nom:  'Supabase Edge',
-    icone: '🗄️',
-    desc: 'Edge Functions + migrations SQL',
-    fichiers: [
-      { nom: 'supabase/functions/api/index.ts',   ext: 'index.ts' },
-      { nom: 'supabase/functions/auth/index.ts',  ext: 'index.ts' },
-      { nom: 'supabase/migrations/001_init.sql',  ext: 'sql'      },
-      { nom: 'supabase/migrations/002_rls.sql',   ext: 'sql'      },
-      { nom: '.env',                               ext: 'env'      },
-      { nom: 'README.md',                          ext: 'md'       },
-    ],
-  },
-
-  'vide': {
-    nom:   'Vide',
-    icone: '📄',
-    desc:  'Partir de zéro',
-    fichiers: [],
-  },
-};
-
-/* Charger un template de projet */
-TILEX.chargerTemplate = function(templateKey) {
-  const tpl = TILEX.projectTemplates[templateKey];
-  if (!tpl) return [];
-
-  return tpl.fichiers.map(f => {
-    const contenu = TILEX.getContentTemplate(f.nom) ||
-                    TILEX.getContentTemplate('fichier.' + f.ext) || '';
-    return { nom: f.nom, contenu };
-  });
-};
-
-/* ════════════════════════════════════════════
-   3. INFOS LANG (pour preview + badges)
-════════════════════════════════════════════ */
-TILEX.langMap = {
-  js:   { hljs: 'javascript', badge: 'JS',   cls: 'badge-js',   icone: '🟨' },
-  mjs:  { hljs: 'javascript', badge: 'JS',   cls: 'badge-js',   icone: '🟨' },
-  cjs:  { hljs: 'javascript', badge: 'JS',   cls: 'badge-js',   icone: '🟨' },
-  jsx:  { hljs: 'javascript', badge: 'JSX',  cls: 'badge-js',   icone: '🟨' },
-  ts:   { hljs: 'typescript', badge: 'TS',   cls: 'badge-ts',   icone: '🔷' },
-  tsx:  { hljs: 'typescript', badge: 'TSX',  cls: 'badge-ts',   icone: '🔷' },
-  html: { hljs: 'html',       badge: 'HTML', cls: 'badge-html', icone: '🌐' },
-  htm:  { hljs: 'html',       badge: 'HTML', cls: 'badge-html', icone: '🌐' },
-  css:  { hljs: 'css',        badge: 'CSS',  cls: 'badge-css',  icone: '🎨' },
-  scss: { hljs: 'scss',       badge: 'SCSS', cls: 'badge-css',  icone: '🎨' },
-  sass: { hljs: 'scss',       badge: 'SASS', cls: 'badge-css',  icone: '🎨' },
-  json: { hljs: 'json',       badge: 'JSON', cls: 'badge-json', icone: '📋' },
-  md:   { hljs: null,         badge: 'MD',   cls: 'badge-md',   icone: '📝' },
-  mdx:  { hljs: null,         badge: 'MDX',  cls: 'badge-md',   icone: '📝' },
-  py:   { hljs: 'python',     badge: 'PY',   cls: 'badge-py',   icone: '🐍' },
-  sql:  { hljs: 'sql',        badge: 'SQL',  cls: 'badge-sql',  icone: '🗄️' },
-  sh:   { hljs: 'bash',       badge: 'SH',   cls: 'badge-sh',   icone: '⚙️' },
-  bash: { hljs: 'bash',       badge: 'SH',   cls: 'badge-sh',   icone: '⚙️' },
-  yml:  { hljs: 'yaml',       badge: 'YAML', cls: 'badge-json', icone: '📋' },
-  yaml: { hljs: 'yaml',       badge: 'YAML', cls: 'badge-json', icone: '📋' },
-  env:  { hljs: 'bash',       badge: 'ENV',  cls: 'badge-sh',   icone: '🔑' },
-  txt:  { hljs: null,         badge: 'TXT',  cls: 'badge-txt',  icone: '📄' },
-  log:  { hljs: null,         badge: 'LOG',  cls: 'badge-txt',  icone: '📄' },
-};
-
-TILEX.getLangInfo = function(nomFichier) {
-  const nom = nomFichier || '';
-  const base = nom.split('/').pop();
-  if (TILEX.exactTemplates[base]) {
-    const ext = base.split('.').pop().toLowerCase();
-    return TILEX.langMap[ext] || { hljs: 'json', badge: 'JSON', cls: 'badge-json', icone: '📋' };
+  // ----------------------------------------------------------
+  // Toast de notification
+  // ----------------------------------------------------------
+  _toast: function (message, type = 'info') {
+    if (window.CoreManager && CoreManager._toast) {
+      CoreManager._toast(message, type);
+      return;
+    }
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className   = `toast toast-${type} toast-visible`;
+    setTimeout(() => { toast.className = 'toast'; }, 3000);
   }
-  const ext = base.includes('.') ? base.split('.').pop().toLowerCase() : 'txt';
-  return TILEX.langMap[ext] || { hljs: null, badge: ext.toUpperCase(), cls: 'badge-txt', icone: '📄' };
 };
-
-/* ── Helpers ── */
-function toPascal(nom) {
-  const base = nom.split('/').pop().replace(/\.[^.]+$/, '');
-  return base.replace(/(^|[-_])(\w)/g, (_, __, c) => c.toUpperCase());
-}
-
-console.log('[ti-lex] Templates chargés ✓ (' +
-  Object.keys(TILEX.contentTemplates).length + ' types, ' +
-  Object.keys(TILEX.projectTemplates).length + ' projets)');
