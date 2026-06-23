@@ -2578,10 +2578,24 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
             <button class="cmi-color-dot" onclick="setCouleurAgent('#ffcf4a')" style="background:#ffcf4a;" title="Jaune"></button>
             <button class="cmi-color-dot" onclick="setCouleurAgent('#1a1a1a')" style="background:#1a1a1a;border:1px solid #666;" title="Noir"></button>
             <button class="cmi-color-dot" onclick="setCouleurAgent('#ffffff')" style="background:#ffffff;" title="Blanc"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#4a9eff')" style="background:#4a9eff;" title="Bleu"></button>
+            <button class="cmi-color-dot" onclick="setCouleurAgent('#1400f5')" style="background:#1400f5;" title="Bleu"></button>
             <button class="cmi-color-dot" onclick="setCouleurAgent('#37e0a0')" style="background:#37e0a0;" title="Vert menthe"></button>
             <button class="cmi-color-dot" onclick="setCouleurAgent('#59b300')" style="background:#59b300;" title="Vert vif"></button>
             <button class="cmi-color-dot" onclick="setCouleurAgent('#e8b830')" style="background:#e8b830;" title="Or (défaut)"></button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-label">🔘 COULEUR DES BOUTONS</div>
+          <div class="settings-hint" style="margin-bottom:8px;">Change la couleur des boutons de l'interface.</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;" id="settings-btn-colors">
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ff3b3b')" style="background:#ff3b3b;" title="Rouge"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ffcf4a')" style="background:#ffcf4a;" title="Jaune"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#1a1a1a')" style="background:#1a1a1a;border:1px solid #666;" title="Noir"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ffffff')" style="background:#ffffff;" title="Blanc"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#1400f5')" style="background:#1400f5;" title="Bleu"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#37e0a0')" style="background:#37e0a0;" title="Vert menthe"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#59b300')" style="background:#59b300;" title="Vert vif"></button>
+            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ff7f27')" style="background:#ff7f27;" title="Orange (défaut)"></button>
           </div>
         </div>
       </div>
@@ -6873,11 +6887,22 @@ function setPolice(nom){
 function setCouleurAgent(couleur){
   document.documentElement.style.setProperty('--agent-text-color',couleur);
   localStorage.setItem('tilex-agent-color',couleur);
-  document.querySelectorAll('.cmi-color-dot').forEach(function(d){
+  document.querySelectorAll('#settings-colors .cmi-color-dot').forEach(function(d){
     var bg=d.style.background||d.style.backgroundColor;
     d.classList.toggle('active',bg===couleur);
   });
-  showToastMsg('🎨 Couleur agent : '+couleur);
+  showToastMsg('🎨 Couleur texte : '+couleur);
+}
+
+function setCouleurBoutons(couleur){
+  document.documentElement.style.setProperty('--orange',couleur);
+  document.documentElement.style.setProperty('--or',couleur);
+  localStorage.setItem('tilex-btn-color',couleur);
+  document.querySelectorAll('#settings-btn-colors .cmi-color-dot').forEach(function(d){
+    var bg=d.style.background||d.style.backgroundColor;
+    d.classList.toggle('active',bg===couleur);
+  });
+  showToastMsg('🔘 Couleur boutons : '+couleur);
 }
 
 (function(){
@@ -6889,6 +6914,11 @@ function setCouleurAgent(couleur){
   var savedColor=localStorage.getItem('tilex-agent-color');
   if(savedColor){
     document.documentElement.style.setProperty('--agent-text-color',savedColor);
+  }
+  var savedBtn=localStorage.getItem('tilex-btn-color');
+  if(savedBtn){
+    document.documentElement.style.setProperty('--orange',savedBtn);
+    document.documentElement.style.setProperty('--or',savedBtn);
   }
 })();
 
