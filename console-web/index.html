@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex AL — Console</title>
+<style>
+  :root {
+    --bg:#14161b; --bg-panel:#1c1f26; --bg-elev:#23272f; --bg-code:#0f1116;
+    --text:#e6e8ec; --text-strong:#fff; --text-muted:#9aa0aa;
+    --accent:#e08763; --accent-2:#c25c3e; --accent-soft:#36241d;
+    --border:#2b2f38; --ok:#34d399; --err:#f87171; --warn:#fbbf24;
+    --crit:#f87171; --high:#fb923c; --med:#fbbf24; --low:#60a5fa; --info:#9aa0aa;
+    --radius:14px;
+    --mono:"SF Mono","JetBrains Mono","Fira Code",Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;height:100%;}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+  #login{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(1200px 600px at 50% -10%,#241a16,var(--bg));z-index:50;}
+  .card{width:360px;max-width:92vw;background:var(--bg-panel);border:1px solid var(--border);border-radius:18px;padding:30px 26px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;margin-bottom:16px;}
+  .card h1{font-size:21px;margin:0 0 4px;color:var(--text-strong);}
+  .card p.sub{font-size:13.5px;color:var(--text-muted);margin:0 0 22px;}
+  label{display:block;font-size:12.5px;color:var(--text-muted);margin:14px 0 6px;}
+  input,textarea,select{width:100%;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 13px;font-size:14.5px;font-family:var(--sans);outline:none;}
+  input:focus,textarea:focus{border-color:var(--accent);}
+  .btn{width:100%;margin-top:20px;border:none;border-radius:10px;padding:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
+  .btn:hover{filter:brightness(1.06);} .btn:disabled{opacity:.6;cursor:default;}
+  .err{font-size:13px;margin-top:12px;min-height:16px;color:var(--err);} .err.ok{color:var(--ok);}
+  .toggle{margin-top:18px;font-size:13px;color:var(--text-muted);text-align:center;}
+  .toggle a{color:var(--accent);cursor:pointer;font-weight:600;} .toggle a:hover{text-decoration:underline;}
+  .logo-banner{display:block;width:100%;border-radius:12px;margin-bottom:18px;border:1px solid var(--border);box-shadow:0 6px 20px rgba(0,0,0,.4);}
+  .logo-mini{height:30px;width:auto;border-radius:7px;display:block;}
+  #app{display:none;grid-template-columns:240px 1fr;height:100vh;}
+  .side{background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  .side .top{padding:14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+  .side .top .logo{width:30px;height:30px;font-size:13px;margin:0;}
+  .nav{padding:10px 8px;border-bottom:1px solid var(--border);}
+  .navbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:none;color:var(--text);padding:9px 11px;border-radius:9px;font-size:14px;cursor:pointer;}
+  .navbtn:hover{background:var(--bg-elev);} .navbtn.active{background:var(--accent-soft);color:var(--text-strong);font-weight:600;}
+  .new{margin:10px 12px;padding:10px;border:1px dashed var(--border);border-radius:10px;color:var(--text);background:transparent;cursor:pointer;font-size:13.5px;text-align:left;}
+  .new:hover{background:var(--bg-elev);border-color:var(--accent);}
+  .convs{flex:1;overflow-y:auto;padding:4px 8px;}
+  .conv{padding:9px 10px;border-radius:8px;font-size:13.5px;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .conv:hover{background:var(--bg-elev);} .conv.active{background:var(--accent-soft);color:var(--text-strong);}
+  .side .bottom{padding:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-muted);}
+  .side .bottom .ghost{margin-left:auto;}
+  .ghost{background:var(--bg-elev);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;} .ghost:hover{background:var(--accent-soft);}
+  .main{display:grid;grid-template-rows:auto 1fr;min-width:0;}
+  header{display:flex;align-items:center;gap:13px;padding:11px 20px;background:var(--bg-panel);border-bottom:1px solid var(--border);}
+  header .spacer{flex:1;}
+  .pill{font-size:12px;color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);padding:4px 10px;border-radius:999px;display:flex;align-items:center;gap:6px;}
+  .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+  .htitle{font-size:15px;font-weight:600;color:var(--text-strong);}
+  .panel{display:none;min-height:0;overflow:hidden;grid-template-rows:1fr auto;}
+  .panel.show{display:grid;}
+  .scroll{overflow-y:auto;padding:24px clamp(14px,5vw,70px);}
+  .msg{max-width:760px;margin:0 auto 22px;}
+  .role{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;display:flex;gap:7px;align-items:center;}
+  .body{font-size:15.5px;line-height:1.65;}
+  .body.user{background:var(--accent-soft);border:1px solid var(--border);border-radius:var(--radius);padding:11px 15px;}
+  .body h1,.body h2,.body h3{color:var(--text-strong);margin:16px 0 8px;} .body h1{font-size:24px;}.body h2{font-size:20px;}.body h3{font-size:17px;}
+  .body p{margin:0 0 11px;} .body ul,.body ol{margin:6px 0 12px;padding-left:22px;}
+  .body code.inline{background:var(--bg-code);border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-family:var(--mono);font-size:13px;}
+  .code-wrap{margin:12px 0;}
+  .code-head{display:flex;justify-content:space-between;align-items:center;background:var(--bg-elev);border:1px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;padding:6px 12px;font-size:12px;color:var(--text-muted);font-family:var(--mono);}
+  pre{margin:0;background:var(--bg-code);border:1px solid var(--border);border-radius:0 0 10px 10px;padding:13px 15px;overflow-x:auto;}
+  pre code{font-family:var(--mono);font-size:13.5px;line-height:1.55;color:var(--text);white-space:pre;}
+  .copy{background:var(--bg-panel);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:3px 10px;font-size:12px;cursor:pointer;} .copy:hover{background:var(--accent-soft);}
+  .typing{color:var(--text-muted);font-size:14px;} .dotpulse::after{content:'...';animation:dots 1.2s steps(4,end) infinite;}
+  @keyframes dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
+  .composer{border-top:1px solid var(--border);background:var(--bg-panel);padding:13px clamp(14px,5vw,70px);}
+  .composer-inner{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:8px 8px 8px 12px;}
+  .attach{width:38px;height:38px;border:none;border-radius:10px;background:transparent;color:var(--text-muted);font-size:17px;cursor:pointer;flex-shrink:0;} .attach:hover{background:var(--bg-panel);}
+  .composer textarea{flex:1;border:none;background:transparent;color:var(--text);font-size:15px;font-family:var(--sans);outline:none;resize:none;max-height:160px;line-height:1.5;padding:6px 0;}
+  .send{width:40px;height:40px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:17px;cursor:pointer;flex-shrink:0;} .send:hover{filter:brightness(1.06);} .send:disabled{opacity:.5;}
+  .previews{max-width:760px;margin:0 auto 8px;display:flex;gap:8px;flex-wrap:wrap;}
+  .previews .pv{position:relative;} .previews img{width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+  .previews .x{position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--err);color:#fff;border:none;font-size:11px;cursor:pointer;}
+  .hint{max-width:760px;margin:8px auto 0;font-size:11.5px;color:var(--text-muted);text-align:center;}
+  .thumb-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;} .thumb-row img{width:120px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+  .ptitle{max-width:980px;margin:0 auto 18px;display:flex;align-items:center;gap:12px;}
+  .ptitle h2{font-size:22px;color:var(--text-strong);margin:0;} .ptitle .spacer{flex:1;}
+  .grid{max-width:980px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .gcard{background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:16px;}
+  .gcard .h{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .gcard .emoji{font-size:22px;} .gcard .nm{font-weight:600;color:var(--text-strong);font-size:15px;}
+  .gcard .sp{font-size:13px;color:var(--text-muted);margin:0 0 10px;}
+  .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--bg-elev);color:var(--text-muted);border:1px solid var(--border);margin-right:6px;}
+  .tag.on{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);}
+  .row{max-width:980px;margin:0 auto;}
+  .scan{background:var(--bg-panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .scan .t{font-weight:600;color:var(--text-strong);} .scan .meta{font-size:12.5px;color:var(--text-muted);}
+  .scan .spacer{flex:1;}
+  .st{font-size:11.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.4px;}
+  .st.completed,.st.done{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent);}
+  .st.running,.st.in_progress,.st.queued{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent);}
+  .st.error,.st.failed{color:var(--err);background:color-mix(in srgb,var(--err) 14%,transparent);}
+  .sev{display:flex;gap:6px;} .chip{font-size:11px;padding:2px 7px;border-radius:6px;font-weight:600;}
+  .chip.c{background:color-mix(in srgb,var(--crit) 18%,transparent);color:var(--crit);}
+  .chip.h{background:color-mix(in srgb,var(--high) 18%,transparent);color:var(--high);}
+  .chip.m{background:color-mix(in srgb,var(--med) 18%,transparent);color:var(--med);}
+  .chip.l{background:color-mix(in srgb,var(--low) 18%,transparent);color:var(--low);}
+  .empty{max-width:980px;margin:40px auto;text-align:center;color:var(--text-muted);font-size:14px;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;z-index:60;}
+  .modal.show{display:grid;}
+  .modal .card{width:440px;}
+  .field2{display:grid;grid-template-columns:70px 1fr;gap:10px;}
+  @media (max-width:780px){#app{grid-template-columns:1fr;}.side{display:none;}}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="card">
+    <img class="logo-banner" src="logo.png" alt="TI-LEX-AL V10" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='grid';">
+    <div class="logo" id="logoFallback" style="display:none;">AL</div>
+    <h1 id="authTitle">ti-lex AL — Console</h1>
+    <p class="sub" id="authSub">Connecte-toi avec ton compte de la plateforme.</p>
+    <label>Courriel</label>
+    <input id="email" type="email" autocomplete="email" placeholder="toi@exemple.com" />
+    <label>Mot de passe</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+    <button class="btn" id="loginBtn">Se connecter</button>
+    <div class="err" id="loginErr"></div>
+    <div class="toggle" id="authToggle">Pas de compte ? <a id="toggleLink">Créer un compte</a></div>
+  </div>
+</div>
+<div id="app">
+  <aside class="side">
+    <div class="top"><img class="logo-mini" src="logo.png" alt="ti-lex AL" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo',textContent:'AL',style:'width:30px;height:30px;font-size:13px;margin:0;'}));"><b style="color:var(--text-strong);font-size:14px;">ti-lex AL</b></div>
+    <div class="nav">
+      <button class="navbtn active" data-view="chat">💬 Chat</button>
+      <button class="navbtn" data-view="agents">🧩 Mes agents</button>
+      <button class="navbtn" data-view="scans">🛡️ Mes scans</button>
+    </div>
+    <button class="new" id="newConv">＋  Nouvelle conversation</button>
+    <div class="convs" id="convs"></div>
+    <div class="bottom"><span id="who2"></span><button class="ghost" id="logoutBtn">Sortir</button></div>
+  </aside>
+  <div class="main">
+    <header>
+      <span class="htitle" id="viewTitle">Chat</span>
+      <div class="spacer"></div>
+      <span class="pill"><span class="dot"></span>Connecté à la plateforme</span>
+      <select id="model" title="Modèle" style="width:auto;">
+        <option value="claude-sonnet-4-6">Sonnet 4.6</option>
+        <option value="claude-opus-4-8">Opus 4.8</option>
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
+      </select>
+    </header>
+    <section class="panel show" id="panel-chat">
+      <div class="scroll" id="messages"></div>
+      <div class="composer">
+        <div class="previews" id="previews"></div>
+        <div class="composer-inner">
+          <button class="attach" id="attachBtn" title="Joindre une image">📎</button>
+          <input id="file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
+          <textarea id="input" rows="1" placeholder="Écris à ti-lex AL…  (Entrée = envoyer)"></textarea>
+          <button class="send" id="sendBtn" title="Envoyer">➤</button>
+        </div>
+        <div class="hint">Session réelle · réponses de ton agent (Supabase + Anthropic).</div>
+      </div>
+    </section>
+    <section class="panel" id="panel-agents">
+      <div class="scroll">
+        <div class="ptitle"><h2>Mes agents</h2><div class="spacer"></div>
+          <button class="ghost" id="refreshAgents">↻ Rafraîchir</button>
+          <button class="btn" style="width:auto;margin:0;" id="openCreate">＋ Créer un agent</button>
+        </div>
+        <div class="grid" id="agentsGrid"></div>
+      </div>
+    </section>
+    <section class="panel" id="panel-scans">
+      <div class="scroll">
+        <div class="ptitle"><h2>Mes scans</h2><div class="spacer"></div>
+          <button class="ghost" id="refreshScans">↻ Rafraîchir</button>
+        </div>
+        <div class="row" id="scansRow"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="modal" id="createModal">
+  <div class="card">
+    <div class="logo">＋</div>
+    <h1 style="font-size:19px;">Créer un agent</h1>
+    <p class="sub">Il sera enregistré sur la plateforme (table <code>agents</code>).</p>
+    <div class="field2">
+      <div><label>Emoji</label><input id="aEmoji" maxlength="2" placeholder="🤖" value="🤖"></div>
+      <div><label>Nom</label><input id="aName" placeholder="Mon agent"></div>
+    </div>
+    <label>Spécialité</label>
+    <input id="aSpec" placeholder="ex. Cybersécurité, Code, Rédaction…">
+    <label>Personnalité / instructions</label>
+    <textarea id="aPers" rows="4" placeholder="Décris comment l'agent doit se comporter…"></textarea>
+    <button class="btn" id="createAgentBtn">Créer l'agent</button>
+    <div class="err" id="createErr"></div>
+    <div class="toggle"><a id="cancelCreate">Annuler</a></div>
+  </div>
+</div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const SUPABASE_URL = "https://rnuripmfozlxenryxhdc.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
+const FN_URL = `${SUPABASE_URL}/functions/v1/agent-al`;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = (id) => document.getElementById(id);
+let convs = [], current = null, pendingImages = [], userId = null;
+(async () => { const { data } = await sb.auth.getSession(); if (data?.session) showApp(data.session); })();
+let mode = "login";
+$("loginBtn").addEventListener("click", submitAuth);
+$("password").addEventListener("keydown", e => { if (e.key === "Enter") submitAuth(); });
+$("toggleLink").addEventListener("click", () => setMode(mode === "login" ? "signup" : "login"));
+function setMode(m){ mode=m; const err=$("loginErr"); err.textContent=""; err.className="err";
+  if(m==="signup"){ $("authTitle").textContent="Créer un compte"; $("authSub").textContent="Ton compte sera créé sur la plateforme ti-lex.";
+    $("loginBtn").textContent="Créer mon compte"; $("authToggle").innerHTML='Déjà un compte ? <a id="toggleLink">Se connecter</a>'; }
+  else{ $("authTitle").textContent="ti-lex AL — Console"; $("authSub").textContent="Connecte-toi avec ton compte de la plateforme.";
+    $("loginBtn").textContent="Se connecter"; $("authToggle").innerHTML='Pas de compte ? <a id="toggleLink">Créer un compte</a>'; }
+  $("toggleLink").addEventListener("click", () => setMode(mode === "login" ? "signup" : "login"));
+}
+async function submitAuth(){
+  const email=$("email").value.trim(), password=$("password").value, err=$("loginErr");
+  err.textContent=""; err.className="err";
+  if(!email||!password){ err.textContent="Entre ton courriel et ton mot de passe."; return; }
+  if(mode==="signup"&&password.length<6){ err.textContent="Le mot de passe doit faire au moins 6 caractères."; return; }
+  $("loginBtn").disabled=true; $("loginBtn").textContent=mode==="signup"?"Création…":"Connexion…";
+  if(mode==="signup"){
+    const {data,error}=await sb.auth.signUp({email,password});
+    $("loginBtn").disabled=false; $("loginBtn").textContent="Créer mon compte";
+    if(error){ err.textContent="Échec : "+error.message; return; }
+    if(data.session) showApp(data.session);
+    else{ err.className="err ok"; err.textContent="Compte créé ! Vérifie ton courriel, puis connecte-toi."; setMode("login"); }
+  } else {
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    $("loginBtn").disabled=false; $("loginBtn").textContent="Se connecter";
+    if(error){ err.textContent="Échec : "+error.message; return; }
+    showApp(data.session);
+  }
+}
+function showApp(session){
+  userId = session.user?.id;
+  $("login").style.display="none"; $("app").style.display="grid";
+  $("who2").textContent=session.user?.email||"";
+  if(convs.length===0) newConversation();
+}
+$("logoutBtn").addEventListener("click", async()=>{ await sb.auth.signOut(); location.reload(); });
+document.querySelectorAll(".navbtn").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
+function switchView(v){
+  document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.dataset.view===v));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+  $("panel-"+v).classList.add("show");
+  $("viewTitle").textContent = v==="chat"?"Chat":v==="agents"?"Mes agents":"Mes scans";
+  $("newConv").style.display = v==="chat" ? "block":"none";
+  $("convs").style.display = v==="chat" ? "block":"none";
+  if(v==="agents") loadAgents();
+  if(v==="scans") loadScans();
+}
+$("refreshAgents").addEventListener("click", loadAgents);
+$("openCreate").addEventListener("click", () => $("createModal").classList.add("show"));
+$("cancelCreate").addEventListener("click", () => $("createModal").classList.remove("show"));
+$("createAgentBtn").addEventListener("click", createAgent);
+async function loadAgents(){
+  const grid=$("agentsGrid"); grid.innerHTML='<div class="empty">Chargement…</div>';
+  const { data, error } = await sb.from("agents")
+    .select("id,name,emoji,specialty,personality,is_active,is_master,default_model,is_public")
+    .order("created_at",{ascending:false});
+  if(error){ grid.innerHTML=`<div class="empty">⚠️ ${error.message}</div>`; return; }
+  if(!data.length){ grid.innerHTML='<div class="empty">Aucun agent pour l\'instant. Clique « Créer un agent ».</div>'; return; }
+  grid.innerHTML="";
+  data.forEach(a=>{
+    const c=document.createElement("div"); c.className="gcard";
+    c.innerHTML=`<div class="h"><span class="emoji">${a.emoji||"🤖"}</span><span class="nm">${esc(a.name||"Sans nom")}</span></div>
+      <p class="sp">${esc(a.specialty||a.personality||"")}</p>
+      <div>${a.is_active?'<span class="tag on">● actif</span>':'<span class="tag">inactif</span>'}
+      ${a.is_master?'<span class="tag">maître</span>':''}
+      ${a.is_public?'<span class="tag">public</span>':''}
+      <span class="tag">${esc(a.default_model||"")}</span></div>`;
+    grid.append(c);
+  });
+}
+async function createAgent(){
+  const err=$("createErr"); err.textContent=""; err.className="err";
+  const name=$("aName").value.trim();
+  if(!name){ err.textContent="Donne un nom à l'agent."; return; }
+  $("createAgentBtn").disabled=true; $("createAgentBtn").textContent="Création…";
+  const payload={ user_id:userId, name, emoji:$("aEmoji").value||"🤖",
+    specialty:$("aSpec").value.trim()||null, personality:$("aPers").value.trim()||null,
+    is_active:true, default_model:$("model").value };
+  const { error } = await sb.from("agents").insert(payload);
+  $("createAgentBtn").disabled=false; $("createAgentBtn").textContent="Créer l'agent";
+  if(error){ err.textContent="Échec : "+error.message; return; }
+  $("createModal").classList.remove("show");
+  $("aName").value=""; $("aSpec").value=""; $("aPers").value="";
+  loadAgents();
+}
+$("refreshScans").addEventListener("click", loadScans);
+async function loadScans(){
+  const row=$("scansRow"); row.innerHTML='<div class="empty">Chargement…</div>';
+  const [cyber, sec] = await Promise.all([
+    sb.from("cyber_scans").select("id,scan_number,scan_type,target,status,total_findings,critical_count,high_count,medium_count,low_count,created_at").order("created_at",{ascending:false}).limit(50),
+    sb.from("security_scans").select("id,scan_type,target,status,findings_critical,findings_high,findings_medium,findings_low,created_at").order("created_at",{ascending:false}).limit(50),
+  ]);
+  const items=[];
+  if(!cyber.error) cyber.data.forEach(s=>items.push({kind:"Cyber",num:s.scan_number,type:s.scan_type,target:s.target,status:s.status,
+    c:s.critical_count,h:s.high_count,m:s.medium_count,l:s.low_count,date:s.created_at}));
+  if(!sec.error) sec.data.forEach(s=>items.push({kind:"Sécurité",num:null,type:s.scan_type,target:s.target,status:s.status,
+    c:s.findings_critical,h:s.findings_high,m:s.findings_medium,l:s.findings_low,date:s.created_at}));
+  const firstErr = cyber.error || sec.error;
+  if(!items.length){ row.innerHTML = firstErr ? `<div class="empty">⚠️ ${firstErr.message}</div>` : '<div class="empty">Aucun scan pour l\'instant.</div>'; return; }
+  items.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  row.innerHTML="";
+  items.forEach(s=>{
+    const st=(s.status||"").toLowerCase();
+    const d=document.createElement("div"); d.className="scan";
+    d.innerHTML=`<div><div class="t">${esc(s.target||s.num||"Scan")} <span class="tag">${s.kind}</span></div>
+      <div class="meta">${esc(s.type||"")} · ${fmtDate(s.date)}</div></div>
+      <div class="spacer"></div>
+      <div class="sev">
+        ${s.c?`<span class="chip c">${s.c} crit</span>`:""}
+        ${s.h?`<span class="chip h">${s.h} élevé</span>`:""}
+        ${s.m?`<span class="chip m">${s.m} moyen</span>`:""}
+        ${s.l?`<span class="chip l">${s.l} faible</span>`:""}
+      </div>
+      <span class="st ${st}">${esc(s.status||"—")}</span>`;
+    row.append(d);
+  });
+}
+$("newConv").addEventListener("click", newConversation);
+function newConversation(){ convs.unshift({id:Date.now(),title:"Nouvelle conversation",history:[]}); current=0; renderConvs(); renderMessages(); }
+function renderConvs(){ const el=$("convs"); el.innerHTML="";
+  convs.forEach((c,i)=>{ const d=document.createElement("div"); d.className="conv"+(i===current?" active":""); d.textContent=c.title;
+    d.addEventListener("click",()=>{current=i;renderConvs();renderMessages();}); el.append(d); }); }
+function renderMessages(){ const m=$("messages"); m.innerHTML=""; const c=convs[current];
+  if(!c.history.length) m.innerHTML=`<div class="msg"><div class="role">⚡ ti-lex AL</div><div class="body"><p>Salut ! Je suis connecté à ta plateforme. Pose une question, demande du code, joins une image, ou parle-moi d'un repo GitHub.</p></div></div>`;
+  else c.history.forEach(msg=>renderBubble(msg.role,msg.text,msg.images));
+  m.scrollTop=m.scrollHeight; }
+$("attachBtn").addEventListener("click", ()=>$("file").click());
+$("file").addEventListener("change", async e=>{ for(const f of e.target.files){ const dataUrl=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(f);}); pendingImages.push({name:f.name,dataUrl}); } renderPreviews(); e.target.value=""; });
+function renderPreviews(){ const p=$("previews"); p.innerHTML=""; pendingImages.forEach((img,i)=>{ const w=document.createElement("div"); w.className="pv"; w.innerHTML=`<img src="${img.dataUrl}"><button class="x">×</button>`; w.querySelector(".x").addEventListener("click",()=>{pendingImages.splice(i,1);renderPreviews();}); p.append(w); }); }
+const input=$("input"), sendBtn=$("sendBtn"), messages=$("messages");
+input.addEventListener("input",()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,160)+"px";});
+input.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();} });
+sendBtn.addEventListener("click", send);
+async function send(){
+  const text=input.value.trim(); const imgs=pendingImages.slice();
+  if(!text&&!imgs.length) return;
+  input.value=""; input.style.height="auto"; pendingImages=[]; renderPreviews();
+  const c=convs[current]; c.history.push({role:"user",text,images:imgs});
+  if(c.title==="Nouvelle conversation"&&text){c.title=text.slice(0,38);renderConvs();}
+  renderBubble("user",text,imgs);
+  const typing=addTyping(); sendBtn.disabled=true;
+  try{
+    const {data:sd}=await sb.auth.getSession(); const token=sd?.session?.access_token;
+    if(!token) throw new Error("Session expirée — reconnecte-toi.");
+    const histForApi=c.history.slice(0,-1).map(m=>({role:m.role,text:m.text}));
+    const res=await fetch(FN_URL,{method:"POST",
+      headers:{"Authorization":`Bearer ${token}`,"apikey":SUPABASE_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({action:"chat",question:text||"Décris et résume l'image jointe.",history:histForApi,model:$("model").value})});
+    const data=await res.json(); typing.remove();
+    if(!res.ok) throw new Error(data.error||`Erreur ${res.status}`);
+    const answer=data.result||"Pas de réponse."; c.history.push({role:"assistant",text:answer}); renderBubble("assistant",answer);
+  }catch(e){ typing.remove(); renderBubble("assistant","⚠️ "+e.message); }
+  finally{ sendBtn.disabled=false; input.focus(); }
+}
+function renderBubble(role,text,images){
+  const wrap=document.createElement("div"); wrap.className="msg";
+  const r=document.createElement("div"); r.className="role"; r.textContent=role==="user"?"👤 Toi":"⚡ ti-lex AL";
+  const b=document.createElement("div"); b.className="body"+(role==="user"?" user":"");
+  b.innerHTML=role==="user"?esc(text||"").replace(/\n/g,"<br>"):renderMarkdown(text);
+  if(images&&images.length){ const row=document.createElement("div"); row.className="thumb-row"; images.forEach(im=>{const i=document.createElement("img");i.src=im.dataUrl;row.append(i);}); b.append(row); }
+  wrap.append(r,b); messages.append(wrap); messages.scrollTop=messages.scrollHeight; attachCopy(b);
+}
+function addTyping(){ const w=document.createElement("div"); w.className="msg"; w.innerHTML=`<div class="role">⚡ ti-lex AL</div><div class="body"><span class="typing dotpulse">réflexion</span></div>`; messages.append(w); messages.scrollTop=messages.scrollHeight; return w; }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmtDate(d){ try{ return new Date(d).toLocaleString("fr-CA",{dateStyle:"medium",timeStyle:"short"}); }catch{ return d||""; } }
+function renderMarkdown(md){
+  const blocks=[];
+  md=(md||"").replace(/```(?:INJECT:)?([\w.\-/]*)\n([\s\S]*?)```/g,(_,lang,code)=>{ const i=blocks.length;
+    blocks.push(`<div class="code-wrap"><div class="code-head"><span>${esc(lang||"code")}</span><button class="copy">Copier</button></div><pre><code>${esc(code.replace(/\n$/,""))}</code></pre></div>`); return `\x00${i}\x00`; });
+  let html=esc(md);
+  html=html.replace(/^### (.*)$/gm,"<h3>$1</h3>").replace(/^## (.*)$/gm,"<h2>$1</h2>").replace(/^# (.*)$/gm,"<h1>$1</h1>")
+    .replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`([^`]+)`/g,'<code class="inline">$1</code>')
+    .replace(/^\s*[-*] (.*)$/gm,"<li>$1</li>");
+  html=html.replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>");
+  html=html.split(/\n{2,}/).map(p=>/^<(h\d|ul|pre|div)/.test(p.trim())?p:`<p>${p.replace(/\n/g,"<br>")}</p>`).join("");
+  html=html.replace(/\x00(\d+)\x00/g,(_,i)=>blocks[i]);
+  return html;
+}
+function attachCopy(scope){ scope.querySelectorAll(".copy").forEach(btn=>btn.addEventListener("click",()=>{
+  const code=btn.closest(".code-wrap").querySelector("code").innerText;
+  navigator.clipboard.writeText(code).then(()=>{const t=btn.textContent;btn.textContent="✔ Copié";setTimeout(()=>btn.textContent=t,1300);}); })); }
+</script>
+</body>
+</html>

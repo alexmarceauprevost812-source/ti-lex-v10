@@ -1,6 +1,9 @@
 const ALLOWED_ORIGINS: string[] = [
   "https://ti-lex-v10.vercel.app",
   "https://ceauprevost812-3889s-projects.vercel.app",
+  "https://ti-lex-al.vercel.app",
+  "https://ti-lex-al.com",
+  "https://www.ti-lex-al.com",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
