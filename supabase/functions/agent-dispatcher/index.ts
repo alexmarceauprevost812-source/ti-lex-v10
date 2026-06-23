@@ -10,6 +10,18 @@ const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
+  const { data, error } = await supabase.rpc("check_rate_limit", {
+    p_key: key, p_max: max, p_window_seconds: windowSec,
+  });
+  if (error) return true;
+  return data === true;
+}
+
+function clientIp(req: Request): string {
+  return (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "inconnu";
+}
+
 // Agent name mapping: uppercase code → lowercase key
 const AGENT_ALIASES: Record<string, string> = {
   "NEXUS-AL": "nexus",
@@ -130,6 +142,16 @@ Deno.serve(async (req: Request) => {
 
   if (req.method !== "POST") {
     return json({ error: "Method not allowed" }, 405, cors);
+  }
+
+  const ip = clientIp(req);
+  const allowed = await rateLimit(`dispatch:${ip}`, 30, 60);
+  if (!allowed) {
+    return json(
+      { error: "Trop de requêtes. Réessaie dans une minute." },
+      429,
+      { ...cors, "Retry-After": "60" },
+    );
   }
 
   // Auth: verify user via JWT

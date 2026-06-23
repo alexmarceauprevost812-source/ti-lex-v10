@@ -1,9 +1,27 @@
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
 
 const DEEPGRAM_KEY = Deno.env.get("DEEPGRAM_KEY")!;
 const ELEVENLABS_KEY = Deno.env.get("ELEVENLABS_KEY")!;
 const ELEVENLABS_VOICE_ID =
   Deno.env.get("ELEVENLABS_VOICE_ID") || "pNInz6obpgDQGcFmaJgB";
+
+const admin = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+);
+
+async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
+  const { data, error } = await admin.rpc("check_rate_limit", {
+    p_key: key, p_max: max, p_window_seconds: windowSec,
+  });
+  if (error) return true;
+  return data === true;
+}
+
+function clientIp(req: Request): string {
+  return (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "inconnu";
+}
 
 function json(obj: unknown, status: number, hdrs: Record<string, string>) {
   return new Response(JSON.stringify(obj), {
@@ -17,6 +35,17 @@ Deno.serve(async (req: Request) => {
   if (preflight) return preflight;
 
   const cors = corsHeaders(req);
+
+  const ip = clientIp(req);
+  const allowed = await rateLimit(`vocal:${ip}`, 20, 60);
+  if (!allowed) {
+    return json(
+      { error: "Trop de requêtes. Réessaie dans une minute." },
+      429,
+      { ...cors, "Retry-After": "60" },
+    );
+  }
+
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
 
