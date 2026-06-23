@@ -2,7 +2,7 @@ const TilexVocal = {
   mediaRecorder: null, chunks: [], enEcoute: false,
 
   proxyUrl() {
-    const base = window.SB_URL || "https://rnuripmfozlxenryxhdc.supabase.co";
+    const base = window.SB_URL;
     return base + "/functions/v1/vocal-proxy";
   },
 

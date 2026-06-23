@@ -240,10 +240,11 @@
     <div class="toggle"><a id="cancelCreate">Annuler</a></div>
   </div>
 </div>
+<script src="/js/tilex-config.js"></script>
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const SUPABASE_URL = "https://rnuripmfozlxenryxhdc.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
+const SUPABASE_URL = window.SB_URL;
+const SUPABASE_ANON = window.SB_ANON;
 const FN_URL = `${SUPABASE_URL}/functions/v1/agent-al`;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = (id) => document.getElementById(id);

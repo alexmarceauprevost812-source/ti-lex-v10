@@ -912,10 +912,11 @@
 
 </div>
 
+<script src="js/tilex-config.js"></script>
 <script>
   // Waitlist — sauvegarder dans Supabase
-  const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
+  const SUPABASE_URL = window.SB_URL;
+  const SUPABASE_ANON_KEY = window.SB_ANON;
 
   async function joinWaitlist() {
     const email = document.getElementById('waitlist-email').value.trim();

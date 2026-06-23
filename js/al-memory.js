@@ -82,7 +82,7 @@
       if(!sess.data||!sess.data.session)return null;
       var tk=sess.data.session.access_token;
       var res=await fetch(
-        "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/al-summarize",
+        (window.SB_URL||"https://rnuripmfozlxenryxhdc.supabase.co")+"/functions/v1/al-summarize",
         {method:"POST",headers:{"Authorization":"Bearer "+tk,"Content-Type":"application/json"}}
       );
       if(!res.ok)return null;

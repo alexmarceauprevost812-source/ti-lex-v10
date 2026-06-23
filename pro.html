@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <title>ti-lex-AL v10 — Pro</title>
+<script src="js/tilex-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <link rel="stylesheet" href="css/agent-marceau.css">
@@ -3584,10 +3585,10 @@ document.addEventListener("click",e=>{
 });
 renderNotifs();
 
-/* ── SUPABASE + AI PROXY ── */
-const AI_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
-const SB_URL="https://rnuripmfozlxenryxhdc.supabase.co";
-const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA";
+/* ── SUPABASE + AI PROXY (config chargée via tilex-config.js) ── */
+const AI_PROXY=window.AI_PROXY;
+const SB_URL=window.SB_URL;
+const SB_ANON=window.SB_ANON;
 const supabase=window.supabase.createClient(SB_URL,SB_ANON);window.supabase=supabase;
 function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
 
@@ -5715,7 +5716,7 @@ function cxSendToChat(){
 }
 
 /* ── GITHUB INTEGRATION (dynamic repo/branch via PAT from profiles) ── */
-var VERCEL_PROXY="https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/vercel-proxy";
+var VERCEL_PROXY=SB_URL+"/functions/v1/vercel-proxy";
 var ghFiles=[];var ghCurrentBranch="main";var ghFilesVisible=false;
 var ghFileCache={};var ghConnected=false;
 
@@ -7350,7 +7351,7 @@ function alScanAction(type){
 /* ══════════════════════════════════════════════════════
    CONVERSATIONS PAGE — Supabase-backed CRUD
    ══════════════════════════════════════════════════════ */
-var SB_REST="https://rnuripmfozlxenryxhdc.supabase.co/rest/v1";
+var SB_REST=SB_URL+"/rest/v1";
 
 async function sbRest(path,opts){
   opts=opts||{};

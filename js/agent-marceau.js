@@ -5,7 +5,7 @@
 
   // ── Config ──
   var MARCEAU_CONFIG = {
-    EDGE_FUNCTION: "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/marceau-reflection",
+    EDGE_FUNCTION: (window.SB_URL||"https://rnuripmfozlxenryxhdc.supabase.co")+"/functions/v1/marceau-reflection",
   };
 
   // ── Couleurs ──

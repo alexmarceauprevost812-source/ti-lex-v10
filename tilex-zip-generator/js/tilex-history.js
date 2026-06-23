@@ -20,8 +20,8 @@ window.HistoryManager = {
   /* ----------  Configuration Supabase  ----------
      Le projet ti-lex : rnuripmfozlxenryxhdc
      ⚠️ Remplace SUPABASE_ANON_KEY par ta vraie clé anon (publique, sans risque). */
-  SUPABASE_URL: "https://rnuripmfozlxenryxhdc.supabase.co",
-  SUPABASE_ANON_KEY: "VOTRE_CLE_ANON_ICI",
+  SUPABASE_URL: window.SB_URL || "https://rnuripmfozlxenryxhdc.supabase.co",
+  SUPABASE_ANON_KEY: window.SB_ANON || "",
 
   _client: null,
 

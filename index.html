@@ -11,6 +11,7 @@
   <meta name="theme-color" content="#ff6600">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="js/tilex-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <style>
     :root {
@@ -1170,8 +1171,8 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
+    const SUPABASE_URL = window.SB_URL;
+    const SUPABASE_ANON_KEY = window.SB_ANON;
     let supabase = null, currentUser = null;
 
     function initSupabase() {

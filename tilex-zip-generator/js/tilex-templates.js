@@ -98,8 +98,8 @@ window.TemplateManager = {
       {
         name: "config.js",
         content:
-          'const SUPABASE_URL = "https://rnuripmfozlxenryxhdc.supabase.co";\n' +
-          'const SUPABASE_ANON_KEY = "VOTRE_CLE_ANON";\n' +
+          'const SUPABASE_URL = window.SB_URL;\n' +
+          'const SUPABASE_ANON_KEY = window.SB_ANON;\n' +
           'const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);\n'
       },
       {

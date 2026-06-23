@@ -104,7 +104,7 @@
         var h={"Content-Type":"application/json"};
         if(tk)h["Authorization"]="Bearer "+tk;
 
-        var aiProxy=window.AI_PROXY||"https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/ai-proxy";
+        var aiProxy=window.AI_PROXY||(window.SB_URL||"https://rnuripmfozlxenryxhdc.supabase.co")+"/functions/v1/ai-proxy";
 
         var res=await fetch(aiProxy,{method:"POST",headers:h,body:JSON.stringify({
           kind:"chat",model:"claude-sonnet-4-6",max_tokens:500,
