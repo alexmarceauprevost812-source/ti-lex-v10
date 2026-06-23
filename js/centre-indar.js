@@ -985,6 +985,47 @@ function indarGridLock(state) {
   if (all) all.disabled = state;
 }
 
+async function ensureMandatForScan(scanTarget) {
+  if (!scanTarget) return null;
+  var token = typeof getToken === 'function' ? getToken() : SB_ANON;
+  if (!token || !window.supabase) return null;
+  try {
+    var now = new Date().toISOString();
+    var endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    var existing = await window.supabase
+      .from('cyber_mandates')
+      .select('id')
+      .ilike('title', '%' + scanTarget + '%')
+      .in('status', ['draft', 'active'])
+      .limit(1);
+    if (existing.data && existing.data.length > 0) {
+      return existing.data[0].id;
+    }
+    var num = 'INDAR-' + Date.now().toString(36).toUpperCase();
+    var row = await window.supabase
+      .from('cyber_mandates')
+      .insert({
+        mandate_number: num,
+        title: 'Scan INDAR — ' + scanTarget,
+        status: 'active',
+        starts_at: now,
+        ends_at: endDate,
+        scope_in: [scanTarget],
+        allowed_scan_types: ['passive_recon', 'osint', 'vuln_scan'],
+        notes: 'Mandat créé automatiquement par le Centre INDAR.'
+      })
+      .select('id')
+      .single();
+    if (row.data) {
+      console.log('[INDAR] Mandat créé:', num, '→', row.data.id);
+      return row.data.id;
+    }
+  } catch (e) {
+    console.warn('[INDAR] Impossible de créer le mandat:', e.message);
+  }
+  return null;
+}
+
 async function callAgentQuick(code, scanTarget) {
   var token = typeof getToken === 'function' ? getToken() : SB_ANON;
   if (!token) return { error: "Session expirée — reconnecte-toi." };
@@ -1011,6 +1052,8 @@ async function indarRunSequential(scanTarget) {
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
+  var mandatId = await ensureMandatForScan(scanTarget);
+  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
   indarConsoleLog("NEXUS-AL", "Dispatch en cours — appel des agents un par un.", "#ff7f27");
 
   for (var i = 0; i < INDAR_GRID_AGENTS.length; i++) {
@@ -1039,6 +1082,8 @@ async function indarRunAll(scanTarget) {
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
+  var mandatId = await ensureMandatForScan(scanTarget);
+  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
   indarConsoleLog("NEXUS-AL", "Scan parallèle — les 7 agents engagés simultanément.", "#ff7f27");
 
   INDAR_GRID_AGENTS.forEach(function(a) { indarGridSetState(a.id, "working"); });
