@@ -1,41 +1,40 @@
-// ti-lex v10 — Edge Function agent-al (PROTÉGÉE : propriétaire seulement)
+// ti-lex v10 — Edge Function agent-al — NIVEAU MAX (5 couches)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const GITHUB_TOKEN       = Deno.env.get("GITHUB_TOKEN")!;
 const SUPABASE_URL       = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY           = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE       = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
+// 🔒 Niveau 1 — propriétaire unique (override possible via secret OWNER_USER_ID)
 const OWNER_USER_ID = Deno.env.get("OWNER_USER_ID") || "d9a1985a-e106-4ea5-9ada-cac775c0b820";
+// 🔐 Niveau 2 — NIP d'injection (secret serveur)
 const INJECT_PIN = Deno.env.get("AL_INJECT_PIN") || "";
-
 const GH_OWNER  = "alexmarceauprevost812-source";
 const GH_REPO   = "ti-lex-v10";
 const GH_BRANCH = "supabase";
 const MODEL     = "claude-sonnet-4-6";
-
+// 🌐 CORS allowlist — remplace par ton domaine Vercel réel
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:5500",
   "https://ti-lex-v10.vercel.app",
 ];
-
-const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-
-async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
-  try {
-    const { data, error } = await admin.rpc("check_rate_limit", {
-      p_key: key, p_max: max, p_window_seconds: windowSec,
-    });
-    if (error) return true;
-    return data === true;
-  } catch {
-    return true;
-  }
+// 🛡️ Niveau 5 — fichiers que AL ne peut JAMAIS modifier
+const PROTECTED_PATHS: RegExp[] = [
+  /(^|\/)\.env($|\.)/i,                  // secrets d'environnement
+  /(^|\/)vercel\.json$/i,                // headers de sécurité / CSP
+  /(^|\/)\.github\//i,                   // workflows CI/CD
+  /supabase\/functions\/auth-/i,         // fonctions d'authentification
+  /supabase\/functions\/stripe/i,        // fonctions de paiement
+  /supabase\/functions\/agent-al/i,      // AL ne se réécrit pas lui-même
+  /(^|\/)config\.toml$/i,                // config Supabase
+  /(^|\/)\.git\//i,                      // interne git
+];
+function isProtected(path: string): boolean {
+  return PROTECTED_PATHS.some((re) => re.test(path));
 }
-
+const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 function corsFor(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
@@ -45,7 +44,7 @@ function corsFor(origin: string | null) {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
-
+// 🔑 Identifie l'appelant via son JWT
 async function getCallerId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) return null;
@@ -53,14 +52,36 @@ async function getCallerId(req: Request): Promise<string | null> {
   const { data } = await c.auth.getUser();
   return data?.user?.id ?? null;
 }
-
+// 🔁 Niveau 3 — rate limiting (fonction check_rate_limit déjà en base)
+async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
+  try {
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_key: key, p_max: max, p_window_seconds: windowSec,
+    });
+    if (error) return true; // fail-open
+    return data === true;
+  } catch {
+    return true;
+  }
+}
+// 📝 Niveau 4 — journalisation (ne bloque jamais sur erreur d'audit)
+async function logInjection(
+  userId: string | null, path: string, message: unknown,
+  pinOk: boolean, scopeOk: boolean, success: boolean, result: string,
+) {
+  try {
+    await admin.from("injection_audit").insert({
+      user_id: userId, path, message: message ? String(message) : null,
+      pin_ok: pinOk, scope_ok: scopeOk, success, result,
+    });
+  } catch (_) { /* silencieux */ }
+}
 // ---------- GitHub helpers ----------
 const ghHeaders = {
   Authorization: `Bearer ${GITHUB_TOKEN}`,
   Accept: "application/vnd.github+json",
   "User-Agent": "ti-lex-AL",
 };
-
 async function githubTree(): Promise<string[]> {
   const r = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/git/trees/${GH_BRANCH}?recursive=1`,
@@ -70,7 +91,6 @@ async function githubTree(): Promise<string[]> {
   const j = await r.json();
   return (j.tree || []).filter((t: any) => t.type === "blob").map((t: any) => t.path);
 }
-
 async function githubRead(path: string): Promise<string> {
   const r = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}?ref=${GH_BRANCH}`,
@@ -81,7 +101,6 @@ async function githubRead(path: string): Promise<string> {
   try { return atob(j.content.replace(/\n/g, "")); }
   catch { return `Contenu illisible pour ${path}`; }
 }
-
 async function githubCommit(path: string, code: string, message: string): Promise<string> {
   let sha: string | undefined;
   const cur = await fetch(
@@ -89,14 +108,12 @@ async function githubCommit(path: string, code: string, message: string): Promis
     { headers: ghHeaders },
   );
   if (cur.ok) { const j = await cur.json(); sha = j.sha; }
-
   const body: Record<string, unknown> = {
     message: message || `AL: maj ${path}`,
     content: btoa(unescape(encodeURIComponent(code))),
     branch: GH_BRANCH,
   };
   if (sha) body.sha = sha;
-
   const r = await fetch(
     `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${encodeURIComponent(path)}`,
     { method: "PUT", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify(body) },
@@ -104,7 +121,6 @@ async function githubCommit(path: string, code: string, message: string): Promis
   if (!r.ok) return `Erreur commit ${path} (${r.status})`;
   return `✅ ${path} poussé sur ${GH_BRANCH}`;
 }
-
 // ---------- Supabase context ----------
 async function supabaseContext() {
   const { count } = await admin.from("cerveau_notes").select("*", { count: "exact", head: true });
@@ -113,7 +129,6 @@ async function supabaseContext() {
     .order("created_at", { ascending: false }).limit(15);
   return { notes_count: count ?? 0, recent_notes: notes ?? [] };
 }
-
 // ---------- Outils Anthropic ----------
 const TOOLS = [
   { name: "github_read_file", description: "Lit un fichier du repo ti-lex-v10 (branche supabase).",
@@ -123,7 +138,6 @@ const TOOLS = [
   { name: "supabase_query", description: "Lit des lignes d'une table Supabase (lecture seule).",
     input_schema: { type: "object", properties: { table: { type: "string" }, limit: { type: "number" } }, required: ["table"] } },
 ];
-
 async function runTool(name: string, input: any): Promise<string> {
   if (name === "github_read_file") return await githubRead(input.path);
   if (name === "github_list_files") return (await githubTree()).join("\n");
@@ -134,7 +148,6 @@ async function runTool(name: string, input: any): Promise<string> {
   }
   return "Outil inconnu.";
 }
-
 async function callAnthropic(messages: any[], system: string) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -143,13 +156,12 @@ async function callAnthropic(messages: any[], system: string) {
   });
   return await r.json();
 }
-
 function buildSystem(ctx: any): string {
   const files = (ctx?.github?.files || []).slice(0, 200).join("\n");
   const notes = (ctx?.supabase?.recent_notes || [])
     .map((n: any) => `- ${n.title} [${(n.tags || []).join(", ")}]`).join("\n");
   return [
-    "Tu es AL, l'agent autonome central de ti-lex v10 (cybersécurité, Québec).",
+    "Tu es AL, l'agent autonome central de ti-lex v10 (cybersécurité, Québec ⚜️).",
     "Tu es déjà connecté au projet : repo GitHub ti-lex-v10 (branche supabase) et base Supabase.",
     "Réponds dans la langue de l'utilisateur ; par défaut français québécois, direct et concret.",
     "Pour du code à appliquer, utilise EXACTEMENT ce format, un bloc par fichier :",
@@ -161,44 +173,55 @@ function buildSystem(ctx: any): string {
     "", `Notes (${ctx?.supabase?.notes_count ?? 0}) :`, notes || "(aucune)",
   ].join("\n");
 }
-
+function json(obj: unknown, status = 200, cors: Record<string, string> = {}) {
+  return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
+}
 // ---------- Handler ----------
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const CORS = corsFor(origin);
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-
+  // 🔒 Niveau 1 — verrou propriétaire (bloque tout sauf ton compte)
   const callerId = await getCallerId(req);
   if (callerId !== OWNER_USER_ID) {
-    return new Response(
-      JSON.stringify({ error: "Accès réservé au propriétaire ti-lex. Connecte-toi avec ton compte." }),
-      { status: 403, headers: { ...CORS, "Content-Type": "application/json" } },
-    );
+    return json({ error: "Accès réservé au propriétaire ti-lex. Connecte-toi avec ton compte." }, 403, CORS);
   }
-
   let payload: any;
   try { payload = await req.json(); }
   catch { return json({ error: "JSON invalide" }, 400, CORS); }
-
   const action = payload.action;
-
+  // --- auto_connect ---
   if (action === "auto_connect") {
     const [files, sb] = await Promise.all([githubTree(), supabaseContext()]);
     return json({ github: { owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, files }, supabase: sb, ready: true }, 200, CORS);
   }
-
+  // --- commit (5 couches) ---
   if (action === "commit") {
+    const path = String(payload.path ?? "");
+    // Niveau 3 — anti brute-force NIP : max 10 essais / 5 min
     const within = await rateLimit(`inject_pin:${callerId}`, 10, 300);
     if (!within) {
+      await logInjection(callerId, path, payload.message, false, false, false, "rate-limited");
       return json({ error: "Trop d'essais de NIP. Réessaie dans 5 minutes." }, 429, CORS);
     }
-    if (!INJECT_PIN || String(payload.pin ?? "") !== INJECT_PIN) {
+    // Niveau 5 — restriction de portée : fichier protégé ?
+    if (isProtected(path)) {
+      await logInjection(callerId, path, payload.message, false, false, false, "fichier protégé");
+      return json({ error: `Fichier protégé : AL ne peut pas modifier « ${path} ».` }, 403, CORS);
+    }
+    // Niveau 2 — NIP
+    const pinOk = !!INJECT_PIN && String(payload.pin ?? "") === INJECT_PIN;
+    if (!pinOk) {
+      await logInjection(callerId, path, payload.message, false, true, false, "NIP invalide");
       return json({ error: "NIP invalide. Injection refusée." }, 403, CORS);
     }
-    const res = await githubCommit(payload.path, payload.code, payload.message || "");
-    return json({ result: res }, 200, CORS);
+    // Push + Niveau 4 — journalisation
+    const resultMsg = await githubCommit(path, payload.code, payload.message || "");
+    const success = resultMsg.startsWith("✅");
+    await logInjection(callerId, path, payload.message, true, true, success, resultMsg);
+    return json({ result: resultMsg }, 200, CORS);
   }
-
+  // --- chat (SSE + tools) ---
   if (action === "chat") {
     const system = buildSystem(payload.projectContext || {});
     const history = (payload.history || []).map((m: any) => ({
@@ -206,7 +229,6 @@ Deno.serve(async (req) => {
     }));
     const messages = [...history];
     if (payload.question) messages.push({ role: "user", content: payload.question });
-
     const enc = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -243,10 +265,5 @@ Deno.serve(async (req) => {
     });
     return new Response(stream, { headers: { ...CORS, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
   }
-
   return json({ error: "Action inconnue" }, 400, CORS);
 });
-
-function json(obj: unknown, status = 200, cors: Record<string, string> = {}) {
-  return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
-}

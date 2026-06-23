@@ -271,7 +271,7 @@ function renderInjects(text) {
           body: JSON.stringify({ action: "commit", path: p, code: c, pin: pin, message: "AL: maj " + p }),
         }).then(function (r) {
           if (r.status === 429) { b.textContent = "Trop d'essais"; return null; }
-          if (r.status === 403) { b.textContent = "NIP invalide"; b.disabled = false; return null; }
+          if (r.status === 403) { b.textContent = "Refusé (NIP ou fichier protégé)"; b.disabled = false; return null; }
           return r.json();
         }).then(function (j) {
           if (j) b.textContent = j.result || "Fait";
