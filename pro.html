@@ -3963,14 +3963,14 @@ var chatSessionId=null;
 async function demarrerConversation(userId){
   try{
     var res=await supabase.from("conversations").select("id").eq("user_id",userId).eq("archived",false).order("updated_at",{ascending:false}).limit(1).maybeSingle();
-    if(res.data){_convActiveId=res.data.id;return res.data.id;}
+    if(res.data){_convActiveId=res.data.id;if(window._cm)window._cm.setActive(res.data.id);return res.data.id;}
     return await creerNouvelleConv(userId);
   }catch(e){console.error("demarrerConversation:",e);return null;}
 }
 async function creerNouvelleConv(userId,titre){
   try{
     var res=await supabase.from("conversations").insert({user_id:userId,title:titre||"Nouvelle conversation"}).select().single();
-    if(res.data){_convActiveId=res.data.id;}
+    if(res.data){_convActiveId=res.data.id;if(window._cm){window._cm.conversations.unshift(res.data);window._cm.setActive(res.data.id);}}
     return res.data?.id||null;
   }catch(e){console.error("creerNouvelleConv:",e);return null;}
 }
@@ -3980,6 +3980,7 @@ async function sauvegarderMsgEnDB(role,contenu){
     var u=await supabase.auth.getUser();
     if(!u.data?.user)return;
     var userId=u.data.user.id;
+    if(!_convActiveId&&window._cm?.activeId)_convActiveId=window._cm.activeId;
     if(!_convActiveId)await demarrerConversation(userId);
     if(!_convActiveId)return;
     await supabase.from("messages").insert({conversation_id:_convActiveId,user_id:userId,role:role,content:contenu});
@@ -9404,6 +9405,39 @@ trackFeatureUsage("app_load");
 
   renderPreview();
   refreshContrast();
+})();
+</script>
+
+<script type="module">
+import { ConversationManager } from './conversation-manager.js';
+import { ConversationSidebar } from './conversation-sidebar.js';
+
+(async () => {
+  const sb = window.supabase;
+  if (!sb || !sb.auth) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.user) return;
+
+  const cm = new ConversationManager(sb, session.user.id);
+  await cm.load();
+  cm.purgeOldEmpty().catch(() => {});
+
+  const sidebar = new ConversationSidebar(cm);
+
+  cm.on('active', (convId) => {
+    if (!convId) return;
+    window._convActiveId = convId;
+    console.log('[ti-lex] Conversation active:', convId);
+  });
+
+  if (cm.conversations.length === 0) {
+    await cm.newConversation('Ma première conversation');
+  } else {
+    cm.setActive(cm.conversations[0].id);
+  }
+
+  window._cm = cm;
+  window._sidebar = sidebar;
 })();
 </script>
 
