@@ -8,6 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ti-lex-AL v10 — Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <link rel="stylesheet" href="css/agent-marceau.css">
 <link rel="stylesheet" href="css/fichiers.css">
 <link rel="stylesheet" href="css/fichiers-selection.css">
@@ -1806,6 +1807,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
+    <button class="studio-hdr-btn" id="studio-hdr-btn" title="Ouvrir/Fermer Studio">⚡ STUDIO<span class="shb-dot"></span></button>
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
     </div>
@@ -2785,14 +2787,13 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 </main>
 
 <!-- ════════════ STUDIO PANEL ════════════ -->
-<button class="studio-toggle" id="studio-toggle" title="Ouvrir Studio">◀<span class="studio-dot"></span></button>
 <div class="studio-panel" id="studio-panel">
   <div class="studio-resize" id="studio-resize"></div>
   <div class="studio-header">
-    <span class="studio-title">STUDIO</span>
-    <button class="studio-header-btn" onclick="TilexStudio.refreshPreview()" title="Rafraîchir preview">↻</button>
-    <button class="studio-header-btn" onclick="TilexStudio.clearEditor()" title="Vider l'éditeur">🗑</button>
-    <button class="studio-header-btn" onclick="TilexStudio.close()" title="Fermer">✕</button>
+    <span class="studio-title">⚡ STUDIO</span>
+    <button class="studio-hd-btn" onclick="TilexStudio.rafraichirPreview()" title="Rafraîchir preview">↻</button>
+    <button class="studio-hd-btn" onclick="TilexStudio.viderEditeur()" title="Vider l'éditeur">🗑</button>
+    <button class="studio-hd-btn" onclick="TilexStudio.fermer()" title="Fermer le Studio">✕</button>
   </div>
   <div class="studio-tabs">
     <button class="studio-tab active" data-tab="code">CODE</button>
@@ -2800,11 +2801,11 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <button class="studio-tab" data-tab="files">FICHIERS</button>
   </div>
   <div class="studio-content">
-    <!-- Code pane -->
+    <!-- Onglet Code : éditeur + coloration Prism.js -->
     <div class="studio-pane active" id="studio-pane-code">
       <div class="studio-lang-bar">
-        <span class="studio-lang-label">LANGAGE</span>
-        <select class="studio-lang-sel" id="studio-lang-sel" onchange="TilexStudio.changeLang(this.value)">
+        <span class="studio-lang-lbl">LANGAGE</span>
+        <select class="studio-lang-sel" id="studio-lang-sel" onchange="TilexStudio.changerLang(this.value)">
           <option value="html">HTML</option>
           <option value="css">CSS</option>
           <option value="js">JavaScript</option>
@@ -2815,31 +2816,36 @@ body.sb-open .composer-bar{left:var(--sb-w);}
           <option value="ts">TypeScript</option>
           <option value="md">Markdown</option>
           <option value="yaml">YAML</option>
+          <option value="php">PHP</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="java">Java</option>
         </select>
-        <span class="studio-char-count" id="studio-char-count">0 car · 1 lig</span>
+        <span class="studio-char-ct" id="studio-char-ct">0 car · 1 lig</span>
       </div>
-      <div class="studio-editor-wrap">
+      <div class="studio-editor-wrap mode-edit">
         <textarea class="studio-editor" id="studio-editor" placeholder="Colle ou écris ton code ici..." spellcheck="false"></textarea>
+        <div class="studio-highlight-wrap" id="studio-highlight"></div>
       </div>
       <div class="studio-actions">
-        <button class="studio-btn" onclick="TilexStudio.copyCode()">📋 Copier</button>
-        <button class="studio-btn primary" onclick="TilexStudio.pushToCodex()">🚀 TilexPush</button>
-        <button class="studio-btn" onclick="TilexStudio.switchTab('preview')">👁 Preview</button>
+        <button class="studio-btn" onclick="TilexStudio.copierCode()"><span class="studio-btn-ico">📋</span> Copier</button>
+        <button class="studio-btn primary" onclick="TilexStudio.pousserVersCodex()"><span class="studio-btn-ico">🚀</span> Push</button>
+        <button class="studio-btn" onclick="TilexStudio.changerOnglet('preview')"><span class="studio-btn-ico">👁</span> Preview</button>
       </div>
     </div>
-    <!-- Preview pane -->
+    <!-- Onglet Preview : iframe sandboxé -->
     <div class="studio-pane" id="studio-pane-preview">
       <div class="studio-preview-bar">
         <span class="studio-preview-url">preview://localhost</span>
-        <button class="studio-header-btn" onclick="TilexStudio.refreshPreview()" title="Rafraîchir">↻</button>
+        <button class="studio-hd-btn" onclick="TilexStudio.rafraichirPreview()" title="Rafraîchir">↻</button>
       </div>
       <div class="studio-preview-wrap">
-        <iframe class="studio-preview-frame" id="studio-preview-frame" sandbox="allow-scripts allow-same-origin" title="Preview"></iframe>
+        <iframe class="studio-preview-frame" id="studio-preview-frame" sandbox="allow-scripts allow-same-origin" title="Preview live"></iframe>
       </div>
     </div>
-    <!-- Files pane -->
+    <!-- Onglet Fichiers : liste des fichiers de la session -->
     <div class="studio-pane" id="studio-pane-files">
-      <div id="studio-files-list" class="studio-files-list"></div>
+      <div id="studio-files-list" class="studio-files"></div>
     </div>
   </div>
 </div>
@@ -8644,6 +8650,20 @@ trackFeatureUsage("app_load");
 </script>
 
 <script src="js/tilex-typewriter.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
 <script src="js/tilex-studio.js"></script>
 <script src="js/security-guard.js"></script>
 <script src="js/guide-protection.js"></script>
