@@ -201,6 +201,13 @@
     }
     .btn-gold:hover { filter: brightness(1.1); transform: translateY(-2px); }
 
+    .btn-demo-scan {
+      background: linear-gradient(135deg, #ff7f27, #E60000);
+      color: var(--bg); text-decoration: none;
+      box-shadow: 0 0 20px rgba(255,127,39,.35);
+    }
+    .btn-demo-scan:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 0 28px rgba(255,127,39,.55); }
+
     /* ═══════════════════════════════════════════════
        OAUTH
     ═══════════════════════════════════════════════ */
@@ -623,6 +630,9 @@
     <button class="btn btn-ghost" onclick="showDemo()">
       🎬 DÉMO INTERACTIVE
     </button>
+    <a href="/demo-scan.html" class="btn btn-demo-scan">
+      🔰 DÉMO SCAN CYBERSÉCURITÉ
+    </a>
   </div>
 
   <!-- ═══ CONNEXION ═══ -->

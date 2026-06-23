@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex v10 — Demo Scan Cybersecurite</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0a;color:#e8e8ee;font-family:'JetBrains Mono',ui-monospace,monospace;min-height:100vh;}
+.demo-container{max-width:860px;margin:0 auto;padding:24px 16px 48px;}
+.demo-header{margin-bottom:28px;}
+.demo-back{display:inline-flex;align-items:center;gap:6px;color:#ff7f27;font-size:12px;text-decoration:none;letter-spacing:1px;margin-bottom:16px;opacity:.7;transition:opacity .2s;}
+.demo-back:hover{opacity:1;}
+.demo-title{font-size:20px;font-weight:700;letter-spacing:1px;color:#e8e8ee;margin-bottom:6px;}
+.demo-sub{font-size:12px;color:#4a4a5a;line-height:1.6;}
+.demo-tabs{display:flex;gap:8px;margin-bottom:20px;}
+.demo-tab{padding:10px 18px;border-radius:8px;background:#111;border:1px solid #23232c;color:#6c6c78;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.demo-tab.active{background:rgba(255,127,39,.12);border-color:#ff7f27;color:#ff7f27;}
+.demo-tab:hover:not(.active){border-color:#444;color:#aaa;}
+.demo-frame{width:100%;border:1px solid #23232c;border-radius:14px;background:#0d0d0d;transition:opacity .3s;}
+.demo-footer{margin-top:32px;text-align:center;font-size:10px;color:#333;letter-spacing:2px;}
+</style>
+</head>
+<body>
+<div class="demo-container">
+  <div class="demo-header">
+    <a href="/index.html" class="demo-back">← Retour a l'accueil</a>
+    <h1 class="demo-title">Demo Scan Cybersecurite</h1>
+    <p class="demo-sub">Deux exemples de rapports — toutes les valeurs sensibles sont masquees en xxxxx.<br>Aucune vraie donnee. 100% securitaire a montrer.</p>
+  </div>
+
+  <div class="demo-tabs">
+    <button class="demo-tab active" data-demo="securise">Scan securise</button>
+    <button class="demo-tab" data-demo="silex">Rapport SILEX + Loi 25</button>
+  </div>
+
+  <iframe id="demo-frame" class="demo-frame" src="/demos/demo-scan-securise.html" style="height:1100px;" title="Demo scan"></iframe>
+
+  <div class="demo-footer">CENTRE INDAR · ti-lex v10 · Produit du Quebec</div>
+</div>
+
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.demo-tab');
+  var frame = document.getElementById('demo-frame');
+  var srcs = {
+    securise: '/demos/demo-scan-securise.html',
+    silex: '/demos/demo-scan-silex.html'
+  };
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      frame.style.opacity = '0';
+      setTimeout(function(){
+        frame.src = srcs[tab.dataset.demo];
+        frame.style.opacity = '1';
+      }, 200);
+    });
+  });
+})();
+</script>
+</body>
+</html>
