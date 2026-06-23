@@ -263,13 +263,15 @@ function renderInjects(text) {
     btn.textContent = "Pousser sur GitHub";
     (function (p, c, b) {
       b.onclick = function () {
-        if (!confirm("Pousser « " + p + " » sur GitHub ?")) return;
+        var pin = prompt("NIP (4 chiffres) pour pousser sur GitHub :");
+        if (!pin) return;
         b.disabled = true; b.textContent = "Envoi…";
         fetch(FN_URL, {
           method: "POST", headers: authHeaders(),
-          body: JSON.stringify({ action: "commit", path: p, code: c, message: "AL: maj " + p }),
+          body: JSON.stringify({ action: "commit", path: p, code: c, pin: pin, message: "AL: maj " + p }),
         }).then(function (r) {
-          if (r.status === 403) { b.textContent = "Accès refusé (403)"; return; }
+          if (r.status === 429) { b.textContent = "Trop d'essais"; return null; }
+          if (r.status === 403) { b.textContent = "NIP invalide"; b.disabled = false; return null; }
           return r.json();
         }).then(function (j) {
           if (j) b.textContent = j.result || "Fait";

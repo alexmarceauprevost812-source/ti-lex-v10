@@ -9,6 +9,7 @@ const ANON_KEY           = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE       = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const OWNER_USER_ID = Deno.env.get("OWNER_USER_ID") || "d9a1985a-e106-4ea5-9ada-cac775c0b820";
+const INJECT_PIN = Deno.env.get("AL_INJECT_PIN") || "";
 
 const GH_OWNER  = "alexmarceauprevost812-source";
 const GH_REPO   = "ti-lex-v10";
@@ -22,6 +23,18 @@ const ALLOWED_ORIGINS = [
 ];
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+async function rateLimit(key: string, max: number, windowSec: number): Promise<boolean> {
+  try {
+    const { data, error } = await admin.rpc("check_rate_limit", {
+      p_key: key, p_max: max, p_window_seconds: windowSec,
+    });
+    if (error) return true;
+    return data === true;
+  } catch {
+    return true;
+  }
+}
 
 function corsFor(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -175,6 +188,13 @@ Deno.serve(async (req) => {
   }
 
   if (action === "commit") {
+    const within = await rateLimit(`inject_pin:${callerId}`, 10, 300);
+    if (!within) {
+      return json({ error: "Trop d'essais de NIP. Réessaie dans 5 minutes." }, 429, CORS);
+    }
+    if (!INJECT_PIN || String(payload.pin ?? "") !== INJECT_PIN) {
+      return json({ error: "NIP invalide. Injection refusée." }, 403, CORS);
+    }
     const res = await githubCommit(payload.path, payload.code, payload.message || "");
     return json({ result: res }, 200, CORS);
   }
