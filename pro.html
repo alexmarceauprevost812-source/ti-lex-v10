@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="css/fichiers-historique.css">
 <link rel="stylesheet" href="css/security.css">
 <link rel="stylesheet" href="css/tilex-typewriter.css">
+<link rel="stylesheet" href="css/tilex-studio.css">
 <style>
 :root{
   --font-tilex:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,Cantarell,'Helvetica Neue',sans-serif;
@@ -2782,6 +2783,67 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 <!-- ════════════ FIN CENTRE INDAR ════════════ -->
 
 </main>
+
+<!-- ════════════ STUDIO PANEL ════════════ -->
+<button class="studio-toggle" id="studio-toggle" title="Ouvrir Studio">◀<span class="studio-dot"></span></button>
+<div class="studio-panel" id="studio-panel">
+  <div class="studio-resize" id="studio-resize"></div>
+  <div class="studio-header">
+    <span class="studio-title">STUDIO</span>
+    <button class="studio-header-btn" onclick="TilexStudio.refreshPreview()" title="Rafraîchir preview">↻</button>
+    <button class="studio-header-btn" onclick="TilexStudio.clearEditor()" title="Vider l'éditeur">🗑</button>
+    <button class="studio-header-btn" onclick="TilexStudio.close()" title="Fermer">✕</button>
+  </div>
+  <div class="studio-tabs">
+    <button class="studio-tab active" data-tab="code">CODE</button>
+    <button class="studio-tab" data-tab="preview">PREVIEW</button>
+    <button class="studio-tab" data-tab="files">FICHIERS</button>
+  </div>
+  <div class="studio-content">
+    <!-- Code pane -->
+    <div class="studio-pane active" id="studio-pane-code">
+      <div class="studio-lang-bar">
+        <span class="studio-lang-label">LANGAGE</span>
+        <select class="studio-lang-sel" id="studio-lang-sel" onchange="TilexStudio.changeLang(this.value)">
+          <option value="html">HTML</option>
+          <option value="css">CSS</option>
+          <option value="js">JavaScript</option>
+          <option value="json">JSON</option>
+          <option value="python">Python</option>
+          <option value="sql">SQL</option>
+          <option value="bash">Bash</option>
+          <option value="ts">TypeScript</option>
+          <option value="md">Markdown</option>
+          <option value="yaml">YAML</option>
+        </select>
+        <span class="studio-char-count" id="studio-char-count">0 car · 1 lig</span>
+      </div>
+      <div class="studio-editor-wrap">
+        <textarea class="studio-editor" id="studio-editor" placeholder="Colle ou écris ton code ici..." spellcheck="false"></textarea>
+      </div>
+      <div class="studio-actions">
+        <button class="studio-btn" onclick="TilexStudio.copyCode()">📋 Copier</button>
+        <button class="studio-btn primary" onclick="TilexStudio.pushToCodex()">🚀 TilexPush</button>
+        <button class="studio-btn" onclick="TilexStudio.switchTab('preview')">👁 Preview</button>
+      </div>
+    </div>
+    <!-- Preview pane -->
+    <div class="studio-pane" id="studio-pane-preview">
+      <div class="studio-preview-bar">
+        <span class="studio-preview-url">preview://localhost</span>
+        <button class="studio-header-btn" onclick="TilexStudio.refreshPreview()" title="Rafraîchir">↻</button>
+      </div>
+      <div class="studio-preview-wrap">
+        <iframe class="studio-preview-frame" id="studio-preview-frame" sandbox="allow-scripts allow-same-origin" title="Preview"></iframe>
+      </div>
+    </div>
+    <!-- Files pane -->
+    <div class="studio-pane" id="studio-pane-files">
+      <div id="studio-files-list" class="studio-files-list"></div>
+    </div>
+  </div>
+</div>
+<!-- ════════════ FIN STUDIO ════════════ -->
 
 <!-- BARRE COMPOSITEUR FIXE (bas de l'écran) -->
 <div class="composer-bar" id="composer-bar">
@@ -8582,6 +8644,7 @@ trackFeatureUsage("app_load");
 </script>
 
 <script src="js/tilex-typewriter.js"></script>
+<script src="js/tilex-studio.js"></script>
 <script src="js/security-guard.js"></script>
 <script src="js/guide-protection.js"></script>
 <script src="js/al-memory.js"></script>
