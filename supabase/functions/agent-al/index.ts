@@ -1,25 +1,45 @@
-// ti-lex v10 — Edge Function agent-al
-// Actions : auto_connect | chat (SSE + tool_use) | commit
+// ti-lex v10 — Edge Function agent-al (PROTÉGÉE : propriétaire seulement)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const GITHUB_TOKEN       = Deno.env.get("GITHUB_TOKEN")!;
 const SUPABASE_URL       = Deno.env.get("SUPABASE_URL")!;
+const ANON_KEY           = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE       = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const OWNER_USER_ID = Deno.env.get("OWNER_USER_ID") || "d9a1985a-e106-4ea5-9ada-cac775c0b820";
 
 const GH_OWNER  = "alexmarceauprevost812-source";
 const GH_REPO   = "ti-lex-v10";
 const GH_BRANCH = "supabase";
 const MODEL     = "claude-sonnet-4-6";
 
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://127.0.0.1:5500",
+  "https://ti-lex-v10.vercel.app",
+];
+
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+function corsFor(origin: string | null) {
+  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+async function getCallerId(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return null;
+  const c = createClient(SUPABASE_URL, ANON_KEY, { global: { headers: { Authorization: authHeader } } });
+  const { data } = await c.auth.getUser();
+  return data?.user?.id ?? null;
+}
 
 // ---------- GitHub helpers ----------
 const ghHeaders = {
@@ -74,38 +94,21 @@ async function githubCommit(path: string, code: string, message: string): Promis
 
 // ---------- Supabase context ----------
 async function supabaseContext() {
-  const { count } = await admin
-    .from("cerveau_notes")
-    .select("*", { count: "exact", head: true });
+  const { count } = await admin.from("cerveau_notes").select("*", { count: "exact", head: true });
   const { data: notes } = await admin
-    .from("cerveau_notes")
-    .select("title,tags,created_at")
-    .order("created_at", { ascending: false })
-    .limit(15);
+    .from("cerveau_notes").select("title,tags,created_at")
+    .order("created_at", { ascending: false }).limit(15);
   return { notes_count: count ?? 0, recent_notes: notes ?? [] };
 }
 
 // ---------- Outils Anthropic ----------
 const TOOLS = [
-  {
-    name: "github_read_file",
-    description: "Lit le contenu complet d'un fichier du repo ti-lex-v10 (branche supabase). Utilise github_list_files d'abord si tu ne connais pas le chemin exact.",
-    input_schema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] },
-  },
-  {
-    name: "github_list_files",
-    description: "Liste tous les fichiers du repo ti-lex-v10 (branche supabase).",
-    input_schema: { type: "object", properties: {} },
-  },
-  {
-    name: "supabase_query",
-    description: "Lit des lignes d'une table Supabase du projet (lecture seule).",
-    input_schema: {
-      type: "object",
-      properties: { table: { type: "string" }, limit: { type: "number" } },
-      required: ["table"],
-    },
-  },
+  { name: "github_read_file", description: "Lit un fichier du repo ti-lex-v10 (branche supabase).",
+    input_schema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] } },
+  { name: "github_list_files", description: "Liste tous les fichiers du repo.",
+    input_schema: { type: "object", properties: {} } },
+  { name: "supabase_query", description: "Lit des lignes d'une table Supabase (lecture seule).",
+    input_schema: { type: "object", properties: { table: { type: "string" }, limit: { type: "number" } }, required: ["table"] } },
 ];
 
 async function runTool(name: string, input: any): Promise<string> {
@@ -119,78 +122,67 @@ async function runTool(name: string, input: any): Promise<string> {
   return "Outil inconnu.";
 }
 
-// ---------- Appel Anthropic (non-stream, pour la boucle d'outils) ----------
 async function callAnthropic(messages: any[], system: string) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: {
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
+    headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model: MODEL, max_tokens: 4000, system, tools: TOOLS, messages }),
   });
   return await r.json();
 }
 
-// ---------- System prompt ----------
 function buildSystem(ctx: any): string {
   const files = (ctx?.github?.files || []).slice(0, 200).join("\n");
   const notes = (ctx?.supabase?.recent_notes || [])
     .map((n: any) => `- ${n.title} [${(n.tags || []).join(", ")}]`).join("\n");
   return [
     "Tu es AL, l'agent autonome central de ti-lex v10 (cybersécurité, Québec).",
-    "Tu es DÉJÀ connecté au projet : repo GitHub ti-lex-v10 (branche supabase) et base Supabase.",
-    "Réponds dans la langue de l'utilisateur ; par défaut français québécois, ton direct et concret.",
-    "Quand tu génères du code à appliquer, utilise EXACTEMENT ce format, un bloc par fichier :",
-    "INJECT: chemin/du/fichier.ext",
-    "```",
-    "<code complet>",
-    "```",
-    "Pas de placeholder, pas de simplification. Code vanilla HTML/CSS/JS uniquement (jamais de React/JSX).",
-    "Respecte les tokens ti-lex : fond #0a0a0a, orange #ff7f27, vert #37e0a0, gold #E6A400, rouge #E60000, bleu #4a9eff, violet #C700E6, police JetBrains Mono.",
-    "",
-    `--- CONTEXTE PROJET ---`,
-    `Fichiers du repo (${(ctx?.github?.files || []).length}) :`,
-    files || "(liste indisponible)",
-    "",
-    `Notes (${ctx?.supabase?.notes_count ?? 0}) récentes :`,
-    notes || "(aucune)",
+    "Tu es déjà connecté au projet : repo GitHub ti-lex-v10 (branche supabase) et base Supabase.",
+    "Réponds dans la langue de l'utilisateur ; par défaut français québécois, direct et concret.",
+    "Pour du code à appliquer, utilise EXACTEMENT ce format, un bloc par fichier :",
+    "INJECT: chemin/du/fichier.ext", "```", "<code complet>", "```",
+    "Pas de placeholder. Vanilla HTML/CSS/JS uniquement (jamais React/JSX).",
+    "Tokens ti-lex : fond #0a0a0a, orange #ff7f27, vert #37e0a0, gold #E6A400, rouge #E60000, bleu #4a9eff, violet #C700E6, JetBrains Mono.",
+    "", "--- CONTEXTE PROJET ---",
+    `Fichiers (${(ctx?.github?.files || []).length}) :`, files || "(indisponible)",
+    "", `Notes (${ctx?.supabase?.notes_count ?? 0}) :`, notes || "(aucune)",
   ].join("\n");
 }
 
 // ---------- Handler ----------
 Deno.serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  const CORS = corsFor(origin);
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
+  const callerId = await getCallerId(req);
+  if (callerId !== OWNER_USER_ID) {
+    return new Response(
+      JSON.stringify({ error: "Accès réservé au propriétaire ti-lex. Connecte-toi avec ton compte." }),
+      { status: 403, headers: { ...CORS, "Content-Type": "application/json" } },
+    );
+  }
 
   let payload: any;
   try { payload = await req.json(); }
-  catch { return json({ error: "JSON invalide" }, 400); }
+  catch { return json({ error: "JSON invalide" }, 400, CORS); }
 
   const action = payload.action;
 
-  // --- auto_connect ---
   if (action === "auto_connect") {
     const [files, sb] = await Promise.all([githubTree(), supabaseContext()]);
-    return json({
-      github: { owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, files },
-      supabase: sb,
-      ready: true,
-    });
+    return json({ github: { owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, files }, supabase: sb, ready: true }, 200, CORS);
   }
 
-  // --- commit ---
   if (action === "commit") {
     const res = await githubCommit(payload.path, payload.code, payload.message || "");
-    return json({ result: res });
+    return json({ result: res }, 200, CORS);
   }
 
-  // --- chat (SSE) ---
   if (action === "chat") {
     const system = buildSystem(payload.projectContext || {});
     const history = (payload.history || []).map((m: any) => ({
-      role: m.role === "assistant" ? "assistant" : "user",
-      content: m.text ?? m.content ?? "",
+      role: m.role === "assistant" ? "assistant" : "user", content: m.text ?? m.content ?? "",
     }));
     const messages = [...history];
     if (payload.question) messages.push({ role: "user", content: payload.question });
@@ -204,7 +196,6 @@ Deno.serve(async (req) => {
           while (guard++ < 6) {
             const resp = await callAnthropic(messages, system);
             if (resp.error) { send({ type: "token", text: "⚠️ " + (resp.error.message || "Erreur API") }); break; }
-
             if (resp.stop_reason === "tool_use") {
               messages.push({ role: "assistant", content: resp.content });
               const toolResults: any[] = [];
@@ -218,11 +209,8 @@ Deno.serve(async (req) => {
               messages.push({ role: "user", content: toolResults });
               continue;
             }
-
-            const finalText = (resp.content || [])
-              .filter((b: any) => b.type === "text").map((b: any) => b.text).join("");
-            const words = finalText.split(/(\s+)/);
-            for (const w of words) send({ type: "token", text: w });
+            const finalText = (resp.content || []).filter((b: any) => b.type === "text").map((b: any) => b.text).join("");
+            for (const w of finalText.split(/(\s+)/)) send({ type: "token", text: w });
             break;
           }
         } catch (e) {
@@ -233,18 +221,12 @@ Deno.serve(async (req) => {
         }
       },
     });
-
-    return new Response(stream, {
-      headers: { ...CORS, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-    });
+    return new Response(stream, { headers: { ...CORS, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
   }
 
-  return json({ error: "Action inconnue" }, 400);
+  return json({ error: "Action inconnue" }, 400, CORS);
 });
 
-function json(obj: unknown, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
+function json(obj: unknown, status = 200, cors: Record<string, string> = {}) {
+  return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }

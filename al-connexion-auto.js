@@ -147,7 +147,17 @@ function autoConnect() {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({ action: "auto_connect" }),
-    }).then(function (r) { return r.json(); }).then(function (ctx) {
+    }).then(function (r) {
+      if (r.status === 403) {
+        setStatus("error", "Accès réservé au propriétaire ti-lex.");
+        el.input.disabled = true;
+        el.send.disabled = true;
+        addMsg("al", "Accès réservé au propriétaire ti-lex. Connecte-toi avec le bon compte.");
+        return null;
+      }
+      return r.json();
+    }).then(function (ctx) {
+      if (!ctx) return;
       if (ctx.error) throw new Error(ctx.error);
       projectContext = ctx;
       connected = true;
@@ -186,6 +196,12 @@ function onSend() {
       headers: authHeaders(),
       body: JSON.stringify({ action: "chat", question: q, history: history, projectContext: projectContext }),
     }).then(function (r) {
+      if (r.status === 403) {
+        thinking.remove();
+        bubble.textContent = "Accès réservé au propriétaire ti-lex. Connecte-toi avec le bon compte.";
+        el.send.disabled = false;
+        return;
+      }
       var reader = r.body.getReader();
       var dec = new TextDecoder();
       var buf = "";
@@ -247,12 +263,16 @@ function renderInjects(text) {
     btn.textContent = "Pousser sur GitHub";
     (function (p, c, b) {
       b.onclick = function () {
+        if (!confirm("Pousser « " + p + " » sur GitHub ?")) return;
         b.disabled = true; b.textContent = "Envoi…";
         fetch(FN_URL, {
           method: "POST", headers: authHeaders(),
           body: JSON.stringify({ action: "commit", path: p, code: c, message: "AL: maj " + p }),
-        }).then(function (r) { return r.json(); }).then(function (j) {
-          b.textContent = j.result || "Fait";
+        }).then(function (r) {
+          if (r.status === 403) { b.textContent = "Accès refusé (403)"; return; }
+          return r.json();
+        }).then(function (j) {
+          if (j) b.textContent = j.result || "Fait";
         }).catch(function () { b.textContent = "Erreur"; b.disabled = false; });
       };
     })(path, code, btn);
