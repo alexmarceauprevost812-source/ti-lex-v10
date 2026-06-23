@@ -9,31 +9,35 @@ Frontend statique (HTML / CSS / JS) sur Vercel, backend Supabase (Auth, Edge Fun
 
 ## Forfaits
 
-| Plan | Prix | Messages / fenetre | Modeles |
-|------|------|-------------------|---------|
-| TI | 29,99 $/mois | 40 | Sonnet 4.6 |
-| TI-LEX | 89,99 $/mois | 100 | Sonnet 4.6 |
-| TI-LEX-AL | 149,99 $/mois | 200 | Sonnet 4.6 + Opus 4.8 |
+| Plan | Prix | Messages / fenetre | Credits / mois | Modeles |
+|------|------|-------------------|----------------|---------|
+| ESSAI | Gratuit | — | 50 | — |
+| TI | 29,99 $/mois | 40 | 500 | Sonnet 4.6 |
+| FLUX | 19,00 $/mois | 40 | 300 | Sonnet 4.6 |
+| TI-LEX | 89,99 $/mois | 100 | 2 000 | Sonnet 4.6 |
+| TI-LEX-AL | 149,99 $/mois | 200 | 5 000 | Sonnet 4.6 + Opus 4.8 |
 
 Plans cybersecurite disponibles sur demande (admin uniquement).
-Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est).
+Deux fenetres de recharge par jour : 00h00 et 12h00 (heure de Montreal).
 
 ---
 
 ## Fonctionnalites
 
 ### Chat — Agent AL
-- Streaming SSE avec ecriture typewriter (lent pour le texte, rapide pour le code)
+- Streaming SSE avec ecriture fluide (acceleration progressive lettre par lettre)
 - Mode reflexion (raisonnement etape par etape)
-- Conversations persistantes (Supabase) avec recherche et filtrage
+- Conversations persistantes (Supabase) avec recherche, filtrage et favoris
 - Mode Maitre (admin : reponses directes) / Mode Standard (clarification d'abord)
 - Pieces jointes : images, fichiers, ZIP, dictee vocale, recherche web
-- Coloration syntaxique, diagrammes Mermaid, text-to-speech
+- Coloration syntaxique avec mots-cles copiables (clic pour copier)
+- Diagrammes Mermaid, text-to-speech, rendu Markdown
 - Animation gold flash a la fin du streaming
 - Bouton Codex sur chaque reponse pour envoyer vers le pipeline de code
 
 ### Codex
 - Interface de generation de code avec deploy GitHub + auto-deploy Vercel
+- Bouton SCAN integre dans le composer (mode codex uniquement)
 - Error Studio : diagnostic et correction d'erreurs de deploiement
 - Pipeline Chat → Codex : table `codex_queue`, Edge Function, listener local
 
@@ -47,6 +51,8 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 ### Cybersecurite (SILEX)
 - Agent defensif avec autorisation SOW
 - Scans : reconnaissance passive, audit web, config, vulnerabilites, dark web
+- Indicateur flottant de scan en cours (top-right, navigable)
+- Timer de scan avec progression en temps reel
 - Dashboard et historique — admin uniquement
 
 ### Centre INDAR
@@ -54,7 +60,15 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 - NEXUS-AL (supervision), MARCEAU (architecture), CIPHER (conformite), SENTINEL (incidents), ORACLE (securite IA), PHANTOM-RED (pentest simule)
 - Mode EN MARCHE : surveillance continue autonome avec flux d'evenements en temps reel
 - PHANTOM-RED : pentester en mode SIMULATION (100% legal, aucun systeme reel touche)
-- 3 forfaits cyber : SENTINELLE (97$/mois), FORTERESSE (297$/mois), COMMANDEMENT (697$/mois)
+
+### Moteur Economique (Credits)
+- Systeme de credits par action (chat, codex, scan, image, etc.)
+- Badge credits en temps reel dans la topbar
+- Recharge mensuelle automatique selon le forfait
+- Journal immutable des transactions (credits_ledger)
+- Fonctions SECURITY DEFINER : consume_credits, grant_credits, get_my_credits
+- Protection 402 (credits insuffisants) avec message utilisateur
+- Carte credits detaillee dans Parametres
 
 ### Image Studio
 - Generation via OpenAI (gpt-image-1)
@@ -63,6 +77,13 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 ### Agent Marceau
 - Dialogue multi-agents en 4 phases
 
+### Parametres
+- Choix de police d'ecriture (6 presets : Systeme, Monospace, Serif, Arrondi, Elegant, Compact)
+- Couleur du texte agent (7 couleurs)
+- Theme jour / nuit
+- Connexions GitHub et Supabase
+- Affichage des credits et statistiques d'utilisation
+
 ---
 
 ## Structure du projet
@@ -70,21 +91,42 @@ Deux fenetres de recharge par jour : 08h00-20h00 et 20h00-08h00 (heure de l'Est)
 ```
 ti-lex-v10/
 ├── index.html                  # Page d'accueil + connexion
-├── pro.html                    # Application principale (~5800 lignes inline)
+├── pro.html                    # Application principale (~8500 lignes inline)
 ├── forfaits.html               # Page forfaits IA (Stripe Payment Links)
-├── forfaits-cyber.html         # Page forfaits cybersecurite (SENTINELLE/FORTERESSE/COMMANDEMENT)
+├── forfaits-cyber.html         # Page forfaits cybersecurite
 ├── centre-indar.html           # Centre INDAR — dashboard cybersecurite 6 agents
 ├── cyber.html                  # Page cybersecurite (landing)
 ├── choose.html                 # Ecran de choix d'interface
-├── sw.js                       # Service Worker PWA
+├── sw.js                       # Service Worker PWA (cache v363)
 ├── manifest.json               # Manifest PWA
-├── vercel.json                 # Rewrites + headers securite
+├── vercel.json                 # Rewrites + headers securite (HSTS, CSP, X-Frame)
 ├── package.json                # Scripts : dev, scan, push, deploy, codex:listen
 │
 ├── js/
-│   └── agent-marceau.js        # Module agent multi-phases
+│   ├── agent-marceau.js        # Module agent multi-phases
+│   ├── al-memory.js            # Memoire long terme Agent AL
+│   ├── memoire-ia.js           # Systeme de memoire IA
+│   ├── centre-indar.js         # Dashboard Centre INDAR
+│   ├── scan-engine.js          # Moteur de scan cybersecurite
+│   ├── security-guard.js       # Garde de securite
+│   ├── guide-protection.js     # Guide de protection
+│   ├── tilex-typewriter.js     # Effet machine a ecrire
+│   ├── fichiers.js             # Gestionnaire de fichiers
+│   ├── fichiers-selection.js   # Selection de fichiers
+│   ├── fichiers-preview.js     # Preview de fichiers
+│   ├── fichiers-partage.js     # Partage de fichiers
+│   ├── fichiers-historique.js  # Historique de fichiers
+│   ├── fichiers-cli.js         # CLI fichiers
+│   └── fichiers-templates.js   # Templates fichiers
+│
 ├── css/
-│   └── agent-marceau.css       # Styles agent Marceau
+│   ├── security.css            # Styles securite
+│   ├── tilex-typewriter.css    # Styles typewriter
+│   ├── fichiers.css            # Styles fichiers
+│   ├── fichiers-selection.css
+│   ├── fichiers-preview.css
+│   ├── fichiers-partage.css
+│   └── fichiers-historique.css
 │
 ├── scripts/
 │   ├── codex-listener.js       # Polle codex_queue, ecrit les .md
@@ -93,9 +135,14 @@ ti-lex-v10/
 │
 ├── assets/                     # Videos, logos, avatars
 │
+├── tilex-zip-generator/        # Generateur ZIP standalone
+│   ├── index.html
+│   ├── css/tilex.css
+│   └── js/                     # Core, preview, zip, share, history, theme
+│
 ├── supabase/
 │   ├── functions/
-│   │   ├── ai-proxy/           # Proxy IA (Anthropic + OpenAI) — auth + plan obligatoires
+│   │   ├── ai-proxy/           # Proxy IA (Anthropic + OpenAI) — auth + plan + credits
 │   │   ├── check-abonnement/   # Verification abonnement (pre-check frontend)
 │   │   ├── create-checkout/    # Session Stripe Checkout
 │   │   ├── create-portal/      # Portail client Stripe
@@ -109,7 +156,11 @@ ti-lex-v10/
 │   │   ├── marceau-reflection/ # Reflexion agent Marceau
 │   │   ├── verify-neq/         # Verification NEQ
 │   │   └── test-key/           # Test de cle API
-│   └── migrations/             # 20 migrations (0001 → 0020)
+│   └── migrations/             # 40 migrations (0001 → 0040)
+│       ├── ...
+│       ├── 0038_security_fixes_audit.sql
+│       ├── 0039_moteur_eco.sql           # Tables credits (action_costs, user_credits, credits_ledger, usage_events)
+│       └── 0040_moteur_eco_functions.sql # Fonctions SECURITY DEFINER (consume/grant/reset credits)
 │
 ├── ti-lex-security-agent/      # Module securite standalone
 ├── image-studio/               # Module generation d'images
@@ -135,8 +186,12 @@ Navigateur (pro.html)
     ├── Garde IA ──────── Edge Function check-abonnement
     │                     (bloque si non connecte ou sans forfait)
     │
+    ├── Credits ───────── consume_credits() / grant_credits()
+    │                     (SECURITY DEFINER, verifie le solde avant chaque action)
+    │                     402 Payment Required si credits insuffisants
+    │
     ├── Chat / Codex ──── Edge Function ai-proxy ──── API Anthropic (Claude)
-    │                     (auth + plan obligatoires, rate limit)
+    │                     (auth + plan + credits obligatoires, rate limit)
     │
     ├── Images ────────── Edge Function ai-proxy ──── API OpenAI (gpt-image-1)
     │
@@ -151,7 +206,8 @@ Navigateur (pro.html)
     │
     └── Donnees ───────── Supabase Postgres
                           (profiles, conversations, messages, codex_queue,
-                           user_connections, ai_usage, user_roles)
+                           user_connections, user_credits, credits_ledger,
+                           usage_events, action_costs, user_roles)
 ```
 
 ---
@@ -159,14 +215,33 @@ Navigateur (pro.html)
 ## Securite
 
 - Aucune cle API dans le frontend — tout passe par les Edge Functions
-- **Garde IA** : `ai-proxy` refuse 401 (non connecte) / 403 (sans forfait) — la verification est server-side
+- **Garde IA** : `ai-proxy` refuse 401 (non connecte) / 402 (credits insuffisants) / 403 (sans forfait)
 - Auth obligatoire pour toute requete IA (pas d'acces anonyme)
 - RLS sur toutes les tables (chaque utilisateur voit uniquement ses donnees)
+- **Aucune ecriture directe client** sur les tables d'argent (user_credits, credits_ledger, usage_events)
 - `is_admin()` en SECURITY DEFINER basee sur `user_roles` (pas un simple champ)
 - CORS sur toutes les Edge Functions
-- Headers Vercel : `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`
+- Headers Vercel : HSTS, CSP (Report-Only), X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 - Plans cyber admin-only tant que l'avocat n'a pas signe
 - Conformite **Loi 25 du Quebec** — documentation dans `docs/`
+
+---
+
+## Couts par action (credits)
+
+| Action | Credits |
+|--------|---------|
+| Message chat (Sonnet / Haiku) | 1 |
+| Message chat (Opus) | 5 |
+| Session Codex | 10 |
+| Commit Codex | 5 |
+| Generation d'image | 3 |
+| Scan cyber complet | 20 |
+| Scan cyber rapide | 5 |
+| Thinking (1k tokens) | 2 |
+| Creation d'agent | 5 |
+| Analyse de fichier | 2 |
+| Recherche web | 1 |
 
 ---
 
