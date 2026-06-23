@@ -1830,6 +1830,13 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .tilex-conn-statut{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;}
 .tilex-conn-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 
+/* === TILEX TOAST === */
+.tilex-toast-conteneur{position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.tilex-toast{display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--bg2,#1c1f26);border:1px solid var(--border,#2b2f38);border-radius:10px;color:var(--text,#e6e8ec);font-size:14px;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transform:translateX(40px);transition:opacity .3s,transform .3s;pointer-events:auto;}
+.tilex-toast.visible{opacity:1;transform:translateX(0);}
+.tilex-toast-icone{font-size:16px;font-weight:700;flex-shrink:0;}
+.tilex-toast-message{flex:1;line-height:1.4;}
+
 /* ═══ AVATARS ANIMÉS ═══ */
 .indar-avatar-wrap svg{width:42px;height:42px;transition:filter .3s;}
 .indar-agent-card:hover .indar-avatar-wrap svg{filter:drop-shadow(0 0 8px var(--agent-color,#ff7f27));}
@@ -9109,6 +9116,7 @@ trackFeatureUsage("app_load");
 <script src="js/tilex-vocal.js"></script>
 <script src="js/tilex-vision.js"></script>
 <script src="js/tilex-connections.js"></script>
+<script src="js/tilex-toast.js"></script>
 <script src="js/scan-manager.js"></script>
 <script src="js/scan-engine.js"></script>
 <script src="js/tilex-push.js"></script>
