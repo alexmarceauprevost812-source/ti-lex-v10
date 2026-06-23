@@ -131,7 +131,7 @@
       var corps = el('corps-table');
       if (!corps) { return; }
       if (total === 0) {
-        corps.innerHTML = '<tr><td colspan="5" class="vide">Aucune intrusion détectée. ' +
+        corps.innerHTML = '<tr><td colspan="6" class="vide">Aucune intrusion détectée. ' +
           'C\'est une bonne nouvelle.</td></tr>';
         return;
       }
@@ -140,13 +140,15 @@
         var L = lignes[j];
         var d = new Date(L.created_at);
         var quand = d.toLocaleString('fr-CA');
+        var qui = L.user_id ? ' · connecté' : '';
         html +=
           '<tr>' +
           '<td><span class="dot" style="background:' + couleurRaison(L.raison) + '"></span>' +
-          echapper(L.raison) + '</td>' +
+          echapper(L.raison) + qui + '</td>' +
+          '<td>' + echapper(L.lieu) + '</td>' +
+          '<td class="ua" title="' + echapper(L.ua) + '">' + echapper(L.appareil) + '</td>' +
+          '<td>' + echapper(L.ip) + '</td>' +
           '<td>' + echapper(L.hote) + '</td>' +
-          '<td>' + echapper(L.chemin) + '</td>' +
-          '<td class="ua" title="' + echapper(L.ua) + '">' + echapper((L.ua || '').slice(0, 40)) + '</td>' +
           '<td class="quand">' + echapper(quand) + '</td>' +
           '</tr>';
       }

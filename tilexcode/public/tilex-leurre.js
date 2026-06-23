@@ -120,13 +120,23 @@
   function signalerIntrusion(raison) {
     try {
       var url = CONFIG.SUPABASE_URL + '/functions/v1/' + CONFIG.GARDIEN_FN;
+      // Empreinte technique (signaux légitimes, aucune permission requise)
+      var tz = '', langues = '', plateforme = '', ecran = '';
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+      try { langues = (navigator.languages || []).join(','); } catch (e) {}
+      try { plateforme = navigator.platform || ''; } catch (e) {}
+      try { ecran = (window.screen ? (window.screen.width + 'x' + window.screen.height) : ''); } catch (e) {}
+
       var charge = {
         event: 'report',
         raison: raison || 'inconnue',
         hote: (window.location && window.location.hostname) || '',
         chemin: (window.location && window.location.pathname) || '',
         canary: CANARY,
-        ua: (window.navigator && window.navigator.userAgent) || ''
+        ua: (window.navigator && window.navigator.userAgent) || '',
+        lieu: tz,                                   // fuseau ≈ région
+        appareil: (plateforme + ' · ' + ecran),     // plateforme + écran
+        fingerprint: JSON.stringify({ tz: tz, langues: langues, plateforme: plateforme, ecran: ecran })
       };
       // sendBeacon survit même si la page se ferme/redirige.
       if (navigator.sendBeacon) {

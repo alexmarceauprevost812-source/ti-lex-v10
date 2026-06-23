@@ -44,6 +44,13 @@ function admin() {
   );
 }
 
+// IP de l'intrus (derrière proxy : premier élément de x-forwarded-for).
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for") || "";
+  if (xff) return xff.split(",")[0].trim().slice(0, 60);
+  return (req.headers.get("x-real-ip") || "").slice(0, 60);
+}
+
 async function logIntrusion(payload: Record<string, unknown>) {
   try {
     await admin().from("tilex_intrusions").insert({
@@ -52,6 +59,11 @@ async function logIntrusion(payload: Record<string, unknown>) {
       chemin: String(payload.chemin ?? "").slice(0, 300),
       canary: String(payload.canary ?? "").slice(0, 120),
       ua: String(payload.ua ?? "").slice(0, 400),
+      ip: String(payload.ip ?? "").slice(0, 60),
+      lieu: String(payload.lieu ?? "").slice(0, 120),
+      appareil: String(payload.appareil ?? "").slice(0, 200),
+      fingerprint: String(payload.fingerprint ?? "").slice(0, 500),
+      user_id: payload.user_id ? String(payload.user_id) : null,
     });
   } catch (_e) { /* le log ne doit jamais casser la réponse */ }
 }
@@ -68,7 +80,7 @@ Deno.serve(async (req: Request) => {
 
     // ---- Mode 1 : signalement d'intrusion venant du front -----------------
     if (body.event === "report") {
-      await logIntrusion(body);
+      await logIntrusion({ ...body, ip: clientIp(req) });
       return new Response(null, { status: 204, headers: cors });
     }
 
@@ -88,6 +100,7 @@ Deno.serve(async (req: Request) => {
         raison: "lecture-non-authentifiee",
         chemin: String(body.ressource ?? ""),
         ua: req.headers.get("User-Agent") ?? "",
+        ip: clientIp(req),
       });
       const { data: faux } = await admin()
         .from("tilex_leurre_data")
@@ -103,7 +116,13 @@ Deno.serve(async (req: Request) => {
       .select("id")
       .gte("created_at", since);
     if (recents && recents.length >= 120) {
-      await logIntrusion({ raison: "debit-anormal", chemin: String(body.ressource ?? "") });
+      await logIntrusion({
+        raison: "debit-anormal",
+        chemin: String(body.ressource ?? ""),
+        ua: req.headers.get("User-Agent") ?? "",
+        ip: clientIp(req),
+        user_id: user.id,
+      });
       const { data: faux } = await admin()
         .from("tilex_leurre_data")
         .select("id, titre, contenu")

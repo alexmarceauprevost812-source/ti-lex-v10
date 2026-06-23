@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     );
     const { data, error } = await admin
       .from("tilex_intrusions")
-      .select("id, raison, hote, chemin, canary, ua, created_at")
+      .select("id, raison, hote, chemin, canary, ua, ip, lieu, appareil, user_id, created_at")
       .order("created_at", { ascending: false })
       .limit(limite);
 
