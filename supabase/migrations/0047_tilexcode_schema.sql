@@ -104,3 +104,40 @@ CREATE POLICY user_own_tilex_runs
   FOR ALL
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- ----------------------------------------------------------------------------
+-- 8. Couche LEURRE : journal des intrusions + jeu de données factices
+-- ----------------------------------------------------------------------------
+
+-- Journal des intrusions (écrit par le gardien via service_role).
+CREATE TABLE IF NOT EXISTS public.tilex_intrusions (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  raison     text,
+  hote       text,
+  chemin     text,
+  canary     text,
+  ua         text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_tilex_intrusions_time
+  ON public.tilex_intrusions (created_at DESC);
+ALTER TABLE public.tilex_intrusions ENABLE ROW LEVEL SECURITY;
+-- Aucune policy publique : seules les Edge Functions (service_role) écrivent,
+-- et toi tu lis via le SQL Editor du dashboard. Default deny = max protection.
+
+-- Données LEURRE servies aux intrus (faux mais plausibles).
+CREATE TABLE IF NOT EXISTS public.tilex_leurre_data (
+  id      uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  titre   text NOT NULL,
+  contenu text NOT NULL
+);
+ALTER TABLE public.tilex_leurre_data ENABLE ROW LEVEL SECURITY;
+-- Lue seulement par le gardien (service_role). Pas de policy publique.
+
+-- Quelques fausses lignes de départ (ajoutes-en autant que tu veux).
+INSERT INTO public.tilex_leurre_data (titre, contenu) VALUES
+  ('Projet Démo', 'Contenu de démonstration sans valeur. Données factices.'),
+  ('Configuration', 'cle=valeur_bidon; mode=demo; actif=false'),
+  ('Notes', 'Rien d''important ici. Ceci est un leurre.'),
+  ('Archive', 'Fichier d''exemple généré automatiquement.')
+ON CONFLICT DO NOTHING;

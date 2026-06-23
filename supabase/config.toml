@@ -24,3 +24,6 @@ verify_jwt = false
 
 [functions.tilexcode-agent]
 verify_jwt = false
+
+[functions.tilex-gardien]
+verify_jwt = false
