@@ -1054,6 +1054,10 @@ async function indarRunSequential(scanTarget) {
   indarConsoleClear();
   var mandatId = await ensureMandatForScan(scanTarget);
   if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  if (scanTarget && window.ScanManager) {
+    indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
+    window.ScanManager.runFullScan(scanTarget).catch(function(){});
+  }
   indarConsoleLog("NEXUS-AL", "Dispatch en cours — appel des agents un par un.", "#ff7f27");
 
   for (var i = 0; i < INDAR_GRID_AGENTS.length; i++) {
@@ -1084,6 +1088,10 @@ async function indarRunAll(scanTarget) {
   indarConsoleClear();
   var mandatId = await ensureMandatForScan(scanTarget);
   if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  if (scanTarget && window.ScanManager) {
+    indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
+    window.ScanManager.runFullScan(scanTarget).catch(function(){});
+  }
   indarConsoleLog("NEXUS-AL", "Scan parallèle — les 7 agents engagés simultanément.", "#ff7f27");
 
   INDAR_GRID_AGENTS.forEach(function(a) { indarGridSetState(a.id, "working"); });
