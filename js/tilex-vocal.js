@@ -113,7 +113,59 @@
       }
     },
 
-    getTranscript: function () { return _transcript; }
+    getTranscript: function () { return _transcript; },
+
+    // ── ElevenLabs TTS — synthèse vocale ──
+    parler: async function (texte, opts) {
+      opts = opts || {};
+      var elevenLabsKey = (window.TILEX_CONFIG && window.TILEX_CONFIG.ELEVENLABS_KEY) || '';
+      if (!elevenLabsKey) {
+        console.warn('[TilexVocal] Clé ElevenLabs manquante (TILEX_CONFIG.ELEVENLABS_KEY)');
+        return;
+      }
+      var voiceId = opts.voiceId || (window.TILEX_CONFIG && window.TILEX_CONFIG.ELEVENLABS_VOICE) || 'pNInz6obpgDQGcFmaJgB';
+      try {
+        var res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': elevenLabsKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: texte,
+            model_id: 'eleven_multilingual_v2',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+          })
+        });
+        if (!res.ok) throw new Error('ElevenLabs ' + res.status);
+        var blob = await res.blob();
+        var url = URL.createObjectURL(blob);
+        var audio = new Audio(url);
+        audio.onended = function () { URL.revokeObjectURL(url); };
+        audio.play();
+      } catch (e) {
+        console.warn('[TilexVocal] TTS échoué:', e.message);
+      }
+    },
+
+    // ── Commande vocale complète : STT → cerveau → TTS ──
+    commandeVocale: async function () {
+      await this.start();
+      var self = this;
+      return new Promise(function (resolve) {
+        var checkInterval = setInterval(function () {
+          if (!self.isRecording() && _transcript) {
+            clearInterval(checkInterval);
+            resolve(_transcript);
+          }
+        }, 500);
+        setTimeout(function () {
+          if (self.isRecording()) self.stop();
+          clearInterval(checkInterval);
+          resolve(_transcript);
+        }, 30000);
+      });
+    }
   };
 
   function _fillInput(text) {
