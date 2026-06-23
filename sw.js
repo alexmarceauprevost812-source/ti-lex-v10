@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-390";
+const CACHE_VERSION = "tilex-v10-391";
 const ASSETS = [
   "/",
   "/index.html",
@@ -66,6 +66,7 @@ const ASSETS = [
   "/tilex-zip-generator/js/tilex-theme.js",
   "/tilexcode/index.html",
   "/tilexcode/public/tilexcode-agents.js",
+  "/tilexcode/public/tilexcode-demo.js",
 ];
 
 self.addEventListener("install", (e) => {

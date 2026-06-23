@@ -3,6 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- CSP stricte : scripts seulement depuis self + le CDN supabase ;
+       connexions seulement vers ton projet Supabase. -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline';
+    connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co;
+    img-src 'self' data:;
+    base-uri 'none';
+    object-src 'none';
+    frame-ancestors 'none';
+    form-action 'none';
+  " />
   <title>tilexcode — Centre d'agents</title>
   <style>
     body{margin:0;background:#0b0f17;color:#e8edf5;
@@ -15,8 +28,7 @@
       font-family:ui-monospace,Menlo,monospace;font-size:14px;resize:vertical;}
     .barre{display:flex;gap:10px;margin:12px 0 24px;flex-wrap:wrap;}
     button.action{padding:11px 18px;border-radius:10px;border:none;cursor:pointer;
-      font-weight:700;font-size:14px;color:#fff;background:#2563eb;}
-    button.action.pipeline{background:#10b981;}
+      font-weight:700;font-size:14px;color:#fff;background:#10b981;}
     h2{font-size:15px;color:#8a96a8;margin:26px 0 10px;text-transform:uppercase;letter-spacing:1px;}
   </style>
 </head>
@@ -29,7 +41,7 @@
       placeholder="Décris ce que tu veux coder en français, en joual, ou dans n'importe quelle langue…"></textarea>
 
     <div class="barre">
-      <button class="action pipeline" id="btn-pipeline">Lancer le pipeline (6 agents)</button>
+      <button class="action" id="btn-pipeline">Lancer le pipeline (6 agents)</button>
     </div>
 
     <h2>Agents</h2>
@@ -39,22 +51,11 @@
     <div id="tilex-resultats"></div>
   </div>
 
-  <script src="/js/tilex-config.js"></script>
+  <!-- 1. supabase-js (CDN autorisé par la CSP) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 2. Le module d'agents (window.TilexCodeAgents) -->
   <script src="public/tilexcode-agents.js"></script>
-  <script>
-    // Câblage de la démo
-    try {
-      window.TilexCodeAgents.init('zone-agents');
-
-      document.getElementById('btn-pipeline').addEventListener('click', function () {
-        var prompt = document.getElementById('tilex-prompt').value;
-        window.TilexCodeAgents.runPipeline(prompt, function (res) {
-          window.TilexCodeAgents.afficherSortie(res);
-        }).catch(function () { /* géré par toast */ });
-      });
-    } catch (e) {
-      console.error('Câblage démo:', e);
-    }
-  </script>
+  <!-- 3. Init Auth + câblage (externalisé pour la CSP) -->
+  <script src="public/tilexcode-demo.js"></script>
 </body>
 </html>

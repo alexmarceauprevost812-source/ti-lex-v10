@@ -81,3 +81,26 @@ DROP TRIGGER IF EXISTS trg_tilex_projects_touch ON public.tilex_projects;
 CREATE TRIGGER trg_tilex_projects_touch
   BEFORE UPDATE ON public.tilex_projects
   FOR EACH ROW EXECUTE FUNCTION public.tilex_touch_updated_at();
+
+-- ----------------------------------------------------------------------------
+-- 7. Journal d'audit + rate limiting (un row par passage d'agent)
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.tilex_agent_runs (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL DEFAULT auth.uid() REFERENCES auth.users (id) ON DELETE CASCADE,
+  agent_id    text NOT NULL,
+  input_chars int  NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_tilex_runs_user_time
+  ON public.tilex_agent_runs (user_id, created_at DESC);
+
+ALTER TABLE public.tilex_agent_runs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS user_own_tilex_runs ON public.tilex_agent_runs;
+CREATE POLICY user_own_tilex_runs
+  ON public.tilex_agent_runs
+  FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);

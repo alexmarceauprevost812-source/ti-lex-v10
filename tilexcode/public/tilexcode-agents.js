@@ -60,10 +60,18 @@
      1. Configuration (à adapter à ton projet ti-lex)
      -------------------------------------------------------------------------- */
   var CONFIG = {
-    SUPABASE_URL: window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co',
-    SUPABASE_KEY: window.SB_ANON || '',
+    // URL de ton projet Supabase (rnuripmfozlxenryxhdc)
+    SUPABASE_URL: 'https://rnuripmfozlxenryxhdc.supabase.co',
+    // Clé PUBLIABLE sb_publishable_* — conçue pour être publique, OK dans le front.
+    // Ne JAMAIS mettre la clé secrète (service_role / sb_secret_*) ici.
+    SUPABASE_KEY: 'REMPLACE_PAR_TA_CLE_PUBLIABLE',
+    // Nom de l'Edge Function qui fait rouler les agents
     EDGE_FUNCTION: 'tilexcode-agent',
-    TIMEOUT_MS: 60000
+    // Délai max d'un appel agent (ms)
+    TIMEOUT_MS: 60000,
+    // Garde-fous miroir des limites serveur (anti-abus)
+    MAX_INPUT_CHARS: 20000,
+    MAX_CONTEXT_CHARS: 80000
   };
 
   /* --------------------------------------------------------------------------
@@ -247,6 +255,23 @@
 
         window.showToast(agent.nom + ' travaille…', 'info');
 
+        // Garde-fous d'entrée (miroir des limites serveur, anti-abus)
+        input = String(input == null ? '' : input);
+        context = String(context == null ? '' : context);
+        if (!input.trim()) {
+          window.showToast('Demande vide.', 'attention');
+          reject(new Error('Input vide'));
+          return;
+        }
+        if (input.length > CONFIG.MAX_INPUT_CHARS) {
+          window.showToast('Demande trop longue (max ' + CONFIG.MAX_INPUT_CHARS + ' caractères).', 'attention');
+          reject(new Error('Input trop long'));
+          return;
+        }
+        if (context.length > CONFIG.MAX_CONTEXT_CHARS) {
+          context = context.slice(-CONFIG.MAX_CONTEXT_CHARS); // on garde le plus récent
+        }
+
         obtenirJetonAuth().then(function (jeton) {
           var url = CONFIG.SUPABASE_URL + '/functions/v1/' + CONFIG.EDGE_FUNCTION;
 
@@ -264,8 +289,9 @@
               'apikey': CONFIG.SUPABASE_KEY
             },
             body: JSON.stringify({
+              // Le system prompt vit côté serveur (Edge Function) — sécurité.
+              // Le client n'envoie que l'identifiant de l'agent.
               agent_id: agentId,
-              system_prompt: agent.systemPrompt,
               input: input || '',
               context: context || ''
             }),
