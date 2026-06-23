@@ -43,6 +43,17 @@ const INDAR_LOGOS = {
     <path d="M19 9 C13 9 10 13 10 18 L10 30 L13.5 27 L17 30 L19 28 L21 30 L24.5 27 L28 30 L28 18 C28 13 25 9 19 9Z" stroke="#ff3b3b" stroke-width="1.5" fill="none"/>
     <circle cx="15.5" cy="17" r="2" fill="#ff3b3b"/>
     <circle cx="22.5" cy="17" r="2" fill="#ff3b3b"/>
+  </svg>`,
+  reaper: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+    <circle cx="19" cy="19" r="18" stroke="#ff2020" stroke-width="1.5" fill="#1a1a1a"/>
+    <circle cx="19" cy="19" r="14" stroke="#ff2020" stroke-width="0.6" fill="none" opacity="0.35"/>
+    <circle cx="19" cy="19" r="10" stroke="#ff2020" stroke-width="0.4" fill="none" opacity="0.2"/>
+    <circle cx="15" cy="17" r="2.5" fill="#ff2020"/>
+    <circle cx="23" cy="17" r="2.5" fill="#ff2020"/>
+    <circle cx="19" cy="3" r="1.5" fill="#ff2020" opacity="0.5"/>
+    <circle cx="35" cy="19" r="1.5" fill="#ff2020" opacity="0.5"/>
+    <circle cx="19" cy="35" r="1.5" fill="#ff2020" opacity="0.5"/>
+    <circle cx="3" cy="19" r="1.5" fill="#ff2020" opacity="0.5"/>
   </svg>`
 };
 
@@ -76,18 +87,186 @@ const INDAR_AGENTS = [
     status:"OFFLINE", specialite:"Pentest · Exploitation · Red Team",
     description:"Simule des attaques réelles pour trouver les failles avant les hackers.",
     outils:["Metasploit","Burp Suite","Nmap","OSINT","Social Engineering"],
-    certifs:["OSCP","CEH","GPEN"] }
+    certifs:["OSCP","CEH","GPEN"] },
+  { id:"reaper",  nom:"REAPER",      role:"Analyste Malwares & Ransomware", couleur:"#ff2020", logoKey:"reaper",
+    status:"OFFLINE", specialite:"Malware · Ransomware · IoC",
+    description:"Traque les malwares, reverse-engineer les ransomwares, identifie les IoC et signatures YARA.",
+    outils:["YARA","VirusTotal","MITRE ATT&CK","Sandbox Analysis"],
+    certifs:["GREM","GCFA","OSCP"] }
 ];
 
 let indarAgentActif = null;
+
+// ════════════════════════════════════════════════════════════════════════════
+// AVATARS ANIMÉS SVG
+// ════════════════════════════════════════════════════════════════════════════
+const AVATAR_CONFIGS = {
+  nexus:    { face:"octagon",        color:"#40c4ff", eyeY:53, eyeGap:24, eyeR:12 },
+  marceau:  { face:"hexagon",        color:"#ff7f27", eyeY:53, eyeGap:26, eyeR:13 },
+  cipher:   { face:"diamond",        color:"#ffcf4a", eyeY:52, eyeGap:26, eyeR:13 },
+  sentinel: { face:"rounded_square", color:"#37e0a0", eyeY:55, eyeGap:24, eyeR:12 },
+  oracle:   { face:"circle",         color:"#c084fc", eyeY:53, eyeGap:28, eyeR:14 },
+  phantom:  { face:"circle",         color:"#e040fb", eyeY:53, eyeGap:28, eyeR:14 },
+  reaper:   { face:"circle_ring",    color:"#ff2020", eyeY:53, eyeGap:28, eyeR:14 },
+};
+
+function buildFaceSVG(type, color) {
+  var fill = "#0c0c14", sw = 1.5;
+  switch (type) {
+    case "hexagon":
+      return '<polygon points="60,8 104,34 104,86 60,112 16,86 16,34" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>';
+    case "rounded_square":
+      return '<rect x="10" y="10" width="100" height="100" rx="20" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>';
+    case "octagon":
+      return '<polygon points="38,10 82,10 110,38 110,82 82,110 38,110 10,82 10,38" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>';
+    case "diamond":
+      return '<polygon points="60,7 112,60 60,113 8,60" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>';
+    case "circle_ring":
+      return '<circle cx="60" cy="60" r="52" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>'
+        + '<circle cx="60" cy="60" r="44" fill="none" stroke="'+color+'" stroke-width="0.6" opacity="0.35"/>'
+        + '<circle cx="60" cy="60" r="36" fill="none" stroke="'+color+'" stroke-width="0.4" opacity="0.2"/>'
+        + '<circle cx="60" cy="8" r="2" fill="'+color+'" opacity="0.5"/>'
+        + '<circle cx="112" cy="60" r="2" fill="'+color+'" opacity="0.5"/>'
+        + '<circle cx="60" cy="112" r="2" fill="'+color+'" opacity="0.5"/>'
+        + '<circle cx="8" cy="60" r="2" fill="'+color+'" opacity="0.5"/>';
+    default:
+      return '<circle cx="60" cy="60" r="52" fill="'+fill+'" stroke="'+color+'" stroke-width="'+sw+'"/>';
+  }
+}
+
+function buildEyeSVG(cx, cy, r, color, eyeId) {
+  var top = cy - r;
+  return '<g class="avatar-eye-group" data-eye-id="'+eyeId+'">'
+    + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#08080f"/>'
+    + '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*0.72)+'" fill="'+color+'" opacity="0.88"/>'
+    + '<circle cx="'+cx+'" cy="'+cy+'" r="'+(r*0.37)+'" fill="#030305"/>'
+    + '<circle cx="'+(cx-r*0.26)+'" cy="'+(cy-r*0.28)+'" r="'+(r*0.15)+'" fill="white" opacity="0.82"/>'
+    + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="0.7" opacity="0.3"/>'
+    + '<rect class="avatar-eyelid" data-eye-top="'+top+'" data-eye-r="'+r+'" x="'+(cx-r)+'" y="'+top+'" width="'+(r*2)+'" height="0" fill="#0c0c14"/>'
+    + '<line class="avatar-eyelash" x1="'+(cx-r+1)+'" y1="'+top+'" x2="'+(cx+r-1)+'" y2="'+top+'" stroke="'+color+'" stroke-width="1.2" opacity="0" stroke-linecap="round"/>'
+    + '</g>';
+}
+
+function buildMouthSVG(cx, eyeY, color, isTyping) {
+  if (isTyping) {
+    var dots = [cx-9, cx, cx+9];
+    var html = '<g class="avatar-mouth-typing">';
+    for (var i = 0; i < dots.length; i++) {
+      html += '<circle cx="'+dots[i]+'" cy="'+(eyeY+22)+'" r="2.2" fill="'+color+'">'
+        + '<animate attributeName="opacity" values="0.2;1;0.2" dur="1.2s" begin="'+(i*0.4)+'s" repeatCount="indefinite"/>'
+        + '<animate attributeName="r" values="1.6;2.4;1.6" dur="1.2s" begin="'+(i*0.4)+'s" repeatCount="indefinite"/>'
+        + '</circle>';
+    }
+    return html + '</g>';
+  }
+  return '<path class="avatar-mouth-idle" d="M'+(cx-11)+','+(eyeY+21)+' Q'+cx+','+(eyeY+26)+' '+(cx+11)+','+(eyeY+21)+'"'
+    + ' fill="none" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round" opacity="0.38"/>';
+}
+
+function buildAvatarSVG(agentId) {
+  var cfg = AVATAR_CONFIGS[agentId];
+  if (!cfg) return '';
+  var CX = 60, lx = CX - cfg.eyeGap / 2, rx = CX + cfg.eyeGap / 2;
+  return '<svg class="agent-avatar-svg" viewBox="0 0 120 120" width="120" height="120" data-agent-id="'+agentId+'" style="cursor:pointer;overflow:visible;display:block;">'
+    + '<ellipse cx="60" cy="116" rx="30" ry="4" fill="'+cfg.color+'" opacity="0.1"/>'
+    + buildFaceSVG(cfg.face, cfg.color)
+    + buildEyeSVG(lx, cfg.eyeY, cfg.eyeR, cfg.color, agentId+'-left')
+    + buildEyeSVG(rx, cfg.eyeY, cfg.eyeR, cfg.color, agentId+'-right')
+    + '<g class="avatar-mouth-group">' + buildMouthSVG(CX, cfg.eyeY, cfg.color, false) + '</g>'
+    + '<defs><pattern id="scl-'+agentId+'" x="0" y="0" width="2" height="2" patternUnits="userSpaceOnUse"><rect x="0" y="0" width="2" height="1" fill="rgba(0,0,0,0.11)"/></pattern></defs>'
+    + '<rect x="0" y="0" width="120" height="120" fill="url(#scl-'+agentId+')" style="pointer-events:none;"/>'
+    + '</svg>';
+}
+
+// ── Animation engine ─────────────────────────────────────────────────────
+var avatarStates = {};
+
+function setLidRatio(agentId, ratio) {
+  var svgEl = document.querySelector('[data-agent-id="'+agentId+'"]');
+  if (!svgEl) return;
+  var lids = svgEl.querySelectorAll('.avatar-eyelid');
+  lids.forEach(function(lid) {
+    var eyeR = parseFloat(lid.getAttribute('data-eye-r') || 12);
+    var eyeTop = parseFloat(lid.getAttribute('data-eye-top') || 40);
+    var lidH = eyeR * 2 * ratio;
+    lid.setAttribute('height', lidH);
+    var lash = lid.nextElementSibling;
+    if (lash && lash.classList.contains('avatar-eyelash')) {
+      lash.setAttribute('y1', eyeTop + lidH);
+      lash.setAttribute('y2', eyeTop + lidH);
+      lash.setAttribute('opacity', lidH > 1.5 ? '0.55' : '0');
+    }
+  });
+  if (avatarStates[agentId]) avatarStates[agentId].lidRatio = ratio;
+}
+
+function triggerBlink(agentId) {
+  var state = avatarStates[agentId];
+  if (!state || state.isTyping) return;
+  setLidRatio(agentId, 1);
+  setTimeout(function() { setLidRatio(agentId, 0); }, 150);
+}
+
+function setAvatarTyping(agentId, isTyping) {
+  var state = avatarStates[agentId];
+  if (!state) return;
+  state.isTyping = isTyping;
+  setLidRatio(agentId, isTyping ? 0.55 : 0);
+  var svgEl = document.querySelector('[data-agent-id="'+agentId+'"]');
+  if (svgEl) {
+    var mg = svgEl.querySelector('.avatar-mouth-group');
+    if (mg) {
+      var cfg = AVATAR_CONFIGS[agentId];
+      mg.innerHTML = buildMouthSVG(60, cfg.eyeY, cfg.color, isTyping);
+    }
+  }
+  if (isTyping) { clearTimeout(state.blinkTimer); }
+  else { scheduleAutoBlink(agentId); }
+}
+
+function scheduleAutoBlink(agentId) {
+  var state = avatarStates[agentId];
+  if (!state) return;
+  clearTimeout(state.blinkTimer);
+  var delay = 2200 + Math.random() * 3800;
+  state.blinkTimer = setTimeout(function() {
+    if (!state.isTyping) triggerBlink(agentId);
+    scheduleAutoBlink(agentId);
+  }, delay);
+}
+
+function initAvatar(agentId) {
+  avatarStates[agentId] = { isTyping: false, lidRatio: 0, blinkTimer: null };
+  var svgEl = document.querySelector('[data-agent-id="'+agentId+'"]');
+  if (svgEl) {
+    svgEl.addEventListener('click', function() {
+      if (!avatarStates[agentId] || !avatarStates[agentId].isTyping) triggerBlink(agentId);
+    });
+  }
+  var initialDelay = 800 + Math.random() * 2000;
+  setTimeout(function() { scheduleAutoBlink(agentId); }, initialDelay);
+}
+
+function destroyAvatar(agentId) {
+  if (avatarStates[agentId]) {
+    clearTimeout(avatarStates[agentId].blinkTimer);
+    delete avatarStates[agentId];
+  }
+}
+
+window.setAvatarTyping = setAvatarTyping;
+window.triggerBlink = triggerBlink;
 
 // ── Rendre les cartes agents ────────────────────────────────────────────────
 function indarRendreAgents() {
   const liste = document.getElementById('indar-agents-liste');
   if (!liste) return;
 
+  // Destroy old avatar timers
+  INDAR_AGENTS.forEach(function(a) { destroyAvatar(a.id); });
+
   liste.innerHTML = INDAR_AGENTS.map(agent => `
-    <div id="carte-${agent.id}"
+    <div id="carte-${agent.id}" class="indar-agent-card"
       onclick="indarOuvrirAgent('${agent.id}')"
       style="
         display:flex;align-items:center;gap:10px;
@@ -97,15 +276,13 @@ function indarRendreAgents() {
         border-radius:8px;cursor:pointer;transition:all 0.18s;
         margin-bottom:6px;
         box-shadow:${indarAgentActif === agent.id ? `0 0 10px ${agent.couleur}22` : 'none'};
+        --agent-color:${agent.couleur};
       "
       onmouseover="this.style.background='#161616'"
       onmouseout="this.style.background='${indarAgentActif === agent.id ? '#1a1a1a' : '#111'}'">
-      <!-- Logo -->
-      <div style="
-        width:36px;height:36px;flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;
-        border-radius:8px;overflow:hidden;background:#0d0d0d;">
-        ${INDAR_LOGOS[agent.logoKey]}
+      <!-- Avatar animé -->
+      <div class="indar-avatar-wrap" style="width:42px;height:42px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        ${AVATAR_CONFIGS[agent.id] ? buildAvatarSVG(agent.id) : '<div style="width:36px;height:36px;border-radius:8px;overflow:hidden;background:#0d0d0d;display:flex;align-items:center;justify-content:center;">'+INDAR_LOGOS[agent.logoKey]+'</div>'}
       </div>
       <!-- Nom + rôle -->
       <div style="flex:1;min-width:0;">
@@ -131,6 +308,9 @@ function indarRendreAgents() {
       </div>
     </div>
   `).join('');
+
+  // Init avatars after DOM injection
+  INDAR_AGENTS.forEach(function(a) { if (AVATAR_CONFIGS[a.id]) initAvatar(a.id); });
 }
 
 // ── Ouvrir/fermer le détail d'un agent ────────────────────────────────────
@@ -271,7 +451,7 @@ function indarDemarrer() {
   const compteur = document.getElementById('indar-agents-actifs');
   if (dot) { dot.style.background = '#37e0a0'; dot.style.boxShadow = '0 0 8px #37e0a0'; }
   if (label) { label.style.color = '#37e0a0'; label.textContent = 'EN LIGNE'; }
-  if (compteur) { compteur.style.color = '#37e0a0'; compteur.textContent = '6'; }
+  if (compteur) { compteur.style.color = '#37e0a0'; compteur.textContent = '7'; }
 
   indarRendreAgents();
 }
@@ -374,6 +554,7 @@ async function indarActiverAgent(agentId) {
     : (scanContext ? `Analyse les derniers scans ti-lex.` : 'Présente-toi et explique ta mission INDAR.');
 
   indarAfficherReponseStream(agent, true);
+  setAvatarTyping(agentId, true);
 
   let userId = null;
   try {
@@ -456,6 +637,7 @@ async function indarActiverAgent(agentId) {
   } catch (error) {
     indarAfficherReponse(agent, '❌ Erreur: ' + error.message, false);
   } finally {
+    setAvatarTyping(agentId, false);
     if (hint) hint.textContent = '';
     if (btn) {
       btn.disabled = false;

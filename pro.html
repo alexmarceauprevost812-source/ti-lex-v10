@@ -1776,6 +1776,15 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   animation:indarBlink 1s step-end infinite;margin-left:2px;vertical-align:middle;}
 @keyframes indarBlink{50%{opacity:0;}}
 
+/* ═══ AVATARS ANIMÉS ═══ */
+.indar-avatar-wrap svg{width:42px;height:42px;transition:filter .3s;}
+.indar-agent-card:hover .indar-avatar-wrap svg{filter:drop-shadow(0 0 8px var(--agent-color,#ff7f27));}
+.agent-avatar-svg{cursor:pointer;}
+.avatar-eyelid{transition:height 110ms ease-in-out;}
+.avatar-eyelash{transition:opacity 110ms ease-in-out;}
+#indar-agents-liste{columns:1;}
+@media(min-width:500px){#indar-agents-liste{columns:1;}}
+
 </style>
 </head>
 <body>
@@ -2781,7 +2790,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
                     margin-bottom:2px;font-family:monospace;">AGENTS ACTIFS</div>
         <div style="font-size:22px;font-weight:bold;font-family:monospace;">
           <span id="indar-agents-actifs" style="color:#ff3b3b;">0</span>
-          <span style="color:#444;">/6</span>
+          <span style="color:#444;">/7</span>
         </div>
       </div>
     </div>
@@ -2832,7 +2841,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
     <!-- Label agents -->
     <div style="color:#444;font-size:10px;letter-spacing:3px;
                 margin-bottom:10px;padding-left:2px;font-family:monospace;">
-      AGENTS IA · 6 DISPONIBLES
+      AGENTS IA · 7 DISPONIBLES
     </div>
 
     <!-- Liste agents (injectée par JS) -->
