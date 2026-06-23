@@ -41,10 +41,11 @@
         },
         {
           "key": "Content-Security-Policy-Report-Only",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co wss://rnuripmfozlxenryxhdc.supabase.co https://api.anthropic.com https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co wss://rnuripmfozlxenryxhdc.supabase.co https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
         },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
