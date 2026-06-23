@@ -47,6 +47,7 @@ const ASSETS = [
   "/js/tilex-connections.js",
   "/js/tilex-toast.js",
   "/js/tilex-copy.js",
+  "/js/tilex-theme.js",
   "/tilex-zip-generator/index.html",
   "/tilex-zip-generator/css/tilex.css",
   "/tilex-zip-generator/js/tilex-templates.js",
