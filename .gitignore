@@ -37,6 +37,10 @@ Thumbs.db
 # Codex
 codex-instructions/
 
+# Clés / certificats
+*.key
+*.pem
+
 # Divers
 .vercel
 .turbo
