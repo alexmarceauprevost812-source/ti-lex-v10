@@ -23,12 +23,17 @@ var TilexStudio = (function(){
     'go':'go','rust':'rust','java':'java','c':'c','cpp':'cpp'
   };
 
+  /* ── Extensions d'images reconnues ── */
+  var IMG_EXTS = ['png','jpg','jpeg','gif','svg','webp','ico','bmp','avif'];
+
   /* ── Icônes par extension ── */
   var ICONES = {
     'html':'📄','css':'🎨','js':'⚡','json':'📋','python':'🐍','py':'🐍',
     'sql':'🗃️','bash':'🖥️','sh':'🖥️','ts':'💎','tsx':'⚛️','jsx':'⚛️',
     'md':'📝','xml':'📃','yaml':'⚙️','yml':'⚙️','php':'🐘','ruby':'💎',
-    'go':'🔵','rust':'🦀','java':'☕','c':'⚙️','cpp':'⚙️','default':'📄'
+    'go':'🔵','rust':'🦀','java':'☕','c':'⚙️','cpp':'⚙️',
+    'png':'🖼️','jpg':'🖼️','jpeg':'🖼️','gif':'🖼️','svg':'🖼️',
+    'webp':'🖼️','ico':'🖼️','bmp':'🖼️','avif':'🖼️','default':'📄'
   };
 
   /* ── Noms de langages pour l'affichage ── */
@@ -75,8 +80,40 @@ var TilexStudio = (function(){
       document.addEventListener('touchend', finResize);
     }
 
+    /* Drag & drop d'images sur le panneau Studio */
+    var panel = document.getElementById('studio-panel');
+    if(panel){
+      panel.addEventListener('dragover', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var dz = document.getElementById('studio-dropzone');
+        if(dz) dz.classList.add('active');
+      });
+      panel.addEventListener('dragleave', function(e){
+        if(e.relatedTarget && panel.contains(e.relatedTarget)) return;
+        var dz = document.getElementById('studio-dropzone');
+        if(dz) dz.classList.remove('active');
+      });
+      panel.addEventListener('drop', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var dz = document.getElementById('studio-dropzone');
+        if(dz) dz.classList.remove('active');
+        traiterFichiersDroppes(e.dataTransfer.files);
+      });
+    }
+
+    /* Input fichier caché pour le bouton "Ajouter image" */
+    var imgInput = document.getElementById('studio-img-input');
+    if(imgInput){
+      imgInput.addEventListener('change', function(){
+        traiterFichiersDroppes(this.files);
+        this.value = '';
+      });
+    }
+
     /* Fichier initial vide */
-    _fichiers.push({ nom:'sans-titre.html', lang:'html', contenu:'' });
+    _fichiers.push({ nom:'sans-titre.html', lang:'html', contenu:'', type:'code' });
     rendreFichiers();
     majLangSel();
     majCompteur();
@@ -313,24 +350,39 @@ var TilexStudio = (function(){
     var iframe = document.getElementById('studio-preview-frame');
     if(!iframe) return;
 
-    /* Rassembler le HTML, CSS et JS de tous les fichiers */
-    var html = '', css = '', js = '';
+    /* Rassembler le HTML, CSS, JS et images de tous les fichiers */
+    var html = '', css = '', js = '', images = [];
     for(var i = 0; i < _fichiers.length; i++){
       var f = _fichiers[i];
-      if(f.lang === 'html') html += f.contenu + '\n';
+      if(estImage(f) && f.dataUrl){
+        images.push(f);
+      } else if(f.lang === 'html') html += f.contenu + '\n';
       else if(f.lang === 'css') css += f.contenu + '\n';
       else if(f.lang === 'js' || f.lang === 'javascript') js += f.contenu + '\n';
     }
 
     /* Si rien de trouvé, utiliser le fichier actif */
-    if(!html && !css && !js){
+    if(!html && !css && !js && !images.length){
       var fa = _fichiers[_fichierActif];
       if(fa){
-        if(fa.lang === 'html') html = fa.contenu;
+        if(estImage(fa) && fa.dataUrl){
+          images.push(fa);
+        } else if(fa.lang === 'html') html = fa.contenu;
         else if(fa.lang === 'css') css = fa.contenu;
         else if(fa.lang === 'js' || fa.lang === 'javascript') js = fa.contenu;
         else html = '<pre style="font-family:monospace;padding:20px;color:#222;">' + echapperHtml(fa.contenu) + '</pre>';
       }
+    }
+
+    /* Ajouter les images en tant que balises <img> si pas de HTML existant les référençant */
+    if(images.length && html.indexOf('<img') === -1){
+      var imgsHtml = '';
+      images.forEach(function(img){
+        imgsHtml += '<div style="margin:10px 0;"><img src="' + img.dataUrl
+          + '" alt="' + echapperHtml(img.nom)
+          + '" style="max-width:100%;border-radius:8px;"></div>\n';
+      });
+      html = imgsHtml + html;
     }
 
     /* Construire le document complet */
@@ -373,11 +425,10 @@ var TilexStudio = (function(){
     if(msgs) observer.observe(msgs, { childList: true });
   }
 
-  /* Extraire les blocs <pre><code> et ajouter le bouton "→ Studio" */
+  /* Extraire les blocs <pre><code> et images, ajouter le bouton "→ Studio" */
   function extraireCodeDuMessage(msgEl){
+    /* Blocs de code */
     var blocs = msgEl.querySelectorAll('pre code, pre');
-    if(!blocs.length) return;
-
     blocs.forEach(function(bloc){
       if(bloc._studioBtn) return;
 
@@ -385,13 +436,11 @@ var TilexStudio = (function(){
       var code = codeEl.textContent || '';
       if(code.length < 10) return;
 
-      /* Détecter le langage depuis la classe CSS */
       var lang = 'html';
       var cls = codeEl.className || '';
       var m = cls.match(/language-(\w+)/);
       if(m) lang = m[1].toLowerCase();
 
-      /* Créer le bouton d'injection */
       var btn = document.createElement('button');
       btn.className = 'studio-inject-btn';
       btn.textContent = '→ Studio';
@@ -406,6 +455,30 @@ var TilexStudio = (function(){
       wrapper.style.position = 'relative';
       wrapper.appendChild(btn);
       bloc._studioBtn = true;
+    });
+
+    /* Images dans le message IA → bouton "→ Studio" */
+    var imgs = msgEl.querySelectorAll('img');
+    imgs.forEach(function(img){
+      if(img._studioBtn) return;
+      var src = img.src;
+      if(!src || src.indexOf('tilex-logo') !== -1) return;
+
+      var wrapper = img.parentElement;
+      if(wrapper){
+        wrapper.style.position = 'relative';
+        var btn = document.createElement('button');
+        btn.className = 'studio-inject-btn';
+        btn.textContent = '🖼️ Studio';
+        btn.title = 'Ajouter l\'image au Studio';
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          e.preventDefault();
+          injecterImageDepuisChat(src, img.alt || 'image-chat');
+        });
+        wrapper.appendChild(btn);
+        img._studioBtn = true;
+      }
     });
   }
 
@@ -446,13 +519,172 @@ var TilexStudio = (function(){
 
 
   /* ═══════════════════════════════════════════
+     IMAGES — Ajout, preview, drag & drop
+     ═══════════════════════════════════════════ */
+
+  function estImage(f){
+    return f && f.type === 'image';
+  }
+
+  function estExtImage(ext){
+    return IMG_EXTS.indexOf((ext||'').toLowerCase()) !== -1;
+  }
+
+  /* Traiter les fichiers déposés (drag & drop ou input file) */
+  function traiterFichiersDroppes(fileList){
+    if(!fileList || !fileList.length) return;
+    var count = 0;
+    Array.from(fileList).forEach(function(file){
+      if(file.type && file.type.startsWith('image/')){
+        var reader = new FileReader();
+        reader.onload = function(e){
+          ajouterImage(file.name, e.target.result, file.size);
+          count++;
+          if(count === fileList.length) rendreFichiers();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        var reader = new FileReader();
+        reader.onload = function(e){
+          var ext = file.name.split('.').pop().toLowerCase();
+          var lang = ext;
+          if(!PRISM_LANG[lang] && !estExtImage(lang)) lang = 'html';
+          ajouterFichier(file.name, lang, e.target.result);
+          count++;
+          if(count === fileList.length) rendreFichiers();
+        };
+        reader.readAsText(file);
+      }
+    });
+    if(!_ouvert) ouvrir();
+    changerOnglet('files');
+    if(typeof showToastMsg === 'function') showToastMsg(fileList.length + ' fichier(s) ajouté(s)');
+  }
+
+  /* Ajouter une image au Studio */
+  function ajouterImage(nom, dataUrl, taille){
+    var ext = nom.split('.').pop().toLowerCase();
+    _fichiers.push({
+      nom: nom,
+      lang: ext,
+      type: 'image',
+      contenu: '',
+      dataUrl: dataUrl,
+      taille: taille || 0
+    });
+    _fichierActif = _fichiers.length - 1;
+    rendreFichiers();
+    afficherImage(_fichierActif);
+  }
+
+  /* Afficher l'image dans la zone éditeur */
+  function afficherImage(idx){
+    var f = _fichiers[idx];
+    if(!f || f.type !== 'image') return;
+    _fichierActif = idx;
+
+    var editorWrap = document.querySelector('.studio-editor-wrap');
+    if(!editorWrap) return;
+
+    /* Cacher éditeur et highlight, montrer preview image */
+    editorWrap.classList.remove('mode-edit','mode-view');
+    editorWrap.classList.add('mode-image');
+
+    /* Créer ou réutiliser le conteneur de preview image */
+    var preview = document.getElementById('studio-img-view');
+    if(!preview){
+      preview = document.createElement('div');
+      preview.id = 'studio-img-view';
+      preview.className = 'studio-img-preview';
+      editorWrap.appendChild(preview);
+    }
+
+    var dims = '';
+    var img = new Image();
+    img.src = f.dataUrl;
+    img.onload = function(){
+      dims = img.naturalWidth + ' × ' + img.naturalHeight + ' px';
+      var info = preview.querySelector('.sip-info');
+      if(info) info.innerHTML = '<strong>' + echapperHtml(f.nom) + '</strong><br>'
+        + dims + ' · ' + formaterTaille(f.taille);
+    };
+
+    preview.innerHTML = '';
+    var imgEl = document.createElement('img');
+    imgEl.src = f.dataUrl;
+    imgEl.alt = f.nom;
+    preview.appendChild(imgEl);
+
+    var info = document.createElement('div');
+    info.className = 'sip-info';
+    info.innerHTML = '<strong>' + echapperHtml(f.nom) + '</strong><br>Chargement...';
+    preview.appendChild(info);
+
+    /* Mettre à jour la barre de langage */
+    var langBar = document.querySelector('.studio-lang-bar');
+    if(langBar) langBar.style.display = 'none';
+
+    rendreFichiers();
+  }
+
+  /* Revenir au mode éditeur de code (quitter le mode image) */
+  function quitterModeImage(){
+    var editorWrap = document.querySelector('.studio-editor-wrap');
+    if(!editorWrap) return;
+    editorWrap.classList.remove('mode-image');
+    var imgView = document.getElementById('studio-img-view');
+    if(imgView) imgView.remove();
+    var langBar = document.querySelector('.studio-lang-bar');
+    if(langBar) langBar.style.display = '';
+  }
+
+  function formaterTaille(octets){
+    if(!octets) return '';
+    if(octets < 1024) return octets + ' o';
+    if(octets < 1048576) return (octets / 1024).toFixed(1) + ' Ko';
+    return (octets / 1048576).toFixed(1) + ' Mo';
+  }
+
+  /* Ouvrir le sélecteur de fichiers image */
+  function ouvrirSelecteurImage(){
+    var input = document.getElementById('studio-img-input');
+    if(input) input.click();
+  }
+
+  /* Injecter une image depuis le chat (img src en data URL ou URL) */
+  function injecterImageDepuisChat(src, alt){
+    if(src.startsWith('data:')){
+      var ext = 'png';
+      var m = src.match(/data:image\/(\w+)/);
+      if(m) ext = m[1];
+      ajouterImage(alt || ('image.' + ext), src, 0);
+    } else {
+      /* URL externe : fetch et convertir en data URL */
+      fetch(src).then(function(r){ return r.blob(); }).then(function(blob){
+        var reader = new FileReader();
+        reader.onload = function(e){
+          var ext = src.split('.').pop().split('?')[0].toLowerCase();
+          if(!estExtImage(ext)) ext = 'png';
+          ajouterImage(alt || ('image.' + ext), e.target.result, blob.size);
+        };
+        reader.readAsDataURL(blob);
+      }).catch(function(){
+        if(typeof showToastMsg === 'function') showToastMsg('Impossible de charger l\'image');
+      });
+    }
+    if(!_ouvert) ouvrir();
+    changerOnglet('files');
+  }
+
+
+  /* ═══════════════════════════════════════════
      GESTION DES FICHIERS
      ═══════════════════════════════════════════ */
 
   function ajouterFichier(nom, lang, contenu){
     lang = lang || 'html';
     nom = nom || ('fichier-' + (_fichiers.length + 1) + '.' + lang);
-    _fichiers.push({ nom: nom, lang: lang, contenu: contenu || '' });
+    _fichiers.push({ nom: nom, lang: lang, contenu: contenu || '', type:'code' });
     _fichierActif = _fichiers.length - 1;
     rendreFichiers();
     chargerFichier(_fichierActif);
@@ -470,6 +702,15 @@ var TilexStudio = (function(){
     if(idx < 0 || idx >= _fichiers.length) return;
     _fichierActif = idx;
     var f = _fichiers[idx];
+
+    /* Si c'est une image, afficher la preview image */
+    if(estImage(f)){
+      afficherImage(idx);
+      return;
+    }
+
+    /* Sinon c'est du code — quitter le mode image si actif */
+    quitterModeImage();
     var editor = document.getElementById('studio-editor');
     if(editor) editor.value = f.contenu;
     majLangSel();
@@ -490,14 +731,26 @@ var TilexStudio = (function(){
     }
 
     _fichiers.forEach(function(f, i){
+      var isImg = estImage(f);
       var ico = ICONES[f.lang] || ICONES['default'];
       var nomLang = NOMS_LANG[f.lang] || f.lang.toUpperCase();
       var el = document.createElement('div');
-      el.className = 'studio-file' + (i === _fichierActif ? ' active' : '');
-      el.innerHTML = '<span class="studio-file-ico">' + ico + '</span>'
-        + '<span class="studio-file-name">' + echapperHtml(f.nom) + '</span>'
-        + '<span class="studio-file-ext">' + nomLang + '</span>'
-        + '<button class="studio-file-del" title="Supprimer">&times;</button>';
+      el.className = 'studio-file' + (i === _fichierActif ? ' active' : '') + (isImg ? ' img-file' : '');
+
+      if(isImg && f.dataUrl){
+        /* Afficher une miniature pour les images */
+        el.innerHTML = '<img class="studio-file-thumb" src="' + f.dataUrl + '" alt="' + echapperHtml(f.nom) + '">'
+          + '<span class="studio-file-name">' + echapperHtml(f.nom)
+          + '<span class="studio-file-size">' + formaterTaille(f.taille) + '</span></span>'
+          + '<span class="studio-file-ext">' + (f.lang || 'IMG').toUpperCase() + '</span>'
+          + '<button class="studio-file-del" title="Supprimer">&times;</button>';
+      } else {
+        el.innerHTML = '<span class="studio-file-ico">' + ico + '</span>'
+          + '<span class="studio-file-name">' + echapperHtml(f.nom) + '</span>'
+          + '<span class="studio-file-ext">' + nomLang + '</span>'
+          + '<button class="studio-file-del" title="Supprimer">&times;</button>';
+      }
+
       el.addEventListener('click', function(e){
         if(e.target.classList.contains('studio-file-del')){
           supprimerFichier(i);
@@ -515,6 +768,13 @@ var TilexStudio = (function(){
     ajout.innerHTML = '+ Nouveau fichier';
     ajout.addEventListener('click', function(){ ajouterFichier(); });
     liste.appendChild(ajout);
+
+    /* Bouton + Ajouter image */
+    var imgAjout = document.createElement('button');
+    imgAjout.className = 'studio-file-img-add';
+    imgAjout.innerHTML = '🖼️ Ajouter image';
+    imgAjout.addEventListener('click', function(){ ouvrirSelecteurImage(); });
+    liste.appendChild(imgAjout);
   }
 
   function viderEditeur(){
@@ -597,9 +857,12 @@ var TilexStudio = (function(){
     rafraichirPreview: rafraichirPreview,
     viderEditeur: viderEditeur,
     ajouterFichier: ajouterFichier,
+    ajouterImage: ajouterImage,
+    ouvrirSelecteurImage: ouvrirSelecteurImage,
+    injecterImageDepuisChat: injecterImageDepuisChat,
     changerLang: changerLang,
     coloriserCode: coloriserCode,
-    /* Alias anglais pour compatibilité */
+    /* Alias anglais */
     open: ouvrir,
     close: fermer,
     toggle: basculer,
@@ -613,6 +876,8 @@ var TilexStudio = (function(){
     refreshPreview: rafraichirPreview,
     clearEditor: viderEditeur,
     addFile: ajouterFichier,
+    addImage: ajouterImage,
+    injectImageFromChat: injecterImageDepuisChat,
     changeLang: changerLang
   };
 

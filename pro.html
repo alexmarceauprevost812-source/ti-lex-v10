@@ -2789,6 +2789,16 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 <!-- ════════════ STUDIO PANEL ════════════ -->
 <div class="studio-panel" id="studio-panel">
   <div class="studio-resize" id="studio-resize"></div>
+  <!-- Zone de drag & drop (overlay) -->
+  <div class="studio-dropzone" id="studio-dropzone">
+    <div class="studio-dropzone-inner">
+      <span class="sdz-ico">📂</span>
+      <span class="sdz-txt">Dépose tes fichiers ici</span>
+      <span class="sdz-sub">Images, code, texte...</span>
+    </div>
+  </div>
+  <!-- Input fichier caché pour ajout d'images -->
+  <input type="file" id="studio-img-input" accept="image/*" multiple style="display:none;">
   <div class="studio-header">
     <span class="studio-title">⚡ STUDIO</span>
     <button class="studio-hd-btn" onclick="TilexStudio.rafraichirPreview()" title="Rafraîchir preview">↻</button>

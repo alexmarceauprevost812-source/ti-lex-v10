@@ -131,11 +131,16 @@ body.studio-open .composer-bar{right:var(--studio-w);}
   text-shadow:none!important;
 }
 
-/* Mode d'affichage : édition ou highlight */
+/* Mode d'affichage : édition, highlight ou image */
 .studio-editor-wrap.mode-edit .studio-editor{display:block;}
 .studio-editor-wrap.mode-edit .studio-highlight-wrap{display:none;}
+.studio-editor-wrap.mode-edit .studio-img-preview{display:none;}
 .studio-editor-wrap.mode-view .studio-editor{display:none;}
 .studio-editor-wrap.mode-view .studio-highlight-wrap{display:flex;}
+.studio-editor-wrap.mode-view .studio-img-preview{display:none;}
+.studio-editor-wrap.mode-image .studio-editor{display:none;}
+.studio-editor-wrap.mode-image .studio-highlight-wrap{display:none;}
+.studio-editor-wrap.mode-image .studio-img-preview{display:flex;}
 
 /* ─── Barre d'actions ─── */
 .studio-actions{
@@ -198,6 +203,53 @@ body.studio-open .composer-bar{right:var(--studio-w);}
   transition:all .15s;background:transparent;letter-spacing:.5px;
 }
 .studio-file-ajout:hover{border-color:var(--orange);color:var(--orange);}
+
+/* ─── Miniature image dans la liste de fichiers ─── */
+.studio-file-thumb{
+  width:36px;height:36px;border-radius:5px;object-fit:cover;
+  border:1px solid var(--border);flex-shrink:0;
+}
+.studio-file.img-file{padding:6px 12px;}
+.studio-file.img-file .studio-file-name{font-size:11px;}
+.studio-file-size{font-size:9px;color:var(--muted);margin-left:4px;}
+
+/* ─── Preview d'image dans la zone éditeur ─── */
+.studio-img-preview{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;overflow:auto;gap:12px;min-height:0;background:var(--bg);
+}
+.studio-img-preview img{
+  max-width:100%;max-height:calc(100% - 40px);object-fit:contain;
+  border-radius:8px;border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.studio-img-preview .sip-info{
+  font-size:10px;color:var(--muted);text-align:center;line-height:1.5;
+}
+
+/* ─── Zone de drag & drop ─── */
+.studio-dropzone{
+  position:absolute;inset:0;z-index:20;
+  background:rgba(255,127,39,.08);border:2.5px dashed var(--orange);
+  display:none;align-items:center;justify-content:center;
+  border-radius:0;
+}
+.studio-dropzone.active{display:flex;}
+.studio-dropzone-inner{
+  text-align:center;color:var(--orange);pointer-events:none;
+}
+.studio-dropzone-inner .sdz-ico{font-size:42px;display:block;margin-bottom:8px;}
+.studio-dropzone-inner .sdz-txt{font-size:13px;font-weight:700;letter-spacing:.5px;}
+.studio-dropzone-inner .sdz-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* ─── Bouton ajouter image ─── */
+.studio-file-img-add{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px;margin:4px 10px 10px;border-radius:8px;border:1.5px dashed rgba(76,175,80,.3);
+  color:rgba(76,175,80,.7);cursor:pointer;font-size:11px;font-weight:600;
+  transition:all .15s;background:transparent;letter-spacing:.5px;
+}
+.studio-file-img-add:hover{border-color:#4caf50;color:#4caf50;}
 
 /* ─── Bouton "→ Studio" sur les blocs de code du chat ─── */
 .studio-inject-btn{
