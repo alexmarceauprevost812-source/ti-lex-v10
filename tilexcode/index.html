@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tilexcode — Centre d'agents</title>
+  <style>
+    body{margin:0;background:#0b0f17;color:#e8edf5;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+    .enrobe{max-width:1000px;margin:0 auto;padding:28px 18px 60px;}
+    h1{font-size:26px;margin:0 0 4px;}
+    .marque{color:#8a96a8;font-size:13px;margin-bottom:22px;}
+    textarea{width:100%;box-sizing:border-box;min-height:90px;padding:12px;border-radius:12px;
+      background:#131a26;color:#e8edf5;border:1px solid rgba(255,255,255,.1);
+      font-family:ui-monospace,Menlo,monospace;font-size:14px;resize:vertical;}
+    .barre{display:flex;gap:10px;margin:12px 0 24px;flex-wrap:wrap;}
+    button.action{padding:11px 18px;border-radius:10px;border:none;cursor:pointer;
+      font-weight:700;font-size:14px;color:#fff;background:#2563eb;}
+    button.action.pipeline{background:#10b981;}
+    h2{font-size:15px;color:#8a96a8;margin:26px 0 10px;text-transform:uppercase;letter-spacing:1px;}
+  </style>
+</head>
+<body>
+  <div class="enrobe">
+    <h1>tilexcode — Centre d'agents</h1>
+    <div class="marque">Mode Codex · TIEX Air · Produit du Québec</div>
+
+    <textarea id="tilex-prompt"
+      placeholder="Décris ce que tu veux coder en français, en joual, ou dans n'importe quelle langue…"></textarea>
+
+    <div class="barre">
+      <button class="action pipeline" id="btn-pipeline">Lancer le pipeline (6 agents)</button>
+    </div>
+
+    <h2>Agents</h2>
+    <div id="zone-agents"></div>
+
+    <h2>Résultats</h2>
+    <div id="tilex-resultats"></div>
+  </div>
+
+  <script src="/js/tilex-config.js"></script>
+  <script src="public/tilexcode-agents.js"></script>
+  <script>
+    // Câblage de la démo
+    try {
+      window.TilexCodeAgents.init('zone-agents');
+
+      document.getElementById('btn-pipeline').addEventListener('click', function () {
+        var prompt = document.getElementById('tilex-prompt').value;
+        window.TilexCodeAgents.runPipeline(prompt, function (res) {
+          window.TilexCodeAgents.afficherSortie(res);
+        }).catch(function () { /* géré par toast */ });
+      });
+    } catch (e) {
+      console.error('Câblage démo:', e);
+    }
+  </script>
+</body>
+</html>

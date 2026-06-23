@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.scan-headers]
 verify_jwt = false
+
+[functions.tilexcode-agent]
+verify_jwt = false
