@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.tilex-gardien]
 verify_jwt = false
+
+[functions.tilex-admin]
+verify_jwt = false
