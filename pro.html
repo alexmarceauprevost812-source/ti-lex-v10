@@ -6,6 +6,9 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ff7f27">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <title>ti-lex-AL v10 — Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -4335,15 +4338,55 @@ var PLAN_DATA={
 };
 var PLAN_NAMES={free:"Gratuit",flux:"TI",ti:"TI",surge:"TI-LEX",apex:"TI-LEX-AL",cyber_recon:"CYBER RECON",cyber_guardian:"CYBER GUARDIAN",cyber_sentinel:"CYBER SENTINEL"};
 var PLAN_COLORS={ti:"#00a86b",surge:"#ff7f27",apex:"#ffcf4a"};
+
+/* ══ Thème partagé console-web ↔ plateforme ══ */
+var _TILEX_THEME_ACCENTS={
+  feu:{accent:"#e08763",accent2:"#c25c3e"},ocean:{accent:"#38bdf8",accent2:"#0284c7"},
+  foret:{accent:"#34d399",accent2:"#059669"},lavande:{accent:"#a78bfa",accent2:"#7c3aed"},
+  rose:{accent:"#f472b6",accent2:"#db2777"},or:{accent:"#fbbf24",accent2:"#d97706"},
+  glacier:{accent:"#67e8f9",accent2:"#06b6d4"},cerise:{accent:"#fb7185",accent2:"#e11d48"},
+  menthe:{accent:"#6ee7b7",accent2:"#10b981"},acier:{accent:"#94a3b8",accent2:"#64748b"}
+};
+var _TILEX_THEME_BGS={
+  nuit:{bg:"#14161b",panel:"#1c1f26",elev:"#23272f",code:"#0f1116",text:"#e6e8ec",strong:"#fff",muted:"#9aa0aa",border:"#2b2f38"},
+  minuit:{bg:"#0a0a0f",panel:"#111118",elev:"#1a1a24",code:"#08080d",text:"#d4d4dc",strong:"#f0f0f5",muted:"#7a7a8a",border:"#222230"},
+  aube:{bg:"#f5f0e8",panel:"#efe8db",elev:"#e8e0d0",code:"#ddd5c5",text:"#2d2a24",strong:"#1a1a1a",muted:"#6b6560",border:"#d4cabb"}
+};
+var _TILEX_THEME_FONTS={
+  inter:"'Inter',sans-serif",roboto:"'Roboto',sans-serif",opensans:"'Open Sans',sans-serif",
+  lato:"'Lato',sans-serif",montserrat:"'Montserrat',sans-serif",poppins:"'Poppins',sans-serif",
+  nunito:"'Nunito',sans-serif",raleway:"'Raleway',sans-serif",
+  merriweather:"'Merriweather',serif",jetbrains:"'JetBrains Mono',monospace"
+};
+function applyTilexTheme(raw){
+  try{
+    var parsed=typeof raw==="string"?JSON.parse(raw):raw;
+    if(!parsed||!parsed.tilex)return;
+    var t=parsed.tilex;
+    var r=document.documentElement.style;
+    var a=_TILEX_THEME_ACCENTS[t.accent];
+    if(a){r.setProperty("--orange",a.accent);r.setProperty("--accent",a.accent);r.setProperty("--accent-2",a.accent2);}
+    var b=_TILEX_THEME_BGS[t.bg];
+    if(b){
+      r.setProperty("--bg",b.bg);r.setProperty("--bg2",b.panel);r.setProperty("--bg3",b.elev);
+      r.setProperty("--txt",b.text);r.setProperty("--muted",b.muted);r.setProperty("--border",b.border);
+      if(t.bg==="aube")document.documentElement.setAttribute("data-theme","day");
+      else document.documentElement.setAttribute("data-theme","night");
+    }
+    var f=_TILEX_THEME_FONTS[t.font];
+    if(f)r.setProperty("--sans",f);
+  }catch(e){/* old format like "dark"/"light" — ignore, keep existing behavior */}
+}
 function getPlanDisplayName(plan){return PLAN_NAMES[plan]||plan?.toUpperCase()||"Gratuit";}
 async function getUserPlanAndLimits(){
   try{
     var s=await supabase.auth.getUser();
     if(s.error||!s.data.user)return null;
     var uid=s.data.user.id;
-    var pr=await supabase.from("profiles").select("plan").eq("id",uid).maybeSingle();
+    var pr=await supabase.from("profiles").select("plan,theme").eq("id",uid).maybeSingle();
     if(pr.error||!pr.data||!pr.data.plan)return null;
     var planName=pr.data.plan;
+    if(pr.data.theme)applyTilexTheme(pr.data.theme);
     localStorage.setItem("tilex-plan",planName);
     document.documentElement.setAttribute("data-plan",planName);
     var lr=await supabase.from("plan_limits").select("*").eq("plan",planName).maybeSingle();

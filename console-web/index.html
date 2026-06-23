@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <title>ti-lex AL — Console</title>
 <style>
   :root {
@@ -107,6 +110,22 @@
   .modal.show{display:grid;}
   .modal .card{width:440px;}
   .field2{display:grid;grid-template-columns:70px 1fr;gap:10px;}
+  .theme-section{margin-bottom:22px;}
+  .theme-section h3{font-size:14px;color:var(--text-strong);margin:0 0 10px;font-weight:600;}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;}
+  .swatch{width:36px;height:36px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:border-color .15s,transform .1s;}
+  .swatch:hover{transform:scale(1.1);} .swatch.active{border-color:var(--text-strong);box-shadow:0 0 0 2px var(--bg);}
+  .bg-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:2px solid var(--border);cursor:pointer;margin-bottom:8px;transition:border-color .15s;}
+  .bg-opt:hover,.bg-opt.active{border-color:var(--accent);}
+  .bg-opt .preview{width:40px;height:28px;border-radius:6px;flex-shrink:0;}
+  .bg-opt .label{font-size:13.5px;color:var(--text);font-weight:600;}
+  .bg-opt .sublabel{font-size:11.5px;color:var(--text-muted);}
+  .font-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:2px solid var(--border);cursor:pointer;margin-bottom:6px;transition:border-color .15s;}
+  .font-opt:hover,.font-opt.active{border-color:var(--accent);}
+  .font-opt .fname{font-size:14px;color:var(--text);font-weight:600;}
+  .font-opt .fsample{font-size:12px;color:var(--text-muted);}
+  .theme-save{margin-top:16px;}
+  .theme-status{font-size:13px;margin-top:10px;min-height:16px;}
   @media (max-width:780px){#app{grid-template-columns:1fr;}.side{display:none;}}
 </style>
 </head>
@@ -133,6 +152,7 @@
       <button class="navbtn active" data-view="chat">💬 Chat</button>
       <button class="navbtn" data-view="agents">🧩 Mes agents</button>
       <button class="navbtn" data-view="scans">🛡️ Mes scans</button>
+      <button class="navbtn" data-view="theme">🎨 Thème</button>
     </div>
     <button class="new" id="newConv">＋  Nouvelle conversation</button>
     <div class="convs" id="convs"></div>
@@ -179,6 +199,27 @@
         <div class="row" id="scansRow"></div>
       </div>
     </section>
+    <section class="panel" id="panel-theme">
+      <div class="scroll">
+        <div class="ptitle"><h2>Thème</h2></div>
+        <div style="max-width:600px;margin:0 auto;">
+          <div class="theme-section">
+            <h3>Couleur d'accent</h3>
+            <div class="swatches" id="accentSwatches"></div>
+          </div>
+          <div class="theme-section">
+            <h3>Fond</h3>
+            <div id="bgOptions"></div>
+          </div>
+          <div class="theme-section">
+            <h3>Police</h3>
+            <div id="fontOptions"></div>
+          </div>
+          <button class="btn theme-save" id="saveTheme">Sauvegarder le thème</button>
+          <div class="theme-status" id="themeStatus"></div>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 <div class="modal" id="createModal">
@@ -206,6 +247,38 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 const FN_URL = `${SUPABASE_URL}/functions/v1/agent-al`;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = (id) => document.getElementById(id);
+const THEMES = {
+  accents: {
+    feu:     { accent:"#e08763", accent2:"#c25c3e" },
+    ocean:   { accent:"#38bdf8", accent2:"#0284c7" },
+    foret:   { accent:"#34d399", accent2:"#059669" },
+    lavande: { accent:"#a78bfa", accent2:"#7c3aed" },
+    rose:    { accent:"#f472b6", accent2:"#db2777" },
+    or:      { accent:"#fbbf24", accent2:"#d97706" },
+    glacier: { accent:"#67e8f9", accent2:"#06b6d4" },
+    cerise:  { accent:"#fb7185", accent2:"#e11d48" },
+    menthe:  { accent:"#6ee7b7", accent2:"#10b981" },
+    acier:   { accent:"#94a3b8", accent2:"#64748b" },
+  },
+  bgs: {
+    nuit:   { bg:"#14161b", panel:"#1c1f26", elev:"#23272f", code:"#0f1116", text:"#e6e8ec", strong:"#fff", muted:"#9aa0aa", border:"#2b2f38" },
+    minuit: { bg:"#0a0a0f", panel:"#111118", elev:"#1a1a24", code:"#08080d", text:"#d4d4dc", strong:"#f0f0f5", muted:"#7a7a8a", border:"#222230" },
+    aube:   { bg:"#f5f0e8", panel:"#efe8db", elev:"#e8e0d0", code:"#ddd5c5", text:"#2d2a24", strong:"#1a1a1a", muted:"#6b6560", border:"#d4cabb" },
+  },
+  fonts: {
+    inter:       { name:"Inter", css:"'Inter',sans-serif" },
+    roboto:      { name:"Roboto", css:"'Roboto',sans-serif" },
+    opensans:    { name:"Open Sans", css:"'Open Sans',sans-serif" },
+    lato:        { name:"Lato", css:"'Lato',sans-serif" },
+    montserrat:  { name:"Montserrat", css:"'Montserrat',sans-serif" },
+    poppins:     { name:"Poppins", css:"'Poppins',sans-serif" },
+    nunito:      { name:"Nunito", css:"'Nunito',sans-serif" },
+    raleway:     { name:"Raleway", css:"'Raleway',sans-serif" },
+    merriweather:{ name:"Merriweather", css:"'Merriweather',serif" },
+    jetbrains:   { name:"JetBrains Mono", css:"'JetBrains Mono',monospace" },
+  }
+};
+let currentTheme = { accent:"feu", bg:"nuit", font:"inter" };
 let convs = [], current = null, pendingImages = [], userId = null;
 (async () => { const { data } = await sb.auth.getSession(); if (data?.session) showApp(data.session); })();
 let mode = "login";
@@ -243,6 +316,7 @@ function showApp(session){
   $("login").style.display="none"; $("app").style.display="grid";
   $("who2").textContent=session.user?.email||"";
   if(convs.length===0) newConversation();
+  loadThemeFromProfile();
 }
 $("logoutBtn").addEventListener("click", async()=>{ await sb.auth.signOut(); location.reload(); });
 document.querySelectorAll(".navbtn").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -250,11 +324,12 @@ function switchView(v){
   document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.dataset.view===v));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
   $("panel-"+v).classList.add("show");
-  $("viewTitle").textContent = v==="chat"?"Chat":v==="agents"?"Mes agents":"Mes scans";
+  $("viewTitle").textContent = v==="chat"?"Chat":v==="agents"?"Mes agents":v==="scans"?"Mes scans":"Thème";
   $("newConv").style.display = v==="chat" ? "block":"none";
   $("convs").style.display = v==="chat" ? "block":"none";
   if(v==="agents") loadAgents();
   if(v==="scans") loadScans();
+  if(v==="theme") renderThemePanel();
 }
 $("refreshAgents").addEventListener("click", loadAgents);
 $("openCreate").addEventListener("click", () => $("createModal").classList.add("show"));
@@ -295,6 +370,7 @@ async function createAgent(){
   loadAgents();
 }
 $("refreshScans").addEventListener("click", loadScans);
+$("saveTheme").addEventListener("click", saveTheme);
 async function loadScans(){
   const row=$("scansRow"); row.innerHTML='<div class="empty">Chargement…</div>';
   const [cyber, sec] = await Promise.all([
@@ -386,6 +462,60 @@ function renderMarkdown(md){
   html=html.split(/\n{2,}/).map(p=>/^<(h\d|ul|pre|div)/.test(p.trim())?p:`<p>${p.replace(/\n/g,"<br>")}</p>`).join("");
   html=html.replace(/\x00(\d+)\x00/g,(_,i)=>blocks[i]);
   return html;
+}
+function renderThemePanel(){
+  const sw=$("accentSwatches"); sw.innerHTML="";
+  Object.entries(THEMES.accents).forEach(([key,val])=>{
+    const d=document.createElement("div"); d.className="swatch"+(currentTheme.accent===key?" active":"");
+    d.style.background=`linear-gradient(135deg,${val.accent},${val.accent2})`;
+    d.title=key; d.addEventListener("click",()=>{currentTheme.accent=key;applyThemeLive();renderThemePanel();});
+    sw.append(d);
+  });
+  const bg=$("bgOptions"); bg.innerHTML="";
+  Object.entries(THEMES.bgs).forEach(([key,val])=>{
+    const d=document.createElement("div"); d.className="bg-opt"+(currentTheme.bg===key?" active":"");
+    d.innerHTML=`<div class="preview" style="background:${val.bg};border:1px solid ${val.border};"></div><div><div class="label">${key.charAt(0).toUpperCase()+key.slice(1)}</div><div class="sublabel">${val.bg}</div></div>`;
+    d.addEventListener("click",()=>{currentTheme.bg=key;applyThemeLive();renderThemePanel();});
+    bg.append(d);
+  });
+  const fo=$("fontOptions"); fo.innerHTML="";
+  Object.entries(THEMES.fonts).forEach(([key,val])=>{
+    const d=document.createElement("div"); d.className="font-opt"+(currentTheme.font===key?" active":"");
+    d.innerHTML=`<div><div class="fname" style="font-family:${val.css};">${val.name}</div><div class="fsample" style="font-family:${val.css};">Bonjour, ti-lex AL.</div></div>`;
+    d.addEventListener("click",()=>{currentTheme.font=key;applyThemeLive();renderThemePanel();});
+    fo.append(d);
+  });
+}
+function applyThemeLive(){
+  const r=document.documentElement.style;
+  const a=THEMES.accents[currentTheme.accent]||THEMES.accents.feu;
+  const b=THEMES.bgs[currentTheme.bg]||THEMES.bgs.nuit;
+  const f=THEMES.fonts[currentTheme.font]||THEMES.fonts.inter;
+  r.setProperty("--accent",a.accent); r.setProperty("--accent-2",a.accent2);
+  r.setProperty("--accent-soft",`color-mix(in srgb,${a.accent} 16%,${b.bg})`);
+  r.setProperty("--bg",b.bg); r.setProperty("--bg-panel",b.panel); r.setProperty("--bg-elev",b.elev);
+  r.setProperty("--bg-code",b.code); r.setProperty("--text",b.text); r.setProperty("--text-strong",b.strong);
+  r.setProperty("--text-muted",b.muted); r.setProperty("--border",b.border);
+  r.setProperty("--sans",f.css);
+}
+async function saveTheme(){
+  const st=$("themeStatus"); st.textContent="Sauvegarde…"; st.style.color="var(--text-muted)";
+  const themeJson=JSON.stringify({tilex:currentTheme});
+  const {error}=await sb.from("profiles").update({theme:themeJson}).eq("id",userId);
+  if(error){st.textContent="Erreur : "+error.message;st.style.color="var(--err)";}
+  else{st.textContent="✓ Thème sauvegardé";st.style.color="var(--ok)";setTimeout(()=>st.textContent="",3000);}
+}
+async function loadThemeFromProfile(){
+  if(!userId) return;
+  const {data}=await sb.from("profiles").select("theme").eq("id",userId).maybeSingle();
+  if(!data?.theme) return;
+  try{
+    const parsed=JSON.parse(data.theme);
+    if(parsed?.tilex){
+      currentTheme={...currentTheme,...parsed.tilex};
+      applyThemeLive();
+    }
+  }catch{}
 }
 function attachCopy(scope){ scope.querySelectorAll(".copy").forEach(btn=>btn.addEventListener("click",()=>{
   const code=btn.closest(".code-wrap").querySelector("code").innerText;
