@@ -4184,7 +4184,9 @@ function renderMd(txt){
     var language=lang||"code";
     var cid="code_"+Math.random().toString(36).substr(2,8);
     var ph="%%CODEBLOCK_"+codeBlocks.length+"%%";
-    codeBlocks.push('<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'" class="language-'+language+'">'+code.trim()+'</code></pre><button class="btn-create-file" onclick="ouvrirDansStudio(\''+cid+'\',\''+language+'\')">Créer un fichier 📂</button></div>');
+    var isSql=/^(sql|pgsql|plpgsql|postgres)$/i.test(language);
+    var applyBtn=isSql?'<button class="btn-create-file" style="margin-left:6px;" onclick="appliquerSchema(\''+cid+'\')">Appliquer ⚡</button>':"";
+    codeBlocks.push('<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'" class="language-'+language+'">'+code.trim()+'</code></pre><div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="btn-create-file" onclick="ouvrirDansStudio(\''+cid+'\',\''+language+'\')">Créer un fichier 📂</button>'+applyBtn+'</div></div>');
     return ph;
   });
   safe=safe.replace(/`([^`]+)`/g,'<code class="inline-code">$1</code>');
@@ -4250,6 +4252,35 @@ function ouvrirDansStudio(codeId,lang){
     navigator.clipboard.writeText(code).then(function(){
       if(typeof showToast==="function")showToast("Code copié — ouvre Studio pour le coller","success");
     });
+  }
+}
+async function appliquerSchema(codeId){
+  var codeEl=document.getElementById(codeId);
+  if(!codeEl){if(typeof showToastMsg==="function")showToastMsg("Code introuvable");return;}
+  var sql=codeEl.textContent||codeEl.innerText;
+  if(!sql.trim()){if(typeof showToastMsg==="function")showToastMsg("Code vide");return;}
+  var destructive=/\b(drop\s+table|truncate|delete\s+from|drop\s+schema|alter\s+table\s+\w+\s+drop)/i.test(sql);
+  var msg=destructive?"⚠️ Opération DESTRUCTRICE détectée!\n\nEs-tu sûr de vouloir exécuter ce SQL?":"Appliquer ce schéma SQL à la base de données?";
+  if(!confirm(msg))return;
+  if(destructive&&!confirm("DOUBLE CONFIRMATION: Cette opération est irréversible. Continuer?"))return;
+  try{
+    var tk=getToken();
+    var h={"Content-Type":"application/json"};
+    if(tk)h["Authorization"]="Bearer "+tk;
+    var res=await fetch(SB_URL+"/functions/v1/tilex-realize",{method:"POST",headers:h,body:JSON.stringify({
+      action:"realize",content:sql,confirmed:true,confirmed_destructive:destructive
+    })});
+    var data=await res.json();
+    if(data.ok){
+      if(typeof showToastMsg==="function")showToastMsg("✅ Schéma appliqué avec succès");
+      addMsg("a","✅ **Schéma appliqué** — Le SQL a été exécuté avec succès sur la base de données.");
+    }else{
+      if(typeof showToastMsg==="function")showToastMsg("❌ Erreur: "+(data.error||"Échec"));
+      addMsg("a","❌ **Erreur d'exécution SQL:** "+(data.error||"Échec inconnu"));
+    }
+  }catch(e){
+    if(typeof showToastMsg==="function")showToastMsg("Erreur réseau");
+    console.error("[appliquerSchema]",e);
   }
 }
 function tiLexHighlightCode(container){
