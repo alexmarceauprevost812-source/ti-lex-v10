@@ -64,7 +64,7 @@
     SUPABASE_URL: 'https://rnuripmfozlxenryxhdc.supabase.co',
     // Clé PUBLIABLE sb_publishable_* — conçue pour être publique, OK dans le front.
     // Ne JAMAIS mettre la clé secrète (service_role / sb_secret_*) ici.
-    SUPABASE_KEY: 'REMPLACE_PAR_TA_CLE_PUBLIABLE',
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA',
     // Nom de l'Edge Function qui fait rouler les agents
     EDGE_FUNCTION: 'tilexcode-agent',
     // Délai max d'un appel agent (ms)

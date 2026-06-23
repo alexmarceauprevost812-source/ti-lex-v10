@@ -12,7 +12,7 @@
     if (window.supabase && typeof window.supabase.createClient === 'function') {
       window.supabaseClient = window.supabase.createClient(
         'https://rnuripmfozlxenryxhdc.supabase.co',
-        'REMPLACE_PAR_TA_CLE_PUBLIABLE'
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA'
       );
     } else {
       console.warn('supabase-js non chargé : les appels d\'agents seront en 401.');

@@ -15,7 +15,7 @@
 
   var CONFIG = {
     SUPABASE_URL: 'https://rnuripmfozlxenryxhdc.supabase.co',
-    SUPABASE_KEY: 'REMPLACE_PAR_TA_CLE_PUBLIABLE',
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA',
     URL_AUTH: '/auth.html',     // page de connexion
     URL_APP: '/index.html'      // où aller une fois connecté
   };

@@ -24,7 +24,7 @@
 
   var CONFIG = {
     SUPABASE_URL: 'https://rnuripmfozlxenryxhdc.supabase.co',
-    SUPABASE_KEY: 'REMPLACE_PAR_TA_CLE_PUBLIABLE',
+    SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA',
     GARDIEN_FN: 'tilex-gardien',
     // Domaines où le code a le DROIT de rouler (verrou de domaine).
     HOTES_AUTORISES: ['localhost', '127.0.0.1', 'ti-lex-v10.vercel.app'],
