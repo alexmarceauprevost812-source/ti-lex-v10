@@ -94,6 +94,27 @@ Réponds en français, structuré et professionnel.
 Format: Identification → Comportement → IoC → Contre-mesures.`,
 };
 
+// ── Media capabilities instructions (appended to all agent system prompts) ──
+const MEDIA_INSTRUCTION = `
+
+## CAPACITÉS MÉDIA
+Quand tu trouves des images pertinentes sur le web, inclus-les dans ta réponse avec ce format exact :
+[IMG]https://url-de-image.jpg|Description courte[/IMG]
+
+Quand tu références une vidéo YouTube ou un lien web utile, utilise ce format :
+[LINK]https://url-complete|Titre du lien[/LINK]
+
+Le système affichera automatiquement ces médias. N'invente jamais d'URLs — utilise seulement des URLs réelles trouvées via la recherche web.
+
+## GÉNÉRATION DE PAGES HTML
+Quand l'utilisateur demande de créer une page web, un rapport visuel, ou un index.html, génère une page HTML complète et autonome (avec CSS inline) dans ce format exact :
+[PAGE:Titre de la page]
+<!DOCTYPE html>
+<html>...page complète...</html>
+[/PAGE]
+
+La page sera automatiquement sauvegardée et un lien partageable sera généré. Utilise le design ti-lex : fond #0a0a0a, accent orange #ff7f27, police monospace.`;
+
 function json(obj: unknown, status: number, hdrs: Record<string, string>) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -228,7 +249,7 @@ Deno.serve(async (req: Request) => {
     text: string;
     cache_control?: { type: string };
   }> = [
-    { type: "text", text: baseSystem, cache_control: { type: "ephemeral" } },
+    { type: "text", text: baseSystem + MEDIA_INSTRUCTION, cache_control: { type: "ephemeral" } },
   ];
   if (contextParts.length > 0) {
     systemBlocks.push({ type: "text", text: contextParts.join("") });

@@ -708,6 +708,92 @@ function indarAfficherReponseStream(agent, isLoading) {
     </div>`;
 }
 
+// ── Media tags parser ────────────────────────────────────────────────────
+function _escapeHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _extractDomain(url) {
+  try { return new URL(url).hostname.replace('www.', ''); } catch { return url; }
+}
+
+function parseMediaTags(text) {
+  var html = _escapeHtml(text);
+
+  // [PAGECARD]url|title[/PAGECARD]
+  html = html.replace(/\[PAGECARD\](.*?)\|(.*?)\[\/PAGECARD\]/g, function(_, url, title) {
+    var u = url.trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    return '<div class="chat-page-card">'
+      + '<div class="chat-page-card__icon">🌐</div>'
+      + '<div class="chat-page-card__content">'
+      + '<div class="chat-page-card__title">' + title.trim() + '</div>'
+      + '<div class="chat-page-card__label">Page générée · cliquable</div></div>'
+      + '<a href="' + u + '" target="_blank" rel="noopener noreferrer" class="chat-page-card__btn">OUVRIR ↗</a></div>';
+  });
+
+  // [IMG]url|desc[/IMG]
+  html = html.replace(/\[IMG\](.*?)\|(.*?)\[\/IMG\]/g, function(_, url, desc) {
+    var u = url.trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    if (!/^https?:/.test(u)) return '';
+    return '<div class="chat-media-image">'
+      + '<img src="' + u + '" alt="' + desc.trim() + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'" />'
+      + '<span class="chat-media-image__caption">' + desc.trim() + '</span></div>';
+  });
+
+  // [LINK]url|title[/LINK]
+  html = html.replace(/\[LINK\](.*?)\|(.*?)\[\/LINK\]/g, function(_, url, title) {
+    var u = url.trim().replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    if (!/^https?:/.test(u)) return '';
+    var domain = _extractDomain(u);
+    var isYT = /youtube\.com|youtu\.be/.test(u);
+    var favicon = 'https://www.google.com/s2/favicons?sz=32&domain=' + domain;
+    return '<a href="' + u + '" target="_blank" rel="noopener noreferrer" class="chat-media-link">'
+      + '<img src="' + favicon + '" class="chat-media-link__favicon" alt="" onerror="this.style.display=\'none\'" />'
+      + '<span class="chat-media-link__content">'
+      + '<span class="chat-media-link__title">' + (isYT ? '▶️ ' : '') + title.trim() + '</span>'
+      + '<span class="chat-media-link__domain">' + domain + '</span></span>'
+      + '<span class="chat-media-link__arrow">↗</span></a>';
+  });
+
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+async function processGeneratedPages(text, agentId) {
+  var pageRegex = /\[PAGE:(.*?)\]([\s\S]*?)\[\/PAGE\]/g;
+  var match;
+  var pages = [];
+  while ((match = pageRegex.exec(text)) !== null) {
+    pages.push({ title: match[1].trim(), html: match[2].trim() });
+  }
+  if (!pages.length) return text;
+
+  var result = text;
+  for (var i = 0; i < pages.length; i++) {
+    var pg = pages[i];
+    try {
+      var token = typeof getToken === 'function' ? getToken() : SB_ANON;
+      var userId = null;
+      try {
+        var u = await supabase.auth.getUser();
+        if (u.data && u.data.user) userId = u.data.user.id;
+      } catch (_) {}
+
+      var r = await fetch(SB_URL + '/functions/v1/save-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SB_ANON, 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ user_id: userId, agent_id: agentId, title: pg.title, html_content: pg.html })
+      });
+      var data = await r.json();
+      if (data.url) {
+        var block = '[PAGE:' + pg.title + ']' + pg.html + '[/PAGE]';
+        result = result.replace(block, '\n\n[PAGECARD]' + data.url + '|' + pg.title + '[/PAGECARD]\n\n');
+      }
+    } catch (e) { console.error('[INDAR] Erreur sauvegarde page:', e); }
+  }
+  return result;
+}
+
 function indarUpdateStreamText(agent, text) {
   const output = document.getElementById('indar-stream-output');
   if (output) {
@@ -723,10 +809,12 @@ function indarShowSearchBadge(agent) {
   }
 }
 
-function indarFinalizeStream(agent, text, webSearchUsed, deepThink) {
+async function indarFinalizeStream(agent, text, webSearchUsed, deepThink) {
+  var processedText = await processGeneratedPages(text || '', agent.id);
+
   const output = document.getElementById('indar-stream-output');
   if (output) {
-    output.innerHTML = (text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    output.innerHTML = parseMediaTags(processedText);
   }
 
   const badges = document.getElementById('indar-stream-badges');
@@ -785,7 +873,7 @@ function indarAfficherReponse(agent, texte, isLoading) {
                background:#0a0a0a;border:1px solid #23232c;
                border-radius:8px;padding:14px;
                max-height:400px;overflow-y:auto;">
-               ${texte ? texte.replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}
+               ${texte ? parseMediaTags(texte) : ''}
              </div>
            </div>
            <div style="display:flex;gap:8px;flex-wrap:wrap;">
