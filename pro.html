@@ -2598,6 +2598,20 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
             <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ff7f27')" style="background:#ff7f27;" title="Orange (défaut)"></button>
           </div>
         </div>
+        <div class="settings-section" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="settings-label">🛡️ COULEURS PAR AGENT (INDAR)</div>
+          <div class="settings-hint" style="margin-bottom:10px;">Personnalise la couleur de police de chaque agent. Sauvegardé sur ton compte Supabase.</div>
+          <div id="agent-theme-colors" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
+          <div class="settings-label" style="margin-top:14px;">🔘 BOUTONS (THÈME)</div>
+          <div id="btn-theme-colors" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
+          <div class="settings-label" style="margin-top:14px;">👁️ APERÇU</div>
+          <div id="theme-preview" style="background:#0a0a0a;border:1px solid #222;border-radius:10px;padding:14px;margin-bottom:14px;"></div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-orange" id="theme-save-btn" style="flex:1;padding:11px;font-size:13px;">💾 SAUVEGARDER MON THÈME</button>
+            <button class="btn-ghost" id="theme-reset-btn" style="padding:11px 16px;font-size:13px;">↺ RÉINITIALISER</button>
+          </div>
+          <div id="theme-msg" style="font-size:11px;margin-top:8px;min-height:14px;color:var(--muted);"></div>
+        </div>
       </div>
     </div>
     <div class="card" style="margin-bottom:14px;">
@@ -9158,6 +9172,7 @@ trackFeatureUsage("app_load");
 <script src="js/centre-indar.js"></script>
 <script src="js/actions-indar.js"></script>
 <script src="js/connectors-hub.js"></script>
+<script src="js/theme-engine.js"></script>
 <script src="js/tilex-toast.js"></script>
 <script src="js/tilex-guard.js"></script>
 <script src="js/tilex-safe-fetch.js"></script>
@@ -9288,6 +9303,109 @@ trackFeatureUsage("app_load");
 
 <!-- AUTO-SAVE DOT -->
 <div class="autosave-dot" id="autosave-dot" title="Auto-save"></div>
+
+<script>
+(function(){
+  var panel=document.getElementById('agent-theme-colors');
+  if(!panel||!window.ThemeEngine)return;
+
+  var AGENTS=[
+    {key:'agent-violet',label:'PHANTOM-RED 🟣'},
+    {key:'agent-gold',label:'CIPHER 🟡'},
+    {key:'agent-red',label:'REAPER 🔴'},
+    {key:'agent-orange',label:'MARCEAU 🟠'},
+    {key:'agent-green',label:'SENTINEL 🟢'},
+    {key:'agent-blue',label:'NEXUS 🔵'}
+  ];
+  var BUTTONS=[
+    {key:'btn-bg',label:'Fond bouton'},
+    {key:'btn-fg',label:'Texte bouton'}
+  ];
+
+  var draft=ThemeEngine.getAll();
+
+  function colorRow(item){
+    var val=draft[item.key]||'#ffffff';
+    return '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#ccc;">'+
+      '<input type="color" data-theme-key="'+item.key+'" value="'+val+'" style="width:36px;height:30px;border:1px solid #2a2a2a;border-radius:6px;background:#0e0e0e;cursor:pointer;padding:0;">'+
+      '<span style="flex:1;">'+item.label+'</span>'+
+      '<span data-contrast="'+item.key+'" style="font-size:9px;color:#666;"></span>'+
+      '</label>';
+  }
+
+  panel.innerHTML=AGENTS.map(colorRow).join('');
+  document.getElementById('btn-theme-colors').innerHTML=BUTTONS.map(colorRow).join('');
+
+  function contrast(hex){
+    var n=parseInt(hex.replace('#',''),16);
+    var r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+    function lum(c){c/=255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4);}
+    var L=lum(r)*.2126+lum(g)*.7152+lum(b)*.0722;
+    var Lbg=lum(10)*.2126+lum(10)*.7152+lum(10)*.0722;
+    return (Math.max(L,Lbg)+.05)/(Math.min(L,Lbg)+.05);
+  }
+
+  function renderPreview(){
+    document.getElementById('theme-preview').innerHTML=
+      '<div style="color:'+draft['agent-green']+';font-size:13px;margin-bottom:6px;">SENTINEL : Incident confiné, surveillance active.</div>'+
+      '<div style="color:'+draft['agent-violet']+';font-size:13px;margin-bottom:6px;">PHANTOM-RED : Test d\'intrusion terminé, 2 failles.</div>'+
+      '<div style="color:'+draft['agent-red']+';font-size:13px;margin-bottom:6px;">REAPER : ⚠️ Ransomware détecté.</div>'+
+      '<div style="color:'+draft['agent-gold']+';font-size:13px;margin-bottom:6px;">CIPHER : Conformité validée.</div>'+
+      '<div style="color:'+draft['agent-blue']+';font-size:13px;margin-bottom:6px;">NEXUS : Scan réseau terminé.</div>'+
+      '<div style="color:'+draft['agent-orange']+';font-size:13px;margin-bottom:10px;">MARCEAU : Architecture déployée.</div>'+
+      '<button style="background:'+draft['btn-bg']+';color:'+draft['btn-fg']+';border:none;border-radius:8px;padding:8px 16px;font-family:inherit;font-size:12px;font-weight:700;">Exemple de bouton</button>';
+  }
+
+  function refreshContrast(){
+    AGENTS.concat(BUTTONS).forEach(function(item){
+      var el=document.querySelector('[data-contrast="'+item.key+'"]');
+      if(!el||item.key==='btn-fg')return;
+      var c=contrast(draft[item.key]);
+      el.textContent=c>=4.5?'✅':c>=3?'🟡':'🔴';
+      el.title='Contraste '+c.toFixed(1)+':1';
+    });
+  }
+
+  document.querySelectorAll('[data-theme-key]').forEach(function(inp){
+    inp.addEventListener('input',function(e){
+      var key=e.target.dataset.themeKey;
+      draft[key]=e.target.value;
+      ThemeEngine.apply({});
+      draft[key]=e.target.value;
+      var obj={};obj[key]=e.target.value;
+      ThemeEngine.apply(obj);
+      renderPreview();
+      refreshContrast();
+    });
+  });
+
+  document.getElementById('theme-save-btn').addEventListener('click',async function(){
+    var msg=document.getElementById('theme-msg');
+    try{
+      msg.textContent='Sauvegarde...';msg.style.color='#888';
+      await ThemeEngine.saveUserTheme(draft);
+      msg.textContent='✅ Ton thème est sauvegardé.';msg.style.color='#37e0a0';
+      if(window.TilexToast)TilexToast.success('Thème sauvegardé');
+    }catch(e){
+      msg.textContent='❌ '+e.message;msg.style.color='#ff3b3b';
+      if(window.TilexToast)TilexToast.error('Erreur: '+e.message);
+    }
+  });
+
+  document.getElementById('theme-reset-btn').addEventListener('click',async function(){
+    var msg=document.getElementById('theme-msg');
+    await ThemeEngine.reset();
+    Object.keys(ThemeEngine.getAll()).forEach(function(k){draft[k]=ThemeEngine.getAll()[k];});
+    document.querySelectorAll('[data-theme-key]').forEach(function(inp){inp.value=draft[inp.dataset.themeKey]||'#ffffff';});
+    renderPreview();refreshContrast();
+    msg.textContent='↺ Thème réinitialisé à la palette ti-lex.';msg.style.color='#888';
+    if(window.TilexToast)TilexToast.info('Thème réinitialisé');
+  });
+
+  renderPreview();
+  refreshContrast();
+})();
+</script>
 
 </body>
 </html>
