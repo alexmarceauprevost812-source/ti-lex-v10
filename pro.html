@@ -3729,10 +3729,10 @@ async function readSSE(res){
   return full;
 }
 
-async function readSSEStream(res,onDelta){
+async function readSSEStream(res,onDelta,onStatus){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
-  var full="";var buf="";
+  var full="";var buf="";var wsUsed=false;
   while(true){
     var chunk=await reader.read();
     if(chunk.done)break;
@@ -3749,6 +3749,18 @@ async function readSSEStream(res,onDelta){
         if(evt.type==="content_block_delta"&&evt.delta&&evt.delta.text){
           full+=evt.delta.text;
           if(onDelta)onDelta(evt.delta.text,full);
+        }
+        if(evt.type==="content_block_start"&&evt.content_block){
+          if(evt.content_block.type==="tool_use"&&evt.content_block.name==="web_search"){
+            wsUsed=true;
+            if(onStatus)onStatus("web_search_start");
+          }
+          if(evt.content_block.type==="web_search_tool_result"){
+            if(onStatus)onStatus("web_search_done");
+          }
+        }
+        if(evt.type==="tool_status"){
+          if(onStatus)onStatus("tool_exec",evt.tool_name);
         }
       }catch(e){}
     }
@@ -4040,7 +4052,8 @@ async function sendChat(){
       kind:"chat",
       model:chatModel,max_tokens:4096,
       system:getSystemPrompt(),
-      messages:chatHistory.slice(-20)
+      messages:chatHistory.slice(-20),
+      ...(webSearchMode?{web_search:true}:{})
     })});
     if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
     else td.remove();
@@ -4068,8 +4081,19 @@ async function sendChat(){
       bblText.style.color=_agentColor;
       if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
       EcritureFluide.demarrer(bblText,msgs);
+      var _toolStatusEl=null;
       var reply=await readSSEStream(res,function(delta){
+        if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
         EcritureFluide.ajouterTexte(delta);
+      },function(status,toolName){
+        if(!_toolStatusEl){
+          _toolStatusEl=document.createElement("div");
+          _toolStatusEl.className="tool-status";
+          bblText.parentNode.insertBefore(_toolStatusEl,bblText);
+        }
+        if(status==="web_search_start")_toolStatusEl.textContent="🌐 Recherche web en cours…";
+        else if(status==="web_search_done")_toolStatusEl.textContent="🌐 Résultats trouvés";
+        else if(status==="tool_exec")_toolStatusEl.textContent="🔧 "+toolName+"…";
       });
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
@@ -8565,10 +8589,26 @@ loadTiEtude();
 
 /* ══ WEB SEARCH TOGGLE ══ */
 var webSearchMode=localStorage.getItem("tilex-web-search")==="true";
-(function(){var btn=document.getElementById("btn-web-search-toggle");if(btn&&webSearchMode)btn.classList.add("active");})();
+(function(){
+  var row=document.querySelector(".composer-actions-row");
+  if(!row)return;
+  var btn=document.createElement("button");
+  btn.id="btn-web-search-toggle";
+  btn.className="composer-plus"+(webSearchMode?" active":"");
+  btn.title="Recherche web";
+  btn.innerHTML="🌐";
+  btn.style.cssText="font-size:15px;"+(webSearchMode?"color:#ff7f27;":"");
+  btn.addEventListener("click",function(e){e.preventDefault();toggleWebSearch();});
+  row.appendChild(btn);
+})();
 function toggleWebSearch(){
   webSearchMode=!webSearchMode;
   localStorage.setItem("tilex-web-search",webSearchMode);
+  var btn=document.getElementById("btn-web-search-toggle");
+  if(btn){
+    if(webSearchMode){btn.classList.add("active");btn.style.color="#ff7f27";}
+    else{btn.classList.remove("active");btn.style.color="";}
+  }
   showToastMsg(webSearchMode?"🌐 Recherche web activée":"Recherche web désactivée");
 }
 

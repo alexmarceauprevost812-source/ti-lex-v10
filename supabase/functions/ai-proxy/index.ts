@@ -149,20 +149,39 @@ Deno.serve(async (req) => {
     const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
     if (!apiKey) return json({ error: "Aucune cle API configuree. Ajoute ta cle Anthropic dans les Parametres ou en secret Supabase." }, 500, cors);
 
+    // Build tools list
+    const tools: any[] = [];
+    if (body.web_search) {
+      tools.push({ type: "web_search_20250305", name: "web_search", max_uses: 5 });
+    }
+    if (body.tools && Array.isArray(body.tools)) {
+      tools.push(...body.tools);
+    }
+
+    const hasCustomTools = tools.some((t: any) => t.type !== "web_search_20250305");
+    const anthropicHeaders = {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    };
+    const systemPrompt = typeof body.system === "string" ? body.system : undefined;
+
+    // ── If custom tools: tool-use loop (non-streaming until final) ──
+    if (hasCustomTools) {
+      return handleToolLoop(body.messages, tools, model, maxTokens, systemPrompt, anthropicHeaders, cors, sb, userId);
+    }
+
+    // ── Standard streaming (with optional web_search passthrough) ──
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
+      headers: anthropicHeaders,
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
-        system: typeof body.system === "string" ? body.system : undefined,
+        system: systemPrompt,
         stream: true,
         messages: body.messages,
-        ...(body.tools ? { tools: body.tools } : {}),
+        ...(tools.length > 0 ? { tools } : {}),
       }),
     });
     if (!r.ok) {
@@ -202,4 +221,127 @@ function json(obj: unknown, status: number, hdrs: Record<string, string>) {
     status,
     headers: { ...hdrs, "Content-Type": "application/json" },
   });
+}
+
+// ── Tool-use loop: execute custom tools server-side ──
+const MAX_TOOL_LOOPS = 8;
+
+async function handleToolLoop(
+  messages: any[],
+  tools: any[],
+  model: string,
+  maxTokens: number,
+  system: string | undefined,
+  headers: Record<string, string>,
+  cors: Record<string, string>,
+  sb: any,
+  userId: string,
+) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: string) => controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+      let msgs = [...messages];
+      let loops = 0;
+
+      while (loops < MAX_TOOL_LOOPS) {
+        loops++;
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: msgs, tools }),
+        });
+
+        if (!r.ok) {
+          const err = await r.text().catch(() => "Erreur Claude");
+          send(JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: `⚠️ ${err}` } }));
+          send("[DONE]");
+          controller.close();
+          return;
+        }
+
+        const response = await r.json();
+        const toolUseBlocks = (response.content || []).filter((b: any) => b.type === "tool_use");
+
+        if (response.stop_reason !== "tool_use" || toolUseBlocks.length === 0) {
+          const textParts = (response.content || []).filter((b: any) => b.type === "text");
+          const fullText = textParts.map((b: any) => b.text).join("");
+          const chunkSize = 30;
+          for (let i = 0; i < fullText.length; i += chunkSize) {
+            send(JSON.stringify({
+              type: "content_block_delta",
+              delta: { type: "text_delta", text: fullText.slice(i, i + chunkSize) },
+            }));
+          }
+          send("[DONE]");
+          controller.close();
+          return;
+        }
+
+        // Execute each tool
+        const toolResults: any[] = [];
+        for (const toolBlock of toolUseBlocks) {
+          send(JSON.stringify({ type: "tool_status", tool_name: toolBlock.name, status: "executing" }));
+          const result = await executeCustomTool(toolBlock.name, toolBlock.input, sb, userId);
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: toolBlock.id,
+            content: typeof result === "string" ? result : JSON.stringify(result),
+          });
+        }
+
+        msgs = [
+          ...msgs,
+          { role: "assistant", content: response.content },
+          { role: "user", content: toolResults },
+        ];
+      }
+
+      send(JSON.stringify({
+        type: "content_block_delta",
+        delta: { type: "text_delta", text: "⚠️ Limite de boucles d'outils atteinte." },
+      }));
+      send("[DONE]");
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: { ...cors, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+  });
+}
+
+async function executeCustomTool(name: string, input: any, sb: any, userId: string): Promise<string> {
+  try {
+    switch (name) {
+      case "execute_sql": {
+        const query = input?.query || input?.sql || "";
+        if (!query) return JSON.stringify({ error: "Requête SQL vide" });
+        const { data, error } = await sb.rpc("exec_realize", { p_sql: query });
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ ok: true, result: data });
+      }
+      case "list_tables": {
+        const { data, error } = await sb.rpc("exec_realize", {
+          p_sql: "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
+        });
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ tables: data });
+      }
+      case "read_audit_events": {
+        const limit = input?.limit || 10;
+        const { data, error } = await sb
+          .from("audit_events")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ events: data });
+      }
+      default:
+        return JSON.stringify({ error: `Outil inconnu: ${name}` });
+    }
+  } catch (e: any) {
+    return JSON.stringify({ error: e.message || "Erreur d'exécution de l'outil" });
+  }
 }
