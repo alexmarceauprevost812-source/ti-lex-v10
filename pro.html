@@ -1842,9 +1842,9 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .tilex-copy-btn.copied{background:#3ECF8E;color:#101622;}
 
 /* === TILEX THEME === */
-body[data-theme="nuit"]{background:#101622;color:#e8eaed;}
+body[data-theme="nuit"]{background:#000;color:var(--text,#e6e8ec);}
+body[data-theme="nuit"] .btn,body[data-theme="nuit"] .btn-primary{background:var(--orange,#ff7f27);color:#000;}
 body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
-#tilex-theme-btn{position:fixed;top:16px;right:16px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;z-index:999;}
 
 /* ═══ AVATARS ANIMÉS ═══ */
 .indar-avatar-wrap svg{width:42px;height:42px;transition:filter .3s;}
@@ -1944,7 +1944,6 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 </style>
 </head>
 <body>
-<button id="tilex-theme-btn" onclick="TilexTheme.basculer()">🌙</button>
 
 <!-- ═══════════════════════════════════════════════════════════════
      ÉCRAN DE CHOIX D'INTERFACE (au login / connexion)

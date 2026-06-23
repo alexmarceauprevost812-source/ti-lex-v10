@@ -1,5 +1,5 @@
 // js/tilex-theme.js
-// Gestion des thèmes jour/nuit pour ti-lex-AL v10
+// Thème nuit par défaut — fond noir, texte selon choix utilisateur, boutons orange
 
 const TilexTheme = {
   cle: "tilex-theme",
@@ -12,8 +12,6 @@ const TilexTheme = {
   appliquer(theme) {
     document.body.setAttribute("data-theme", theme);
     localStorage.setItem(this.cle, theme);
-    const btn = document.getElementById("tilex-theme-btn");
-    if (btn) btn.textContent = theme === "nuit" ? "🌙" : "☀️";
   },
 
   basculer() {
