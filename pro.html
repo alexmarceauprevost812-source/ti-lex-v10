@@ -1572,6 +1572,28 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .cmsg-bbl pre{background:#0e0e14;border:1px solid #23232c;border-radius:8px;padding:14px;overflow-x:auto;font-family:'Share Tech Mono',monospace;font-size:13px;line-height:1.5;color:#f0e0c0;margin:10px 0;}
 [data-theme="day"] .cmsg-bbl pre{background:#E8E0D0;border-color:#D4C5A4;color:#1a1a1a;}
 
+/* ══ Chat typographie hiérarchique ══ */
+.cmsg-bbl h1,.cmsg-bbl h2,.cmsg-bbl h3{font-family:'Rajdhani',sans-serif;font-weight:700;margin:0;padding:0;line-height:1.3;}
+.cmsg-bbl h1{font-size:20px;margin-top:18px;margin-bottom:8px;color:var(--orange,#ff7f27);}
+.cmsg-bbl h2{font-size:17px;margin-top:14px;margin-bottom:6px;color:var(--txt,#e0ddd4);}
+.cmsg-bbl h3{font-size:15px;margin-top:12px;margin-bottom:4px;color:var(--txt,#e0ddd4);}
+.cmsg-bbl h1:first-child,.cmsg-bbl h2:first-child,.cmsg-bbl h3:first-child{margin-top:0;}
+.cmsg-bbl p{margin:6px 0;line-height:1.7;}
+.cmsg-bbl ul,.cmsg-bbl ol{margin:6px 0;padding-left:20px;}
+.cmsg-bbl li{margin:3px 0;line-height:1.6;}
+.cmsg-bbl blockquote{margin:8px 0;padding:6px 12px;border-left:3px solid var(--orange,#ff7f27);background:rgba(255,127,39,.05);border-radius:0 6px 6px 0;font-style:italic;color:var(--muted,#888);}
+.cmsg-bbl hr{border:none;border-top:1px solid var(--border,rgba(255,255,255,0.08));margin:12px 0;}
+.cmsg-bbl strong{color:var(--txt,#e0ddd4);}
+.cmsg-bbl .tool-status{color:var(--muted,#6b6b78);font-size:12px;font-family:'Share Tech Mono',monospace;padding:4px 0;}
+[data-theme="day"] .cmsg-bbl h1{color:#cc6520;}
+[data-theme="day"] .cmsg-bbl h2,[data-theme="day"] .cmsg-bbl h3{color:#1a1a1a;}
+[data-theme="day"] .cmsg-bbl strong{color:#1a1a1a;}
+[data-theme="day"] .cmsg-bbl blockquote{background:rgba(255,127,39,.06);color:#666;}
+
+/* ══ Bouton Créer un fichier ══ */
+.btn-create-file{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;margin-top:6px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.1));background:transparent;color:var(--muted,#888);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+.btn-create-file:hover{border-color:var(--orange,#ff7f27);color:var(--orange,#ff7f27);background:rgba(255,127,39,.08);}
+
 /* ══ SEARCH INPUT (conversations page) ══ */
 .conv-search-input{width:100%;padding:10px 14px;background:#0e0e14;border:1px solid #23232c;border-radius:8px;color:#f0e0c0;font-size:14px;box-sizing:border-box;font-family:'Rajdhani',sans-serif;transition:border-color .2s;}
 .conv-search-input:focus{outline:none;border-color:#ff7f27;}
@@ -4056,7 +4078,7 @@ async function sendChat(){
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       var _replyPlain=reply||"";
-      var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain));
+      var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
       if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
       else{applySyntaxHL(bblText);}
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
@@ -4133,15 +4155,78 @@ function isValidScanResult(obj){return obj&&typeof obj==="object"&&("findings" i
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
 function renderMd(txt){
   var safe=escHtml(txt);
+  var codeBlocks=[];
   safe=safe.replace(/```(\w+)?\n?([\s\S]*?)```/g,function(m,lang,code){
     var language=lang||"code";
     var cid="code_"+Math.random().toString(36).substr(2,8);
-    return '<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'" class="language-'+language+'">'+code.trim()+'</code></pre></div>';
+    var ph="%%CODEBLOCK_"+codeBlocks.length+"%%";
+    codeBlocks.push('<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'" class="language-'+language+'">'+code.trim()+'</code></pre><button class="btn-create-file" onclick="ouvrirDansStudio(\''+cid+'\',\''+language+'\')">Créer un fichier 📂</button></div>');
+    return ph;
   });
   safe=safe.replace(/`([^`]+)`/g,'<code class="inline-code">$1</code>');
   safe=safe.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  safe=safe.replace(/\n/g,"<br>");
-  return safe;
+  safe=safe.replace(/_([^_\n]+)_/g,'<em>$1</em>');
+  var lines=safe.split("\n");
+  var out=[];var inList=false;var listType="";var inBlockquote=false;
+  for(var li=0;li<lines.length;li++){
+    var line=lines[li];
+    if(/%%CODEBLOCK_\d+%%/.test(line.trim())){
+      if(inList){out.push(listType==="ul"?"</ul>":"</ol>");inList=false;}
+      if(inBlockquote){out.push("</blockquote>");inBlockquote=false;}
+      out.push(line.trim());continue;
+    }
+    if(/^---+$/.test(line.trim())||/^\*\*\*+$/.test(line.trim())){
+      if(inList){out.push(listType==="ul"?"</ul>":"</ol>");inList=false;}
+      if(inBlockquote){out.push("</blockquote>");inBlockquote=false;}
+      out.push("<hr>");continue;
+    }
+    var hm=line.match(/^(#{1,3})\s+(.+)$/);
+    if(hm){
+      if(inList){out.push(listType==="ul"?"</ul>":"</ol>");inList=false;}
+      if(inBlockquote){out.push("</blockquote>");inBlockquote=false;}
+      var hlvl=hm[1].length;out.push("<h"+hlvl+">"+hm[2]+"</h"+hlvl+">");continue;
+    }
+    var bqm=line.match(/^&gt;\s?(.*)$/);
+    if(bqm){
+      if(inList){out.push(listType==="ul"?"</ul>":"</ol>");inList=false;}
+      if(!inBlockquote){out.push("<blockquote>");inBlockquote=true;}
+      out.push(bqm[1]||"");continue;
+    }else if(inBlockquote){out.push("</blockquote>");inBlockquote=false;}
+    var ulm=line.match(/^[-*]\s+(.+)$/);
+    if(ulm){
+      if(inList&&listType!=="ul"){out.push("</ol>");inList=false;}
+      if(!inList){out.push("<ul>");inList=true;listType="ul";}
+      out.push("<li>"+ulm[1]+"</li>");continue;
+    }
+    var olm=line.match(/^\d+\.\s+(.+)$/);
+    if(olm){
+      if(inList&&listType!=="ol"){out.push("</ul>");inList=false;}
+      if(!inList){out.push("<ol>");inList=true;listType="ol";}
+      out.push("<li>"+olm[1]+"</li>");continue;
+    }
+    if(inList){out.push(listType==="ul"?"</ul>":"</ol>");inList=false;}
+    if(line.trim()===""){out.push("<br>");}
+    else{out.push("<p>"+line+"</p>");}
+  }
+  if(inList)out.push(listType==="ul"?"</ul>":"</ol>");
+  if(inBlockquote)out.push("</blockquote>");
+  var result=out.join("");
+  for(var ci=0;ci<codeBlocks.length;ci++){
+    result=result.replace("%%CODEBLOCK_"+ci+"%%",codeBlocks[ci]);
+  }
+  return result;
+}
+function ouvrirDansStudio(codeId,lang){
+  var codeEl=document.getElementById(codeId);
+  if(!codeEl)return;
+  var code=codeEl.textContent||codeEl.innerText;
+  if(window.TilexStudio&&typeof window.TilexStudio.open==="function"){
+    window.TilexStudio.open(code,lang);
+  }else{
+    navigator.clipboard.writeText(code).then(function(){
+      if(typeof showToast==="function")showToast("Code copié — ouvre Studio pour le coller","success");
+    });
+  }
 }
 function tiLexHighlightCode(container){
   if(!container||typeof hljs==="undefined")return;
@@ -4152,7 +4237,7 @@ function tiLexHighlightCode(container){
   });
 }
 function projHtml(txt){
-  if(/```/.test(txt)||/\*\*/.test(txt))return renderMd(txt);
+  if(/```/.test(txt)||/\*\*/.test(txt)||/^#{1,3}\s/m.test(txt)||/^[-*]\s/m.test(txt)||/^\d+\.\s/m.test(txt)||/^>/m.test(txt)||/^---/m.test(txt))return renderMd(txt);
   var safe=escHtml(txt);
   var out="";var idx=0;
   var speed=Math.max(6,Math.min(15,3000/Math.max(1,safe.length)));
