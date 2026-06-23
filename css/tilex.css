@@ -173,6 +173,91 @@
   100% { transform: scale(1.6); opacity: 0; }
 }
 
+/* ─── TilexVision — aperçu image dans le composer ─── */
+.tilex-vision-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  position: relative;
+}
+
+.tilex-vision-preview img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tvp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tvp-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--txt, #e0ddd4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tvp-size {
+  font-size: 10px;
+  color: var(--muted, #888);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.tvp-remove {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,60,60,0.15);
+  color: #ff3b3b;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.tvp-remove:hover {
+  background: rgba(255,60,60,0.3);
+}
+
+[data-theme="day"] .tilex-vision-preview {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.1);
+}
+
+[data-theme="day"] .tvp-name {
+  color: #1a1a1a;
+}
+
+/* ─── Bouton Vision ─── */
+#vision-btn {
+  position: relative;
+  transition: all 0.2s;
+}
+
+#vision-btn:hover {
+  color: var(--orange, #ff7f27);
+}
+
 /* ─── Responsive Studio ─── */
 @media (max-width: 768px) {
   .tilex-studio {
