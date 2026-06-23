@@ -1071,7 +1071,7 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
   display:none;transition:left .42s cubic-bezier(.22,1,.36,1);flex-direction:column;gap:0;}
 body.sb-open .composer-bar{left:var(--sb-w);}
 .composer-bar.visible{display:flex;}
-.composer-glass{background:rgba(40,40,44,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+.composer-glass{position:relative;background:rgba(40,40,44,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:8px;}
 .composer-input-row{display:flex;align-items:flex-end;gap:0;}
 .composer-input{flex:1;padding:8px 0;background:transparent;border:none;
@@ -1119,7 +1119,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:auto;}
 .composer-send:hover{filter:brightness(1.1);transform:scale(1.05);}
-.composer-menu{position:absolute;bottom:90px;left:16px;background:rgba(30,30,34,.92);backdrop-filter:blur(16px);
+.composer-menu{position:absolute;bottom:100%;left:0;margin-bottom:8px;background:rgba(30,30,34,.92);backdrop-filter:blur(16px);
   border:1px solid rgba(255,255,255,.1);
   border-radius:14px;padding:6px;display:none;min-width:190px;box-shadow:0 -8px 30px rgba(0,0,0,.6);}
 .composer-menu.open{display:block;}
@@ -4052,6 +4052,7 @@ async function sendChat(){
   if(chatBusy)return;
   const inp=document.getElementById("chat-in");
   const txt=inp.value.trim();if(!txt)return;
+  if(activeChatConv<0)newConversation();
   if(_alGhConnected&&_isGithubRequest(txt)){
     inp.value="";
     alSendToAgent(txt);
@@ -6754,6 +6755,7 @@ async function composerSend(){
   if(currentComposerMode==="chat"){
     var autorise=await gardeIA();
     if(!autorise)return;
+    if(activeChatConv<0){newConversation();}
     document.getElementById("chat-in").value=txt;
     inp.value="";inp.style.height="auto";
     if(typeof trackFeatureUsage==="function")trackFeatureUsage("chat_send");
