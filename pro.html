@@ -115,6 +115,16 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 .plan-badge.plan-pro .plan-dot{background:var(--orange);box-shadow:0 0 5px var(--orange);}
 .plan-badge.plan-basic .plan-dot{background:#666;}
 
+/* Credits badge */
+.credits-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;
+  font-size:11px;letter-spacing:.5px;cursor:pointer;transition:all .2s;
+  border:1px solid rgba(255,106,0,.25);background:rgba(255,106,0,.06);color:var(--orange);}
+.credits-badge:hover{border-color:var(--orange);background:rgba(255,106,0,.12);}
+.credits-badge .cb-icon{font-size:12px;}
+.credits-badge .cb-val{font-weight:700;}
+.credits-badge.cb-low{border-color:rgba(255,60,60,.4);background:rgba(255,60,60,.08);color:#ff4444;animation:pulse .8s infinite;}
+.credits-badge.cb-zero{border-color:rgba(255,0,0,.5);background:rgba(255,0,0,.1);color:#ff0000;}
+
 .topbar-center{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;}
 .eye-status-bar{display:flex;align-items:center;gap:7px;font-family:'Share Tech Mono',monospace;
   font-size:10px;letter-spacing:1px;padding:5px 14px;border-radius:20px;
@@ -1795,6 +1805,9 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
+    <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
+      <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
+    </div>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
   </div>
 </nav>
@@ -2356,6 +2369,20 @@ body.sb-open .composer-bar{left:var(--sb-w);}
             <button class="cmi-color-dot" onclick="setCouleurAgent('#e8b830')" style="background:#e8b830;" title="Or (défaut)"></button>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-hd">⚡ CRÉDITS</div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+          <div style="font-size:32px;font-weight:800;color:var(--orange);" id="settings-credits-balance">—</div>
+          <div style="font-size:12px;color:var(--muted);">crédits<br>disponibles</div>
+        </div>
+        <div style="display:flex;gap:20px;font-size:11px;color:var(--muted);margin-bottom:10px;">
+          <span>Gagnés: <strong id="settings-credits-earned" style="color:var(--green);">—</strong></span>
+          <span>Dépensés: <strong id="settings-credits-spent" style="color:var(--orange);">—</strong></span>
+        </div>
+        <div class="settings-hint">Les crédits sont rechargés le 1er de chaque mois selon ton forfait. Chaque action (message, scan, codex) consomme des crédits.</div>
       </div>
     </div>
     <div class="card admin-only-section" style="margin-bottom:14px;">
@@ -3224,6 +3251,47 @@ const SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJl
 const supabase=window.supabase.createClient(SB_URL,SB_ANON);window.supabase=supabase;
 function getToken(){try{var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return SB_ANON;}
 
+/* ═══════════════════════════════════════════════
+   ⚡ MOTEUR ÉCONOMIQUE — Crédits
+   ═══════════════════════════════════════════════ */
+var _creditsSolde=0;
+async function chargerCredits(){
+  try{
+    var tk=getToken();if(!tk||tk===SB_ANON)return;
+    var res=await fetch(SB_URL+"/rest/v1/rpc/get_my_credits",{
+      method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+tk,"Content-Type":"application/json"},
+      body:"{}"
+    });
+    if(!res.ok)return;
+    var data=await res.json();
+    if(data&&data.length>0){
+      _creditsSolde=data[0].balance||0;
+      var eb=document.getElementById("settings-credits-balance");if(eb)eb.textContent=_creditsSolde;
+      var ee=document.getElementById("settings-credits-earned");if(ee)ee.textContent=data[0].lifetime_earned||0;
+      var es=document.getElementById("settings-credits-spent");if(es)es.textContent=data[0].lifetime_spent||0;
+    }
+    else{_creditsSolde=0;}
+    majBadgeCredits();
+  }catch(e){console.warn("[credits]",e);}
+}
+function majBadgeCredits(){
+  var badge=document.getElementById("credits-badge");
+  var val=document.getElementById("credits-val");
+  if(!badge||!val)return;
+  badge.style.display="flex";
+  val.textContent=_creditsSolde>=1000?(_creditsSolde/1000).toFixed(1)+"k":_creditsSolde;
+  badge.classList.remove("cb-low","cb-zero");
+  if(_creditsSolde<=0)badge.classList.add("cb-zero");
+  else if(_creditsSolde<20)badge.classList.add("cb-low");
+}
+function getActionType(model){
+  if(!model)return"chat_message_sonnet";
+  var m=model.toLowerCase();
+  if(m.includes("opus"))return"chat_message_opus";
+  if(m.includes("haiku"))return"chat_message_haiku";
+  return"chat_message_sonnet";
+}
+
 /* ═══════════════════════════════════════════════════════════════
    ✍️ ÉCRITURE FLUIDE — Lent au début, accélère progressivement
    Plus le texte avance, plus ça va vite (comme un vrai humain)
@@ -3689,6 +3757,7 @@ async function sendChat(){
     if(!res.ok){
       if(res.status===401){afficherMessageBlocage("non_connecte");chatBusy=false;return;}
       if(res.status===403){afficherMessageBlocage("sans_abonnement");chatBusy=false;return;}
+      if(res.status===402){addMsg("a","⚡ Crédits insuffisants. Recharge tes crédits ou passe à un forfait supérieur.");_creditsSolde=0;majBadgeCredits();chatBusy=false;return;}
       if(res.status===429){var ra=res.headers.get("Retry-After")||"30";addMsg("a","⏳ Trop de requêtes. Réessaie dans "+ra+" secondes.");chatBusy=false;return;}
       let errMsg="Erreur de connexion.";
       try{
@@ -3715,6 +3784,7 @@ async function sendChat(){
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
       EcritureFluide._terminer();
+      chargerCredits();
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       var _replyPlain=reply||"";
@@ -8044,6 +8114,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     demarrerConversation(session.user.id).catch(function(){});
     chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
+    chargerCredits().catch(function(){});
     if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
     if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
   }
@@ -8052,6 +8123,7 @@ supabase.auth.onAuthStateChange(function(event,session){
 /* ══ PLAN INIT + MODE AGENT INIT ══ */
 (async function(){
   getUserPlanAndLimits().catch(function(){});
+  chargerCredits().catch(function(){});
   try{
     var u=await supabase.auth.getUser();
     if(u.data?.user){
