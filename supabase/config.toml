@@ -15,3 +15,6 @@ verify_jwt = true
 
 [functions.agent-dispatcher]
 verify_jwt = false
+
+[functions.tilex-realize]
+verify_jwt = false

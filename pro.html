@@ -1864,6 +1864,13 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 @keyframes indarCaretHex{50%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.indar-agent-hex *{animation:none !important;transition:opacity .2s !important}}
 
+/* ── Connectors Hub ── */
+#connectors-hub{display:flex;align-items:center;gap:6px;margin-right:8px;}
+#connectors-hub .connector-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);cursor:default;transition:background .2s;}
+#connectors-hub .connector-chip:hover{background:rgba(255,255,255,0.12);}
+#connectors-hub .connector-logo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;}
+#connectors-hub .connector-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
+
 </style>
 </head>
 <body>
@@ -1936,6 +1943,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
+    <div id="connectors-hub" data-connectors-hub></div>
     <button class="studio-hdr-btn" id="studio-hdr-btn" title="Ouvrir/Fermer Studio">⚡ STUDIO<span class="shb-dot"></span></button>
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
@@ -8868,6 +8876,7 @@ trackFeatureUsage("app_load");
 <script src="js/agent-marceau.js"></script>
 <script src="js/centre-indar.js"></script>
 <script src="js/actions-indar.js"></script>
+<script src="js/connectors-hub.js"></script>
 <script src="js/scan-engine.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

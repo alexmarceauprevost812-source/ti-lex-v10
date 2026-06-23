@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- Stylized "A" mark in Anthropic orange -->
+  <path d="M12 3L4 21h3.5l1.5-3.5h6L16.5 21H20L12 3z" fill="#ff7f27"/>
+  <path d="M10 14.5L12 8l2 6.5H10z" fill="black" opacity="0.15"/>
+</svg>

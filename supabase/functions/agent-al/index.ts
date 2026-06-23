@@ -295,6 +295,13 @@ Deno.serve(async (req) => {
   if (preflight) return preflight;
   if (req.method !== "POST") return json({ error: "POST uniquement" }, 405, cors);
 
+  // Ping — health-check rapide (pas de billing, pas d'auth)
+  try {
+    const cloned = req.clone();
+    const peek = await cloned.json();
+    if (peek?.action === "ping") return json({ ok: true }, 200, cors);
+  } catch { /* not JSON or no action — continue */ }
+
   const t0 = Date.now();
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
