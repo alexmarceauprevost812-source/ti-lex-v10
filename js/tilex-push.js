@@ -7,7 +7,7 @@
       if (!code) return;
       var wrapped = '```' + (langHint || '') + '\n' + code + '\n```';
       navigator.clipboard.writeText(wrapped).then(function () {
-        if (typeof showToast === 'function') showToast('Code copié pour ti-lex-code', 'success');
+        if (window.TilexToast) TilexToast.success('Code copié pour ti-lex-code');
       }).catch(function () {
         _fallbackCopy(wrapped);
       });
@@ -18,7 +18,7 @@
       try {
         var u = await window.supabase.auth.getUser();
         if (!u.data || !u.data.user) {
-          if (typeof showToast === 'function') showToast('Connecte-toi pour pousser du code', 'error');
+          if (window.TilexToast) TilexToast.error('Connecte-toi pour pousser du code');
           return;
         }
 
@@ -41,13 +41,13 @@
         });
 
         if (res.ok) {
-          if (typeof showToast === 'function') showToast('Code envoyé à Agent AL', 'success');
+          if (window.TilexToast) TilexToast.success('Code envoyé à Agent AL');
         } else {
-          if (typeof showToast === 'function') showToast('Erreur lors de l\'envoi', 'error');
+          if (window.TilexToast) TilexToast.error('Erreur lors de l\'envoi');
         }
       } catch (e) {
         console.warn('[TilexPush] Erreur:', e.message);
-        if (typeof showToast === 'function') showToast('Erreur réseau', 'error');
+        if (window.TilexToast) TilexToast.error('Erreur réseau');
       }
     },
 
@@ -88,7 +88,7 @@
     ta.select();
     try { document.execCommand('copy'); } catch (e) { /* ignore */ }
     document.body.removeChild(ta);
-    if (typeof showToast === 'function') showToast('Code copié', 'success');
+    if (window.TilexToast) TilexToast.success('Code copié');
   }
 
   var observer = new MutationObserver(function (mutations) {
