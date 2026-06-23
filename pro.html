@@ -1736,6 +1736,46 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .composer-plus,.composer-action-btn{border-color:rgba(0,0,0,.1);}
 [data-theme="day"] .composer-model-chip{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.1);}
 
+/* ═══ INDAR SUPERPOWERS ═══ */
+.indar-superpowers-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  background:#111;border:1px solid #23232c;border-radius:10px;margin-bottom:12px;flex-wrap:wrap;}
+.indar-sp-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;}
+.indar-sp-toggle input{display:none;}
+.indar-sp-slider{width:32px;height:18px;background:#1e1e28;border:1px solid #2a2a35;
+  border-radius:9px;position:relative;transition:background .2s;flex-shrink:0;}
+.indar-sp-slider::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;
+  background:#444;border-radius:50%;transition:transform .2s,background .2s;}
+.indar-sp-toggle input:checked+.indar-sp-slider{background:rgba(255,127,39,.2);border-color:#ff7f27;}
+.indar-sp-toggle input:checked+.indar-sp-slider::after{transform:translateX(14px);background:#ff7f27;}
+.indar-sp-label{font-size:11px;color:#666;font-family:monospace;transition:color .2s;}
+.indar-sp-toggle input:checked~.indar-sp-label{color:#ff7f27;}
+.indar-sp-btn{background:none;border:1px solid #2a2a35;color:#555;font-family:monospace;
+  font-size:10px;border-radius:6px;padding:5px 10px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.indar-sp-btn:hover{border-color:#555;color:#888;}
+.indar-sp-btn.active{background:rgba(55,224,160,.08);border-color:rgba(55,224,160,.4);color:#37e0a0;}
+.indar-sp-hint{font-size:10px;color:#444;font-style:italic;font-family:monospace;
+  margin-bottom:8px;min-height:14px;padding-left:2px;}
+.indar-img-preview{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:rgba(255,127,39,.05);border:1px solid rgba(255,127,39,.2);
+  border-radius:10px;margin-bottom:12px;}
+.indar-img-preview img{height:48px;width:48px;object-fit:cover;border-radius:6px;
+  border:1px solid rgba(255,127,39,.3);}
+.indar-img-label{font-size:11px;color:#ff7f27;opacity:.7;font-family:monospace;flex:1;}
+.indar-img-remove{background:none;border:1px solid #ff4444;color:#ff4444;font-size:11px;
+  border-radius:6px;padding:4px 10px;cursor:pointer;font-family:monospace;}
+.indar-dropzone{display:none;position:absolute;inset:0;background:rgba(10,10,18,.85);
+  border:2px dashed rgba(255,127,39,.5);border-radius:8px;z-index:10;
+  align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  backdrop-filter:blur(4px);}
+.indar-dropzone.visible{display:flex;}
+.indar-stream-badge{display:inline-block;font-size:9px;border-radius:4px;padding:2px 8px;
+  margin-bottom:6px;letter-spacing:.05em;font-family:monospace;}
+.indar-badge-think{background:rgba(255,127,39,.1);border:1px solid rgba(255,127,39,.3);color:#ff7f27;}
+.indar-badge-web{background:rgba(55,224,160,.08);border:1px solid rgba(55,224,160,.3);color:#37e0a0;}
+.indar-stream-cursor{display:inline-block;width:2px;height:14px;background:#ff7f27;
+  animation:indarBlink 1s step-end infinite;margin-left:2px;vertical-align:middle;}
+@keyframes indarBlink{50%{opacity:0;}}
+
 </style>
 </head>
 <body>
@@ -2762,6 +2802,31 @@ body.sb-open .composer-bar{left:var(--sb-w);}
       <span style="color:#00000088;font-size:11px;font-family:monospace;">
         — roule tout seul
       </span>
+    </div>
+
+    <!-- SUPERPOWERS BAR -->
+    <div class="indar-superpowers-bar" id="indar-superpowers-bar">
+      <label class="indar-sp-toggle" title="Pensée profonde — réponses plus lentes mais détaillées">
+        <input type="checkbox" id="indar-deepthink-cb" />
+        <span class="indar-sp-slider"></span>
+        <span class="indar-sp-label">🧠 Pensée Profonde</span>
+      </label>
+      <button class="indar-sp-btn" id="indar-websearch-btn" onclick="indarToggleWebSearch()" title="Recherche web temps réel">🌐 Web Search</button>
+      <button class="indar-sp-btn" id="indar-vision-btn" onclick="document.getElementById('indar-img-input').click()" title="Analyser une image">👁 Vision</button>
+      <input type="file" id="indar-img-input" accept="image/*" style="display:none" onchange="indarLoadImage(this)">
+    </div>
+    <!-- Superpowers hint -->
+    <div class="indar-sp-hint" id="indar-sp-hint"></div>
+    <!-- Image preview -->
+    <div class="indar-img-preview" id="indar-img-preview" style="display:none;">
+      <img id="indar-preview-img" src="" alt="Image">
+      <span class="indar-img-label">👁 L'agent va analyser cette image</span>
+      <button class="indar-img-remove" onclick="indarRemoveImage()">✕</button>
+    </div>
+    <!-- Dropzone overlay -->
+    <div class="indar-dropzone" id="indar-dropzone">
+      <span style="font-size:36px;">📷</span>
+      <span style="color:#ff7f27;font-size:13px;font-family:monospace;">Glisse une image ici</span>
     </div>
 
     <!-- Label agents -->

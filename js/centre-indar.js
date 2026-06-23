@@ -276,7 +276,72 @@ function indarDemarrer() {
   indarRendreAgents();
 }
 
-// ── Activer un agent + appel Claude API ──────────────────────────────────
+// ── Superpowers state ────────────────────────────────────────────────────
+let _indarWebSearch = false;
+let _indarImageB64 = null;
+let _indarImageType = null;
+
+function indarToggleWebSearch() {
+  _indarWebSearch = !_indarWebSearch;
+  const btn = document.getElementById('indar-websearch-btn');
+  if (btn) {
+    btn.classList.toggle('active', _indarWebSearch);
+    btn.textContent = _indarWebSearch ? '🌐 Web Search ✓' : '🌐 Web Search';
+  }
+}
+
+function indarLoadImage(input) {
+  const file = input && input.files && input.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    _indarImageB64 = dataUrl.split(',')[1];
+    _indarImageType = file.type;
+    const preview = document.getElementById('indar-img-preview');
+    const img = document.getElementById('indar-preview-img');
+    if (preview && img) { img.src = dataUrl; preview.style.display = 'flex'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function indarRemoveImage() {
+  _indarImageB64 = null;
+  _indarImageType = null;
+  const preview = document.getElementById('indar-img-preview');
+  if (preview) preview.style.display = 'none';
+  const input = document.getElementById('indar-img-input');
+  if (input) input.value = '';
+}
+
+// ── Drag & drop image sur le panel INDAR ─────────────────────────────────
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const panel = document.getElementById('view-indar');
+    const dropzone = document.getElementById('indar-dropzone');
+    if (!panel || !dropzone) return;
+    panel.style.position = 'relative';
+    panel.addEventListener('dragover', function(e) { e.preventDefault(); dropzone.classList.add('visible'); });
+    panel.addEventListener('dragleave', function(e) { if (!panel.contains(e.relatedTarget)) dropzone.classList.remove('visible'); });
+    panel.addEventListener('drop', function(e) {
+      e.preventDefault(); dropzone.classList.remove('visible');
+      var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          _indarImageB64 = ev.target.result.split(',')[1];
+          _indarImageType = file.type;
+          var preview = document.getElementById('indar-img-preview');
+          var img = document.getElementById('indar-preview-img');
+          if (preview && img) { img.src = ev.target.result; preview.style.display = 'flex'; }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  });
+})();
+
+// ── Activer un agent + appel Edge Function avec streaming SSE ────────────
 async function indarActiverAgent(agentId) {
   const agent = INDAR_AGENTS.find(a => a.id === agentId);
   if (!agent) return;
@@ -288,67 +353,225 @@ async function indarActiverAgent(agentId) {
     btn.style.opacity = '0.7';
   }
 
-  let scanData = null;
+  const deepThink = document.getElementById('indar-deepthink-cb')?.checked || false;
+  const hint = document.getElementById('indar-sp-hint');
+  if (hint) hint.textContent = deepThink ? '🧠 Claude réfléchit en profondeur (~30-60s)' : '';
+
+  let scanContext = null;
   try {
     const { data: scans, error } = await supabase
       .from('scans')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(5);
-    if (!error && scans && scans.length > 0) scanData = scans;
+    if (!error && scans && scans.length > 0) scanContext = JSON.stringify(scans, null, 2);
   } catch (e) {
     console.warn('Impossible de récupérer les scans:', e);
   }
 
-  indarAfficherReponse(agent, null, true);
+  const userMessage = _indarImageB64
+    ? 'Analyse cette image et donne tes observations.'
+    : (scanContext ? `Analyse les derniers scans ti-lex.` : 'Présente-toi et explique ta mission INDAR.');
+
+  indarAfficherReponseStream(agent, true);
+
+  let userId = null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) userId = user.id;
+  } catch (e) {}
 
   try {
-    const response = await fetch('/api/indar', {
+    const token = typeof getToken === 'function' ? getToken() : SB_ANON;
+    const response = await fetch(SB_URL + '/functions/v1/agent-dispatcher', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer ' + token,
+      },
       body: JSON.stringify({
-        agentId,
-        scanData,
-        userMessage: scanData
-          ? `Analyse les ${scanData.length} dernier(s) scan(s) ti-lex.`
-          : 'Présente-toi et explique ta mission INDAR.'
+        agent_id: agentId,
+        message: userMessage,
+        user_id: userId,
+        scan_context: scanContext,
+        deep_think: deepThink,
+        web_search: _indarWebSearch,
+        image_base64: _indarImageB64 || undefined,
+        image_media_type: _indarImageType || undefined,
       })
     });
 
     if (!response.ok) throw new Error('Erreur API: ' + response.status);
-    const result = await response.json();
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let streamedText = '';
+    let buffer = '';
+    let wsUsed = false;
+    let dtUsed = false;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+
+          if (event.type === 'text' && event.delta) {
+            streamedText += event.delta;
+            indarUpdateStreamText(agent, streamedText);
+          }
+
+          if (event.type === 'web_search_start') {
+            indarShowSearchBadge(agent);
+          }
+
+          if (event.type === 'done') {
+            wsUsed = event.web_search_used || false;
+            dtUsed = event.deep_think || false;
+            indarFinalizeStream(agent, streamedText, wsUsed, dtUsed);
+          }
+
+          if (event.type === 'error') {
+            indarAfficherReponse(agent, '❌ Erreur: ' + event.message, false);
+          }
+        } catch (_) {}
+      }
+    }
 
     agent.status = 'ONLINE';
-    indarAfficherReponse(agent, result.reponse, false);
-
     const actifs = INDAR_AGENTS.filter(a => a.status === 'ONLINE').length;
     const compteur = document.getElementById('indar-agents-actifs');
     if (compteur) { compteur.textContent = actifs; compteur.style.color = '#37e0a0'; }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('indar_analyses').upsert({
-          user_id: user.id,
-          agent_id: agentId,
-          analyse: result.reponse,
-          scan_count: scanData ? scanData.length : 0,
-          created_at: new Date().toISOString()
-        });
-      }
-    } catch (e) {
-      console.warn('Sauvegarde analyse:', e);
-    }
-
     indarRendreAgents();
+
+    indarRemoveImage();
   } catch (error) {
-    indarAfficherReponse(agent, `❌ Erreur: ${error.message}`, false);
+    indarAfficherReponse(agent, '❌ Erreur: ' + error.message, false);
   } finally {
+    if (hint) hint.textContent = '';
     if (btn) {
       btn.disabled = false;
-      btn.textContent = `⚡ ACTIVER ${agent.nom}`;
+      btn.textContent = '⚡ ACTIVER ' + agent.nom;
       btn.style.opacity = '1';
     }
+  }
+}
+
+// ── Streaming UI helpers ─────────────────────────────────────────────────
+function indarAfficherReponseStream(agent, isLoading) {
+  const detail = document.getElementById('indar-agent-detail');
+  if (!detail) return;
+
+  detail.innerHTML = `
+    <div style="
+      background:#0d0d0d;border:1px solid ${agent.couleur};
+      border-radius:12px;overflow:hidden;margin-top:16px;
+      box-shadow:0 0 20px ${agent.couleur}18;">
+      <div style="
+        background:#111;border-bottom:2px solid ${agent.couleur};
+        padding:14px 18px;display:flex;align-items:center;gap:12px;">
+        <div style="
+          width:48px;height:48px;border-radius:10px;
+          border:2px solid ${agent.couleur};overflow:hidden;
+          flex-shrink:0;background:#0a0a0a;
+          display:flex;align-items:center;justify-content:center;">
+          ${agent.logoKey === 'marceau'
+            ? '<img src="' + (typeof MARCEAU_LOGO !== 'undefined' ? MARCEAU_LOGO : '') + '" style="width:48px;height:48px;object-fit:cover;" alt="Marceau"/>'
+            : '<div style="transform:scale(1.3);">' + INDAR_LOGOS[agent.logoKey] + '</div>'}
+        </div>
+        <div style="flex:1;">
+          <div style="color:${agent.couleur};font-size:9px;letter-spacing:3px;font-family:monospace;margin-bottom:2px;">AGENT IA ACTIF · CENTRE INDAR</div>
+          <div style="color:#fff;font-size:16px;font-weight:bold;font-family:monospace;">${agent.nom}</div>
+          <div style="color:#777;font-size:11px;font-family:monospace;">${agent.role}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div style="
+            background:${agent.couleur}22;border:1px solid ${agent.couleur};
+            border-radius:6px;padding:4px 10px;
+            color:${agent.couleur};font-size:9px;
+            letter-spacing:2px;font-family:monospace;">
+            ⏳ STREAMING
+          </div>
+          <button onclick="indarFermerDetail()" style="
+            background:transparent;border:1px solid #333;border-radius:6px;
+            color:#555;font-size:11px;padding:3px 8px;
+            cursor:pointer;font-family:monospace;">✕</button>
+        </div>
+      </div>
+      <div data-indar-corps>
+        <div id="indar-stream-badges" style="padding:8px 18px 0;"></div>
+        <div style="padding:4px 18px 16px;">
+          <div style="color:${agent.couleur};font-size:10px;letter-spacing:2px;
+                      margin-bottom:8px;font-family:monospace;">
+            📊 ANALYSE ${agent.nom} — ${new Date().toLocaleTimeString('fr-CA')}
+          </div>
+          <div id="indar-stream-output" style="
+            color:#ccc;font-size:12px;line-height:1.8;
+            font-family:monospace;white-space:pre-wrap;
+            background:#0a0a0a;border:1px solid #23232c;
+            border-radius:8px;padding:14px;
+            min-height:60px;max-height:400px;overflow-y:auto;">
+            <span class="indar-stream-cursor"></span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function indarUpdateStreamText(agent, text) {
+  const output = document.getElementById('indar-stream-output');
+  if (output) {
+    output.innerHTML = (text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '<span class="indar-stream-cursor"></span>';
+    output.scrollTop = output.scrollHeight;
+  }
+}
+
+function indarShowSearchBadge(agent) {
+  const badges = document.getElementById('indar-stream-badges');
+  if (badges && !badges.querySelector('.indar-badge-web')) {
+    badges.innerHTML += '<span class="indar-stream-badge indar-badge-web">🌐 Recherche web en cours...</span> ';
+  }
+}
+
+function indarFinalizeStream(agent, text, webSearchUsed, deepThink) {
+  const output = document.getElementById('indar-stream-output');
+  if (output) {
+    output.innerHTML = (text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  const badges = document.getElementById('indar-stream-badges');
+  if (badges) {
+    badges.innerHTML = '';
+    if (deepThink) badges.innerHTML += '<span class="indar-stream-badge indar-badge-think">🧠 Pensée profonde</span> ';
+    if (webSearchUsed) badges.innerHTML += '<span class="indar-stream-badge indar-badge-web">🌐 Infos temps réel</span> ';
+  }
+
+  const status = document.querySelector('[data-indar-corps]')?.parentElement?.querySelector('[style*="STREAMING"]');
+  if (status) { status.textContent = '✅ ONLINE'; }
+
+  const corps = document.querySelector('[data-indar-corps]');
+  if (corps) {
+    const actionsDiv = document.createElement('div');
+    actionsDiv.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 16px;';
+    actionsDiv.innerHTML = `
+      <button onclick="indarActiverAgent('${agent.id}')" data-activer="${agent.id}"
+        style="background:${agent.couleur};color:#000;border:none;border-radius:8px;padding:10px 16px;
+        font-weight:bold;font-size:11px;letter-spacing:2px;cursor:pointer;font-family:monospace;flex:1;">
+        🔄 RELANCER L'ANALYSE
+      </button>
+      <button onclick="indarCopierAnalyse()" style="background:#23232c;color:#fff;border:1px solid #333;
+        border-radius:8px;padding:10px 16px;font-size:11px;cursor:pointer;font-family:monospace;">
+        📋 COPIER
+      </button>`;
+    corps.appendChild(actionsDiv);
   }
 }
 
