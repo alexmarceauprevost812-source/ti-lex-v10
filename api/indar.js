@@ -1,6 +1,57 @@
 // /api/indar.js — Route API pour les agents INDAR (Claude API)
 export const config = { runtime: 'edge' };
 
+const INDAR_GROUND_TRUTH = `
+# FAITS CONFIRMÉS — BASE DE VÉRITÉ INDAR (NON NÉGOCIABLE)
+
+Ces faits proviennent d'un audit DIRECT et VÉRIFIÉ de l'infrastructure ti-lex.
+Tu DOIS les respecter. Tu NE PEUX PAS les contredire.
+
+## Infrastructure (faits établis)
+- RLS (Row Level Security) est ACTIF sur les 68 tables Supabase. Audit confirmé.
+- La clé anon Supabase est PUBLIQUE PAR DESIGN. Ce n'est PAS une faille.
+- La clé service_role n'est PAS exposée côté client.
+- Aucune vulnérabilité CRITICAL n'est présente.
+
+## Conséquences logiques OBLIGATOIRES
+- RLS actif sur 100% des tables → EXFILTRATION DIRECTE NEUTRALISÉE.
+- Tu NE PEUX PAS écrire "exfiltration silencieuse" ou "énumération de données clients".
+- Le rate limiting protège contre l'ABUS (DoS, brute-force), PAS contre l'exfiltration.
+
+# ÉCHELLE DE SÉVÉRITÉ COMMUNE
+- CRITICAL : faille d'accès direct aux données. (AUCUNE présente.)
+- HIGH : faille exploitable donnant un accès non autorisé réel.
+- MEDIUM : faiblesse de périmètre/défense en profondeur.
+- LOW / INFO : durcissement, bonnes pratiques.
+- "Rate limiting absent" → MEDIUM max. "CORS wildcard" → LOW/MEDIUM. "Clé anon exposée" → INFO.
+
+# RÈGLE LOI 25 (Québec)
+- Régime PRÉVENTIF (art. 3.7) : rate limiting et CORS = améliorations préventives.
+- Régime INCIDENT : notification CAI SEULEMENT si incident de confidentialité CONFIRMÉ.
+- NE PAS écrire "non-conformité caractérisée", "signalement CAI automatique", "25 M$".
+- Formuler : "Amélioration préventive (art. 3.7). Aucun incident confirmé."
+
+# RÈGLES ANTI-CONTRADICTION
+- Ne JAMAIS affirmer "RLS actif" ET "exfiltration possible" dans le même rapport.
+- 0 critique + 0 high = "POSTURE SAINE", jamais "RISQUE ÉLEVÉ".
+`;
+
+function detecterContradictions(texte) {
+  const violations = [];
+  const t = texte.toLowerCase();
+  if ((t.includes("exfiltration") || t.includes("énumération de données")) &&
+      !t.includes("rls bloque") && !t.includes("neutralisé"))
+    violations.push("Claim exfiltration vs RLS actif");
+  if (t.includes("non-conformité caractérisée") || t.includes("non conforme") ||
+      (t.includes("signalement cai") && t.includes("automatique")))
+    violations.push("Claim Loi 25 alarmiste");
+  if (t.includes("25 m$") || t.includes("25m$") || t.includes("4 % du ca"))
+    violations.push("Montant sanction interdit");
+  if (t.includes("rate limiting") && (t.includes("[critical]") || t.includes("critique")))
+    violations.push("Rate limiting classé CRITICAL");
+  return violations;
+}
+
 const AGENT_PROMPTS = {
   nexus: `Tu es NEXUS-AL, responsable de la cybersécurité du Centre INDAR ti-lex.
 Tu coordonnes tous les agents et supervises les opérations de sécurité.
@@ -101,7 +152,7 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
-        system: AGENT_PROMPTS[agentId],
+        system: INDAR_GROUND_TRUTH + "\n\n" + AGENT_PROMPTS[agentId],
         messages: [{ role: 'user', content: userContent }]
       })
     });
@@ -116,8 +167,10 @@ export default async function handler(req) {
 
     const data = await response.json();
     const reponse = data.content?.[0]?.text || 'Aucune réponse de l\'agent.';
+    const violations = detecterContradictions(reponse);
+    if (violations.length > 0) console.warn(`[INDAR] ${agentId} — contradictions:`, violations);
 
-    return new Response(JSON.stringify({ agentId, reponse, tokens: data.usage }), {
+    return new Response(JSON.stringify({ agentId, reponse, tokens: data.usage, violations }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

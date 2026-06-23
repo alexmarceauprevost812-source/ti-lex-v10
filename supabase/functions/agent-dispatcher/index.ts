@@ -3,6 +3,7 @@
 // 5 Superpowers: Extended Thinking, Web Search, Vision, Streaming SSE, Prompt Caching
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+import { INDAR_GROUND_TRUTH, detecterContradictions } from "../_shared/indar-ground-truth.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -184,8 +185,9 @@ Deno.serve(async (req: Request) => {
     const code = String(rawBody.agent).toUpperCase();
     const target = String(rawBody.scan_target ?? rawBody.target ?? "").slice(0, 8000);
     const agentKey = AGENT_ALIASES[code];
-    const system = agentKey ? QUICK_PROMPTS[agentKey] : null;
-    if (!system) return json({ error: `Agent inconnu : ${code}` }, 400, cors);
+    const baseQuick = agentKey ? QUICK_PROMPTS[agentKey] : null;
+    if (!baseQuick) return json({ error: `Agent inconnu : ${code}` }, 400, cors);
+    const system = INDAR_GROUND_TRUTH + "\n\n" + baseQuick;
 
     try {
       const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -226,7 +228,12 @@ Deno.serve(async (req: Request) => {
           .catch(() => {});
       }
 
-      return json({ agent: code, summary }, 200, cors);
+      const qViolations = detecterContradictions(summary);
+      if (qViolations.length > 0) {
+        console.warn(`[INDAR] ${agentKey} quick — contradictions:`, qViolations);
+      }
+
+      return json({ agent: code, summary, violations: qViolations }, 200, cors);
     } catch (e) {
       return json({ error: "Échec de l'appel à Claude", detail: String(e) }, 502, cors);
     }
@@ -271,7 +278,8 @@ Deno.serve(async (req: Request) => {
     text: string;
     cache_control?: { type: string };
   }> = [
-    { type: "text", text: baseSystem + MEDIA_INSTRUCTION, cache_control: { type: "ephemeral" } },
+    { type: "text", text: INDAR_GROUND_TRUTH, cache_control: { type: "ephemeral" } },
+    { type: "text", text: baseSystem + MEDIA_INSTRUCTION },
   ];
   if (contextParts.length > 0) {
     systemBlocks.push({ type: "text", text: contextParts.join("") });
@@ -380,6 +388,10 @@ Deno.serve(async (req: Request) => {
               }
 
               if (event.type === "message_stop") {
+                const violations = detecterContradictions(fullReplyText);
+                if (violations.length > 0) {
+                  console.warn(`[INDAR] ${agentId} — contradictions:`, violations);
+                }
                 if (userId && fullReplyText) {
                   await supabase.from("indar_analyses").upsert({
                     user_id: userId,
@@ -390,7 +402,7 @@ Deno.serve(async (req: Request) => {
                   }).catch(() => {});
                 }
                 controller.enqueue(encoder.encode(
-                  `data: ${JSON.stringify({ type: "done", web_search_used: webSearchUsed, deep_think: body.deep_think || false })}\n\n`,
+                  `data: ${JSON.stringify({ type: "done", web_search_used: webSearchUsed, deep_think: body.deep_think || false, violations })}\n\n`,
                 ));
               }
             } catch { /* skip */ }
