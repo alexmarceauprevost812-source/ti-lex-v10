@@ -1,39 +1,35 @@
--- tilex_memoire: historique des messages par session
-CREATE TABLE IF NOT EXISTS public.tilex_memoire (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
-  session_id TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+CREATE TABLE IF NOT EXISTS tilex_memoire (
+  id BIGSERIAL PRIMARY KEY,
+  role TEXT NOT NULL,
   contenu TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_memoire_session ON tilex_memoire(session_id);
+
+CREATE TABLE IF NOT EXISTS tilex_faits (
+  id BIGSERIAL PRIMARY KEY,
+  cle TEXT UNIQUE NOT NULL,
+  valeur TEXT NOT NULL,
+  contexte TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_tilex_memoire_session ON public.tilex_memoire(session_id);
-CREATE INDEX IF NOT EXISTS idx_tilex_memoire_user ON public.tilex_memoire(user_id);
-
-ALTER TABLE public.tilex_memoire ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users manage own memoire"
-  ON public.tilex_memoire FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
--- tilex_faits: faits persistants (clé-valeur) par utilisateur
-CREATE TABLE IF NOT EXISTS public.tilex_faits (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID DEFAULT auth.uid() REFERENCES auth.users(id) ON DELETE CASCADE,
-  cle TEXT NOT NULL,
-  valeur TEXT NOT NULL,
-  contexte TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, cle)
+-- zip_historique already exists from migration 0028, skip if present
+CREATE TABLE IF NOT EXISTS zip_historique (
+  id BIGSERIAL PRIMARY KEY,
+  nom_projet TEXT NOT NULL,
+  fichiers JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_tilex_faits_user ON public.tilex_faits(user_id);
+ALTER TABLE tilex_memoire ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tilex_faits ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE public.tilex_faits ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users full access memoire"
+  ON tilex_memoire FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
 
-CREATE POLICY "Users manage own faits"
-  ON public.tilex_faits FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Authenticated users full access faits"
+  ON tilex_faits FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
