@@ -12,3 +12,6 @@ verify_jwt = true
 
 [functions.create-portal]
 verify_jwt = true
+
+[functions.agent-dispatcher]
+verify_jwt = false

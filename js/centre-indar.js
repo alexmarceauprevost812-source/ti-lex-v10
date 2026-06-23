@@ -909,5 +909,187 @@ function indarCopierAnalyse() {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// QUICK SCAN GRID — séquentiel / parallèle
+// ════════════════════════════════════════════════════════════════════════════
+const INDAR_GRID_AGENTS = [
+  { id:"nexus",   code:"NEXUS-AL",    role:"Orchestrateur",     aura:"#ff7f27",
+    glyph:'<circle cx="12" cy="12" r="2.5"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M18 6l-2.5 2.5M6 18l2.5-2.5M18 18l-2.5-2.5"/>' },
+  { id:"marceau", code:"MARCEAU",     role:"Gardien · Mémoire", aura:"#ffcf4a",
+    glyph:'<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>' },
+  { id:"cipher",  code:"CIPHER",      role:"Briseur de codes",  aura:"#37e0a0",
+    glyph:'<circle cx="8" cy="12" r="3.2"/><path d="M11 12h9M16 12v3M19 12v4"/>' },
+  { id:"sentinel",code:"SENTINEL",    role:"La Vigie",          aura:"#dfe6ff",
+    glyph:'<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="2.5"/>' },
+  { id:"oracle",  code:"ORACLE",      role:"Le Prophète",       aura:"#c084fc",
+    glyph:'<path d="M12 3l5 5-5 13L7 8z"/><path d="M7 8h10"/>' },
+  { id:"phantom", code:"PHANTOM-RED", role:"Fantôme offensif",  aura:"#ff3b3b",
+    glyph:'<path d="M6 20V10a6 6 0 0 1 12 0v10l-2-1.5L14 20l-2-1.5L10 20l-2-1.5z"/><path d="M9.5 10.5h.01M14.5 10.5h.01"/>' },
+  { id:"reaper",  code:"REAPER",      role:"Analyste Malwares", aura:"#ff2020",
+    glyph:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6" fill="none" opacity=".4"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>' },
+];
+
+var _gridEl  = function() { return document.getElementById("indar-grid"); };
+var _consEl  = function() { return document.getElementById("indar-console"); };
+var _gridRunId = 0;
+var _gridBusy  = false;
+
+function indarRenderGrid() {
+  var grid = _gridEl();
+  if (!grid) return;
+  grid.innerHTML = "";
+  INDAR_GRID_AGENTS.forEach(function(a) {
+    var el = document.createElement("div");
+    el.className = "indar-agent-hex";
+    el.id = "indar-hex-" + a.id;
+    el.style.setProperty("--aura", a.aura);
+    el.innerHTML =
+      '<span class="indar-hex-badge"></span>'
+      + '<div class="indar-hex-icon"><div class="sweep"></div><svg viewBox="0 0 24 24">' + a.glyph + '</svg></div>'
+      + '<div class="indar-hex-code mono">' + a.code + '</div>'
+      + '<div class="indar-hex-role">' + a.role + '</div>'
+      + '<div class="indar-hex-check mono">✓ TERMINÉ</div>';
+    grid.appendChild(el);
+  });
+}
+
+function indarGridSetState(id, state) {
+  var el = document.getElementById("indar-hex-" + id);
+  if (!el) return;
+  el.classList.remove("revealed", "working", "done");
+  if (state === "working") el.classList.add("revealed", "working");
+  else if (state === "done") el.classList.add("revealed", "done");
+  else if (state === "revealed") el.classList.add("revealed");
+}
+
+function indarConsoleLog(who, msg, aura, cls) {
+  var line = document.createElement("div");
+  line.className = "line";
+  line.innerHTML =
+    '<span class="who" style="color:' + (aura || "#ff7f27") + '">' + who + '</span>'
+    + '<span class="msg ' + (cls || "") + '">' + (msg || '').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>';
+  var c = _consEl();
+  if (c) { c.appendChild(line); c.scrollTop = c.scrollHeight; }
+  return line;
+}
+
+function indarConsoleClear() {
+  var c = _consEl();
+  if (c) c.innerHTML = "";
+}
+
+function indarGridLock(state) {
+  _gridBusy = state;
+  var seq = document.getElementById("indar-seq");
+  var all = document.getElementById("indar-all");
+  if (seq) seq.disabled = state;
+  if (all) all.disabled = state;
+}
+
+async function callAgentQuick(code, scanTarget) {
+  var token = typeof getToken === 'function' ? getToken() : SB_ANON;
+  if (!token) return { error: "Session expirée — reconnecte-toi." };
+  try {
+    var r = await fetch(SB_URL + '/functions/v1/agent-dispatcher', {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "apikey": SB_ANON,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ agent: code, scan_target: scanTarget || "" }),
+    });
+    var data = await r.json();
+    if (!r.ok) return { error: data.error || ("Erreur " + r.status) };
+    return { summary: data.summary };
+  } catch (e) {
+    return { error: "Réseau indisponible." };
+  }
+}
+
+async function indarRunSequential(scanTarget) {
+  var my = ++_gridRunId;
+  indarGridReset();
+  indarGridLock(true);
+  indarConsoleClear();
+  indarConsoleLog("NEXUS-AL", "Dispatch en cours — appel des agents un par un.", "#ff7f27");
+
+  for (var i = 0; i < INDAR_GRID_AGENTS.length; i++) {
+    var a = INDAR_GRID_AGENTS[i];
+    if (my !== _gridRunId) return;
+    indarGridSetState(a.id, "working");
+    var l = indarConsoleLog(a.code, "Analyse…", a.aura, "cursor");
+    var res = await callAgentQuick(a.code, scanTarget);
+    if (my !== _gridRunId) return;
+    var msgEl = l.querySelector(".msg");
+    if (msgEl) {
+      msgEl.classList.remove("cursor");
+      msgEl.textContent = res.summary || res.error;
+    }
+    indarGridSetState(a.id, "done");
+    await new Promise(function(r) { setTimeout(r, 180); });
+  }
+  if (my !== _gridRunId) return;
+  indarGridConverge();
+  indarConsoleLog("NEXUS-AL", "Convergence des 7 verdicts → rapport unifié prêt.", "#ff7f27", "verdict");
+  indarGridLock(false);
+}
+
+async function indarRunAll(scanTarget) {
+  var my = ++_gridRunId;
+  indarGridReset();
+  indarGridLock(true);
+  indarConsoleClear();
+  indarConsoleLog("NEXUS-AL", "Scan parallèle — les 7 agents engagés simultanément.", "#ff7f27");
+
+  INDAR_GRID_AGENTS.forEach(function(a) { indarGridSetState(a.id, "working"); });
+
+  await Promise.all(INDAR_GRID_AGENTS.map(async function(a) {
+    var res = await callAgentQuick(a.code, scanTarget);
+    if (my !== _gridRunId) return;
+    indarConsoleLog(a.code, res.summary || res.error, a.aura);
+    indarGridSetState(a.id, "done");
+  }));
+
+  if (my !== _gridRunId) return;
+  indarGridConverge();
+  indarConsoleLog("NEXUS-AL", "Tous les agents ont répondu → rapport unifié.", "#ff7f27", "verdict");
+  indarGridLock(false);
+}
+
+function indarGridConverge() {
+  var n = document.getElementById("indar-hex-nexus");
+  if (n) {
+    n.classList.add("working");
+    setTimeout(function() { n.classList.replace("working", "done"); }, 700);
+  }
+}
+
+function indarGridReset() {
+  _gridRunId++;
+  INDAR_GRID_AGENTS.forEach(function(a) { indarGridSetState(a.id, ""); });
+}
+
+function indarGridFullReset() {
+  indarGridReset();
+  indarGridLock(false);
+  indarConsoleClear();
+  indarConsoleLog("SYSTÈME", "En attente. Lance un scan pour que les agents prennent place.", "#6b6b78");
+}
+
+function indarGridInit() {
+  indarRenderGrid();
+  var targetInput = document.getElementById("indar-scan-target");
+  var getTarget = function() { return targetInput ? targetInput.value.trim() : ""; };
+  var seqBtn = document.getElementById("indar-seq");
+  var allBtn = document.getElementById("indar-all");
+  var resetBtn = document.getElementById("indar-grid-reset");
+  if (seqBtn) seqBtn.addEventListener("click", function() { indarRunSequential(getTarget()); });
+  if (allBtn) allBtn.addEventListener("click", function() { indarRunAll(getTarget()); });
+  if (resetBtn) resetBtn.addEventListener("click", indarGridFullReset);
+}
+
+document.addEventListener("DOMContentLoaded", indarGridInit);
+
+// ════════════════════════════════════════════════════════════════════════════
 // FIN CENTRE INDAR
 // ════════════════════════════════════════════════════════════════════════════

@@ -1785,6 +1785,85 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 #indar-agents-liste{columns:1;}
 @media(min-width:500px){#indar-agents-liste{columns:1;}}
 
+/* ═══ CENTRE INDAR — GRID SCAN ═══ */
+.indar .mono,.indar.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.indar-scan-head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.indar-scan-crest{
+  width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;
+  border:1px solid var(--border,#23232c);border-radius:11px;
+  background:linear-gradient(160deg,#141414,#0c0c0c);color:#ff7f27;
+}
+.indar-scan-title{font-size:1.18rem;letter-spacing:.04em;font-weight:700;color:#fff}
+.indar-scan-title span{color:#ff7f27}
+.indar-scan-sub{color:#6b6b78;font-size:.82rem;letter-spacing:.06em;margin-top:1px}
+.indar-controls{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 26px}
+.indar-btn{
+  font:inherit;cursor:pointer;color:#fff;
+  border:1px solid #23232c;border-radius:10px;background:#121218;
+  padding:11px 15px;letter-spacing:.02em;font-family:monospace;font-size:12px;
+  transition:border-color .18s,background .18s,transform .06s;
+}
+.indar-btn:hover:not(:disabled){border-color:#ff7f27}
+.indar-btn:active:not(:disabled){transform:translateY(1px)}
+.indar-btn:disabled{opacity:.45;cursor:not-allowed}
+.indar-btn:focus-visible{outline:2px solid #ffcf4a;outline-offset:2px}
+.indar-btn--primary{background:linear-gradient(135deg,#ff7f27,#e06a16);border-color:transparent;color:#160a00;font-weight:600}
+.indar-btn--ghost{background:#101016}
+.indar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.indar-agent-hex{
+  --aura:#ff7f27;
+  position:relative;border:1px solid #23232c;border-radius:16px;
+  background:linear-gradient(180deg,#101016,#0b0b0f);
+  padding:18px 14px 16px;text-align:center;overflow:hidden;
+  transition:border-color .3s,box-shadow .3s,transform .3s,opacity .45s;
+  opacity:.16;transform:translateY(8px) scale(.97);
+}
+.indar-agent-hex::before{
+  content:"";position:absolute;inset:14px;border-radius:12px;
+  border:1px dashed #2a2a33;transition:opacity .4s;pointer-events:none;
+}
+.indar-agent-hex.revealed{opacity:1;transform:none}
+.indar-agent-hex.revealed::before{opacity:0}
+.indar-agent-hex.working{border-color:var(--aura);box-shadow:0 0 0 1px var(--aura),0 0 26px -6px var(--aura)}
+.indar-agent-hex.done{border-color:color-mix(in srgb,var(--aura) 55%,#23232c)}
+.indar-hex-icon{
+  width:74px;height:74px;margin:0 auto 12px;position:relative;display:grid;place-items:center;
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  background:#16161d;color:#6b6b78;transition:background .3s,color .3s;
+}
+.indar-agent-hex.revealed .indar-hex-icon{color:var(--aura)}
+.indar-agent-hex.working .indar-hex-icon,
+.indar-agent-hex.done .indar-hex-icon{
+  background:radial-gradient(120% 120% at 50% 0%,color-mix(in srgb,var(--aura) 22%,transparent),transparent 70%),#16161d;
+}
+.indar-hex-icon svg{width:34px;height:34px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;z-index:2}
+.indar-hex-icon::after{content:"";position:absolute;inset:-3px;border-radius:4px;clip-path:inherit;background:var(--aura);opacity:0;z-index:1}
+.indar-agent-hex.working .indar-hex-icon::after{animation:indarPulseHex 1.15s ease-in-out infinite}
+@keyframes indarPulseHex{0%,100%{opacity:0;transform:scale(1)}50%{opacity:.28;transform:scale(1.06)}}
+.indar-agent-hex.working .indar-hex-icon .sweep{
+  position:absolute;left:0;right:0;height:30%;z-index:2;
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--aura) 65%,transparent),transparent);
+  animation:indarSweepHex 1.1s linear infinite;mix-blend-mode:screen;
+}
+@keyframes indarSweepHex{0%{top:-30%}100%{top:100%}}
+.indar-hex-code{font-size:.74rem;letter-spacing:.12em;color:var(--aura);font-weight:600}
+.indar-agent-hex:not(.revealed) .indar-hex-code{color:#33333d}
+.indar-hex-role{font-size:.7rem;color:#6b6b78;margin-top:2px;letter-spacing:.02em}
+.indar-hex-badge{position:absolute;top:11px;right:11px;width:9px;height:9px;border-radius:50%;background:#26262e;transition:background .3s,box-shadow .3s}
+.indar-agent-hex.working .indar-hex-badge{background:var(--aura);box-shadow:0 0 9px var(--aura);animation:indarHexBlink 1s steps(2) infinite}
+.indar-agent-hex.done .indar-hex-badge{background:#37e0a0;box-shadow:0 0 8px #37e0a0}
+@keyframes indarHexBlink{50%{opacity:.35}}
+.indar-hex-check{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) translateY(6px);font-size:.66rem;color:#37e0a0;letter-spacing:.08em;opacity:0;transition:opacity .3s,transform .3s}
+.indar-agent-hex.done .indar-hex-check{opacity:1;transform:translateX(-50%)}
+.indar-console{margin-top:24px;border:1px solid #23232c;border-radius:14px;background:#0c0c11;padding:14px 16px;min-height:64px;max-height:260px;overflow-y:auto}
+.indar-console .line{display:flex;gap:9px;align-items:baseline;font-size:.82rem;padding:3px 0}
+.indar-console .who{flex:0 0 auto;font-size:.72rem;letter-spacing:.06em;color:#ff7f27}
+.indar-console .msg{color:#cfcfd6}
+.indar-console .verdict{color:#ffcf4a;font-weight:600}
+.indar-console .cursor::after{content:"▋";color:#ff7f27;animation:indarCaretHex .8s steps(2) infinite}
+@keyframes indarCaretHex{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.indar-agent-hex *{animation:none !important;transition:opacity .2s !important}}
+
 </style>
 </head>
 <body>
@@ -2849,6 +2928,33 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 
     <!-- Panneau détail agent (injecté par JS) -->
     <div id="indar-agent-detail"></div>
+
+    <!-- ═══ QUICK SCAN GRID ═══ -->
+    <div style="margin-top:28px;border-top:1px solid #1a1a22;padding-top:20px;">
+      <header class="indar-scan-head">
+        <div class="indar-scan-crest mono">◇</div>
+        <div>
+          <h3 class="indar-scan-title">Quick <span>Scan</span></h3>
+          <div class="indar-scan-sub mono">7 AGENTS · DISPATCHER</div>
+        </div>
+      </header>
+
+      <div style="margin-bottom:14px;">
+        <input id="indar-scan-target" type="text" placeholder="Cible du scan (URL, domaine, IP...)" style="width:100%;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:10px 12px;color:#e2e2ea;font-size:12px;font-family:monospace;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#ff7f27'" onblur="this.style.borderColor='#23232c'">
+      </div>
+
+      <div class="indar-controls">
+        <button class="indar-btn indar-btn--primary" id="indar-seq">▸ Scan séquentiel (1 par 1)</button>
+        <button class="indar-btn" id="indar-all">⛬ Scan complet (LES 7)</button>
+        <button class="indar-btn indar-btn--ghost" id="indar-grid-reset">Réinitialiser</button>
+      </div>
+
+      <div class="indar-grid" id="indar-grid"></div>
+
+      <div class="indar-console mono" id="indar-console">
+        <div class="line"><span class="who">SYSTÈME</span><span class="msg">En attente. Lance un scan pour que les agents prennent place.</span></div>
+      </div>
+    </div>
 
     <!-- Footer -->
     <div style="margin-top:24px;text-align:center;color:#222;
