@@ -27,7 +27,7 @@
     SUPABASE_KEY: 'REMPLACE_PAR_TA_CLE_PUBLIABLE',
     GARDIEN_FN: 'tilex-gardien',
     // Domaines où le code a le DROIT de rouler (verrou de domaine).
-    HOTES_AUTORISES: ['localhost', '127.0.0.1', 'ton-domaine.com', 'www.ton-domaine.com'],
+    HOTES_AUTORISES: ['localhost', '127.0.0.1', 'ti-lex-v10.vercel.app'],
     // Chemin-piège où on redirige les intrus.
     CHEMIN_PIEGE: '/zone-interdite.html',
     // Seuil de suspicion (score >=) pour déclencher le leurre.
