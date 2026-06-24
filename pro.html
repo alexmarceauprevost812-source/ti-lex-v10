@@ -817,11 +817,11 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cx-typing .tyd:nth-child(2){animation-delay:.15s;}.cx-typing .tyd:nth-child(3){animation-delay:.3s;}
 .cx-cursor{display:inline;color:#ff7f27;font-weight:700;animation:cxBlink .7s infinite;}
 @keyframes cxBlink{0%,100%{opacity:1}50%{opacity:0}}
-.cx-scan-bar{display:flex;gap:8px;padding:8px 16px;align-items:center;order:2;}
-.cx-scan-btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:8px 18px;}
-@media(max-width:680px){.cx-scan-bar{position:sticky;bottom:70px;z-index:20;background:var(--bg);padding:8px 12px;border-top:1px solid var(--border);}}
-.cx-scan-results{padding:0 16px 8px;max-height:320px;overflow-y:auto;}
-.cx-scan-summary{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--or);padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.cx-scan-bar{display:flex;gap:10px;padding:12px 16px;align-items:center;order:2;justify-content:center;flex-wrap:wrap;}
+.cx-scan-btn{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 22px;border-radius:10px;box-shadow:0 0 12px rgba(255,127,39,.3);}
+@media(max-width:680px){.cx-scan-bar{position:sticky;bottom:70px;z-index:20;background:var(--bg);padding:10px 12px;border-top:1px solid var(--border);}}
+.cx-scan-results{padding:0 12px 8px;max-height:180px;overflow-y:auto;}
+.cx-scan-summary{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--txt);padding:10px 14px;border-radius:8px;background:var(--bg2);}
 .cx-scan-tree{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--or);line-height:1.6;}
 .cx-tree-folder{cursor:pointer;padding:1px 0;user-select:none;}
 .cx-tree-folder:hover{color:var(--orange);}
@@ -2387,13 +2387,16 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
       </div>
       <div class="gh-files" id="gh-files"></div>
       <div class="cx-scan-bar" id="cx-scan-bar">
-        <button class="btn-orange cx-scan-btn" id="cx-scan-btn" onclick="cxScanProject()">SCANNER LE PROJET</button>
-        <button class="btn-orange cx-scan-btn" id="cx-code-btn" onclick="cxStartCoding()" style="display:none;">COMMENCER À CODER</button>
+        <button class="btn-orange cx-scan-btn" id="cx-scan-btn" onclick="cxScanProject()" style="font-size:14px;padding:12px 24px;letter-spacing:2px;">🔰 SCANNER LE PROJET</button>
+        <button class="btn-orange cx-scan-btn" id="cx-code-btn" onclick="cxStartCoding()" style="display:none;font-size:14px;padding:12px 24px;letter-spacing:2px;background:linear-gradient(135deg,#37e0a0,#1a9e6a);">✅ VALIDER & CODER</button>
         <button class="cgb-action-btn cgb-media" id="cx-media-btn" onclick="openMediaModal()" style="display:none;">MEDIA</button>
       </div>
       <div class="cx-scan-results" id="cx-scan-results" style="display:none;">
-        <div class="cx-scan-summary" id="cx-scan-summary"></div>
-        <div class="cx-scan-tree" id="cx-scan-tree"></div>
+        <div class="cx-scan-summary" id="cx-scan-summary" style="padding:12px 16px;font-size:13px;color:var(--txt);background:var(--bg2);border-radius:8px;margin:8px 12px;"></div>
+        <div class="cx-scan-tree" id="cx-scan-tree" style="display:none;"></div>
+        <div style="text-align:center;padding:4px 12px;">
+          <button class="btn-ghost" id="cx-tree-toggle" onclick="cxToggleTree()" style="font-size:11px;padding:4px 14px;">📂 Voir les fichiers</button>
+        </div>
       </div>
       <button class="cx-clear-btn" onclick="clearCx()">EFFACER</button>
       <div class="codex-feed" id="codex-feed">
@@ -5616,10 +5619,24 @@ async function genCode(){
       cxAddReply("⚠️ "+errMsg);genBusy=false;return;
     }
     var streamEl=cxAddStreamReply();
+    var _cxTextNode=document.createTextNode('');
+    var _cxCursor=document.createElement('span');
+    _cxCursor.className='cx-cursor';_cxCursor.textContent='█';
+    streamEl.textContent='';
+    streamEl.appendChild(_cxTextNode);
+    streamEl.appendChild(_cxCursor);
+    var _cxScrollTimer=null;
     var reply=await readSSEStream(res,function(delta,full){
-      streamEl.innerHTML=escHtml(full)+'<span class="cx-cursor">█</span>';
-      var feed=document.getElementById("codex-feed");if(feed)feed.scrollTop=feed.scrollHeight;
+      _cxTextNode.data=full;
+      if(!_cxScrollTimer){
+        _cxScrollTimer=setTimeout(function(){
+          _cxScrollTimer=null;
+          var feed=document.getElementById("codex-feed");if(feed)feed.scrollTop=feed.scrollHeight;
+        },_efMobile?60:16);
+      }
     });
+    if(_cxScrollTimer){clearTimeout(_cxScrollTimer);_cxScrollTimer=null;}
+    _cxCursor.remove();
     cxFinalizeStream(streamEl,reply||"(réponse vide)");
     codexHistory.push({role:"assistant",content:reply});
     if(!codexValidated)showCodexValidateBtn();
@@ -5662,27 +5679,48 @@ async function cxScanProject(){
   var summaryEl=document.getElementById("cx-scan-summary");
   var scanBtn=document.getElementById("cx-scan-btn");
   var codeBtn=document.getElementById("cx-code-btn");
-  scanBtn.disabled=true;scanBtn.textContent="ANALYSE EN COURS...";
+  scanBtn.disabled=true;scanBtn.textContent="⏳ ANALYSE EN COURS...";
   resultsEl.style.display="block";
-  treeEl.innerHTML='<div class="cx-scan-progress">Analyse du projet...<div class="cx-scan-progress-bar"><div class="cx-scan-progress-fill" id="cx-scan-fill" style="width:20%;"></div></div></div>';
-  summaryEl.innerHTML="";
+  treeEl.style.display="none";
+  var toggleBtn=document.getElementById("cx-tree-toggle");
+  if(toggleBtn)toggleBtn.textContent="📂 Voir les fichiers";
+  summaryEl.innerHTML='<div style="text-align:center;padding:8px;color:var(--muted);">Analyse du projet...</div>';
   try{
     var data=await ghProxyCall({action:"listFiles",path:""});
-    document.getElementById("cx-scan-fill")&&(document.getElementById("cx-scan-fill").style.width="80%");
     var tree=data.tree||data;
     if(!Array.isArray(tree)){tree=[];}
     cxScanData=tree;
     var stats=cxAnalyzeTree(tree);
-    summaryEl.innerHTML="<b>"+stats.files+"</b> fichiers · <b>"+stats.folders+"</b> dossiers · Langages: <b>"+stats.langs.join(", ")+"</b>";
-    treeEl.innerHTML="";
-    var treeHtml=cxBuildTree(tree);
-    treeEl.innerHTML=treeHtml;
-    document.getElementById("cx-scan-fill")&&(document.getElementById("cx-scan-fill").style.width="100%");
+    var gh=window._codexGithub;
+    var repoLabel=gh&&gh.repo?gh.repo.owner+"/"+gh.repo.name:"projet";
+    var branchLabel=gh&&gh.branch?gh.branch:"main";
+    summaryEl.innerHTML='<div style="font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px;">✅ SCAN TERMINÉ</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">📦 <b>'+escHtml(repoLabel)+'</b> · 🌿 <b>'+escHtml(branchLabel)+'</b></div>'+
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+
+      '<span><b style="color:var(--txt);font-size:16px;">'+stats.files+'</b> <span style="color:var(--muted);font-size:11px;">fichiers</span></span>'+
+      '<span><b style="color:var(--txt);font-size:16px;">'+stats.folders+'</b> <span style="color:var(--muted);font-size:11px;">dossiers</span></span>'+
+      '<span style="color:var(--muted);font-size:11px;">Langages: <b>'+stats.langs.join(", ")+'</b></span>'+
+      '</div>';
+    treeEl.innerHTML=cxBuildTree(tree);
     codeBtn.style.display="inline-flex";
-    scanBtn.textContent="RE-SCANNER";scanBtn.disabled=false;
+    scanBtn.textContent="🔄 RE-SCANNER";scanBtn.disabled=false;
+    scanBtn.style.fontSize="12px";scanBtn.style.padding="8px 16px";
   }catch(e){
-    treeEl.innerHTML='<div style="color:var(--red);padding:8px;">Erreur: '+escHtml(e.message)+'</div>';
-    scanBtn.textContent="SCANNER LE PROJET";scanBtn.disabled=false;
+    summaryEl.innerHTML='<div style="color:var(--red);padding:8px;">❌ Erreur: '+escHtml(e.message)+'</div>';
+    scanBtn.textContent="🔰 SCANNER LE PROJET";scanBtn.disabled=false;
+  }
+}
+
+function cxToggleTree(){
+  var treeEl=document.getElementById("cx-scan-tree");
+  var btn=document.getElementById("cx-tree-toggle");
+  if(!treeEl)return;
+  if(treeEl.style.display==="none"){
+    treeEl.style.display="block";
+    if(btn)btn.textContent="📂 Masquer les fichiers";
+  }else{
+    treeEl.style.display="none";
+    if(btn)btn.textContent="📂 Voir les fichiers";
   }
 }
 
