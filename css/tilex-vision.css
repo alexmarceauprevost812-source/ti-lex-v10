@@ -1,0 +1,27 @@
+/* css/tilex-vision.css */
+/* ===== TILEXVISION ===== */
+.tilex-vision-apercu { text-align:center; margin-bottom:16px; }
+.tilex-vision-img {
+  max-width:100%; max-height:300px; border-radius:12px;
+  border:2px solid #2a2a4a; box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.tilex-vision-meta { font-size:12px; color:#aaaacc; margin-top:8px; font-family:monospace; }
+.tilex-vision-loading {
+  text-align:center; padding:20px; color:#00d4ff; font-size:15px;
+  animation:pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+.tilex-vision-resume {
+  background:rgba(20,20,40,0.7); border:1px solid #2a2a4a;
+  border-radius:14px; padding:20px; margin-top:16px;
+}
+.tilex-vision-titre { font-size:17px; font-weight:700; color:#00ff88; margin-bottom:12px; }
+.tilex-vision-texte { font-size:14px; line-height:1.7; color:#e0e0f0; }
+.tilex-vision-footer {
+  margin-top:14px; padding-top:12px; border-top:1px solid #2a2a4a;
+  font-size:12px; color:#6666aa;
+}
+.tilex-vision-erreur {
+  background:rgba(255,80,80,0.1); border:1px solid #ff5050;
+  color:#ff8888; padding:16px; border-radius:12px;
+}
