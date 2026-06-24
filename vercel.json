@@ -5,6 +5,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/abonnement", "destination": "/abonnement.html" },
     { "source": "/forfaits", "destination": "/forfaits.html" },
     { "source": "/forfaits-cyber", "destination": "/forfaits-cyber.html" },
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
