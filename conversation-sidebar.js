@@ -136,16 +136,7 @@ const SIDEBAR_CSS = `
   font-size: 10px; color: #444; letter-spacing: 1px;
 }
 
-#cm-toggle {
-  position: fixed; top: 16px; left: 16px; z-index: 1001;
-  width: 40px; height: 40px; border-radius: 10px;
-  background: #111; border: 1px solid rgba(255,127,39,.25);
-  color: #ff7f27; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s;
-  font-size: 16px;
-}
-#cm-toggle:hover { border-color: #ff7f27; background: rgba(255,127,39,.1); }
+/* cm-toggle removed — conversations accessible via sidebar menu */
 
 .cm-warning {
   margin: 8px 12px; padding: 8px 12px; border-radius: 6px;
@@ -174,12 +165,6 @@ export class ConversationSidebar {
     ov.onclick = () => this.close();
     document.body.appendChild(ov);
     this.overlay = ov;
-
-    const tog = document.createElement('button');
-    tog.id = 'cm-toggle'; tog.title = 'Conversations';
-    tog.innerHTML = '☰';
-    tog.onclick = () => this.toggle();
-    document.body.appendChild(tog);
 
     const sb = document.createElement('div');
     sb.id = 'cm-sidebar';

@@ -2080,7 +2080,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
   </div>
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
-      <div class="sb-sub-item active" id="sub-convos" onclick="showTab('conversations')" data-hide-in-chat="true">Conversations</div>
+      <div class="sb-sub-item active" id="sub-convos" onclick="ouvriConvSidebar()" data-hide-in-chat="true">Conversations</div>
       <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
       <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
     </div>
@@ -3428,6 +3428,15 @@ document.addEventListener("click",function(e){
   var btn=document.getElementById("sidebar-toggle-btn");
   if(!sb.contains(e.target)&&!btn.contains(e.target))toggleSidebar();
 });
+
+function ouvriConvSidebar(){
+  if(window._convSidebarInstance&&typeof _convSidebarInstance.toggle==="function"){
+    _convSidebarInstance.toggle();
+  }else{
+    showTab("conversations");
+  }
+  if(sbOpen&&window.innerWidth<=640)toggleSidebar();
+}
 
 /* ── NAVIGATION ── */
 function showTab(name){
@@ -9858,6 +9867,7 @@ import { ConversationSidebar } from './conversation-sidebar.js';
   cm.purgeOldEmpty().catch(() => {});
 
   const sidebar = new ConversationSidebar(cm);
+  window._convSidebarInstance = sidebar;
 
   cm.on('active', (convId) => {
     if (!convId) return;
