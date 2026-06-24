@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-409";
+const CACHE_VERSION = "tilex-v10-410";
 const ASSETS = [
   "/",
   "/index.html",
@@ -85,6 +85,11 @@ const ASSETS = [
   "/test-vision.html",
   "/js/tilex-ia.js",
   "/js/tilex-gardien.js",
+  "/js/midas-cerveau.js",
+  "/js/midas-crypto.js",
+  "/js/midas-actions.js",
+  "/js/midas-manager.js",
+  "/js/midas-agent-definition.js",
 ];
 
 self.addEventListener("install", (e) => {

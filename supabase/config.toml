@@ -39,3 +39,6 @@ verify_jwt = false
 
 [functions.tilex-elevenlabs-proxy]
 verify_jwt = false
+
+[functions.midas-agent]
+verify_jwt = false

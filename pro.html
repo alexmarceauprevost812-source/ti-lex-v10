@@ -8685,6 +8685,13 @@ supabase.auth.onAuthStateChange(function(event,session){
       if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
     }
   }catch(e){}
+  /* ── MIDAS init ── */
+  try{
+    if(window.MidasManager) window.MidasManager.init({supabase:supabase});
+    if(window.MidasCrypto) window.MidasCrypto.init({supabase:supabase,nbCryptos:10,intervalleScanMs:60000});
+    if(window.MidasActions) window.MidasActions.init({supabase:supabase});
+    if(window.MIDAS_AGENT && window.INDAR_AGENTS) window.INDAR_AGENTS.push(window.MIDAS_AGENT);
+  }catch(e){console.warn("[MIDAS] init skip",e);}
 })();
 
 /* ══ MOTEUR COMMUNICATION CHAT → CODEX ══ */
@@ -9189,6 +9196,11 @@ trackFeatureUsage("app_load");
 <script src="js/scan-manager.js"></script>
 <script src="js/scan-engine.js"></script>
 <script src="js/tilex-stream.js"></script>
+<script src="js/midas-cerveau.js"></script>
+<script src="js/midas-crypto.js"></script>
+<script src="js/midas-actions.js"></script>
+<script src="js/midas-manager.js"></script>
+<script src="js/midas-agent-definition.js"></script>
 <script src="js/tilex-zip.js"></script>
 <script src="js/tilex-zip-history.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
