@@ -4496,6 +4496,8 @@ function projHtml(txt){
   return out;
 }
 function addMsg(role,txt){
+  if(Array.isArray(txt)){var _tf=txt.find(function(c){return c.type==="text";});txt=_tf?_tf.text:"[Image]";}
+  if(typeof txt!=="string")txt=String(txt||"");
   const msgs=document.getElementById("chat-msgs");
   var welcome=document.getElementById("chat-welcome");if(welcome)welcome.style.display="none";
   const t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
@@ -4800,7 +4802,9 @@ function loadConv(idx){
   msgs.innerHTML="";
   for(var i=0;i<chatHistory.length;i++){
     var m=chatHistory[i];
-    addMsg(m.role==="user"?"u":"a",m.content);
+    var contentTxt=m.content;
+    if(Array.isArray(m.content)){var _tf=m.content.find(function(c){return c.type==="text";});contentTxt=_tf?_tf.text:"[Image]";}
+    addMsg(m.role==="user"?"u":"a",contentTxt);
   }
   renderConvList();
 }
@@ -4828,7 +4832,7 @@ function showDeleteConfirm(){
     if(existing)existing.remove();
     var toast=document.createElement("div");
     toast.className="delete-confirm-toast";
-    var msg=typeof t==="function"?t("delete-confirm"):"Supprimer?";
+    var msg;try{msg=typeof t==="function"?t("delete-confirm"):"Supprimer?";}catch(e){msg="Supprimer?";}
     toast.innerHTML='<span>'+msg+'</span><div class="delete-confirm-actions"><button class="confirm-yes">Oui</button><button class="confirm-no">Non</button></div>';
     toast.querySelector(".confirm-yes").onclick=function(){toast.remove();resolve(true);};
     toast.querySelector(".confirm-no").onclick=function(){toast.remove();resolve(false);};
@@ -7614,7 +7618,7 @@ function alScanAction(type){
 /* ══════════════════════════════════════════════════════
    CONVERSATIONS PAGE — Supabase-backed CRUD
    ══════════════════════════════════════════════════════ */
-var SB_REST=SB_URL+"/rest/v1";
+var SB_REST=(SB_URL||window.SB_URL||"")+"/rest/v1";
 
 async function sbRest(path,opts){
   opts=opts||{};
@@ -7764,7 +7768,9 @@ async function cvpLoadSession(sessionId){
     for(var i=0;i<msgs.length;i++){
       var m=msgs[i];
       chatHistory.push({role:m.role,content:m.content});
-      addMsg(m.role==="user"?"u":"a",m.content);
+      var contentTxt=m.content;
+      if(Array.isArray(m.content)){var _tf=m.content.find(function(c){return c.type==="text";});contentTxt=_tf?_tf.text:"[Image]";}
+      addMsg(m.role==="user"?"u":"a",contentTxt);
     }
     showTab("chat");
     showToastMsg("Session chargée ("+msgs.length+" messages)");
