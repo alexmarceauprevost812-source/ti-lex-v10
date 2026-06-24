@@ -3208,6 +3208,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
       <div class="composer-menu-item" onclick="composeAction('zip')"><span class="cmi-ico">📦</span> Fichier ZIP</div>
       <div class="composer-menu-item" onclick="composeAction('image')"><span class="cmi-ico">🖼️</span> Image</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
+      <div class="composer-menu-item" id="composer-mic-menu-item" onclick="toggleMicro()"><span class="cmi-ico" id="composer-mic-ico">🎙️</span> <span id="composer-mic-label">Activer le micro</span></div>
       <div class="composer-menu-sep"></div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
       <div class="composer-menu-item" onclick="showTab('settings');closeComposerMenu()"><span class="cmi-ico">⚙️</span> Paramètres</div>
@@ -3220,7 +3221,6 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
     </div>
     <div class="composer-actions-row">
       <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
-      <button class="composer-mic" id="composer-mic-btn" onclick="toggleMicro()" title="Micro vocal">🎙️</button>
       <div class="composer-selector-wrap" id="composer-selector-wrap">
         <div class="composer-model-chip" id="composer-model-chip" onclick="toggleComposerSelector()">
           <span class="composer-model-name" id="composer-model-label">TI-LEX-AL</span>
@@ -9021,12 +9021,15 @@ function cxAjouterBtnStudioPlus(){
 /* ══ MICRO VOCAL COMPOSER ══ */
 var _micRecognition=null;
 var _micActive=false;
+var _micLock=false;
 function toggleMicro(){
-  if(_micActive){arreterMicro();return;}
+  if(_micLock)return;
+  _micLock=true;setTimeout(function(){_micLock=false;},600);
+  if(_micActive){arreterMicro();closeComposerMenu();return;}
   var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SpeechRec){
-    if(window.TilexVocal){toggleMicroFallback();return;}
-    showToastMsg("⚠️ Micro non supporté sur ce navigateur");return;
+    if(window.TilexVocal){toggleMicroFallback();closeComposerMenu();return;}
+    showToastMsg("⚠️ Micro non supporté sur ce navigateur");closeComposerMenu();return;
   }
   _micRecognition=new SpeechRec();
   _micRecognition.lang="fr-CA";
@@ -9043,16 +9046,21 @@ function toggleMicro(){
     if(inp){inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
   };
   _micRecognition.onerror=function(e){
-    if(e.error!=="no-speech")arreterMicro();
+    if(e.error!=="no-speech"&&e.error!=="aborted")arreterMicro();
   };
   _micRecognition.onend=function(){
-    if(_micActive){try{_micRecognition.start();}catch(e){arreterMicro();}}
+    if(_micActive&&_micRecognition){try{_micRecognition.start();}catch(e){arreterMicro();}}
   };
-  try{_micRecognition.start();_micActive=true;majMicBtn();showToastMsg("🎙️ Micro activé — parle!");}catch(e){showToastMsg("⚠️ "+e.message);}
+  _micActive=true;
+  try{_micRecognition.start();majMicBtn();showToastMsg("🎙️ Micro activé — parle!");closeComposerMenu();}
+  catch(e){_micActive=false;majMicBtn();showToastMsg("⚠️ "+e.message);}
 }
 function arreterMicro(){
   _micActive=false;
-  if(_micRecognition){try{_micRecognition.stop();}catch(e){}_micRecognition=null;}
+  if(_micRecognition){
+    var r=_micRecognition;_micRecognition=null;
+    try{r.onend=null;r.stop();}catch(e){}
+  }
   majMicBtn();
   showToastMsg("🔇 Micro désactivé");
 }
@@ -9069,10 +9077,12 @@ function toggleMicroFallback(){
   TilexVocal.demarrerEcoute();
 }
 function majMicBtn(){
-  var btn=document.getElementById("composer-mic-btn");
-  if(!btn)return;
-  btn.classList.toggle("mic-active",_micActive);
-  btn.textContent=_micActive?"🔴":"🎙️";
+  var ico=document.getElementById("composer-mic-ico");
+  var lbl=document.getElementById("composer-mic-label");
+  var item=document.getElementById("composer-mic-menu-item");
+  if(ico)ico.textContent=_micActive?"🔴":"🎙️";
+  if(lbl)lbl.textContent=_micActive?"Désactiver le micro":"Activer le micro";
+  if(item)item.style.color=_micActive?"#ff3b3b":"";
 }
 
 /* ══ CODEX STUDIO+ — VALIDATION POST-GÉNÉRATION ══ */
