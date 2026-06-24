@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-406";
+const CACHE_VERSION = "tilex-v10-407";
 const ASSETS = [
   "/",
   "/index.html",
@@ -82,6 +82,7 @@ const ASSETS = [
   "/demos/demo-scan-silex.html",
   "/css/tilex-vision.css",
   "/test-vision.html",
+  "/js/tilex-ia.js",
 ];
 
 self.addEventListener("install", (e) => {

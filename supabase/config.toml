@@ -30,3 +30,12 @@ verify_jwt = false
 
 [functions.tilex-admin]
 verify_jwt = false
+
+[functions.tilex-ia-proxy]
+verify_jwt = false
+
+[functions.tilex-deepgram-proxy]
+verify_jwt = false
+
+[functions.tilex-elevenlabs-proxy]
+verify_jwt = false
