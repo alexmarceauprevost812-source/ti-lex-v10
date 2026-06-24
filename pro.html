@@ -2575,6 +2575,16 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
             <button class="cmi-chip" onclick="setPolice('compact')" data-font="compact" title="Compact" style="font-family:'Arial Narrow',sans-serif;">Compact</button>
           </div>
         </div>
+        <div class="settings-section" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div class="settings-label">📱 TYPE D'APPAREIL</div>
+          <div class="settings-hint" style="margin-bottom:10px;">Règle la fluidité d'écriture de l'agent selon ton écran. Détection automatique sinon.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="settings-device">
+            <button class="cmi-chip" onclick="setDeviceProfil('ordinateur')" data-device="ordinateur">🖥️ Ordinateur</button>
+            <button class="cmi-chip" onclick="setDeviceProfil('tablette')" data-device="tablette">📲 Tablette</button>
+            <button class="cmi-chip" onclick="setDeviceProfil('telephone')" data-device="telephone">📱 Téléphone</button>
+          </div>
+          <div id="device-profil-hint" style="font-size:11px;margin-top:8px;color:var(--muted);min-height:14px;"></div>
+        </div>
         <div class="settings-section">
           <div class="settings-label">🎨 COULEUR DU TEXTE AGENT</div>
           <div class="settings-hint" style="margin-bottom:8px;">Change la couleur des réponses de l'agent AL.</div>
@@ -3671,7 +3681,16 @@ function getActionType(model){
    ✍️ ÉCRITURE FLUIDE — Lent au début, accélère progressivement
    Plus le texte avance, plus ça va vite (comme un vrai humain)
    ═══════════════════════════════════════════════════════════════ */
-var _efMobile=/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&window.innerWidth<768);
+var _efAutoDetect=(function(){
+  var ua=navigator.userAgent;
+  var isPhone=/Android.*Mobile|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)||(navigator.maxTouchPoints>1&&window.innerWidth<600);
+  var isTablet=/iPad/i.test(ua)||(navigator.maxTouchPoints>1&&window.innerWidth>=600&&window.innerWidth<=1200&&!/Android.*Mobile|iPhone/i.test(ua));
+  if(isPhone)return 'telephone';
+  if(isTablet)return 'tablette';
+  return 'ordinateur';
+})();
+var _efProfil=localStorage.getItem('tilex_device_profil')||_efAutoDetect;
+var _efMobile=(_efProfil!=='ordinateur');
 var EcritureFluide={
   _buffer:'',_affiche:'',_raf:null,_curseur:null,
   _element:null,_container:null,_totalChars:0,
@@ -3736,13 +3755,21 @@ var EcritureFluide={
     }
     var n=E._totalChars;
     var delai;
-    if(n<20)delai=90;
-    else if(n<60)delai=60;
-    else if(n<150)delai=35;
-    else if(n<400)delai=18;
-    else delai=5;
-    if(E._tokens.length>15)delai=2;
-    else if(E._tokens.length>8)delai=Math.min(delai,10);
+    if(_efProfil==='tablette'){
+      if(n<20)delai=55;
+      else if(n<60)delai=35;
+      else if(n<150)delai=18;
+      else if(n<400)delai=8;
+      else delai=3;
+    }else{
+      if(n<20)delai=80;
+      else if(n<60)delai=50;
+      else if(n<150)delai=25;
+      else if(n<400)delai=12;
+      else delai=4;
+    }
+    if(E._tokens.length>15)delai=1;
+    else if(E._tokens.length>8)delai=Math.min(delai,8);
     E._tokenTimer=setTimeout(function(){E._drainMobile();},delai);
   },
 
@@ -6972,6 +6999,19 @@ function setCouleurBoutons(couleur){
   showToastMsg('🔘 Couleur boutons : '+couleur);
 }
 
+var _DEVICE_LABELS={'ordinateur':'🖥️ Typewriter lettre par lettre — précis et vif.','tablette':'📲 Mot par mot fluide — vitesse progressive.','telephone':'📱 Mot par mot naturel — commence lent, accélère.'};
+function setDeviceProfil(profil){
+  localStorage.setItem('tilex_device_profil',profil);
+  _efProfil=profil;
+  _efMobile=(profil!=='ordinateur');
+  document.querySelectorAll('[data-device]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-device')===profil);
+  });
+  var hint=document.getElementById('device-profil-hint');
+  if(hint)hint.textContent='✓ '+(_DEVICE_LABELS[profil]||profil);
+  showToastMsg('📱 Appareil : '+profil);
+}
+
 (function(){
   var savedFont=localStorage.getItem('tilex-police');
   if(savedFont&&POLICES_MAP[savedFont]){
@@ -6987,6 +7027,13 @@ function setCouleurBoutons(couleur){
     document.documentElement.style.setProperty('--orange',savedBtn);
     document.documentElement.style.setProperty('--or',savedBtn);
   }
+  var savedDevice=localStorage.getItem('tilex_device_profil');
+  var activeDevice=savedDevice||_efAutoDetect;
+  document.querySelectorAll('[data-device]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-device')===activeDevice);
+  });
+  var hint=document.getElementById('device-profil-hint');
+  if(hint)hint.textContent=(savedDevice?'✓ ':'Auto: ')+(_DEVICE_LABELS[activeDevice]||activeDevice);
 })();
 
 /* ══ SUPABASE CHAT INTEGRATION ══ */
