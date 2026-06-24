@@ -185,6 +185,60 @@ function buildSystem(ctx: any): string {
     "", `Notes (${ctx?.supabase?.notes_count ?? 0}) :`, notes || "(aucune)",
   ].join("\n");
 }
+// 🔍 Niveau 6 — Enquête automatique (analyse la demande AVANT exécution)
+const THREAT_PATTERNS: { re: RegExp; tag: string; severity: "block" | "warn" }[] = [
+  // Prompt injection
+  { re: /ignore\s+(all\s+)?(previous|prior|above|preceding)\s+(instructions?|prompts?|rules?)/i, tag: "prompt-injection", severity: "block" },
+  { re: /you\s+are\s+now\s+(a|an|the)\b/i, tag: "identity-hijack", severity: "block" },
+  { re: /act\s+as\s+(if\s+)?you\s+(have\s+no|don.?t\s+have)\s+(restrictions?|limits?|rules?)/i, tag: "jailbreak", severity: "block" },
+  { re: /system\s*prompt|repeat\s+(your|the)\s+(instructions?|system|prompt)/i, tag: "system-leak", severity: "block" },
+  { re: /oublie\s+(tes|les|toutes?\s+les)\s+(instructions?|r[eè]gles?|consignes?)/i, tag: "prompt-injection-fr", severity: "block" },
+  // Secrets & credentials
+  { re: /\b(service.?role|ANTHROPIC.?API.?KEY|AL.?INJECT.?PIN|INJECT.?PIN|secret.?key|private.?key)\b/i, tag: "secret-exfil", severity: "block" },
+  { re: /\b(r[eé]v[eè]le|affiche|montre|donne|print|log|echo|expose)\b.{0,30}\b(nip|pin|mot\s+de\s+passe|password|secret|cl[eé]\s+priv)/i, tag: "credential-request", severity: "block" },
+  { re: /Deno\.env\.get/i, tag: "env-access", severity: "block" },
+  // Destructive operations
+  { re: /\b(drop\s+(table|database|schema)|truncate\s+table|delete\s+from\s+\w+\s*;?\s*$|rm\s+-rf)\b/i, tag: "destructive-sql", severity: "block" },
+  { re: /\b(supprimer?\s+(toutes?|la\s+base|tout)|efface[r]?\s+tout|d[eé]truire?\s+(la\s+base|tout))\b/i, tag: "destructive-fr", severity: "block" },
+  // Privilege escalation
+  { re: /\b(grant\s+all|alter\s+role|set\s+role|security\s+definer|superuser|bypass\s+rls)\b/i, tag: "privilege-escalation", severity: "block" },
+  { re: /\b(d[eé]sactiver?\s+(rls|s[eé]curit[eé]|auth)|disable\s+(rls|security|auth))\b/i, tag: "security-disable", severity: "block" },
+  // Data exfil
+  { re: /\bselect\s+\*\s+from\s+(auth\.|pg_)/i, tag: "auth-table-read", severity: "block" },
+  { re: /\b(exporter?|dump|backup)\b.{0,20}\b(users?|auth|credentials?|passwords?)\b/i, tag: "data-exfil", severity: "warn" },
+];
+
+interface ThreatResult {
+  safe: boolean;
+  blocked: boolean;
+  threats: { tag: string; severity: string }[];
+}
+
+function enquete(text: string): ThreatResult {
+  const threats: { tag: string; severity: string }[] = [];
+  for (const p of THREAT_PATTERNS) {
+    if (p.re.test(text)) {
+      threats.push({ tag: p.tag, severity: p.severity });
+    }
+  }
+  const blocked = threats.some((t) => t.severity === "block");
+  return { safe: threats.length === 0, blocked, threats };
+}
+
+async function logThreat(userId: string | null, question: string, result: ThreatResult) {
+  try {
+    await admin.from("injection_audit").insert({
+      user_id: userId,
+      path: "chat/enquete",
+      message: question.slice(0, 500),
+      pin_ok: false,
+      scope_ok: !result.blocked,
+      success: !result.blocked,
+      result: result.threats.map((t) => `${t.severity}:${t.tag}`).join(", "),
+    });
+  } catch (_) { /* silencieux */ }
+}
+
 function json(obj: unknown, status = 200, cors: Record<string, string> = {}) {
   return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
@@ -235,6 +289,20 @@ Deno.serve(async (req) => {
   }
   // --- chat (SSE + tools) ---
   if (action === "chat") {
+    // 🔍 Niveau 6 — Enquête automatique avant traitement
+    const question = payload.question || "";
+    const fullInput = [question, ...(payload.history || []).map((m: any) => m.text ?? m.content ?? "")].join(" ");
+    const threat = enquete(fullInput);
+    if (!threat.safe) {
+      await logThreat(callerId, question, threat);
+    }
+    if (threat.blocked) {
+      const tags = threat.threats.filter((t) => t.severity === "block").map((t) => t.tag).join(", ");
+      return json({
+        error: `🛡️ Enquête automatique — demande bloquée.\nMenace détectée : ${tags}.\nCette tentative a été journalisée.`,
+        threat_tags: threat.threats,
+      }, 403, CORS);
+    }
     const system = buildSystem(payload.projectContext || {});
     const history = (payload.history || []).map((m: any) => ({
       role: m.role === "assistant" ? "assistant" : "user", content: m.text ?? m.content ?? "",
