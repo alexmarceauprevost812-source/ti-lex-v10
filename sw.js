@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-410";
+const CACHE_VERSION = "tilex-v10-411";
 const ASSETS = [
   "/",
   "/index.html",
@@ -17,6 +17,7 @@ const ASSETS = [
   "/assets/creer-agent-icon.mp4",
   "/forfaits.html",
   "/abonnement.html",
+  "/midas.html",
   "/cyber.html",
   "/centre-indar.html",
   "/forfaits-cyber.html",

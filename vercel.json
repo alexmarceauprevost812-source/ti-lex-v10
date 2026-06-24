@@ -6,6 +6,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/abonnement", "destination": "/abonnement.html" },
+    { "source": "/midas", "destination": "/midas.html" },
     { "source": "/forfaits", "destination": "/forfaits.html" },
     { "source": "/forfaits-cyber", "destination": "/forfaits-cyber.html" },
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
