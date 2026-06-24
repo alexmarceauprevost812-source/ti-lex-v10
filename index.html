@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#ff7f27">
+  <meta name="theme-color" content="#7c6ff7">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="description" content="ti-lex-AL V10 — Agent de cybersécurité québécois. Scans, mandats, conformité Loi 25. Produit du Québec ⚜️">
@@ -563,6 +563,15 @@
   </style>
 </head>
 <body>
+
+<div id="tilex-banniere-offline" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1a2e;color:#ff6b6b;text-align:center;padding:8px 16px;font-size:13px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(255,107,107,.3);">
+  <span>Mode offline — Ti-lex fonctionne quand même!</span>
+</div>
+<div id="tilex-statut-connexion" class="tilex-statut en-ligne" title="En ligne" style="position:fixed;bottom:12px;right:12px;width:10px;height:10px;border-radius:50%;z-index:9998;"></div>
+<style>
+.tilex-statut.en-ligne{background:#00c853;box-shadow:0 0 6px rgba(0,200,83,.5);}
+.tilex-statut.hors-ligne{background:#ff6b6b;box-shadow:0 0 6px rgba(255,107,107,.5);}
+</style>
 
 <!-- Intro splash -->
 <div class="intro-splash" id="introSplash">
@@ -1436,6 +1445,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script src="js/tilex-offline.js"></script>
 
 </body>
 </html>
