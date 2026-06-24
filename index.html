@@ -1416,23 +1416,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- Service Worker -->
+<!-- Service Worker — mise à jour automatique au refresh -->
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
+  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    reg.addEventListener('updatefound', function() {
+      var nw = reg.installing;
       if (!nw) return;
-      nw.addEventListener('statechange', () => {
+      nw.addEventListener('statechange', function() {
         if (nw.state === 'activated' && navigator.serviceWorker.controller) {
-          const b = document.createElement('div');
-          b.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 24px;background:var(--orange);color:#000;border-radius:10px;font-weight:700;font-family:var(--font);z-index:9999;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(255,127,39,.4);font-size:12px;letter-spacing:1px';
-          b.innerHTML='MISE À JOUR DISPONIBLE <button onclick="location.reload()" style="background:#000;color:var(--orange);border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:700;font-family:inherit;font-size:11px;letter-spacing:1px">RAFRAÎCHIR</button>';
-          document.body.appendChild(b);
+          location.reload();
         }
       });
     });
-    setInterval(() => reg.update(), 3600000);
+    reg.update();
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    location.reload();
   });
 }
 </script>
