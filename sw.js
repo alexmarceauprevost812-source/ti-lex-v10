@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-426";
+const CACHE_VERSION = "tilex-v10-427";
 const ASSETS = [
   "/",
   "/index.html",
@@ -92,6 +92,7 @@ const ASSETS = [
   "/js/midas-manager.js",
   "/js/midas-agent-definition.js",
   "/js/yilo-memory.js",
+  "/js/tilex-offline.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -114,6 +115,19 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
   if (e.request.method !== "GET") return;
+
+  if (url.hostname.includes("supabase.co") || url.hostname.includes("anthropic.com")) {
+    e.respondWith(
+      fetch(e.request).catch(() =>
+        new Response(
+          JSON.stringify({ erreur: "offline", message: "Ti-lex est en mode offline — pas de connexion API disponible." }),
+          { headers: { "Content-Type": "application/json" }, status: 503 }
+        )
+      )
+    );
+    return;
+  }
+
   if (url.origin !== location.origin) return;
 
   e.respondWith(
@@ -130,5 +144,11 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("message", (e) => {
   if (e.data === "check-update") {
     self.registration.update();
+  }
+  if (e.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+  if (e.data === "GET_VERSION") {
+    e.source.postMessage({ version: CACHE_VERSION });
   }
 });

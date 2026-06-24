@@ -1971,6 +1971,15 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 </head>
 <body>
 
+<div id="tilex-banniere-offline" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1a2e;color:#ff6b6b;text-align:center;padding:8px 16px;font-size:13px;font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(255,107,107,.3);">
+  <span>Mode offline — Ti-lex fonctionne quand même!</span>
+</div>
+<div id="tilex-statut-connexion" class="tilex-statut en-ligne" title="En ligne" style="position:fixed;bottom:12px;right:12px;width:10px;height:10px;border-radius:50%;z-index:9998;"></div>
+<style>
+.tilex-statut.en-ligne{background:#00c853;box-shadow:0 0 6px rgba(0,200,83,.5);}
+.tilex-statut.hors-ligne{background:#ff6b6b;box-shadow:0 0 6px rgba(255,107,107,.5);}
+</style>
+
 <!-- ═══════════════════════════════════════════════════════════════
      ÉCRAN DE CHOIX D'INTERFACE (au login / connexion)
 ═════════════════════════════════════════════════════════════════ -->
@@ -9626,6 +9635,7 @@ trackFeatureUsage("app_load");
 <script src="js/tilex-vocal.js"></script>
 <script src="js/tilex-vision.js"></script>
 <script src="js/yilo-memory.js"></script>
+<script src="js/tilex-offline.js"></script>
 <script src="js/tilex-connections.js"></script>
 <script src="js/tilex-copy.js"></script>
 <script src="js/tilex-theme.js"></script>
