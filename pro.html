@@ -1092,6 +1092,20 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   background:rgba(255,255,255,.06);color:var(--txt);cursor:pointer;font-size:18px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;transition:all .2s;}
 .composer-plus:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.1);}
+.composer-mic{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.composer-mic:hover{border-color:#ff3b3b;background:rgba(255,59,59,.1);}
+.composer-mic.mic-active{border-color:#ff3b3b;background:rgba(255,59,59,.15);animation:mic-pulse 1.2s ease-in-out infinite;box-shadow:0 0 12px rgba(255,59,59,.4);}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 8px rgba(255,59,59,.3);}50%{box-shadow:0 0 20px rgba(255,59,59,.6);}}
+.cx-studio-overlay{position:fixed;inset:0;z-index:9999;background:rgba(6,6,10,.96);display:flex;flex-direction:column;overflow:hidden;animation:cx-ov-in .3s ease;}
+@keyframes cx-ov-in{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.cx-studio-hd{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #1a1a22;flex-shrink:0;}
+.cx-studio-hd h2{font-size:16px;font-weight:700;color:var(--orange);letter-spacing:2px;margin:0;font-family:'Share Tech Mono',monospace;}
+.cx-studio-body{flex:1;overflow-y:auto;padding:16px 20px;}
+.cx-studio-file{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.cx-studio-file-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:#37e0a0;font-family:'Share Tech Mono',monospace;}
+.cx-studio-file pre{margin:0;padding:12px 14px;font-size:11px;overflow-x:auto;color:var(--txt);line-height:1.5;}
+.cx-studio-footer{display:flex;gap:10px;padding:14px 20px;border-top:1px solid #1a1a22;flex-shrink:0;justify-content:center;flex-wrap:wrap;}
+.cx-studio-status{text-align:center;padding:8px;font-size:12px;color:var(--muted);}
 .composer-model-chip{display:flex;align-items:center;gap:6px;padding:7px 14px;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;
   cursor:pointer;transition:all .2s;white-space:nowrap;}
@@ -3206,6 +3220,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
     </div>
     <div class="composer-actions-row">
       <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
+      <button class="composer-mic" id="composer-mic-btn" onclick="toggleMicro()" title="Micro vocal">🎙️</button>
       <div class="composer-selector-wrap" id="composer-selector-wrap">
         <div class="composer-model-chip" id="composer-model-chip" onclick="toggleComposerSelector()">
           <span class="composer-model-name" id="composer-model-label">TI-LEX-AL</span>
@@ -5609,9 +5624,13 @@ async function genCode(){
 
   var sysPrompt=getCodexSysPrompt();
   if(codexValidated){
+    var scanCtx=cxBuildScanContext();
+    var repoInfo=scanCtx?" Le projet contient ces fichiers:\n"+scanCtx.context.slice(0,2000):"";
     sysPrompt+=" Génère du code propre et production-ready en "+(LANG_N[lang]||lang)+
       ". Réponds avec le code dans des blocs ```"+lang+" et de courtes explications en français québécois. "+
-      "Pour chaque bloc de code, ajoute en première ligne un commentaire indiquant le chemin du fichier.";
+      "IMPORTANT: Pour chaque bloc de code, la PREMIÈRE LIGNE doit être un commentaire avec le chemin EXACT du fichier dans le repo "+
+      "(ex: // js/mon-module.js ou # scripts/utils.py). "+
+      "Utilise les chemins existants du projet quand tu modifies un fichier. Pour les nouveaux fichiers, place-les dans le bon dossier selon la structure du projet."+repoInfo;
   }
 
   codexHistory.push({role:"user",content:prompt});
@@ -5655,6 +5674,7 @@ async function genCode(){
     cxFinalizeStream(streamEl,reply||"(réponse vide)");
     codexHistory.push({role:"assistant",content:reply});
     if(!codexValidated)showCodexValidateBtn();
+    if(codexValidated&&reply&&/```/.test(reply))cxAjouterBtnStudioPlus();
     if(typeof pushNotif==="function")pushNotif("⌨️","Code généré · Codex","Génération terminée, prête à pousser sur GitHub.","ok");
   }catch(e){
     cxRemoveTyping();
@@ -9014,6 +9034,209 @@ function showCodexValidateBtn(){
   btn.style.cssText="text-align:center;padding:10px;";
   btn.innerHTML='<button onclick="validateCodexProject()" style="background:#00a86b;color:#0a0a0a;border:none;border-radius:8px;padding:10px 24px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;letter-spacing:.5px;">✅ Valider le projet</button><div style="font-size:10px;color:#6c6c78;margin-top:6px;">Clique pour passer en mode génération de code</div>';
   feed.appendChild(btn);
+}
+
+/* ══ CODEX STUDIO+ BUTTON ══ */
+function cxAjouterBtnStudioPlus(){
+  var feed=document.getElementById("codex-feed");
+  if(!feed)return;
+  var existing=document.getElementById("cx-studio-plus-btn-wrap");
+  if(existing)existing.remove();
+  var wrap=document.createElement("div");
+  wrap.id="cx-studio-plus-btn-wrap";
+  wrap.style.cssText="text-align:center;padding:10px;";
+  wrap.innerHTML='<button onclick="cxOuvrirStudioPlus()" style="background:linear-gradient(135deg,#ff7f27,#cc5500);border:none;border-radius:10px;padding:12px 28px;color:white;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;box-shadow:0 0 16px rgba(255,127,39,.3);transition:all .2s;">🔍 STUDIO+ — VÉRIFIER & PUSH</button><div style="font-size:10px;color:var(--muted);margin-top:6px;">Valide le code avant de l\'envoyer au repo</div>';
+  feed.appendChild(wrap);
+  feed.scrollTop=feed.scrollHeight;
+}
+
+/* ══ MICRO VOCAL COMPOSER ══ */
+var _micRecognition=null;
+var _micActive=false;
+function toggleMicro(){
+  if(_micActive){arreterMicro();return;}
+  var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRec){
+    if(window.TilexVocal){toggleMicroFallback();return;}
+    showToastMsg("⚠️ Micro non supporté sur ce navigateur");return;
+  }
+  _micRecognition=new SpeechRec();
+  _micRecognition.lang="fr-CA";
+  _micRecognition.continuous=true;
+  _micRecognition.interimResults=true;
+  var inp=document.getElementById("composer-input");
+  var baseText=inp?inp.value:"";
+  _micRecognition.onresult=function(e){
+    var transcript="";
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      transcript+=e.results[i][0].transcript;
+    }
+    if(inp)inp.value=baseText+(baseText?" ":"")+transcript;
+    if(inp){inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
+  };
+  _micRecognition.onerror=function(e){
+    if(e.error!=="no-speech")arreterMicro();
+  };
+  _micRecognition.onend=function(){
+    if(_micActive){try{_micRecognition.start();}catch(e){arreterMicro();}}
+  };
+  try{_micRecognition.start();_micActive=true;majMicBtn();showToastMsg("🎙️ Micro activé — parle!");}catch(e){showToastMsg("⚠️ "+e.message);}
+}
+function arreterMicro(){
+  _micActive=false;
+  if(_micRecognition){try{_micRecognition.stop();}catch(e){}_micRecognition=null;}
+  majMicBtn();
+  showToastMsg("🔇 Micro désactivé");
+}
+function toggleMicroFallback(){
+  if(_micActive){
+    _micActive=false;TilexVocal.arreterEcoute();majMicBtn();showToastMsg("🔇 Micro désactivé");return;
+  }
+  _micActive=true;majMicBtn();
+  window.onTilexVocalInput=function(txt){
+    var inp=document.getElementById("composer-input");
+    if(inp){inp.value+=(inp.value?" ":"")+txt;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
+    _micActive=false;majMicBtn();
+  };
+  TilexVocal.demarrerEcoute();
+}
+function majMicBtn(){
+  var btn=document.getElementById("composer-mic-btn");
+  if(!btn)return;
+  btn.classList.toggle("mic-active",_micActive);
+  btn.textContent=_micActive?"🔴":"🎙️";
+}
+
+/* ══ CODEX STUDIO+ — VALIDATION POST-GÉNÉRATION ══ */
+function cxExtraireBlocs(txt){
+  var blocs=[];
+  var re=/```(\w*)\n([\s\S]*?)```/g;
+  var m;
+  while((m=re.exec(txt))!==null){
+    var lang=m[1]||"code";
+    var code=m[2];
+    var path=cxDevinerPath(code,lang);
+    blocs.push({lang:lang,code:code,path:path});
+  }
+  return blocs;
+}
+function cxDevinerPath(code,lang){
+  var lines=code.split("\n");
+  for(var i=0;i<Math.min(3,lines.length);i++){
+    var l=lines[i].trim();
+    var m=l.match(/^(?:\/\/|#|\/\*|<!--)\s*([\w./-]+\.\w{1,6})/);
+    if(m)return m[1];
+  }
+  var extMap={js:".js",ts:".ts",jsx:".jsx",tsx:".tsx",html:".html",css:".css",py:".py",sql:".sql",json:".json",bash:".sh",sh:".sh"};
+  var ext=extMap[lang]||".txt";
+  return "nouveau-fichier"+ext;
+}
+function cxOuvrirStudioPlus(){
+  var lastAssistant=codexHistory.filter(function(m){return m.role==="assistant";}).slice(-1);
+  if(!lastAssistant.length){showToastMsg("Aucun code généré.");return;}
+  var blocs=cxExtraireBlocs(lastAssistant[0].content);
+  if(!blocs.length){showToastMsg("Aucun bloc de code trouvé.");return;}
+  var ov=document.createElement("div");
+  ov.className="cx-studio-overlay";
+  ov.id="cx-studio-overlay";
+  var html='<div class="cx-studio-hd"><h2>🔍 STUDIO+ — VALIDATION</h2><div style="flex:1;"></div><button class="btn-ghost" onclick="cxFermerStudioPlus()" style="font-size:18px;padding:4px 10px;">✕</button></div>';
+  html+='<div class="cx-studio-body">';
+  for(var i=0;i<blocs.length;i++){
+    var b=blocs[i];
+    html+='<div class="cx-studio-file" data-idx="'+i+'">';
+    html+='<div class="cx-studio-file-hd"><span>📄</span> <input type="text" class="cx-studio-path-input" value="'+escHtml(b.path)+'" data-idx="'+i+'" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:#37e0a0;font-family:inherit;font-size:12px;padding:4px 8px;flex:1;min-width:0;"/> <span style="color:var(--muted);font-size:10px;">'+escHtml(b.lang)+'</span></div>';
+    html+='<pre>'+escHtml(b.code.slice(0,800))+(b.code.length>800?"\n... ("+b.code.length+" chars)":"")+'</pre>';
+    html+='</div>';
+  }
+  html+='</div>';
+  html+='<div class="cx-studio-status" id="cx-studio-status">'+blocs.length+' fichier'+(blocs.length>1?"s":"")+' détecté'+(blocs.length>1?"s":"")+'</div>';
+  html+='<div class="cx-studio-footer">';
+  html+='<button class="btn-orange" onclick="cxStudioValider()" style="padding:12px 24px;font-size:13px;letter-spacing:1px;">🔍 VÉRIFIER LE CODE</button>';
+  html+='<button class="btn-orange" onclick="cxStudioPush()" id="cx-studio-push-btn" style="padding:12px 24px;font-size:13px;letter-spacing:1px;background:linear-gradient(135deg,#37e0a0,#1a9e6a);display:none;">📤 PUSH AU REPO</button>';
+  html+='<button class="btn-ghost" onclick="cxFermerStudioPlus()" style="padding:12px 20px;font-size:12px;">FERMER</button>';
+  html+='</div>';
+  ov.innerHTML=html;
+  document.body.appendChild(ov);
+  window._cxStudioBlocs=blocs;
+}
+function cxFermerStudioPlus(){
+  var ov=document.getElementById("cx-studio-overlay");
+  if(ov)ov.remove();
+}
+function cxStudioValider(){
+  var status=document.getElementById("cx-studio-status");
+  if(status)status.innerHTML='<span style="color:var(--orange);">⏳ Vérification en cours...</span>';
+  var blocs=window._cxStudioBlocs||[];
+  var inputs=document.querySelectorAll(".cx-studio-path-input");
+  inputs.forEach(function(inp){
+    var idx=parseInt(inp.getAttribute("data-idx"));
+    if(blocs[idx])blocs[idx].path=inp.value.trim();
+  });
+  var erreurs=0;var avertissements=0;
+  for(var i=0;i<blocs.length;i++){
+    var b=blocs[i];
+    var fileEl=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
+    if(!fileEl)continue;
+    var issues=[];
+    if(!b.path||b.path==="nouveau-fichier"+"."+b.lang){issues.push("⚠️ Chemin de fichier manquant");avertissements++;}
+    if(b.lang==="js"||b.lang==="ts"){
+      var brackets=0;var parens=0;
+      for(var c=0;c<b.code.length;c++){
+        if(b.code[c]==="{")brackets++;else if(b.code[c]==="}")brackets--;
+        if(b.code[c]==="(")parens++;else if(b.code[c]===")")parens--;
+      }
+      if(brackets!==0){issues.push("❌ Accolades déséquilibrées ("+brackets+")");erreurs++;}
+      if(parens!==0){issues.push("❌ Parenthèses déséquilibrées ("+parens+")");erreurs++;}
+    }
+    if(/API_KEY|SECRET|PASSWORD|SERVICE_ROLE|ANTHROPIC_API/i.test(b.code)){issues.push("❌ Secret potentiel détecté!");erreurs++;}
+    var existingStatus=fileEl.querySelector(".cx-file-status");
+    if(existingStatus)existingStatus.remove();
+    var statusDiv=document.createElement("div");statusDiv.className="cx-file-status";
+    statusDiv.style.cssText="padding:8px 14px;font-size:11px;border-top:1px solid var(--border);";
+    if(issues.length===0){statusDiv.innerHTML='<span style="color:#37e0a0;">✅ OK</span>';
+    }else{statusDiv.innerHTML=issues.map(function(s){return '<div>'+s+'</div>';}).join("");}
+    fileEl.appendChild(statusDiv);
+  }
+  if(status){
+    if(erreurs>0)status.innerHTML='<span style="color:#ff3b3b;">❌ '+erreurs+' erreur'+(erreurs>1?"s":"")+'</span>'+(avertissements?' · <span style="color:var(--orange);">⚠️ '+avertissements+' avertissement'+(avertissements>1?"s":"")+'</span>':'');
+    else if(avertissements>0)status.innerHTML='<span style="color:var(--orange);">⚠️ '+avertissements+' avertissement'+(avertissements>1?"s":"")+'</span> — <span style="color:#37e0a0;">Aucune erreur</span>';
+    else status.innerHTML='<span style="color:#37e0a0;">✅ TOUT EST BON — Prêt à push</span>';
+  }
+  var pushBtn=document.getElementById("cx-studio-push-btn");
+  if(pushBtn&&erreurs===0)pushBtn.style.display="inline-flex";
+}
+async function cxStudioPush(){
+  var blocs=window._cxStudioBlocs||[];
+  var inputs=document.querySelectorAll(".cx-studio-path-input");
+  inputs.forEach(function(inp){
+    var idx=parseInt(inp.getAttribute("data-idx"));
+    if(blocs[idx])blocs[idx].path=inp.value.trim();
+  });
+  var status=document.getElementById("cx-studio-status");
+  if(status)status.innerHTML='<span style="color:var(--orange);">📤 Push en cours...</span>';
+  var gh=window._codexGithub;
+  if(!gh||!gh.repo){
+    if(status)status.innerHTML='<span style="color:#ff3b3b;">❌ GitHub non connecté</span>';return;
+  }
+  var pushed=0;var errors=0;
+  for(var i=0;i<blocs.length;i++){
+    var b=blocs[i];
+    if(!b.path||b.path.indexOf("nouveau-fichier")===0)continue;
+    try{
+      await ghProxyCall({action:"createOrUpdateFile",path:b.path,content:b.code,message:"feat: "+b.path+" via TilexCode Studio+"});
+      pushed++;
+      var fileEl=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
+      if(fileEl){var s=fileEl.querySelector(".cx-file-status");if(s)s.innerHTML='<span style="color:#37e0a0;">✅ Pushé!</span>';}
+    }catch(e){errors++;
+      var fileEl2=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
+      if(fileEl2){var s2=fileEl2.querySelector(".cx-file-status");if(s2)s2.innerHTML='<span style="color:#ff3b3b;">❌ '+escHtml(e.message)+'</span>';}
+    }
+  }
+  if(status){
+    if(errors>0)status.innerHTML='<span style="color:var(--orange);">📤 '+pushed+' pushé'+(pushed>1?"s":"")+'</span> · <span style="color:#ff3b3b;">'+errors+' erreur'+(errors>1?"s":"")+'</span>';
+    else status.innerHTML='<span style="color:#37e0a0;">✅ '+pushed+' fichier'+(pushed>1?"s":"")+' pushé'+(pushed>1?"s":"")+'! 🎉</span>';
+  }
+  if(typeof pushNotif==="function")pushNotif("📤","Code pushé",""+pushed+" fichiers envoyés au repo","ok");
 }
 
 /* ══ LIVE TYPING WATCHER ══ */
