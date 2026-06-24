@@ -561,7 +561,15 @@ body.sb-open .content{margin-left:var(--sb-w);}
 
 /* ── GitHub Codex Panel ── */
 /* == CODEX GITHUB BAR == */
-.codex-github-bar{display:flex;align-items:center;gap:8px;padding:7px 14px;background:#101015;border-bottom:1px solid #23232c;border-top:1px solid #23232c;position:sticky;top:0;z-index:50;flex-shrink:0;overflow:visible;}
+.codex-github-toggle{display:flex;align-items:center;gap:10px;padding:6px 14px;background:#0c0c10;border-bottom:1px solid #1a1a22;flex-shrink:0;position:sticky;top:0;z-index:51;}
+.cgb-toggle-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--orange);padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:inherit;display:flex;align-items:center;transition:all .2s;}
+.cgb-toggle-btn:hover{border-color:var(--orange);background:rgba(255,127,39,.08);}
+.cgb-toggle-info{font-size:10px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;}
+.codex-ghbar-collapsible{overflow:hidden;transition:max-height .3s ease,padding .3s ease,opacity .25s ease;max-height:120px;opacity:1;}
+.codex-ghbar-collapsible.collapsed{max-height:0;padding-top:0;padding-bottom:0;border:none;opacity:0;}
+.codex-github-bar{display:flex;align-items:center;gap:8px;padding:7px 14px;background:#101015;border-bottom:1px solid #23232c;border-top:1px solid #23232c;z-index:50;flex-shrink:0;overflow:visible;}
+.cx-coding-mode .cx-scan-bar,.cx-coding-mode .cx-scan-results,.cx-coding-mode .gh-files{display:none!important;}
+.cx-coding-mode .codex-ghbar-collapsible{max-height:0;padding:0;border:none;opacity:0;}
 .cgb-icon{color:#6c6c78;display:flex;align-items:center;flex-shrink:0;}
 .cgb-select-wrap{position:relative;}
 .cgb-select-btn{display:flex;align-items:center;gap:6px;padding:4px 10px;background:#0a0a0a;border:1px solid #23232c;border-radius:4px;cursor:pointer;color:#e0e0e0;font-family:'JetBrains Mono','Share Tech Mono',monospace;font-size:11px;white-space:nowrap;transition:border-color .15s;min-width:90px;}
@@ -2354,7 +2362,14 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
         </select>
       </div>
       <!-- BARRE GITHUB CODEX -->
-      <div class="codex-github-bar" id="codex-github-bar">
+      <div class="codex-github-toggle" id="codex-github-toggle">
+        <button class="cgb-toggle-btn" id="cgb-toggle-btn" onclick="toggleCodexGithubBar()">
+          <span id="cgb-toggle-label">🔗 GITHUB</span>
+          <span id="cgb-toggle-chevron" style="font-size:10px;margin-left:4px;">▼</span>
+        </button>
+        <span class="cgb-toggle-info" id="cgb-toggle-info"></span>
+      </div>
+      <div class="codex-github-bar codex-ghbar-collapsible" id="codex-github-bar">
         <span class="cgb-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></span>
         <div class="cgb-select-wrap" id="cgb-repo-wrap">
           <button class="cgb-select-btn" id="cgb-repo-btn" title="Choisir un projet GitHub">
@@ -5666,6 +5681,7 @@ function cxFinalizeStream(el,fullText){
 }
 function clearCx(){
   codexValidated=false;
+  cxExitCodingMode();
   document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">TILEXCODE PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   codexHistory=[];genBusy=false;
 }
@@ -5722,6 +5738,31 @@ function cxToggleTree(){
     treeEl.style.display="none";
     if(btn)btn.textContent="📂 Voir les fichiers";
   }
+}
+
+function toggleCodexGithubBar(){
+  var bar=document.getElementById("codex-github-bar");
+  var chevron=document.getElementById("cgb-toggle-chevron");
+  if(!bar)return;
+  bar.classList.toggle("collapsed");
+  if(chevron)chevron.textContent=bar.classList.contains("collapsed")?"▶":"▼";
+}
+
+function cxEnterCodingMode(){
+  var wrap=document.querySelector(".codex-wrap");
+  if(wrap)wrap.classList.add("cx-coding-mode");
+  var bar=document.getElementById("codex-github-bar");
+  if(bar)bar.classList.add("collapsed");
+  var chevron=document.getElementById("cgb-toggle-chevron");
+  if(chevron)chevron.textContent="▶";
+  var gh=window._codexGithub;
+  var info=document.getElementById("cgb-toggle-info");
+  if(info&&gh&&gh.repo)info.textContent=gh.repo.name+" / "+(gh.branch||"main");
+}
+
+function cxExitCodingMode(){
+  var wrap=document.querySelector(".codex-wrap");
+  if(wrap)wrap.classList.remove("cx-coding-mode");
 }
 
 function cxAnalyzeTree(tree){
@@ -5797,6 +5838,7 @@ function cxBuildScanContext(){
 
 function cxStartCoding(){
   if(!cxScanData){cxAddReply("Scanne le projet d'abord.");return;}
+  cxEnterCodingMode();
   var scan=cxBuildScanContext();
   codexHistory=[{role:"user",content:"[CONTEXTE PROJET]\n"+scan.context+"\n[FIN CONTEXTE]\nJe suis prêt à coder. Dis-moi ce que tu vois dans le projet."}];
   cxAddUser("[Scan du projet injecté comme contexte]");
@@ -8947,6 +8989,7 @@ function getCodexSysPrompt(){
 }
 function validateCodexProject(){
   codexValidated=true;
+  cxEnterCodingMode();
   var vb=document.getElementById("codex-validate-btn");
   if(vb)vb.style.display="none";
   cxAddReply("✅ Projet validé! Je suis maintenant en mode génération de code. Décris ce que tu veux coder!");
@@ -8955,6 +8998,7 @@ function validateCodexProject(){
 function resetCodexProject(){
   codexValidated=false;
   codexHistory=[];
+  cxExitCodingMode();
   var feed=document.getElementById("codex-feed");
   if(feed)feed.innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
   showCodexValidateBtn();
