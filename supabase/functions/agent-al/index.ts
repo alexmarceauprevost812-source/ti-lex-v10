@@ -14,29 +14,41 @@ const GH_OWNER  = "alexmarceauprevost812-source";
 const GH_REPO   = "ti-lex-v10";
 const GH_BRANCH = "supabase";
 const MODEL     = "claude-sonnet-4-6";
-// 🌐 CORS allowlist — remplace par ton domaine Vercel réel
+// 🌐 CORS allowlist
 const ALLOWED_ORIGINS = [
   "http://localhost:3000",
   "http://127.0.0.1:5500",
   "https://ti-lex-v10.vercel.app",
+  "https://ti-lex-al.vercel.app",
+  "https://ti-lex-al.com",
+  "https://www.ti-lex-al.com",
 ];
+function isAllowedOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    if (host === "vercel.app" || host.endsWith(".vercel.app")) return true;
+  } catch { return false; }
+  return false;
+}
 // 🛡️ Niveau 5 — fichiers que AL ne peut JAMAIS modifier
 const PROTECTED_PATHS: RegExp[] = [
-  /(^|\/)\.env($|\.)/i,                  // secrets d'environnement
-  /(^|\/)vercel\.json$/i,                // headers de sécurité / CSP
-  /(^|\/)\.github\//i,                   // workflows CI/CD
-  /supabase\/functions\/auth-/i,         // fonctions d'authentification
-  /supabase\/functions\/stripe/i,        // fonctions de paiement
-  /supabase\/functions\/agent-al/i,      // AL ne se réécrit pas lui-même
-  /(^|\/)config\.toml$/i,                // config Supabase
-  /(^|\/)\.git\//i,                      // interne git
+  /(^|\/)\.env($|\.)/i,
+  /(^|\/)vercel\.json$/i,
+  /(^|\/)\.github\//i,
+  /supabase\/functions\/auth-/i,
+  /supabase\/functions\/stripe/i,
+  /supabase\/functions\/agent-al/i,
+  /(^|\/)config\.toml$/i,
+  /(^|\/)\.git\//i,
 ];
 function isProtected(path: string): boolean {
   return PROTECTED_PATHS.some((re) => re.test(path));
 }
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
 function corsFor(origin: string | null) {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allow = isAllowedOrigin(origin) ? origin! : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
     "Vary": "Origin",

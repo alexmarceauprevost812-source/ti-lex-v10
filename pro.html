@@ -6328,7 +6328,7 @@ var TRANSLATIONS={
 };
 var currentLang=localStorage.getItem("tilex-al-lang")||"fr";
 
-function t(key){return (TRANSLATIONS[currentLang]||{})[key]||(TRANSLATIONS.fr||{})[key]||key;}
+function t(key){if(typeof TRANSLATIONS==="undefined"||!TRANSLATIONS)return key;return (TRANSLATIONS[currentLang]||{})[key]||(TRANSLATIONS.fr||{})[key]||key;}
 
 function applyLanguage(lang){
   if(!TRANSLATIONS[lang])return;
@@ -7883,6 +7883,7 @@ var SYNTAX_RULES=[
 ];
 function applySyntaxHL(el){
   if(!el)return;
+  if(typeof SYNTAX_RULES==="undefined"||!SYNTAX_RULES)return;
   var html=el.innerHTML;
   if(html.indexOf("<code")!==-1||html.indexOf("<pre")!==-1)return;
   var allRules=[];
