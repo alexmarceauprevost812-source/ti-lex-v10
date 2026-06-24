@@ -1,261 +1,183 @@
-// ti-lex v10 — TilexVision : analyse d'image via Claude Vision
-(function () {
-  'use strict';
+'use strict';
+(function(){
 
-  var _currentImage = null;
+var _imageEnAttente=null;
+var _MAX_SIZE=5*1024*1024;
+var _FORMATS=["image/jpeg","image/png","image/webp","image/gif"];
 
-  window.TilexVision = {
-    // Charge une image depuis un input file
-    loadFromInput: function (input) {
-      return new Promise(function (resolve, reject) {
-        var file = input && input.files && input.files[0];
-        if (!file || !file.type.startsWith('image/')) {
-          reject(new Error('Fichier image invalide'));
+window.TilexVision={
+
+  imageEnAttente:null,
+
+  chargerImage:function(fichier){
+    return new Promise(function(resolve,reject){
+      if(!fichier){reject(new Error("Aucun fichier"));return;}
+      if(_FORMATS.indexOf(fichier.type)===-1){
+        reject(new Error("Format non supporté. Utilise JPG, PNG, WEBP ou GIF."));return;
+      }
+      if(fichier.size>_MAX_SIZE){
+        reject(new Error("Image trop grosse. Maximum 5MB."));return;
+      }
+      var reader=new FileReader();
+      reader.onload=function(e){
+        var dataUrl=e.target.result;
+        _imageEnAttente={
+          base64:dataUrl.split(",")[1],
+          mediaType:fichier.type,
+          nom:fichier.name,
+          size:fichier.size,
+          dataUrl:dataUrl
+        };
+        TilexVision.imageEnAttente=_imageEnAttente;
+        resolve(_imageEnAttente);
+      };
+      reader.onerror=function(){reject(new Error("Erreur lecture fichier"));};
+      reader.readAsDataURL(fichier);
+    });
+  },
+
+  loadFromInput:function(input){
+    var file=input&&input.files&&input.files[0];
+    if(!file)return Promise.reject(new Error("Aucun fichier"));
+    return TilexVision.chargerImage(file);
+  },
+
+  loadFromPaste:function(clipboardData){
+    return new Promise(function(resolve,reject){
+      var items=clipboardData&&clipboardData.items;
+      if(!items){reject(new Error("Pas de données"));return;}
+      for(var i=0;i<items.length;i++){
+        if(items[i].type.indexOf("image/")===0){
+          var file=items[i].getAsFile();
+          TilexVision.chargerImage(file).then(resolve).catch(reject);
           return;
         }
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          var dataUrl = e.target.result;
-          _currentImage = {
-            base64: dataUrl.split(',')[1],
-            mediaType: file.type,
-            name: file.name,
-            size: file.size,
-            dataUrl: dataUrl
-          };
-          resolve(_currentImage);
-        };
-        reader.onerror = function () { reject(new Error('Erreur lecture fichier')); };
-        reader.readAsDataURL(file);
-      });
-    },
+      }
+      reject(new Error("Pas d'image dans le presse-papier"));
+    });
+  },
 
-    // Charge depuis un paste (Ctrl+V)
-    loadFromPaste: function (clipboardData) {
-      return new Promise(function (resolve, reject) {
-        var items = clipboardData && clipboardData.items;
-        if (!items) { reject(new Error('Pas de données')); return; }
-        for (var i = 0; i < items.length; i++) {
-          if (items[i].type.startsWith('image/')) {
-            var file = items[i].getAsFile();
-            var reader = new FileReader();
-            reader.onload = function (e) {
-              var dataUrl = e.target.result;
-              _currentImage = {
-                base64: dataUrl.split(',')[1],
-                mediaType: file.type,
-                name: 'paste-' + Date.now() + '.png',
-                size: file.size,
-                dataUrl: dataUrl
-              };
-              resolve(_currentImage);
-            };
-            reader.onerror = function () { reject(new Error('Erreur lecture')); };
-            reader.readAsDataURL(file);
-            return;
-          }
-        }
-        reject(new Error('Pas d\'image dans le presse-papier'));
-      });
-    },
+  loadFromDrop:function(dataTransfer){
+    var file=dataTransfer&&dataTransfer.files&&dataTransfer.files[0];
+    if(!file||file.type.indexOf("image/")!==0)return Promise.reject(new Error("Pas d'image"));
+    return TilexVision.chargerImage(file);
+  },
 
-    // Charge depuis un drag & drop
-    loadFromDrop: function (dataTransfer) {
-      return new Promise(function (resolve, reject) {
-        var file = dataTransfer && dataTransfer.files && dataTransfer.files[0];
-        if (!file || !file.type.startsWith('image/')) {
-          reject(new Error('Pas d\'image'));
+  afficherPreview:function(container,imgData){
+    var img=imgData||_imageEnAttente;
+    if(!img||!img.dataUrl)return null;
+
+    var existante=document.getElementById("tilex-vision-preview");
+    if(existante)existante.remove();
+
+    var preview=document.createElement("div");
+    preview.id="tilex-vision-preview";
+    preview.className="tilex-vision-preview";
+
+    var inner=document.createElement("div");
+    inner.className="tilex-vision-preview-inner";
+
+    var imgEl=document.createElement("img");
+    imgEl.src=img.dataUrl;
+    imgEl.alt=img.nom||"Image";
+
+    var nom=document.createElement("span");
+    nom.className="tilex-vision-nom";
+    nom.textContent=img.nom||"image";
+
+    var sizeKb=Math.round((img.size||0)/1024);
+    var taille=document.createElement("span");
+    taille.className="tilex-vision-taille";
+    taille.textContent=sizeKb+" Ko";
+
+    var annulerBtn=document.createElement("button");
+    annulerBtn.className="tilex-vision-annuler";
+    annulerBtn.textContent="✕";
+    annulerBtn.title="Retirer l'image";
+    annulerBtn.addEventListener("click",function(){
+      TilexVision.annulerImage();
+    });
+
+    inner.appendChild(imgEl);
+    inner.appendChild(nom);
+    inner.appendChild(taille);
+    inner.appendChild(annulerBtn);
+
+    var badge=document.createElement("div");
+    badge.className="tilex-vision-badge";
+    badge.textContent="👁️ Vision Anthropic";
+
+    preview.appendChild(inner);
+    preview.appendChild(badge);
+    container.insertBefore(preview,container.firstChild);
+    return preview;
+  },
+
+  annulerImage:function(){
+    _imageEnAttente=null;
+    TilexVision.imageEnAttente=null;
+    var preview=document.getElementById("tilex-vision-preview");
+    if(preview)preview.remove();
+  },
+
+  buildVisionContent:function(texte){
+    var img=_imageEnAttente;
+    if(!img||!img.base64)return null;
+    return [
+      {type:"image",source:{type:"base64",media_type:img.mediaType,data:img.base64}},
+      {type:"text",text:texte||"Analyse cette image et décris ce que tu vois."}
+    ];
+  },
+
+  hasImage:function(){return !!_imageEnAttente;},
+  getImage:function(){return _imageEnAttente;},
+  clear:function(){
+    _imageEnAttente=null;
+    TilexVision.imageEnAttente=null;
+    var preview=document.getElementById("tilex-vision-preview");
+    if(preview)preview.remove();
+  },
+
+  showPreview:function(container,imgData){
+    return TilexVision.afficherPreview(container,imgData);
+  }
+};
+
+document.addEventListener("DOMContentLoaded",function(){
+  var composerInput=document.getElementById("composer-input");
+  if(composerInput){
+    composerInput.addEventListener("paste",function(e){
+      if(!e.clipboardData||!e.clipboardData.items)return;
+      for(var i=0;i<e.clipboardData.items.length;i++){
+        if(e.clipboardData.items[i].type.indexOf("image/")===0){
+          e.preventDefault();
+          TilexVision.loadFromPaste(e.clipboardData).then(function(img){
+            var composer=document.querySelector(".composer-glass");
+            if(composer)TilexVision.afficherPreview(composer,img);
+            if(typeof showToastMsg==="function")showToastMsg("📋 Image collée");
+          }).catch(function(){});
           return;
         }
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          var dataUrl = e.target.result;
-          _currentImage = {
-            base64: dataUrl.split(',')[1],
-            mediaType: file.type,
-            name: file.name,
-            size: file.size,
-            dataUrl: dataUrl
-          };
-          resolve(_currentImage);
-        };
-        reader.onerror = function () { reject(new Error('Erreur lecture')); };
-        reader.readAsDataURL(file);
-      });
-    },
-
-    // Analyse via Edge Function (utilise Claude Vision)
-    analyser: async function (prompt, imageData) {
-      var img = imageData || _currentImage;
-      if (!img || !img.base64) {
-        if (typeof showToast === 'function') showToast('Aucune image chargée', 'error');
-        return { ok: false, erreur: 'Aucune image' };
       }
-
-      var token = typeof getToken === 'function' ? getToken() : '';
-      var sbUrl = typeof SB_URL !== 'undefined' ? SB_URL : '';
-      var sbAnon = typeof SB_ANON !== 'undefined' ? SB_ANON : '';
-
-      try {
-        var res = await fetch(sbUrl + '/functions/v1/agent-dispatcher', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token,
-            'apikey': sbAnon
-          },
-          body: JSON.stringify({
-            agent_id: 'nexus-al',
-            message: prompt || 'Analyse cette image en détail. Décris ce que tu vois.',
-            image_base64: img.base64,
-            image_media_type: img.mediaType
-          })
-        });
-
-        if (!res.ok) {
-          var errData = await res.json().catch(function () { return {}; });
-          throw new Error(errData.error || 'Erreur ' + res.status);
-        }
-
-        // SSE streaming ou JSON
-        var contentType = res.headers.get('content-type') || '';
-        if (contentType.indexOf('text/event-stream') !== -1) {
-          return { ok: true, stream: res.body, image: img };
-        }
-
-        var data = await res.json();
-        if (typeof showToast === 'function') showToast('Image analysée', 'success');
-        return { ok: true, resultat: data.summary || data, image: img };
-      } catch (e) {
-        console.warn('[TilexVision] Erreur analyse:', e.message);
-        if (typeof showToast === 'function') showToast('Erreur analyse image', 'error');
-        return { ok: false, erreur: e.message };
-      }
-    },
-
-    // Affiche un aperçu de l'image dans le chat
-    showPreview: function (container, imageData) {
-      var img = imageData || _currentImage;
-      if (!img || !img.dataUrl) return null;
-
-      var existing = container.querySelector('.tilex-vision-preview');
-      if (existing) existing.remove();
-
-      var wrap = document.createElement('div');
-      wrap.className = 'tilex-vision-preview';
-
-      var imgEl = document.createElement('img');
-      imgEl.src = img.dataUrl;
-      imgEl.alt = img.name || 'Image';
-
-      var info = document.createElement('div');
-      info.className = 'tvp-info';
-      var sizeKb = Math.round((img.size || 0) / 1024);
-      info.innerHTML = '<span class="tvp-name">' + _escHtml(img.name || 'image') + '</span>'
-        + '<span class="tvp-size">' + sizeKb + ' Ko</span>';
-
-      var removeBtn = document.createElement('button');
-      removeBtn.className = 'tvp-remove';
-      removeBtn.textContent = '✕';
-      removeBtn.title = 'Retirer l\'image';
-      removeBtn.addEventListener('click', function () {
-        wrap.remove();
-        _currentImage = null;
-      });
-
-      wrap.appendChild(imgEl);
-      wrap.appendChild(info);
-      wrap.appendChild(removeBtn);
-      container.appendChild(wrap);
-      return wrap;
-    },
-
-    // Getter
-    getImage: function () { return _currentImage; },
-    hasImage: function () { return !!_currentImage; },
-    clear: function () { _currentImage = null; }
-  };
-
-  function _escHtml(s) {
-    var d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
+    });
   }
 
-  // ── Bouton Vision dans le composer ──
-  document.addEventListener('DOMContentLoaded', function () {
-    var composerRow = document.querySelector('.composer-actions-row');
-    if (!composerRow) return;
-
-    // Bouton
-    var btn = document.createElement('button');
-    btn.id = 'vision-btn';
-    btn.className = 'composer-plus';
-    btn.title = 'Analyser une image';
-    btn.innerHTML = '👁';
-    btn.style.cssText = 'font-size:16px;';
-
-    // Input file caché
-    var fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    fileInput.id = 'vision-file-input';
-
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      fileInput.click();
+  var chatMsgs=document.getElementById("chat-msgs");
+  if(chatMsgs){
+    chatMsgs.addEventListener("dragover",function(e){e.preventDefault();e.currentTarget.classList.add("vision-dragover");});
+    chatMsgs.addEventListener("dragleave",function(e){e.currentTarget.classList.remove("vision-dragover");});
+    chatMsgs.addEventListener("drop",function(e){
+      e.preventDefault();e.currentTarget.classList.remove("vision-dragover");
+      if(!e.dataTransfer||!e.dataTransfer.files||!e.dataTransfer.files[0])return;
+      if(e.dataTransfer.files[0].type.indexOf("image/")!==0)return;
+      TilexVision.loadFromDrop(e.dataTransfer).then(function(img){
+        var composer=document.querySelector(".composer-glass");
+        if(composer)TilexVision.afficherPreview(composer,img);
+        if(typeof showToastMsg==="function")showToastMsg("🖼️ Image déposée");
+      }).catch(function(){});
     });
+  }
+});
 
-    fileInput.addEventListener('change', function () {
-      window.TilexVision.loadFromInput(fileInput).then(function (img) {
-        var composer = document.querySelector('.composer-glass');
-        if (composer) window.TilexVision.showPreview(composer, img);
-        if (typeof showToast === 'function') showToast('Image chargée — envoie ton message pour l\'analyser', 'success');
-      }).catch(function (e) {
-        if (typeof showToast === 'function') showToast(e.message, 'error');
-      });
-      fileInput.value = '';
-    });
-
-    composerRow.appendChild(btn);
-    composerRow.appendChild(fileInput);
-
-    // ── Ctrl+V pour coller une image ──
-    var chatInput = document.getElementById('chat-input');
-    if (chatInput) {
-      chatInput.addEventListener('paste', function (e) {
-        if (!e.clipboardData || !e.clipboardData.items) return;
-        for (var i = 0; i < e.clipboardData.items.length; i++) {
-          if (e.clipboardData.items[i].type.startsWith('image/')) {
-            e.preventDefault();
-            window.TilexVision.loadFromPaste(e.clipboardData).then(function (img) {
-              var composer = document.querySelector('.composer-glass');
-              if (composer) window.TilexVision.showPreview(composer, img);
-              if (typeof showToast === 'function') showToast('Image collée', 'success');
-            }).catch(function () {});
-            return;
-          }
-        }
-      });
-    }
-
-    // ── Drag & drop sur le chat ──
-    var chatArea = document.getElementById('chat-messages');
-    if (chatArea) {
-      chatArea.addEventListener('dragover', function (e) { e.preventDefault(); });
-      chatArea.addEventListener('drop', function (e) {
-        e.preventDefault();
-        if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files[0]) return;
-        if (!e.dataTransfer.files[0].type.startsWith('image/')) return;
-        window.TilexVision.loadFromDrop(e.dataTransfer).then(function (img) {
-          var composer = document.querySelector('.composer-glass');
-          if (composer) window.TilexVision.showPreview(composer, img);
-          if (typeof showToast === 'function') showToast('Image déposée', 'success');
-        }).catch(function () {});
-      });
-    }
-  });
-
-  console.log('[TilexVision] Chargé — analyse d\'image Claude Vision');
+console.log("[TilexVision] Chargé — Claude Vision via AI_PROXY (100% Anthropic)");
 })();
