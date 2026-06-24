@@ -2,7 +2,10 @@
 (function () {
   'use strict';
 
-  var VITESSE_MS = 18;
+  var _isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 1 && window.innerWidth < 768);
+
+  var VITESSE_MS = _isMobile ? 35 : 18;
   var _queue = [];
   var _running = false;
 
@@ -89,6 +92,7 @@
 
   function _streamPlain(el, texte, vitesse, done, cursor) {
     var idx = 0;
+    var chunkSize = _isMobile ? 3 : 1;
     var textNode = document.createTextNode('');
     if (cursor) {
       el.insertBefore(textNode, cursor);
@@ -101,14 +105,16 @@
         done();
         return;
       }
-      var ch = texte[idx];
-      textNode.textContent += ch;
-      idx++;
+      var end = Math.min(idx + chunkSize, texte.length);
+      var chunk = texte.slice(idx, end);
+      textNode.textContent += chunk;
+      var lastCh = chunk[chunk.length - 1];
+      idx = end;
 
       var delay = vitesse;
-      if (ch === '\n') delay = vitesse * 3;
-      else if ('.!?'.indexOf(ch) !== -1) delay = vitesse * 4;
-      else if (',;:'.indexOf(ch) !== -1) delay = vitesse * 2;
+      if (lastCh === '\n') delay = vitesse * 3;
+      else if ('.!?'.indexOf(lastCh) !== -1) delay = vitesse * 4;
+      else if (',;:'.indexOf(lastCh) !== -1) delay = vitesse * 2;
 
       setTimeout(tick, delay);
     }
@@ -130,5 +136,5 @@
   style.textContent = '@keyframes tilexCursorBlink{50%{opacity:0}}';
   document.head.appendChild(style);
 
-  console.log('[TilexStream] Chargé — écriture fluide ' + VITESSE_MS + 'ms/caractère');
+  console.log('[TilexStream] Chargé — ' + (_isMobile ? 'mobile' : 'desktop') + ' ' + VITESSE_MS + 'ms/car, chunk=' + (_isMobile ? 3 : 1));
 })();

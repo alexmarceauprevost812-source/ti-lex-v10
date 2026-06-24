@@ -307,12 +307,87 @@ var TilexStudio = (function(){
      6. BOUTON 🚀 PUSH (TilexPush → ti-lex-code)
      ═══════════════════════════════════════════ */
 
+  function validerEtAfficher(){
+    var code = obtenirCode();
+    var f = _fichiers[_fichierActif];
+    var lang = f ? f.lang : 'html';
+
+    if(!code){
+      masquerPanneauErreurs();
+      return { ok: true, alertes: [] };
+    }
+
+    if(typeof TilexGardien === 'undefined'){
+      return { ok: true, alertes: [] };
+    }
+
+    var resultat = TilexGardien.valider(code, lang);
+    afficherPanneauErreurs(resultat);
+    return resultat;
+  }
+
+  function afficherPanneauErreurs(resultat){
+    var panel = document.getElementById('studio-erreurs');
+    if(!panel){
+      panel = document.createElement('div');
+      panel.id = 'studio-erreurs';
+      panel.className = 'studio-erreurs-panel';
+      var editorWrap = document.querySelector('.studio-editor-wrap');
+      if(editorWrap) editorWrap.appendChild(panel);
+      else return;
+    }
+
+    panel.innerHTML = '';
+    panel.style.display = 'block';
+
+    if(resultat.ok){
+      panel.className = 'studio-erreurs-panel ok';
+      panel.innerHTML = '<div class="se-header ok">Aucune erreur</div>';
+      setTimeout(function(){ masquerPanneauErreurs(); }, 3000);
+      return;
+    }
+
+    panel.className = 'studio-erreurs-panel erreur';
+    var titre = document.createElement('div');
+    titre.className = 'se-header erreur';
+    titre.textContent = resultat.resume;
+    panel.appendChild(titre);
+
+    resultat.alertes.forEach(function(a){
+      var el = document.createElement('div');
+      el.className = 'se-ligne ' + a.niveau;
+      var ligneInfo = a.ligne > 0 ? ' L' + a.ligne : '';
+      el.innerHTML = '<span class="se-badge ' + a.niveau + '">'
+        + a.niveau.toUpperCase() + '</span> '
+        + '<span class="se-msg">' + a.message + ligneInfo + '</span>';
+      if(a.extrait){
+        var ext = document.createElement('code');
+        ext.className = 'se-extrait';
+        ext.textContent = a.extrait;
+        el.appendChild(ext);
+      }
+      panel.appendChild(el);
+    });
+  }
+
+  function masquerPanneauErreurs(){
+    var panel = document.getElementById('studio-erreurs');
+    if(panel) panel.style.display = 'none';
+  }
+
   function pousserVersCodex(){
     var code = obtenirCode();
     if(!code){
       if(typeof showToastMsg === 'function') showToastMsg('Rien à envoyer');
       return;
     }
+
+    var resultat = validerEtAfficher();
+    if(!resultat.ok && resultat.critiques && resultat.critiques.length > 0){
+      if(typeof showToastMsg === 'function') showToastMsg('Push bloqué par le Gardien');
+      return;
+    }
+
     var f = _fichiers[_fichierActif];
     var lang = f ? f.lang : 'html';
     var nom = f ? f.nom : 'code.html';
@@ -878,7 +953,9 @@ var TilexStudio = (function(){
     addFile: ajouterFichier,
     addImage: ajouterImage,
     injectImageFromChat: injecterImageDepuisChat,
-    changeLang: changerLang
+    changeLang: changerLang,
+    validerEtAfficher: validerEtAfficher,
+    validate: validerEtAfficher
   };
 
 })();
