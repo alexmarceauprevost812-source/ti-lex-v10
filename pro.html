@@ -8112,19 +8112,27 @@ var SYNTAX_RULES=[
   {color:"#ffffff",keywords:["résultat","résumé","conclusion","recommandation","solution","réponse","étape","instruction","commande","exemple","note","astuce","conseil"]}
 ];
 function applySyntaxHL(el){
-  if(!el)return;
-  if(typeof SYNTAX_RULES==="undefined"||!SYNTAX_RULES)return;
-  var html=el.innerHTML;
-  if(html.indexOf("<code")!==-1||html.indexOf("<pre")!==-1)return;
-  var allRules=[];
-  SYNTAX_RULES.forEach(function(rule){rule.keywords.forEach(function(kw){allRules.push({keyword:kw,color:rule.color});});});
-  allRules.sort(function(a,b){return b.keyword.length-a.keyword.length;});
-  allRules.forEach(function(r){
-    var escaped=r.keyword.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-    var regex=new RegExp("\\b("+escaped+")\\b","gi");
-    html=html.replace(regex,'<span class="syntax-hl kw-copy" style="color:'+r.color+';font-weight:600;cursor:pointer;border-bottom:1px dotted '+r.color+'40;padding:0 2px;border-radius:2px;transition:background .15s;" onclick="copierMotCle(this)" title="Cliquer pour copier">$1</span>');
-  });
-  el.innerHTML=html;
+  try{
+    if(!el)return;
+    if(typeof SYNTAX_RULES==="undefined"||!SYNTAX_RULES||!Array.isArray(SYNTAX_RULES))return;
+    var html=el.innerHTML;
+    if(!html||typeof html!=="string")return;
+    if(html.indexOf("<code")!==-1||html.indexOf("<pre")!==-1)return;
+    var allRules=[];
+    for(var i=0;i<SYNTAX_RULES.length;i++){
+      var rule=SYNTAX_RULES[i];
+      if(!rule||!rule.keywords||!Array.isArray(rule.keywords))continue;
+      for(var j=0;j<rule.keywords.length;j++){allRules.push({keyword:rule.keywords[j],color:rule.color});}
+    }
+    allRules.sort(function(a,b){return b.keyword.length-a.keyword.length;});
+    for(var k=0;k<allRules.length;k++){
+      var r=allRules[k];
+      var escaped=r.keyword.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      var regex=new RegExp("\\b("+escaped+")\\b","gi");
+      html=html.replace(regex,'<span class="syntax-hl kw-copy" style="color:'+r.color+';font-weight:600;cursor:pointer;border-bottom:1px dotted '+r.color+'40;padding:0 2px;border-radius:2px;transition:background .15s;" onclick="copierMotCle(this)" title="Cliquer pour copier">$1</span>');
+    }
+    el.innerHTML=html;
+  }catch(e){}
 }
 function copierMotCle(el){
   var txt=el.textContent;

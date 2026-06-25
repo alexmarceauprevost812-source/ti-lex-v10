@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-429";
+const CACHE_VERSION = "tilex-v10-430";
 const ASSETS = [
   "/",
   "/index.html",
@@ -133,8 +133,10 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
+        if (res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
+        }
         return res;
       })
       .catch(() => caches.match(e.request))
