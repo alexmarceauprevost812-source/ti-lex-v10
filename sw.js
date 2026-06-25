@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-430";
+const CACHE_VERSION = "tilex-v10-431";
 const ASSETS = [
   "/",
   "/index.html",
@@ -92,6 +92,10 @@ const ASSETS = [
   "/js/midas-manager.js",
   "/js/midas-agent-definition.js",
   "/js/yilo-memory.js",
+  "/js/tilex-image.js",
+  "/js/tilex-schema.js",
+  "/css/tilex-image.css",
+  "/css/tilex-schema.css",
   "/js/tilex-offline.js",
 ];
 

@@ -42,3 +42,6 @@ verify_jwt = false
 
 [functions.midas-agent]
 verify_jwt = false
+
+[functions.tilex-image]
+verify_jwt = false
