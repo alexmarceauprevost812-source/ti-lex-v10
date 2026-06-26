@@ -11,6 +11,9 @@ const admin = createClient(
 
 const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN") ?? "";
 const GITHUB_REPO  = Deno.env.get("GITHUB_REPO") ?? "";
+// 🔒 Propriétaire unique : seul lui peut RÉALISER (SQL service-role / push GitHub).
+// Empêche tout utilisateur connecté d'exécuter du SQL et d'élever ses privilèges.
+const OWNER_USER_ID = Deno.env.get("OWNER_USER_ID") || "d9a1985a-e106-4ea5-9ada-cac775c0b820";
 
 const DESTRUCTIVE = /\b(drop\s+table|drop\s+database|truncate|delete\s+from|drop\s+schema|alter\s+table\s+\w+\s+drop)\b/i;
 
@@ -59,6 +62,10 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "realize") {
+    // 🔒 Niveau 1 — verrou propriétaire : seul le propriétaire peut réaliser.
+    if (user.id !== OWNER_USER_ID) {
+      return json({ error: "forbidden", message: "Réalisation réservée au propriétaire ti-lex." }, 403, cors);
+    }
     const kind = detectKind(content);
     const destructive = kind === "sql" && DESTRUCTIVE.test(content);
 

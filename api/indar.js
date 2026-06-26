@@ -119,11 +119,37 @@ RÈGLES : Tu aides à DÉFENDRE contre les malwares, jamais à en créer. Tu ne 
 Réponds en français, structuré et professionnel.`
 };
 
+// 🔒 $$ : limite par IP (via check_rate_limit en base) pour éviter qu'un
+// abuseur ne fasse exploser le quota Anthropic. Fail-open si Supabase non config.
+async function verifierDebitIP(req, max, fenetreSec) {
+  try {
+    const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'inconnu';
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return true;
+    const r = await fetch(`${url}/rest/v1/rpc/check_rate_limit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ p_key: `indar:${ip}`, p_max: max, p_window_seconds: fenetreSec })
+    });
+    if (!r.ok) return true;
+    return (await r.json()) === true;
+  } catch { return true; }
+}
+
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
       headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  const within = await verifierDebitIP(req, 20, 60);
+  if (!within) {
+    return new Response(JSON.stringify({ error: 'Trop de requêtes. Réessaie dans une minute.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': '60' }
     });
   }
 

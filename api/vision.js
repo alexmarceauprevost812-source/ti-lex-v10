@@ -4,6 +4,25 @@
 // Utilise Claude Vision (Anthropic) — inclus dans ta clé existante
 // ⚠️ Clé ANTHROPIC_API_KEY dans les variables Vercel
 // ============================================
+// 🔒 $$ : limite par IP (via check_rate_limit en base) pour éviter qu'un
+// abuseur ne fasse exploser le quota Anthropic. Fail-open si Supabase non config.
+async function verifierDebitIP(req, max, fenetreSec) {
+  try {
+    const xff = req.headers['x-forwarded-for'] || '';
+    const ip = String(xff).split(',')[0].trim() || 'inconnu';
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return true;
+    const r = await fetch(`${url}/rest/v1/rpc/check_rate_limit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ p_key: `vision:${ip}`, p_max: max, p_window_seconds: fenetreSec })
+    });
+    if (!r.ok) return true;
+    return (await r.json()) === true;
+  } catch { return true; }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,6 +33,12 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ erreur: 'Méthode non autorisée' });
+  }
+
+  const within = await verifierDebitIP(req, 15, 60);
+  if (!within) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ erreur: 'Trop de requêtes. Réessaie dans une minute.' });
   }
 
   const { maxTokens, messages, prompt, image_base64, image_media_type } = req.body || {};
