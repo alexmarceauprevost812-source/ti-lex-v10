@@ -84,6 +84,42 @@
         const crypto = this.trouver(match);
         return crypto ? this.badge(crypto) : match;
       });
+    },
+
+    // Vrai si le texte contient au moins un nom de crypto connu.
+    _contientCrypto(texte) {
+      const mots = String(texte).match(/[a-zA-Zéè]+/g);
+      if (!mots) return false;
+      return mots.some((m) => this.trouver(m));
+    },
+
+    /**
+     * 🌳 Rehausse un élément DÉJÀ rendu (Markdown/HTML) : remplace les mots crypto
+     * par des badges, UNIQUEMENT dans les nœuds texte, en sautant pre/code/a/etc.
+     * → ne casse ni le Markdown ni la coloration de code. Sûr (injecter échappe).
+     */
+    rehausser(root) {
+      if (!root || !root.ownerDocument) return;
+      const SKIP = { PRE: 1, CODE: 1, A: 1, SCRIPT: 1, STYLE: 1, BUTTON: 1, IMG: 1, TEXTAREA: 1 };
+      const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          let p = node.parentNode;
+          while (p && p !== root) {
+            if (SKIP[p.nodeName]) return NodeFilter.FILTER_REJECT;
+            if (p.classList && p.classList.contains("tilex-crypto-badge")) return NodeFilter.FILTER_REJECT;
+            p = p.parentNode;
+          }
+          return this._contientCrypto(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+        }
+      });
+      const cibles = [];
+      let n;
+      while ((n = walker.nextNode())) cibles.push(n);
+      cibles.forEach((textNode) => {
+        const span = document.createElement("span");
+        span.innerHTML = this.injecter(textNode.nodeValue); // injecter échappe le texte
+        textNode.parentNode.replaceChild(span, textNode);
+      });
     }
   };
 
