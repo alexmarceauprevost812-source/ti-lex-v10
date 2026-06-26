@@ -124,10 +124,18 @@
         esc(actif.symbole || actif.nom || "?") + '.</div>';
 
       const couleur = couleurSure(v.couleur);
+      // fmt ne laisse passer que des nombres finis ; toute autre valeur est échappée.
       const fmt = function (x, suf) {
-        return x == null ? "n/d" : (typeof x === "number" ? x.toFixed(2) : x) + (suf || "");
+        if (x == null) return "n/d";
+        const n = Number(x);
+        return Number.isFinite(n) ? n.toFixed(2) + (suf || "") : esc(x);
       };
       const ind = actif.indicateurs || {};
+      // var24h : on garde seulement un nombre fini, sinon on omet (évite toFixed sur string).
+      const var24h = Number(actif.var24h);
+      const var24hHtml = Number.isFinite(var24h)
+        ? '(' + (var24h >= 0 ? '+' : '') + var24h.toFixed(2) + '% 24h)'
+        : '';
 
       let raisonsHtml = "";
       (v.raisons || []).slice(0, 5).forEach(function (r) {
@@ -141,7 +149,7 @@
           '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
             '<strong style="font-size:1rem">' + esc(actif.symbole || "") + ' · ' + esc(actif.nom || "") + '</strong>' +
             '<span style="font-size:.78rem;color:#888">' + fmt(actif.prix) + ' ' +
-              (actif.var24h != null ? '(' + (actif.var24h >= 0 ? '+' : '') + actif.var24h.toFixed(2) + '% 24h)' : '') +
+              var24hHtml +
             '</span>' +
           '</div>' +
           '<div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +

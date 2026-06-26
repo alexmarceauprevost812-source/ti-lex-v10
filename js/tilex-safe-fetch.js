@@ -14,7 +14,9 @@ const TilexSafeFetch = {
         return r;
       } catch (err) {
         clearTimeout(timer);
-        const transient = err.name === "AbortError" || /^HTTP 5\d\d$/.test(err.message);
+        // Transitoire = timeout (AbortError), panne réseau (TypeError), 5xx, 408, 429.
+        const transient = err.name === "AbortError" || err.name === "TypeError" ||
+          /^HTTP (5\d\d|408|429)$/.test(err.message);
         if (!retryableMethod || !transient || tentative === retries) {
           if (window.TilexToast) TilexToast.error("Connexion échouée");
           throw err;
