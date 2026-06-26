@@ -196,3 +196,64 @@
    ctrl.demarrer();
    // ctrl.arreter();  // pour stopper en cours de route
 --------------------------------------------------------------- */
+
+/**
+ * TilexTypewriter — typewriter mono-élément, mobile-friendly (requestAnimationFrame).
+ * Vitesse adaptive (lent au début → normale → rapide à la fin), accumulateur de
+ * temps → fluide sur mobile ET desktop, indépendant du framerate.
+ *   window.TilexTypewriter.ecrire(element, "mon texte", 18);
+ */
+(function () {
+  "use strict";
+
+  const TilexTypewriter = {
+    ecrire(element, texte, vitesseBase = 18) {
+      if (!element) return;
+      texte = String(texte == null ? "" : texte);
+
+      // Respecte « réduire les animations » : on pose le texte direct.
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        element.textContent = texte;
+        return;
+      }
+
+      let index = 0;
+      let dernierTemps = null;
+      let accumulateur = 0;
+
+      // Vitesse adaptive : lente → normale → rapide
+      const getVitesse = (i, total) => {
+        const ratio = total ? i / total : 1;
+        if (ratio < 0.2) return vitesseBase * 2;      // Lent au début
+        if (ratio > 0.8) return vitesseBase * 0.5;    // Rapide à la fin
+        return vitesseBase;                            // Normale au milieu
+      };
+
+      const frame = (timestamp) => {
+        if (!dernierTemps) dernierTemps = timestamp;
+        const delta = timestamp - dernierTemps;
+        dernierTemps = timestamp;
+
+        accumulateur += delta;
+        const vitesse = getVitesse(index, texte.length);
+
+        // Écrire autant de lettres que le temps écoulé le permet (anti-saccade mobile).
+        while (accumulateur >= vitesse && index < texte.length) {
+          element.textContent += texte[index];
+          index++;
+          accumulateur -= vitesse;
+        }
+
+        if (index < texte.length) {
+          window.requestAnimationFrame(frame); // ✅ fluide mobile + desktop
+        }
+      };
+
+      element.textContent = "";
+      window.requestAnimationFrame(frame);
+    }
+  };
+
+  // --- Expose en global (convention ti-lex) ---
+  window.TilexTypewriter = TilexTypewriter;
+})();
