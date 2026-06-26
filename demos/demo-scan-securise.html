@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INDAR — Démo Scan Sécurisé</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#0d0d14; --panel2:#111118; --border:#23232c;
+    --orange:#ff7f27; --green:#37e0a0; --gold:#E6A400; --red:#E60000;
+    --blue:#4a9eff; --violet:#C700E6; --muted:#4a4a5a; --txt:#e8e8ee;
+    --font:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--txt); font-family:var(--font);
+    padding:20px; line-height:1.5; min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+
+  /* En-tête */
+  .head{
+    display:flex; align-items:center; gap:14px; margin-bottom:6px;
+  }
+  .logo{
+    width:46px;height:46px;border-radius:12px;
+    background:linear-gradient(135deg,var(--orange),var(--red));
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+    box-shadow:0 0 18px #ff7f2733;
+  }
+  h1{font-size:18px;letter-spacing:1px}
+  h1 .v{color:var(--orange)}
+  .sub{font-size:11px;color:var(--muted);margin-bottom:22px;margin-left:60px}
+
+  /* Toggle */
+  .toggle-bar{
+    display:flex;gap:8px;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:6px;margin-bottom:18px;
+  }
+  .toggle-bar button{
+    flex:1;padding:10px;border:none;border-radius:7px;cursor:pointer;
+    font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:1px;
+    background:transparent;color:var(--muted);transition:all .25s;
+  }
+  .toggle-bar button.active.secure{background:var(--green);color:#04130d}
+  .toggle-bar button.active.raw{background:var(--red);color:#fff}
+
+  .explain{
+    font-size:11px;padding:10px 14px;border-radius:8px;margin-bottom:18px;
+    border:1px solid; line-height:1.6;
+  }
+  .explain.secure{border-color:var(--green);background:#04130d;color:var(--green)}
+  .explain.raw{border-color:var(--red);background:#160202;color:#ff8a8a}
+
+  /* Bouton scan */
+  .scan-btn{
+    width:100%;padding:14px;border:1px solid var(--orange);border-radius:10px;
+    background:#1a0a00;color:var(--orange);font-family:var(--font);font-size:13px;
+    font-weight:700;letter-spacing:2px;cursor:pointer;margin-bottom:20px;
+    transition:all .2s;
+  }
+  .scan-btn:hover{background:var(--orange);color:#0a0a0a;box-shadow:0 0 18px #ff7f2744}
+  .scan-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* Carte rapport */
+  .report{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:20px;margin-bottom:18px;animation:fade .4s ease;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .r-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border);
+  }
+  .r-title{font-size:13px;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+  .r-agent{font-size:9px;color:var(--muted);letter-spacing:1.5px}
+  .badge-agent{
+    font-size:9px;padding:3px 8px;border-radius:5px;letter-spacing:1px;font-weight:700;
+  }
+  .verdict{font-size:14px;font-weight:700;margin-bottom:14px}
+
+  .meta-row{font-size:11px;color:var(--blue);margin-bottom:14px;line-height:1.8}
+  .masked{
+    background:#1a1a24;border:1px dashed var(--muted);border-radius:4px;
+    padding:1px 7px;color:var(--muted);letter-spacing:1px;
+  }
+  .revealed{
+    background:#160202;border:1px solid var(--red);border-radius:4px;
+    padding:1px 7px;color:#ff8a8a;text-decoration:line-through;
+  }
+
+  /* Sévérités */
+  .sev{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-bottom:16px;font-weight:700}
+  .sev span{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .sev .n{font-size:18px}
+  .sev .l{font-size:8px;color:var(--muted);letter-spacing:1px}
+
+  .label{font-size:9px;color:var(--muted);letter-spacing:1.5px;margin:14px 0 7px}
+  .badges{display:flex;flex-wrap:wrap;gap:6px}
+  .b{border-radius:6px;padding:4px 10px;font-size:10px;letter-spacing:.5px;border:1px solid}
+  .b-cat{color:var(--orange);border-color:var(--orange);background:#1a0a00}
+  .b-data{color:var(--gold);border-color:var(--gold);background:#1a1500}
+  .b-flag{color:var(--red);border-color:var(--red);background:#160202}
+  .b-tech{color:var(--blue);border-color:var(--blue);background:#0a1320}
+
+  .loi25{
+    margin-top:14px;padding:9px 13px;background:#1a1500;border:1px solid var(--gold);
+    border-radius:8px;color:var(--gold);font-size:10px;line-height:1.6;
+  }
+  .r-foot{margin-top:16px;font-size:9px;color:#3a3a48;text-align:right}
+
+  .scanning{
+    text-align:center;padding:30px;color:var(--orange);font-size:12px;
+    letter-spacing:2px;animation:pulse 1s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .legend{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+    padding:14px;margin-top:8px;font-size:10px;color:var(--muted);line-height:1.8;
+  }
+  .legend b{color:var(--txt)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="logo">🔰</div>
+    <div>
+      <h1>INDAR <span class="v">v10</span></h1>
+    </div>
+  </div>
+  <div class="sub">Démo · Scan sécurisé — cibles et valeurs masquées · Produit du Québec ⚜️</div>
+
+  <!-- Toggle vue sécurisée / brute -->
+  <div class="toggle-bar">
+    <button id="btnSecure" class="active secure" onclick="setMode('secure')">🔒 VUE SÉCURISÉE (ce que voit l'utilisateur)</button>
+    <button id="btnRaw" class="raw" onclick="setMode('raw')">⚠️ VUE BRUTE (ce qu'on cache)</button>
+  </div>
+
+  <div id="explain" class="explain secure">
+    🔒 <b>Mode sécurisé.</b> Voici exactement ce que ti-lex affiche : des mots-clés, des catégories et des compteurs. Aucune vraie valeur, aucune cible complète. C'est sécuritaire à montrer à un client ou à partager.
+  </div>
+
+  <button id="scanBtn" class="scan-btn" onclick="lancerScan()">⚡ LANCER LE SCAN DÉMO</button>
+
+  <div id="output"></div>
+
+  <div class="legend">
+    <div style="color:var(--txt);font-weight:700;margin-bottom:8px;letter-spacing:1px">LÉGENDE DES BADGES</div>
+    <span class="dot" style="background:var(--orange)"></span> Catégorie de finding (type de problème)<br>
+    <span class="dot" style="background:var(--gold)"></span> Type de donnée touchée (catégorie, pas la valeur)<br>
+    <span class="dot" style="background:var(--red)"></span> Drapeau sensible (oui/non — jamais la donnée réelle)<br>
+    <span class="dot" style="background:var(--blue)"></span> Identifiant technique public (CWE/CVE — sécuritaire)
+  </div>
+
+</div>
+
+<script>
+  let mode = 'secure';
+  let scanLance = false;
+
+  // Données démo — 2 rapports (style NEXUS-AL + SILEX)
+  // Les "valeurs réelles" ne servent QU'À montrer ce qui est caché en mode brut.
+  const rapports = [
+    {
+      agent:'NEXUS-AL', role:'Responsable cybersécurité',
+      agentColor:'var(--orange)', agentBg:'#1a0a00',
+      verdict:'POSTURE SAINE — améliorations préventives', verdictColor:'var(--green)',
+      cibleMasquee:'xxxxxxxxxxxxxxxxxxxx', cibleReelle:'rnuripmfozlxenryxhdc.supabase.co',
+      scanType:'AUDIT COMPLET', duree:'74',
+      sev:{crit:0,high:1,med:1,low:2,info:5},
+      total:9,
+      categories:['HEADERS MANQUANTS','RATE LIMITING','CORS WILDCARD','DNS EXPOSÉ'],
+      donnees:[], // aucune donnée perso touchée
+      flags:{password:false,nas:false,carte:false},
+      cwe:['CWE-693','CWE-307','CWE-942','CWE-200'],
+      loi25:'⚖️ Pertinence Loi 25 — régime PRÉVENTIF (art. 3.7). Aucun incident confirmé, aucune notification CAI requise.',
+      valeursCachees:['Adresse IP serveur : xxx.xx.x.x','URL endpoints : xxxxxxxxxxxx','Version serveur : xxxxxxxx']
+    },
+    {
+      agent:'SILEX', role:'Cybersécurité défensive',
+      agentColor:'var(--green)', agentBg:'#04130d',
+      verdict:'POSTURE MAÎTRISÉE — exposition réduite', verdictColor:'var(--green)',
+      cibleMasquee:'xxxxxxxxxx', cibleReelle:'app.ti-lex.ca',
+      scanType:'SCAN WEB + DARK WEB', duree:'112',
+      sev:{crit:0,high:0,med:2,low:1,info:4},
+      total:7,
+      categories:['HEADERS HTTP','VERSION SERVEUR','SURVEILLANCE DARK WEB'],
+      donnees:['COURRIEL ADMIN','SOUS-DOMAINES'],
+      flags:{password:false,nas:false,carte:false},
+      cwe:['CWE-693','CWE-200'],
+      loi25:'⚖️ Pertinence Loi 25 — mesures raisonnables en place (RLS actif 68/68). Diligence démontrée.',
+      valeursCachees:['Courriel admin : xxx@xxxxxx.ca','Sous-domaines : xxxxxxxxxxxx','Certificat SSL : xxxxxxxx']
+    }
+  ];
+
+  function setMode(m){
+    mode = m;
+    document.getElementById('btnSecure').classList.toggle('active', m==='secure');
+    document.getElementById('btnRaw').classList.toggle('active', m==='raw');
+    const ex = document.getElementById('explain');
+    if(m==='secure'){
+      ex.className='explain secure';
+      ex.innerHTML='🔒 <b>Mode sécurisé.</b> Voici exactement ce que ti-lex affiche : des mots-clés, des catégories et des compteurs. Aucune vraie valeur, aucune cible complète. C\'est sécuritaire à montrer à un client ou à partager.';
+    } else {
+      ex.className='explain raw';
+      ex.innerHTML='⚠️ <b>Mode brut (démonstration seulement).</b> Voici ce que ti-lex <b>NE montre PAS</b>. Les valeurs barrées en rouge sont masquées dans la vraie interface. C\'est ça que la protection cache pour t\'éviter une fuite.';
+    }
+    if(scanLance) render();
+  }
+
+  function lancerScan(){
+    const btn = document.getElementById('scanBtn');
+    const out = document.getElementById('output');
+    btn.disabled = true;
+    out.innerHTML = '<div class="scanning">▸ SCAN EN COURS...</div>';
+    let etapes = ['▸ RECONNAISSANCE...','▸ ANALYSE DES HEADERS...','▸ VÉRIFICATION RLS...','▸ MASQUAGE DES VALEURS...'];
+    let i = 0;
+    const sc = document.querySelector('.scanning');
+    const it = setInterval(()=>{
+      if(sc) sc.textContent = etapes[i] || '▸ FINALISATION...';
+      i++;
+      if(i > etapes.length){
+        clearInterval(it);
+        scanLance = true;
+        btn.disabled = false;
+        btn.textContent = '🔄 RELANCER LE SCAN DÉMO';
+        render();
+      }
+    }, 550);
+  }
+
+  function cible(r){
+    if(mode==='secure') return `<span class="masked">${r.cibleMasquee}</span>`;
+    return `<span class="masked">${r.cibleMasquee}</span> &nbsp;⟵ remplace ⟵&nbsp; <span class="revealed">${r.cibleReelle}</span>`;
+  }
+
+  function render(){
+    const out = document.getElementById('output');
+    out.innerHTML = rapports.map(r=>{
+      // Badges catégories
+      const cats = r.categories.map(c=>`<span class="b b-cat">${c}</span>`).join('');
+      // Badges données
+      const data = r.donnees.length
+        ? r.donnees.map(d=>`<span class="b b-data">${d}</span>`).join('')
+        : '<span style="color:var(--green);font-size:10px">✔ Aucune donnée personnelle touchée</span>';
+      // Flags
+      const flagsArr=[];
+      if(r.flags.password) flagsArr.push('🔑 MOT DE PASSE');
+      if(r.flags.nas) flagsArr.push('🆔 NAS');
+      if(r.flags.carte) flagsArr.push('💳 CARTE CRÉDIT');
+      const flags = flagsArr.length
+        ? flagsArr.map(f=>`<span class="b b-flag">${f}</span>`).join('')
+        : '<span style="color:var(--green);font-size:10px">✔ Aucune donnée sensible exposée</span>';
+      // CWE
+      const cwe = r.cwe.map(c=>`<span class="b b-tech">${c}</span>`).join('');
+
+      // Section "valeurs cachées" — seulement en mode brut
+      let cacheSection = '';
+      if(mode==='raw'){
+        cacheSection = `
+          <div class="label" style="color:var(--red)">🚫 VALEURS MASQUÉES (jamais affichées dans ti-lex)</div>
+          <div class="badges">
+            ${r.valeursCachees.map(v=>`<span class="b" style="color:#ff8a8a;border-color:var(--red);background:#160202;text-decoration:line-through">${v}</span>`).join('')}
+          </div>`;
+      }
+
+      return `
+      <div class="report">
+        <div class="r-head">
+          <div class="r-title">
+            🔰 RAPPORT — ${r.agent}
+          </div>
+          <span class="badge-agent" style="color:${r.agentColor};background:${r.agentBg};border:1px solid ${r.agentColor}">${r.role}</span>
+        </div>
+
+        <div class="meta-row">
+          CIBLE : ${cible(r)}<br>
+          TYPE : ${r.scanType} &nbsp;|&nbsp; DURÉE : ${r.duree}s &nbsp;|&nbsp; FINDINGS : ${r.total}
+        </div>
+
+        <div class="verdict" style="color:${r.verdictColor}">${r.verdict}</div>
+
+        <div class="sev">
+          <span><span class="n" style="color:var(--red)">${r.sev.crit}</span><span class="l">CRIT</span></span>
+          <span><span class="n" style="color:var(--orange)">${r.sev.high}</span><span class="l">HIGH</span></span>
+          <span><span class="n" style="color:var(--gold)">${r.sev.med}</span><span class="l">MED</span></span>
+          <span><span class="n" style="color:var(--blue)">${r.sev.low}</span><span class="l">LOW</span></span>
+          <span><span class="n" style="color:var(--muted)">${r.sev.info}</span><span class="l">INFO</span></span>
+        </div>
+
+        <div class="label">CATÉGORIES DÉTECTÉES</div>
+        <div class="badges">${cats}</div>
+
+        <div class="label">TYPES DE DONNÉES TOUCHÉES</div>
+        <div class="badges">${data}</div>
+
+        <div class="label">DONNÉES SENSIBLES</div>
+        <div class="badges">${flags}</div>
+
+        <div class="label">IDENTIFIANTS TECHNIQUES (publics)</div>
+        <div class="badges">${cwe}</div>
+
+        ${cacheSection}
+
+        <div class="loi25">${r.loi25}</div>
+
+        <div class="r-foot">🔒 ${mode==='secure'?'Valeurs masquées — mots-clés seulement':'DÉMO — valeurs normalement cachées'} · Centre INDAR</div>
+      </div>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

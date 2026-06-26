@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline';
+    connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co;
+    img-src 'self' data:;
+    base-uri 'none';
+    object-src 'none';
+    frame-ancestors 'none';
+    form-action 'none';
+  " />
+  <title>ti-lex — Connexion</title>
+  <style>
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0f17;}
+    #tilex-toast-zone{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+    .tilex-toast{padding:11px 16px;border-radius:10px;color:#fff;font-size:14px;font-family:system-ui,sans-serif;}
+    .tilex-toast-error{background:#ef4444;} .tilex-toast-attention{background:#f59e0b;color:#1a1205;}
+    .tilex-toast-info{background:#2563eb;} .tilex-toast-success{background:#10b981;}
+  </style>
+</head>
+<body>
+  <!-- data-retour : où aller après connexion réussie -->
+  <div id="tilex-auth" data-retour="/index.html"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="tilex-auth.js"></script>
+  <script src="tilex-auth-ui.js"></script>
+</body>
+</html>

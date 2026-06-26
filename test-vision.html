@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TilexVision — Test Scanner d'image</title>
+<link rel="stylesheet" href="css/tilex-vision.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0a0a0a;color:#e2e2ea;font-family:'Rajdhani','Share Tech Mono',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+.test-wrap{max-width:640px;width:100%;padding:40px 20px;}
+.test-title{font-size:28px;font-weight:800;color:#ff7f27;letter-spacing:2px;margin-bottom:8px;}
+.test-sub{font-size:13px;color:#6c6c78;margin-bottom:24px;}
+.test-input-wrap{background:rgba(30,30,34,.6);border:2px dashed rgba(255,127,39,.3);border-radius:16px;padding:40px;text-align:center;cursor:pointer;transition:border-color .2s;}
+.test-input-wrap:hover{border-color:#ff7f27;}
+.test-input-wrap label{cursor:pointer;display:block;}
+.test-input-wrap .ico{font-size:48px;margin-bottom:12px;}
+.test-input-wrap .txt{font-size:14px;color:#aaa;}
+input[type="file"]{display:none;}
+#vision-result{margin-top:24px;}
+.test-footer{margin-top:32px;text-align:center;font-size:11px;color:#3a3a44;}
+.test-footer a{color:#ff7f27;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="test-wrap">
+  <div class="test-title">👁️ TILEXVISION</div>
+  <div class="test-sub">Scanner d'image IA — Claude Vision (Sonnet 4.6)</div>
+  <div class="test-input-wrap" onclick="document.getElementById('vision-input').click()">
+    <div class="ico">📸</div>
+    <div class="txt">Clique ou glisse une image ici</div>
+    <input type="file" id="vision-input" accept="image/*"/>
+  </div>
+  <div id="vision-result"></div>
+  <div class="test-footer">
+    <a href="/pro.html">← Retour à TI-LEX-AL</a> · Propulsé par Claude Vision
+  </div>
+</div>
+<script>
+var TilexVisionTest={
+  config:{endpoint:'/api/vision',maxTokens:1000,formatsAcceptes:['image/jpeg','image/png','image/webp','image/gif']},
+  enCours:false,
+  inputEl:null,
+  resultEl:null,
+  init:function(inputSel,resultSel){
+    try{
+      this.inputEl=document.querySelector(inputSel);
+      this.resultEl=document.querySelector(resultSel);
+      if(!this.inputEl)return;
+      var self=this;
+      this.inputEl.addEventListener('change',function(e){
+        var f=e.target.files[0];
+        if(f)self.scannerImage(f);
+      });
+    }catch(e){console.error('TilexVision init:',e);}
+  },
+  scannerImage:async function(fichier){
+    if(!this.config.formatsAcceptes.includes(fichier.type)){
+      this.afficherErreur('Format non supporté: '+fichier.type);return;
+    }
+    this.enCours=true;
+    this.afficherChargement(fichier.name);
+    try{
+      var base64=await this.fichierVersBase64(fichier);
+      this.afficherApercu(base64,fichier);
+      var analyse=await this.analyserAvecIA(base64,fichier);
+      this.afficherResume(analyse,fichier);
+    }catch(e){
+      this.afficherErreur('Erreur scan: '+e.message);
+    }finally{this.enCours=false;}
+  },
+  fichierVersBase64:function(f){
+    return new Promise(function(ok,ko){
+      var r=new FileReader();
+      r.onload=function(){ok(r.result);};r.onerror=ko;r.readAsDataURL(f);
+    });
+  },
+  analyserAvecIA:async function(dataUrl,fichier){
+    var match=dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    if(!match)throw new Error('Format image invalide');
+    var res=await fetch(this.config.endpoint,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        image_base64:match[2],
+        image_media_type:match[1],
+        maxTokens:this.config.maxTokens,
+        prompt:"Analyse cette image en détail et donne-moi un résumé COMPLET en français québécois. Décris:\n1. Ce qu'on voit principalement (sujet)\n2. Les couleurs dominantes\n3. Les objets/personnes présents\n4. L'ambiance / le contexte\n5. Tout texte visible dans l'image\n6. Détails techniques pertinents\n\nSois précis et détaillé."
+      })
+    });
+    if(!res.ok)throw new Error('API vision: '+res.status);
+    var data=await res.json();
+    if(data.erreur)throw new Error(data.erreur);
+    return data.resultat||'Aucune analyse.';
+  },
+  afficherApercu:function(base64,f){
+    if(!this.resultEl)return;
+    var taille=(f.size/1024).toFixed(1);
+    this.resultEl.innerHTML='<div class="tilex-vision-apercu"><img src="'+base64+'" alt="'+f.name+'" class="tilex-vision-img"/><div class="tilex-vision-meta">📄 <strong>'+f.name+'</strong> • '+taille+' Ko • '+f.type+'</div></div><div class="tilex-vision-loading">👁️ Scan en cours...</div>';
+  },
+  afficherChargement:function(nom){
+    if(!this.resultEl)return;
+    this.resultEl.innerHTML='<div class="tilex-vision-loading">👁️ TilexVision scanne <strong>'+nom+'</strong>...</div>';
+  },
+  afficherResume:function(analyse,f){
+    if(!this.resultEl)return;
+    var taille=(f.size/1024).toFixed(1);
+    var apercu=this.resultEl.querySelector('.tilex-vision-apercu');
+    var apercuHtml=apercu?apercu.outerHTML:'';
+    this.resultEl.innerHTML=apercuHtml+'<div class="tilex-vision-resume"><div class="tilex-vision-titre">🔍 Ce que je vois :</div><div class="tilex-vision-texte">'+this.formaterTexte(analyse)+'</div><div class="tilex-vision-footer">✅ Scan complété • '+f.name+' • '+taille+' Ko</div></div>';
+  },
+  afficherErreur:function(msg){
+    if(!this.resultEl)return;
+    this.resultEl.innerHTML='<div class="tilex-vision-erreur">❌ '+msg+'</div>';
+  },
+  formaterTexte:function(t){
+    return t.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  }
+};
+TilexVisionTest.init('#vision-input','#vision-result');
+</script>
+</body>
+</html>

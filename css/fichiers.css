@@ -1,0 +1,359 @@
+/* ===== MODULE FICHIERS + ZIP — ti-lex ===== */
+
+.tilex-fichiers-module {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--font-tilex);
+}
+
+.fichiers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fichiers-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fichiers-compteur {
+  font-size: 11px;
+  color: var(--muted);
+  background: rgba(255,106,0,0.1);
+  border: 1px solid rgba(255,106,0,0.2);
+  border-radius: 20px;
+  padding: 2px 10px;
+}
+
+.fichier-new-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fichier-nom-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fich-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--txt);
+  font-family: var(--font-tilex);
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fich-input:focus {
+  border-color: var(--orange);
+}
+
+.fich-input::placeholder {
+  color: var(--muted);
+}
+
+.fich-textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--txt);
+  font-family: var(--font-tilex);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+  min-height: 160px;
+}
+
+.fich-textarea:focus {
+  border-color: var(--orange);
+}
+
+.fich-textarea::placeholder {
+  color: var(--muted);
+}
+
+.fichiers-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.fichiers-vide {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.fichier-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 0.15s;
+}
+
+.fichier-card:hover {
+  border-color: rgba(255,106,0,0.4);
+}
+
+.fichier-card-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fichier-card-icon {
+  color: var(--or2);
+  flex-shrink: 0;
+}
+
+.fichier-card-nom {
+  font-size: 13px;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.fichier-card-taille {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.fichier-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.fichier-btn-action {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-family: var(--font-tilex);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fichier-btn-action:hover {
+  color: var(--txt);
+  border-color: var(--orange);
+}
+
+.fichier-btn-action.copie-ok {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.fichier-btn-action.supprimer:hover {
+  color: #e05555;
+  border-color: #e05555;
+}
+
+.fichiers-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  gap: 10px;
+}
+
+.tilex-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--bg2);
+  border: 1px solid var(--green);
+  border-radius: var(--radius);
+  color: var(--green);
+  font-family: var(--font-tilex);
+  font-size: 12px;
+  padding: 10px 18px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+
+.tilex-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Nom de projet custom ── */
+
+.projet-nom-bloc {
+  padding-bottom: 4px;
+}
+
+.projet-nom-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.projet-nom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.projet-nom-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+.projet-nom-input {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.projet-nom-apercu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 106, 0, 0.05);
+  border: 1px dashed rgba(255, 106, 0, 0.25);
+  border-radius: var(--radius);
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 280px;
+  overflow: hidden;
+}
+
+.apercu-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.apercu-valeur {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--orange);
+  font-family: var(--font-tilex);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .projet-nom-row    { flex-direction: column; align-items: stretch; }
+  .projet-nom-apercu { max-width: 100%; }
+}
+
+/* ── Badge modèle auto (module 05) ── */
+
+.template-badge {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(55, 224, 160, 0.06);
+  border: 1px solid rgba(55, 224, 160, 0.2);
+  border-radius: var(--radius, 6px);
+  font-family: var(--font-tilex);
+  font-size: 11px;
+  color: var(--green, #37e0a0);
+  margin-top: 6px;
+  transition: all 0.15s;
+  flex-wrap: wrap;
+}
+
+.template-badge.modifie {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.2);
+  color: var(--or, #ff7f27);
+}
+
+.template-badge-icone { flex-shrink: 0; }
+
+.template-badge-texte {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.template-badge-texte em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.template-badge-reset {
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  color: inherit;
+  font-family: var(--font-tilex);
+  font-size: 10px;
+  padding: 3px 9px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.13s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.template-badge-reset:hover { opacity: 1; }
+
+/* ── Bouton CLI (module 08) ── */
+
+.tilex-btn-cli {
+  border-color: rgba(55, 224, 160, 0.4) !important;
+  color: var(--green, #37e0a0) !important;
+  font-family: var(--font-tilex);
+}
+
+.tilex-btn-cli:hover {
+  background: rgba(55, 224, 160, 0.08) !important;
+  border-color: var(--green, #37e0a0) !important;
+}

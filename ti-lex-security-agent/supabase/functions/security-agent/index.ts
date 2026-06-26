@@ -152,6 +152,11 @@ RÈGLES ABSOLUES :
 - Si une preuve manque ou n'est pas concluante, dis-le explicitement au lieu de spéculer.
 - Ne fournis aucune méthode d'exploitation, charge utile ni technique offensive (ni DoS, ni ingénierie sociale).
 - Reste défensif : en-têtes de sécurité manquants, fuites d'information, pistes de durcissement.
+CALIBRATION DE SÉVÉRITÉ :
+- RLS (Row Level Security) est activé sur toutes les tables Supabase du projet. Un header manquant = Basse (defense-in-depth).
+- Seule une exposition de données confirmée sans RLS mérite Haute ou Critique.
+- Loi 25 : mentionne uniquement les mesures préventives raisonnables (art. 3.7). Ne mentionne PAS de montant de sanction ni de délai de notification sauf incident confirmé.
+- Délais de remédiation : Critique=7j, Haute=30j, Moyenne=90j, Basse=backlog.
 Réponds UNIQUEMENT avec un JSON valide, sans préambule ni balises Markdown, de la forme :
 { "findings": [ { "titre": "", "criticite": "Critique|Haute|Moyenne|Basse", "preuve": "", "recommandation": "" } ], "synthese": "" }`;
 

@@ -1,0 +1,219 @@
+/* ============================================================
+   ti-lex-AL v10 — Interface Pro
+   Même fonctionnalités, design sobre et professionnel.
+   Animations calmées, couleurs gold/orange.
+   ============================================================ */
+
+/* ══ VARIABLES PRO (gold accent) ══ */
+body.mode-pro {
+  --or: #D4AF37;
+  --or2: #F0C040;
+  --or3: #B8960C;
+}
+
+/* ══ GRID BACKGROUND — calme ══ */
+body.mode-pro {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(212,175,55,.03) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(212,175,55,.03) 60px);
+}
+
+/* ══ ANIMATIONS CALMÉES ══ */
+body.mode-pro .brand-avatar-vid,
+body.mode-pro .welcome-video,
+body.mode-pro .nav-video-ico {
+  filter: saturate(.6) brightness(.9);
+}
+
+body.mode-pro .cdx-letter,
+body.mode-pro .ca-lt,
+body.mode-pro .fin-letter,
+body.mode-pro .forf-spot {
+  animation: none !important;
+  text-shadow: none !important;
+}
+
+body.mode-pro .status-dot {
+  animation: none !important;
+  opacity: .7;
+}
+
+body.mode-pro .pill-toggle[aria-pressed="true"] .pill-knob {
+  box-shadow: none;
+}
+
+/* Sweep effect on buttons — removed */
+body.mode-pro .send::after,
+body.mode-pro .sug::after,
+body.mode-pro .codex-run-btn::after {
+  display: none !important;
+}
+
+/* ECG animation — static */
+body.mode-pro .fin-ecg-dot {
+  animation: none !important;
+}
+body.mode-pro .fin-ecg-line {
+  stroke-dashoffset: 0 !important;
+  animation: none !important;
+}
+
+/* Codex matrix rain — stopped */
+body.mode-pro .cdx-letter {
+  animation: none !important;
+  color: var(--or) !important;
+  text-shadow: none !important;
+  opacity: .7;
+}
+
+/* Créer Agent letters — static */
+body.mode-pro .ca-lt {
+  animation: none !important;
+  opacity: .7;
+}
+
+/* ══ SIDEBAR — plus sobre ══ */
+body.mode-pro .sidebar {
+  border-right-color: rgba(212,175,55,.15);
+}
+
+body.mode-pro .brand-name {
+  background: linear-gradient(90deg, var(--or3), var(--or2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.mode-pro .nav-item:hover,
+body.mode-pro .nav-item.active {
+  border-color: var(--or);
+}
+body.mode-pro .nav-item.active {
+  background: rgba(212,175,55,.08);
+}
+
+/* ══ TOPBAR — clean ══ */
+body.mode-pro .topbar {
+  border-bottom-color: rgba(212,175,55,.12);
+}
+
+body.mode-pro #viewTitle {
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+body.mode-pro .status-dot {
+  background: var(--or);
+  box-shadow: 0 0 4px var(--or);
+}
+
+/* ══ MESSAGES — cleaner ══ */
+body.mode-pro .msg.assistant .msg-body {
+  font-weight: 400;
+  line-height: 1.75;
+}
+
+body.mode-pro .msg.assistant .msg-body code {
+  background: rgba(212,175,55,.08);
+  border-color: rgba(212,175,55,.15);
+}
+
+/* ══ AGENTS PANEL — gold accent ══ */
+body.mode-pro .agents-card:hover,
+body.mode-pro .agents-card.active {
+  border-color: var(--or);
+  box-shadow: 0 0 15px rgba(212,175,55,.12);
+}
+
+/* ══ WELCOME SECTION — subtler ══ */
+body.mode-pro .welcome h2 .orange {
+  background: linear-gradient(90deg, var(--or3), var(--or2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body.mode-pro .sug {
+  border-color: rgba(212,175,55,.2);
+}
+body.mode-pro .sug:hover {
+  border-color: var(--or);
+  background: rgba(212,175,55,.06);
+}
+
+/* ══ COMPOSER — gold send button ══ */
+body.mode-pro .send {
+  background: linear-gradient(135deg, var(--or3), var(--or), var(--or2));
+}
+
+/* ══ FORFAITS CARDS — gold highlights ══ */
+body.mode-pro .forfait-card.recommended {
+  border-color: var(--or);
+  box-shadow: 0 0 25px rgba(212,175,55,.1);
+}
+
+/* ══ CODEX — subtle styling ══ */
+body.mode-pro .codex-editor-wrap {
+  border-color: rgba(212,175,55,.15);
+}
+
+/* ══ SECURITY VIEW — gold accents ══ */
+body.mode-pro .sec-card {
+  border-color: rgba(212,175,55,.1);
+}
+
+/* ══ LIGHT MODE PRO OVERRIDES ══ */
+body.mode-pro[data-theme="light"] {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(150,110,20,.04) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(150,110,20,.04) 60px);
+}
+
+body.mode-pro[data-theme="light"] .sidebar {
+  border-right-color: rgba(150,110,20,.12);
+}
+
+body.mode-pro[data-theme="light"] .topbar {
+  border-bottom-color: rgba(150,110,20,.1);
+}
+
+/* ══ PRO BADGE INDICATOR ══ */
+body.mode-pro::after {
+  content: 'PRO';
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  z-index: 9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--or);
+  background: rgba(212,175,55,.06);
+  border: 1px solid rgba(212,175,55,.15);
+  opacity: .5;
+  pointer-events: none;
+}
+
+/* ══ INTERFACE SWITCHER BUTTON (settings) ══ */
+.interface-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(212,175,55,.25);
+  background: rgba(212,175,55,.06);
+  color: var(--or, #D4AF37);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.interface-switch-btn:hover {
+  border-color: var(--or, #D4AF37);
+  background: rgba(212,175,55,.12);
+}

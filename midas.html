@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDAS — Stratège Financier · ti-lex-AL v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#0c0c11; --panel2:#121219; --bord:#23232c;
+    --or:#ffcf4a; --ambre:#f59e0b; --orange:#ff7f27;
+    --vert:#37e0a0; --rouge:#ff4d4d; --bleu:#4a9eff;
+    --txt:#e6e6ea; --muet:#9a9aa2; --faible:#6a6a74;
+    --font:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 70% -10%, #1a160833 0%, transparent 60%),
+      radial-gradient(900px 500px at 0% 10%, #ff7f2710 0%, transparent 55%),
+      var(--bg);
+    color:var(--txt); font-family:var(--font); line-height:1.5;
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 18px 60px}
+
+  /* ---------- EN-TÊTE / AVATAR SIGNATURE ---------- */
+  header.hero{
+    display:flex; align-items:center; gap:22px; padding:34px 0 22px;
+    border-bottom:1px solid var(--bord);
+  }
+  .avatar{
+    position:relative; width:96px; height:96px; flex:0 0 96px;
+    display:grid; place-items:center;
+  }
+  .avatar .halo{
+    position:absolute; inset:-10px; border-radius:50%;
+    background:radial-gradient(circle, #ffcf4a44 0%, transparent 65%);
+    animation:pulse 2.8s ease-in-out infinite;
+  }
+  .avatar svg{position:relative; width:96px; height:96px; color:var(--or);
+    filter:drop-shadow(0 0 10px #ffcf4a66);}
+  .avatar .sweep{
+    position:absolute; inset:0; border-radius:14px; overflow:hidden; pointer-events:none;
+  }
+  .avatar .sweep::before{
+    content:""; position:absolute; top:0; left:-120%; width:60%; height:100%;
+    background:linear-gradient(100deg, transparent, #ffcf4a55, transparent);
+    transform:skewX(-18deg); animation:sweep 3.6s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.5; transform:scale(.96)}50%{opacity:1; transform:scale(1.05)}}
+  @keyframes sweep{0%{left:-120%}55%{left:140%}100%{left:140%}}
+  .draw{stroke-dasharray:60; stroke-dashoffset:60; animation:draw 2.2s ease-out forwards .3s}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .titremidas h1{margin:0; font-size:1.9rem; font-weight:800; letter-spacing:.04em}
+  .titremidas h1 .v{color:var(--or)}
+  .titremidas .sous{color:var(--muet); font-size:.82rem; margin-top:4px}
+  .titremidas .tag{
+    display:inline-block; margin-top:9px; font-size:.68rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ambre); border:1px solid #f59e0b44;
+    border-radius:999px; padding:3px 10px; background:#f59e0b0d;
+  }
+
+  /* ---------- ONGLETS ---------- */
+  nav.onglets{display:flex; gap:6px; margin:22px 0 18px; flex-wrap:wrap}
+  .onglet{
+    font-family:var(--font); font-size:.82rem; font-weight:500; cursor:pointer;
+    color:var(--muet); background:var(--panel); border:1px solid var(--bord);
+    border-radius:10px; padding:9px 16px; transition:.18s;
+  }
+  .onglet:hover{color:var(--txt); border-color:#3a3a45}
+  .onglet.actif{color:#0a0a0a; background:var(--or); border-color:var(--or); font-weight:700}
+
+  .vue{display:none}
+  .vue.actif{display:block; animation:fade .3s ease}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+
+  /* ---------- BARRE D'ACTION ---------- */
+  .barre{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px}
+  .btn{
+    font-family:var(--font); font-weight:700; font-size:.85rem; cursor:pointer;
+    color:#0a0a0a; background:linear-gradient(135deg,var(--or),var(--ambre));
+    border:none; border-radius:10px; padding:11px 20px; transition:.18s;
+    box-shadow:0 4px 14px #f59e0b22;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 20px #f59e0b3a}
+  .btn:disabled{opacity:.5; cursor:wait; transform:none}
+  .btn.ghost{background:var(--panel); color:var(--txt); border:1px solid var(--bord); box-shadow:none}
+  .interrupteur{display:flex; align-items:center; gap:8px; color:var(--muet); font-size:.78rem; cursor:pointer; user-select:none}
+  .interrupteur input{accent-color:var(--or); width:15px; height:15px}
+  .horodate{margin-left:auto; color:var(--faible); font-size:.72rem}
+  .fg{display:flex; align-items:center; gap:8px; font-size:.74rem; color:var(--muet);
+    border:1px solid var(--bord); border-radius:999px; padding:5px 12px; background:var(--panel)}
+  .fg b{font-weight:700}
+
+  /* ---------- CARTES DE SIGNAUX ---------- */
+  .grille{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px}
+  .carte{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    border:1px solid var(--bord); border-radius:14px; padding:16px; position:relative; overflow:hidden;
+  }
+  .carte .bord{position:absolute; left:0; top:0; bottom:0; width:4px}
+  .carte .haut{display:flex; align-items:center; gap:10px}
+  .carte .pic{width:30px; height:30px; border-radius:50%; background:#1c1c24; object-fit:cover}
+  .carte .sym{font-weight:800; font-size:1rem}
+  .carte .nom{color:var(--muet); font-size:.74rem}
+  .carte .prix{margin-left:auto; text-align:right}
+  .carte .prix .p{font-weight:700; font-size:.95rem}
+  .carte .prix .d{font-size:.74rem}
+  .pos{color:var(--vert)} .neg{color:var(--rouge)}
+
+  .verdict{margin-top:13px; display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .verdict .et{font-weight:800; font-size:.92rem}
+  .verdict .meta{font-size:.7rem; color:var(--faible); text-align:right}
+
+  /* Jauge de verdict — SIGNATURE */
+  .jauge{margin-top:9px; height:8px; border-radius:6px; position:relative;
+    background:linear-gradient(90deg,#ff4d4d 0%, #ff7f27 30%, #ffcf4a 50%, #9ee6c4 70%, #37e0a0 100%);}
+  .jauge .aig{position:absolute; top:-3px; width:3px; height:14px; border-radius:2px;
+    background:#fff; box-shadow:0 0 6px #000a; transform:translateX(-50%)}
+  .jauge .zero{position:absolute; left:50%; top:-4px; bottom:-4px; width:1px; background:#ffffff30}
+
+  .chips{margin-top:12px; display:flex; gap:6px; flex-wrap:wrap}
+  .chip{font-size:.7rem; color:var(--muet); background:#16161d; border:1px solid var(--bord);
+    border-radius:7px; padding:3px 8px}
+  .chip b{color:var(--txt); font-weight:600}
+
+  .spark{margin-top:11px; height:34px; width:100%}
+  .raisons{margin:10px 0 0; padding:0; list-style:none; font-size:.74rem; color:#c2c2cc}
+  .raisons li{margin:3px 0; padding-left:12px; position:relative}
+  .raisons li::before{content:"›"; position:absolute; left:0; color:var(--or)}
+  .badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+  .badge{font-size:.68rem; font-weight:700; border-radius:7px; padding:3px 9px;
+    background:#ff4d4d18; color:var(--rouge); border:1px solid #ff4d4d44}
+  .stop{margin-top:9px; font-size:.72rem; color:var(--orange)}
+
+  /* ---------- WATCHLIST ---------- */
+  table{width:100%; border-collapse:collapse; font-size:.8rem}
+  th,td{text-align:left; padding:10px 12px; border-bottom:1px solid var(--bord)}
+  th{color:var(--muet); font-weight:500; font-size:.72rem; text-transform:uppercase; letter-spacing:.06em}
+  td .vsmall{font-weight:700}
+  .retirer{cursor:pointer; color:var(--faible); border:none; background:none; font-size:1rem}
+  .retirer:hover{color:var(--rouge)}
+  .ajout{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap}
+  input[type=text],textarea,select{
+    font-family:var(--font); color:var(--txt); background:var(--panel); border:1px solid var(--bord);
+    border-radius:9px; padding:10px 12px; font-size:.82rem; outline:none;
+  }
+  input[type=text]:focus,textarea:focus,select:focus{border-color:var(--or)}
+  textarea{width:100%; resize:vertical; min-height:90px}
+
+  /* ---------- RECHERCHE ---------- */
+  .reco{background:var(--panel); border:1px solid var(--bord); border-radius:12px; padding:16px}
+  .reco .ligne{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+  .reponse{white-space:pre-wrap; margin-top:14px; font-size:.84rem; color:#d4d4dc;
+    background:#0e0e14; border:1px solid var(--bord); border-radius:10px; padding:14px; display:none}
+  .note{font-size:.74rem; color:var(--muet); margin-top:10px}
+
+  /* ---------- DISCLAIMER ---------- */
+  .disclaimer{
+    margin-top:26px; font-size:.74rem; line-height:1.5; color:#c9c9d0;
+    border:1px solid #ffcf4a33; background:#ffcf4a0a; border-radius:12px; padding:12px 16px;
+  }
+  .disclaimer b{color:var(--or)}
+  footer{margin-top:24px; text-align:center; color:var(--faible); font-size:.72rem}
+
+  .vide{text-align:center; color:var(--muet); padding:46px 10px; font-size:.85rem}
+  .spin{display:inline-block; width:14px; height:14px; border:2px solid #0a0a0a40;
+    border-top-color:#0a0a0a; border-radius:50%; animation:rot .7s linear infinite; vertical-align:-2px; margin-right:7px}
+  @keyframes rot{to{transform:rotate(360deg)}}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important}
+  }
+  @media(max-width:560px){
+    .hero{gap:14px} .avatar,.avatar svg,.avatar{width:72px;height:72px;flex-basis:72px}
+    .titremidas h1{font-size:1.45rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- EN-TÊTE -->
+  <header class="hero">
+    <div class="avatar">
+      <span class="halo"></span>
+      <span class="sweep"></span>
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <polygon points="24,3 45,24 24,45 3,24" fill="none" stroke="currentColor" stroke-width="2"/>
+        <polyline class="draw" points="13,30 20,24 26,28 35,16" fill="none" stroke="currentColor"
+          stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="35" cy="16" r="2.6" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="titremidas">
+      <h1>MIDAS <span class="v">v10</span></h1>
+      <div class="sous">Stratège financier · Recherche, crypto & actions · Produit du Québec ⚜️</div>
+      <span class="tag">Signaux par confluence — information, pas un conseil</span>
+    </div>
+  </header>
+
+  <!-- ONGLETS -->
+  <nav class="onglets">
+    <button class="onglet actif" data-vue="crypto">📊 Scan crypto</button>
+    <button class="onglet" data-vue="watch">⭐ Watchlist</button>
+    <button class="onglet" data-vue="reco">🔎 Recherche finance</button>
+  </nav>
+
+  <!-- VUE : CRYPTO -->
+  <section class="vue actif" id="vue-crypto">
+    <div class="barre">
+      <button class="btn" id="btnScan">Scanner le marché</button>
+      <label class="interrupteur"><input type="checkbox" id="auto"> Auto (60 s)</label>
+      <span class="fg" id="fg" style="display:none">Fear &amp; Greed : <b id="fgVal">—</b></span>
+      <span class="horodate" id="horo"></span>
+    </div>
+    <div class="grille" id="grille">
+      <div class="vide">Clique « Scanner le marché » pour analyser le top 10 des cryptos en direct.</div>
+    </div>
+  </section>
+
+  <!-- VUE : WATCHLIST -->
+  <section class="vue" id="vue-watch">
+    <div class="ajout">
+      <input type="text" id="wlSym" placeholder="ex. bitcoin, ethereum, solana (id CoinGecko)" style="flex:1; min-width:200px">
+      <button class="btn ghost" id="wlAdd">+ Ajouter</button>
+      <button class="btn" id="wlScan">Rafraîchir les verdicts</button>
+    </div>
+    <table>
+      <thead><tr><th>Actif</th><th>Prix</th><th>24h</th><th>Verdict</th><th>Score</th><th>RSI</th><th></th></tr></thead>
+      <tbody id="wlBody">
+        <tr><td colspan="7" class="vide" style="padding:30px">Ta watchlist est vide. Ajoute un actif par son id CoinGecko.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- VUE : RECHERCHE -->
+  <section class="vue" id="vue-reco">
+    <div class="reco">
+      <textarea id="rqSujet" placeholder="ex. Impact de la prochaine décision de la Banque du Canada sur les banques du TSX"></textarea>
+      <div class="ligne">
+        <select id="rqMarche">
+          <option value="both">Canada + USA</option>
+          <option value="CA">Canada (TSX / ARC)</option>
+          <option value="US">USA (NYSE / NASDAQ / Fed)</option>
+        </select>
+        <button class="btn" id="rqGo">Lancer la recherche</button>
+      </div>
+      <div class="reponse" id="rqRep"></div>
+      <p class="note" id="rqNote">⚙️ La recherche web passe par l'Edge Function <code>midas-agent</code> (Claude + recherche web) — elle s'active une fois MIDAS branché à ton Supabase et que tu es connecté. Dans cette page de démo, le scan crypto fonctionne déjà en direct.</p>
+    </div>
+  </section>
+
+  <!-- DISCLAIMER (toujours visible) -->
+  <div class="disclaimer">
+    <b>⚠️ Information éducative — pas un conseil financier personnalisé.</b>
+    Les signaux MIDAS ne garantissent aucun rendement. Aucun système ne prédit le sommet ou le creux parfait.
+    Fais tes propres recherches et consulte un conseiller inscrit à l'AMF avant d'investir.
+    La gestion du risque (taille de position, stop-loss) reste ta responsabilité.
+  </div>
+  <footer>Données crypto fournies par CoinGecko · MIDAS · ti-lex-AL v10 ⚜️</footer>
+</div>
+
+<script>
+/* ============================================================
+   CERVEAU MIDAS (intégré pour la démo — même logique que midas-cerveau.js)
+   ============================================================ */
+const Ind = {};
+Ind.sma=(v,p)=>{if(!v||v.length<p)return null;let s=0;for(let i=v.length-p;i<v.length;i++)s+=v[i];return s/p;};
+Ind.emaSerie=(v,p)=>{const o=new Array(v.length).fill(null);if(!v||v.length<p)return o;const k=2/(p+1);let pr=0;for(let i=0;i<p;i++)pr+=v[i];pr/=p;o[p-1]=pr;for(let i=p;i<v.length;i++){pr=v[i]*k+pr*(1-k);o[i]=pr;}return o;};
+Ind.rsi=(c,p=14)=>{if(!c||c.length<p+1)return null;let g=0,l=0;for(let i=1;i<=p;i++){const d=c[i]-c[i-1];if(d>=0)g+=d;else l-=d;}let mg=g/p,ml=l/p;for(let i=p+1;i<c.length;i++){const d=c[i]-c[i-1];const gg=d>0?d:0,ll=d<0?-d:0;mg=(mg*(p-1)+gg)/p;ml=(ml*(p-1)+ll)/p;}if(ml===0)return 100;return 100-100/(1+mg/ml);};
+Ind.macd=(c,f=12,s=26,sp=9)=>{if(!c||c.length<s+sp)return null;const ef=Ind.emaSerie(c,f),el=Ind.emaSerie(c,s);const lm=c.map((_,i)=>ef[i]!=null&&el[i]!=null?ef[i]-el[i]:null);const fi=lm.findIndex(x=>x!=null);const def=lm.filter(x=>x!=null);if(def.length<sp)return null;const sd=Ind.emaSerie(def,sp);const ls=new Array(c.length).fill(null);for(let i=0;i<sd.length;i++)if(sd[i]!=null)ls[fi+i]=sd[i];const i=c.length-1;const m=lm[i],sg=ls[i],mp=lm[i-1],spp=ls[i-1];let cr=0;if(m!=null&&sg!=null&&mp!=null&&spp!=null){if(mp<=spp&&m>sg)cr=1;else if(mp>=spp&&m<sg)cr=-1;}return{macd:m,signal:sg,histogramme:m!=null&&sg!=null?m-sg:null,croisement:cr};};
+Ind.bollinger=(c,p=20,m=2)=>{if(!c||c.length<p)return null;const t=c.slice(-p);const mo=t.reduce((a,b)=>a+b,0)/p;let vr=0;for(const x of t)vr+=(x-mo)**2;vr/=p;const sd=Math.sqrt(vr);const h=mo+m*sd,b=mo-m*sd,pr=c[c.length-1];return{moyenne:mo,haute:h,basse:b,pctB:h===b?.5:(pr-b)/(h-b),largeur:mo?(h-b)/mo:0};};
+Ind.atr=(h,l,c,p=14)=>{if(!h||!l||!c||c.length<p+1)return null;const tr=[];for(let i=1;i<c.length;i++)tr.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));let a=0;for(let i=0;i<p;i++)a+=tr[i];a/=p;for(let i=p;i<tr.length;i++)a=(a*(p-1)+tr[i])/p;return a;};
+Ind.obv=(c,v)=>{if(!c||!v||c.length<2)return null;let val=0;const s=[0];for(let i=1;i<c.length;i++){if(c[i]>c[i-1])val+=v[i]||0;else if(c[i]<c[i-1])val-=v[i]||0;s.push(val);}const n=s.length;const rec=s.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,n);const old=s.slice(Math.max(0,n-15),Math.max(0,n-5));const mo=old.length?old.reduce((a,b)=>a+b,0)/old.length:rec;return{valeur:val,tendance:rec>mo?1:rec<mo?-1:0};};
+Ind.stoch=(h,l,c,p=14,sd=3)=>{if(!h||!l||!c||c.length<p+sd)return null;const k=[];for(let i=p-1;i<c.length;i++){let hh=-Infinity,ll=Infinity;for(let j=i-p+1;j<=i;j++){if(h[j]>hh)hh=h[j];if(l[j]<ll)ll=l[j];}k.push(hh===ll?50:((c[i]-ll)/(hh-ll))*100);}return{k:k[k.length-1],d:k.slice(-sd).reduce((a,b)=>a+b,0)/sd};};
+Ind.zscore=(c,w=30)=>{if(!c||c.length<w+1)return null;const r=[];for(let i=1;i<c.length;i++)r.push(c[i-1]===0?0:(c[i]-c[i-1])/c[i-1]);const t=r.slice(-w);const m=t.reduce((a,b)=>a+b,0)/t.length;let v=0;for(const x of t)v+=(x-m)**2;v/=t.length;const sd=Math.sqrt(v);return{z:sd===0?0:(r[r.length-1]-m)/sd};};
+Ind.complet=(closes)=>{const c=closes||[];const lng=c.length>=220?200:Math.max(10,Math.floor(c.length/2));const crt=c.length>=220?50:Math.max(5,Math.floor(lng/3));return{prix:c.length?c[c.length-1]:null,rsi:Ind.rsi(c),macd:Ind.macd(c),smaCourte:Ind.sma(c,crt),smaLongue:Ind.sma(c,lng),bollinger:Ind.bollinger(c),atr:Ind.atr(c,c,c),obv:Ind.obv(c,c.map(()=>0)),stochastique:Ind.stoch(c,c,c),zscore:Ind.zscore(c)};};
+
+const POIDS={macd:22,croisementMA:18,rsi:16,stochastique:14,bollinger:15,obv:15};
+function evaluer(ind){
+  if(!ind)return null;const votes={},raisons=[];
+  if(ind.macd&&ind.macd.histogramme!=null){let v=ind.macd.histogramme>0?.6:-.6;if(ind.macd.croisement===1){v=1;raisons.push("Croisement MACD haussier frais");}else if(ind.macd.croisement===-1){v=-1;raisons.push("Croisement MACD baissier frais");}else raisons.push(ind.macd.histogramme>0?"MACD au-dessus du signal":"MACD sous le signal");votes.macd=v;}
+  if(ind.smaCourte!=null&&ind.smaLongue!=null){const v=ind.smaCourte>ind.smaLongue?1:-1;votes.croisementMA=v;raisons.push(v>0?"MM courte > longue (tendance haussière)":"MM courte < longue (tendance baissière)");}
+  if(ind.rsi!=null){let v=0;if(ind.rsi<30){v=1;raisons.push("RSI en survente (<30)");}else if(ind.rsi<45)v=.3;else if(ind.rsi<=55)v=0;else if(ind.rsi<=70)v=-.3;else{v=-1;raisons.push("RSI en surachat (>70)");}votes.rsi=v;}
+  if(ind.stochastique&&ind.stochastique.k!=null){const k=ind.stochastique.k;let v=0;if(k<20){v=1;raisons.push("Stochastique en survente");}else if(k>80){v=-1;raisons.push("Stochastique en surachat");}else v=(50-k)/50;votes.stochastique=v;}
+  if(ind.bollinger&&ind.bollinger.pctB!=null){const b=ind.bollinger.pctB;let v=0;if(b<0){v=1;raisons.push("Prix sous la bande inférieure de Bollinger");}else if(b>1){v=-1;raisons.push("Prix au-dessus de la bande supérieure");}else v=(.5-b)*2;votes.bollinger=v;}
+  if(ind.obv&&ind.obv.tendance!=null){votes.obv=ind.obv.tendance;if(ind.obv.tendance!==0)raisons.push(ind.obv.tendance>0?"Volume (OBV) confirme la hausse":"Volume (OBV) confirme la baisse");}
+  let sc=0,pu=0,nh=0,nb=0,nv=0;
+  for(const k in POIDS){if(votes[k]==null)continue;sc+=votes[k]*POIDS[k];pu+=POIDS[k];nv++;if(votes[k]>.15)nh++;else if(votes[k]<-.15)nb++;}
+  let sn=pu>0?Math.round(sc/pu*100):0;if(Object.is(sn,-0))sn=0;
+  const dom=sn>=0?nh:nb;const conf=nv>0?Math.round(dom/nv*100):0;
+  let verdict,et,coul;
+  if(sn>=50){verdict="ACCUMULATION";et="Zone d'accumulation forte";coul="#37e0a0";}
+  else if(sn>=20){verdict="HAUSSIER";et="Signaux haussiers";coul="#9ee6c4";}
+  else if(sn>-20){verdict="NEUTRE";et="Neutre / indécis";coul="#ffcf4a";}
+  else if(sn>-50){verdict="BAISSIER";et="Signaux baissiers";coul="#ff9e7d";}
+  else{verdict="DISTRIBUTION";et="Zone de distribution forte";coul="#ff4d4d";}
+  let stop=null;if(ind.atr!=null&&ind.prix!=null)stop=sn>=0?+(ind.prix-2*ind.atr).toFixed(6):+(ind.prix+2*ind.atr).toFixed(6);
+  return{score:sn,verdict,etiquette:et,couleur:coul,confluence:conf,nbIndicateurs:nv,raisons,stopLossSuggere:stop};
+}
+
+/* ============================================================
+   APP — scan live CoinGecko + rendu
+   ============================================================ */
+const BASE="https://api.coingecko.com/api/v3";
+const $=s=>document.querySelector(s);
+let autoTimer=null;
+const watchlist=[]; // ids CoinGecko en mémoire (pas de localStorage)
+
+function fmtPrix(p){if(p==null)return"—";if(p>=1)return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:2});return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:6});}
+function fmtPct(x){if(x==null)return"";const s=x>=0?"+":"";return s+x.toFixed(2)+"%";}
+
+function sparkline(prices,coul){
+  if(!prices||prices.length<2)return"";
+  const w=300,h=34,mn=Math.min(...prices),mx=Math.max(...prices),rg=mx-mn||1;
+  const pts=prices.map((p,i)=>`${(i/(prices.length-1)*w).toFixed(1)},${(h-((p-mn)/rg)*(h-4)-2).toFixed(1)}`).join(" ");
+  return`<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${coul}" stroke-width="1.6" opacity="0.85"/></svg>`;
+}
+
+function detecterChute(c,ind){
+  const a=[];
+  if(c.price_change_percentage_1h_in_currency!=null&&c.price_change_percentage_1h_in_currency<=-5)a.push({t:"Chute 1h",v:c.price_change_percentage_1h_in_currency.toFixed(1)+"%"});
+  if(c.price_change_percentage_24h_in_currency!=null&&c.price_change_percentage_24h_in_currency<=-12)a.push({t:"Chute 24h",v:c.price_change_percentage_24h_in_currency.toFixed(1)+"%"});
+  if(ind&&ind.zscore&&ind.zscore.z<=-3)a.push({t:"Anomalie",v:ind.zscore.z.toFixed(1)+"σ"});
+  return a;
+}
+
+function carteHTML(c){
+  const closes=c.sparkline_in_7d&&c.sparkline_in_7d.price?c.sparkline_in_7d.price:[];
+  const ind=Ind.complet(closes);
+  const v=evaluer(ind);
+  if(!v)return"";
+  const d24=c.price_change_percentage_24h_in_currency;
+  const pos=(d24!=null&&d24>=0);
+  const aig=((v.score+100)/200*100).toFixed(1);
+  const chutes=detecterChute(c,ind);
+  const chip=(lbl,val)=>`<span class="chip">${lbl} <b>${val}</b></span>`;
+  return`<div class="carte">
+    <div class="bord" style="background:${v.couleur}"></div>
+    <div class="haut">
+      <img class="pic" src="${c.image}" alt="">
+      <div><div class="sym">${(c.symbol||"").toUpperCase()}</div><div class="nom">${c.name} · #${c.market_cap_rank||"?"}</div></div>
+      <div class="prix"><div class="p">${fmtPrix(c.current_price)}</div><div class="d ${pos?'pos':'neg'}">${fmtPct(d24)} 24h</div></div>
+    </div>
+    <div class="verdict">
+      <span class="et" style="color:${v.couleur}">${v.etiquette}</span>
+      <span class="meta">Score ${v.score>0?'+':''}${v.score} · Confluence ${v.confluence}% · ${v.nbIndicateurs} ind.</span>
+    </div>
+    <div class="jauge"><span class="zero"></span><span class="aig" style="left:${aig}%"></span></div>
+    ${sparkline(closes,v.couleur)}
+    <div class="chips">
+      ${chip("RSI",ind.rsi!=null?ind.rsi.toFixed(0):"—")}
+      ${chip("MACD",ind.macd&&ind.macd.histogramme!=null?ind.macd.histogramme.toFixed(2):"—")}
+      ${chip("%B",ind.bollinger?ind.bollinger.pctB.toFixed(2):"—")}
+      ${chip("Stoch",ind.stochastique?ind.stochastique.k.toFixed(0):"—")}
+    </div>
+    ${chutes.length?`<div class="badges">${chutes.map(x=>`<span class="badge">⚠️ ${x.t} ${x.v}</span>`).join("")}</div>`:""}
+    <ul class="raisons">${v.raisons.slice(0,3).map(r=>`<li>${r}</li>`).join("")}</ul>
+    ${v.stopLossSuggere!=null?`<div class="stop">Stop-loss suggéré (2× ATR) : ${fmtPrix(v.stopLossSuggere)}</div>`:""}
+  </div>`;
+}
+
+async function chargerMarche(ids){
+  const u=new URL(BASE+"/coins/markets");
+  u.searchParams.set("vs_currency","usd");
+  if(ids)u.searchParams.set("ids",ids);
+  else{u.searchParams.set("order","market_cap_desc");u.searchParams.set("per_page","10");u.searchParams.set("page","1");}
+  u.searchParams.set("sparkline","true");
+  u.searchParams.set("price_change_percentage","1h,24h,7d");
+  const r=await fetch(u,{headers:{accept:"application/json"}});
+  if(!r.ok)throw new Error("CoinGecko HTTP "+r.status);
+  return r.json();
+}
+
+async function scannerCrypto(){
+  const btn=$("#btnScan"),grille=$("#grille");
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Analyse…';
+  try{
+    const data=await chargerMarche();
+    grille.innerHTML=data.map(carteHTML).join("");
+    $("#horo").textContent="Mis à jour : "+new Date().toLocaleTimeString("fr-CA");
+    chargerFearGreed();
+  }catch(e){
+    grille.innerHTML=`<div class="vide">Impossible de joindre CoinGecko (${e.message}). Réessaie dans un instant — l'API gratuite limite le débit.</div>`;
+  }finally{
+    btn.disabled=false;btn.textContent="Scanner le marché";
+  }
+}
+
+async function chargerFearGreed(){
+  try{
+    const r=await fetch("https://api.alternative.me/fng/?limit=1");
+    const d=await r.json();const v=d&&d.data&&d.data[0];
+    if(v){$("#fg").style.display="";$("#fgVal").textContent=v.value+" · "+v.value_classification;
+      const n=+v.value;$("#fgVal").style.color=n<25?"#ff4d4d":n>75?"#37e0a0":"#ffcf4a";}
+  }catch(e){}
+}
+
+/* ---- Watchlist ---- */
+async function rafraichirWatch(){
+  const body=$("#wlBody");
+  if(watchlist.length===0){body.innerHTML='<tr><td colspan="7" class="vide" style="padding:30px">Ta watchlist est vide. Ajoute un actif par son id CoinGecko.</td></tr>';return;}
+  body.innerHTML='<tr><td colspan="7" class="vide" style="padding:24px"><span class="spin" style="border-top-color:#ffcf4a;border-color:#ffcf4a40"></span>Chargement…</td></tr>';
+  try{
+    const data=await chargerMarche(watchlist.join(","));
+    body.innerHTML=data.map(c=>{
+      const closes=c.sparkline_in_7d&&c.sparkline_in_7d.price?c.sparkline_in_7d.price:[];
+      const v=evaluer(Ind.complet(closes));const d24=c.price_change_percentage_24h_in_currency;
+      const ind=Ind.complet(closes);
+      return`<tr>
+        <td><b>${(c.symbol||"").toUpperCase()}</b> <span style="color:var(--muet)">${c.name}</span></td>
+        <td>${fmtPrix(c.current_price)}</td>
+        <td class="${d24>=0?'pos':'neg'}">${fmtPct(d24)}</td>
+        <td><span class="vsmall" style="color:${v?v.couleur:'#999'}">${v?v.etiquette:'—'}</span></td>
+        <td>${v?(v.score>0?'+':'')+v.score:'—'}</td>
+        <td>${ind.rsi!=null?ind.rsi.toFixed(0):'—'}</td>
+        <td><button class="retirer" data-id="${c.id}">✕</button></td>
+      </tr>`;
+    }).join("");
+  }catch(e){
+    body.innerHTML=`<tr><td colspan="7" class="vide" style="padding:24px">Erreur : ${e.message}</td></tr>`;
+  }
+}
+
+/* ---- Recherche (branche sur MidasManager si présent) ---- */
+async function lancerRecherche(){
+  const sujet=$("#rqSujet").value.trim(),marche=$("#rqMarche").value,rep=$("#rqRep"),btn=$("#rqGo");
+  if(!sujet){$("#rqSujet").focus();return;}
+  if(window.MidasManager&&typeof window.MidasManager.recherche==="function"){
+    btn.disabled=true;btn.innerHTML='<span class="spin"></span>Recherche…';rep.style.display="block";rep.textContent="MIDAS cherche…";
+    try{const txt=await window.MidasManager.recherche(sujet,marche);rep.textContent=txt;}
+    catch(e){rep.textContent="⚠️ "+e.message;}
+    finally{btn.disabled=false;btn.textContent="Lancer la recherche";}
+  }else{
+    rep.style.display="block";
+    rep.textContent="🔌 Démo : la recherche web s'active quand MIDAS est branché à ton Supabase (window.MidasManager + connexion). Le code et l'Edge Function sont déjà dans ton paquet midas-package.zip.";
+  }
+}
+
+/* ---- Onglets ---- */
+document.querySelectorAll(".onglet").forEach(o=>o.addEventListener("click",()=>{
+  document.querySelectorAll(".onglet").forEach(x=>x.classList.remove("actif"));
+  document.querySelectorAll(".vue").forEach(x=>x.classList.remove("actif"));
+  o.classList.add("actif");
+  $("#vue-"+o.dataset.vue).classList.add("actif");
+}));
+
+/* ---- Événements ---- */
+$("#btnScan").addEventListener("click",scannerCrypto);
+$("#auto").addEventListener("change",e=>{
+  if(e.target.checked){scannerCrypto();autoTimer=setInterval(scannerCrypto,60000);}
+  else{clearInterval(autoTimer);autoTimer=null;}
+});
+$("#wlAdd").addEventListener("click",()=>{
+  const v=$("#wlSym").value.trim().toLowerCase();
+  if(v&&!watchlist.includes(v)){watchlist.push(v);$("#wlSym").value="";rafraichirWatch();}
+});
+$("#wlSym").addEventListener("keydown",e=>{if(e.key==="Enter")$("#wlAdd").click();});
+$("#wlScan").addEventListener("click",rafraichirWatch);
+$("#wlBody").addEventListener("click",e=>{
+  if(e.target.classList.contains("retirer")){
+    const id=e.target.dataset.id;const i=watchlist.indexOf(id);if(i>=0)watchlist.splice(i,1);rafraichirWatch();
+  }
+});
+$("#rqGo").addEventListener("click",lancerRecherche);
+
+/* ---- Premier scan auto au chargement ---- */
+scannerCrypto();
+</script>
+
+<script src="/js/tilex-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/midas-cerveau.js"></script>
+<script src="/js/midas-crypto.js"></script>
+<script src="/js/midas-actions.js"></script>
+<script src="/js/midas-manager.js"></script>
+<script src="/js/midas-agent-definition.js"></script>
+<script>
+(async function(){
+  if(!window.SB_URL||!window.SB_ANON)return;
+  var sb=window.supabase.createClient(window.SB_URL,window.SB_ANON);
+  window.supabase=sb;
+  window.MidasManager.init({supabase:sb});
+  window.MidasCrypto.init({supabase:sb,nbCryptos:10});
+  window.MidasActions.init({supabase:sb});
+  window.MidasActions.definirWatchlist(["AAPL","NVDA","SHOP.TO","RY.TO"]);
+})();
+</script>
+</body>
+</html>

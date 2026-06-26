@@ -13,7 +13,8 @@
 
 import Stripe from "npm:stripe@^17";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   // apiVersion omise volontairement -> utilise la version par défaut de ton compte.
@@ -23,23 +24,22 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://ti-lex-v10.vercel.app";
 
-function json(payload: unknown, status = 200) {
+function json(req: Request, payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
 Deno.serve(async (req) => {
   // Pré-vol CORS
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
 
   try {
     // 1) Identifier l'utilisateur connecté à partir de son JWT Supabase
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "Non authentifié" }, 401);
+    if (!authHeader) return json(req, { error: "Non authentifié" }, 401);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-    if (userError || !user) return json({ error: "Session invalide" }, 401);
+    if (userError || !user) return json(req, { error: "Session invalide" }, 401);
+
+    const rl = await checkRateLimit(getIdentifier(req, user.id), { prefix: "create-checkout-session", max: 30, windowSec: 60 });
+    if (!rl.allowed) return tooManyRequests(rl, corsHeaders(req));
 
     // 2) Lire l'input : soit un price_id direct, soit un tier ('pro' | 'ultra'…)
     const body = await req.json().catch(() => ({}));
@@ -82,6 +85,7 @@ Deno.serve(async (req) => {
 
     if (!priceId) {
       return json(
+        req,
         { error: `Aucun prix trouvé pour « ${tier ?? "(price_id manquant)"} »` },
         400,
       );
@@ -97,6 +101,7 @@ Deno.serve(async (req) => {
 
     if (priceErr || !priceRow || !priceRow.active) {
       return json(
+        req,
         {
           error:
             "Ce prix n'existe pas (ou est inactif) dans la base. " +
@@ -141,9 +146,9 @@ Deno.serve(async (req) => {
       cancel_url: `${SITE_URL}/forfaits`,
     });
 
-    return json({ url: session.url });
+    return json(req, { url: session.url });
   } catch (err) {
     console.error("checkout error:", err);
-    return json({ error: (err as Error).message }, 500);
+    return json(req, { error: (err as Error).message }, 500);
   }
 });

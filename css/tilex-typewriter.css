@@ -1,0 +1,121 @@
+/* TILEX-TYPEWRITER.CSS — ti-lex-AL v10
+   Effet machine à écrire 2 phases (blanc → vert) */
+
+.tx-typewriter {
+  font-family: var(--font-tilex);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  position: relative;
+  transition: color 0.05s linear;
+}
+
+.tx-typewriter.phase-1 {
+  color: #ffffff;
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.45),
+    0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.tx-typewriter.phase-2 {
+  color: #37e0a0;
+  text-shadow:
+    0 0 5px rgba(55, 224, 160, 0.55),
+    0 0 12px rgba(55, 224, 160, 0.25);
+}
+
+.tx-typewriter.termine {
+  color: #37e0a0;
+  text-shadow: 0 0 3px rgba(55, 224, 160, 0.3);
+}
+
+.tx-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: tx-blink 0.85s steps(1) infinite;
+  box-shadow: 0 0 6px currentColor;
+  border-radius: 1px;
+}
+
+@keyframes tx-blink {
+  0%, 50%   { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+.tx-typewriter .tx-glitch {
+  display: inline-block;
+  animation: tx-glitch-flick 0.12s ease-out;
+}
+
+@keyframes tx-glitch-flick {
+  0% {
+    opacity: 0.3;
+    transform: translateX(-1px) skewX(-8deg);
+    filter: blur(0.6px);
+  }
+  40% {
+    opacity: 1;
+    transform: translateX(0.5px) skewX(3deg);
+    filter: blur(0.2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0);
+    filter: blur(0);
+  }
+}
+
+.tx-typewriter.ecrit::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(55, 224, 160, 0.03) 50%,
+    transparent 100%
+  );
+  background-size: 100% 8px;
+  animation: tx-scan 0.6s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes tx-scan {
+  from { background-position: 0 0; }
+  to   { background-position: 0 8px; }
+}
+
+[data-theme="day"] .tx-typewriter.phase-1 {
+  color: #18181f;
+  text-shadow: none;
+}
+[data-theme="day"] .tx-typewriter.phase-2,
+[data-theme="day"] .tx-typewriter.termine {
+  color: #1a9e6a;
+  text-shadow: none;
+}
+[data-theme="day"] .tx-typewriter.ecrit::after {
+  display: none;
+}
+
+[data-theme="monokai"] .tx-typewriter.phase-2,
+[data-theme="monokai"] .tx-typewriter.termine {
+  color: #a6e22e;
+  text-shadow:
+    0 0 5px rgba(166, 226, 46, 0.5),
+    0 0 12px rgba(166, 226, 46, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-typewriter .tx-glitch,
+  .tx-typewriter.ecrit::after { animation: none !important; }
+  .tx-cursor { animation: none; opacity: 1; }
+}

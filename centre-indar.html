@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centre INDAR · ti-lex v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:#000;color:#eaeaea;font-family:'Rajdhani','Inter',system-ui,sans-serif;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;border:none;outline:none;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:#0a0a0a;}
+::-webkit-scrollbar-thumb{background:#222;border-radius:10px;}
+::-webkit-scrollbar-thumb:hover{background:#333;}
+
+/* ═══ BACK LINK ═══ */
+.back-link{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;font-size:12px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.08em;transition:color 0.2s;}
+.back-link:hover{color:#ff7f27;}
+
+/* ═══ TOP BAR ═══ */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid #161616;background:#000;position:sticky;top:0;z-index:10;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#ff7f27,#ffcf4a);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 18px rgba(255,127,39,0.4);color:#000;}
+.topbar-title{font-size:15px;font-weight:800;letter-spacing:0.04em;color:#fff;font-family:'Bebas Neue','Rajdhani',sans-serif;font-size:18px;}
+.topbar-title span{color:#ff7f27;}
+.topbar-sub{font-size:9px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.15em;}
+
+/* Status pill */
+.status-pill{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:0.12em;font-family:'Share Tech Mono',monospace;padding:6px 12px;border-radius:7px;}
+.status-pill.offline{color:#777;border:1px solid #222;background:#0a0a0a;}
+.status-pill.booting{color:#ffcf4a;border:1px solid #ffcf4a44;background:#0a0a0a;}
+.status-pill.running{color:#37e0a0;border:1px solid #37e0a044;background:#37e0a00d;}
+.status-dot{width:7px;height:7px;border-radius:50%;}
+.status-dot.offline{background:#444;}
+.status-dot.booting{background:#ffcf4a;animation:blink 1.4s infinite;}
+.status-dot.running{background:#37e0a0;animation:blink 1.4s infinite;}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;gap:6px;padding:14px 24px 0;max-width:920px;margin:0 auto;width:100%;}
+.tab-btn{padding:9px 18px;font-size:13px;font-weight:500;border-radius:9px 9px 0 0;cursor:pointer;background:transparent;border:1px solid transparent;border-bottom:none;color:#888;transition:all 0.15s;font-family:'Rajdhani',sans-serif;}
+.tab-btn.active{font-weight:700;background:#0a0a0a;border-color:#1c1c1c;color:#fff;}
+
+/* ═══ WRAP ═══ */
+.wrap{max-width:920px;margin:0 auto;padding:20px 24px 60px;width:100%;}
+
+/* ═══ COMMANDER CARD ═══ */
+.cmd-card{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:#070707;border:1px solid rgba(255,127,39,0.15);border-radius:14px;padding:20px 22px;margin-bottom:16px;box-shadow:0 0 30px rgba(255,127,39,0.06);}
+.cmd-left{display:flex;align-items:center;gap:14px;}
+.cmd-avatar{width:52px;height:52px;border-radius:13px;background:#141414;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.cmd-badge{font-size:9px;font-weight:800;letter-spacing:0.18em;color:#ff7f27;background:rgba(255,127,39,0.09);border:1px solid rgba(255,127,39,0.2);padding:3px 9px;border-radius:5px;display:inline-block;font-family:'Share Tech Mono',monospace;}
+.cmd-name{font-size:20px;font-weight:800;margin-top:3px;color:#fff;font-family:'Bebas Neue','Rajdhani',sans-serif;font-size:24px;letter-spacing:0.04em;}
+.cmd-role{font-size:11px;color:#999;}
+.cmd-right{text-align:right;}
+.cmd-agents-label{font-size:11px;color:#777;font-family:'Share Tech Mono',monospace;}
+.cmd-agents-count{font-size:28px;font-weight:800;font-family:'Share Tech Mono',monospace;transition:color 0.3s;}
+.cmd-agents-count span{font-size:14px;color:#444;}
+
+/* ═══ SCAN TAB ═══ */
+.scan-form{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;}
+.scan-form-title{font-size:11px;font-weight:800;letter-spacing:0.15em;color:#a78bfa;font-family:'Share Tech Mono',monospace;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.scan-input{width:100%;background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:12px 14px;color:#eaeaea;font-size:14px;font-family:'Rajdhani',sans-serif;outline:none;transition:border-color 0.2s;}
+.scan-input:focus{border-color:#a78bfa;}
+.scan-input::placeholder{color:#555;}
+.scan-type-row{display:flex;gap:8px;margin:14px 0 16px;flex-wrap:wrap;}
+.scan-type-btn{padding:8px 16px;border-radius:8px;border:1px solid #222;background:#0a0a0a;color:#888;font-size:12px;font-weight:700;cursor:pointer;font-family:'Share Tech Mono',monospace;letter-spacing:0.06em;transition:all 0.15s;}
+.scan-type-btn.active{border-color:#a78bfa;color:#a78bfa;background:rgba(167,139,250,0.08);}
+.scan-type-btn:hover:not(.active){border-color:#444;color:#bbb;}
+.btn-scan-real{width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#a78bfa,#c4b5fd);color:#000;font-weight:800;font-size:14px;letter-spacing:0.02em;box-shadow:0 4px 20px rgba(167,139,250,0.3);font-family:'Rajdhani',sans-serif;transition:transform 0.15s,box-shadow 0.15s;}
+.btn-scan-real:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(167,139,250,0.4);}
+.btn-scan-real:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.scan-admin-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:0.12em;color:#ffcf4a;background:rgba(255,207,74,0.08);border:1px solid rgba(255,207,74,0.2);padding:4px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;margin-bottom:14px;}
+.scan-terminal{background:#0a0a0a;border:1px solid #1c1c1c;border-radius:10px;padding:16px;margin-bottom:16px;max-height:260px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.7;}
+.scan-log{color:#777;}
+.scan-log.phantom{color:#a78bfa;}
+.scan-log.success{color:#37e0a0;}
+.scan-log.warn{color:#ffcf4a;}
+.scan-log.error{color:#f87171;}
+.scan-result{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;animation:fadeIn 0.5s;}
+.scan-score-row{display:flex;align-items:center;gap:18px;margin-bottom:18px;}
+.scan-score-box{width:80px;height:80px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;}
+.scan-score-val{font-size:32px;font-weight:800;font-family:'Share Tech Mono',monospace;}
+.scan-score-max{font-size:10px;color:#777;font-family:'Share Tech Mono',monospace;}
+.scan-risk-label{font-size:10px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;}
+.scan-risk-level{font-size:22px;font-weight:800;}
+.scan-summary{font-size:13px;color:#ccc;line-height:1.6;margin-bottom:18px;padding:14px;background:#0a0a0a;border-radius:8px;border-left:3px solid #a78bfa;}
+.finding-card{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px;margin-bottom:8px;}
+.finding-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.finding-title{font-size:13px;font-weight:700;color:#eaeaea;}
+.sev-badge{font-size:9px;font-weight:800;letter-spacing:0.1em;padding:2px 8px;border-radius:4px;font-family:'Share Tech Mono',monospace;}
+.sev-CRITIQUE{background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.3);}
+.sev-HAUTE{background:rgba(255,127,39,0.12);color:#ff7f27;border:1px solid rgba(255,127,39,0.25);}
+.sev-MOYENNE{background:rgba(255,207,74,0.12);color:#ffcf4a;border:1px solid rgba(255,207,74,0.25);}
+.sev-FAIBLE{background:rgba(55,224,160,0.1);color:#37e0a0;border:1px solid rgba(55,224,160,0.2);}
+.sev-INFO{background:rgba(79,142,247,0.1);color:#4f8ef7;border:1px solid rgba(79,142,247,0.2);}
+.finding-desc{font-size:12px;color:#aaa;line-height:1.5;margin-bottom:6px;}
+.finding-remed{font-size:11px;color:#37e0a0;display:flex;align-items:flex-start;gap:6px;}
+.scan-recs{margin-top:14px;}
+.scan-recs-title{font-size:11px;font-weight:800;letter-spacing:0.12em;color:#37e0a0;font-family:'Share Tech Mono',monospace;margin-bottom:8px;}
+.scan-rec-item{font-size:12px;color:#ccc;padding:4px 0;display:flex;align-items:flex-start;gap:8px;}
+.scan-history{background:#070707;border:1px solid #1c1c1c;border-radius:14px;padding:22px;margin-bottom:16px;}
+.scan-history-title{font-size:11px;font-weight:800;letter-spacing:0.15em;color:#777;font-family:'Share Tech Mono',monospace;margin-bottom:12px;}
+.scan-history-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #141414;font-size:12px;}
+.scan-history-row:last-child{border-bottom:none;}
+.scan-history-target{color:#eaeaea;font-weight:600;flex:1;}
+.scan-history-type{color:#a78bfa;font-family:'Share Tech Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.08em;width:70px;}
+.scan-history-date{color:#666;font-size:11px;width:90px;text-align:right;}
+.scan-history-status{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px;font-family:'Share Tech Mono',monospace;width:80px;text-align:center;}
+.scan-history-status.completed{color:#37e0a0;background:rgba(55,224,160,0.08);border:1px solid rgba(55,224,160,0.2);}
+.scan-history-status.running{color:#ffcf4a;background:rgba(255,207,74,0.08);border:1px solid rgba(255,207,74,0.2);}
+.scan-history-status.failed{color:#f87171;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);}
+
+/* ═══ BUTTONS ═══ */
+.btn-start{width:100%;padding:15px;border-radius:11px;border:none;cursor:pointer;background:linear-gradient(135deg,#ff7f27,#ffa052);color:#000;font-weight:800;font-size:15px;letter-spacing:0.02em;box-shadow:0 4px 24px rgba(255,127,39,0.35);display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Rajdhani',sans-serif;transition:transform 0.15s,box-shadow 0.15s;}
+.btn-start:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(255,127,39,0.45);}
+.btn-start:active{transform:translateY(0);}
+.btn-start .sub{font-size:10px;font-weight:600;opacity:0.85;margin-left:4px;}
+.btn-stop{padding:11px 22px;border-radius:9px;border:1px solid rgba(248,113,113,0.25);background:rgba(248,113,113,0.05);color:#f87171;font-weight:700;font-size:13px;cursor:pointer;font-family:'Rajdhani',sans-serif;transition:background 0.15s;}
+.btn-stop:hover{background:rgba(248,113,113,0.12);}
+.run-chip{display:flex;align-items:center;gap:8px;font-size:11px;color:#37e0a0;font-family:'Share Tech Mono',monospace;letter-spacing:0.04em;}
+.run-pulse{width:8px;height:8px;border-radius:50%;background:#37e0a0;box-shadow:0 0 8px #37e0a0;animation:pulse 1.4s infinite;}
+.btn-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 18px;}
+
+/* ═══ STATS ═══ */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
+.stat-box{background:#070707;border:1px solid #1a1a1a;border-radius:10px;padding:12px 14px;}
+.stat-label{font-size:9px;color:#777;font-family:'Share Tech Mono',monospace;letter-spacing:0.1em;margin-bottom:4px;}
+.stat-val{font-size:22px;font-weight:800;font-family:'Share Tech Mono',monospace;}
+
+/* ═══ MENACES/MIN WIDGET ═══ */
+#card-menaces-min{position:relative;overflow:hidden;transition:border-color .3s ease;}
+#card-menaces-min::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,#ff7f2710 0%,transparent 70%);opacity:0;transition:opacity .5s ease;pointer-events:none;}
+#card-menaces-min.spike::before{opacity:1;}
+#card-menaces-min.spike{border-color:#ff7f27;box-shadow:0 0 12px #ff7f2730;}
+#menaces-par-minute.calme{color:#37e0a0;}
+#menaces-par-minute.actif{color:#ffcf4a;}
+#menaces-par-minute.spike{color:#ff7f27;}
+.mpm-unit{font-size:11px;color:#4a4a5a;margin-left:2px;font-weight:400;}
+.mpm-barre-container{height:3px;background:#1a1a24;border-radius:2px;margin:10px 0 6px;overflow:hidden;}
+.mpm-barre{height:100%;width:0%;background:linear-gradient(90deg,#37e0a0,#ffcf4a,#ff7f27);border-radius:2px;transition:width .8s ease,filter .3s ease;}
+.mpm-barre.spike{filter:drop-shadow(0 0 4px #ff7f27);}
+.mpm-statut{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;color:#4a4a5a;margin-top:2px;}
+@keyframes mpm-pulse{0%{opacity:1;}50%{opacity:.4;}100%{opacity:1;}}
+#card-menaces-min.spike .mpm-statut{color:#ff7f27;animation:mpm-pulse 1s ease infinite;}
+
+/* ═══ AGENT GRID ═══ */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:13px;margin-bottom:18px;}
+.agent-card{background:#070707;border-radius:12px;padding:18px 18px 16px;transition:all 0.2s;cursor:default;}
+.agent-card.offline{opacity:0.55;}
+.agent-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.agent-card-left{display:flex;align-items:center;gap:10px;}
+.agent-icon{width:34px;height:34px;border-radius:9px;font-size:17px;display:flex;align-items:center;justify-content:center;}
+.agent-name{font-size:14px;font-weight:800;letter-spacing:0.02em;}
+.agent-poste{font-size:10px;color:#888;}
+.status-tag{font-size:8.5px;font-weight:800;letter-spacing:0.12em;padding:3px 8px;border-radius:5px;display:flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;}
+.status-tag .blink-dot{width:5px;height:5px;border-radius:50%;background:#37e0a0;animation:blink 1.4s infinite;}
+.agent-booting{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:11px;font-family:'Share Tech Mono',monospace;}
+.agent-desc{font-size:12px;color:#ccc;margin:0 0 10px;line-height:1.55;}
+.agent-caps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.agent-cap{font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;}
+.agent-detect-row{display:flex;justify-content:space-between;font-size:9px;color:#777;margin-bottom:4px;font-family:'Share Tech Mono',monospace;}
+.detect-bar{height:5px;background:#161616;border-radius:100px;overflow:hidden;}
+.detect-fill{height:100%;border-radius:100px;transition:width 1s ease;}
+.agent-model{margin-top:11px;font-size:9px;color:#555;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:5px;}
+.agent-offline-msg{font-size:11px;color:#444;font-style:italic;margin:0;}
+.agent-loading{font-size:11px;color:#666;font-style:italic;margin:0 0 12px;display:flex;align-items:center;gap:6px;}
+
+/* ═══ CONSOLE ═══ */
+.console{background:#000;border:1px solid #1a1a1a;border-radius:12px;overflow:hidden;}
+.console-head{padding:10px 16px;border-bottom:1px solid #1a1a1a;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#888;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;gap:8px;}
+.console-body{padding:12px 16px;max-height:280px;overflow-y:auto;font-family:'Share Tech Mono',monospace;}
+.log-line{display:flex;gap:12px;font-size:11px;margin-bottom:5px;line-height:1.4;animation:fadeIn 0.3s;}
+.log-time{color:#555;}
+.log-agent{font-weight:700;min-width:78px;display:inline-block;}
+
+/* ═══ PENTESTER ═══ */
+.legal-banner{background:rgba(55,224,160,0.05);border:1px solid rgba(55,224,160,0.2);border-radius:10px;padding:12px 16px;font-size:12px;color:#9fe8c8;margin-bottom:16px;line-height:1.5;}
+.pent-card{background:#070707;border:1px solid #1c1c1c;border-radius:12px;padding:20px;margin-bottom:14px;}
+.pent-card.breach{border-color:rgba(248,113,113,0.33);}
+.pent-target-label{font-size:11px;color:#ff7f27;font-weight:700;letter-spacing:0.1em;margin-bottom:12px;font-family:'Share Tech Mono',monospace;}
+.platform-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.platform-btn{padding:8px 14px;font-size:12px;border-radius:8px;cursor:pointer;background:#0a0a0a;border:1px solid #1c1c1c;color:#999;font-weight:400;transition:all 0.15s;font-family:'Rajdhani',sans-serif;}
+.platform-btn.active{background:rgba(255,127,39,0.1);border-color:rgba(255,127,39,0.4);color:#ff7f27;font-weight:700;}
+.platform-btn:disabled{cursor:not-allowed;}
+.btn-scan{padding:12px 24px;border-radius:9px;font-weight:800;font-size:13px;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Rajdhani',sans-serif;transition:transform 0.15s;}
+.btn-scan.ready{background:linear-gradient(135deg,#ff7f27,#ffa052);border:none;color:#000;}
+.btn-scan.ready:hover{transform:translateY(-1px);}
+.btn-scan.scanning{background:#0d0d0d;border:1px solid rgba(255,127,39,0.25);color:#ff7f27;cursor:not-allowed;}
+.terminal{background:#000;border:1px solid rgba(255,127,39,0.13);border-radius:12px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;}
+.scanline{position:absolute;top:0;bottom:0;width:30%;background:linear-gradient(90deg,transparent,rgba(255,127,39,0.08),transparent);animation:scan 1.6s linear infinite;pointer-events:none;}
+.term-line{font-size:11.5px;font-family:'Share Tech Mono',monospace;margin-bottom:5px;display:flex;gap:10px;}
+.term-time{color:#555;}
+.term-prompt{color:#ff7f27;}
+.term-text{color:#bbb;}
+
+/* Score box */
+.score-box{width:72px;height:72px;border-radius:14px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.score-val{font-size:24px;font-weight:800;font-family:'Share Tech Mono',monospace;}
+.score-max{font-size:8px;color:#777;}
+.risk-label{font-size:10px;color:#777;font-family:'Share Tech Mono',monospace;margin-bottom:3px;}
+.risk-level{font-size:20px;font-weight:800;font-family:'Bebas Neue','Rajdhani',sans-serif;font-size:24px;letter-spacing:0.04em;}
+
+/* Breach alert */
+.breach-alert{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.33);border-radius:10px;padding:14px 16px;margin-bottom:18px;animation:fadeIn 0.4s;}
+.breach-title{font-size:13px;font-weight:800;color:#f87171;margin-bottom:3px;}
+.breach-desc{font-size:11px;color:#e0a0a0;}
+
+/* Section */
+.report-section{margin-top:14px;}
+.report-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;margin-bottom:8px;font-family:'Share Tech Mono',monospace;}
+.report-item{font-size:12px;color:#ccc;margin-bottom:6px;padding-left:14px;position:relative;line-height:1.5;}
+.report-item .arrow{position:absolute;left:0;}
+
+/* Spinner */
+.spinner{display:inline-block;width:11px;height:11px;border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:860px){
+  .agent-grid{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .cmd-card{flex-direction:column;align-items:flex-start;}
+  .cmd-right{text-align:left;}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .topbar{padding:12px 16px;}
+  .wrap{padding:16px 16px 40px;}
+  .tabs{padding:10px 16px 0;}
+}
+
+/* ═══ MÉDIAS DANS LE CHAT ═══ */
+.chat-media-image{margin:8px 0;border-radius:8px;overflow:hidden;border:1px solid #1e1e28;max-width:320px;}
+.chat-media-image img{width:100%;height:auto;display:block;}
+.chat-media-image__caption{display:block;padding:6px 10px;font-size:10px;color:#666;background:#0d0d12;}
+.chat-media-link{display:flex;align-items:center;gap:10px;margin:6px 0;padding:10px 12px;background:#111118;border:1px solid #1e1e28;border-radius:8px;text-decoration:none;transition:border-color 0.2s,background 0.2s;}
+.chat-media-link:hover{border-color:#ff7f27;background:rgba(255,127,39,0.05);}
+.chat-media-link__favicon{width:20px;height:20px;border-radius:4px;flex-shrink:0;}
+.chat-media-link__content{flex:1;min-width:0;}
+.chat-media-link__title{display:block;font-size:12px;color:#e0e0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chat-media-link__domain{display:block;font-size:10px;color:#555;}
+.chat-media-link__arrow{color:#ff7f27;font-size:14px;flex-shrink:0;}
+.chat-page-card{display:flex;align-items:center;gap:12px;margin:10px 0;padding:14px 16px;background:linear-gradient(135deg,rgba(255,127,39,0.08),rgba(255,127,39,0.02));border:1px solid rgba(255,127,39,0.3);border-radius:10px;}
+.chat-page-card__icon{font-size:24px;flex-shrink:0;}
+.chat-page-card__content{flex:1;min-width:0;}
+.chat-page-card__title{font-size:13px;font-weight:700;color:#ff7f27;margin-bottom:2px;}
+.chat-page-card__label{font-size:10px;color:#666;}
+.chat-page-card__btn{background:#ff7f27;color:#000;font-size:10px;font-weight:700;letter-spacing:0.08em;padding:8px 14px;border-radius:7px;text-decoration:none;flex-shrink:0;transition:background 0.15s;}
+.chat-page-card__btn:hover{background:#ff9040;}
+
+/* ═══ KEYFRAMES ═══ */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scan{0%{left:-30%}100%{left:130%}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+</style>
+</head>
+<body>
+
+<!-- ═══ BACK LINK ═══ -->
+<a href="/pro.html" class="back-link">← Retour a ti-lex</a>
+
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">⚜</div>
+    <div>
+      <div class="topbar-title">CENTRE <span>INDAR</span></div>
+      <div class="topbar-sub">ti-lex v10 · cybersecurite autonome</div>
+    </div>
+  </div>
+  <div id="statusPill" class="status-pill offline">
+    <span id="statusDot" class="status-dot offline"></span>
+    <span id="statusText">HORS LIGNE</span>
+  </div>
+</div>
+
+<!-- ═══ TABS ═══ -->
+<div class="tabs">
+  <button id="tabCentre" class="tab-btn active" onclick="switchTab('centre')">&#x1f6e1; Centre INDAR</button>
+  <button id="tabPentest" class="tab-btn" onclick="switchTab('pentest')">&#x1f3af; PHANTOM-RED</button>
+  <button id="tabScan" class="tab-btn" onclick="switchTab('scan')">&#x1f50d; Scan INDAR</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB: CENTRE INDAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="panelCentre" class="wrap">
+
+  <!-- Commander card -->
+  <div class="cmd-card">
+    <div class="cmd-left">
+      <div class="cmd-avatar">&#x1f464;</div>
+      <div>
+        <div class="cmd-badge">COMMANDANT HUMAIN</div>
+        <div class="cmd-name">LEX</div>
+        <div class="cmd-role">Fondateur · Operateur unique du Centre INDAR</div>
+      </div>
+    </div>
+    <div class="cmd-right">
+      <div class="cmd-agents-label">AGENTS ACTIFS</div>
+      <div id="agentCount" class="cmd-agents-count" style="color:#ff7f27;">0<span>/6</span></div>
+    </div>
+  </div>
+
+  <!-- Start/Stop button area -->
+  <div id="btnArea" class="btn-row">
+    <button class="btn-start" onclick="demarrer()">&#x26a1; DEMARRER LE CENTRE INDAR <span class="sub">— roule tout seul</span></button>
+  </div>
+
+  <!-- Stats (hidden initially) -->
+  <div id="statsArea" class="stats-row" style="display:none;">
+    <div class="stat-box"><div class="stat-label">MENACES DETECTEES</div><div id="statMenaces" class="stat-val" style="color:#f87171;">0</div></div>
+    <div class="stat-box"><div class="stat-label">BLOQUEES</div><div id="statBloquees" class="stat-val" style="color:#37e0a0;">0</div></div>
+    <div class="stat-box" id="card-menaces-min">
+      <div class="stat-label">MENACES/MIN</div>
+      <div id="menaces-par-minute" class="stat-val calme" style="line-height:1;">
+        <span id="mpm-valeur">0</span><span class="mpm-unit">/min</span>
+      </div>
+      <div class="mpm-barre-container"><div class="mpm-barre" id="mpm-barre"></div></div>
+      <div class="mpm-statut" id="mpm-statut">EN ATTENTE</div>
+    </div>
+    <div class="stat-box"><div class="stat-label">SCANS AUTO</div><div id="statScans" class="stat-val" style="color:#4f8ef7;">0</div></div>
+    <div class="stat-box"><div class="stat-label">POSTURE</div><div id="statPosture" class="stat-val" style="color:#ff7f27;">98%</div></div>
+  </div>
+
+  <!-- Agent grid -->
+  <div id="agentGrid" class="agent-grid"></div>
+
+  <!-- Console (hidden initially) -->
+  <div id="consoleArea" class="console" style="display:none;">
+    <div class="console-head"><span style="color:#37e0a0;">&#x25cf;</span> FLUX DE SURVEILLANCE · TEMPS REEL</div>
+    <div id="consoleBody" class="console-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB: PHANTOM-RED (PENTESTER)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="panelPentest" class="wrap" style="display:none;">
+
+  <!-- Legal banner -->
+  <div class="legal-banner">
+    &#x1f6e1; <b>Mode SIMULATION</b> — PHANTOM-RED ne touche aucun systeme reel. Rapports fictifs et educatifs. 100% legal.
+  </div>
+
+  <!-- Target selector -->
+  <div class="pent-card">
+    <div class="pent-target-label">&#x1f3af; CIBLE DE TEST (simulee)</div>
+    <div id="platformBtns" class="platform-btns"></div>
+    <button id="btnScan" class="btn-scan ready" onclick="lancerScan()">&#x25b6; LANCER LE SCAN SIMULE</button>
+  </div>
+
+  <!-- Terminal output -->
+  <div id="terminalArea" class="terminal" style="display:none;">
+    <div id="scanlineEl" class="scanline" style="display:none;"></div>
+    <div id="terminalBody"></div>
+  </div>
+
+  <!-- Report -->
+  <div id="reportArea" style="display:none;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TAB: SCAN INDAR
+     ═══════════════════════════════════════════════════════════ -->
+<div id="panelScan" class="wrap" style="display:none;">
+
+  <!-- Legal banner -->
+  <div class="legal-banner">
+    &#x1f6e1; <b>Mode SIMULATION</b> — Les scans sont educatifs. Aucun systeme externe n'est attaque. 100% legal.
+  </div>
+
+  <!-- Admin badge -->
+  <div id="scanAdminBadge" class="scan-admin-badge" style="display:none;">
+    &#x2b50; ACCES COMMANDEMENT · Scans illimites
+  </div>
+
+  <!-- Scan form -->
+  <div class="scan-form">
+    <div class="scan-form-title">&#x2b22; MOTEUR DE SCAN PHANTOM-RED</div>
+    <input id="scanTarget" class="scan-input" type="text" placeholder="Domaine, courriel ou URL a scanner (ex. exemple.com)" autocomplete="off">
+    <div class="scan-type-row">
+      <button class="scan-type-btn active" data-type="osint" onclick="setScanType(this)">OSINT</button>
+      <button class="scan-type-btn" data-type="hibp" onclick="setScanType(this)">BRECHES (HIBP)</button>
+      <button class="scan-type-btn" data-type="darkweb" onclick="setScanType(this)">DARK WEB</button>
+    </div>
+    <button id="btnScanReal" class="btn-scan-real" onclick="lancerScanReel()">&#x26a1; LANCER LE SCAN</button>
+  </div>
+
+  <!-- Scan terminal -->
+  <div id="scanTerminal" class="scan-terminal" style="display:none;"></div>
+
+  <!-- Scan result -->
+  <div id="scanResult" style="display:none;"></div>
+
+  <!-- Résumé sécurisé (mots-clés seulement) -->
+  <div id="scan-resume-container" style="padding:0 16px;"></div>
+
+  <!-- Guide de protection — apparaît après le scan -->
+  <div id="guide-protection-result" style="display:none; padding:0 16px;"></div>
+
+  <!-- Scan history -->
+  <div id="scanHistory" class="scan-history" style="display:none;">
+    <div class="scan-history-title">&#x1f4cb; HISTORIQUE DES SCANS</div>
+    <div id="scanHistoryBody"></div>
+  </div>
+</div>
+
+<script src="/js/tilex-config.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+   CENTRE INDAR · ti-lex v10
+   Vanilla JS — converted from React JSX
+   ════════════════════════════════════════════════════════════ */
+
+var SB_URL = window.SB_URL;
+var SB_ANON = window.SB_ANON;
+var AI_PROXY = window.AI_PROXY;
+
+var ORANGE = "#ff7f27";
+
+var AGENTS = [
+  { id:"nexus",    nom:"NEXUS-AL",    poste:"Responsable cybersecurite",  couleur:"#ffcf4a", glow:"rgba(255,207,74,0.25)",  modele:"claude-opus-4-8",   icone:"◈" },
+  { id:"marceau",  nom:"MARCEAU",     poste:"Architecte securite",        couleur:"#ff7f27", glow:"rgba(255,127,39,0.25)",  modele:"claude-sonnet-4-6", icone:"⬡" },
+  { id:"cipher",   nom:"CIPHER",      poste:"GRC / Conformite",           couleur:"#4f8ef7", glow:"rgba(79,142,247,0.25)",  modele:"claude-sonnet-4-6", icone:"⊞" },
+  { id:"sentinel", nom:"SENTINEL",    poste:"Reponse aux incidents",      couleur:"#f87171", glow:"rgba(248,113,113,0.25)", modele:"claude-sonnet-4-6", icone:"⊕" },
+  { id:"oracle",   nom:"ORACLE",      poste:"Securite IA / Gouvernance",  couleur:"#37e0a0", glow:"rgba(55,224,160,0.25)",  modele:"claude-sonnet-4-6", icone:"◉" },
+  { id:"phantom",  nom:"PHANTOM-RED", poste:"Pentest / Red Team",         couleur:"#a78bfa", glow:"rgba(167,139,250,0.25)", modele:"claude-sonnet-4-6", icone:"⬢" }
+];
+
+var PLATEFORMES = ["Supabase","Vercel","GitHub","Azure AD","Slack","VPN Corporatif"];
+
+var EVENTS_POOL = [
+  { a:"sentinel", t:"info",  m:"Trafic reseau analyse — aucune anomalie" },
+  { a:"oracle",   t:"info",  m:"Modeles IA scannes — integrite confirmee" },
+  { a:"cipher",   t:"info",  m:"Audit conformite RGPD — conforme" },
+  { a:"marceau",  t:"info",  m:"Verification Zero Trust — segments isoles" },
+  { a:"nexus",    t:"info",  m:"Rapport horaire consolide" },
+  { a:"sentinel", t:"warn",  m:"Tentative de connexion inhabituelle bloquee" },
+  { a:"oracle",   t:"warn",  m:"Prompt suspect detecte sur endpoint LLM — filtre" },
+  { a:"marceau",  t:"info",  m:"Certificats TLS valides — 0 expire" },
+  { a:"cipher",   t:"warn",  m:"Politique d’acces obsolete signalee" },
+  { a:"sentinel", t:"crit",  m:"Pic de requetes — protection anti-DDoS activee" },
+  { a:"phantom",  t:"info",  m:"Surface d’attaque cartographiee" },
+  { a:"nexus",    t:"info",  m:"Score de posture securite recalcule" }
+];
+
+var FALLBACK_FICHES = {
+  nexus:   { desc:"Supervise la posture globale et arbitre les decisions critiques en temps reel.", capacites:["Vue d'ensemble","Priorisation","Reporting executif"] },
+  marceau: { desc:"Concoit et maintient une architecture Zero Trust segmentee et resiliente.", capacites:["Zero Trust","Micro-segmentation","Durcissement"] },
+  cipher:  { desc:"Aligne l'infrastructure sur les cadres reglementaires en continu.", capacites:["ISO 27001","NIS2","RGPD"] },
+  sentinel:{ desc:"Detecte, contient et eradique les menaces actives en quelques secondes.", capacites:["SOC 24/7","DFIR","Confinement"] },
+  oracle:  { desc:"Protege les modeles IA contre injections, fuites et abus.", capacites:["Garde-fous LLM","Red teaming IA","Filtrage"] },
+  phantom: { desc:"Simule des attaques offensives pour reveler les failles avant l'ennemi.", capacites:["Pentest","Cartographie","Rapport"] }
+};
+
+/* ── State ── */
+var phase = "offline";        // offline | booting | running
+var agentStates = AGENTS.map(function(a){ return { id:a.id, status:"offline", data:null, detection:0 }; });
+var events = [];
+var stats = { menaces:0, bloquees:0, scans:0, uptime:0 };
+var tickInterval = null;
+var currentTab = "centre";
+
+/* ── Compteur menaces/minute ── */
+var historiqueBloquees = [];
+var menacesParMinute = 0;
+var intervalCompteur = null;
+
+/* Pentester state */
+var pentCible = PLATEFORMES[0];
+var pentScanning = false;
+
+/* ── Helpers ── */
+function now() {
+  var d = new Date();
+  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0") + ":" + String(d.getSeconds()).padStart(2,"0");
+}
+
+function agentById(id) {
+  for (var i = 0; i < AGENTS.length; i++) { if (AGENTS[i].id === id) return AGENTS[i]; }
+  return null;
+}
+
+function getAgentState(id) {
+  for (var i = 0; i < agentStates.length; i++) { if (agentStates[i].id === id) return agentStates[i]; }
+  return null;
+}
+
+function getToken() {
+  try {
+    var r = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (r) { var s = JSON.parse(r); if (s && s.access_token) return s.access_token; }
+  } catch(e) {}
+  return SB_ANON;
+}
+
+function salvageTruncatedJSON(s){
+  var inStr=false,esc=false,stack=[];
+  for(var ci=0;ci<s.length;ci++){
+    var ch=s[ci];
+    if(esc){esc=false;continue;}
+    if(ch==="\\"){esc=true;continue;}
+    if(ch==='"'){inStr=!inStr;continue;}
+    if(inStr)continue;
+    if(ch==="{"||ch==="[")stack.push(ch);
+    else if(ch==="}"||ch==="]")stack.pop();
+  }
+  var fixed=s;
+  if(inStr)fixed+='"';
+  while(stack.length){var open=stack.pop();fixed+=(open==="{"?"}":"]");}
+  try{return JSON.parse(fixed);}catch(e){return null;}
+}
+function parseScanJSON(raw){
+  if(typeof raw!=="string"||raw.trim()==="")throw new Error("Réponse de scan vide.");
+  var cleaned=raw.trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"");
+  try{return JSON.parse(cleaned);}catch(e){
+    if(/Unterminated string|Unexpected end of (JSON|input)/i.test(e.message)){
+      console.warn("[scan] JSON tronqué — tentative de récupération.");
+      var salvaged=salvageTruncatedJSON(cleaned);
+      if(salvaged)return salvaged;
+    }
+    throw new Error("Résultat de scan illisible (JSON invalide). "+e.message);
+  }
+}
+
+function spinnerHTML(color) {
+  return '<span class="spinner" style="border:2px solid ' + color + '40;border-top:2px solid ' + color + ';"></span>';
+}
+
+/* ── SSE Reader (from project pattern) ── */
+async function readSSE(res) {
+  var reader = res.body.getReader();
+  var decoder = new TextDecoder();
+  var full = ""; var buf = "";
+  while (true) {
+    var chunk = await reader.read();
+    if (chunk.done) break;
+    buf += decoder.decode(chunk.value, { stream: true });
+    var lines = buf.split("\n");
+    buf = lines.pop() || "";
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line.startsWith("data: ")) continue;
+      var payload = line.slice(6);
+      if (payload === "[DONE]") continue;
+      try {
+        var evt = JSON.parse(payload);
+        if (evt.type === "content_block_delta" && evt.delta && evt.delta.text) {
+          full += evt.delta.text;
+        }
+      } catch(e) {}
+    }
+  }
+  return full;
+}
+
+/* ════════════════════════════════════════════════════════════
+   TAB SWITCHING
+   ════════════════════════════════════════════════════════════ */
+function switchTab(t) {
+  currentTab = t;
+  document.getElementById("tabCentre").className = "tab-btn" + (t === "centre" ? " active" : "");
+  document.getElementById("tabPentest").className = "tab-btn" + (t === "pentest" ? " active" : "");
+  document.getElementById("tabScan").className = "tab-btn" + (t === "scan" ? " active" : "");
+  document.getElementById("panelCentre").style.display = t === "centre" ? "" : "none";
+  document.getElementById("panelPentest").style.display = t === "pentest" ? "" : "none";
+  document.getElementById("panelScan").style.display = t === "scan" ? "" : "none";
+  if (t === "scan" && !scanHistoryLoaded) loadScanHistory();
+}
+
+/* ════════════════════════════════════════════════════════════
+   STATUS PILL
+   ════════════════════════════════════════════════════════════ */
+function updateStatusPill() {
+  var pill = document.getElementById("statusPill");
+  var dot  = document.getElementById("statusDot");
+  var txt  = document.getElementById("statusText");
+  pill.className = "status-pill " + phase;
+  dot.className  = "status-dot " + phase;
+  txt.textContent = phase === "offline" ? "HORS LIGNE" : phase === "booting" ? "DEMARRAGE…" : "EN MARCHE";
+}
+
+/* ════════════════════════════════════════════════════════════
+   AGENT COUNT
+   ════════════════════════════════════════════════════════════ */
+function updateAgentCount() {
+  var count = 0;
+  for (var i = 0; i < agentStates.length; i++) { if (agentStates[i].status === "online") count++; }
+  var el = document.getElementById("agentCount");
+  el.innerHTML = count + '<span>/6</span>';
+  el.style.color = count === 6 ? "#37e0a0" : ORANGE;
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMPTEUR MENACES/MIN
+   ════════════════════════════════════════════════════════════ */
+function calculerMenacesParMinute(countActuel) {
+  var maintenant = Date.now();
+  historiqueBloquees.push({ timestamp: maintenant, count: countActuel });
+  var limite = maintenant - 60000;
+  historiqueBloquees = historiqueBloquees.filter(function(s) { return s.timestamp >= limite; });
+  if (historiqueBloquees.length < 2) return 0;
+  var plusAncien = historiqueBloquees[0];
+  var plusRecent = historiqueBloquees[historiqueBloquees.length - 1];
+  var deltaCount = plusRecent.count - plusAncien.count;
+  var deltaTemps = (plusRecent.timestamp - plusAncien.timestamp) / 60000;
+  if (deltaTemps === 0) return 0;
+  return Math.round(deltaCount / deltaTemps);
+}
+
+function mettreAJourAffichageCompteur(mpm) {
+  var valeurEl = document.getElementById("mpm-valeur");
+  var valueEl = document.getElementById("menaces-par-minute");
+  var barreEl = document.getElementById("mpm-barre");
+  var statutEl = document.getElementById("mpm-statut");
+  var cardEl = document.getElementById("card-menaces-min");
+  if (!valeurEl) return;
+  valeurEl.textContent = mpm;
+  valueEl.classList.remove("calme", "actif", "spike");
+  cardEl.classList.remove("spike");
+  barreEl.classList.remove("spike");
+  var statut = "EN ATTENTE";
+  var largeur = 0;
+  if (mpm === 0) { valueEl.classList.add("calme"); statut = "CALME"; largeur = 2; }
+  else if (mpm <= 2) { valueEl.classList.add("calme"); statut = "ACTIVITÉ NORMALE"; largeur = Math.min(mpm * 15, 30); }
+  else if (mpm <= 5) { valueEl.classList.add("actif"); statut = "ACTIVITÉ ÉLEVÉE"; largeur = Math.min(30 + mpm * 8, 65); }
+  else { valueEl.classList.add("spike"); cardEl.classList.add("spike"); barreEl.classList.add("spike"); statut = "⚠ SPIKE DÉTECTÉ"; largeur = Math.min(65 + mpm * 3, 100); }
+  barreEl.style.width = largeur + "%";
+  statutEl.textContent = statut;
+}
+
+function demarrerCompteur() {
+  historiqueBloquees = [];
+  menacesParMinute = 0;
+  mettreAJourAffichageCompteur(0);
+  intervalCompteur = setInterval(function() {
+    menacesParMinute = calculerMenacesParMinute(stats.bloquees);
+    mettreAJourAffichageCompteur(menacesParMinute);
+  }, 5000);
+}
+
+function arreterCompteur() {
+  if (intervalCompteur) { clearInterval(intervalCompteur); intervalCompteur = null; }
+  historiqueBloquees = [];
+  menacesParMinute = 0;
+  mettreAJourAffichageCompteur(0);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BUTTON AREA
+   ════════════════════════════════════════════════════════════ */
+function updateBtnArea() {
+  var area = document.getElementById("btnArea");
+  if (phase === "offline") {
+    area.innerHTML = '<button class="btn-start" onclick="demarrer()">&#x26a1; DEMARRER LE CENTRE INDAR <span class="sub">— roule tout seul</span></button>';
+  } else {
+    var html = '<button class="btn-stop" onclick="arreter()">&#x23f9; Arreter</button>';
+    if (phase === "running") {
+      html += '<span class="run-chip"><span class="run-pulse"></span> Surveillance autonome active · uptime ' + Math.floor(stats.uptime * 2.2) + 's</span>';
+    }
+    area.innerHTML = html;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   STATS
+   ════════════════════════════════════════════════════════════ */
+function updateStats() {
+  document.getElementById("statMenaces").textContent = stats.menaces;
+  document.getElementById("statBloquees").textContent = stats.bloquees;
+  document.getElementById("statScans").textContent = stats.scans;
+  document.getElementById("statPosture").textContent = "98%";
+}
+
+/* ════════════════════════════════════════════════════════════
+   EVENTS
+   ════════════════════════════════════════════════════════════ */
+function pushEvent(ev) {
+  events.push({ a: ev.a, t: ev.t, m: ev.m, time: now() });
+  if (events.length > 42) events = events.slice(-42);
+  renderEvents();
+}
+
+function renderEvents() {
+  var body = document.getElementById("consoleBody");
+  var html = "";
+  for (var i = 0; i < events.length; i++) {
+    var ev = events[i];
+    var ag = agentById(ev.a);
+    var col = ev.t === "crit" ? "#f87171" : ev.t === "warn" ? "#ffcf4a" : (ag ? ag.couleur : "#888");
+    var msgCol = ev.t === "info" ? "#bbb" : col;
+    html += '<div class="log-line"><span class="log-time">' + ev.time + '</span><span class="log-agent" style="color:' + col + ';">' + (ag ? ag.nom : "SYS") + '</span><span style="color:' + msgCol + ';">' + ev.m + '</span></div>';
+  }
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
+}
+
+/* ════════════════════════════════════════════════════════════
+   AGENT GRID RENDER
+   ════════════════════════════════════════════════════════════ */
+function renderAgentGrid() {
+  var grid = document.getElementById("agentGrid");
+  var html = "";
+  for (var i = 0; i < AGENTS.length; i++) {
+    var ag = AGENTS[i];
+    var st = getAgentState(ag.id);
+    var online = st.status === "online";
+    var isOffline = st.status === "offline";
+    var isBooting = st.status === "booting";
+
+    var borderColor = online ? ag.couleur + "33" : "#1c1c1c";
+    var borderLeft = online ? ag.couleur : "#262626";
+    var cardClass = "agent-card" + (isOffline ? " offline" : "");
+
+    html += '<div class="' + cardClass + '" id="card-' + ag.id + '" style="border:1px solid ' + borderColor + ';border-left:3px solid ' + borderLeft + ';">';
+
+    // Head row
+    html += '<div class="agent-card-head"><div class="agent-card-left">';
+    var iconBg = online ? ag.couleur + "18" : "#141414";
+    var iconBorder = online ? ag.couleur + "44" : "#222";
+    var iconColor = online ? ag.couleur : "#444";
+    html += '<div class="agent-icon" style="background:' + iconBg + ';border:1px solid ' + iconBorder + ';color:' + iconColor + ';">' + ag.icone + '</div>';
+    html += '<div><div class="agent-name" style="color:' + (online ? "#fff" : "#666") + ';">' + ag.nom + '</div>';
+    html += '<div class="agent-poste">' + ag.poste + '</div></div></div>';
+
+    // Status tag
+    var tagInfo = isOffline ? { t:"OFFLINE", c:"#555" } : isBooting ? { t:"BOOT…", c:ag.couleur } : { t:"EN LIGNE", c:"#37e0a0" };
+    html += '<span class="status-tag" style="color:' + tagInfo.c + ';border:1px solid ' + tagInfo.c + '44;background:' + tagInfo.c + '14;">';
+    if (online) html += '<span class="blink-dot"></span>';
+    html += tagInfo.t + '</span></div>';
+
+    // Body
+    if (isBooting) {
+      html += '<div class="agent-booting" style="color:' + ag.couleur + ';">' + spinnerHTML(ag.couleur) + ' Initialisation des protocoles…</div>';
+    }
+    if (online) {
+      html += '<div style="animation:fadeIn 0.4s;">';
+      if (st.data) {
+        html += '<p class="agent-desc">' + st.data.desc + '</p>';
+        html += '<div class="agent-caps">';
+        var caps = st.data.capacites || [];
+        for (var c = 0; c < caps.length; c++) {
+          html += '<span class="agent-cap" style="color:' + ag.couleur + ';background:' + ag.couleur + '14;border:1px solid ' + ag.couleur + '30;">' + caps[c] + '</span>';
+        }
+        html += '</div>';
+      } else {
+        html += '<p class="agent-loading">' + spinnerHTML(ag.couleur) + ' Fiche generee par Equipe AL…</p>';
+      }
+
+      html += '<div class="agent-detect-row"><span>TAUX DE DETECTION</span><span style="color:' + ag.couleur + ';">' + st.detection + '%</span></div>';
+      html += '<div class="detect-bar"><div class="detect-fill" style="width:' + st.detection + '%;background:' + ag.couleur + ';box-shadow:0 0 8px ' + ag.couleur + ';"></div></div>';
+      html += '<div class="agent-model"><span style="color:' + ag.couleur + ';opacity:0.7;">&#x25b8;</span> ' + ag.modele + '</div>';
+      html += '</div>';
+    }
+    if (isOffline) {
+      html += '<p class="agent-offline-msg">Agent hors ligne</p>';
+    }
+
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════
+   BOOT SEQUENCE
+   ════════════════════════════════════════════════════════════ */
+function sleep(ms) { return new Promise(function(r){ setTimeout(r, ms); }); }
+
+async function demarrer() {
+  if (phase !== "offline") return;
+  phase = "booting";
+  updateStatusPill();
+  updateBtnArea();
+  document.getElementById("statsArea").style.display = "";
+  document.getElementById("consoleArea").style.display = "";
+  updateStats();
+
+  pushEvent({ a:"nexus", t:"info", m:"━━ INITIALISATION DU CENTRE INDAR ━━" });
+
+  for (var i = 0; i < AGENTS.length; i++) {
+    await sleep(650);
+    var ag = AGENTS[i];
+    getAgentState(ag.id).status = "booting";
+    renderAgentGrid();
+    pushEvent({ a: ag.id, t:"info", m: ag.nom + " en cours d'initialisation…" });
+
+    await sleep(500);
+    var detection = 92 + Math.floor(Math.random() * 8);
+    getAgentState(ag.id).status = "online";
+    getAgentState(ag.id).detection = detection;
+    renderAgentGrid();
+    updateAgentCount();
+    pushEvent({ a: ag.id, t:"info", m: ag.nom + " EN LIGNE · detection " + detection + "%" });
+  }
+
+  pushEvent({ a:"nexus", t:"info", m:"━━ 6 AGENTS OPERATIONNELS · MODE EN MARCHE ━━" });
+  phase = "running";
+  updateStatusPill();
+  updateBtnArea();
+
+  genererFiches();
+  startTick();
+  demarrerCompteur();
+}
+
+/* ════════════════════════════════════════════════════════════
+   GENERATE AGENT FICHES (AI_PROXY with fallback)
+   ════════════════════════════════════════════════════════════ */
+async function genererFiches() {
+  try {
+    var token = getToken();
+    var res = await fetch(AI_PROXY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": SB_ANON },
+      body: JSON.stringify({
+        kind: "chat",
+        model: "claude-sonnet-4-6",
+        max_tokens: 1600,
+        system: "Tu es l'orchestrateur du Centre INDAR. Genere des fiches techniques pour 6 agents IA de cybersecurite.\nREPONDS UNIQUEMENT EN JSON VALIDE, aucun texte ni backtick.\nFormat : { \"agents\": [ { \"id\":\"nexus\", \"desc\":\"1 phrase technique percutante\", \"capacites\":[\"cap1\",\"cap2\",\"cap3\"] } ] }\nLes ids : nexus, marceau, cipher, sentinel, oracle, phantom.",
+        messages: [{ role: "user", content: "nexus = Responsable cybersecurite (commande)\nmarceau = Architecte securite (Zero Trust)\ncipher = GRC/Conformite (ISO27001, NIS2, RGPD)\nsentinel = Reponse aux incidents (SOC, DFIR)\noracle = Securite IA (protection LLM)\nphantom = Pentest Red Team (simulation)\nPour chacun : 1 phrase technique + 3 capacites courtes." }]
+      })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var txt = await readSSE(res);
+    var parsed = parseScanJSON(txt);
+    var agentsList = parsed.agents || [];
+    for (var i = 0; i < agentsList.length; i++) {
+      var f = agentsList[i];
+      var st = getAgentState(f.id);
+      if (st) st.data = f;
+    }
+  } catch(e) {
+    console.log("[INDAR] AI fallback for fiches:", e.message || e);
+    for (var id in FALLBACK_FICHES) {
+      var st = getAgentState(id);
+      if (st) st.data = FALLBACK_FICHES[id];
+    }
+  }
+  renderAgentGrid();
+}
+
+/* ════════════════════════════════════════════════════════════
+   SURVEILLANCE TICK (every 2.2s)
+   ════════════════════════════════════════════════════════════ */
+function startTick() {
+  if (tickInterval) clearInterval(tickInterval);
+  tickInterval = setInterval(function() {
+    if (phase !== "running") return;
+    stats.uptime++;
+    updateBtnArea();
+
+    if (Math.random() < 0.6) {
+      var ev = EVENTS_POOL[Math.floor(Math.random() * EVENTS_POOL.length)];
+      pushEvent(ev);
+      if (ev.t === "warn" || ev.t === "crit") {
+        stats.menaces++;
+        stats.bloquees++;
+      }
+      updateStats();
+    }
+    if (Math.random() < 0.18) {
+      stats.scans++;
+      pushEvent({ a:"phantom", t:"info", m:"Scan automatique periodique termine" });
+      updateStats();
+    }
+  }, 2200);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FLUSH SUPABASE AVANT ARRÊT
+   ════════════════════════════════════════════════════════════ */
+async function flushScanDataBeforeStop() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return { success: true, flushed: 0 };
+    if (events.length === 0 && stats.menaces === 0) return { success: true, flushed: 0 };
+    var payload = {
+      session_stats: {
+        menaces: stats.menaces,
+        bloquees: stats.bloquees,
+        scans: stats.scans,
+        uptime_ticks: stats.uptime,
+        events_count: events.length
+      },
+      events_summary: events.slice(-20).map(function(e) { return { agent: e.a, type: e.t, message: e.m }; }),
+      stopped_at: new Date().toISOString()
+    };
+    var res = await fetch(SB_URL + "/rest/v1/scan_resumes", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify({ resume: payload })
+    });
+    if (!res.ok) {
+      var errTxt = await res.text().catch(function() { return ""; });
+      return { success: false, error: "HTTP " + res.status + " " + errTxt };
+    }
+    return { success: true, flushed: events.length };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   STOP
+   ════════════════════════════════════════════════════════════ */
+async function arreter() {
+  arreterCompteur();
+  var btnArea = document.getElementById("btnArea");
+  var stopBtn = btnArea ? btnArea.querySelector(".btn-stop") : null;
+  if (stopBtn) { stopBtn.disabled = true; stopBtn.textContent = "⏳ Sauvegarde..."; }
+
+  var flushResult = await flushScanDataBeforeStop();
+  if (!flushResult.success) {
+    var continuer = confirm("⚠️ Erreur de sauvegarde : " + flushResult.error + "\n\nArrêter quand même?");
+    if (!continuer) {
+      if (stopBtn) { stopBtn.disabled = false; stopBtn.innerHTML = "&#x23f9; Arreter"; }
+      return;
+    }
+  }
+
+  if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+  phase = "offline";
+  agentStates = AGENTS.map(function(a){ return { id:a.id, status:"offline", data:null, detection:0 }; });
+  events = [];
+  stats = { menaces:0, bloquees:0, scans:0, uptime:0 };
+  updateStatusPill();
+  updateBtnArea();
+  updateAgentCount();
+  renderAgentGrid();
+  document.getElementById("statsArea").style.display = "none";
+  document.getElementById("consoleArea").style.display = "none";
+  document.getElementById("consoleBody").innerHTML = "";
+}
+
+/* ════════════════════════════════════════════════════════════
+   PENTESTER: PHANTOM-RED
+   ════════════════════════════════════════════════════════════ */
+function renderPlatformBtns() {
+  var container = document.getElementById("platformBtns");
+  var html = "";
+  for (var i = 0; i < PLATEFORMES.length; i++) {
+    var p = PLATEFORMES[i];
+    var cls = "platform-btn" + (pentCible === p ? " active" : "");
+    var disabled = pentScanning ? " disabled" : "";
+    html += '<button class="' + cls + '"' + disabled + ' onclick="selectPlatform(\'' + p.replace(/'/g, "\\'") + '\')">' + p + '</button>';
+  }
+  container.innerHTML = html;
+}
+
+function selectPlatform(p) {
+  if (pentScanning) return;
+  pentCible = p;
+  renderPlatformBtns();
+}
+
+function updateScanBtn() {
+  var btn = document.getElementById("btnScan");
+  if (pentScanning) {
+    btn.className = "btn-scan scanning";
+    btn.disabled = true;
+    btn.innerHTML = spinnerHTML(ORANGE) + ' Scan en cours sur ' + pentCible + '…';
+  } else {
+    btn.className = "btn-scan ready";
+    btn.disabled = false;
+    btn.innerHTML = '&#x25b6; LANCER LE SCAN SIMULE';
+  }
+}
+
+async function lancerScan() {
+  if (pentScanning) return;
+  pentScanning = true;
+  updateScanBtn();
+  renderPlatformBtns();
+
+  var termArea = document.getElementById("terminalArea");
+  var termBody = document.getElementById("terminalBody");
+  var scanlineEl = document.getElementById("scanlineEl");
+  var reportArea = document.getElementById("reportArea");
+
+  termArea.style.display = "";
+  termBody.innerHTML = "";
+  reportArea.style.display = "none";
+  reportArea.innerHTML = "";
+  scanlineEl.style.display = "";
+
+  if (phase === "running") {
+    pushEvent({ a:"phantom", t:"info", m:"Scan simule lance sur " + pentCible });
+  }
+
+  var ETAPES = [
+    "Initialisation de PHANTOM-RED…",
+    "Mode SIMULATION confirme · aucun systeme reel touche",
+    "Cartographie de la surface : " + pentCible,
+    "Enumeration des ports ouverts…",
+    "Analyse des en-tetes de securite…",
+    "Test des politiques d'authentification…",
+    "Recherche de configurations faibles…",
+    "Compilation du rapport…"
+  ];
+
+  for (var i = 0; i < ETAPES.length; i++) {
+    await sleep(520);
+    termBody.innerHTML += '<div class="term-line"><span class="term-time">' + now() + '</span><span class="term-prompt">phantom@indar</span><span class="term-text">' + ETAPES[i] + '</span></div>';
+    termBody.parentElement.scrollTop = termBody.parentElement.scrollHeight;
+  }
+
+  await sleep(400);
+  scanlineEl.style.display = "none";
+
+  var rapport = null;
+  try {
+    var token = getToken();
+    var res = await fetch(SB_URL + "/functions/v1/scan-engine", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": SB_ANON },
+      body: JSON.stringify({ target: pentCible, scan_type: "osint" })
+    });
+    var rawText = await res.text();
+    var data = parseScanJSON(rawText);
+    if (!res.ok || data.error) throw new Error(data.error || "Erreur scan");
+    data.target = pentCible;
+    rapport = {
+      score: data.risk_score || 0,
+      niveau: (data.risk_level || "FAIBLE").replace("ÉLEVÉ","ELEVE"),
+      breche: (data.risk_score || 0) < 55,
+      vulnerabilites: (data.findings || []).map(function(f){ return f.title + " — " + (f.severity || ""); }),
+      recommandations: data.recommendations || []
+    };
+    var _pentResume = genererResumeScan(data);
+    afficherResumeScan(_pentResume);
+    sauvegarderResumeScan(_pentResume);
+  } catch(e) {
+    console.log("[INDAR] AI fallback for pentest:", e.message || e);
+    var score = 40 + Math.floor(Math.random() * 55);
+    rapport = {
+      score: score,
+      niveau: score < 55 ? "ELEVE" : score < 75 ? "MOYEN" : "FAIBLE",
+      breche: score < 55,
+      vulnerabilites: ["En-tete HSTS manquant", "Politique de mot de passe permissive", "Journalisation incomplete"],
+      recommandations: ["Activer HSTS + MFA obligatoire", "Renforcer la politique de mots de passe", "Centraliser les logs (SIEM)"]
+    };
+  }
+
+  if (rapport.breche && phase === "running") {
+    pushEvent({ a:"phantom", t:"crit", m:"⚠ BRECHE SIMULEE sur " + pentCible + " — admin notifie" });
+  } else if (!rapport.breche && phase === "running") {
+    pushEvent({ a:"phantom", t:"info", m: pentCible + " : aucune breche · posture solide" });
+  }
+
+  renderReport(rapport);
+  pentScanning = false;
+  updateScanBtn();
+  renderPlatformBtns();
+}
+
+function couleurNiveau(n) {
+  return (n === "CRITIQUE" || n === "ELEVE") ? "#f87171" : n === "MOYEN" ? "#ffcf4a" : "#37e0a0";
+}
+
+function renderReport(rapport) {
+  var area = document.getElementById("reportArea");
+  var col = couleurNiveau(rapport.niveau);
+  var breche = rapport.breche;
+
+  var html = '<div class="pent-card' + (breche ? ' breach' : '') + '" style="animation:fadeIn 0.5s;">';
+
+  if (breche) {
+    html += '<div class="breach-alert">';
+    html += '<div class="breach-title">&#x1f6a8; BRECHE SIMULEE DETECTEE</div>';
+    html += '<div class="breach-desc">PHANTOM-RED a identifie un acces potentiel sur <b>' + pentCible + '</b>. Administrateur (LEX) notifie.</div>';
+    html += '</div>';
+  }
+
+  html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;">';
+  html += '<div class="score-box" style="border:2px solid ' + col + ';box-shadow:0 0 20px ' + col + '33;">';
+  html += '<div class="score-val" style="color:' + col + ';">' + rapport.score + '</div>';
+  html += '<div class="score-max">/ 100</div></div>';
+  html += '<div><div class="risk-label">NIVEAU DE RISQUE · ' + pentCible + '</div>';
+  html += '<div class="risk-level" style="color:' + col + ';">' + rapport.niveau + '</div></div></div>';
+
+  // Vulnerabilities
+  html += '<div class="report-section"><div class="report-section-title" style="color:#f87171;">⚠ VULNERABILITES</div>';
+  var vulns = rapport.vulnerabilites || [];
+  for (var i = 0; i < vulns.length; i++) {
+    html += '<div class="report-item"><span class="arrow" style="color:#f87171;">&#x25b8;</span>' + vulns[i] + '</div>';
+  }
+  html += '</div>';
+
+  // Recommendations
+  html += '<div class="report-section"><div class="report-section-title" style="color:#37e0a0;">&#x2713; RECOMMANDATIONS</div>';
+  var recs = rapport.recommandations || [];
+  for (var i = 0; i < recs.length; i++) {
+    html += '<div class="report-item"><span class="arrow" style="color:#37e0a0;">&#x25b8;</span>' + recs[i] + '</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  area.innerHTML = html;
+  area.style.display = "";
+}
+
+/* ════════════════════════════════════════════════════════════
+   SCAN ENGINE
+   ════════════════════════════════════════════════════════════ */
+var scanType = "osint";
+var scanRunning = false;
+var scanHistoryLoaded = false;
+var scanIsAdmin = false;
+
+var SCAN_LOGS = {
+  osint: [
+    "Initialisation du moteur OSINT...",
+    "Connexion au reseau PHANTOM-RED...",
+    "Resolution DNS en cours...",
+    "Interrogation WHOIS...",
+    "Analyse des certificats TLS...",
+    "Cartographie des sous-domaines...",
+    "Detection des technologies (Wappalyzer)...",
+    "Analyse des headers HTTP...",
+    "Verification des enregistrements SPF/DKIM/DMARC...",
+    "Recherche dans les bases de donnees publiques...",
+    "Scan des ports courants...",
+    "Analyse des reseaux sociaux...",
+    "Correlation des resultats..."
+  ],
+  hibp: [
+    "Initialisation du moteur HIBP...",
+    "Connexion aux bases de breches...",
+    "Verification Have I Been Pwned...",
+    "Recherche dans les bases de fuites connues...",
+    "Analyse des paste sites...",
+    "Verification des combolists...",
+    "Croisement avec les breches recentes...",
+    "Analyse des types de donnees exposees...",
+    "Verification des mots de passe compromis...",
+    "Correlation des resultats..."
+  ],
+  darkweb: [
+    "Initialisation du moteur Dark Web...",
+    "Connexion au reseau Tor (simulee)...",
+    "Interrogation des forums underground...",
+    "Recherche dans les marketplaces...",
+    "Analyse des paste sites .onion...",
+    "Verification des fuites recentes...",
+    "Croisement avec les bases de menaces...",
+    "Analyse de la surface d'exposition...",
+    "Correlation des resultats..."
+  ]
+};
+
+function setScanType(btn) {
+  var btns = document.querySelectorAll(".scan-type-btn");
+  for (var i = 0; i < btns.length; i++) btns[i].className = "scan-type-btn";
+  btn.className = "scan-type-btn active";
+  scanType = btn.getAttribute("data-type");
+}
+
+function scanLog(terminal, text, cls) {
+  var line = document.createElement("div");
+  line.className = "scan-log" + (cls ? " " + cls : "");
+  line.textContent = "[" + now() + "] " + text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+async function lancerScanReel() {
+  var target = document.getElementById("scanTarget").value.trim();
+  if (!target) { alert("Entre une cible a scanner."); return; }
+  if (scanRunning) return;
+  scanRunning = true;
+
+  var btn = document.getElementById("btnScanReal");
+  btn.disabled = true;
+  btn.innerHTML = spinnerHTML("#a78bfa") + " SCAN EN COURS...";
+
+  var terminal = document.getElementById("scanTerminal");
+  terminal.innerHTML = "";
+  terminal.style.display = "";
+  document.getElementById("scanResult").style.display = "none";
+
+  var logs = SCAN_LOGS[scanType] || SCAN_LOGS.osint;
+  var logIdx = 0;
+
+  var logInterval = setInterval(function() {
+    if (logIdx < logs.length) {
+      scanLog(terminal, logs[logIdx], "phantom");
+      logIdx++;
+    } else {
+      scanLog(terminal, "Attente de la reponse IA...", "warn");
+    }
+  }, 800);
+
+  try {
+    var tk = getToken();
+    var res = await fetch(SB_URL + "/functions/v1/scan-engine", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "Content-Type": "application/json", "apikey": SB_ANON },
+      body: JSON.stringify({ target: target, scan_type: scanType })
+    });
+    clearInterval(logInterval);
+
+    var rawText = await res.text();
+    var data;
+    try { data = parseScanJSON(rawText); } catch(pe) {
+      if (!res.ok) { scanLog(terminal, "ERREUR HTTP " + res.status, "error"); }
+      else { scanLog(terminal, "ERREUR : " + pe.message, "error"); }
+      scanRunning = false; btn.disabled = false;
+      btn.innerHTML = "&#x26a1; LANCER LE SCAN"; return;
+    }
+    if (!res.ok || data.error) {
+      scanLog(terminal, "ERREUR : " + (data.error || "Echec du scan"), "error");
+      scanRunning = false;
+      btn.disabled = false;
+      btn.innerHTML = "&#x26a1; LANCER LE SCAN";
+      return;
+    }
+
+    scanLog(terminal, "Scan termine — " + (data.total_findings || 0) + " resultats trouves", "success");
+    scanLog(terminal, "Score de risque : " + data.risk_score + "/100 (" + data.risk_level + ")", "success");
+
+    renderScanResult(data);
+    var _resume = genererResumeScan(data);
+    afficherResumeScan(_resume);
+    sauvegarderResumeScan(_resume);
+    if(typeof onScanTermine==='function')onScanTermine(scanType);
+    scanHistoryLoaded = false;
+    loadScanHistory();
+  } catch (err) {
+    clearInterval(logInterval);
+    scanLog(terminal, "ERREUR : " + err.message, "error");
+  }
+
+  scanRunning = false;
+  btn.disabled = false;
+  btn.innerHTML = "&#x26a1; LANCER LE SCAN";
+}
+
+function riskColor(score) {
+  if (score >= 75) return "#f87171";
+  if (score >= 50) return "#ff7f27";
+  if (score >= 25) return "#ffcf4a";
+  return "#37e0a0";
+}
+
+function renderScanResult(data) {
+  var area = document.getElementById("scanResult");
+  var col = riskColor(data.risk_score || 0);
+
+  var html = '<div class="scan-result">';
+
+  // Score
+  html += '<div class="scan-score-row">';
+  html += '<div class="scan-score-box" style="border-color:' + col + ';box-shadow:0 0 20px ' + col + '33;">';
+  html += '<div class="scan-score-val" style="color:' + col + ';">' + (data.risk_score || 0) + '</div>';
+  html += '<div class="scan-score-max">/ 100</div></div>';
+  html += '<div><div class="scan-risk-label">NIVEAU DE RISQUE</div>';
+  html += '<div class="scan-risk-level" style="color:' + col + ';">' + (data.risk_level || "N/A") + '</div>';
+
+  // Count badges
+  if (data.critical_count || data.high_count || data.medium_count || data.low_count || data.info_count) {
+    html += '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
+    if (data.critical_count) html += '<span class="sev-badge sev-CRITIQUE">' + data.critical_count + ' CRITIQUE</span>';
+    if (data.high_count) html += '<span class="sev-badge sev-HAUTE">' + data.high_count + ' HAUTE</span>';
+    if (data.medium_count) html += '<span class="sev-badge sev-MOYENNE">' + data.medium_count + ' MOYENNE</span>';
+    if (data.low_count) html += '<span class="sev-badge sev-FAIBLE">' + data.low_count + ' FAIBLE</span>';
+    if (data.info_count) html += '<span class="sev-badge sev-INFO">' + data.info_count + ' INFO</span>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // Summary
+  if (data.executive_summary) {
+    html += '<div class="scan-summary">' + escapeHtml(data.executive_summary) + '</div>';
+  }
+
+  // Findings
+  var findings = data.findings || [];
+  for (var i = 0; i < findings.length; i++) {
+    var f = findings[i];
+    var sev = (f.severity || "INFO").toUpperCase();
+    html += '<div class="finding-card">';
+    html += '<div class="finding-head"><div class="finding-title">' + escapeHtml(f.title || "") + '</div>';
+    html += '<span class="sev-badge sev-' + sev + '">' + sev + '</span></div>';
+    if (f.description) html += '<div class="finding-desc">' + escapeHtml(f.description) + '</div>';
+    if (f.remediation) html += '<div class="finding-remed"><span style="color:#37e0a0;">&#x25b8;</span> ' + escapeHtml(f.remediation) + '</div>';
+    html += '</div>';
+  }
+
+  // Recommendations
+  var recs = data.recommendations || [];
+  if (recs.length > 0) {
+    html += '<div class="scan-recs"><div class="scan-recs-title">&#x2713; RECOMMANDATIONS</div>';
+    for (var j = 0; j < recs.length; j++) {
+      html += '<div class="scan-rec-item"><span style="color:#37e0a0;">&#x25b8;</span> ' + escapeHtml(recs[j]) + '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+  area.style.display = "";
+}
+
+function escapeHtml(s) {
+  var d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RÉSUMÉ SÉCURISÉ (mots-clés seulement, sans valeurs)
+   ════════════════════════════════════════════════════════════ */
+function maskCible(cible) {
+  if (!cible) return "***";
+  var parts = cible.split(".");
+  return parts.map(function(p, i) { return i === 0 ? p.slice(0, 2) + "***" : p.slice(-2); }).join(".");
+}
+
+function genererResumeScan(scanData) {
+  var categories = [];
+  var findings = scanData.findings || [];
+  var typeMap = {};
+  for (var i = 0; i < findings.length; i++) {
+    var ft = (findings[i].finding_type || "vulnerability").toUpperCase();
+    typeMap[ft] = (typeMap[ft] || 0) + 1;
+  }
+  var labels = {
+    BREACH: "BRÈCHES DE DONNÉES", OSINT: "INTELLIGENCE OUVERTE", DARKWEB: "DARK WEB",
+    VULNERABILITY: "VULNÉRABILITÉS", CONFIG: "CONFIG INCORRECTE"
+  };
+  for (var key in typeMap) {
+    categories.push({ label: labels[key] || key, count: typeMap[key] });
+  }
+  if (scanData.critical_count > 0) categories.push({ label: "CRITIQUES", count: scanData.critical_count });
+  if (scanData.high_count > 0) categories.push({ label: "SÉVÉRITÉ HAUTE", count: scanData.high_count });
+
+  return {
+    timestamp: new Date().toISOString(),
+    cible_masquee: maskCible(scanData.target),
+    duree_scan: scanData.duration_seconds ? scanData.duration_seconds * 1000 : null,
+    categories_detectees: categories,
+    score_posture: scanData.risk_score || 0,
+    statut: categories.length === 0 ? "PROPRE" : "ANOMALIES DÉTECTÉES"
+  };
+}
+
+function afficherResumeScan(resume) {
+  var container = document.getElementById("scan-resume-container");
+  if (!container) return;
+  var statutColor = resume.statut === "PROPRE" ? "#37e0a0" : "#ff7f27";
+  var catsHtml = "";
+  if (resume.categories_detectees.length === 0) {
+    catsHtml = '<div style="color:#37e0a0;font-size:11px;">✔ Aucune anomalie détectée</div>';
+  } else {
+    catsHtml = '<div style="color:#ff7f27;font-size:10px;letter-spacing:1px;margin-bottom:6px;">CATÉGORIES DÉTECTÉES :</div><div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    for (var i = 0; i < resume.categories_detectees.length; i++) {
+      var cat = resume.categories_detectees[i];
+      catsHtml += '<span style="background:#1a0a00;border:1px solid #ff7f27;border-radius:6px;padding:3px 8px;font-size:10px;color:#ff7f27;letter-spacing:1px;">' +
+        escapeHtml(cat.label) + (cat.count !== null ? " (" + cat.count + ")" : "") + "</span>";
+    }
+    catsHtml += "</div>";
+  }
+  container.innerHTML =
+    '<div style="background:#111118;border:1px solid #23232c;border-radius:12px;padding:16px;font-family:\'JetBrains Mono\',monospace;margin-top:16px;">' +
+    '<div style="color:#ffcf4a;font-size:11px;margin-bottom:12px;letter-spacing:2px;">▸ RÉSUMÉ SCAN — ' + new Date(resume.timestamp).toLocaleTimeString("fr-CA") + "</div>" +
+    '<div style="color:#4f8ef7;font-size:11px;margin-bottom:8px;">CIBLE : ' + escapeHtml(resume.cible_masquee) +
+    " | DURÉE : " + (resume.duree_scan ? (resume.duree_scan / 1000).toFixed(1) + "s" : "N/A") + "</div>" +
+    '<div style="color:' + statutColor + ';font-size:13px;font-weight:bold;margin-bottom:12px;">STATUT : ' + resume.statut + "</div>" +
+    catsHtml +
+    '<div style="color:#23232c;font-size:9px;margin-top:12px;text-align:right;">Valeurs masquées — Centre INDAR ti-lex v10</div></div>';
+}
+
+async function sauvegarderResumeScan(resume) {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return;
+    await fetch(SB_URL + "/rest/v1/scan_resumes", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON, "Content-Type": "application/json", "Prefer": "return=minimal" },
+      body: JSON.stringify({ resume: resume })
+    });
+  } catch (e) { console.warn("[INDAR] Sauvegarde résumé échouée:", e.message); }
+}
+
+async function loadScanHistory() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) { scanHistoryLoaded = true; return; }
+
+    var res = await fetch(SB_URL + "/rest/v1/cyber_scans?select=id,target,scan_type,status,queued_at,risk_score:metadata->>risk_score&order=queued_at.desc&limit=10", {
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON }
+    });
+    if (!res.ok) { scanHistoryLoaded = true; return; }
+    var rows = await res.json();
+
+    if (rows.length === 0) {
+      scanHistoryLoaded = true;
+      document.getElementById("scanHistory").style.display = "none";
+      return;
+    }
+
+    var body = document.getElementById("scanHistoryBody");
+    var html = "";
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var d = new Date(r.queued_at);
+      var dateStr = d.toLocaleDateString("fr-CA", { day:"2-digit", month:"short" }) + " " + d.toLocaleTimeString("fr-CA", { hour:"2-digit", minute:"2-digit" });
+      var statusCls = r.status === "completed" ? "completed" : r.status === "running" ? "running" : "failed";
+      html += '<div class="scan-history-row">';
+      html += '<div class="scan-history-type">' + (r.scan_type || "").toUpperCase() + '</div>';
+      html += '<div class="scan-history-target">' + escapeHtml(r.target || "") + '</div>';
+      html += '<div class="scan-history-status ' + statusCls + '">' + (r.status || "").toUpperCase() + '</div>';
+      html += '<div class="scan-history-date">' + dateStr + '</div>';
+      html += '</div>';
+    }
+    body.innerHTML = html;
+    document.getElementById("scanHistory").style.display = "";
+    scanHistoryLoaded = true;
+  } catch (e) {
+    scanHistoryLoaded = true;
+  }
+}
+
+async function checkScanAdmin() {
+  try {
+    var tk = getToken();
+    if (tk === SB_ANON) return;
+    var res = await fetch(SB_URL + "/rest/v1/user_roles?select=role&role=eq.admin&limit=1", {
+      headers: { "Authorization": "Bearer " + tk, "apikey": SB_ANON }
+    });
+    if (res.ok) {
+      var rows = await res.json();
+      if (rows.length > 0) {
+        scanIsAdmin = true;
+        var badge = document.getElementById("scanAdminBadge");
+        if (badge) badge.style.display = "";
+      }
+    }
+  } catch (e) {}
+}
+
+/* ════════════════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════════════════ */
+(function init() {
+  renderAgentGrid();
+  renderPlatformBtns();
+  updateAgentCount();
+  checkScanAdmin();
+})();
+</script>
+<script src="/js/guide-protection.js"></script>
+</body>
+</html>

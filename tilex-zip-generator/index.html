@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ti-lex-AL v10 · Générateur ZIP</title>
+  <meta name="description" content="Générateur de fichiers ZIP intelligent — Produit du Québec ⚜️" />
+
+  <!-- Highlight.js (syntax highlighting) -->
+  <link rel="stylesheet" id="hljs-theme-css"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+
+  <!-- Styles locaux -->
+  <link rel="stylesheet" href="css/tilex.css" />
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     HEADER
+════════════════════════════════════════ -->
+<header class="tx-header">
+  <div class="tx-header-left">
+    <div class="tx-logo">
+      <span class="tx-logo-icon">⚡</span>
+      <span class="tx-logo-text">ti-lex-<span class="tx-accent">AL</span></span>
+      <span class="tx-logo-version">v10</span>
+    </div>
+    <span class="tx-header-subtitle">Générateur ZIP · Produit du Québec ⚜️</span>
+  </div>
+  <div class="tx-header-right">
+    <!-- Compteur live -->
+    <div class="tx-stats-badge" id="stats-badge">
+      <span id="stats-count">0 fichier</span>
+      <span class="tx-stats-sep">·</span>
+      <span id="stats-size">0 o</span>
+    </div>
+    <!-- Boutons header -->
+    <button class="tx-btn-icon" id="btn-historique" title="Historique des ZIPs">🗄️</button>
+    <button class="tx-btn-icon" id="btn-theme" title="Thème">🎨</button>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════
+     TEMPLATES DE PROJETS
+════════════════════════════════════════ -->
+<div class="tx-templates-bar">
+  <span class="tx-templates-label">Templates :</span>
+  <div class="tx-templates-btns">
+    <button class="tx-template-btn" data-template="tilex-al">
+      <span>⚡</span> ti-lex-AL
+    </button>
+    <button class="tx-template-btn" data-template="api">
+      <span>🔌</span> API Pure
+    </button>
+    <button class="tx-template-btn" data-template="landing">
+      <span>🌐</span> Landing Page
+    </button>
+    <button class="tx-template-btn" data-template="supabase">
+      <span>🗄️</span> Supabase Edge
+    </button>
+    <button class="tx-template-btn" data-template="vide">
+      <span>📄</span> Vide
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     CORPS PRINCIPAL
+════════════════════════════════════════ -->
+<main class="tx-main">
+
+  <!-- ── Panneau gauche : formulaire ── -->
+  <aside class="tx-panel-left">
+    <div class="tx-section-title">➕ Nouveau fichier</div>
+
+    <!-- Nom du fichier -->
+    <div class="tx-field">
+      <label class="tx-label" for="input-nom-fichier">Nom du fichier</label>
+      <input
+        type="text"
+        id="input-nom-fichier"
+        class="tx-input"
+        placeholder="ex: app.js, styles.css, README.md"
+        spellcheck="false"
+        autocomplete="off"
+      />
+    </div>
+
+    <!-- Contenu -->
+    <div class="tx-field">
+      <label class="tx-label" for="input-contenu">Contenu</label>
+      <textarea
+        id="input-contenu"
+        class="tx-textarea"
+        rows="14"
+        placeholder="Le contenu sera auto-rempli selon l'extension..."
+        spellcheck="false"
+      ></textarea>
+      <!-- Badge modèle auto -->
+      <div class="tx-template-badge hidden" id="badge-template">
+        <span>✨ Modèle auto ·</span>
+        <em id="badge-template-nom"></em>
+        <button class="tx-badge-reset" id="btn-reset-template">Réinitialiser</button>
+      </div>
+    </div>
+
+    <!-- Bouton ajouter -->
+    <button class="tx-btn-primary tx-btn-full" id="btn-ajouter">
+      + Ajouter le fichier
+    </button>
+
+    <!-- Séparateur -->
+    <div class="tx-divider">Options du ZIP</div>
+
+    <!-- Nom du projet -->
+    <div class="tx-field">
+      <label class="tx-label" for="input-nom-projet">📁 Nom du projet</label>
+      <input
+        type="text"
+        id="input-nom-projet"
+        class="tx-input"
+        placeholder="mon-projet"
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <div class="tx-apercu-zip" id="apercu-zip">ZIP : <em>mon-projet.zip</em></div>
+    </div>
+
+    <!-- Mot de passe optionnel -->
+    <div class="tx-field">
+      <label class="tx-label" for="input-mdp">🔒 Mot de passe (optionnel)</label>
+      <div class="tx-password-wrap">
+        <input
+          type="password"
+          id="input-mdp"
+          class="tx-input"
+          placeholder="Laisser vide = pas de protection"
+          autocomplete="new-password"
+        />
+        <button class="tx-btn-eye" id="btn-toggle-mdp" type="button">👁</button>
+      </div>
+    </div>
+
+    <!-- Option README -->
+    <label class="tx-checkbox-row">
+      <input type="checkbox" id="cb-readme" checked />
+      <span class="tx-checkbox-custom"></span>
+      <span>Générer README.md automatiquement</span>
+    </label>
+
+  </aside>
+
+  <!-- ── Panneau droit : liste des fichiers ── -->
+  <section class="tx-panel-right">
+
+    <!-- Toolbar sélection -->
+    <div class="tx-selection-toolbar hidden" id="selection-toolbar">
+      <span class="tx-sel-count" id="sel-count">0 sélectionné(s)</span>
+      <button class="tx-btn-sm" id="btn-tout-sel">☑ Tout</button>
+      <button class="tx-btn-sm" id="btn-tout-desel">☐ Aucun</button>
+      <div class="tx-sel-spacer"></div>
+      <button class="tx-btn-sm tx-btn-danger" id="btn-suppr-sel">🗑 Supprimer</button>
+      <button class="tx-btn-sm tx-btn-orange" id="btn-zip-sel">⬇ ZIP sélection</button>
+    </div>
+
+    <!-- Liste des fichiers -->
+    <div class="tx-file-list" id="file-list">
+      <!-- État vide -->
+      <div class="tx-empty" id="empty-state">
+        <div class="tx-empty-icon">📂</div>
+        <div class="tx-empty-title">Aucun fichier</div>
+        <div class="tx-empty-sub">Ajoute des fichiers ou choisis un template de projet</div>
+      </div>
+    </div>
+
+    <!-- Actions globales -->
+    <div class="tx-actions-bar" id="actions-bar">
+      <button class="tx-btn-ghost" id="btn-tout-suppr">🗑 Tout effacer</button>
+      <button class="tx-btn-ghost" id="btn-cli">⌨️ Script CLI</button>
+      <button class="tx-btn-ghost" id="btn-partager">🔗 Partager</button>
+      <button class="tx-btn-primary" id="btn-zip-all">⬇ Télécharger ZIP</button>
+    </div>
+
+  </section>
+</main>
+
+<!-- ════════════════════════════════════════
+     MODAL : PRÉVISUALISATION
+════════════════════════════════════════ -->
+<div class="tx-modal-overlay hidden" id="modal-preview">
+  <div class="tx-modal tx-modal-lg">
+    <div class="tx-modal-header">
+      <span class="tx-modal-icon" id="preview-icon">📄</span>
+      <span class="tx-modal-title" id="preview-nom">fichier.txt</span>
+      <span class="tx-badge" id="preview-badge">TXT</span>
+      <div class="tx-modal-actions">
+        <button class="tx-btn-sm" id="preview-copier">Copier</button>
+        <button class="tx-btn-sm" id="preview-dl">⬇ DL</button>
+        <button class="tx-modal-close" id="preview-fermer">✕</button>
+      </div>
+    </div>
+    <div class="tx-modal-meta">
+      <span>Taille : <strong id="preview-taille">—</strong></span>
+      <span>Lignes : <strong id="preview-lignes">—</strong></span>
+      <span>UTF-8</span>
+    </div>
+    <div class="tx-modal-body" id="preview-body"></div>
+    <div class="tx-modal-footer">
+      <span class="tx-hint"><kbd>Échap</kbd> pour fermer</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL : ANIMATION DE GÉNÉRATION
+════════════════════════════════════════ -->
+<div class="tx-modal-overlay hidden" id="modal-animation">
+  <div class="tx-modal tx-modal-sm">
+    <div class="tx-anim-header">
+      <span class="tx-anim-title">⚡ Génération du ZIP</span>
+    </div>
+    <div class="tx-anim-body">
+      <div class="tx-anim-project" id="anim-project-name">mon-projet.zip</div>
+      <div class="tx-anim-progress-wrap">
+        <div class="tx-anim-progress-bar" id="anim-progress-bar"></div>
+      </div>
+      <div class="tx-anim-current" id="anim-current-file">Initialisation...</div>
+      <div class="tx-anim-log" id="anim-log"></div>
+      <div class="tx-anim-status hidden" id="anim-done">
+        <span class="tx-anim-check">✓</span>
+        <span id="anim-done-text">ZIP créé avec succès !</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL : PARTAGE
+════════════════════════════════════════ -->
+<div class="tx-modal-overlay hidden" id="modal-partage">
+  <div class="tx-modal">
+    <div class="tx-modal-header">
+      <span class="tx-modal-title">🔗 Partager la structure</span>
+      <button class="tx-modal-close" id="partage-fermer">✕</button>
+    </div>
+    <div class="tx-modal-body tx-p20">
+      <p class="tx-desc" id="partage-desc">
+        Ce lien encode toute la structure dans l'URL.
+      </p>
+      <div class="tx-lien-wrap">
+        <input type="text" class="tx-input tx-input-mono" id="partage-lien" readonly />
+        <button class="tx-btn-sm" id="partage-copier">Copier</button>
+      </div>
+      <div class="tx-partage-stats" id="partage-stats"></div>
+      <div class="tx-alerte hidden" id="partage-alerte">
+        ⚠ Lien très long — peut ne pas fonctionner partout
+      </div>
+    </div>
+    <div class="tx-modal-footer tx-modal-footer-row">
+      <button class="tx-btn-ghost" id="partage-ouvrir">↗ Ouvrir dans onglet</button>
+      <button class="tx-btn-primary" id="partage-copier2">🔗 Copier le lien</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL : HISTORIQUE
+════════════════════════════════════════ -->
+<div class="tx-modal-overlay hidden" id="modal-historique">
+  <div class="tx-modal tx-modal-lg">
+    <div class="tx-modal-header">
+      <span class="tx-modal-title">🗄️ Historique des ZIPs</span>
+      <button class="tx-modal-close" id="historique-fermer">✕</button>
+    </div>
+    <div class="tx-modal-body tx-modal-scroll" id="historique-body">
+      <div class="tx-loading">Chargement...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL : THÈME
+════════════════════════════════════════ -->
+<div class="tx-modal-overlay hidden" id="modal-theme">
+  <div class="tx-modal">
+    <div class="tx-modal-header">
+      <span class="tx-modal-title">🎨 Thème</span>
+      <button class="tx-modal-close" id="theme-fermer">✕</button>
+    </div>
+    <div class="tx-modal-body tx-p20">
+      <!-- Thèmes prédéfinis -->
+      <div class="tx-theme-grid">
+        <button class="tx-theme-choice active" data-theme="dark">
+          <div class="tx-theme-preview tx-theme-dark-preview"></div>
+          <span>Cyberpunk</span>
+        </button>
+        <button class="tx-theme-choice" data-theme="light">
+          <div class="tx-theme-preview tx-theme-light-preview"></div>
+          <span>Lumière</span>
+        </button>
+        <button class="tx-theme-choice" data-theme="monokai">
+          <div class="tx-theme-preview tx-theme-monokai-preview"></div>
+          <span>Monokai</span>
+        </button>
+        <button class="tx-theme-choice" data-theme="custom">
+          <div class="tx-theme-preview tx-theme-custom-preview" id="custom-preview-swatch"></div>
+          <span>Custom</span>
+        </button>
+      </div>
+
+      <!-- Couleurs custom -->
+      <div class="tx-custom-colors" id="custom-colors">
+        <div class="tx-color-row">
+          <label>Accent</label>
+          <input type="color" id="color-accent" value="#ff7f27" />
+          <span id="color-accent-val">#ff7f27</span>
+        </div>
+        <div class="tx-color-row">
+          <label>Fond</label>
+          <input type="color" id="color-bg" value="#0a0a0a" />
+          <span id="color-bg-val">#0a0a0a</span>
+        </div>
+        <div class="tx-color-row">
+          <label>Surface</label>
+          <input type="color" id="color-surface" value="#111118" />
+          <span id="color-surface-val">#111118</span>
+        </div>
+        <div class="tx-color-row">
+          <label>Texte</label>
+          <input type="color" id="color-text" value="#e8e8f0" />
+          <span id="color-text-val">#e8e8f0</span>
+        </div>
+        <button class="tx-btn-primary tx-mt10" id="btn-appliquer-theme">Appliquer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast global -->
+<div class="tx-toast hidden" id="tx-toast"></div>
+
+<!-- ════════════════════════════════════════
+     SCRIPTS CDN (ordre obligatoire)
+════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- ════════════════════════════════════════
+     SCRIPTS LOCAUX (ordre obligatoire)
+════════════════════════════════════════ -->
+<script src="js/tilex-templates.js"></script>
+<script src="js/tilex-core.js"></script>
+<script src="js/tilex-preview.js"></script>
+<script src="js/tilex-zip.js"></script>
+<script src="js/tilex-share.js"></script>
+<script src="js/tilex-history.js"></script>
+<script src="js/tilex-theme.js"></script>
+
+</body>
+</html>

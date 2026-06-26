@@ -1,0 +1,210 @@
+/* ================================================
+   FICHIERS-PARTAGE.CSS — ti-lex v10
+   Modal de partage de structure via lien URL
+   ================================================ */
+
+.partage-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 10001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.partage-overlay.ouvert { opacity: 1; }
+
+.partage-modal {
+  background: var(--bg2, #111118);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 560px;
+  font-family: var(--font-tilex);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6),
+              0 0 0 1px rgba(212,175,55,0.1);
+  transform: translateY(8px);
+  transition: transform 0.18s ease;
+}
+
+.partage-overlay.ouvert .partage-modal {
+  transform: translateY(0);
+}
+
+.partage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.partage-titre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--txt);
+}
+
+.partage-btn-fermer {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.13s;
+}
+.partage-btn-fermer:hover { color: #e05555; }
+
+.partage-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.partage-description {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.partage-description strong { color: var(--txt); }
+
+.partage-alerte {
+  background: rgba(255, 207, 74, 0.07);
+  border: 1px solid rgba(255, 207, 74, 0.25);
+  border-radius: var(--radius, 6px);
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--or, #ff7f27);
+  line-height: 1.5;
+}
+
+.partage-lien-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.partage-lien-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.partage-lien-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+
+.partage-lien-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 6px);
+  color: var(--orange);
+  font-family: var(--font-tilex);
+  font-size: 11px;
+  padding: 8px 12px;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.partage-lien-input:focus {
+  border-color: var(--orange);
+}
+
+.partage-btn-copier {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius, 6px);
+  color: var(--muted);
+  font-family: var(--font-tilex);
+  font-size: 11px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.13s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.partage-btn-copier:hover {
+  color: var(--txt);
+  border-color: var(--orange);
+}
+
+.partage-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.partage-stats span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.partage-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.partage-banniere-import {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(55, 224, 160, 0.07);
+  border: 1px solid rgba(55, 224, 160, 0.25);
+  border-radius: var(--radius, 6px);
+  margin-bottom: 12px;
+  font-family: var(--font-tilex);
+  font-size: 12px;
+  color: var(--green, #37e0a0);
+  transition: opacity 0.3s;
+}
+
+.banniere-icone { font-size: 18px; flex-shrink: 0; }
+
+.banniere-texte {
+  flex: 1;
+  line-height: 1.5;
+}
+
+.banniere-texte strong { color: var(--txt); }
+.banniere-texte em     { font-style: normal; color: var(--orange); }
+.banniere-date         { color: var(--muted); font-size: 11px; }
+
+.banniere-fermer {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+.banniere-fermer:hover { color: #e05555; }
+
+@media (max-width: 520px) {
+  .partage-overlay { padding: 0; }
+  .partage-modal   { border-radius: 0; max-width: 100%; }
+  .partage-footer  { flex-direction: column; }
+  .partage-footer .btn-ghost,
+  .partage-footer .btn-orange { width: 100%; text-align: center; }
+}

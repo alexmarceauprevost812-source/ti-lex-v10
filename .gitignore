@@ -34,6 +34,13 @@ Thumbs.db
 .idea/
 *.swp
 
+# Codex
+codex-instructions/
+
+# Clés / certificats
+*.key
+*.pem
+
 # Divers
 .vercel
 .turbo

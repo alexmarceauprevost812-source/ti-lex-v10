@@ -1,12 +1,16 @@
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
+import { corsHeaders, handlePreflight } from "../_shared/cors.ts";
+
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
-};
-
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const preflight = handlePreflight(req);
+  if (preflight) return preflight;
+
+  const cors = corsHeaders(req);
+
+  const rl = await checkRateLimit(getIdentifier(req), { prefix: "test-key", max: 5, windowSec: 60 });
+  if (!rl.allowed) return tooManyRequests(rl, cors);
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -33,13 +37,13 @@ Deno.serve(async (req) => {
           status: res.status,
           key_present: !!ANTHROPIC_KEY,
         }),
-        { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
+        { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
 
     return new Response(
       JSON.stringify({ ok: true, id: data.id }),
-      { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
+      { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
     );
   } catch (e: any) {
     return new Response(
@@ -48,7 +52,7 @@ Deno.serve(async (req) => {
         error: e.message,
         key_present: !!ANTHROPIC_KEY,
       }),
-      { status: 200, headers: { ...CORS, "Content-Type": "application/json" } },
+      { status: 200, headers: { ...cors, "Content-Type": "application/json" } },
     );
   }
 });

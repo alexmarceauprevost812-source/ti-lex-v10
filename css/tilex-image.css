@@ -1,0 +1,96 @@
+/* ============================================================
+   ti-lex-AL v10 — css/tilex-image.css
+   Habillage du moteur de génération d'image.
+   Couleurs neutres + accent rouge ti-lex. S'adapte au sombre.
+   ============================================================ */
+
+.tilex-img-zone {
+  --ti-rouge: #c0392b;
+  --ti-bg:    #ffffff;
+  --ti-bord:  #d9d9d9;
+  --ti-txt:   #1d2330;
+  --ti-sous:  #5a6478;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ti-txt);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tilex-img-zone {
+    --ti-bg:   #1a1d24;
+    --ti-bord: #353a45;
+    --ti-txt:  #e7eaf2;
+    --ti-sous: #a3acc0;
+  }
+}
+
+.tilex-img-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tilex-img-form textarea,
+.tilex-img-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ti-bord);
+  border-radius: 8px;
+  background: var(--ti-bg);
+  color: var(--ti-txt);
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.tilex-img-form textarea { min-height: 72px; resize: vertical; }
+
+.tilex-img-options { display: flex; gap: 10px; }
+.tilex-img-options select { flex: 1; }
+
+.tilex-img-form button#tilex-img-go {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ti-rouge);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tilex-img-form button#tilex-img-go:hover { filter: brightness(1.05); }
+
+/* ----------  États  ---------- */
+.tilex-img-chargement,
+.tilex-img-erreur {
+  padding: 24px;
+  text-align: center;
+  border: 1px dashed var(--ti-bord);
+  border-radius: 12px;
+  color: var(--ti-sous);
+}
+.tilex-img-erreur { color: var(--ti-rouge); border-color: var(--ti-rouge); }
+
+/* ----------  Rendu  ---------- */
+.tilex-img-figure { margin: 0; }
+.tilex-img-rendu {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+.tilex-img-prompt {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--ti-sous);
+  line-height: 1.5;
+}
+.tilex-img-dl {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--ti-bord);
+  border-radius: 8px;
+  background: var(--ti-bg);
+  color: var(--ti-txt);
+  font-size: 14px;
+  cursor: pointer;
+}
+.tilex-img-dl:hover { border-color: var(--ti-rouge); color: var(--ti-rouge); }

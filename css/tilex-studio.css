@@ -1,0 +1,302 @@
+/* ══════════════════════════════════════════════════
+   ti-lex Studio — Panneau split-view code + preview
+   Produit du Québec ⚜️
+   ══════════════════════════════════════════════════ */
+
+/* ─── Variables Studio ─── */
+:root{
+  --studio-w:50%;
+  --studio-min:360px;
+}
+
+/* ─── Bouton ⚡ Studio dans le header ─── */
+.studio-hdr-btn{
+  display:flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;
+  font-size:11px;letter-spacing:1px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  transition:all .25s;
+}
+.studio-hdr-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.08);}
+.studio-hdr-btn.active{border-color:var(--orange);color:#000;background:var(--orange);}
+.studio-hdr-btn .shb-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--orange);
+  display:none;animation:pulse .8s infinite;
+}
+.studio-hdr-btn.has-code .shb-dot{display:inline-block;}
+
+/* ─── Panneau principal ─── */
+.studio-panel{
+  position:fixed;top:var(--tb);right:0;bottom:0;
+  width:var(--studio-w);min-width:var(--studio-min);
+  background:var(--bg);border-left:1.5px solid var(--border);
+  z-index:310;transform:translateX(100%);
+  transition:transform .32s cubic-bezier(.22,1,.36,1);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+body.studio-open .studio-panel{transform:translateX(0);}
+
+/* ─── Le chat et le composer se réduisent quand Studio est ouvert ─── */
+body.studio-open .content{margin-right:var(--studio-w);}
+body.studio-open .composer-bar{right:var(--studio-w);}
+
+/* ─── Mobile : Studio en plein écran (overlay) ─── */
+@media(max-width:900px){
+  :root{--studio-w:100vw;--studio-min:100vw;}
+  body.studio-open .content{margin-right:0;}
+  body.studio-open .composer-bar{right:0;}
+}
+
+/* ─── Poignée de redimensionnement ─── */
+.studio-resize{
+  position:absolute;left:-4px;top:0;bottom:0;width:8px;
+  cursor:col-resize;z-index:5;
+}
+.studio-resize:hover,
+.studio-resize.dragging{background:var(--orange);opacity:.25;border-radius:4px;}
+
+/* ─── En-tête du Studio ─── */
+.studio-header{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;
+}
+.studio-title{
+  font-size:13px;letter-spacing:2px;font-weight:800;color:var(--orange);flex:1;
+}
+.studio-hd-btn{
+  width:30px;height:30px;border-radius:6px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  transition:all .15s;
+}
+.studio-hd-btn:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,127,39,.08);}
+
+/* ─── Onglets : Code / Preview / Fichiers ─── */
+.studio-tabs{
+  display:flex;gap:0;border-bottom:1px solid var(--border);
+  background:var(--bg2);flex-shrink:0;
+}
+.studio-tab{
+  flex:1;padding:9px 0;text-align:center;font-size:11px;letter-spacing:1.2px;font-weight:700;
+  color:var(--muted);cursor:pointer;border:none;
+  border-bottom:2.5px solid transparent;transition:all .15s;background:transparent;
+}
+.studio-tab:hover{color:var(--txt);background:rgba(255,255,255,.02);}
+.studio-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+
+/* ─── Panneaux de contenu ─── */
+.studio-content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+.studio-pane{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0;}
+.studio-pane.active{display:flex;}
+
+/* ─── Barre de langage ─── */
+.studio-lang-bar{
+  display:flex;align-items:center;gap:8px;padding:6px 14px;
+  border-bottom:1px solid rgba(255,255,255,.04);background:var(--bg2);flex-shrink:0;
+}
+.studio-lang-sel{
+  background:var(--bg3);color:var(--txt);border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;outline:none;
+  font-family:var(--font-tilex)!important;
+}
+.studio-lang-sel:focus{border-color:var(--orange);}
+.studio-lang-lbl{font-size:10px;color:var(--muted);letter-spacing:.8px;font-weight:600;}
+.studio-char-ct{font-size:10px;color:var(--muted);margin-left:auto;font-family:var(--font-mono)!important;}
+
+/* ─── Éditeur de code ─── */
+.studio-editor-wrap{
+  flex:1;overflow:hidden;position:relative;min-height:0;
+  display:flex;flex-direction:column;
+}
+
+/* Zone d'édition : textarea pour la saisie */
+.studio-editor{
+  width:100%;flex:1;padding:14px;
+  font-family:var(--font-mono)!important;font-size:13px;line-height:1.65;
+  color:var(--txt);background:var(--bg);border:none;outline:none;
+  resize:none;tab-size:2;white-space:pre;overflow:auto;
+}
+.studio-editor::placeholder{color:var(--muted);opacity:.4;}
+
+/* Coloration Prism.js — surcharge thème sombre */
+.studio-highlight-wrap{
+  flex:1;overflow:auto;position:relative;min-height:0;
+}
+.studio-highlight-wrap pre[class*="language-"]{
+  margin:0;padding:14px;background:var(--bg)!important;
+  font-size:13px;line-height:1.65;border-radius:0;
+  min-height:100%;
+}
+.studio-highlight-wrap code[class*="language-"]{
+  font-family:var(--font-mono)!important;
+  text-shadow:none!important;
+}
+
+/* Mode d'affichage : édition, highlight ou image */
+.studio-editor-wrap.mode-edit .studio-editor{display:block;}
+.studio-editor-wrap.mode-edit .studio-highlight-wrap{display:none;}
+.studio-editor-wrap.mode-edit .studio-img-preview{display:none;}
+.studio-editor-wrap.mode-view .studio-editor{display:none;}
+.studio-editor-wrap.mode-view .studio-highlight-wrap{display:flex;}
+.studio-editor-wrap.mode-view .studio-img-preview{display:none;}
+.studio-editor-wrap.mode-image .studio-editor{display:none;}
+.studio-editor-wrap.mode-image .studio-highlight-wrap{display:none;}
+.studio-editor-wrap.mode-image .studio-img-preview{display:flex;}
+
+/* ─── Barre d'actions ─── */
+.studio-actions{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;
+  border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0;
+}
+.studio-btn{
+  padding:7px 16px;border-radius:8px;font-size:11px;letter-spacing:.5px;font-weight:700;
+  cursor:pointer;transition:all .18s;border:1px solid var(--border);
+  background:transparent;color:var(--txt);display:flex;align-items:center;gap:6px;
+}
+.studio-btn:hover{border-color:var(--orange);color:var(--orange);}
+.studio-btn.primary{
+  background:linear-gradient(135deg,#ff6a00,#ff8c2a);color:#000;
+  border-color:transparent;font-weight:800;
+}
+.studio-btn.primary:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,106,0,.3);}
+.studio-btn .studio-btn-ico{font-size:13px;}
+
+/* ─── Preview (iframe) ─── */
+.studio-preview-wrap{flex:1;overflow:hidden;position:relative;min-height:0;background:#fff;}
+.studio-preview-frame{width:100%;height:100%;border:none;background:#fff;}
+.studio-preview-bar{
+  display:flex;align-items:center;gap:8px;padding:7px 14px;
+  border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;
+}
+.studio-preview-url{
+  flex:1;padding:5px 12px;border-radius:6px;background:var(--bg3);
+  border:1px solid var(--border);color:var(--muted);font-size:11px;
+  font-family:var(--font-mono)!important;
+}
+
+/* ─── Liste de fichiers ─── */
+.studio-files{flex:1;overflow-y:auto;padding:10px;}
+.studio-file{
+  display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;
+  cursor:pointer;transition:all .12s;border:1px solid transparent;
+}
+.studio-file:hover{background:rgba(255,127,39,.06);border-color:rgba(255,127,39,.15);}
+.studio-file.active{background:rgba(255,127,39,.1);border-color:var(--orange);}
+.studio-file-ico{font-size:15px;width:22px;text-align:center;}
+.studio-file-name{font-size:12px;color:var(--txt);flex:1;font-weight:500;}
+.studio-file-ext{
+  font-size:9px;color:var(--muted);letter-spacing:.8px;
+  text-transform:uppercase;font-weight:600;padding:2px 6px;
+  border-radius:4px;background:var(--bg3);
+}
+.studio-file-del{
+  width:22px;height:22px;border-radius:4px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;font-size:12px;opacity:0;transition:opacity .15s;
+  display:flex;align-items:center;justify-content:center;
+}
+.studio-file:hover .studio-file-del{opacity:1;}
+.studio-file-del:hover{color:#ff4444;background:rgba(255,0,0,.1);}
+.studio-files-vide{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px;line-height:1.6;}
+.studio-file-ajout{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px;margin:10px;border-radius:8px;border:1.5px dashed var(--border);
+  color:var(--muted);cursor:pointer;font-size:11px;font-weight:600;
+  transition:all .15s;background:transparent;letter-spacing:.5px;
+}
+.studio-file-ajout:hover{border-color:var(--orange);color:var(--orange);}
+
+/* ─── Miniature image dans la liste de fichiers ─── */
+.studio-file-thumb{
+  width:36px;height:36px;border-radius:5px;object-fit:cover;
+  border:1px solid var(--border);flex-shrink:0;
+}
+.studio-file.img-file{padding:6px 12px;}
+.studio-file.img-file .studio-file-name{font-size:11px;}
+.studio-file-size{font-size:9px;color:var(--muted);margin-left:4px;}
+
+/* ─── Preview d'image dans la zone éditeur ─── */
+.studio-img-preview{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;overflow:auto;gap:12px;min-height:0;background:var(--bg);
+}
+.studio-img-preview img{
+  max-width:100%;max-height:calc(100% - 40px);object-fit:contain;
+  border-radius:8px;border:1px solid var(--border);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.studio-img-preview .sip-info{
+  font-size:10px;color:var(--muted);text-align:center;line-height:1.5;
+}
+
+/* ─── Zone de drag & drop ─── */
+.studio-dropzone{
+  position:absolute;inset:0;z-index:20;
+  background:rgba(255,127,39,.08);border:2.5px dashed var(--orange);
+  display:none;align-items:center;justify-content:center;
+  border-radius:0;
+}
+.studio-dropzone.active{display:flex;}
+.studio-dropzone-inner{
+  text-align:center;color:var(--orange);pointer-events:none;
+}
+.studio-dropzone-inner .sdz-ico{font-size:42px;display:block;margin-bottom:8px;}
+.studio-dropzone-inner .sdz-txt{font-size:13px;font-weight:700;letter-spacing:.5px;}
+.studio-dropzone-inner .sdz-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* ─── Bouton ajouter image ─── */
+.studio-file-img-add{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px;margin:4px 10px 10px;border-radius:8px;border:1.5px dashed rgba(76,175,80,.3);
+  color:rgba(76,175,80,.7);cursor:pointer;font-size:11px;font-weight:600;
+  transition:all .15s;background:transparent;letter-spacing:.5px;
+}
+.studio-file-img-add:hover{border-color:#4caf50;color:#4caf50;}
+
+/* ─── Bouton "→ Studio" sur les blocs de code du chat ─── */
+.studio-inject-btn{
+  position:absolute;top:5px;right:5px;padding:3px 10px;border-radius:5px;
+  font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;z-index:2;
+  background:rgba(255,127,39,.15);color:var(--orange);
+  border:1px solid rgba(255,127,39,.3);transition:all .15s;
+}
+.studio-inject-btn:hover{background:var(--orange);color:#000;}
+
+/* ─── Thème jour ─── */
+[data-theme="day"] .studio-panel{background:#f5f0e8;border-left-color:#d4c9b0;}
+[data-theme="day"] .studio-header,[data-theme="day"] .studio-tabs,
+[data-theme="day"] .studio-actions,[data-theme="day"] .studio-lang-bar,
+[data-theme="day"] .studio-preview-bar{background:#ede6d8;}
+[data-theme="day"] .studio-editor{background:#f5f0e8;color:#1a1a1a;}
+[data-theme="day"] .studio-hdr-btn{background:#ede6d8;border-color:#d4c9b0;}
+[data-theme="day"] .studio-tab:hover{background:rgba(0,0,0,.03);}
+[data-theme="day"] .studio-highlight-wrap pre[class*="language-"]{background:#f5f0e8!important;}
+
+/* ─── Panneau Erreurs Gardien ─── */
+.studio-erreurs-panel{
+  position:absolute;bottom:0;left:0;right:0;z-index:15;
+  max-height:40%;overflow-y:auto;padding:10px 14px;
+  border-top:2px solid var(--border);
+  background:var(--bg2);
+  animation:seSlide .25s ease-out;
+}
+.studio-erreurs-panel.ok{border-top-color:#4caf50;}
+.studio-erreurs-panel.erreur{border-top-color:#ff4444;}
+.se-header{font-size:12px;font-weight:800;letter-spacing:.8px;padding:4px 0 8px;text-transform:uppercase;}
+.se-header.ok{color:#4caf50;}
+.se-header.erreur{color:#ff4444;}
+.se-ligne{display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:11px;flex-wrap:wrap;}
+.se-badge{
+  padding:1px 6px;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:.5px;
+  flex-shrink:0;
+}
+.se-badge.critique{background:#ff4444;color:#fff;}
+.se-badge.erreur{background:#ff8800;color:#000;}
+.se-badge.avertissement{background:#ffc107;color:#000;}
+.se-msg{color:var(--txt);flex:1;}
+.se-extrait{
+  display:block;width:100%;margin-top:2px;padding:3px 8px;border-radius:4px;
+  background:rgba(0,0,0,.2);color:var(--muted);font-size:10px;
+  font-family:var(--font-mono)!important;word-break:break-all;
+}
+@keyframes seSlide{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+[data-theme="day"] .studio-erreurs-panel{background:#ede6d8;}
+[data-theme="day"] .se-extrait{background:rgba(0,0,0,.06);}

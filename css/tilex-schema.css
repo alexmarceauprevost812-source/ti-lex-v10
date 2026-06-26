@@ -1,0 +1,79 @@
+/* ============================================================
+   ti-lex-AL v10 — css/tilex-schema.css
+   Thème du moteur de schéma. 3 couleurs principales :
+     • Couleur 1 : Bleu   (primaire)
+     • Couleur 2 : Or      (accent chaud)
+     • Couleur 3 : Violet  (tertiaire)
+   + un neutre pour les boîtes de structure.
+   Deux thèmes : JOUR (clair) et NUIT (sombre).
+   ============================================================ */
+
+/* ----------  JOUR : valeurs par défaut  ---------- */
+.tilex-schema {
+  --tc-txt:      #1d2330;   /* texte titre */
+  --tc-sous:     #5a6478;   /* texte sous-titre */
+  --tc-arr:      #8a93a6;   /* flèches */
+
+  --tc1-bg:  #dceaf9;  --tc1-bord: #2d6bb5;  --tc1-txt: #163a63;  /* bleu */
+  --tc2-bg:  #f7eccf;  --tc2-bord: #c9911f;  --tc2-txt: #6e4e08;  /* or   */
+  --tc3-bg:  #e7e0f7;  --tc3-bord: #6d4fb8;  --tc3-txt: #3b2a6b;  /* violet */
+
+  --tcn-bg:  #f1f0ec;  --tcn-bord: #b8bdc7;  --tcn-txt: #2d3340;  /* neutre */
+
+  width: 100%;
+  display: block;
+}
+
+/* ----------  NUIT : via le système OU l'attribut  ---------- */
+@media (prefers-color-scheme: dark) {
+  .tilex-schema:not([data-tilex-theme="jour"]) {
+    --tc-txt:  #e7eaf2;
+    --tc-sous: #a3acc0;
+    --tc-arr:  #6f7891;
+
+    --tc1-bg:  #16314f;  --tc1-bord: #5b9be0;  --tc1-txt: #bcd8f6;
+    --tc2-bg:  #3e3413;  --tc2-bord: #e8b84b;  --tc2-txt: #f3dca0;
+    --tc3-bg:  #2c2350;  --tc3-bord: #9b82e0;  --tc3-txt: #d8ccf6;
+
+    --tcn-bg:  #232733;  --tcn-bord: #444b5c;  --tcn-txt: #d3d8e2;
+  }
+}
+
+/* ----------  NUIT forcée (data-tilex-theme="nuit")  ---------- */
+.tilex-schema[data-tilex-theme="nuit"] {
+  --tc-txt:  #e7eaf2;
+  --tc-sous: #a3acc0;
+  --tc-arr:  #6f7891;
+
+  --tc1-bg:  #16314f;  --tc1-bord: #5b9be0;  --tc1-txt: #bcd8f6;
+  --tc2-bg:  #3e3413;  --tc2-bord: #e8b84b;  --tc2-txt: #f3dca0;
+  --tc3-bg:  #2c2350;  --tc3-bord: #9b82e0;  --tc3-txt: #d8ccf6;
+
+  --tcn-bg:  #232733;  --tcn-bord: #444b5c;  --tcn-txt: #d3d8e2;
+}
+
+/* ----------  SVG : structure  ---------- */
+.tilex-schema-svg { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+.tilex-noeud-rect   { stroke-width: 1; }
+.tilex-noeud-titre  { font-size: 14px; font-weight: 600; fill: var(--tc-txt); }
+.tilex-noeud-sous   { font-size: 12px; font-weight: 400; fill: var(--tc-sous); }
+
+.tilex-arr      { stroke: var(--tc-arr); stroke-width: 1.5; }
+.tilex-arr-tete { stroke: var(--tc-arr); }
+
+/* ----------  Couleur 1 — Bleu  ---------- */
+.tilex-c1 .tilex-noeud-rect  { fill: var(--tc1-bg); stroke: var(--tc1-bord); }
+.tilex-c1 .tilex-noeud-titre { fill: var(--tc1-txt); }
+
+/* ----------  Couleur 2 — Or  ---------- */
+.tilex-c2 .tilex-noeud-rect  { fill: var(--tc2-bg); stroke: var(--tc2-bord); }
+.tilex-c2 .tilex-noeud-titre { fill: var(--tc2-txt); }
+
+/* ----------  Couleur 3 — Violet  ---------- */
+.tilex-c3 .tilex-noeud-rect  { fill: var(--tc3-bg); stroke: var(--tc3-bord); }
+.tilex-c3 .tilex-noeud-titre { fill: var(--tc3-txt); }
+
+/* ----------  Neutre — structure  ---------- */
+.tilex-neutre .tilex-noeud-rect  { fill: var(--tcn-bg); stroke: var(--tcn-bord); }
+.tilex-neutre .tilex-noeud-titre { fill: var(--tcn-txt); }

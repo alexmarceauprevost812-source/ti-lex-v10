@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SILEX 🔰 — Démo Rapport Sécurisé</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a; --panel:#0d0d14; --panel2:#111118; --border:#23232c;
+    --orange:#ff7f27; --green:#37e0a0; --gold:#E6A400; --red:#E60000;
+    --blue:#4a9eff; --violet:#C700E6; --muted:#4a4a5a; --txt:#e8e8ee;
+    --font:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:var(--font);padding:20px;line-height:1.5;min-height:100vh}
+  .wrap{max-width:780px;margin:0 auto}
+
+  .head{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--green),#1a8f63);
+    display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 18px #37e0a033}
+  h1{font-size:18px;letter-spacing:1px}
+  h1 .v{color:var(--green)}
+  .sub{font-size:11px;color:var(--muted);margin:0 0 22px 60px}
+
+  .toggle-bar{display:flex;gap:8px;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:6px;margin-bottom:16px}
+  .toggle-bar button{flex:1;padding:10px;border:none;border-radius:7px;cursor:pointer;
+    font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.5px;
+    background:transparent;color:var(--muted);transition:all .25s}
+  .toggle-bar button.active.secure{background:var(--green);color:#04130d}
+  .toggle-bar button.active.raw{background:var(--red);color:#fff}
+  .toggle-bar button.active.calib{background:var(--orange);color:#0a0a0a}
+
+  .explain{font-size:11px;padding:11px 14px;border-radius:8px;margin-bottom:18px;border:1px solid;line-height:1.6}
+  .explain.secure{border-color:var(--green);background:#04130d;color:var(--green)}
+  .explain.raw{border-color:var(--red);background:#160202;color:#ff8a8a}
+  .explain.calib{border-color:var(--orange);background:#1a0a00;color:var(--orange)}
+
+  .scan-btn{width:100%;padding:14px;border:1px solid var(--green);border-radius:10px;
+    background:#04130d;color:var(--green);font-family:var(--font);font-size:13px;font-weight:700;
+    letter-spacing:2px;cursor:pointer;margin-bottom:20px;transition:all .2s}
+  .scan-btn:hover{background:var(--green);color:#0a0a0a;box-shadow:0 0 18px #37e0a044}
+  .scan-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .report{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:22px;margin-bottom:18px;animation:fade .4s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .r-banner{text-align:center;border:1px solid var(--green);border-radius:10px;padding:12px;
+    margin-bottom:18px;font-size:13px;letter-spacing:2px;font-weight:700;color:var(--green);background:#04130d}
+
+  .meta-row{font-size:11px;color:var(--blue);margin-bottom:16px;line-height:1.9;
+    padding-bottom:14px;border-bottom:1px solid var(--border)}
+  .masked{background:#1a1a24;border:1px dashed var(--muted);border-radius:4px;padding:1px 7px;color:var(--muted);letter-spacing:1px}
+  .revealed{background:#160202;border:1px solid var(--red);border-radius:4px;padding:1px 7px;color:#ff8a8a;text-decoration:line-through}
+
+  .verdict{font-size:15px;font-weight:700;margin-bottom:6px}
+  .verdict-sub{font-size:10px;color:var(--muted);margin-bottom:16px}
+
+  .sev{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-bottom:18px;font-weight:700}
+  .sev span{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .sev .n{font-size:20px}
+  .sev .l{font-size:8px;color:var(--muted);letter-spacing:1px}
+
+  .label{font-size:9px;color:var(--muted);letter-spacing:1.5px;margin:16px 0 8px}
+  .badges{display:flex;flex-wrap:wrap;gap:6px}
+  .b{border-radius:6px;padding:4px 10px;font-size:10px;letter-spacing:.5px;border:1px solid}
+  .b-cat{color:var(--orange);border-color:var(--orange);background:#1a0a00}
+  .b-tech{color:var(--blue);border-color:var(--blue);background:#0a1320}
+  .b-ok{color:var(--green);border-color:var(--green);background:#04130d}
+
+  .finding{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--panel2)}
+  .f-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .f-sev{font-size:9px;padding:3px 9px;border-radius:5px;font-weight:700;letter-spacing:1px}
+  .f-sev.high{color:var(--orange);background:#1a0a00;border:1px solid var(--orange)}
+  .f-sev.med{color:var(--gold);background:#1a1500;border:1px solid var(--gold)}
+  .f-title{font-size:12px;font-weight:700}
+  .f-desc{font-size:10px;color:#b8b8c4;line-height:1.6}
+
+  .loi25{margin-top:16px;padding:12px 14px;border-radius:8px;font-size:10px;line-height:1.7}
+  .loi25.good{background:#04130d;border:1px solid var(--green);color:var(--green)}
+  .loi25.bad{background:#160202;border:1px solid var(--red);color:#ff8a8a}
+
+  .calib-row{display:flex;gap:10px;margin-bottom:8px;align-items:stretch}
+  .calib-col{flex:1;border-radius:8px;padding:10px;font-size:10px;line-height:1.6}
+  .calib-bad{background:#160202;border:1px solid var(--red)}
+  .calib-bad .t{color:var(--red);font-weight:700;font-size:9px;letter-spacing:1px;margin-bottom:5px}
+  .calib-bad .x{color:#ff8a8a;text-decoration:line-through}
+  .calib-good{background:#04130d;border:1px solid var(--green)}
+  .calib-good .t{color:var(--green);font-weight:700;font-size:9px;letter-spacing:1px;margin-bottom:5px}
+  .calib-good .v{color:var(--green)}
+
+  .r-foot{margin-top:18px;font-size:9px;color:#3a3a48;text-align:right}
+  .scanning{text-align:center;padding:30px;color:var(--green);font-size:12px;letter-spacing:2px;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="logo">🔰</div>
+    <div><h1>SILEX <span class="v">🔰</span></h1></div>
+  </div>
+  <div class="sub">Démo · Rapport sécurisé — cible et valeurs masquées en xxxxx · Produit du Québec ⚜️</div>
+
+  <div class="toggle-bar">
+    <button id="b-secure" class="active secure" onclick="setMode('secure')">🔒 SÉCURISÉ (xxxxx)</button>
+    <button id="b-raw" class="raw" onclick="setMode('raw')">⚠️ CE QU'ON CACHE</button>
+    <button id="b-calib" class="calib" onclick="setMode('calib')">⚖️ CALIBRATION LOI 25</button>
+  </div>
+
+  <div id="explain" class="explain secure">
+    🔒 <b>Mode sécurisé.</b> La cible et toutes les valeurs sensibles sont remplacées par des <b>xxxxx</b>. Seuls les mots-clés, sévérités et findings techniques restent lisibles. Sécuritaire à partager.
+  </div>
+
+  <button id="scanBtn" class="scan-btn" onclick="lancerScan()">⚡ LANCER LE SCAN SILEX (DÉMO)</button>
+  <div id="output"></div>
+
+</div>
+
+<script>
+  let mode='secure', scanLance=false;
+
+  function setMode(m){
+    mode=m;
+    ['secure','raw','calib'].forEach(x=>document.getElementById('b-'+x).classList.toggle('active', x===m));
+    const ex=document.getElementById('explain');
+    if(m==='secure'){
+      ex.className='explain secure';
+      ex.innerHTML='🔒 <b>Mode sécurisé.</b> La cible et toutes les valeurs sensibles sont remplacées par des <b>xxxxx</b>. Seuls les mots-clés, sévérités et findings techniques restent lisibles. Sécuritaire à partager.';
+    } else if(m==='raw'){
+      ex.className='explain raw';
+      ex.innerHTML='⚠️ <b>Ce qu\'on cache (démo).</b> Voici ce que SILEX <b>NE montre PAS</b>. La cible réelle est barrée en rouge — dans la vraie interface elle reste en xxxxx. Même cette démo masque tes vraies valeurs.';
+    } else {
+      ex.className='explain calib';
+      ex.innerHTML='⚖️ <b>Calibration Loi 25.</b> SILEX disait « NON CONFORME / 25 M$ / exfiltration silencieuse » — c\'est alarmiste et faux (RLS protège tes données). Voici la version corrigée, factuelle.';
+    }
+    if(scanLance) render();
+  }
+
+  function lancerScan(){
+    const btn=document.getElementById('scanBtn'), out=document.getElementById('output');
+    btn.disabled=true;
+    out.innerHTML='<div class="scanning">▸ SCAN SILEX EN COURS...</div>';
+    const etapes=['▸ RECONNAISSANCE PASSIVE...','▸ ANALYSE DES HEADERS...','▸ TEST RATE LIMITING...','▸ VÉRIFICATION CORS...','▸ MASQUAGE xxxxx...'];
+    let i=0; const sc=document.querySelector('.scanning');
+    const it=setInterval(()=>{
+      if(sc) sc.textContent=etapes[i]||'▸ FINALISATION...'; i++;
+      if(i>etapes.length){clearInterval(it);scanLance=true;btn.disabled=false;btn.textContent='🔄 RELANCER LE SCAN';render();}
+    },500);
+  }
+
+  function cibleHtml(){
+    if(mode==='secure'||mode==='calib') return '<span class="masked">xxxxxxxxxxxxxxxxxxxx</span>';
+    return '<span class="masked">xxxxxxxxxxxxxxxxxxxx</span> &nbsp;⟵ remplace ⟵&nbsp; <span class="revealed">rnuripmfozlxenryxhdc.supabase.co</span>';
+  }
+
+  function render(){
+    const out=document.getElementById('output');
+
+    // Findings SILEX (recalibrés : RLS actif → sévérités réalistes)
+    const findingsHtml = `
+      <div class="finding">
+        <div class="f-head">
+          <span class="f-sev med">MEDIUM</span>
+          <span class="f-title">Rate limiting API absent</span>
+        </div>
+        <div class="f-desc">Les Edge Functions n'ont pas de limite de débit personnalisée. Protège contre l'abus/DoS applicatif. <b>Les données restent protégées par RLS</b> (actif 68/68 tables).</div>
+      </div>
+      <div class="finding">
+        <div class="f-head">
+          <span class="f-sev med">LOW</span>
+          <span class="f-title">CORS permissif (wildcard *)</span>
+        </div>
+        <div class="f-desc">Access-Control-Allow-Origin: * — <b>normal pour la clé anon Supabase</b> (publique par design). À documenter; restreindre seulement les endpoints authentifiés.</div>
+      </div>`;
+
+    // Bloc Loi 25 selon le mode
+    let loi25Html;
+    if(mode==='calib'){
+      loi25Html = `
+        <div class="label">⚖️ CALIBRATION — AVANT / APRÈS</div>
+        <div class="calib-row">
+          <div class="calib-col calib-bad">
+            <div class="t">❌ CE QUE SILEX DISAIT</div>
+            <div class="x">Art. 3.1 → NON CONFORME</div>
+            <div class="x">Exfiltration silencieuse possible</div>
+            <div class="x">Amende jusqu'à 25 M$</div>
+            <div class="x">RISQUE ÉLEVÉ — exposition active</div>
+          </div>
+          <div class="calib-col calib-good">
+            <div class="t">✅ VERSION CORRECTE</div>
+            <div class="v">Art. 3.7 → régime préventif</div>
+            <div class="v">RLS bloque l'exfiltration (68/68)</div>
+            <div class="v">Aucune sanction automatique</div>
+            <div class="v">POSTURE MAÎTRISÉE</div>
+          </div>
+        </div>`;
+    } else {
+      loi25Html = `<div class="loi25 good">⚖️ <b>Loi 25 — régime PRÉVENTIF (art. 3.7).</b> RLS actif sur 68/68 tables = mesure raisonnable en place. Aucun incident confirmé → aucune notification CAI requise. Les findings sont des améliorations de périmètre, pas des failles d'accès aux données.</div>`;
+    }
+
+    out.innerHTML = `
+      <div class="report">
+        <div class="r-banner">RAPPORT SILEX 🔰 — RÉSUMÉ EXÉCUTIF</div>
+
+        <div class="meta-row">
+          CIBLE : ${cibleHtml()}<br>
+          TYPE : SCAN COMPLET &nbsp;|&nbsp; FINDINGS : 2 &nbsp;|&nbsp; C:0 H:0 M:1 L:1
+        </div>
+
+        <div class="verdict" style="color:var(--green)">POSTURE MAÎTRISÉE — exposition réduite</div>
+        <div class="verdict-sub">0 critique · 0 élevé réel · RLS actif 68/68 (audit confirmé)</div>
+
+        <div class="sev">
+          <span><span class="n" style="color:var(--red)">0</span><span class="l">CRIT</span></span>
+          <span><span class="n" style="color:var(--orange)">0</span><span class="l">HIGH</span></span>
+          <span><span class="n" style="color:var(--gold)">1</span><span class="l">MED</span></span>
+          <span><span class="n" style="color:var(--blue)">1</span><span class="l">LOW</span></span>
+          <span><span class="n" style="color:var(--muted)">0</span><span class="l">INFO</span></span>
+        </div>
+
+        <div class="label">FINDINGS DÉTECTÉS</div>
+        ${findingsHtml}
+
+        <div class="label">DONNÉES SENSIBLES</div>
+        <div class="badges">
+          <span class="b b-ok">✔ Aucune clé sensible détectée</span>
+          <span class="b b-ok">✔ Aucune donnée perso exposée</span>
+        </div>
+
+        <div class="label">IDENTIFIANTS TECHNIQUES (publics)</div>
+        <div class="badges">
+          <span class="b b-tech">CWE-307</span>
+          <span class="b b-tech">CWE-942</span>
+        </div>
+
+        ${loi25Html}
+
+        <div class="r-foot">🔒 ${mode==='secure'?'Cible et valeurs en xxxxx — sécuritaire à partager':mode==='raw'?'DÉMO — valeurs normalement masquées':'Version recalibrée — factuelle'} · SILEX · Centre INDAR</div>
+      </div>`;
+  }
+</script>
+</body>
+</html>

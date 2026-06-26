@@ -1,0 +1,272 @@
+/* ── Agent MARCEAU — Dialogue multi-agents 4 phases ── */
+
+/* ── Avatar Marceau (PNG + glow) ── */
+.marceau-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.marceau-avatar-img {
+  transition: transform 0.3s ease;
+}
+
+.marceau-avatar-wrap:hover .marceau-avatar-img {
+  transform: scale(1.05);
+}
+
+.marceau-avatar-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 127, 39, 0.3) 0%, transparent 70%);
+  animation: marceau-pulse-glow 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes marceau-pulse-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.9; transform: scale(1.08); }
+}
+
+/* ── Large avatar card variant ── */
+.marceau-card-avatar {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 2px solid #ff7f27;
+  background: #111118;
+  padding: 4px;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.ag-card:hover .marceau-card-avatar {
+  transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .marceau-card-avatar {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+#agent-marceau-container {
+  min-height: 100vh;
+  background: var(--bg, #0a0a0a);
+  padding: 20px 24px;
+  font-family: var(--font-tilex);
+  color: var(--txt, #e2e2ea);
+}
+
+/* ── Écriture fluide ── */
+.stream-line {
+  margin-bottom: 3px;
+  min-height: 1.5em;
+  line-height: 1.85;
+  font-size: 12px;
+  transition: color 0.3s, opacity 0.3s;
+}
+
+.stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.82em;
+  vertical-align: middle;
+  margin-left: 2px;
+  border-radius: 1px;
+  animation: cursorBlink step-start infinite;
+  animation-duration: 0.48s;
+}
+
+@keyframes cursorBlink { 0%, 100% { opacity: 1 } 50% { opacity: 0 } }
+
+/* ── Bulles de dialogue ── */
+.marceau-bubble {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-bottom: 6px;
+  align-items: flex-start;
+  animation: mFadeSlide 0.35s ease forwards;
+}
+
+.claude-bubble {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 10px;
+  margin-bottom: 6px;
+  align-items: flex-start;
+  animation: mFadeSlide 0.35s ease forwards;
+}
+
+.bubble-content {
+  flex: 1;
+  max-width: 88%;
+  background: var(--bg3, #0d0d12);
+  border-radius: 8px;
+  padding: 12px 14px;
+  border: 1px solid;
+  transition: all 0.4s;
+}
+
+.bubble-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border, #23232c);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.connector {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.connector-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.connector-line {
+  width: 1px;
+  height: 10px;
+}
+
+.connector-circle {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+/* ── Synthèse NEXUS ── */
+.nexus-panel {
+  background: var(--bg3, #0d0d12);
+  border-radius: 8px;
+  padding: 18px;
+  animation: mFadeSlide 0.35s ease forwards;
+}
+
+.nexus-row {
+  margin-bottom: 12px;
+}
+
+.nexus-label {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--muted, #6c6c78);
+  margin-bottom: 4px;
+}
+
+.nexus-value {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.score-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1.2s ease;
+  background: linear-gradient(90deg, #ff7f27, var(--score-color, #37e0a0));
+}
+
+@keyframes mFadeSlide {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.2 } }
+
+/* ── Input area ── */
+#marceau-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--txt, #e2e2ea);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+#marceau-input::placeholder {
+  color: var(--muted, #6c6c78);
+}
+
+#marceau-launch-btn {
+  background: linear-gradient(135deg, #ff7f27, #ffcf4a);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 9px 22px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+#marceau-launch-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+#marceau-launch-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Step indicators ── */
+.step-indicator {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted, #6c6c78);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.step-dot.active {
+  background: #ff7f27;
+  box-shadow: 0 0 6px #ff7f27;
+}
+
+.step-dot.done {
+  background: #37e0a0;
+  box-shadow: 0 0 4px #37e0a0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  #agent-marceau-container {
+    padding: 14px 12px;
+  }
+  .bubble-content {
+    max-width: 95%;
+  }
+}

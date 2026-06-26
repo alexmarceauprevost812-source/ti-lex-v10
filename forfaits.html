@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex — Forfaits</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0a0a;--panel:#0d0d14;--panel2:#111118;--border:#23232c;
+  --orange:#ff7f27;--green:#37e0a0;--gold:#E6A400;--red:#E60000;
+  --blue:#4a9eff;--violet:#C700E6;--muted:#4a4a5a;--txt:#e8e8ee;
+  --font:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);line-height:1.5;min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 18px}
+
+/* ── En-tête ── */
+.head{text-align:center;margin-bottom:32px}
+.logo{width:56px;height:56px;border-radius:14px;margin:0 auto 14px;
+  background:linear-gradient(135deg,var(--orange),var(--red));
+  display:flex;align-items:center;justify-content:center;font-size:28px;
+  box-shadow:0 0 24px #ff7f2733}
+h1{font-size:22px;letter-spacing:1px;margin-bottom:6px}
+h1 b{color:var(--orange)}
+.sub{font-size:11px;color:var(--muted)}
+.ql{color:var(--gold);font-size:11px;margin-top:4px}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:8px;margin-bottom:28px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;padding:6px}
+.tab{flex:1;padding:12px;border:none;border-radius:8px;cursor:pointer;
+  font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:1px;
+  background:transparent;color:var(--muted);transition:all .2s}
+.tab.active.std{background:linear-gradient(135deg,var(--orange),var(--red));color:#0a0a0a}
+.tab.active.cyber{background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff}
+
+/* ── Section ── */
+.section{display:none}
+.section.visible{display:block}
+.section-label{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── Grille forfaits ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:32px}
+
+/* ── Carte ── */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:24px 20px;position:relative;display:flex;flex-direction:column;
+  transition:transform .2s,border-color .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px)}
+.card.pop-std{border-color:var(--orange);box-shadow:0 0 24px #ff7f2720}
+.card.pop-cyber{border-color:var(--blue);box-shadow:0 0 24px #4a9eff20}
+.card.best{border-color:var(--gold);box-shadow:0 0 24px #E6A40020}
+
+/* Badge */
+.ribbon{position:absolute;top:-1px;right:16px;
+  font-size:9px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:0 0 8px 8px}
+.ribbon.std{background:linear-gradient(135deg,var(--orange),var(--red));color:#0a0a0a}
+.ribbon.cyber{background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff}
+.ribbon.best{background:linear-gradient(135deg,var(--gold),var(--orange));color:#0a0a0a}
+
+/* Badge Bientôt */
+.soon{display:inline-flex;align-items:center;gap:6px;
+  background:#1a1500;border:1px solid var(--gold);color:var(--gold);
+  font-size:9px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:20px;margin-bottom:12px}
+.soon-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.c-emoji{font-size:28px;margin-bottom:10px}
+.c-name{font-size:15px;font-weight:700;letter-spacing:1px;margin-bottom:3px}
+.c-tag{font-size:10px;color:var(--muted);line-height:1.5;margin-bottom:14px;min-height:28px}
+
+/* Prix */
+.c-price{display:flex;align-items:baseline;gap:5px;margin-bottom:4px}
+.c-amt{font-size:30px;font-weight:700;line-height:1}
+.c-per{font-size:10px;color:var(--muted)}
+.c-sub{font-size:9px;color:var(--muted);margin-bottom:16px}
+
+/* Features */
+.feats{list-style:none;flex:1;margin-bottom:20px}
+.feats li{font-size:10px;padding:6px 0;display:flex;align-items:flex-start;
+  gap:8px;border-bottom:1px solid #16161e;line-height:1.5}
+.feats li .ic{flex-shrink:0;font-size:11px}
+.feats li.on{color:var(--txt)}
+.feats li.off{color:#33333d}
+
+/* Billets */
+.billets{font-size:9px;color:var(--gold);margin-bottom:14px;
+  display:flex;align-items:center;gap:5px}
+
+/* Bouton */
+.c-btn{width:100%;padding:13px;border-radius:10px;font-family:var(--font);
+  font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;
+  border:1px solid;text-align:center;text-decoration:none;display:block;transition:all .2s}
+.btn-std{background:var(--orange);color:#0a0a0a;border-color:var(--orange)}
+.btn-std:hover{box-shadow:0 0 16px #ff7f2755}
+.btn-cyber{background:var(--blue);color:#0a0a0a;border-color:var(--blue)}
+.btn-cyber:hover{box-shadow:0 0 16px #4a9eff55}
+.btn-best{background:linear-gradient(135deg,var(--gold),var(--orange));color:#0a0a0a;border-color:var(--gold)}
+.btn-best:hover{box-shadow:0 0 16px #E6A40055}
+.btn-off{background:transparent;color:var(--muted);border-color:var(--border);cursor:default}
+
+/* Encart reset */
+.reset-info{font-size:9px;color:var(--blue);text-align:center;margin-top:8px}
+
+/* Bandeau ESSAI */
+.essai-band{background:linear-gradient(135deg,#1a1500,#0d0d14);
+  border:1px solid var(--gold);border-radius:14px;padding:22px 24px;
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.essai-left{flex:1;min-width:200px}
+.essai-name{font-size:16px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.essai-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.essai-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.essai-price{font-size:26px;font-weight:700;color:var(--green)}
+
+/* Concours section */
+.concours{background:var(--panel);border:1px solid var(--orange);border-radius:14px;
+  padding:22px 24px;text-align:center;margin-bottom:28px}
+.concours-title{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px}
+.concours-sub{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:16px}
+.concours-grid{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.billet-item{background:var(--panel2);border:1px solid var(--gold);border-radius:10px;
+  padding:10px 18px;text-align:center}
+.billet-n{font-size:22px;font-weight:700;color:var(--gold)}
+.billet-l{font-size:9px;color:var(--muted);letter-spacing:1px}
+.concours-btn{display:inline-block;padding:12px 26px;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  color:#0a0a0a;font-family:var(--font);font-size:12px;font-weight:700;
+  letter-spacing:1px;border-radius:10px;text-decoration:none;
+  box-shadow:0 0 18px #E6A40033;transition:transform .2s}
+.concours-btn:hover{transform:translateY(-2px)}
+
+.foot{text-align:center;font-size:9px;color:#3a3a48;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="logo">🔰</div>
+    <h1>ti-lex <b>v10</b> — Forfaits</h1>
+    <div class="sub">Cybersécurité autonome · Agents IA · Produit du Québec</div>
+    <div class="ql">⚜️ Québec · Tous les prix en CAD · Taxes en sus</div>
+  </div>
+
+  <!-- Forfait ESSAI bientôt -->
+  <div class="essai-band">
+    <div class="essai-left">
+      <div class="essai-name">🆓 ESSAI — Bientôt disponible</div>
+      <div class="essai-desc">
+        5 messages par 24h · Reset à minuit · Agent AL seulement · Haiku 4.5<br>
+        <span style="color:var(--gold);font-size:9px">🎟️ +45 billets concours à l'inscription</span>
+      </div>
+    </div>
+    <div class="essai-right">
+      <div class="essai-price">0$</div>
+      <div class="soon"><span class="soon-dot"></span> BIENTÔT</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active std" onclick="showTab('std')">⚡ STANDARD — Agents IA</button>
+    <button class="tab cyber" onclick="showTab('cyber')">🛡️ CYBER — Cybersécurité PME</button>
+  </div>
+
+  <!-- ══════════════ SECTION STANDARD ══════════════ -->
+  <div id="sec-std" class="section visible">
+    <div class="section-label">⚡ FORFAITS STANDARD — Agents IA · Codex · Modèles Claude</div>
+
+    <div class="grid">
+
+      <!-- TI -->
+      <div class="card">
+        <div class="c-emoji">⚡</div>
+        <div class="c-name">TI</div>
+        <div class="c-tag">Pour débuter avec les agents IA. Modèles Haiku et Sonnet.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--green)">29,99$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">80 messages/jour · 2 fenêtres (recharge 8h et 20h)</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 80 messages/jour (fenêtres de 40)</li>
+          <li class="on"><span class="ic">✅</span> 5 agents IA</li>
+          <li class="on"><span class="ic">✅</span> Claude Haiku 4.5 + Sonnet 4.6</li>
+          <li class="on"><span class="ic">✅</span> 1 projet Codex</li>
+          <li class="on"><span class="ic">✅</span> 0,5 GB stockage</li>
+          <li class="off"><span class="ic">—</span> Marketplace</li>
+          <li class="off"><span class="ic">—</span> Opus 4.8</li>
+        </ul>
+        <div class="billets">🎟️ +5 billets concours</div>
+        <a href="/abonnement?plan=ti" class="c-btn btn-std">⚡ CHOISIR TI</a>
+        <div class="reset-info">⟳ Recharge : 8h00 · 20h00</div>
+      </div>
+
+      <!-- TI-LEX ★ POPULAIRE -->
+      <div class="card pop-std">
+        <div class="ribbon std">★ POPULAIRE</div>
+        <div class="c-emoji">🔥</div>
+        <div class="c-name">TI-LEX</div>
+        <div class="c-tag">Pour les créateurs sérieux. Plus d'agents, plus de puissance.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--orange)">89,99$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">200 messages/jour · 2 fenêtres de 100 (recharge 8h et 20h)</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 200 messages/jour (fenêtres de 100)</li>
+          <li class="on"><span class="ic">✅</span> 20 agents IA</li>
+          <li class="on"><span class="ic">✅</span> Claude Sonnet 4.6</li>
+          <li class="on"><span class="ic">✅</span> 5 projets Codex · Auto-deploy Vercel</li>
+          <li class="on"><span class="ic">✅</span> 5 GB stockage</li>
+          <li class="on"><span class="ic">✅</span> Accès Marketplace</li>
+          <li class="off"><span class="ic">—</span> Opus 4.8</li>
+        </ul>
+        <div class="billets">🎟️ +20 billets concours</div>
+        <a href="/abonnement?plan=surge" class="c-btn btn-std">🔥 CHOISIR TI-LEX</a>
+        <div class="reset-info">⟳ Recharge : 8h00 · 20h00</div>
+      </div>
+
+      <!-- TI-LEX-AL ★ MEILLEUR -->
+      <div class="card best">
+        <div class="ribbon best">★ MEILLEUR</div>
+        <div class="c-emoji">🚀</div>
+        <div class="c-name">TI-LEX-AL</div>
+        <div class="c-tag">Le forfait complet. Agents illimités, Opus 4.8 inclus.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--gold)">149,99$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">400 messages/jour · 2 fenêtres de 200 (recharge 8h et 20h)</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 400 messages/jour (fenêtres de 200)</li>
+          <li class="on"><span class="ic">✅</span> Agents IA illimités</li>
+          <li class="on"><span class="ic">✅</span> Sonnet 4.6 + 100 msgs Opus 4.8/fenêtre</li>
+          <li class="on"><span class="ic">✅</span> 15 projets Codex · Auto-deploy Vercel</li>
+          <li class="on"><span class="ic">✅</span> 10 GB stockage</li>
+          <li class="on"><span class="ic">✅</span> Marketplace + publication d'agents</li>
+          <li class="on"><span class="ic">✅</span> Support prioritaire</li>
+        </ul>
+        <div class="billets">🎟️ +45 billets concours</div>
+        <a href="/abonnement?plan=apex" class="c-btn btn-best">🚀 CHOISIR TI-LEX-AL</a>
+        <div class="reset-info">⟳ Recharge : 8h00 · 20h00</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ SECTION CYBER ══════════════ -->
+  <div id="sec-cyber" class="section">
+    <div class="section-label">🛡️ FORFAITS CYBER — Cybersécurité · PME Québécoises · Loi 25</div>
+
+    <div class="grid">
+
+      <!-- CYBER RECON -->
+      <div class="card">
+        <div class="c-emoji">🔍</div>
+        <div class="c-name">CYBER RECON</div>
+        <div class="c-tag">Consultant solo — premiers mandats cybersécurité.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--blue)">299$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">Scan avec Claude Opus 4.8</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 3 compagnies · 3 mandats</li>
+          <li class="on"><span class="ic">✅</span> 50 vérifications HIBP/mois</li>
+          <li class="on"><span class="ic">✅</span> 20 OSINT/mois</li>
+          <li class="on"><span class="ic">✅</span> 5 dark web/mois</li>
+          <li class="on"><span class="ic">✅</span> 10 rapports PDF/mois</li>
+          <li class="on"><span class="ic">✅</span> Scan Opus 4.8</li>
+          <li class="off"><span class="ic">—</span> Slack · Formations · API</li>
+        </ul>
+        <a href="/abonnement?plan=cyber_recon" class="c-btn btn-cyber">🔍 CHOISIR RECON</a>
+      </div>
+
+      <!-- CYBER GUARDIAN ★ POPULAIRE -->
+      <div class="card pop-cyber">
+        <div class="ribbon cyber">★ POPULAIRE</div>
+        <div class="c-emoji">🔒</div>
+        <div class="c-name">CYBER GUARDIAN</div>
+        <div class="c-tag">Cabinet professionnel — clients multiples, formations incluses.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--blue)">599$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">Scan avec Claude Opus 4.8 · Support prioritaire</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 15 compagnies · 8 mandats</li>
+          <li class="on"><span class="ic">✅</span> 200 HIBP · 100 OSINT/mois</li>
+          <li class="on"><span class="ic">✅</span> 30 dark web/mois</li>
+          <li class="on"><span class="ic">✅</span> 50 rapports PDF/mois</li>
+          <li class="on"><span class="ic">✅</span> Notifications Slack + Email</li>
+          <li class="on"><span class="ic">✅</span> Formations incluses</li>
+          <li class="off"><span class="ic">—</span> API access · White-label</li>
+        </ul>
+        <a href="/abonnement?plan=cyber_guardian" class="c-btn btn-cyber">🔒 CHOISIR GUARDIAN</a>
+      </div>
+
+      <!-- CYBER SENTINEL -->
+      <div class="card">
+        <div class="c-emoji">🏛️</div>
+        <div class="c-name">CYBER SENTINEL</div>
+        <div class="c-tag">Entreprise — forteresse numérique totale. API + White-label.</div>
+        <div class="c-price">
+          <span class="c-amt" style="color:var(--violet)">1 199$</span>
+          <span class="c-per">/ mois</span>
+        </div>
+        <div class="c-sub">Scan Opus 4.8 · API access · White-label</div>
+        <ul class="feats">
+          <li class="on"><span class="ic">✅</span> 50 compagnies · 20 mandats</li>
+          <li class="on"><span class="ic">✅</span> 500 HIBP · 300 OSINT/mois</li>
+          <li class="on"><span class="ic">✅</span> 100 dark web/mois</li>
+          <li class="on"><span class="ic">✅</span> Rapports PDF illimités</li>
+          <li class="on"><span class="ic">✅</span> API access + White-label</li>
+          <li class="on"><span class="ic">✅</span> Formations illimitées</li>
+          <li class="on"><span class="ic">✅</span> Support prioritaire</li>
+        </ul>
+        <a href="/abonnement?plan=cyber_sentinel" class="c-btn" style="background:linear-gradient(135deg,var(--blue),var(--violet));color:#fff;border-color:var(--violet)">🏛️ CHOISIR SENTINEL</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Concours -->
+  <div class="concours">
+    <div class="concours-title">🎁 CONCOURS — Gagne 3 mois gratuits de TI-LEX-AL</div>
+    <div class="concours-sub">
+      Inscris-toi et cours la chance de gagner. Plus tu t'engages, plus tu as de billets.
+    </div>
+    <div class="concours-grid">
+      <div class="billet-item">
+        <div class="billet-n">45</div>
+        <div class="billet-l">BILLETS<br>INSCRIPTION</div>
+      </div>
+      <div class="billet-item">
+        <div class="billet-n">5</div>
+        <div class="billet-l">BILLETS<br>FORFAIT TI</div>
+      </div>
+      <div class="billet-item">
+        <div class="billet-n">20</div>
+        <div class="billet-l">BILLETS<br>TI-LEX</div>
+      </div>
+      <div class="billet-item">
+        <div class="billet-n">45</div>
+        <div class="billet-l">BILLETS<br>TI-LEX-AL</div>
+      </div>
+    </div>
+    <a href="/concours" class="concours-btn">🎁 PARTICIPER AU TIRAGE →</a>
+  </div>
+
+  <div class="foot">
+    🔰 ti-lex v10 · Cybersécurité autonome · Produit du Québec ⚜️<br>
+    Tous les prix en CAD · Taxes applicables en sus · Aucun remboursement sur les périodes entamées
+  </div>
+
+</div>
+
+<script src="/js/tilex-config.js"></script>
+<script>
+function showTab(tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('visible'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('visible');
+  var btn = document.querySelector('.tab.'+tab);
+  if(btn){ btn.classList.add('active'); }
+}
+
+(async function(){
+  if(!window.SB_URL||!window.SB_ANON)return;
+  try{
+    var script=document.createElement('script');
+    script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    script.onload=async function(){
+      var sb=window.supabase.createClient(window.SB_URL,window.SB_ANON);
+      var res=await sb.from('plan_limits').select('plan,display_name,price_monthly_cents,messages_per_day,is_active,highlight,category').order('sort_order');
+      if(res.error||!res.data)return;
+      var plans=res.data.filter(function(p){return p.is_active;});
+      var map={};
+      plans.forEach(function(p){map[p.plan]=p;});
+      var priceMap={ti:'.card:nth-child(1)',surge:'.card:nth-child(2)',apex:'.card:nth-child(3)'};
+      Object.keys(priceMap).forEach(function(k){
+        if(!map[k])return;
+        var card=document.querySelector('#sec-std .grid '+priceMap[k]);
+        if(!card)return;
+        var amt=card.querySelector('.c-amt');
+        if(amt)amt.textContent=(map[k].price_monthly_cents/100).toFixed(2).replace('.',',')+' $';
+      });
+      var cyberMap={cyber_recon:1,cyber_guardian:2,cyber_sentinel:3};
+      Object.keys(cyberMap).forEach(function(k){
+        if(!map[k])return;
+        var card=document.querySelector('#sec-cyber .grid .card:nth-child('+cyberMap[k]+')');
+        if(!card)return;
+        var amt=card.querySelector('.c-amt');
+        if(amt)amt.textContent=(map[k].price_monthly_cents/100).toFixed(0)+' $';
+      });
+    };
+    document.head.appendChild(script);
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
