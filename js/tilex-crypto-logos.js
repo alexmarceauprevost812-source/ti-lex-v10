@@ -92,11 +92,12 @@
     const st = document.createElement("style");
     st.id = "tilex-crypto-logos-css";
     st.textContent =
-      ".tilex-crypto-badge{display:inline-flex;align-items:center;gap:5px;padding:1px 8px 1px 4px;" +
-      "border-radius:999px;background:color-mix(in srgb,var(--c,#ff7f27) 18%,transparent);" +
-      "border:1px solid var(--c,#ff7f27);font-weight:700;font-size:.85em;line-height:1.6;vertical-align:middle;}" +
-      ".tilex-crypto-logo{width:16px;height:16px;border-radius:50%;}" +
-      ".tilex-crypto-nom{color:var(--c,#ff7f27);}";
+      ".tilex-crypto-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;margin:0 2px;" +
+      "border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid var(--c,#F7931A);vertical-align:middle;" +
+      "font-weight:600;transition:transform .15s ease,box-shadow .15s ease;}" +
+      ".tilex-crypto-badge:hover{transform:translateY(-1px);box-shadow:0 0 12px var(--c,#F7931A);}" +
+      ".tilex-crypto-logo{width:18px;height:18px;border-radius:50%;}" +
+      ".tilex-crypto-nom{color:var(--c,#F7931A);font-size:.85em;letter-spacing:.5px;}";
     (document.head || document.documentElement).appendChild(st);
   }
 
