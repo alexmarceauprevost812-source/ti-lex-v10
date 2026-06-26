@@ -114,11 +114,13 @@
     body.innerHTML = '';
 
     if (ext === 'md' || ext === 'mdx') {
-      if (typeof marked !== 'undefined') {
+      // 🔒 marked ne nettoie PAS le HTML : un .md malveillant peut injecter du script.
+      // On sanitise avec DOMPurify si présent, sinon on retombe sur le rendu texte échappé.
+      if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
         var div = document.createElement('div');
         div.className = 'preview-markdown';
         marked.setOptions({ breaks: true, gfm: true });
-        div.innerHTML = marked.parse(fichier.contenu);
+        div.innerHTML = DOMPurify.sanitize(marked.parse(fichier.contenu));
         body.appendChild(div);
       } else {
         rendreBrut(body, fichier.contenu);

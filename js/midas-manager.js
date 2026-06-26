@@ -108,11 +108,22 @@
   /* --- Rend un verdict de scoring en HTML (carte) --- */
   M.rendreVerdict = function (actif) {
     try {
+      // 🔒 Les champs (symbole, nom, etiquette, raisons, couleur) peuvent venir de
+      // données de marché externes → on échappe avant injection HTML (anti-XSS).
+      const esc = function (x) {
+        return String(x == null ? "" : x).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      };
+      const couleurSure = function (x) {
+        return /^#[0-9a-fA-F]{3,8}$/.test(String(x || "")) ? x : "#ffcf4a";
+      };
+
       const v = actif.verdict;
       if (!v) return '<div class="midas-carte">Données insuffisantes pour ' +
-        (actif.symbole || actif.nom || "?") + '.</div>';
+        esc(actif.symbole || actif.nom || "?") + '.</div>';
 
-      const couleur = v.couleur || "#ffcf4a";
+      const couleur = couleurSure(v.couleur);
       const fmt = function (x, suf) {
         return x == null ? "n/d" : (typeof x === "number" ? x.toFixed(2) : x) + (suf || "");
       };
@@ -120,7 +131,7 @@
 
       let raisonsHtml = "";
       (v.raisons || []).slice(0, 5).forEach(function (r) {
-        raisonsHtml += '<li style="margin:2px 0">• ' + r + '</li>';
+        raisonsHtml += '<li style="margin:2px 0">• ' + esc(r) + '</li>';
       });
 
       return '' +
@@ -128,13 +139,13 @@
           ';background:#0c0c11;border-radius:12px;padding:14px 16px;margin:10px 0;' +
           'font-family:var(--font-tilex, monospace);color:#e6e6ea">' +
           '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-            '<strong style="font-size:1rem">' + (actif.symbole || "") + ' · ' + (actif.nom || "") + '</strong>' +
+            '<strong style="font-size:1rem">' + esc(actif.symbole || "") + ' · ' + esc(actif.nom || "") + '</strong>' +
             '<span style="font-size:.78rem;color:#888">' + fmt(actif.prix) + ' ' +
               (actif.var24h != null ? '(' + (actif.var24h >= 0 ? '+' : '') + actif.var24h.toFixed(2) + '% 24h)' : '') +
             '</span>' +
           '</div>' +
           '<div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
-            '<span style="color:' + couleur + ';font-weight:700;font-size:.95rem">' + v.etiquette + '</span>' +
+            '<span style="color:' + couleur + ';font-weight:700;font-size:.95rem">' + esc(v.etiquette) + '</span>' +
             '<span style="font-size:.75rem;color:#aaa">Score ' + v.score + '/100</span>' +
             '<span style="font-size:.75rem;color:#aaa">Confluence ' + v.confluence + '%</span>' +
             '<span style="font-size:.75rem;color:#aaa">' + v.nbIndicateurs + ' indicateurs</span>' +

@@ -8,18 +8,19 @@
 
     var blocsFichiers = '';
     fichiers.forEach(function (f, i) {
+      var nomValide = validerChemin(f.nom);
       var contenuEchappe = echapperPourHeredoc(f.contenu);
       blocsFichiers +=
         '\n# ── Fichier ' + (i + 1) + '/' + total + ' ──\n' +
-        'afficher_progression ' + (i + 1) + ' ' + total + ' "' + echapperBash(f.nom) + '"\n\n';
+        'afficher_progression ' + (i + 1) + ' ' + total + ' ' + echapperBash(nomValide) + '\n\n';
 
-      var dir = f.nom.lastIndexOf('/');
+      var dir = nomValide.lastIndexOf('/');
       if (dir !== -1) {
-        blocsFichiers += 'mkdir -p "' + echapperBash(f.nom.substring(0, dir)) + '"\n';
+        blocsFichiers += 'mkdir -p -- ' + echapperBash(nomValide.substring(0, dir)) + '\n';
       }
 
       blocsFichiers +=
-        'cat > "' + echapperBash(f.nom) + '" << \'TILEX_EOF\'\n' +
+        'cat > ' + echapperBash(nomValide) + ' << \'TILEX_EOF\'\n' +
         contenuEchappe + '\n' +
         'TILEX_EOF\n';
     });
@@ -147,8 +148,21 @@
     return (contenu || '').replace(/^TILEX_EOF$/gm, 'TILEX_E0F_ESCAPED');
   }
 
+  // 🔒 Les noms de fichiers viennent de l'utilisateur → on les traite comme entrée
+  // shell non fiable. Rejette chemins absolus et remontées (../) pour éviter
+  // l'écriture hors du dossier cible (path-traversal).
+  function validerChemin(valeur) {
+    var v = String(valeur || '');
+    if (!v || v[0] === '/' || /(^|\/)\.\.(\/|$)/.test(v)) {
+      throw new Error('Nom de fichier invalide : ' + v);
+    }
+    return v;
+  }
+
+  // Vrai quoting shell : on entoure de guillemets simples et on échappe les '
+  // (neutralise backticks, $, etc. → pas de substitution de commande).
   function echapperBash(valeur) {
-    return (valeur || '').replace(/"/g, '\\"').replace(/\$/g, '\\$');
+    return "'" + String(valeur || '').replace(/'/g, "'\"'\"'") + "'";
   }
 
   function slugifier(valeur) {
@@ -176,7 +190,13 @@
     var inputNom  = document.getElementById('projet-nom-input');
     var nomProjet = inputNom ? inputNom.value.trim() : '';
 
-    var script  = genererScriptBash(fichiers, nomProjet);
+    var script;
+    try {
+      script = genererScriptBash(fichiers, nomProjet);
+    } catch (e) {
+      afficherToast('⚠ Export annulé : ' + (e && e.message ? e.message : 'nom de fichier non sûr'));
+      return;
+    }
     var blob    = new Blob([script], { type: 'text/x-shellscript;charset=utf-8' });
     var url     = URL.createObjectURL(blob);
     var nomSlug = slugifier(nomProjet) || 'ti-lex-projet';

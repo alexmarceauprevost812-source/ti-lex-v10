@@ -208,7 +208,7 @@
       '<div class="banniere-texte">' +
         '<strong>' + nb + ' fichier(s) importé(s)</strong> depuis un lien partagé' +
         (nomProjet ? ' · <em>' + escapeHTML(nomProjet) + '</em>' : '') +
-        (date ? ' · <span class="banniere-date">' + date + '</span>' : '') +
+        (date ? ' · <span class="banniere-date">' + escapeHTML(date) + '</span>' : '') +
       '</div>' +
       '<button class="banniere-fermer" id="banniere-fermer">✕</button>';
 

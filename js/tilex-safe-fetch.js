@@ -1,5 +1,9 @@
 const TilexSafeFetch = {
   async appeler(url, options = {}, retries = 2, timeout = 10000) {
+    // 🔒 On ne rejoue QUE les méthodes idempotentes (ou opt-in explicite via retryUnsafe),
+    // sinon un POST/PUT/DELETE rejoué peut dupliquer un enregistrement / un paiement.
+    const method = (options.method || "GET").toUpperCase();
+    const retryableMethod = ["GET", "HEAD", "OPTIONS"].includes(method) || options.retryUnsafe === true;
     for (let tentative = 0; tentative <= retries; tentative++) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeout);
@@ -10,7 +14,8 @@ const TilexSafeFetch = {
         return r;
       } catch (err) {
         clearTimeout(timer);
-        if (tentative === retries) {
+        const transient = err.name === "AbortError" || /^HTTP 5\d\d$/.test(err.message);
+        if (!retryableMethod || !transient || tentative === retries) {
           if (window.TilexToast) TilexToast.error("Connexion échouée");
           throw err;
         }
