@@ -262,7 +262,10 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Agent inconnu: " + agentId }, 400, cors);
   }
 
-  if (body.user_id) userId = body.user_id;
+  // 🔒 SÉCURITÉ : ne JAMAIS faire confiance à un user_id fourni par le client.
+  // L'identité vient uniquement du JWT vérifié (Authorization). Sinon un appelant
+  // pourrait usurper l'UUID d'un autre et écraser ses lignes indar_analyses (RLS contournée
+  // car l'upsert utilise le service-role). On persiste donc seulement si userId vient du JWT.
 
   const contextParts: string[] = [];
   if (body.scan_context) {

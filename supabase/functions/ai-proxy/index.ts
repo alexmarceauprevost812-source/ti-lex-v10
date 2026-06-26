@@ -212,9 +212,10 @@ Deno.serve(async (req) => {
     if (FMP_KEY) {
       tools.push(...FINANCE_TOOLS);
     }
-    if (body.tools && Array.isArray(body.tools)) {
-      tools.push(...body.tools);
-    }
+    // 🔒 SÉCURITÉ : on n'accepte PAS d'outils fournis par le client (body.tools).
+    // Sinon un appelant pourrait enregistrer un outil exécuté côté serveur
+    // (ex: execute_sql) et faire tourner du SQL arbitraire via le service-role.
+    // Seuls les outils définis ici (web_search, bourse) sont permis.
 
     const hasCustomTools = tools.some((t: any) => t.type !== "web_search_20250305");
     const anthropicHeaders = {
@@ -437,37 +438,15 @@ async function handleToolLoop(
   });
 }
 
-async function executeCustomTool(name: string, input: any, sb: any, userId: string): Promise<string> {
+// Seuls les outils définis côté serveur (bourse) sont exécutables. On NE remet PAS
+// d'outils privilégiés (execute_sql, etc.) ici : pas de SQL arbitraire via le chat.
+async function executeCustomTool(name: string, input: any, _sb: any, _userId: string): Promise<string> {
   try {
     switch (name) {
       case "get_stock_quote":
         return await fmpFetch("quote", input?.symbol);
       case "get_company_profile":
         return await fmpFetch("profile", input?.symbol);
-      case "execute_sql": {
-        const query = input?.query || input?.sql || "";
-        if (!query) return JSON.stringify({ error: "Requête SQL vide" });
-        const { data, error } = await sb.rpc("exec_realize", { p_sql: query });
-        if (error) return JSON.stringify({ error: error.message });
-        return JSON.stringify({ ok: true, result: data });
-      }
-      case "list_tables": {
-        const { data, error } = await sb.rpc("exec_realize", {
-          p_sql: "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
-        });
-        if (error) return JSON.stringify({ error: error.message });
-        return JSON.stringify({ tables: data });
-      }
-      case "read_audit_events": {
-        const limit = input?.limit || 10;
-        const { data, error } = await sb
-          .from("audit_events")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(limit);
-        if (error) return JSON.stringify({ error: error.message });
-        return JSON.stringify({ events: data });
-      }
       default:
         return JSON.stringify({ error: `Outil inconnu: ${name}` });
     }
