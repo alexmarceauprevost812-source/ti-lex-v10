@@ -171,7 +171,7 @@
       ".tilex-crypto-var{font-size:.75em;font-weight:700;}" +
       ".tilex-up{color:#16c784;}" +
       ".tilex-down{color:#ea3943;}" +
-      ".tilex-crypto-stake{font-size:.85em;line-height:1;}";
+      ".tilex-crypto-stake{font-size:.8em;margin-left:1px;filter:drop-shadow(0 0 3px rgba(22,199,132,0.6));}";
     (document.head || document.documentElement).appendChild(st);
   }
 
