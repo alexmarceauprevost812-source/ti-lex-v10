@@ -4322,8 +4322,7 @@ async function sendChat(){
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
       if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
       else{applySyntaxHL(bblText);}
-      // 🪙 Badges crypto (texte seulement, saute code/liens) — n'altère pas le Markdown.
-      if(window.TilexCryptoLogos)TilexCryptoLogos.rehausser(bblText);
+      // 🪙 Badges crypto : branchement géré par js/tilex-crypto-connect.js (observer).
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
       sauvegarderMsgEnDB("assistant",reply||"");
@@ -9654,6 +9653,7 @@ trackFeatureUsage("app_load");
 <script src="js/tilex-export.js"></script>
 <script src="js/tilex-studio-auto.js"></script>
 <script src="js/tilex-crypto-logos.js"></script>
+<script src="js/tilex-crypto-connect.js"></script>
 <script src="js/security-guard.js"></script>
 <script src="js/guide-protection.js"></script>
 <script src="js/al-memory.js"></script>

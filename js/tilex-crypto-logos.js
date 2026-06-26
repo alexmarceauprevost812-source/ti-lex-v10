@@ -171,16 +171,16 @@
     const st = document.createElement("style");
     st.id = "tilex-crypto-logos-css";
     st.textContent =
-      ".tilex-crypto-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px 2px 4px;margin:0 2px;" +
+      ".tilex-crypto-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 4px;margin:0 2px;" +
       "border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid var(--c,#F7931A);vertical-align:middle;" +
       "font-weight:600;transition:transform .15s ease,box-shadow .15s ease;}" +
       ".tilex-crypto-badge:hover{transform:translateY(-1px);box-shadow:0 0 12px var(--c,#F7931A);}" +
       ".tilex-crypto-logo{width:18px;height:18px;border-radius:50%;}" +
       ".tilex-crypto-nom{color:var(--c,#F7931A);font-size:.85em;letter-spacing:.5px;}" +
-      ".tilex-crypto-prix{font-size:.82em;color:#e8e8f0;font-variant-numeric:tabular-nums;}" +
-      ".tilex-crypto-var{font-size:.78em;font-weight:700;}" +
-      ".tilex-crypto-var.tilex-up{color:#37e0a0;}" +
-      ".tilex-crypto-var.tilex-down{color:#ff5c5c;}";
+      ".tilex-crypto-prix{color:#e8e8e8;font-size:.82em;font-weight:700;}" +
+      ".tilex-crypto-var{font-size:.75em;font-weight:700;}" +
+      ".tilex-up{color:#16c784;}" +
+      ".tilex-down{color:#ea3943;}";
     (document.head || document.documentElement).appendChild(st);
   }
 
