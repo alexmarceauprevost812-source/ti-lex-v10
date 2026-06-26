@@ -23,6 +23,8 @@
   <!-- Config + Supabase -->
   <script src="js/tilex-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+  <!-- Typewriter (phrases chevauchées à 70%) — doit être chargé avant l'usage -->
+  <script src="js/tilex-typewriter.js"></script>
 
   <style>
     /* ═══════════════════════════════════════════════
@@ -140,6 +142,8 @@
     }
     .tw-char { display: inline; }
     .tw-new  { color: var(--orange); transition: color .4s; }
+    /* Phrases du TypewriterManager (chevauchement à 70%) */
+    .tilex-typer-phrase { margin: 0; min-height: 1.6em; }
     .tw-cursor {
       display: inline-block; width: 2px; height: 1.1em;
       background: var(--orange); vertical-align: text-bottom;
@@ -1001,42 +1005,28 @@ function showLegal(type) {
     "TI-LEX-AL V10 · Conforme Loi 25 · Art. 342.1 C.cr. · Produit du Québec ⚜️",
   ];
   const block = document.getElementById('twBlock');
-  let lineIdx = 0, charIdx = 0;
-  let lineEl, cursorEl;
+  if (!block) return;
 
-  function nextLine() {
-    if (lineIdx >= LINES.length) return;
-    lineEl = document.createElement('p');
-    lineEl.style.cssText = 'margin:0;min-height:1.6em';
-    cursorEl = document.createElement('span');
-    cursorEl.className = 'tw-cursor';
-    block.appendChild(lineEl);
-    lineEl.appendChild(cursorEl);
-    typeChar();
+  // Nouveau typewriter à phrases chevauchées : chaque phrase démarre quand la
+  // précédente atteint 70% (deux phrases s'animent en même temps). rAF, pas de setTimeout.
+  if (!window.TypewriterManager || typeof window.TypewriterManager.makeTyper !== "function") {
+    // Repli minimal si le module n'est pas chargé : affichage direct.
+    LINES.forEach(function(t) {
+      const p = document.createElement('p');
+      p.className = 'tilex-typer-phrase';
+      p.textContent = t;
+      block.appendChild(p);
+    });
+    return;
   }
 
-  function typeChar() {
-    const line = LINES[lineIdx];
-    if (charIdx < line.length) {
-      const span = document.createElement('span');
-      span.className = 'tw-char tw-new';
-      span.textContent = line[charIdx];
-      lineEl.insertBefore(span, cursorEl);
-      setTimeout(() => span.classList.remove('tw-new'), 400);
-      charIdx++;
-      const c = line[charIdx - 1];
-      const delay = 48 * (.6 + Math.random() * .8) + (',.!?⚜️'.includes(c) ? 220 : 0);
-      setTimeout(typeChar, delay);
-    } else {
-      charIdx = 0; lineIdx++;
-      if (lineIdx < LINES.length) {
-        if (lineIdx < LINES.length - 1) cursorEl?.remove();
-        setTimeout(nextLine, 400);
-      }
-    }
-  }
-
-  setTimeout(nextLine, 1000);
+  const ctrl = window.TypewriterManager.makeTyper({
+    textes: LINES,
+    conteneur: block,
+    vitesse: 30,
+    seuil: 0.70
+  });
+  setTimeout(function() { ctrl.demarrer(); }, 1000);
 })();
 
 // ─────────────────────────────────────────────

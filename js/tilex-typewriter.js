@@ -1,205 +1,198 @@
-'use strict';
+/**
+ * TypewriterManager — Animation typewriter avec chevauchement à 70%
+ * Quand une phrase atteint 70% de son écriture, la phrase suivante démarre,
+ * donc deux phrases s'animent en même temps.
+ * Vanilla JS, exposé en global sur window.TypewriterManager (conventions ti-lex).
+ *
+ * Inclus dans le HTML AVANT le script qui l'utilise :
+ *   <script src="js/tilex-typewriter.js"></script>
+ */
+(function () {
+  "use strict";
 
-window.TILEX = window.TILEX || {};
+  // --- Configuration par défaut ---
+  const CONFIG = {
+    vitesse: 18,   // ms par caractère
+    seuil: 0.70    // déclenche la phrase suivante à 70%
+  };
 
-TILEX.typewriterConfig = {
-  vitesse:         22,
-  pauseEntrePhases: 180,
-  glitch:          true,
-  scanline:        true,
-};
-
-TILEX.ecrireTexte = function(el, texte, onDone) {
-  if (!el) return { annuler: function(){} };
-
-  var cfg    = TILEX.typewriterConfig;
-  var annule = false;
-  var rafId  = null;
-
-  el.classList.add('tx-typewriter', 'ecrit');
-  el.classList.remove('phase-2', 'termine');
-  el.classList.add('phase-1');
-  el.textContent = '';
-
-  // ── Noeuds créés UNE seule fois : on les mute frame par frame.
-  //    JAMAIS de el.textContent='' + reconstruction (cause des saccades mobile).
-  var noeudTexte = document.createTextNode('');
-  var spanGlitch = document.createElement('span');
-  spanGlitch.className = 'tx-glitch';
-  var cursor = document.createElement('span');
-  cursor.className = 'tx-cursor';
-  el.appendChild(noeudTexte);
-  el.appendChild(spanGlitch);
-  el.appendChild(cursor);
-
-  // Affiche les i premiers caractères en mutant les noeuds existants.
-  // Index simple (+1) géré dans la boucle : aucun re-scan, aucun rebuild DOM.
-  function afficher(i) {
-    var sub = texte.slice(0, i);
-    if (cfg.glitch && sub.length > 0) {
-      noeudTexte.data        = sub.slice(0, -1); // partie stable
-      spanGlitch.textContent = sub.slice(-1);    // dernier caractère qui glitch
-    } else {
-      noeudTexte.data        = sub;
-      spanGlitch.textContent = '';
+  // --- Notifications (chaîne de priorité ti-lex) ---
+  function notifier(message, type) {
+    try {
+      if (window.TilexToast && typeof window.TilexToast.show === "function") {
+        window.TilexToast.show(message, type || "info");
+        return;
+      }
+      if (typeof window.showToast === "function") {
+        window.showToast(message, type || "info");
+        return;
+      }
+      console.log("[Typewriter] " + message);
+    } catch (e) {
+      console.log("[Typewriter] " + message);
     }
   }
 
-  // États de la boucle d'animation (machine à états dans un seul rAF)
-  var PHASE_1 = 1, PAUSE = 2, PHASE_2 = 3;
-  var phase     = PHASE_1;
-  var i         = 0;
-  var dernierTs = 0;
-  var accumule  = 0; // accumulateur de temps (delta) : synchro sur le vrai refresh
+  /**
+   * Crée une animation typewriter à phrases chevauchées.
+   * options = {
+   *   textes: ["phrase 1", "phrase 2", ...],  // tableau de phrases (obligatoire)
+   *   conteneur: HTMLElement,                  // parent où injecter (obligatoire)
+   *   vitesse: 18,                             // ms/caractère (optionnel)
+   *   seuil: 0.70,                             // seuil de déclenchement (optionnel)
+   *   onPhrase: function(el) {},               // appelé quand une phrase finit (optionnel)
+   *   onFini: function() {}                     // appelé quand tout est fini (optionnel)
+   * }
+   * Retourne un contrôleur { demarrer, arreter }.
+   */
+  function makeTyper(options) {
+    options = options || {};
+    const textes = Array.isArray(options.textes) ? options.textes.slice() : [];
+    const conteneur = options.conteneur;
+    const vitesse = typeof options.vitesse === "number" ? options.vitesse : CONFIG.vitesse;
+    const seuil = typeof options.seuil === "number" ? options.seuil : CONFIG.seuil;
+    const onPhrase = typeof options.onPhrase === "function" ? options.onPhrase : null;
+    const onFini = typeof options.onFini === "function" ? options.onFini : null;
 
-  function boucle(ts) {
-    if (annule) return;
-    try {
-      if (!dernierTs) dernierTs = ts;
-      accumule += (ts - dernierTs);
-      dernierTs = ts;
+    if (!conteneur || !textes.length) {
+      notifier("Typewriter: conteneur ou textes manquants", "error");
+      return { demarrer: function () {}, arreter: function () {} };
+    }
 
-      if (phase === PHASE_1 || phase === PHASE_2) {
-        // On avance d'autant de caractères que le temps écoulé le permet.
-        var aChange = false;
-        while (accumule >= cfg.vitesse && i <= texte.length) {
-          accumule -= cfg.vitesse;
-          i++;
-          aChange = true;
+    let file = textes.slice();   // phrases en attente
+    let actives = [];            // phrases en cours d'écriture
+    let rafId = null;
+    let enCours = false;
+
+    // Lance une phrase: crée son élément et l'ajoute aux actives
+    function lancerPhrase() {
+      if (!file.length) return;
+      const texte = file.shift();
+
+      const el = document.createElement("div");
+      el.className = "tilex-typer-phrase";
+      // Noeud texte unique: on ajoute caractère par caractère (pas de re-scan O(n))
+      el.appendChild(document.createTextNode(""));
+      conteneur.appendChild(el);
+
+      actives.push({
+        texte: texte,
+        noeud: el.firstChild,
+        el: el,
+        i: 0,
+        n: texte.length,
+        declenche: false,   // a-t-on déjà lancé la phrase suivante au seuil ?
+        fini: false,
+        prochain: 0         // timestamp du prochain caractère
+      });
+    }
+
+    // Boucle d'animation (requestAnimationFrame, indépendante du framerate)
+    function tick(t) {
+      for (let k = 0; k < actives.length; k++) {
+        const p = actives[k];
+        if (p.fini) continue;
+
+        if (p.prochain === 0) p.prochain = t;
+
+        // Rattrapage: écrit autant de caractères que le temps écoulé le permet
+        while (p.prochain <= t && p.i < p.n) {
+          p.noeud.nodeValue += p.texte.charAt(p.i); // ajout 1 caractère
+          p.i++;
+          p.prochain += vitesse;
         }
-        if (aChange) afficher(i > texte.length ? texte.length : i);
 
-        if (i > texte.length) {
-          if (phase === PHASE_1) {
-            // BUG 3 : transition phrase 1 → phrase 2 SANS setTimeout.
-            // La pause est comptée par l'accumulateur, sur les frames suivants.
-            phase    = PAUSE;
-            accumule = 0;
-          } else {
-            terminer();
-            return;
+        // Seuil 70% atteint → lance la phrase suivante (une seule fois)
+        if (!p.declenche && p.i / p.n >= seuil) {
+          p.declenche = true;
+          lancerPhrase();
+        }
+
+        // Phrase terminée
+        if (p.i >= p.n && !p.fini) {
+          p.fini = true;
+          if (onPhrase) {
+            try { onPhrase(p.el); } catch (e) { console.log(e); }
           }
         }
-      } else if (phase === PAUSE) {
-        // Pause entre les deux phrases, en temps réel (aucun timer empilé).
-        if (accumule >= cfg.pauseEntrePhases) {
-          el.classList.remove('phase-1');
-          el.classList.add('phase-2');
-          phase    = PHASE_2;
-          i        = 0;
-          accumule = 0;
+      }
+
+      // Retire les phrases finies de la liste active (elles restent dans le DOM)
+      actives = actives.filter(function (p) { return !p.fini; });
+
+      // Continue tant qu'il reste des phrases en file ou en cours
+      if (actives.length || file.length) {
+        rafId = window.requestAnimationFrame(tick);
+      } else {
+        finTypewriter();
+      }
+    }
+
+    // Démarre l'animation
+    function demarrer() {
+      try {
+        if (enCours) return;
+        enCours = true;
+        lancerPhrase();              // première phrase
+        rafId = window.requestAnimationFrame(tick);
+      } catch (e) {
+        notifier("Erreur démarrage typewriter", "error");
+        console.log(e);
+      }
+    }
+
+    // Arrête l'animation (annule le rAF proprement)
+    function arreter() {
+      try {
+        if (rafId !== null) {
+          window.cancelAnimationFrame(rafId);
+          rafId = null;
         }
+        enCours = false;
+      } catch (e) {
+        console.log(e);
       }
-
-      rafId = requestAnimationFrame(boucle);
-    } catch (e) {
-      console.log('[TILEX ecrireTexte] ' + (e && e.message ? e.message : e));
     }
-  }
 
-  function terminer() {
-    el.classList.remove('phase-1', 'phase-2', 'ecrit');
-    el.classList.add('termine');
-    el.textContent = texte; // efface curseur + noeuds, pose le texte final
-    if (typeof onDone === 'function') onDone();
-  }
-
-  rafId = requestAnimationFrame(boucle);
-
-  return {
-    annuler: function() {
-      annule = true;
-      if (rafId) cancelAnimationFrame(rafId);
-      terminer();
-    }
-  };
-};
-
-TILEX.phase2Seulement = function(el, texte, onDone) {
-  if (!el) return { annuler: function(){} };
-
-  var cfg    = TILEX.typewriterConfig;
-  var annule = false;
-  var rafId  = null;
-  var len    = texte.length;
-
-  el.classList.add('tx-typewriter', 'ecrit', 'phase-2');
-  el.classList.remove('phase-1', 'termine');
-  el.textContent = '';
-
-  // Vitesse adaptée à la longueur, calculée UNE seule fois (pas à chaque frame).
-  var vitesse = cfg.vitesse;
-  if (len > 600)      vitesse = 2;
-  else if (len > 300) vitesse = 6;
-  else if (len > 150) vitesse = 12;
-
-  // Noeuds persistants : on mute au lieu de reconstruire le DOM chaque frame.
-  var noeudTexte = document.createTextNode('');
-  var spanGlitch = document.createElement('span');
-  spanGlitch.className = 'tx-glitch';
-  var cursor = document.createElement('span');
-  cursor.className = 'tx-cursor';
-  el.appendChild(noeudTexte);
-  el.appendChild(spanGlitch);
-  el.appendChild(cursor);
-
-  function afficher(i) {
-    var sub = texte.slice(0, i);
-    if (cfg.glitch && sub.length > 0) {
-      noeudTexte.data        = sub.slice(0, -1);
-      spanGlitch.textContent = sub.slice(-1);
-    } else {
-      noeudTexte.data        = sub;
-      spanGlitch.textContent = '';
-    }
-  }
-
-  var i         = 0;
-  var dernierTs = 0;
-  var accumule  = 0; // accumulateur de temps (delta) synchro sur le refresh
-
-  function boucle(ts) {
-    if (annule) return;
-    try {
-      if (!dernierTs) dernierTs = ts;
-      accumule += (ts - dernierTs);
-      dernierTs = ts;
-
-      // Index simple +1 ; rattrape plusieurs caractères par frame si besoin.
-      var aChange = false;
-      while (accumule >= vitesse && i <= len) {
-        accumule -= vitesse;
-        i++;
-        aChange = true;
+    // Fin: stoppe le rAF et notifie la fin
+    function finTypewriter() {
+      try {
+        if (rafId !== null) {
+          window.cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        enCours = false;
+        if (onFini) onFini();
+      } catch (e) {
+        console.log(e);
       }
-      if (aChange) afficher(i > len ? len : i);
-
-      if (i > len) { terminer(); return; }
-      rafId = requestAnimationFrame(boucle);
-    } catch (e) {
-      console.log('[TILEX phase2Seulement] ' + (e && e.message ? e.message : e));
     }
+
+    return { demarrer: demarrer, arreter: arreter };
   }
 
-  function terminer() {
-    el.classList.remove('phase-1', 'phase-2', 'ecrit');
-    el.classList.add('termine');
-    el.textContent = texte;
-    if (typeof onDone === 'function') onDone();
-  }
-
-  rafId = requestAnimationFrame(boucle);
-
-  return {
-    annuler: function() {
-      annule = true;
-      if (rafId) cancelAnimationFrame(rafId);
-      terminer();
-    }
+  // --- Expose en global (convention ti-lex) ---
+  window.TypewriterManager = {
+    makeTyper: makeTyper,
+    CONFIG: CONFIG
   };
-};
+})();
 
-TILEX.doitAnimer = function() {
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-  return true;
-};
+/* ---------------------------------------------------------------
+   EXEMPLE D'UTILISATION:
+
+   const ctrl = window.TypewriterManager.makeTyper({
+     textes: [
+       "Bienvenue sur ti-lex.",
+       "Produit du Québec.",
+       "On part-tu?"
+     ],
+     conteneur: document.getElementById("zone-typer"),
+     vitesse: 18,
+     seuil: 0.70,
+     onFini: function () { console.log("Typer fini"); }
+   });
+
+   ctrl.demarrer();
+   // ctrl.arreter();  // pour stopper en cours de route
+--------------------------------------------------------------- */
