@@ -3952,18 +3952,31 @@ async function readSSEStream(res,onDelta,onStatus){
 }
 
 var _streamQueue=[];var _streamBusy=false;var _streamAbort=false;
-async function typeStream(container,queue){
-  while(queue.length>0){
-    if(_streamAbort){container.textContent+=queue.join("");queue.length=0;break;}
-    var ch=queue.shift();
-    container.textContent+=ch;
-    container.closest(".chat-msgs,.codex-feed")&&(container.closest(".chat-msgs,.codex-feed").scrollTop=container.closest(".chat-msgs,.codex-feed").scrollHeight);
-    var isPunct='.!?,;:'.indexOf(ch)!==-1;
-    var delay=isPunct?66:22;
-    if(queue.length>200)delay=4;
-    else if(queue.length>80)delay=10;
-    await new Promise(function(r){setTimeout(r,delay);});
-  }
+// rAF + accumulateur (zéro setTimeout) — fluide sur mobile, débit adaptatif.
+function typeStream(container,queue){
+  return new Promise(function(resolve){
+    var last=null,acc=0;
+    var feed=container.closest(".chat-msgs,.codex-feed");
+    function frame(ts){
+      if(_streamAbort){container.textContent+=queue.join("");queue.length=0;resolve();return;}
+      if(last===null)last=ts;
+      acc+=ts-last;last=ts;
+      while(queue.length>0){
+        var ch=queue[0];
+        var isPunct='.!?,;:'.indexOf(ch)!==-1;
+        var delay=isPunct?66:22;
+        if(queue.length>200)delay=4;
+        else if(queue.length>80)delay=10;
+        if(acc<delay)break;
+        acc-=delay;
+        container.textContent+=queue.shift();
+      }
+      if(feed)feed.scrollTop=feed.scrollHeight;
+      if(queue.length>0)window.requestAnimationFrame(frame);
+      else resolve();
+    }
+    window.requestAnimationFrame(frame);
+  });
 }
 
 function applyGoldProjection(container){
@@ -5708,7 +5721,7 @@ async function genCode(){
   genBusy=false;
 }
 
-function typeCode(txt,el,cb){el.textContent="";var i=0;function t(){if(i<txt.length){el.textContent+=txt[i++];el.scrollTop=el.scrollHeight;setTimeout(t,8);}else if(cb)cb();}t();}
+function typeCode(txt,el,cb){el.textContent="";var i=0,last=null,acc=0;function frame(ts){if(last===null)last=ts;acc+=ts-last;last=ts;while(acc>=8&&i<txt.length){el.textContent+=txt[i++];acc-=8;}el.scrollTop=el.scrollHeight;if(i<txt.length)window.requestAnimationFrame(frame);else if(cb)cb();}window.requestAnimationFrame(frame);}
 function cxAddStreamReply(){
   var feed=document.getElementById("codex-feed");
   var wrapper=document.createElement("div");wrapper.className="cx-msg agent";
