@@ -9298,7 +9298,12 @@ async function cxStudioPush(){
     var b=blocs[i];
     if(!b.path||b.path.indexOf("nouveau-fichier")===0)continue;
     try{
-      await ghProxyCall({action:"createOrUpdateFile",path:b.path,content:b.code,message:"feat: "+b.path+" via TilexCode Studio+"});
+      var _sha;
+      try{var _ex=await ghProxyCall({action:"readFile",path:b.path,branch:ghCurrentBranch});_sha=_ex.sha;}catch(_e){}
+      var _b64=btoa(unescape(encodeURIComponent(b.code)));
+      var _body={action:"pushFile",path:b.path,content:_b64,branch:ghCurrentBranch,message:"feat: "+b.path+" via TilexCode Studio+"};
+      if(_sha)_body.sha=_sha;
+      await ghProxyCall(_body);
       pushed++;
       var fileEl=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
       if(fileEl){var s=fileEl.querySelector(".cx-file-status");if(s)s.innerHTML='<span style="color:#37e0a0;">✅ Pushé!</span>';}
