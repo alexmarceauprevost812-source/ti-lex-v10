@@ -434,9 +434,46 @@ async function send(){
     const res=await fetch(FN_URL,{method:"POST",
       headers:{"Authorization":`Bearer ${token}`,"apikey":SUPABASE_ANON,"Content-Type":"application/json"},
       body:JSON.stringify({action:"chat",question:text||"Décris et résume l'image jointe.",history:histForApi,model:$("model").value})});
-    const data=await res.json(); typing.remove();
-    if(!res.ok) throw new Error(data.error||`Erreur ${res.status}`);
-    const answer=data.result||"Pas de réponse."; c.history.push({role:"assistant",text:answer}); renderBubble("assistant",answer);
+    typing.remove();
+    if(!res.ok){
+      let emsg=`Erreur ${res.status}`;
+      try{ const ed=await res.json(); emsg=ed.error||emsg; }catch{}
+      throw new Error(emsg);
+    }
+    const ct=res.headers.get("content-type")||"";
+    if(ct.includes("application/json")){
+      // Compatibilité : ancienne réponse JSON non-stream
+      const data=await res.json();
+      const answer=data.result||"Pas de réponse."; c.history.push({role:"assistant",text:answer}); renderBubble("assistant",answer);
+    }else{
+      // Réponse en flux SSE (data: {...}\n\n … data: [DONE])
+      const wrap=document.createElement("div"); wrap.className="msg";
+      const role=document.createElement("div"); role.className="role"; role.textContent="⚡ ti-lex AL";
+      const statusLine=document.createElement("div"); statusLine.style.cssText="font-size:12px;opacity:.65;margin-bottom:6px;";
+      const body=document.createElement("div"); body.className="body";
+      wrap.append(role,statusLine,body); messages.append(wrap); messages.scrollTop=messages.scrollHeight;
+      const reader=res.body.getReader(); const dec=new TextDecoder();
+      let buf="", answer="";
+      while(true){
+        const {done,value}=await reader.read(); if(done)break;
+        buf+=dec.decode(value,{stream:true});
+        const lines=buf.split("\n"); buf=lines.pop()||"";
+        for(const line of lines){
+          const t=line.trim();
+          if(!t.startsWith("data: "))continue;
+          const d=t.slice(6);
+          if(d==="[DONE]")continue;
+          try{ const ev=JSON.parse(d);
+            if(ev.type==="token"){ answer+=ev.text; body.innerHTML=renderMarkdown(answer); messages.scrollTop=messages.scrollHeight; }
+            else if(ev.type==="status"){ statusLine.textContent=ev.text||""; }
+          }catch{}
+        }
+      }
+      statusLine.remove();
+      if(!answer)answer="Pas de réponse.";
+      body.innerHTML=renderMarkdown(answer); attachCopy(body);
+      c.history.push({role:"assistant",text:answer});
+    }
   }catch(e){ typing.remove(); renderBubble("assistant","⚠️ "+e.message); }
   finally{ sendBtn.disabled=false; input.focus(); }
 }

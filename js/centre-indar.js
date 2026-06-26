@@ -457,7 +457,9 @@ function indarDemarrer() {
 }
 
 // ── Superpowers state ────────────────────────────────────────────────────
-let _indarWebSearch = false;
+// Recherche web active par défaut : les agents INDAR vérifient les infos
+// récentes (CVE, versions, actualités) d'eux-mêmes pour de meilleures réponses.
+let _indarWebSearch = true;
 let _indarImageB64 = null;
 let _indarImageType = null;
 

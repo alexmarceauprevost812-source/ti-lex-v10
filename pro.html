@@ -3068,7 +3068,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
         <span class="indar-sp-slider"></span>
         <span class="indar-sp-label">🧠 Pensée Profonde</span>
       </label>
-      <button class="indar-sp-btn" id="indar-websearch-btn" onclick="indarToggleWebSearch()" title="Recherche web temps réel">🌐 Web Search</button>
+      <button class="indar-sp-btn active" id="indar-websearch-btn" onclick="indarToggleWebSearch()" title="Recherche web temps réel">🌐 Web Search ✓</button>
       <button class="indar-sp-btn" id="indar-vision-btn" onclick="document.getElementById('indar-img-input').click()" title="Analyser une image">👁 Vision</button>
       <input type="file" id="indar-img-input" accept="image/*" style="display:none" onchange="indarLoadImage(this)">
     </div>
@@ -9006,7 +9006,9 @@ async function addTiEtudeNote(note){
 loadTiEtude();
 
 /* ══ WEB SEARCH TOGGLE ══ */
-var webSearchMode=localStorage.getItem("tilex-web-search")==="true";
+/* Auto par défaut : AL cherche sur le web de lui-même quand ça améliore la réponse.
+   Désactivé seulement si l'utilisateur l'a explicitement coupé (valeur "false"). */
+var webSearchMode=localStorage.getItem("tilex-web-search")!=="false";
 (function(){
   var row=document.querySelector(".composer-actions-row");
   if(!row)return;

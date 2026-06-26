@@ -149,6 +149,9 @@ const TOOLS = [
     input_schema: { type: "object", properties: {} } },
   { name: "supabase_query", description: "Lit des lignes d'une table Supabase (lecture seule).",
     input_schema: { type: "object", properties: { table: { type: "string" }, limit: { type: "number" } }, required: ["table"] } },
+  // 🌐 Recherche web native Anthropic (exécutée côté serveur Anthropic).
+  // AL l'utilise de lui-même quand une info récente/externe améliore sa réponse.
+  { type: "web_search_20250305", name: "web_search", max_uses: 5 },
 ];
 async function runTool(name: string, input: any): Promise<string> {
   if (name === "github_read_file") return await githubRead(input.path);
@@ -175,6 +178,9 @@ function buildSystem(ctx: any): string {
   return [
     "Tu es AL, l'agent autonome central de ti-lex v10 (cybersécurité, Québec ⚜️).",
     "Tu es déjà connecté au projet : repo GitHub ti-lex-v10 (branche supabase) et base Supabase.",
+    "Tu peux faire des recherches web en temps réel (outil web_search) : utilise-le de toi-même",
+    "dès qu'une info récente, externe ou à vérifier améliorerait ta réponse (actualités, versions,",
+    "docs, CVE, prix, faits postérieurs à ton entraînement). N'invente jamais — cherche puis cite tes sources.",
     "Réponds dans la langue de l'utilisateur ; par défaut français québécois, direct et concret.",
     "Pour du code à appliquer, utilise EXACTEMENT ce format, un bloc par fichier :",
     "INJECT: chemin/du/fichier.ext", "```", "<code complet>", "```",
@@ -318,6 +324,16 @@ Deno.serve(async (req) => {
           while (guard++ < 6) {
             const resp = await callAnthropic(messages, system);
             if (resp.error) { send({ type: "token", text: "⚠️ " + (resp.error.message || "Erreur API") }); break; }
+            // 🌐 Recherche web (outil serveur Anthropic) : exécutée côté Anthropic,
+            // on signale juste à l'UI que AL a cherché sur le web.
+            if ((resp.content || []).some((b: any) => b.type === "server_tool_use" && b.name === "web_search")) {
+              send({ type: "status", text: "🌐 AL cherche sur le web…" });
+            }
+            // Anthropic met la génération en pause après un outil serveur : on relance.
+            if (resp.stop_reason === "pause_turn") {
+              messages.push({ role: "assistant", content: resp.content });
+              continue;
+            }
             if (resp.stop_reason === "tool_use") {
               messages.push({ role: "assistant", content: resp.content });
               const toolResults: any[] = [];
