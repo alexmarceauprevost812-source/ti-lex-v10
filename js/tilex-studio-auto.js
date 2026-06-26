@@ -81,6 +81,7 @@
       open.addEventListener("click", () => {
         if (this._candidat) this.injecter(this._candidat);
         else this.ouvrir();
+        open.classList.remove("visible"); // le bouton disparaît après le clic
       });
     },
 
