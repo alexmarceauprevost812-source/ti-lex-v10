@@ -10,6 +10,7 @@
     { "source": "/forfaits", "destination": "/forfaits.html" },
     { "source": "/forfaits-cyber", "destination": "/forfaits-cyber.html" },
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
+    { "source": "/bourse", "destination": "/bourse.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/app", "destination": "/pro.html" }
   ],
