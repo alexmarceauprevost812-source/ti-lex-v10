@@ -9676,7 +9676,8 @@ trackFeatureUsage("app_load");
 <script src="js/tilex-offline.js"></script>
 <script src="js/tilex-connections.js"></script>
 <script src="js/tilex-copy.js"></script>
-<script src="js/tilex-theme.js"></script>
+<!-- tilex-theme.js retiré : doublon bogué (écrivait data-theme="nuit" sur <body>,
+     ce qui sabotait le mode jour). Le vrai sélecteur = toggleTheme() inline (html night/day). -->
 <script src="js/tilex-push.js"></script>
 <script src="js/scan-manager.js"></script>
 <script src="js/scan-engine.js"></script>
