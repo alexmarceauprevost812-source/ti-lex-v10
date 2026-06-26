@@ -1,35 +1,33 @@
 // ============================================
 // 📁 js/tilex-crypto-logos.js
-// MOTEUR LOGOS CRYPTO + PRIX CAD 🇨🇦 — ti-lex-AL v10
-// Affiche logo + prix en dollars canadiens en temps réel
+// MOTEUR LOGOS CRYPTO WEALTHSIMPLE 🇨🇦 — ti-lex-AL v10
+// Logos + prix CAD + flag staking pour les cryptos dispo sur Wealthsimple
 // Auteur: Alex Marceau-Prévost
-// 🔒 Le texte est échappé avant insertion (anti-XSS).
+// 🔒 Texte échappé avant insertion (anti-XSS).
 // ============================================
 (function () {
   "use strict";
 
   const TilexCryptoLogos = {
 
-    // 🎨 Base de données des cryptos (avec l'ID CoinGecko pour le prix)
+    // 🍁 Cryptos Wealthsimple (top populaires) — staking=true = stakable sur WS
     cryptos: {
-      btc: { nom: 'Bitcoin', symbole: 'BTC', id: 'bitcoin', couleur: '#F7931A',
-        logo: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
-        alias: ['btc', 'bitcoin', 'bitcoine', 'bitcoinne'] },
-      eth: { nom: 'Ethereum', symbole: 'ETH', id: 'ethereum', couleur: '#627EEA',
-        logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
-        alias: ['eth', 'ethereum', 'ether', 'ethereume'] },
-      sol: { nom: 'Solana', symbole: 'SOL', id: 'solana', couleur: '#14F195',
-        logo: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-        alias: ['sol', 'solana', 'solanna'] },
-      xrp: { nom: 'XRP', symbole: 'XRP', id: 'ripple', couleur: '#23292F',
-        logo: 'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png',
-        alias: ['xrp', 'ripple'] },
-      ada: { nom: 'Cardano', symbole: 'ADA', id: 'cardano', couleur: '#0033AD',
-        logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png',
-        alias: ['ada', 'cardano'] },
-      doge: { nom: 'Dogecoin', symbole: 'DOGE', id: 'dogecoin', couleur: '#C2A633',
-        logo: 'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',
-        alias: ['doge', 'dogecoin', 'doge coin'] }
+      btc:  { nom:'Bitcoin',     symbole:'BTC',  id:'bitcoin',      couleur:'#F7931A', staking:false, logo:'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',     alias:['btc','bitcoin','bitcoine','bitcoinne'] },
+      eth:  { nom:'Ethereum',    symbole:'ETH',  id:'ethereum',     couleur:'#627EEA', staking:true,  logo:'https://assets.coingecko.com/coins/images/279/small/ethereum.png',  alias:['eth','ethereum','ether','ethereume'] },
+      sol:  { nom:'Solana',      symbole:'SOL',  id:'solana',       couleur:'#14F195', staking:true,  logo:'https://assets.coingecko.com/coins/images/4128/small/solana.png',  alias:['sol','solana','solanna'] },
+      ada:  { nom:'Cardano',     symbole:'ADA',  id:'cardano',      couleur:'#0033AD', staking:true,  logo:'https://assets.coingecko.com/coins/images/975/small/cardano.png',  alias:['ada','cardano'] },
+      dot:  { nom:'Polkadot',    symbole:'DOT',  id:'polkadot',     couleur:'#E6007A', staking:true,  logo:'https://assets.coingecko.com/coins/images/12171/small/polkadot.png', alias:['dot','polkadot'] },
+      xrp:  { nom:'XRP',         symbole:'XRP',  id:'ripple',       couleur:'#23292F', staking:false, logo:'https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png', alias:['xrp','ripple'] },
+      doge: { nom:'Dogecoin',    symbole:'DOGE', id:'dogecoin',     couleur:'#C2A633', staking:false, logo:'https://assets.coingecko.com/coins/images/5/small/dogecoin.png',    alias:['doge','dogecoin','doge coin'] },
+      bch:  { nom:'Bitcoin Cash',symbole:'BCH',  id:'bitcoin-cash', couleur:'#0AC18E', staking:false, logo:'https://assets.coingecko.com/coins/images/780/small/bitcoin-cash-circle.png', alias:['bch','bitcoin cash','bitcoincash'] },
+      ltc:  { nom:'Litecoin',    symbole:'LTC',  id:'litecoin',     couleur:'#345D9D', staking:false, logo:'https://assets.coingecko.com/coins/images/2/small/litecoin.png',    alias:['ltc','litecoin'] },
+      avax: { nom:'Avalanche',   symbole:'AVAX', id:'avalanche-2',  couleur:'#E84142', staking:false, logo:'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png', alias:['avax','avalanche'] },
+      link: { nom:'Chainlink',   symbole:'LINK', id:'chainlink',    couleur:'#2A5ADA', staking:false, logo:'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png', alias:['link','chainlink'] },
+      bnb:  { nom:'BNB',         symbole:'BNB',  id:'binancecoin',  couleur:'#F3BA2F', staking:false, logo:'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png', alias:['bnb','binance coin','binancecoin'] },
+      arb:  { nom:'Arbitrum',    symbole:'ARB',  id:'arbitrum',     couleur:'#28A0F0', staking:false, logo:'https://assets.coingecko.com/coins/images/16547/small/arb.jpg',     alias:['arb','arbitrum'] },
+      algo: { nom:'Algorand',    symbole:'ALGO', id:'algorand',     couleur:'#000000', staking:false, logo:'https://assets.coingecko.com/coins/images/4380/small/download.png',  alias:['algo','algorand'] },
+      aave: { nom:'Aave',        symbole:'AAVE', id:'aave',         couleur:'#B6509E', staking:false, logo:'https://assets.coingecko.com/coins/images/12645/small/aave-token-round.png', alias:['aave'] },
+      bonk: { nom:'Bonk',        symbole:'BONK', id:'bonk',         couleur:'#FF7A00', staking:false, logo:'https://assets.coingecko.com/coins/images/28600/small/bonk.jpg',    alias:['bonk'] }
     },
 
     // 💾 Cache des prix (évite de spammer l'API)
@@ -44,10 +42,7 @@
       });
     },
 
-    /**
-     * 💰 Récupère les prix en CAD via CoinGecko (API gratuite, pas de clé).
-     * Cache 60 s + déduplication des appels concurrents.
-     */
+    /** 💰 Récupère les prix en CAD via CoinGecko (gratuit, aucune clé). Cache 60 s + dédup. */
     async chargerPrix() {
       const maintenant = Date.now();
       if (maintenant - this.derniereMaj < 60000 && Object.keys(this.prixCache).length) {
@@ -67,7 +62,7 @@
           return data;
         } catch (e) {
           console.warn('⚠️ TilexCrypto: prix CAD pas dispo (offline?)', e);
-          return this.prixCache; // ancien cache si offline
+          return this.prixCache;
         } finally {
           this._enCours = null;
         }
@@ -89,11 +84,11 @@
       if (montant == null) return '';
       return new Intl.NumberFormat('fr-CA', {
         style: 'currency', currency: 'CAD',
-        maximumFractionDigits: montant < 1 ? 4 : 2
+        maximumFractionDigits: montant < 1 ? 6 : 2
       }).format(montant);
     },
 
-    /** 🏷️ Génère le badge logo + prix CAD + variation (données internes/numériques = sûres) */
+    /** 🏷️ Badge logo + prix CAD + variation + flag staking 🥩 */
     badge(crypto) {
       const data = this.prixCache[crypto.id];
       const prix = data ? this._esc(this.formatCAD(data.cad)) : '';
@@ -105,12 +100,13 @@
         variation = '<span class="tilex-crypto-var ' + classeVar + '">' +
           fleche + ' ' + Math.abs(change).toFixed(1) + '%</span>';
       }
-      return '<span class="tilex-crypto-badge" style="--c:' + crypto.couleur + '">' +
-        '<img src="' + crypto.logo + '" alt="' + crypto.symbole + '" class="tilex-crypto-logo" ' +
-        'onerror="this.style.display=\'none\'">' +
+      const stake = crypto.staking
+        ? '<span class="tilex-crypto-stake" title="Stakable sur Wealthsimple">🥩</span>' : '';
+      return '<span class="tilex-crypto-badge" style="--c:' + crypto.couleur + '" title="' + this._esc(crypto.nom) + ' • Wealthsimple">' +
+        '<img src="' + crypto.logo + '" alt="' + crypto.symbole + '" class="tilex-crypto-logo" onerror="this.style.display=\'none\'">' +
         '<span class="tilex-crypto-nom">' + crypto.symbole + '</span>' +
         (prix ? '<span class="tilex-crypto-prix">' + prix + '</span>' : '') +
-        variation +
+        variation + stake +
       '</span>';
     },
 
@@ -122,10 +118,7 @@
       });
     },
 
-    /**
-     * ✨ Scanne un texte et remplace les cryptos par des badges (avec prix CAD).
-     * ⚠️ ASYNC : charge les prix live avant. Texte échappé (anti-XSS).
-     */
+    /** ✨ Scanne un texte → badges (prix CAD live). ASYNC. Texte échappé (anti-XSS). */
     async injecter(texte) {
       await this.chargerPrix();
       return this._injecterSync(texte);
@@ -136,10 +129,7 @@
       return mots ? mots.some((m) => this.trouver(m)) : false;
     },
 
-    /**
-     * 🌳 Rehausse un élément DÉJÀ rendu (Markdown/HTML) : badges crypto dans le
-     * texte seulement (saute pre/code/a/…). Charge les prix une fois, puis remplace.
-     */
+    /** 🌳 Rehausse un élément déjà rendu (Markdown/HTML) — texte seulement, saute pre/code/a. */
     async rehausser(root) {
       if (!root || !root.ownerDocument) return;
       await this.chargerPrix();
@@ -180,7 +170,8 @@
       ".tilex-crypto-prix{color:#e8e8e8;font-size:.82em;font-weight:700;}" +
       ".tilex-crypto-var{font-size:.75em;font-weight:700;}" +
       ".tilex-up{color:#16c784;}" +
-      ".tilex-down{color:#ea3943;}";
+      ".tilex-down{color:#ea3943;}" +
+      ".tilex-crypto-stake{font-size:.85em;line-height:1;}";
     (document.head || document.documentElement).appendChild(st);
   }
 
