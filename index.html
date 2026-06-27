@@ -568,8 +568,8 @@
       .terminal-fab { bottom: 16px; right: 16px; }
     }
   </style>
-  <!-- Mobile fluide (ajouté via TilexCode) -->
-  <link rel="stylesheet" href="css/tilex-mobile.css">
+  <!-- tilex-mobile.css retiré : il mettait html,body{overflow:hidden} sur mobile
+       → bloquait le scroll + l'accès au formulaire de connexion sur l'accueil. -->
 </head>
 <body>
 
@@ -1442,8 +1442,6 @@ if ('serviceWorker' in navigator) {
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="js/tilex-offline.js"></script>
-<!-- Autocorrect québécois (ajouté via TilexCode) -->
-<script src="js/tilex-autocorrect.js" defer></script>
 
 </body>
 </html>
