@@ -48,11 +48,11 @@
   --tb:56px;--sb-w:252px;--sb-c:62px;
 }
 [data-theme="day"]{
-  --bg:#949698;--bg2:#9b9d9f;--bg3:#8d8f92;--bg4:#848689;
-  --txt:#000000;--muted:#2e3034;
-  --border:rgba(80,85,95,.22);--grid:rgba(80,85,95,.08);
+  --bg:#E8DCC8;--bg2:#EFE5D4;--bg3:#DED0B8;--bg4:#D3C3A6;
+  --txt:#1a1208;--muted:#5a4d38;
+  --border:rgba(120,100,70,.26);--grid:rgba(120,100,70,.08);
   --or:#5A4000;--or2:#7A5800;--or3:#3D2B00;
-  --agent-text-color:#000000;
+  --agent-text-color:#1a1208;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-tilex)!important;}
 html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
@@ -82,11 +82,12 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
   -webkit-text-fill-color:transparent;animation:txt-sw 3.2s ease-in-out infinite;}
 .btn-outline:hover{background:rgba(255,106,0,.08);}
 @keyframes txt-sw{0%{background-position:200% center}100%{background-position:-60% center}}
+/* ghost = même famille orange (outline léger) pour cohérence visuelle */
 .btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;
+  padding:8px 16px;border-radius:var(--radius);border:1px solid rgba(255,106,0,.35);cursor:pointer;
   font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;
-  background:transparent;color:var(--muted);transition:all .2s;width:auto;}
-.btn-ghost:hover{border-color:var(--orange);color:var(--orange);}
+  background:transparent;color:var(--orange);transition:all .2s;width:auto;}
+.btn-ghost:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,106,0,.08);}
 
 /* ══ TOPBAR ══ */
 .topbar{position:fixed;top:0;left:0;right:0;z-index:400;height:var(--tb);
@@ -1892,7 +1893,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 /* === TILEX THEME === */
 body[data-theme="nuit"]{background:#000;color:var(--text,#e6e8ec);}
 body[data-theme="nuit"] .btn,body[data-theme="nuit"] .btn-primary{background:var(--orange,#FF6B00);color:#000;}
-body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
+body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
 /* ═══ AVATARS ANIMÉS ═══ */
 .indar-avatar-wrap svg{width:42px;height:42px;transition:filter .3s;}
@@ -2079,15 +2080,6 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
   </div>
 </nav>
 
-<!-- Scan en cours — indicateur flottant -->
-<div id="scan-floating-indicator" onclick="scanRetourSilex()">
-  <span class="sfi-icon">🔰</span>
-  <div style="display:flex;flex-direction:column;gap:1px;">
-    <span class="sfi-label">SCAN EN COURS</span>
-    <span class="sfi-target" id="sfi-target-name"></span>
-  </div>
-  <span class="sfi-timer" id="sfi-timer">0:00</span>
-</div>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
@@ -2111,6 +2103,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
   </div>
   <div class="sb-submenu open" id="sm-chat">
     <div class="sb-sub-inner">
+      <div class="sb-sub-item" id="sub-chat" onclick="showTab('chat')">💬 Chat</div>
       <div class="sb-sub-item active" id="sub-convos" onclick="ouvriConvSidebar()" data-hide-in-chat="true">Conversations</div>
       <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
       <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
@@ -2131,20 +2124,15 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
     </span><span class="sb-label" data-txt="MARCEAU"></span>
   </div>
 
-  <!-- SILEX Cybersécurité — masqué par défaut, affiché si admin -->
-  <div class="sb-item silex-admin-only" id="si-silex" onclick="showTab('silex')" style="display:none;">
-    <span class="sb-icon" style="color:#FF6B00;">🔰</span><span class="sb-label" data-txt="SILEX"></span>
+  <!-- SECURITY — Cybersécurité (page dédiée /security) -->
+  <div class="sb-item silex-admin-only" id="si-security" onclick="window.location.href='/security'" style="display:none;cursor:pointer;">
+    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITY"></span>
     <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
   </div>
 
   <!-- Dashboard Analytics -->
   <div class="sb-item" id="si-dashboard" onclick="dashOpen()">
     <span class="sb-icon" style="color:#4f8ef7;">📊</span><span class="sb-label" data-txt="DASHBOARD"></span>
-  </div>
-
-  <!-- Centre INDAR — admin only -->
-  <div class="sb-item silex-admin-only" id="si-indar" onclick="showTab('indar')" style="display:none;cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="CENTRE INDAR"></span>
   </div>
 
   <!-- Forfaits Cyber — admin only -->
@@ -2861,236 +2849,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
   <!-- AGENT MARCEAU — Dialogue multi-agents 4 phases -->
   <div id="view-marceau" class="view"></div>
 
-  <!-- SILEX — Cybersécurité Admin -->
-  <div id="view-silex" class="view silex-admin-only">
-    <div style="display:flex;align-items:center;gap:14px;padding:20px 24px 16px;border-bottom:1px solid #23232c;">
-      <div style="width:44px;height:44px;background:linear-gradient(135deg,#FF6B00,#cc5500);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px rgba(255,107,0,.3);">🔰</div>
-      <div>
-        <h2 style="margin:0;color:#FF6B00;font-size:18px;font-weight:800;letter-spacing:2px;font-family:'Share Tech Mono',monospace;">ÉQUIPE SILEX</h2>
-        <p style="margin:0;color:#6c6c78;font-size:11px;font-family:'Share Tech Mono',monospace;">Cybersécurité défensive · ti-lex-v10 · Admin uniquement</p>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-        <span style="background:rgba(255,107,0,.1);border:1px solid rgba(255,107,0,.27);color:#FF6B00;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">SOW ACTIF · Supabase + Vercel</span>
-      </div>
-    </div>
-    <div style="display:flex;border-bottom:1px solid #23232c;padding:0 24px;">
-      <button class="silex-tab active" onclick="silexTab('scan')" id="silex-tab-scan" style="padding:12px 16px;font-size:12px;font-weight:600;color:#FF6B00;border-bottom:2px solid #FF6B00;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">⚡ LANCER UN SCAN</button>
-      <button class="silex-tab" onclick="silexTab('chat')" id="silex-tab-chat" style="padding:12px 16px;font-size:12px;font-weight:600;color:#6c6c78;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">💬 CHAT SILEX</button>
-      <button class="silex-tab" onclick="silexTab('history')" id="silex-tab-history" style="padding:12px 16px;font-size:12px;font-weight:600;color:#6c6c78;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">📋 HISTORIQUE</button>
-    </div>
-    <div style="padding:20px 24px;overflow-y:auto;flex:1;">
-      <div id="silex-panel-scan">
-        <div style="background:#0d0d12;border:1px solid #23232c;border-radius:16px;padding:20px;margin-bottom:20px;">
-          <h3 style="color:#FF6B00;font-size:13px;font-weight:700;letter-spacing:2px;margin:0 0 16px;font-family:'Share Tech Mono',monospace;">🎯 NOUVEAU SCAN</h3>
-          <div style="margin-bottom:12px;">
-            <label style="color:#6c6c78;font-size:11px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">CIBLE</label>
-            <select id="silex-target" style="width:100%;margin-top:6px;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:10px 12px;color:#e2e2ea;font-size:13px;cursor:pointer;font-family:'Share Tech Mono',monospace;">
-              <option value="rnuripmfozlxenryxhdc.supabase.co">Supabase (rnuripmfozlxenryxhdc)</option>
-              <option value="ti-lex-v10.vercel.app">Vercel (ti-lex-v10)</option>
-            </select>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label style="color:#6c6c78;font-size:11px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">TYPE DE SCAN</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="passive_recon" checked><span>🔍 Reconnaissance passive</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="web_scan"><span>🌐 Scan web</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="config_audit"><span>⚙️ Audit configuration</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="vuln_scan"><span>🛡️ Vulnérabilités</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="dark_web_monitor"><span>🌑 Dark web</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="full_audit"><span>🔰 Audit complet</span></label>
-            </div>
-          </div>
-          <button id="silex-launch-btn" onclick="silexLaunchScan()" style="width:100%;background:linear-gradient(135deg,#FF6B00,#cc5500);border:none;border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:opacity .2s,transform .1s;font-family:'Share Tech Mono',monospace;">🔰 LANCER LE SCAN</button>
-        </div>
-        <div id="silex-results" style="display:none;"></div>
-        <div id="guide-protection-result" style="display:none;padding:0 4px;"></div>
-      </div>
-      <div id="silex-panel-chat" style="display:none;">
-        <div style="display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:400px;">
-          <div id="silex-chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-bottom:16px;">
-            <div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:12px;padding:16px;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <span style="font-size:16px;">🔰</span>
-                <span style="color:#FF6B00;font-weight:700;font-size:12px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">SILEX</span>
-              </div>
-              <p style="color:#e2e2ea;font-size:13px;margin:0;line-height:1.6;font-family:'Share Tech Mono',monospace;">Système de cybersécurité actif.<br>Je surveille ti-lex-v10.<br>Pose-moi une question ou lance un scan.<br><span style="color:#FF6B00;">Je ne reproduis jamais les données brutes.</span></p>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid #23232c;">
-            <input id="silex-chat-input" type="text" placeholder="Demande à SILEX... (ex: analyse les headers HTTP de Supabase)" onkeydown="if(event.key==='Enter')silexSendChat()" style="flex:1;background:#0d0d12;border:1px solid rgba(255,107,0,.2);border-radius:10px;padding:12px 16px;color:#e2e2ea;font-size:13px;outline:none;font-family:'Share Tech Mono',monospace;">
-            <button onclick="silexSendChat()" style="background:linear-gradient(135deg,#FF6B00,#cc5500);border:none;border-radius:10px;padding:12px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Share Tech Mono',monospace;">Envoyer</button>
-          </div>
-        </div>
-      </div>
-      <div id="silex-panel-history" style="display:none;">
-        <div id="silex-history-list">
-          <p style="color:#6c6c78;text-align:center;padding:40px 0;font-family:'Share Tech Mono',monospace;">Chargement de l'historique...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<!-- ════════════════════════════════════════════════
-     CENTRE INDAR — Section Agents IA
-     ════════════════════════════════════════════════ -->
-<div id="view-indar" class="view silex-admin-only">
-
-  <!-- Header Centre INDAR -->
-  <div style="
-    background:#0d0d0d;
-    border-bottom:2px solid #FF6B00;
-    padding:14px 18px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-  ">
-    <!-- Logo ti-lex orange -->
-    <div style="
-      width:42px;height:42px;background:#FF6B00;
-      border-radius:10px;display:flex;align-items:center;
-      justify-content:center;font-size:22px;flex-shrink:0;">⚜️</div>
-
-    <div style="flex:1;">
-      <div style="font-size:18px;font-weight:bold;letter-spacing:1px;font-family:monospace;">
-        <span style="color:#fff;">CENTRE </span>
-        <span style="color:#FF6B00;">INDAR</span>
-      </div>
-      <div style="color:#555;font-size:10px;letter-spacing:2px;font-family:monospace;">
-        ti-lex v10 · cybersécurité autonome · Produit du Québec 🍁
-      </div>
-    </div>
-
-    <div style="
-      background:#1a1a1a;border:1px solid #333;border-radius:8px;
-      padding:8px 14px;display:flex;align-items:center;gap:6px;">
-      <div id="indar-status-dot" style="
-        width:7px;height:7px;border-radius:50%;background:#333;"></div>
-      <span id="indar-status-label" style="
-        color:#666;font-size:10px;font-weight:bold;
-        letter-spacing:2px;font-family:monospace;">HORS LIGNE</span>
-    </div>
-  </div>
-
-  <!-- Corps -->
-  <div style="padding:18px 16px;max-width:600px;margin:0 auto;">
-
-    <!-- Commandant LEX -->
-    <div style="
-      background:#111;border:1px solid #23232c;border-radius:10px;
-      padding:14px 16px;margin-bottom:16px;
-      display:flex;align-items:center;gap:12px;">
-      <div style="
-        width:42px;height:42px;background:#1a1a1a;border-radius:50%;
-        border:2px solid #FF6B00;
-        display:flex;align-items:center;justify-content:center;
-        font-size:20px;flex-shrink:0;">👤</div>
-      <div style="flex:1;">
-        <div style="font-size:9px;color:#FF6B00;letter-spacing:2px;
-                    margin-bottom:2px;font-family:monospace;">COMMANDANT HUMAIN</div>
-        <div style="font-size:20px;font-weight:bold;color:#fff;font-family:monospace;">LEX</div>
-        <div style="font-size:11px;color:#666;font-family:monospace;">
-          Fondateur · Opérateur unique du Centre INDAR</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="color:#555;font-size:9px;letter-spacing:1px;
-                    margin-bottom:2px;font-family:monospace;">AGENTS ACTIFS</div>
-        <div style="font-size:22px;font-weight:bold;font-family:monospace;">
-          <span id="indar-agents-actifs" style="color:#ff3b3b;">0</span>
-          <span style="color:#444;">/7</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bouton Démarrer -->
-    <div onclick="indarDemarrer()" style="
-      background:#FF6B00;border-radius:10px;padding:14px 18px;
-      margin-bottom:16px;display:flex;align-items:center;
-      justify-content:space-between;cursor:pointer;
-      box-shadow:0 0 20px rgba(255,107,0,0.3);
-      transition:box-shadow 0.2s;"
-      onmouseover="this.style.boxShadow='0 0 30px rgba(255,107,0,0.6)'"
-      onmouseout="this.style.boxShadow='0 0 20px rgba(255,107,0,0.3)'">
-      <span style="color:#000;font-weight:bold;font-size:14px;
-                   letter-spacing:2px;font-family:monospace;">
-        ⚡ DÉMARRER LE CENTRE INDAR
-      </span>
-      <span style="color:#00000088;font-size:11px;font-family:monospace;">
-        — roule tout seul
-      </span>
-    </div>
-
-    <!-- SUPERPOWERS BAR -->
-    <div class="indar-superpowers-bar" id="indar-superpowers-bar">
-      <label class="indar-sp-toggle" title="Pensée profonde — réponses plus lentes mais détaillées">
-        <input type="checkbox" id="indar-deepthink-cb" />
-        <span class="indar-sp-slider"></span>
-        <span class="indar-sp-label">🧠 Pensée Profonde</span>
-      </label>
-      <button class="indar-sp-btn active" id="indar-websearch-btn" onclick="indarToggleWebSearch()" title="Recherche web temps réel">🌐 Web Search ✓</button>
-      <button class="indar-sp-btn" id="indar-vision-btn" onclick="document.getElementById('indar-img-input').click()" title="Analyser une image">👁 Vision</button>
-      <input type="file" id="indar-img-input" accept="image/*" style="display:none" onchange="indarLoadImage(this)">
-    </div>
-    <!-- Superpowers hint -->
-    <div class="indar-sp-hint" id="indar-sp-hint"></div>
-    <!-- Image preview -->
-    <div class="indar-img-preview" id="indar-img-preview" style="display:none;">
-      <img id="indar-preview-img" src="" alt="Image">
-      <span class="indar-img-label">👁 L'agent va analyser cette image</span>
-      <button class="indar-img-remove" onclick="indarRemoveImage()">✕</button>
-    </div>
-    <!-- Dropzone overlay -->
-    <div class="indar-dropzone" id="indar-dropzone">
-      <span style="font-size:36px;">📷</span>
-      <span style="color:#FF6B00;font-size:13px;font-family:monospace;">Glisse une image ici</span>
-    </div>
-
-    <!-- Label agents -->
-    <div style="color:#444;font-size:10px;letter-spacing:3px;
-                margin-bottom:10px;padding-left:2px;font-family:monospace;">
-      AGENTS IA · 7 DISPONIBLES
-    </div>
-
-    <!-- Liste agents (injectée par JS) -->
-    <div id="indar-agents-liste"></div>
-
-    <!-- Panneau détail agent (injecté par JS) -->
-    <div id="indar-agent-detail"></div>
-
-    <!-- ═══ QUICK SCAN GRID ═══ -->
-    <div style="margin-top:28px;border-top:1px solid #1a1a22;padding-top:20px;">
-      <header class="indar-scan-head">
-        <div class="indar-scan-crest mono">◇</div>
-        <div>
-          <h3 class="indar-scan-title">Quick <span>Scan</span></h3>
-          <div class="indar-scan-sub mono">7 AGENTS · DISPATCHER</div>
-        </div>
-      </header>
-
-      <div style="margin-bottom:14px;">
-        <input id="indar-scan-target" type="text" placeholder="Cible du scan (URL, domaine, IP...)" style="width:100%;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:10px 12px;color:#e2e2ea;font-size:12px;font-family:monospace;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#FF6B00'" onblur="this.style.borderColor='#23232c'">
-      </div>
-
-      <div class="indar-controls">
-        <button class="indar-btn indar-btn--primary" id="indar-seq">▸ Scan séquentiel (1 par 1)</button>
-        <button class="indar-btn" id="indar-all">⛬ Scan complet (LES 7)</button>
-        <button class="indar-btn indar-btn--ghost" id="indar-grid-reset">Réinitialiser</button>
-      </div>
-
-      <div class="indar-grid" id="indar-grid"></div>
-
-      <div class="indar-console mono" id="indar-console">
-        <div class="line"><span class="who">SYSTÈME</span><span class="msg">En attente. Lance un scan pour que les agents prennent place.</span></div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="margin-top:24px;text-align:center;color:#222;
-                font-size:10px;letter-spacing:2px;font-family:monospace;">
-      TI-LEX-AL · PRODUIT DU QUÉBEC 🍁 · ti-lex.ca
-    </div>
-  </div>
-</div>
-<!-- ════════════ FIN CENTRE INDAR ════════════ -->
+  <!-- SILEX & CENTRE INDAR déplacés vers la page dédiée /security (security.html) -->
 
 </main>
 
@@ -3411,18 +3170,16 @@ function ouvriConvSidebar(){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-silex","si-fichiers","si-indar"].forEach(id=>{
+  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-fichiers"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers",indar:"si-indar"};
+  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",fichiers:"si-fichiers"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
-  if(name==="silex"&&typeof silexLoadHistory==="function"){silexLoadHistory();}
-  if(name==="indar"&&typeof indarRendreAgents==="function"){indarRendreAgents();}
   document.querySelectorAll(".mqb-btn").forEach(function(b,i){
     var tabs=["chat","codex","studio","settings"];
     b.classList.toggle("active",tabs[i]===name);
@@ -8225,235 +7982,7 @@ function silexCheckAccess(){
   });
 }
 
-function silexTab(tab){
-  ['scan','chat','history'].forEach(function(t){
-    var panel=document.getElementById('silex-panel-'+t);
-    var btn=document.getElementById('silex-tab-'+t);
-    if(panel)panel.style.display=t===tab?'block':'none';
-    if(btn){
-      btn.style.color=t===tab?'#FF6B00':'#6c6c78';
-      btn.style.borderBottomColor=t===tab?'#FF6B00':'transparent';
-    }
-  });
-  if(tab==='history')silexLoadHistory();
-}
-
-var DOMAINES_EXCLUS=["ti-lex.ca","tilex.ca"];
-function estCibleAutorisee(c){return!DOMAINES_EXCLUS.some(function(e){return c.indexOf(e)!==-1;});}
-
-/* ── Timer flottant — scan en arrière-plan ── */
-var _scanTimerInterval=null;
-var _scanStartTime=0;
-var _scanEnCours=false;
-
-function scanDemarrerTimer(scanType){
-  _scanEnCours=true;_scanStartTime=Date.now();
-  var indicator=document.getElementById('scan-floating-indicator');
-  var timerEl=document.getElementById('sfi-timer');
-  indicator.className='';indicator.style.display='flex';
-  timerEl.textContent='0:00';
-  _scanTimerInterval=setInterval(function(){
-    var elapsed=Math.floor((Date.now()-_scanStartTime)/1000);
-    var m=Math.floor(elapsed/60);var s=elapsed%60;
-    timerEl.textContent=m+':'+(s<10?'0':'')+s;
-  },1000);
-}
-
-function scanArreterTimer(statut){
-  _scanEnCours=false;
-  if(_scanTimerInterval){clearInterval(_scanTimerInterval);_scanTimerInterval=null;}
-  var indicator=document.getElementById('scan-floating-indicator');
-  var label=indicator.querySelector('.sfi-label');
-  if(statut==='error'){
-    indicator.className='sfi-error';
-    label.textContent='SCAN ÉCHOUÉ';
-    indicator.querySelector('.sfi-icon').textContent='⚠️';
-  }else{
-    indicator.className='sfi-done';
-    label.textContent='SCAN TERMINÉ';
-    indicator.querySelector('.sfi-icon').textContent='✅';
-  }
-  setTimeout(function(){
-    indicator.style.display='none';
-    indicator.className='';
-    indicator.querySelector('.sfi-icon').textContent='🔰';
-    label.textContent='SCAN EN COURS';
-  },8000);
-}
-
-function scanRetourSilex(){
-  showTab('silex');
-}
-
-async function silexLaunchScan(){
-  var btn=document.getElementById('silex-launch-btn');
-  var target=document.getElementById('silex-target').value;
-  var scanTypeEl=document.querySelector('input[name="scan_type"]:checked');
-  var scanType=scanTypeEl?scanTypeEl.value:'passive_recon';
-  if(!target)return;
-  if(!estCibleAutorisee(target)){alert('Cible hors mandat. Seuls Supabase et Vercel sont autorisés.');return;}
-  if(_scanEnCours){showToastMsg('Un scan est déjà en cours…');return;}
-  btn.disabled=true;btn.textContent='🔰 Scan en cours...';
-  var resultsEl=document.getElementById('silex-results');
-  resultsEl.style.display='block';
-  resultsEl.innerHTML='<div style="background:#0d0d12;border:1px solid rgba(255,107,0,.27);border-radius:16px;padding:24px;text-align:center;">'+
-    '<div style="color:#FF6B00;font-size:32px;margin-bottom:12px;animation:silexPulse 1s ease-in-out infinite;">🔰</div>'+
-    '<p style="color:#FF6B00;font-weight:700;letter-spacing:2px;margin:0;font-family:\'Share Tech Mono\',monospace;">SILEX analyse '+escHtml(target)+'...</p>'+
-    '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+'</p>'+
-    '<p style="color:#6c6c78;font-size:11px;margin:12px 0 0;">Tu peux changer de page — le scan continue en arrière-plan.</p></div>';
-  document.getElementById('sfi-target-name').textContent=target;
-  scanDemarrerTimer(scanType);
-  try{
-    var session=(await supabase.auth.getSession()).data.session;
-    if(!session)throw new Error('Non authentifié');
-    var res=await fetch(SB_URL+'/functions/v1/security-agent',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
-      body:JSON.stringify({target:target,scan_type:scanType,authorization_id:SILEX_SOW_ID})
-    });
-    var rawText=await res.text();
-    var data;
-    try{data=parseScanJSON(rawText);}catch(pe){
-      if(!res.ok)throw new Error('Erreur HTTP '+res.status);
-      throw pe;
-    }
-    if(!res.ok||!data.success)throw new Error(data.error||'Erreur scan');
-    if(!isValidScanResult(data))throw new Error('Résultat de scan incomplet ou invalide.');
-    scanArreterTimer('ok');
-    silexRenderResults(data,resultsEl);
-    if(typeof scanAnalyserClesSensibles==='function'){
-      var cles=scanAnalyserClesSensibles(data);
-      var vulnCount=(data.severity_counts&&data.severity_counts.critical||0)+(data.severity_counts&&data.severity_counts.high||0);
-      var score=scanCalculerScoreRisque(cles,vulnCount);
-      var rapportDiv=document.createElement('div');
-      resultsEl.appendChild(rapportDiv);
-      scanAfficherRapportCles(rapportDiv,cles,score);
-    }
-    if(typeof onScanTermine==='function')onScanTermine(scanType);
-    if(typeof indarResumerScan==='function'){setTimeout(function(){indarResumerScan(data,scanType);},1500);}
-    showToastMsg('✅ Scan SILEX terminé — résultats disponibles');
-  }catch(err){
-    scanArreterTimer('error');
-    resultsEl.innerHTML='<div class="scan-error"><div style="font-weight:700;margin-bottom:8px;">⚠️ Le scan n\'a pas pu se terminer</div>'+
-      '<div style="color:#e2e2ea;font-size:12px;margin-bottom:8px;">Réessaie ou réduis la portée du scan.</div>'+
-      '<details style="cursor:pointer;"><summary style="font-size:11px;color:#6c6c78;">Détail technique</summary>'+
-      '<pre style="font-size:10px;color:#6c6c78;margin:6px 0 0;white-space:pre-wrap;">'+escHtml(err.message)+'</pre></details></div>';
-  }finally{
-    btn.disabled=false;btn.textContent='🔰 LANCER LE SCAN';
-  }
-}
-
-function scanDeterminerStatut(texte){
-  if(!texte)return'ok';
-  var t=texte.toLowerCase();
-  var critique=['critical','critique','danger','vulnérab','exploit','injection','xss','breach','compromis','elevated','high','élevé'];
-  var attention=['warning','attention','medium','moyen','à modifier','à prévoir','recommand','devrait','could','missing','manquant','expired','expiré','outdated'];
-  for(var i=0;i<critique.length;i++){if(t.indexOf(critique[i])!==-1)return'critique';}
-  for(var i=0;i<attention.length;i++){if(t.indexOf(attention[i])!==-1)return'attention';}
-  return'ok';
-}
-
-function silexRenderResults(data,container){
-  var sevColors={critical:'#ff3b3b',high:'#FF6B00',medium:'#ffcf4a',low:'#4f8ef7',info:'#37e0a0'};
-  var sevStatut={critical:'critique',high:'critique',medium:'attention',low:'attention',info:'ok'};
-  var statutColors={critique:'#ff3b3b',attention:'#ffcf4a',ok:'#37e0a0'};
-  var counts=data.severity_counts||{};
-  var countsHtml=Object.keys(counts).map(function(sev){
-    var c=sevColors[sev]||'#6c6c78';
-    return '<div style="background:'+c+'15;border:1px solid '+c+'44;border-radius:8px;padding:6px 12px;color:'+c+';font-size:11px;font-weight:700;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">'+sev.toUpperCase()+' · '+counts[sev]+'</div>';
-  }).join('');
-  var findingsHtml=(data.findings||[]).map(function(f){
-    var statut=sevStatut[f.severity]||scanDeterminerStatut(f.title+' '+f.description);
-    var c=statutColors[statut]||'#6c6c78';
-    return '<div style="border-left:3px solid '+c+';padding:12px 14px;margin-bottom:8px;background:#0a0a0a;border-radius:0 8px 8px 0;">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'+
-      '<span class="silex-badge silex-badge-'+statut+'">'+f.severity.toUpperCase()+'</span>'+
-      '<span style="color:#e2e2ea;font-size:13px;font-weight:600;">'+escHtml(f.title||'')+'</span></div>'+
-      '<p style="color:#6c6c78;font-size:12px;margin:0 0 6px;">'+escHtml(f.description||'')+'</p>'+
-      (f.remediation?'<div style="color:#37e0a0;font-size:11px;margin-top:6px;">✅ '+escHtml(f.remediation)+'</div>':'')+
-      '</div>';
-  }).join('');
-  container.innerHTML='<div style="background:#0d0d12;border:1px solid rgba(255,107,0,.27);border-radius:16px;padding:20px;">'+
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">'+
-    '<span style="font-size:20px;">🔰</span>'+
-    '<div><div style="color:#FF6B00;font-weight:800;font-size:14px;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">RAPPORT SILEX — '+escHtml(data.target||'')+'</div>'+
-    '<div style="color:#6c6c78;font-size:11px;">'+(data.scan_type||'').replace(/_/g,' ').toUpperCase()+' · '+(data.findings_count||0)+' findings</div></div></div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'+countsHtml+'</div>'+
-    '<div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:12px;padding:14px;margin-bottom:16px;">'+
-    '<div style="color:#FF6B00;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px;font-family:\'Share Tech Mono\',monospace;">📋 RÉSUMÉ EXÉCUTIF</div>'+
-    '<p style="color:#e2e2ea;font-size:13px;margin:0;line-height:1.7;">'+(data.executive_summary||'').replace(/\n/g,'<br>')+'</p></div>'+
-    findingsHtml+'</div>';
-}
-
-async function silexSendChat(){
-  var input=document.getElementById('silex-chat-input');
-  var question=input.value.trim();
-  if(!question)return;
-  input.value='';
-  var messages=document.getElementById('silex-chat-messages');
-  messages.insertAdjacentHTML('beforeend','<div style="display:flex;justify-content:flex-end;">'+
-    '<div style="max-width:80%;background:#111111;border:1px solid #23232c;border-radius:12px 12px 2px 12px;padding:12px 14px;color:#e2e2ea;font-size:13px;line-height:1.6;font-family:\'Share Tech Mono\',monospace;">'+escHtml(question)+'</div></div>');
-  var thinkingId='silex-thinking-'+Date.now();
-  messages.insertAdjacentHTML('beforeend','<div id="'+thinkingId+'" style="display:flex;align-items:flex-start;gap:8px;">'+
-    '<span style="font-size:16px;">🔰</span>'+
-    '<div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:12px;padding:12px 14px;color:#FF6B00;font-size:13px;animation:silexPulse 1s ease-in-out infinite;font-family:\'Share Tech Mono\',monospace;">SILEX analyse...</div></div>');
-  messages.scrollTop=messages.scrollHeight;
-  try{
-    var session=(await supabase.auth.getSession()).data.session;
-    if(!session)throw new Error('Non authentifié');
-    var target=(document.getElementById('silex-target')||{}).value||'rnuripmfozlxenryxhdc.supabase.co';
-    var res=await fetch(SB_URL+'/functions/v1/security-agent',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
-      body:JSON.stringify({target:target,scan_type:'web_scan',authorization_id:SILEX_SOW_ID,silex_question:question})
-    });
-    var data=await res.json();
-    var answer=data.executive_summary||data.error||'Aucune réponse.';
-    var thinkingEl=document.getElementById(thinkingId);if(thinkingEl)thinkingEl.remove();
-    var replyEl=document.createElement('div');
-    replyEl.style.cssText='display:flex;align-items:flex-start;gap:8px;';
-    replyEl.innerHTML='<span style="font-size:16px;flex-shrink:0;">🔰</span>'+
-      '<div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:2px 12px 12px 12px;padding:12px 14px;color:#e2e2ea;font-size:13px;line-height:1.7;max-width:85%;white-space:pre-wrap;font-family:\'Share Tech Mono\',monospace;">'+escHtml(answer)+'</div>';
-    messages.appendChild(replyEl);
-    if(typeof fireGoldParticles==='function'){var rect=replyEl.getBoundingClientRect();fireGoldParticles(rect.right-20,rect.top+20,1);}
-  }catch(err){
-    var thinkingEl=document.getElementById(thinkingId);if(thinkingEl)thinkingEl.remove();
-    messages.insertAdjacentHTML('beforeend','<div style="color:#ff3a5c;font-size:12px;padding:8px;font-family:\'Share Tech Mono\',monospace;">⚠️ Erreur SILEX: '+escHtml(err.message)+'</div>');
-  }
-  messages.scrollTop=messages.scrollHeight;
-}
-
-async function silexLoadHistory(){
-  var container=document.getElementById('silex-history-list');
-  if(!container)return;
-  try{
-    var res=await supabase.from('security_scans')
-      .select('id,target,scan_type,status,findings_critical,findings_high,findings_medium,findings_low,findings_info,started_at,completed_at')
-      .order('started_at',{ascending:false}).limit(20);
-    var scans=res.data;var error=res.error;
-    if(error||!scans||!scans.length){
-      container.innerHTML='<p style="color:#6c6c78;text-align:center;padding:40px 0;font-family:\'Share Tech Mono\',monospace;">Aucun scan effectué pour l\'instant.</p>';
-      return;
-    }
-    container.innerHTML=scans.map(function(s){
-      var statusColor=s.status==='completed'?'#00a86b':s.status==='running'?'#ffcf4a':'#ff3a5c';
-      var countsLine='';
-      if(s.findings_critical>0)countsLine+='<span style="color:#ff3a5c;font-size:11px;">CRITIQUE:'+s.findings_critical+'</span> ';
-      if(s.findings_high>0)countsLine+='<span style="color:#FF6B00;font-size:11px;">ÉLEVÉ:'+s.findings_high+'</span> ';
-      if(s.findings_medium>0)countsLine+='<span style="color:#ffcf4a;font-size:11px;">MOYEN:'+s.findings_medium+'</span> ';
-      if(s.findings_low>0)countsLine+='<span style="color:#4f8ef7;font-size:11px;">FAIBLE:'+s.findings_low+'</span> ';
-      return '<div style="background:#0d0d12;border:1px solid #23232c;border-radius:12px;padding:16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor=\'rgba(255,107,0,.27)\'" onmouseout="this.style.borderColor=\'#23232c\'">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;">'+
-        '<div><span style="color:#FF6B00;font-weight:700;font-size:13px;font-family:\'Share Tech Mono\',monospace;">'+escHtml(s.target||'')+'</span>'+
-        '<span style="color:#6c6c78;font-size:11px;margin-left:8px;">'+(s.scan_type||'').replace(/_/g,' ').toUpperCase()+'</span></div>'+
-        '<span style="color:'+statusColor+';font-size:11px;font-weight:700;">'+(s.status||'').toUpperCase()+'</span></div>'+
-        '<div style="display:flex;gap:6px;margin-top:8px;">'+countsLine+'</div>'+
-        '<div style="color:#6c6c78;font-size:10px;margin-top:6px;">'+new Date(s.started_at).toLocaleString('fr-CA')+'</div></div>';
-    }).join('');
-  }catch(e){
-    container.innerHTML='<p style="color:#ff3a5c;text-align:center;padding:40px 0;font-family:\'Share Tech Mono\',monospace;">Erreur chargement historique.</p>';
-  }
-}
+/* SILEX scan tools déplacés vers security.html — silexCheckAccess conservé pour la visibilité admin du menu */
 
 function applyPlanVisibility(){
   supabase.auth.getUser().then(function(res){
@@ -9058,8 +8587,6 @@ _checkDeployVersion();
 <script src="js/al-memory.js"></script>
 <script src="js/memoire-ia.js"></script>
 <script src="js/agent-marceau.js"></script>
-<script src="js/centre-indar.js"></script>
-<script src="js/actions-indar.js"></script>
 <script src="js/connectors-hub.js"></script>
 <script src="js/theme-engine.js"></script>
 <script src="js/tilex-toast.js"></script>
@@ -9077,8 +8604,6 @@ _checkDeployVersion();
 <!-- tilex-theme.js retiré : doublon bogué (écrivait data-theme="nuit" sur <body>,
      ce qui sabotait le mode jour). Le vrai sélecteur = toggleTheme() inline (html night/day). -->
 <script src="js/tilex-push.js"></script>
-<script src="js/scan-manager.js"></script>
-<script src="js/scan-engine.js"></script>
 <script src="js/tilex-stream.js"></script>
 <script src="js/midas-cerveau.js"></script>
 <script src="js/midas-crypto.js"></script>

@@ -25,8 +25,8 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--w
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:600;font-size:14px;border-radius:var(--r2);padding:10px 20px;transition:all .2s;white-space:nowrap}
 .btn-orange{background:var(--orange);color:#fff}
 .btn-orange:hover{background:var(--orange2);box-shadow:var(--glow);transform:translateY(-1px)}
-.btn-ghost{background:transparent;color:var(--grey);border:1px solid var(--border)}
-.btn-ghost:hover{border-color:var(--orange);color:var(--white)}
+.btn-ghost{background:transparent;color:var(--orange);border:1px solid var(--orange)}
+.btn-ghost:hover{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
 .btn-red{background:rgba(204,34,0,.15);color:#ff4444;border:1px solid rgba(204,34,0,.3)}
 .btn-red:hover{background:rgba(204,34,0,.3)}
 .btn-sm{padding:7px 14px;font-size:13px}
@@ -343,7 +343,8 @@ tbody td{padding:11px 12px;color:var(--white)}
 .project-header-card{background:linear-gradient(135deg,var(--accent-dim),rgba(255,107,0,.02))!important;border-color:var(--accent-dim)!important}
 .auth-glow{background:radial-gradient(ellipse,rgba(var(--accent-rgb,255,107,0),.13) 0%,transparent 65%)!important}
 ::-webkit-scrollbar-thumb{background:var(--accent)!important}
-.btn-ghost:hover{border-color:var(--accent)!important;color:var(--white)!important}
+.btn-ghost{color:var(--accent)!important;border-color:var(--accent)!important}
+.btn-ghost:hover{background:var(--accent-dim)!important;border-color:var(--accent)!important;color:var(--accent)!important}
 .settings-nav-item.active{background:var(--accent-dim)!important;color:var(--accent)!important}
 .prev-av,.msg-av.agent-av{background:linear-gradient(135deg,var(--accent),#ff4400)!important}
 
@@ -581,6 +582,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
       <div class="nav-item" id="nav-project" onclick="navigateTo('project')"><span class="nav-icon">📁</span><span>tilex.</span></div>
       <div class="nav-item" onclick="openGitHub()"><span class="nav-icon">⑂</span><span>GitHub</span></div>
       <div class="nav-item" onclick="showToast('Déploiement lancé! 🚀','success')"><span class="nav-icon">🚀</span><span>Déployer</span></div>
+      <div class="nav-item" id="nav-security" onclick="window.location.href='/security'"><span class="nav-icon">🛡</span><span>Sécurité</span></div>
       <div class="divider"></div>
       <div class="sb-label">Compte</div>
       <div class="nav-item" id="nav-profile" onclick="navigateTo('profile')"><span class="nav-icon">👤</span><span>Mon profil</span></div>
@@ -614,6 +616,8 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">Mes agents</div><div class="stat-value orange" id="stat-agents">0</div><div class="stat-delta" id="stat-agents-delta">Aucun agent</div></div>
           <div class="stat-card"><div class="stat-label">Conversations</div><div class="stat-value" id="stat-convs">0</div><div class="stat-delta">Privées</div></div>
+          <div class="stat-card"><div class="stat-label">Messages envoyés</div><div class="stat-value orange" id="stat-messages">0</div><div class="stat-delta" id="stat-messages-delta">role utilisateur</div></div>
+          <div class="stat-card"><div class="stat-label">Données échangées</div><div class="stat-value" id="stat-data" style="font-size:26px">—</div><div class="stat-delta" id="stat-data-delta">approx.</div></div>
           <div class="stat-card"><div class="stat-label">Projets</div><div class="stat-value">1</div><div class="stat-delta">tilex.</div></div>
           <div class="stat-card"><div class="stat-label">Statut</div><div class="stat-value" style="font-size:22px">🟢</div><div class="stat-delta">En ligne</div></div>
         </div>
@@ -782,6 +786,21 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             <div class="project-meta-item"><span class="badge badge-green"><span class="dot dot-green"></span>Déployé</span></div>
           </div>
         </div>
+
+        <!-- ── GITHUB BROWSER (vrai, via github-proxy) ── -->
+        <div class="card" style="padding:0">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <span>⑂ GitHub — voir le code</span>
+            <div id="gh-breadcrumb" style="font-size:12px;color:var(--grey);font-weight:500;font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+            <button class="btn btn-ghost btn-sm" onclick="openGitHub()">↻ Recharger</button>
+          </div>
+          <div id="gh-panel" style="padding:16px;min-height:120px">
+            <div style="color:var(--grey);font-size:13px;display:flex;align-items:center;gap:10px">
+              <span>Cliquez sur « GitHub » dans le menu ou sur Recharger pour voir vos dépôts.</span>
+            </div>
+          </div>
+        </div>
+
         <div class="project-grid">
           <div class="card" style="padding:0">
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
@@ -1517,6 +1536,7 @@ function newConversation(){
 // ═══════════════════════════════════════
 function refreshDash(){
   if(!currentUser) return;
+  refreshMessageStats();
   const agents=getAgents();
   const count=agents.length;
   document.getElementById('stat-agents').textContent=count;
@@ -1541,6 +1561,32 @@ function refreshDash(){
     pal.innerHTML='<div style="color:var(--grey);font-size:13px">Aucun agent lié pour l\'instant.</div>';
   } else {
     pal.innerHTML=agents.slice(0,4).map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px"><div style="display:flex;align-items:center;gap:8px">${agentIconInline(a,20)} ${esc(a.name)}</div><span class="badge ${a.status==='active'?'badge-green':'badge-orange'}">${a.status==='active'?'Actif':'En pause'}</span></div>`).join('');
+  }
+}
+
+// Stats de messages depuis Supabase (table `messages`, RLS filtre par utilisateur connecté)
+async function refreshMessageStats(){
+  const elCount=document.getElementById('stat-messages');
+  const elData=document.getElementById('stat-data');
+  try{
+    const cl=sbClient();
+    // Requiert une vraie session Supabase (les comptes démo locaux n'en ont pas)
+    let hasSession=false;
+    if(cl){ const {data}=await cl.auth.getSession(); hasSession=!!(data&&data.session); }
+    if(!cl||!hasSession){ if(elCount)elCount.textContent='0'; if(elData)elData.textContent='—'; return; }
+    // 1) Nombre de messages de l'utilisateur (role='user')
+    const {count}=await cl.from('messages').select('id',{count:'exact',head:true}).eq('role','user');
+    if(elCount) elCount.textContent=(count||0).toLocaleString('fr-CA');
+    // 2) Volume approximatif des données échangées (somme des longueurs de `contenu`)
+    const {data:rows,error}=await cl.from('messages').select('contenu');
+    if(error) throw error;
+    let totalChars=0;
+    if(Array.isArray(rows)){ for(const r of rows){ if(r&&typeof r.contenu==='string') totalChars+=r.contenu.length; } }
+    if(elData) elData.textContent=(totalChars/1024).toFixed(1)+' Ko';
+  }catch(e){
+    console.warn('[stats] messages',e);
+    if(elCount&&elCount.textContent==='0') elCount.textContent='0';
+    if(elData) elData.textContent='—';
   }
 }
 
@@ -1827,7 +1873,207 @@ function lightenHex(hex,amount){
 //   MISC
 // ═══════════════════════════════════════
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
-function openGitHub(){showToast('Ouverture du repo GitHub tilex.…','info')}
+// ═══════════════════════════════════════
+//   GITHUB — navigateur réel via github-proxy
+//   (le PAT reste côté serveur ; jamais exposé au client)
+// ═══════════════════════════════════════
+const GH = { repo:null, branch:null, tree:[] };
+
+// Récupère le jeton d'accès Supabase de l'utilisateur connecté
+async function ghGetToken(){
+  try{
+    const cl=sbClient();
+    if(cl){ const {data}=await cl.auth.getSession(); if(data&&data.session&&data.session.access_token) return data.session.access_token; }
+  }catch(e){}
+  return null;
+}
+
+// Appel au proxy GitHub. Retourne le JSON, lève une erreur en cas d'échec.
+async function gh(body){
+  const token=await ghGetToken();
+  if(!token) throw new Error('Connecte-toi à ton compte pour accéder à GitHub.');
+  const r=await fetch(`${window.SB_URL}/functions/v1/github-proxy`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':window.SB_ANON},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){ let e; try{e=await r.json();}catch(x){e={};} throw new Error(e.error||('GitHub '+r.status)); }
+  return r.json();
+}
+
+// Décodage base64 (contenu de fichier GitHub) en UTF-8
+function ghB64decode(b64){
+  try{ return decodeURIComponent(escape(atob(String(b64||'').replace(/\n/g,'')))); }
+  catch(e){ try{ return atob(String(b64||'').replace(/\n/g,'')); }catch(_){ return ''; } }
+}
+
+function ghPanel(){ return document.getElementById('gh-panel'); }
+function ghSetBreadcrumb(text){ const b=document.getElementById('gh-breadcrumb'); if(b) b.textContent=text||''; }
+function ghLoading(msg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const d=document.createElement('div');
+  d.style.cssText='color:var(--grey);font-size:13px;display:flex;align-items:center;gap:10px';
+  const sp=document.createElement('span'); sp.className='spinner';
+  const tx=document.createElement('span'); tx.textContent=msg||'Chargement…';
+  d.appendChild(sp); d.appendChild(tx); p.appendChild(d);
+}
+function ghError(msg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const d=document.createElement('div');
+  d.style.cssText='color:#ff6b6b;font-size:13px;line-height:1.6';
+  d.textContent='⚠️ '+(msg||'Erreur GitHub.');
+  p.appendChild(d);
+}
+
+// Point d'entrée : ouvre/charge le navigateur GitHub dans la section Projet
+async function openGitHub(){
+  navigateTo('project');
+  ghSetBreadcrumb('');
+  GH.repo=null; GH.branch=null; GH.tree=[];
+  ghLoading('Vérification de la connexion GitHub…');
+  let status;
+  try{ status=await gh({action:'status'}); }
+  catch(e){ ghShowConnect(e.message); return; }
+  if(!status||!status.connected){ ghShowConnect(); return; }
+  ghLoadRepos();
+}
+
+// Écran « pas connecté » → renvoie vers pro.html (réglages) pour brancher GitHub
+function ghShowConnect(extraMsg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:flex-start';
+  const t=document.createElement('div');
+  t.style.cssText='font-size:14px;font-weight:700';
+  t.textContent='GitHub n’est pas encore connecté';
+  const d=document.createElement('div');
+  d.style.cssText='font-size:13px;color:var(--grey);line-height:1.6';
+  d.textContent='Connecte ton compte GitHub depuis les réglages de l’application pour voir tes dépôts et ton code ici.';
+  const a=document.createElement('a');
+  a.href='/pro'; a.className='btn btn-orange btn-sm';
+  a.textContent='Connecter GitHub →';
+  wrap.appendChild(t); wrap.appendChild(d);
+  if(extraMsg){ const e=document.createElement('div'); e.style.cssText='font-size:12px;color:#ff6b6b'; e.textContent=extraMsg; wrap.appendChild(e); }
+  wrap.appendChild(a);
+  p.appendChild(wrap);
+}
+
+// Liste des dépôts
+async function ghLoadRepos(){
+  ghSetBreadcrumb('');
+  ghLoading('Chargement de tes dépôts…');
+  let res;
+  try{ res=await gh({action:'listRepos'}); }
+  catch(e){ ghError(e.message); return; }
+  const repos=(res&&res.repos)||[];
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  if(repos.length===0){
+    const d=document.createElement('div'); d.style.cssText='color:var(--grey);font-size:13px';
+    d.textContent='Aucun dépôt accessible.'; p.appendChild(d); return;
+  }
+  const list=document.createElement('div'); list.className='file-list';
+  repos.forEach(repo=>{
+    const full=repo.full_name||((repo.owner&&repo.owner.login?repo.owner.login+'/':'')+(repo.name||''));
+    const item=document.createElement('div'); item.className='file-item';
+    const ic=document.createElement('span'); ic.textContent='📦';
+    const nm=document.createElement('span'); nm.textContent=full; nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    item.appendChild(ic); item.appendChild(nm);
+    item.addEventListener('click',()=>ghOpenRepo(full));
+    list.appendChild(item);
+  });
+  p.appendChild(list);
+}
+
+// Ouvre un dépôt : choisit la branche puis charge l'arbre
+async function ghOpenRepo(full){
+  GH.repo=full; GH.branch=null; GH.tree=[];
+  ghSetBreadcrumb(full);
+  ghLoading('Chargement des branches…');
+  let branch='main';
+  try{
+    const br=await gh({action:'listBranches',repo:full});
+    const branches=(br&&br.branches)||[];
+    branch = branches.includes('main') ? 'main' : (branches[0]||'main');
+  }catch(e){ /* on tente 'main' par défaut */ }
+  GH.branch=branch;
+  ghLoadTree();
+}
+
+// Arbre des fichiers du dépôt/branche courants
+async function ghLoadTree(){
+  if(!GH.repo){ ghLoadRepos(); return; }
+  ghSetBreadcrumb(GH.repo+' @ '+(GH.branch||'?'));
+  ghLoading('Chargement des fichiers…');
+  let res;
+  try{ res=await gh({action:'listFiles',repo:GH.repo,branch:GH.branch}); }
+  catch(e){ ghError(e.message); return; }
+  GH.tree=(res&&res.tree)||[];
+  const truncated=res&&res.truncated;
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+
+  // Barre d'actions : retour aux dépôts
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
+  const back=document.createElement('button'); back.className='btn btn-ghost btn-sm';
+  back.textContent='← Dépôts'; back.addEventListener('click',ghLoadRepos);
+  const tag=document.createElement('span'); tag.className='branch-tag'; tag.textContent='⑂ '+(GH.branch||'?');
+  bar.appendChild(back); bar.appendChild(tag);
+  p.appendChild(bar);
+
+  const files=GH.tree.filter(n=>n&&n.type==='blob');
+  if(files.length===0){
+    const d=document.createElement('div'); d.style.cssText='color:var(--grey);font-size:13px';
+    d.textContent='Aucun fichier dans cette branche.'; p.appendChild(d); return;
+  }
+  const list=document.createElement('div'); list.className='file-list'; list.style.maxHeight='360px'; list.style.overflowY='auto';
+  files.forEach(node=>{
+    const item=document.createElement('div'); item.className='file-item';
+    const ic=document.createElement('span'); ic.textContent='📄';
+    const nm=document.createElement('span'); nm.textContent=node.path; nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    item.appendChild(ic); item.appendChild(nm);
+    item.addEventListener('click',()=>ghOpenFile(node.path));
+    list.appendChild(item);
+  });
+  p.appendChild(list);
+  if(truncated){
+    const w=document.createElement('div'); w.style.cssText='color:var(--grey2);font-size:11px;margin-top:8px';
+    w.textContent='Liste tronquée par GitHub (dépôt volumineux).'; p.appendChild(w);
+  }
+}
+
+// Lit et affiche le contenu d'un fichier
+async function ghOpenFile(path){
+  if(!GH.repo) return;
+  ghSetBreadcrumb(GH.repo+' @ '+(GH.branch||'?')+' / '+path);
+  ghLoading('Lecture de '+path+'…');
+  let res;
+  try{ res=await gh({action:'readFile',repo:GH.repo,path:path,branch:GH.branch}); }
+  catch(e){ ghError(e.message); return; }
+  const content=ghB64decode(res&&res.content);
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
+  const back=document.createElement('button'); back.className='btn btn-ghost btn-sm';
+  back.textContent='← Fichiers'; back.addEventListener('click',ghLoadTree);
+  const name=document.createElement('span'); name.style.cssText='font-family:var(--mono);font-size:12px;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  name.textContent=path;
+  bar.appendChild(back); bar.appendChild(name);
+  p.appendChild(bar);
+
+  const pre=document.createElement('pre');
+  pre.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;overflow:auto;max-height:480px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre';
+  const code=document.createElement('code');
+  code.textContent=content;            // contenu distant échappé via textContent (anti-XSS)
+  pre.appendChild(code);
+  p.appendChild(pre);
+}
 
 function showToast(msg,type='info'){
   const c=document.getElementById('toast-container');
