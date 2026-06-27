@@ -282,6 +282,22 @@
     var reader=res.body.getReader(); var dec=new TextDecoder(); var buf=""; var plein="";
     var span=document.createElement("span"); var cur=document.createElement("span"); cur.className="tc-curseur";
     corpsEl.appendChild(span); corpsEl.appendChild(cur);
+
+    // ── Écriture fluide (rAF, lettre par lettre, rattrapage doux) ──
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var affiche=0, finFlux=false, raf=null;
+    function boucle(){
+      if(plein.length>affiche){
+        var rem=plein.length-affiche;
+        var pas=rem>120?4:(rem>50?2:1);   // rattrapage seulement si le réseau a de l'avance
+        affiche+=pas;
+        span.textContent=plein.slice(0,affiche);
+        scrollBas();
+      }else if(finFlux){ if(cur.parentNode)cur.remove(); raf=null; return; }
+      raf=requestAnimationFrame(boucle);
+    }
+    if(!reduce) raf=requestAnimationFrame(boucle);
+
     while(true){
       var ch=await reader.read(); if(ch.done) break;
       buf+=dec.decode(ch.value,{stream:true});
@@ -292,11 +308,16 @@
         var data=ln.slice(5).trim();
         if(data==="[DONE]") continue;
         try{ var o=JSON.parse(data);
-          if(o.type==="content_block_delta" && o.delta && o.delta.text){ plein+=o.delta.text; span.textContent=plein; scrollBas(); }
+          if(o.type==="content_block_delta" && o.delta && o.delta.text){
+            plein+=o.delta.text;
+            if(reduce){ span.textContent=plein; scrollBas(); }   // accessibilité : pas d'animation
+          }
         }catch(e){}
       }
     }
-    if(cur.parentNode) cur.remove();
+    finFlux=true;
+    if(reduce){ if(cur.parentNode)cur.remove(); }
+    else{ await new Promise(function(r){var iv=setInterval(function(){if(!raf){clearInterval(iv);r();}},40);}); }
     return plein;
   }
 
