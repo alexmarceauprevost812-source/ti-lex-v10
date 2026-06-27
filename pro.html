@@ -3735,12 +3735,11 @@ var EcritureFluide={
     var c=document.createElement('span');
     c.className='curseur-agent';
     E._curseur=c;el.appendChild(c);
-    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      E._skipMode=true;
-    }else{
-      E._skipMode=false;
-      E._raf=requestAnimationFrame(E._boucle);
-    }
+    // On anime TOUJOURS lettre par lettre (même si « réduire les animations » est
+    // activé sur l'appareil) — sinon le texte s'affichait par paquets de tokens (~6
+    // lettres). L'utilisateur peut toujours toucher l'écran pour tout révéler (skip).
+    E._skipMode=false;
+    E._raf=requestAnimationFrame(E._boucle);
   },
 
   ajouterTexte:function(delta){
@@ -3773,6 +3772,7 @@ var EcritureFluide={
       var exact=dt*rate+(E._carry||0);
       var n=Math.floor(exact);
       E._carry=exact-n;                          // garde la fraction → transitions fluides
+      if(n>3)n=3;                                // plafond strict : jamais de gros paquets (toujours fluide)
       if(n>0){
         if(n>pending)n=pending;
         // mesure "collé en bas" AVANT d'écrire (évite le reflow forcé write→read→write)
