@@ -12,6 +12,13 @@
 <title>ti-lex-AL v10 — Pro</title>
 <script src="js/tilex-guardian.js"></script>
 <script src="js/tilex-config.js"></script>
+<script>
+/* 🔗 Thème piloté depuis la plateforme /web : applique la couleur d'accent choisie là-bas */
+(function(){try{var t=JSON.parse(localStorage.getItem('tilex_platform_theme')||'null');
+  if(t&&t.accent&&/^#[0-9A-Fa-f]{6}$/.test(t.accent)){var r=document.documentElement;
+    r.style.setProperty('--orange',t.accent);r.style.setProperty('--or',t.accent);r.style.setProperty('--orange2',t.accent);
+    if(t.accentRgb)r.style.setProperty('--og','rgba('+t.accentRgb+',.2)');}}catch(e){}})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 <link rel="stylesheet" href="css/agent-marceau.css">

@@ -1744,6 +1744,8 @@ function applyTheme(){
   const radObj=RADIUS_OPTIONS.find(r=>r.id===t.radius);
   if(radObj){root.style.setProperty('--r',radObj.r);root.style.setProperty('--r2',radObj.r2)}
   document.body.classList.remove('mode-light');
+  // 🔗 Partage le thème avec l'app pro.html (couleur d'accent pilotée depuis la plateforme)
+  try{ localStorage.setItem('tilex_platform_theme',JSON.stringify({accent:t.accent,accentRgb:rgb})); }catch(e){}
 }
 
 function saveTheme(){
