@@ -4447,25 +4447,10 @@ async function appliquerSchema(codeId){
   var msg=destructive?"⚠️ Opération DESTRUCTRICE détectée!\n\nEs-tu sûr de vouloir exécuter ce SQL?":"Appliquer ce schéma SQL à la base de données?";
   if(!confirm(msg))return;
   if(destructive&&!confirm("DOUBLE CONFIRMATION: Cette opération est irréversible. Continuer?"))return;
-  try{
-    var tk=getToken();
-    var h={"Content-Type":"application/json"};
-    if(tk)h["Authorization"]="Bearer "+tk;
-    var res=await fetch(SB_URL+"/functions/v1/tilex-realize",{method:"POST",headers:h,body:JSON.stringify({
-      action:"realize",content:sql,confirmed:true,confirmed_destructive:destructive
-    })});
-    var data=await res.json();
-    if(data.ok){
-      if(typeof showToastMsg==="function")showToastMsg("✅ Schéma appliqué avec succès");
-      addMsg("a","✅ **Schéma appliqué** — Le SQL a été exécuté avec succès sur la base de données.");
-    }else{
-      if(typeof showToastMsg==="function")showToastMsg("❌ Erreur: "+(data.error||"Échec"));
-      addMsg("a","❌ **Erreur d'exécution SQL:** "+(data.error||"Échec inconnu"));
-    }
-  }catch(e){
-    if(typeof showToastMsg==="function")showToastMsg("Erreur réseau");
-    console.error("[appliquerSchema]",e);
-  }
+  // ⚠️ tilex-realize n'est pas déployée (404) → application auto désactivée pour éviter les erreurs en prod.
+  // TODO: réactiver quand l'Edge Function tilex-realize existera côté Supabase.
+  if(typeof showToastMsg==="function")showToastMsg("⚙️ Application de schéma bientôt disponible");
+  addMsg("a","⚙️ L'application automatique du schéma SQL n'est pas encore activée (fonction serveur à venir). Ton SQL est prêt — copie-le et exécute-le manuellement dans Supabase.");
 }
 function tiLexHighlightCode(container){
   if(!container||typeof hljs==="undefined")return;
