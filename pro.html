@@ -1178,7 +1178,8 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .composer-mic-btn{background:rgba(0,0,0,.06);color:#1a1a1a;}
 .composer-menu{position:absolute;bottom:100%;left:0;margin-bottom:8px;background:rgba(30,30,34,.92);backdrop-filter:blur(16px);
   border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;padding:6px;display:none;min-width:190px;box-shadow:0 -8px 30px rgba(0,0,0,.6);}
+  border-radius:14px;padding:6px;display:none;min-width:190px;box-shadow:0 -8px 30px rgba(0,0,0,.6);
+  max-height:min(62vh,460px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .composer-menu.open{display:block;}
 .composer-menu-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;
   cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--txt);
@@ -2953,10 +2954,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="composeAction('photo')"><span class="cmi-ico">📸</span> Prendre une photo</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
       <div class="composer-menu-item" id="composer-mic-menu-item" onclick="toggleMicro()"><span class="cmi-ico" id="composer-mic-ico">🎙️</span> <span id="composer-mic-label">Activer le micro</span></div>
-      <div class="composer-menu-item" onclick="compacterChat()"><span class="cmi-ico">🗜️</span> Compacter la conversation</div>
-      <div class="composer-menu-item" onclick="ouvrirConvCompact()"><span class="cmi-ico">📜</span> Conversations résumées</div>
-      <div class="composer-menu-item" onclick="nouvelleConvCompact()"><span class="cmi-ico">🆕</span> Nouvelle conversation</div>
       <div class="composer-menu-sep"></div>
+      <div class="composer-menu-item" onclick="ouvrirConvCompact()"><span class="cmi-ico">📜</span> Conversations résumées</div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
       <div class="composer-menu-item" onclick="showTab('settings');closeComposerMenu()"><span class="cmi-ico">⚙️</span> Paramètres</div>
     </div>
@@ -4042,7 +4041,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
@@ -4324,7 +4323,7 @@ function addMsg(role,txt){
   var icoHtml;
   if(role==="u"){var pav=localStorage.getItem("tilex-profile-avatar");icoHtml=pav?'<img src="'+pav+'" alt="U">':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3.5-7 7-7s7 3 7 7"/></svg>';}
   else{icoHtml='<img src="assets/tilex-logo.png" alt="AL">';}
-  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>':"";
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
@@ -7007,7 +7006,7 @@ function alRenderAgentReply(text,data){
   if(data&&data.duration_ms){
     htmlContent+='<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);">⏱ '+(data.duration_ms/1000).toFixed(1)+'s</div>';
   }
-  htmlContent+='<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>';
+  htmlContent+='<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div>';
   htmlContent+='<div class="cmsg-time">'+t+'</div></div>';
   bbl.innerHTML=htmlContent;
   msgs.appendChild(bbl);msgs.scrollTop=msgs.scrollHeight;
