@@ -2118,7 +2118,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 
   <!-- CODEX -->
   <div class="sb-item" id="si-codex" onclick="showTab('codex')">
-    <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="TILEXCODE"></span>
+    <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="PROJET GIT"></span>
   </div>
 
   <!-- FICHIERS -->
@@ -2257,7 +2257,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
             <div class="ag-stat"><div class="sdot g"></div> MÉMOIRE ACTIVE</div>
             <div class="ag-tags"><span class="atag og">CHAT</span><span class="atag">MÉMOIRE</span></div>
           </div>
-          <div class="ag-card" onclick="showTab('codex')">
+          <div class="ag-card" onclick="window.location.href='/codex'">
             <div class="ag-top"><div class="ag-ico dark">⌨️</div>
               <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
@@ -2406,21 +2406,10 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 
   </div>
 
-  <!-- CODEX -->
+  <!-- PROJET GITHUB — sélecteur repo/branche (utilisé par Studio, Scanner, SILEX) -->
   <div id="view-codex" class="view" style="padding:0;position:relative;">
     <div class="codex-wrap">
-      <div class="codex-topbar">
-        <span class="cx-dot r"></span><span class="cx-dot y"></span><span class="cx-dot g"></span>
-        <span class="codex-title">TILEXCODE · TI-LEX-AL</span>
-        <select class="cx-lang" id="codex-lang">
-          <option value="js">JavaScript</option>
-          <option value="py">Python</option>
-          <option value="sql">SQL · Supabase</option>
-          <option value="html">HTML/CSS</option>
-          <option value="bash">Bash</option>
-        </select>
-      </div>
-      <!-- BARRE GITHUB CODEX -->
+      <!-- BARRE GITHUB -->
       <div class="codex-github-toggle" id="codex-github-toggle">
         <button class="cgb-toggle-btn" id="cgb-toggle-btn" onclick="toggleCodexGithubBar()">
           <span id="cgb-toggle-label">🔗 GITHUB</span>
@@ -2460,27 +2449,11 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
         </div>
       </div>
       <div class="gh-files" id="gh-files"></div>
-      <div class="cx-scan-bar" id="cx-scan-bar">
-        <button class="btn-orange cx-scan-btn" id="cx-scan-btn" onclick="cxScanProject()" style="font-size:14px;padding:12px 24px;letter-spacing:2px;">🔰 SCANNER LE PROJET</button>
-        <button class="btn-orange cx-scan-btn" id="cx-code-btn" onclick="cxStartCoding()" style="display:none;font-size:14px;padding:12px 24px;letter-spacing:2px;background:linear-gradient(135deg,#37e0a0,#1a9e6a);">✅ VALIDER & CODER</button>
-        <button class="cgb-action-btn cgb-media" id="cx-media-btn" onclick="openMediaModal()" style="display:none;">MEDIA</button>
-      </div>
-      <div class="cx-scan-results" id="cx-scan-results" style="display:none;">
-        <div class="cx-scan-summary" id="cx-scan-summary" style="padding:12px 16px;font-size:13px;color:var(--txt);background:var(--bg2);border-radius:8px;margin:8px 12px;"></div>
-        <div class="cx-scan-tree" id="cx-scan-tree" style="display:none;"></div>
-        <div style="text-align:center;padding:4px 12px;">
-          <button class="btn-ghost" id="cx-tree-toggle" onclick="cxToggleTree()" style="font-size:11px;padding:4px 14px;">📂 Voir les fichiers</button>
-        </div>
-      </div>
-      <button class="cx-clear-btn" onclick="clearCx()">EFFACER</button>
-      <div class="codex-feed" id="codex-feed">
-        <div class="codex-empty" id="codex-empty">
-          <div class="codex-empty-ico">⌨️</div>
-          <div class="codex-empty-txt">TILEXCODE PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.<br><br>🔗 Connecte GitHub dans la barre ci-haut<br>pour travailler sur tes projets.</div>
-        </div>
+      <div class="codex-empty">
+        <div class="codex-empty-ico">🔗</div>
+        <div class="codex-empty-txt">PROJET GITHUB<br>Choisis ton repo et ta branche ci-haut.<br>Ils servent au Studio, au Scanner et à SILEX.<br><br>Pour coder avec l'IA, ouvre <strong>TILEXCODE</strong> (🤖) dans le menu.</div>
       </div>
     </div>
-    <textarea class="cx-txt" id="codex-txt" style="display:none;"></textarea>
   </div>
 
   <!-- STUDIO -->
@@ -4260,7 +4233,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à tilexcode" style="color:#FF6B00;">📤</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
@@ -4493,7 +4466,7 @@ function addMsg(role,txt){
   var icoHtml;
   if(role==="u"){var pav=localStorage.getItem("tilex-profile-avatar");icoHtml=pav?'<img src="'+pav+'" alt="U">':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21c0-4 3.5-7 7-7s7 3 7 7"/></svg>';}
   else{icoHtml='<img src="assets/tilex-logo.png" alt="AL">';}
-  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn codex-send-btn" onclick="envoyerMsgVersCodex(this)" title="Envoyer à tilexcode" style="color:#FF6B00;">📤</button></div>':"";
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);}}
@@ -5449,474 +5422,6 @@ function speakMsg(btn){
   }
 })();
 
-/* ── CODEX (style terminal Claude Code) ── */
-let genBusy=false;
-let codexHistory=[];
-const LANG_N={js:"JavaScript",py:"Python",sql:"SQL · Supabase",html:"HTML/CSS",bash:"Bash"};
-
-function cxAddUser(txt){
-  var feed=document.getElementById("codex-feed");
-  var empty=document.getElementById("codex-empty");
-  if(empty)empty.style.display="none";
-  var d=document.createElement("div");d.className="cx-msg user";
-  d.innerHTML='<span class="cx-prefix">▸</span><div class="cx-prompt">'+escHtml(txt)+'</div>';
-  feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
-}
-function cxAddTyping(){
-  var feed=document.getElementById("codex-feed");
-  var d=document.createElement("div");d.className="cx-msg agent";d.id="cx-typing";
-  d.innerHTML='<span class="cx-prefix">⚡</span><div class="cx-typing"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div>';
-  feed.appendChild(d);feed.scrollTop=feed.scrollHeight;
-}
-function cxRemoveTyping(){var el=document.getElementById("cx-typing");if(el)el.remove();}
-
-function cxParseReply(txt){
-  var parts=[];var buf="";var inCode=false;var lang="";
-  var lines=txt.split("\n");
-  for(var i=0;i<lines.length;i++){
-    var l=lines[i];
-    if(!inCode&&l.trim().startsWith("```")){
-      if(buf.trim())parts.push({type:"text",content:buf.trim()});
-      buf="";inCode=true;lang=l.trim().slice(3).trim()||"code";continue;
-    }
-    if(inCode&&l.trim()==="```"){
-      parts.push({type:"code",lang:lang,content:buf});
-      buf="";inCode=false;lang="";continue;
-    }
-    buf+=l+"\n";
-  }
-  if(buf.trim()){
-    if(inCode)parts.push({type:"code",lang:lang,content:buf});
-    else parts.push({type:"text",content:buf.trim()});
-  }
-  return parts;
-}
-
-function cxHighlight(code,lang){
-  var h=escHtml(code);
-  var kw,str,num,fn,cm,tag,attr,op;
-  if(lang==="js"||lang==="ts"||lang==="jsx"||lang==="tsx"||lang==="javascript"||lang==="typescript"){
-    h=h.replace(/(\/\/[^\n]*)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g,'<span class="syn-str">$1</span>');
-    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b(var|let|const)\b/g,'<span class="syn-var">$1</span>');
-    h=h.replace(/\b(function|return|if|else|for|while|switch|case|break|default|try|catch|throw|new|this|class|import|export|from|async|await|typeof|instanceof|of|in|void)\b/g,'<span class="syn-kw">$1</span>');
-    h=h.replace(/\b(true|false|null|undefined)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b([a-zA-Z_$]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
-    h=h.replace(/\b(API_KEY|SECRET|TOKEN|PASSWORD|PRIVATE_KEY|ACCESS_TOKEN|ANON_KEY|SERVICE_ROLE|SUPABASE_KEY|ANTHROPIC_API_KEY|STRIPE_SECRET|OPENAI_KEY)\b/gi,'<span class="syn-secret">$1</span>');
-  }else if(lang==="html"||lang==="htm"){
-    h=h.replace(/(&lt;!--[\s\S]*?--&gt;)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/(&lt;\/?[a-zA-Z][a-zA-Z0-9]*)/g,'<span class="syn-tag">$1</span>');
-    h=h.replace(/\s([a-zA-Z-]+)=/g,' <span class="syn-attr">$1</span>=');
-    h=h.replace(/("(?:[^"\\]|\\.)*")/g,'<span class="syn-str">$1</span>');
-  }else if(lang==="css"){
-    h=h.replace(/(\/\*[\s\S]*?\*\/)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/([.#]?[a-zA-Z_-][\w-]*)\s*\{/g,'<span class="syn-tag">$1</span>{');
-    h=h.replace(/:\s*([^;{}]+)/g,': <span class="syn-str">$1</span>');
-  }else if(lang==="py"||lang==="python"){
-    h=h.replace(/(#[^\n]*)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
-    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b(def|class|return|if|elif|else|for|while|try|except|finally|with|as|import|from|in|not|and|or|is|pass|break|continue|lambda|yield|raise|async|await)\b/g,'<span class="syn-kw">$1</span>');
-    h=h.replace(/\b(True|False|None)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b([a-zA-Z_]\w*)\s*\(/g,'<span class="syn-fn">$1</span>(');
-  }else if(lang==="sql"){
-    h=h.replace(/(--[^\n]*)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/('(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
-    h=h.replace(/\b(\d+\.?\d*)\b/g,'<span class="syn-num">$1</span>');
-    h=h.replace(/\b(SELECT|FROM|WHERE|INSERT|INTO|UPDATE|SET|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|NOT|NULL|PRIMARY|KEY|FOREIGN|REFERENCES|DEFAULT|VALUES|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|AS|IF|EXISTS|BEGIN|END|GRANT|REVOKE|POLICY|ENABLE|ROW|LEVEL|SECURITY|USING|WITH|CHECK|CASCADE|UNIQUE|CONSTRAINT|TRIGGER|FUNCTION|RETURNS|LANGUAGE|DECLARE|RETURN|NEW|OLD|BEFORE|AFTER|EXECUTE|PROCEDURE|TYPE|ENUM|BOOLEAN|INTEGER|TEXT|TIMESTAMP|UUID|SERIAL|BIGINT|VARCHAR|JSONB|JSON)\b/gi,'<span class="syn-kw">$&</span>');
-  }else if(lang==="bash"||lang==="sh"){
-    h=h.replace(/(#[^\n]*)/g,'<span class="syn-cm">$1</span>');
-    h=h.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g,'<span class="syn-str">$1</span>');
-  }
-  return h;
-}
-function cxBuildCodeBlock(code,lang,cid){
-  var lines=code.split("\n");
-  var lineCount=lines.length;
-  var collapsed=lineCount>15;
-  var nums="";var codeLines="";
-  for(var i=0;i<lineCount;i++){nums+=(i+1)+"\n";codeLines+=lines[i]+(i<lineCount-1?"\n":"");}
-  var highlighted=cxHighlight(codeLines,lang);
-  var html='<div class="cx-code-block"><div class="cx-code-hd"><span>'+escHtml(lang)+(lineCount>1?" · "+lineCount+" lignes":"")+'</span><span style="cursor:pointer;" onclick="cxCopy(\''+cid+'\')">📋 COPIER</span></div>';
-  html+='<div style="display:flex;overflow:auto;max-height:'+(collapsed?"200px":"none")+';position:relative;" class="cx-code-wrap'+(collapsed?" collapsed":"")+'" id="wrap-'+cid+'">';
-  html+='<pre class="cx-ln" style="user-select:none;text-align:right;padding:10px 8px 10px 10px;color:#555;border-right:1px solid #333;margin:0;flex-shrink:0;">'+nums+'</pre>';
-  html+='<pre class="cx-lc cx-code-pre" id="'+cid+'" style="margin:0;padding:10px;flex:1;overflow-x:auto;">'+highlighted+'</pre>';
-  html+='</div>';
-  if(collapsed){
-    html+='<button class="cx-expand-btn" onclick="cxToggleExpand(\''+cid+'\')">▼ VOIR AU COMPLET ('+lineCount+' lignes)</button>';
-  }
-  html+='</div>';
-  return html;
-}
-function cxToggleExpand(cid){
-  var wrap=document.getElementById("wrap-"+cid);
-  var btn=wrap?wrap.parentElement.querySelector(".cx-expand-btn"):null;
-  if(!wrap)return;
-  if(wrap.classList.contains("collapsed")){
-    wrap.classList.remove("collapsed");wrap.style.maxHeight="none";
-    if(btn)btn.innerHTML="▲ REPLIER";
-  }else{
-    wrap.classList.add("collapsed");wrap.style.maxHeight="200px";
-    if(btn)btn.innerHTML="▼ VOIR AU COMPLET";
-  }
-}
-function cxAddReply(txt){
-  var feed=document.getElementById("codex-feed");
-  var parts=cxParseReply(txt);
-  var wrapper=document.createElement("div");wrapper.className="cx-msg agent";
-  wrapper.innerHTML='<span class="cx-prefix">⚡</span><div style="flex:1;min-width:0;"></div>';
-  var content=wrapper.children[1];
-  for(var p=0;p<parts.length;p++){
-    if(parts[p].type==="text"){
-      var td=document.createElement("div");td.className="cx-prompt";
-      td.innerHTML=projHtml(parts[p].content);
-      content.appendChild(td);
-    }else{
-      var cid="cx-code-"+Date.now()+"-"+p;
-      var blockHtml=cxBuildCodeBlock(parts[p].content,parts[p].lang,cid);
-      var tmp=document.createElement("div");tmp.innerHTML=blockHtml;
-      content.appendChild(tmp.firstChild);
-    }
-  }
-  var actRow=document.createElement("div");
-  actRow.style.cssText="display:flex;gap:6px;margin-top:6px;";
-  actRow.innerHTML='<button class="btn-ghost" style="font-size:10px;padding:4px 10px;" onclick="cxSendToChat()" title="Continuer dans le chat">💬 Chat</button>';
-  content.appendChild(actRow);
-  feed.appendChild(wrapper);feed.scrollTop=feed.scrollHeight;
-}
-
-function cxCopy(id){
-  var el=document.getElementById(id);if(!el)return;
-  navigator.clipboard.writeText(el.textContent).catch(function(){});
-  var hd=el.previousElementSibling;if(hd){var btn=hd.lastElementChild;if(btn){btn.textContent="✓ COPIÉ";setTimeout(function(){btn.textContent="📋 COPIER";},2000);}}
-}
-
-async function genCode(){
-  if(genBusy)return;
-  var prompt=document.getElementById("codex-txt").value.trim();
-  if(!prompt){
-    var ci=document.getElementById("composer-input");
-    if(ci)prompt=ci.value.trim();
-  }
-  var lang=document.getElementById("codex-lang").value;
-  if(!prompt)return;
-  genBusy=true;
-  cxAddUser(prompt);
-  document.getElementById("codex-txt").value="";
-  cxAddTyping();
-
-  var sysPrompt=getCodexSysPrompt();
-  if(codexValidated){
-    var scanCtx=cxBuildScanContext();
-    var repoInfo=scanCtx?" Le projet contient ces fichiers:\n"+scanCtx.context.slice(0,2000):"";
-    sysPrompt+=" Génère du code propre et production-ready en "+(LANG_N[lang]||lang)+
-      ". Réponds avec le code dans des blocs ```"+lang+" et de courtes explications en français québécois. "+
-      "IMPORTANT: Pour chaque bloc de code, la PREMIÈRE LIGNE doit être un commentaire avec le chemin EXACT du fichier dans le repo "+
-      "(ex: // js/mon-module.js ou # scripts/utils.py). "+
-      "Utilise les chemins existants du projet quand tu modifies un fichier. Pour les nouveaux fichiers, place-les dans le bon dossier selon la structure du projet."+repoInfo;
-  }
-
-  if(window.TilexVision&&TilexVision.hasImage()){
-    var _cxImg=TilexVision.getImage();
-    codexHistory.push({role:"user",content:[
-      {type:"image",source:{type:"base64",media_type:_cxImg.mediaType,data:_cxImg.base64}},
-      {type:"text",text:prompt}
-    ]});
-    TilexVision.clear();
-  }else{
-    codexHistory.push({role:"user",content:prompt});
-  }
-
-  try{
-    var tk=getToken();
-    var h={"Content-Type":"application/json"};
-    if(tk)h["Authorization"]="Bearer "+tk;
-    var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
-      kind:"chat",
-      model:"claude-sonnet-4-6",max_tokens:4096,
-      system:sysPrompt,
-      messages:codexHistory.slice(-10)
-    })});
-    cxRemoveTyping();
-    if(!res.ok){
-      var errMsg="Erreur de connexion.";
-      try{var ct2=res.headers.get("content-type")||"";if(ct2.includes("json")){var errData=await res.json();errMsg=errData.error||errMsg;}else{errMsg=await res.text()||("HTTP "+res.status);}}catch(e){errMsg="HTTP "+res.status;}
-      console.error("[ti-lex] Codex error:",res.status,errMsg);
-      cxAddReply("⚠️ "+errMsg);genBusy=false;return;
-    }
-    var streamEl=cxAddStreamReply();
-    var _cxTextNode=document.createTextNode('');
-    var _cxCursor=document.createElement('span');
-    _cxCursor.className='cx-cursor';_cxCursor.textContent='█';
-    streamEl.textContent='';
-    streamEl.appendChild(_cxTextNode);
-    streamEl.appendChild(_cxCursor);
-    var _cxScrollTimer=null;
-    var reply=await readSSEStream(res,function(delta,full){
-      _cxTextNode.data=full;
-      if(!_cxScrollTimer){
-        _cxScrollTimer=setTimeout(function(){
-          _cxScrollTimer=null;
-          var feed=document.getElementById("codex-feed");if(feed)feed.scrollTop=feed.scrollHeight;
-        },_efMobile?60:16);
-      }
-    });
-    if(_cxScrollTimer){clearTimeout(_cxScrollTimer);_cxScrollTimer=null;}
-    _cxCursor.remove();
-    cxFinalizeStream(streamEl,reply||"(réponse vide)");
-    codexHistory.push({role:"assistant",content:reply});
-    if(!codexValidated)showCodexValidateBtn();
-    if(codexValidated&&reply&&/```/.test(reply))cxAjouterBtnStudioPlus();
-    if(typeof pushNotif==="function")pushNotif("⌨️","Code généré · Codex","Génération terminée, prête à pousser sur GitHub.","ok");
-  }catch(e){
-    cxRemoveTyping();
-    cxAddReply("Erreur: "+e.message);
-  }
-  genBusy=false;
-}
-
-function typeCode(txt,el,cb){el.textContent="";var i=0,last=null,acc=0;function frame(ts){if(last===null)last=ts;acc+=ts-last;last=ts;while(acc>=8&&i<txt.length){el.textContent+=txt[i++];acc-=8;}el.scrollTop=el.scrollHeight;if(i<txt.length)window.requestAnimationFrame(frame);else if(cb)cb();}window.requestAnimationFrame(frame);}
-function cxAddStreamReply(){
-  var feed=document.getElementById("codex-feed");
-  var wrapper=document.createElement("div");wrapper.className="cx-msg agent";
-  wrapper.innerHTML='<span class="cx-prefix">⚡</span><div style="flex:1;min-width:0;"><div class="cx-prompt cx-stream-target"></div></div>';
-  feed.appendChild(wrapper);
-  return wrapper.querySelector(".cx-stream-target");
-}
-function cxFinalizeStream(el,fullText){
-  var parts=cxParseReply(fullText);
-  var parent=el.parentElement;parent.innerHTML="";
-  for(var p=0;p<parts.length;p++){
-    if(parts[p].type==="text"){var td=document.createElement("div");td.className="cx-prompt";td.innerHTML=projHtml(parts[p].content);parent.appendChild(td);}
-    else{var cid="cx-code-"+Date.now()+"-"+p;var tmp=document.createElement("div");tmp.innerHTML=cxBuildCodeBlock(parts[p].content,parts[p].lang,cid);parent.appendChild(tmp.firstChild);}
-  }
-}
-function clearCx(){
-  codexValidated=false;
-  cxExitCodingMode();
-  document.getElementById("codex-feed").innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">TILEXCODE PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
-  codexHistory=[];genBusy=false;
-}
-
-/* ── CODEX PROJECT SCAN ── */
-var cxScanData=null;
-async function cxScanProject(){
-  if(!ghConnected){cxAddReply("Connecte GitHub d'abord via le bouton CONNECTER ci-haut.");return;}
-  var resultsEl=document.getElementById("cx-scan-results");
-  var treeEl=document.getElementById("cx-scan-tree");
-  var summaryEl=document.getElementById("cx-scan-summary");
-  var scanBtn=document.getElementById("cx-scan-btn");
-  var codeBtn=document.getElementById("cx-code-btn");
-  scanBtn.disabled=true;scanBtn.textContent="⏳ ANALYSE EN COURS...";
-  resultsEl.style.display="block";
-  treeEl.style.display="none";
-  var toggleBtn=document.getElementById("cx-tree-toggle");
-  if(toggleBtn)toggleBtn.textContent="📂 Voir les fichiers";
-  summaryEl.innerHTML='<div style="text-align:center;padding:8px;color:var(--muted);">Analyse du projet...</div>';
-  try{
-    var data=await ghProxyCall({action:"listFiles",path:""});
-    var tree=data.tree||data;
-    if(!Array.isArray(tree)){tree=[];}
-    cxScanData=tree;
-    var stats=cxAnalyzeTree(tree);
-    var gh=window._codexGithub;
-    var repoLabel=gh&&gh.repo?gh.repo.owner+"/"+gh.repo.name:"projet";
-    var branchLabel=gh&&gh.branch?gh.branch:"main";
-    summaryEl.innerHTML='<div style="font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px;">✅ SCAN TERMINÉ</div>'+
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">📦 <b>'+escHtml(repoLabel)+'</b> · 🌿 <b>'+escHtml(branchLabel)+'</b></div>'+
-      '<div style="display:flex;gap:16px;flex-wrap:wrap;">'+
-      '<span><b style="color:var(--txt);font-size:16px;">'+stats.files+'</b> <span style="color:var(--muted);font-size:11px;">fichiers</span></span>'+
-      '<span><b style="color:var(--txt);font-size:16px;">'+stats.folders+'</b> <span style="color:var(--muted);font-size:11px;">dossiers</span></span>'+
-      '<span style="color:var(--muted);font-size:11px;">Langages: <b>'+stats.langs.join(", ")+'</b></span>'+
-      '</div>';
-    treeEl.innerHTML=cxBuildTree(tree);
-    codeBtn.style.display="inline-flex";
-    scanBtn.textContent="🔄 RE-SCANNER";scanBtn.disabled=false;
-    scanBtn.style.fontSize="12px";scanBtn.style.padding="8px 16px";
-  }catch(e){
-    summaryEl.innerHTML='<div style="color:var(--red);padding:8px;">❌ Erreur: '+escHtml(e.message)+'</div>';
-    scanBtn.textContent="🔰 SCANNER LE PROJET";scanBtn.disabled=false;
-  }
-}
-
-function cxToggleTree(){
-  var treeEl=document.getElementById("cx-scan-tree");
-  var btn=document.getElementById("cx-tree-toggle");
-  if(!treeEl)return;
-  if(treeEl.style.display==="none"){
-    treeEl.style.display="block";
-    if(btn)btn.textContent="📂 Masquer les fichiers";
-  }else{
-    treeEl.style.display="none";
-    if(btn)btn.textContent="📂 Voir les fichiers";
-  }
-}
-
-function toggleCodexGithubBar(){
-  var bar=document.getElementById("codex-github-bar");
-  var chevron=document.getElementById("cgb-toggle-chevron");
-  if(!bar)return;
-  bar.classList.toggle("collapsed");
-  if(chevron)chevron.textContent=bar.classList.contains("collapsed")?"▶":"▼";
-}
-
-function cxEnterCodingMode(){
-  var wrap=document.querySelector(".codex-wrap");
-  if(wrap)wrap.classList.add("cx-coding-mode");
-  var bar=document.getElementById("codex-github-bar");
-  if(bar)bar.classList.add("collapsed");
-  var chevron=document.getElementById("cgb-toggle-chevron");
-  if(chevron)chevron.textContent="▶";
-  var gh=window._codexGithub;
-  var info=document.getElementById("cgb-toggle-info");
-  if(info&&gh&&gh.repo)info.textContent=gh.repo.name+" / "+(gh.branch||"main");
-}
-
-function cxExitCodingMode(){
-  var wrap=document.querySelector(".codex-wrap");
-  if(wrap)wrap.classList.remove("cx-coding-mode");
-}
-
-function cxAnalyzeTree(tree){
-  var files=0;var folderSet={};var exts={};
-  for(var i=0;i<tree.length;i++){
-    var p=tree[i].path||"";
-    var slash=p.lastIndexOf("/");
-    if(slash>0)folderSet[p.slice(0,slash)]=true;
-    files++;
-    var dot=p.lastIndexOf(".");if(dot>0)exts[p.slice(dot+1)]=true;
-  }
-  var folders=Object.keys(folderSet).length;
-  var langMap={js:"JavaScript",ts:"TypeScript",html:"HTML",css:"CSS",py:"Python",sql:"SQL",json:"JSON",md:"Markdown",sh:"Bash",yml:"YAML",yaml:"YAML",jsx:"React",tsx:"React TS"};
-  var langs=[];
-  for(var ext in exts){if(langMap[ext])langs.push(langMap[ext]);else if(ext.length<=5)langs.push(ext.toUpperCase());}
-  if(langs.length===0)langs.push("N/A");
-  if(langs.length>6)langs=langs.slice(0,6);
-  return{files:files,folders:folders,langs:langs};
-}
-
-function cxBuildTree(tree){
-  var root={};
-  for(var i=0;i<tree.length;i++){
-    var parts=(tree[i].path||"").split("/");
-    var node=root;
-    for(var j=0;j<parts.length;j++){
-      if(j<parts.length-1){
-        if(!node[parts[j]])node[parts[j]]={_isDir:true};
-        node=node[parts[j]];
-      }else{
-        node[parts[j]]={_isFile:true,_path:tree[i].path};
-      }
-    }
-  }
-  return cxRenderNode(root,"",0);
-}
-
-function cxRenderNode(node,prefix,depth){
-  var html="";var dirs=[];var files=[];
-  for(var key in node){
-    if(key==="_isDir"||key==="_isFile"||key==="_path")continue;
-    if(node[key]._isFile)files.push(key);
-    else dirs.push(key);
-  }
-  dirs.sort();files.sort();
-  for(var d=0;d<dirs.length;d++){
-    var id="cx-tree-"+Date.now()+"-"+d+"-"+depth;
-    html+='<div class="cx-tree-folder" onclick="this.nextElementSibling.classList.toggle(\'collapsed\');this.querySelector(\'span\').textContent=this.nextElementSibling.classList.contains(\'collapsed\')?\'▶\':\'▼\'"><span>▼</span> 📁 '+escHtml(dirs[d])+'</div>';
-    html+='<div class="cx-tree-children">'+cxRenderNode(node[dirs[d]],prefix+dirs[d]+"/",depth+1)+'</div>';
-  }
-  for(var f=0;f<files.length;f++){
-    var path=node[files[f]]._path||prefix+files[f];
-    html+='<div class="cx-tree-file" onclick="cxScanOpenFile(\''+escHtml(path).replace(/'/g,"\\'")+'\')">📄 '+escHtml(files[f])+'</div>';
-  }
-  return html;
-}
-
-function cxScanOpenFile(path){
-  if(typeof ghOpenFile==="function")ghOpenFile(path);
-}
-
-function cxBuildScanContext(){
-  if(!cxScanData)return null;
-  var scanContext="Arbre du projet:\n";
-  var gh=window._codexGithub;
-  var repoName=gh&&gh.repo?gh.repo.owner+"/"+gh.repo.name:"projet";
-  for(var i=0;i<cxScanData.length;i++){
-    scanContext+=(cxScanData[i].type==="tree"?"[DIR] ":"      ")+cxScanData[i].path+"\n";
-    if(i>200){scanContext+="... et "+(cxScanData.length-i)+" autres fichiers\n";break;}
-  }
-  return{context:scanContext,repoName:repoName,fileCount:cxScanData.length};
-}
-
-function cxStartCoding(){
-  if(!cxScanData){cxAddReply("Scanne le projet d'abord.");return;}
-  cxEnterCodingMode();
-  var scan=cxBuildScanContext();
-  codexHistory=[{role:"user",content:"[CONTEXTE PROJET]\n"+scan.context+"\n[FIN CONTEXTE]\nJe suis prêt à coder. Dis-moi ce que tu vois dans le projet."}];
-  cxAddUser("[Scan du projet injecté comme contexte]");
-  cxAddTyping();
-  genBusy=true;
-  cxSaveProjectToSidebar(scan.repoName,scan.fileCount);
-  var sysPrompt="Tu es le Codex de ti-lex-AL. Le scan du projet a été chargé. Tu connais la structure complète. Aide l'usager à coder, modifier ou expliquer le code du projet. Réponds en français québécois.";
-  (async function(){
-    try{
-      var tk=getToken();
-      var h={"Content-Type":"application/json"};
-      if(tk)h["Authorization"]="Bearer "+tk;
-      var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,messages:codexHistory.slice(-10)})});
-      cxRemoveTyping();
-      if(!res.ok){var err=await res.json().catch(function(){return{};});cxAddReply(err.error||"Erreur.");genBusy=false;return;}
-      var reply=await readSSE(res);
-      codexHistory.push({role:"assistant",content:reply});
-      cxAddReply(reply||"(réponse vide)");
-    }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
-    genBusy=false;
-  })();
-}
-
-async function cxSaveProjectToSidebar(repoName,fileCount){
-  try{
-    var proj=await sbRest("/projects",{method:"POST",prefer:"return=representation",body:{name:repoName}});
-    var projId=proj&&proj[0]?proj[0].id:null;
-    if(!projId)return;
-    window._codexProjectId=projId;
-    var conv=await sbRest("/conversations",{method:"POST",prefer:"return=representation",body:{
-      title:"TILEXCODE · "+repoName,type:"project",project_id:projId
-    }});
-    if(conv&&conv[0]){
-      window._codexConvId=conv[0].id;
-      var scan=cxBuildScanContext();
-      if(scan){
-        await sbRest("/messages",{method:"POST",prefer:"return=minimal",body:{
-          conversation_id:conv[0].id,role:"assistant",
-          content:"📊 Projet scanné: **"+repoName+"**\n"+fileCount+" fichiers trouvés.\n\nUtilise ce chat pour demander de l'aide sur ton code."
-        }});
-      }
-    }
-    if(typeof cvpLoad==="function")cvpLoad();
-    if(typeof pushNotif==="function")pushNotif("📁","Projet sauvegardé",repoName,"ok");
-  }catch(e){console.error("[codex] save project:",e);}
-}
-
-function cxSendToChat(){
-  if(!codexHistory||codexHistory.length===0){addMsg("a","Aucun contexte codex à envoyer. Scanne un projet d'abord.");return;}
-  var scan=cxBuildScanContext();
-  var lastCodex=codexHistory.filter(function(m){return m.role==="assistant";}).slice(-1);
-  var context="📦 **Contexte TILEXCODE importé**\n\n";
-  if(scan)context+="**Projet:** "+scan.repoName+" ("+scan.fileCount+" fichiers)\n\n";
-  if(lastCodex.length>0)context+="**Dernière analyse codex:**\n"+lastCodex[0].content.slice(0,800);
-  showTab("chat");
-  var bar=document.getElementById("composer-bar");if(bar)bar.classList.add("visible");
-  chatHistory.push({role:"assistant",content:context});
-  addMsg("a",context);
-  if(window._codexConvId){
-    cvpActiveConvId=window._codexConvId;
-    _convActiveId=window._codexConvId;
-  }
-}
-
 /* ── GITHUB INTEGRATION (dynamic repo/branch via PAT from profiles) ── */
 var VERCEL_PROXY=SB_URL+"/functions/v1/vercel-proxy";
 var ghFiles=[];var ghCurrentBranch="main";var ghFilesVisible=false;
@@ -6200,42 +5705,39 @@ async function ghOpenFile(path){
   if(el)el.classList.add("active");
   var cacheKey=ghCurrentBranch+"/"+path;
   if(ghFileCache[cacheKey]){
-    cxAddUser("Ouvre le fichier : "+path);
-    cxAddReply("```"+path.split(".").pop()+"\n"+ghFileCache[cacheKey]+"\n```\nFichier **"+path+"** ("+ghCurrentBranch+")");
+    showTab("chat");
+    addMsg("a","📄 **"+path+"** ("+ghCurrentBranch+")\n```"+path.split(".").pop()+"\n"+ghFileCache[cacheKey]+"\n```");
     return;
   }
-  cxAddUser("Ouvre le fichier : "+path);
-  cxAddTyping();
+  if(typeof showToastMsg==="function")showToastMsg("Ouverture de "+path+"…");
   try{
     var data=await ghProxyCall({action:"readFile",path:path,branch:ghCurrentBranch});
-    cxRemoveTyping();
-    if(!data||!data.content){cxAddReply("Erreur: fichier vide ou inaccessible.");return;}
+    if(!data||!data.content){addMsg("a","Erreur: fichier vide ou inaccessible.");return;}
     var content=atob(data.content.replace(/\n/g,""));
     ghFileCache[cacheKey]=content;
-    cxAddReply("```"+path.split(".").pop()+"\n"+content+"\n```\nFichier **"+path+"** ("+content.split("\n").length+" lignes · "+ghCurrentBranch+")");
-  }catch(e){cxRemoveTyping();cxAddReply("&#10060; "+e.message);}
+    showTab("chat");
+    addMsg("a","📄 **"+path+"** ("+content.split("\n").length+" lignes · "+ghCurrentBranch+")\n```"+path.split(".").pop()+"\n"+content+"\n```");
+  }catch(e){addMsg("a","❌ "+e.message);}
 }
 async function ghPushCode(){
-  if(!ghConnected||!ghGetRepo()){cxAddReply("Sélectionne un projet GitHub dans la barre en haut.");return;}
+  if(!ghConnected||!ghGetRepo()){if(typeof showToastMsg==="function")showToastMsg("Sélectionne un projet GitHub dans la barre en haut.");return;}
   var lastCode="";
-  document.querySelectorAll(".cx-code-pre").forEach(function(el){var t=el.textContent.trim();if(t)lastCode=t;});
-  if(!lastCode){cxAddReply("Aucun code à push. Génère du code d'abord!");return;}
-  cxAddUser("Push le dernier code généré ("+ghGetRepo()+"@"+ghCurrentBranch+")");
-  cxAddTyping();
+  document.querySelectorAll(".cmsg.a pre code,.cmsg.a pre").forEach(function(el){var t=el.textContent.trim();if(t)lastCode=t;});
+  if(!lastCode){if(typeof showToastMsg==="function")showToastMsg("Aucun code à pousser. Demande du code à AL d'abord.");return;}
   var fileName=prompt("Nom du fichier à créer/modifier :","code.js");
-  if(!fileName){cxRemoveTyping();return;}
+  if(!fileName)return;
   try{
     var existing=null;
     try{existing=await ghProxyCall({action:"readFile",path:fileName,branch:ghCurrentBranch});}catch(e){}
     var sha=existing?existing.sha:undefined;
     var b64=btoa(unescape(encodeURIComponent(lastCode)));
     var result=await ghProxyCall({action:"pushFile",path:fileName,content:b64,branch:ghCurrentBranch,message:"[ti-lex-AL] "+fileName,sha:sha});
-    cxRemoveTyping();
     if(result&&result.success){
-      cxAddReply("&#9989; **"+fileName+"** push sur "+ghGetRepo()+"@"+ghCurrentBranch+"\nCommit: "+result.commit);
+      showTab("chat");
+      addMsg("a","✅ **"+fileName+"** poussé sur "+ghGetRepo()+"@"+ghCurrentBranch+"\nCommit: "+result.commit);
       if(typeof pushNotif==="function")pushNotif("UP","Code push sur GitHub",fileName+" → "+ghCurrentBranch,"ok");
-    }else{cxAddReply("Erreur lors du push.");}
-  }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
+    }else{if(typeof showToastMsg==="function")showToastMsg("Erreur lors du push.");}
+  }catch(e){if(typeof showToastMsg==="function")showToastMsg("Erreur: "+e.message);}
 }
 async function ghRefreshProjects(){
   var container=document.getElementById("studio-projects");
@@ -6389,28 +5891,26 @@ function scanCode(filename,code){
 }
 
 async function studioAutoFix(file,line,errMsg){
-  cxAddUser("Corrige l'erreur dans "+file+" (ligne "+line+") : "+errMsg);
-  cxAddTyping();showTab("codex");
+  showTab("chat");
+  addMsg("u","Corrige l'erreur dans "+file+" (ligne "+line+") : "+errMsg);
   var cacheKey=ghCurrentBranch+"/"+file;
   var content=ghFileCache[cacheKey]||"";
   var sysPrompt="Tu es un correcteur de code expert. On te donne un fichier avec une erreur. "+
     "Corrige UNIQUEMENT l'erreur indiquée. Retourne le fichier corrigé complet dans un bloc ```"+file.split(".").pop()+" ."+
     " Explique brièvement la correction en français québécois.";
-  codexHistory.push({role:"user",content:"Fichier: "+file+"\nErreur ligne "+line+": "+errMsg+"\n\nCode actuel:\n```\n"+content+"\n```\n\nCorrige cette erreur."});
+  var msgs=[{role:"user",content:"Fichier: "+file+"\nErreur ligne "+line+": "+errMsg+"\n\nCode actuel:\n```\n"+content+"\n```\n\nCorrige cette erreur."}];
   try{
     var tk=getToken();
     var h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",model:"claude-sonnet-4-6",max_tokens:4096,system:sysPrompt,
-      messages:codexHistory.slice(-6)
+      messages:msgs
     })});
-    cxRemoveTyping();
-    if(!res.ok){var errData=await res.json().catch(function(){return{};});cxAddReply(errData.error||"Erreur de connexion.");return;}
+    if(!res.ok){var errData=await res.json().catch(function(){return{};});addMsg("a",errData.error||"Erreur de connexion.");return;}
     var reply=await readSSE(res);
-    codexHistory.push({role:"assistant",content:reply});
-    cxAddReply(reply||"(réponse vide)");
-  }catch(e){cxRemoveTyping();cxAddReply("Erreur: "+e.message);}
+    addMsg("a",reply||"(réponse vide)");
+  }catch(e){addMsg("a","Erreur: "+e.message);}
 }
 
 /* ── SETTINGS FUNCTIONS ── */
@@ -6940,7 +6440,7 @@ async function studioVerifyBeforeDeploy(){
 }
 
 /* ── BARRE COMPOSITEUR FIXE ── */
-var composerViews=["view-chat","view-codex"];
+var composerViews=["view-chat"];
 var currentComposerMode="chat";
 
 function updateComposer(){
@@ -6955,10 +6455,6 @@ function updateComposer(){
     bar.classList.add("visible");currentComposerMode="chat";
     document.getElementById("composer-input").placeholder="Discuter avec Agent AL…";
     if(scanBtn)scanBtn.style.display="none";
-  }else if(activeView==="view-codex"){
-    bar.classList.add("visible");currentComposerMode="codex";
-    document.getElementById("composer-input").placeholder="Décris ce que tu veux coder…";
-    if(scanBtn)scanBtn.style.display="inline-block";
   }else{
     bar.classList.remove("visible");
     if(scanBtn)scanBtn.style.display="none";
@@ -6966,10 +6462,7 @@ function updateComposer(){
   closeComposerMenu();
 }
 
-function composerScanAction(){
-  if(typeof cxScanProject==="function")cxScanProject();
-  else showTab("silex");
-}
+function composerScanAction(){ showTab("silex"); }
 
 var origShowTab=showTab;
 showTab=function(name){
@@ -6999,13 +6492,6 @@ async function composerSend(){
     inp.value="";inp.style.height="auto";
     if(typeof trackFeatureUsage==="function")trackFeatureUsage("chat_send");
     sendChat();
-  }else if(currentComposerMode==="codex"){
-    var autorise2=await gardeIA();
-    if(!autorise2)return;
-    document.getElementById("codex-txt").value=txt;
-    inp.value="";inp.style.height="auto";
-    if(typeof trackFeatureUsage==="function")trackFeatureUsage("codex_send");
-    genCode();
   }
 }
 
@@ -7042,7 +6528,7 @@ document.addEventListener("click",function(e){
 
 function composeAction(action){
   closeComposerMenu();
-  if(action==="codex")showTab("codex");
+  if(action==="codex")window.location.href="/codex";
   else if(action==="agent")openModal();
   else if(action==="clear"){
     document.getElementById("chat-msgs").innerHTML="";
@@ -7108,15 +6594,7 @@ function composeAction(action){
   }
   else if(action==="sb-read"){sbChatRead();}
   else if(action==="sb-send"){sbChatSend();}
-  else if(action==="to-codex"){
-    var code=document.getElementById("composer-input").value.trim();
-    if(!code){addMsg("a","Écris du code dans la barre, puis clique 🔄 Envoyer à TILEXCODE.");return;}
-    document.getElementById("codex-txt").value=code;
-    document.getElementById("composer-input").value="";
-    document.getElementById("composer-input").style.height="auto";
-    showTab("codex");
-    addMsg("a","📤 Code envoyé à TILEXCODE.");
-  }
+  else if(action==="to-codex"){ window.location.href="/codex"; }
 }
 
 var POLICES_MAP={
@@ -8382,7 +7860,7 @@ async function mediaUploadAll(){
   if(fill)fill.style.width="100%";
   if(ptxt)ptxt.textContent=success+" uploadé(s)"+(failed>0?", "+failed+" échoué(s)":"")+" — terminé!";
   if(typeof pushNotif==="function")pushNotif("📁","Upload terminé",success+" fichier(s) sur "+repo,"ok");
-  cxAddReply("📁 **"+success+" fichier(s)** uploadé(s) dans `"+basePath+"` sur "+repo+"@"+ghCurrentBranch+(failed>0?"\n⚠️ "+failed+" échec(s)":""));
+  if(typeof showToastMsg==="function")showToastMsg("📁 "+success+" fichier(s) uploadé(s) sur "+repo+"@"+ghCurrentBranch+(failed>0?" · "+failed+" échec(s)":""));
   setTimeout(function(){closeMediaModal();if(ghConnected)ghLoadFiles();},1500);
 }
 
@@ -8981,45 +8459,6 @@ supabase.auth.onAuthStateChange(function(event,session){
   }catch(e){console.warn("[MIDAS] init skip",e);}
 })();
 
-/* ══ MOTEUR COMMUNICATION CHAT → CODEX ══ */
-async function envoyerVersCodex(titre,instruction,fichiers){
-  try{
-    var sess=await supabase.auth.getSession();
-    if(!sess.data||!sess.data.session){showToastMsg("Connecte-toi d'abord.");return null;}
-    var token=sess.data.session.access_token;
-    var res=await fetch(SB_URL+"/functions/v1/receive-codex-instruction",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SB_ANON},
-      body:JSON.stringify({titre:titre,instruction:instruction,fichiers:fichiers||[]})
-    });
-    var data=await res.json();
-    if(data.succes){
-      showToastMsg("📤 Instruction envoyée à Codex!");
-      console.log("Codex queue ID:",data.id);
-    }else{
-      showToastMsg("❌ Erreur Codex : "+(data.error||"inconnue"));
-    }
-    return data;
-  }catch(err){
-    console.error("envoyerVersCodex:",err);
-    showToastMsg("❌ Connexion Codex échouée");
-    return null;
-  }
-}
-function envoyerMsgVersCodex(btnEl){
-  var bbl=btnEl.closest(".cmsg")?.querySelector(".cmsg-bbl");
-  if(!bbl)return;
-  var contenu=bbl.innerText||bbl.textContent;
-  var codexTxt=document.getElementById("codex-txt");
-  if(codexTxt){
-    codexTxt.value=contenu;
-    showTab("codex");
-    showToastMsg("📤 Code envoyé à TILEXCODE");
-  }
-}
-window.envoyerVersCodex=envoyerVersCodex;
-window.envoyerMsgVersCodex=envoyerMsgVersCodex;
-
 /* ══ TI-ÉTUDE — profil utilisateur ══ */
 var _tiEtude=null;
 async function loadTiEtude(){
@@ -9077,69 +8516,6 @@ function toggleWebSearch(){
     else{btn.classList.remove("active");btn.style.color="";}
   }
   showToastMsg(webSearchMode?"🌐 Recherche web activée":"Recherche web désactivée");
-}
-
-/* ══ CODEX VALIDATION FLOW ══ */
-var codexValidated=false;
-function getCodexSysPrompt(){
-  var etude="";
-  if(_tiEtude){
-    var parts=[];
-    if(_tiEtude.langue_preferee)parts.push("Langue: "+_tiEtude.langue_preferee);
-    if(_tiEtude.style_ecriture)parts.push("Style: "+_tiEtude.style_ecriture);
-    if(Array.isArray(_tiEtude.couleurs_preferees)&&_tiEtude.couleurs_preferees.length)parts.push("Couleurs: "+_tiEtude.couleurs_preferees.join(", "));
-    if(Array.isArray(_tiEtude.interets)&&_tiEtude.interets.length)parts.push("Intérêts: "+_tiEtude.interets.join(", "));
-    if(parts.length)etude="\n\n[Profil utilisateur]: "+parts.join(" | ");
-  }
-  if(!codexValidated){
-    return "Tu es l'agent ti-lex-AL en mode cadrage de projet. Tu NE génères PAS de code. "+
-      "Tu poses des questions pour bien comprendre le projet de l'utilisateur : but, fonctionnalités, style visuel, couleurs, technologies. "+
-      "Sois chaleureux, en français québécois professionnel. "+
-      "Quand tu as assez d'information, dis-le clairement et invite l'utilisateur à cliquer le bouton « ✅ Valider le projet » pour passer en mode génération de code."+etude;
-  }
-  return "Tu es le Codex de ti-lex-AL, un assistant de code expert."+etude;
-}
-function validateCodexProject(){
-  codexValidated=true;
-  cxEnterCodingMode();
-  var vb=document.getElementById("codex-validate-btn");
-  if(vb)vb.style.display="none";
-  cxAddReply("✅ Projet validé! Je suis maintenant en mode génération de code. Décris ce que tu veux coder!");
-  showToastMsg("✅ Projet validé — mode code activé");
-}
-function resetCodexProject(){
-  codexValidated=false;
-  codexHistory=[];
-  cxExitCodingMode();
-  var feed=document.getElementById("codex-feed");
-  if(feed)feed.innerHTML='<div class="codex-empty" id="codex-empty"><div class="codex-empty-ico">⌨️</div><div class="codex-empty-txt">CODEX PRÊT<br>Décris ce que tu veux coder<br>dans la barre en bas.</div></div>';
-  showCodexValidateBtn();
-}
-function showCodexValidateBtn(){
-  var existing=document.getElementById("codex-validate-btn");
-  if(existing)existing.remove();
-  if(codexValidated)return;
-  var feed=document.getElementById("codex-feed");
-  if(!feed)return;
-  var btn=document.createElement("div");
-  btn.id="codex-validate-btn";
-  btn.style.cssText="text-align:center;padding:10px;";
-  btn.innerHTML='<button onclick="validateCodexProject()" style="background:#00a86b;color:#0a0a0a;border:none;border-radius:8px;padding:10px 24px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;letter-spacing:.5px;">✅ Valider le projet</button><div style="font-size:10px;color:#6c6c78;margin-top:6px;">Clique pour passer en mode génération de code</div>';
-  feed.appendChild(btn);
-}
-
-/* ══ CODEX STUDIO+ BUTTON ══ */
-function cxAjouterBtnStudioPlus(){
-  var feed=document.getElementById("codex-feed");
-  if(!feed)return;
-  var existing=document.getElementById("cx-studio-plus-btn-wrap");
-  if(existing)existing.remove();
-  var wrap=document.createElement("div");
-  wrap.id="cx-studio-plus-btn-wrap";
-  wrap.style.cssText="text-align:center;padding:10px;";
-  wrap.innerHTML='<button onclick="cxOuvrirStudioPlus()" style="background:linear-gradient(135deg,#FF6B00,#cc5500);border:none;border-radius:10px;padding:12px 28px;color:white;font-size:14px;font-weight:700;letter-spacing:1.5px;cursor:pointer;font-family:inherit;box-shadow:0 0 16px rgba(255,107,0,.3);transition:all .2s;">🔍 STUDIO+ — VÉRIFIER & PUSH</button><div style="font-size:10px;color:var(--muted);margin-top:6px;">Valide le code avant de l\'envoyer au repo</div>';
-  feed.appendChild(wrap);
-  feed.scrollTop=feed.scrollHeight;
 }
 
 /* ══ MICRO VOCAL COMPOSER ══ */
@@ -9207,143 +8583,6 @@ function majMicBtn(){
   if(ico)ico.textContent=_micActive?"🔴":"🎙️";
   if(lbl)lbl.textContent=_micActive?"Désactiver le micro":"Activer le micro";
   if(item)item.style.color=_micActive?"#ff3b3b":"";
-}
-
-/* ══ CODEX STUDIO+ — VALIDATION POST-GÉNÉRATION ══ */
-function cxExtraireBlocs(txt){
-  var blocs=[];
-  var re=/```(\w*)\n([\s\S]*?)```/g;
-  var m;
-  while((m=re.exec(txt))!==null){
-    var lang=m[1]||"code";
-    var code=m[2];
-    var path=cxDevinerPath(code,lang);
-    blocs.push({lang:lang,code:code,path:path});
-  }
-  return blocs;
-}
-function cxDevinerPath(code,lang){
-  var lines=code.split("\n");
-  for(var i=0;i<Math.min(3,lines.length);i++){
-    var l=lines[i].trim();
-    var m=l.match(/^(?:\/\/|#|\/\*|<!--)\s*([\w./-]+\.\w{1,6})/);
-    if(m)return m[1];
-  }
-  var extMap={js:".js",ts:".ts",jsx:".jsx",tsx:".tsx",html:".html",css:".css",py:".py",sql:".sql",json:".json",bash:".sh",sh:".sh"};
-  var ext=extMap[lang]||".txt";
-  return "nouveau-fichier"+ext;
-}
-function cxOuvrirStudioPlus(){
-  var lastAssistant=codexHistory.filter(function(m){return m.role==="assistant";}).slice(-1);
-  if(!lastAssistant.length){showToastMsg("Aucun code généré.");return;}
-  var blocs=cxExtraireBlocs(lastAssistant[0].content);
-  if(!blocs.length){showToastMsg("Aucun bloc de code trouvé.");return;}
-  var ov=document.createElement("div");
-  ov.className="cx-studio-overlay";
-  ov.id="cx-studio-overlay";
-  var html='<div class="cx-studio-hd"><h2>🔍 STUDIO+ — VALIDATION</h2><div style="flex:1;"></div><button class="btn-ghost" onclick="cxFermerStudioPlus()" style="font-size:18px;padding:4px 10px;">✕</button></div>';
-  html+='<div class="cx-studio-body">';
-  for(var i=0;i<blocs.length;i++){
-    var b=blocs[i];
-    html+='<div class="cx-studio-file" data-idx="'+i+'">';
-    html+='<div class="cx-studio-file-hd"><span>📄</span> <input type="text" class="cx-studio-path-input" value="'+escHtml(b.path)+'" data-idx="'+i+'" style="background:transparent;border:1px solid var(--border);border-radius:4px;color:#37e0a0;font-family:inherit;font-size:12px;padding:4px 8px;flex:1;min-width:0;"/> <span style="color:var(--muted);font-size:10px;">'+escHtml(b.lang)+'</span></div>';
-    html+='<pre>'+escHtml(b.code.slice(0,800))+(b.code.length>800?"\n... ("+b.code.length+" chars)":"")+'</pre>';
-    html+='</div>';
-  }
-  html+='</div>';
-  html+='<div class="cx-studio-status" id="cx-studio-status">'+blocs.length+' fichier'+(blocs.length>1?"s":"")+' détecté'+(blocs.length>1?"s":"")+'</div>';
-  html+='<div class="cx-studio-footer">';
-  html+='<button class="btn-orange" onclick="cxStudioValider()" style="padding:12px 24px;font-size:13px;letter-spacing:1px;">🔍 VÉRIFIER LE CODE</button>';
-  html+='<button class="btn-orange" onclick="cxStudioPush()" id="cx-studio-push-btn" style="padding:12px 24px;font-size:13px;letter-spacing:1px;background:linear-gradient(135deg,#37e0a0,#1a9e6a);display:none;">📤 PUSH AU REPO</button>';
-  html+='<button class="btn-ghost" onclick="cxFermerStudioPlus()" style="padding:12px 20px;font-size:12px;">FERMER</button>';
-  html+='</div>';
-  ov.innerHTML=html;
-  document.body.appendChild(ov);
-  window._cxStudioBlocs=blocs;
-}
-function cxFermerStudioPlus(){
-  var ov=document.getElementById("cx-studio-overlay");
-  if(ov)ov.remove();
-}
-function cxStudioValider(){
-  var status=document.getElementById("cx-studio-status");
-  if(status)status.innerHTML='<span style="color:var(--orange);">⏳ Vérification en cours...</span>';
-  var blocs=window._cxStudioBlocs||[];
-  var inputs=document.querySelectorAll(".cx-studio-path-input");
-  inputs.forEach(function(inp){
-    var idx=parseInt(inp.getAttribute("data-idx"));
-    if(blocs[idx])blocs[idx].path=inp.value.trim();
-  });
-  var erreurs=0;var avertissements=0;
-  for(var i=0;i<blocs.length;i++){
-    var b=blocs[i];
-    var fileEl=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
-    if(!fileEl)continue;
-    var issues=[];
-    if(!b.path||b.path==="nouveau-fichier"+"."+b.lang){issues.push("⚠️ Chemin de fichier manquant");avertissements++;}
-    if(b.lang==="js"||b.lang==="ts"){
-      var brackets=0;var parens=0;
-      for(var c=0;c<b.code.length;c++){
-        if(b.code[c]==="{")brackets++;else if(b.code[c]==="}")brackets--;
-        if(b.code[c]==="(")parens++;else if(b.code[c]===")")parens--;
-      }
-      if(brackets!==0){issues.push("❌ Accolades déséquilibrées ("+brackets+")");erreurs++;}
-      if(parens!==0){issues.push("❌ Parenthèses déséquilibrées ("+parens+")");erreurs++;}
-    }
-    if(/API_KEY|SECRET|PASSWORD|SERVICE_ROLE|ANTHROPIC_API/i.test(b.code)){issues.push("❌ Secret potentiel détecté!");erreurs++;}
-    var existingStatus=fileEl.querySelector(".cx-file-status");
-    if(existingStatus)existingStatus.remove();
-    var statusDiv=document.createElement("div");statusDiv.className="cx-file-status";
-    statusDiv.style.cssText="padding:8px 14px;font-size:11px;border-top:1px solid var(--border);";
-    if(issues.length===0){statusDiv.innerHTML='<span style="color:#37e0a0;">✅ OK</span>';
-    }else{statusDiv.innerHTML=issues.map(function(s){return '<div>'+s+'</div>';}).join("");}
-    fileEl.appendChild(statusDiv);
-  }
-  if(status){
-    if(erreurs>0)status.innerHTML='<span style="color:#ff3b3b;">❌ '+erreurs+' erreur'+(erreurs>1?"s":"")+'</span>'+(avertissements?' · <span style="color:var(--orange);">⚠️ '+avertissements+' avertissement'+(avertissements>1?"s":"")+'</span>':'');
-    else if(avertissements>0)status.innerHTML='<span style="color:var(--orange);">⚠️ '+avertissements+' avertissement'+(avertissements>1?"s":"")+'</span> — <span style="color:#37e0a0;">Aucune erreur</span>';
-    else status.innerHTML='<span style="color:#37e0a0;">✅ TOUT EST BON — Prêt à push</span>';
-  }
-  var pushBtn=document.getElementById("cx-studio-push-btn");
-  if(pushBtn&&erreurs===0)pushBtn.style.display="inline-flex";
-}
-async function cxStudioPush(){
-  var blocs=window._cxStudioBlocs||[];
-  var inputs=document.querySelectorAll(".cx-studio-path-input");
-  inputs.forEach(function(inp){
-    var idx=parseInt(inp.getAttribute("data-idx"));
-    if(blocs[idx])blocs[idx].path=inp.value.trim();
-  });
-  var status=document.getElementById("cx-studio-status");
-  if(status)status.innerHTML='<span style="color:var(--orange);">📤 Push en cours...</span>';
-  var gh=window._codexGithub;
-  if(!gh||!gh.repo){
-    if(status)status.innerHTML='<span style="color:#ff3b3b;">❌ GitHub non connecté</span>';return;
-  }
-  var pushed=0;var errors=0;
-  for(var i=0;i<blocs.length;i++){
-    var b=blocs[i];
-    if(!b.path||b.path.indexOf("nouveau-fichier")===0)continue;
-    try{
-      var _sha;
-      try{var _ex=await ghProxyCall({action:"readFile",path:b.path,branch:ghCurrentBranch});_sha=_ex.sha;}catch(_e){}
-      var _b64=btoa(unescape(encodeURIComponent(b.code)));
-      var _body={action:"pushFile",path:b.path,content:_b64,branch:ghCurrentBranch,message:"feat: "+b.path+" via TilexCode Studio+"};
-      if(_sha)_body.sha=_sha;
-      await ghProxyCall(_body);
-      pushed++;
-      var fileEl=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
-      if(fileEl){var s=fileEl.querySelector(".cx-file-status");if(s)s.innerHTML='<span style="color:#37e0a0;">✅ Pushé!</span>';}
-    }catch(e){errors++;
-      var fileEl2=document.querySelectorAll('.cx-studio-file[data-idx="'+i+'"]')[0];
-      if(fileEl2){var s2=fileEl2.querySelector(".cx-file-status");if(s2)s2.innerHTML='<span style="color:#ff3b3b;">❌ '+escHtml(e.message)+'</span>';}
-    }
-  }
-  if(status){
-    if(errors>0)status.innerHTML='<span style="color:var(--orange);">📤 '+pushed+' pushé'+(pushed>1?"s":"")+'</span> · <span style="color:#ff3b3b;">'+errors+' erreur'+(errors>1?"s":"")+'</span>';
-    else status.innerHTML='<span style="color:#37e0a0;">✅ '+pushed+' fichier'+(pushed>1?"s":"")+' pushé'+(pushed>1?"s":"")+'! 🎉</span>';
-  }
-  if(typeof pushNotif==="function")pushNotif("📤","Code pushé",""+pushed+" fichiers envoyés au repo","ok");
 }
 
 /* ══ LIVE TYPING WATCHER ══ */
@@ -9773,7 +9012,7 @@ trackFeatureUsage("app_load");
 <!-- MOBILE QUICK BAR -->
 <div class="mobile-quick-bar" id="mobile-quick-bar">
   <button class="mqb-btn" onclick="showTab('chat')"><span class="mqb-ico">💬</span>CHAT</button>
-  <button class="mqb-btn" onclick="showTab('codex')"><span class="mqb-ico">⌨️</span>CODEX</button>
+  <button class="mqb-btn" onclick="window.location.href='/codex'"><span class="mqb-ico">⌨️</span>CODEX</button>
   <button class="mqb-btn" onclick="showTab('studio')"><span class="mqb-ico">🚀</span>STUDIO</button>
   <button class="mqb-btn" onclick="showTab('settings')"><span class="mqb-ico">⚙️</span>CONFIG</button>
 </div>
