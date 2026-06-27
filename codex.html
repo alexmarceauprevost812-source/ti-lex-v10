@@ -251,6 +251,16 @@
       r.readAsText(file);
     });
   }
+  // pousse un fichier complet (chemin via // path:) — sans UI de bouton
+  async function pousserUn(code){
+    var m=code.match(/^[^\n]*?path:\s*([^\s*]+)/i); var path=m?m[1].trim():null;
+    if(!path) throw new Error("chemin manquant");
+    var contenu=code.replace(/^[^\n]*path:[^\n]*\n/i,"");
+    var sha; try{ var ex=await gh({action:"readFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch}); sha=ex.sha; }catch(e){}
+    var body={action:"pushFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch,content:b64encode(contenu),message:"feat: "+path+" via TilexCode"};
+    if(sha) body.sha=sha;
+    return gh(body);
+  }
 
   // appel GitHub via le proxy serveur (PAT côté serveur — aucun token client)
   async function gh(body){
@@ -288,6 +298,7 @@
     }
     corpsEl.innerHTML='<div class="tc-who">TILEXCODE</div>';
     var wrap=document.createElement("div");
+    var pushables=[];   // fichiers complets (non-diff) avec // path: → bouton « Tout pousser »
     blocs.forEach(function(b){
       if(b.avant.trim()){ var p=document.createElement("div"); p.innerHTML=inline(b.avant); wrap.appendChild(p); }
       // ── Détection diff : 1re ligne = // path: fichier
@@ -312,6 +323,7 @@
         });
         diffDiv.appendChild(body);
         wrap.appendChild(diffDiv);
+        if(!isDiff) pushables.push(b.code);
         var btn=document.createElement("button"); btn.className="tc-push";
         btn.textContent=isDiff?"📤 Appliquer le diff":"📤 Pousser ce fichier";
         btn.onclick=function(){ TC.pousser(b.code, btn); };
@@ -325,6 +337,13 @@
         wrap.appendChild(btn);
       }
     });
+    if(pushables.length>=2){
+      var allBtn=document.createElement("button"); allBtn.className="tc-push";
+      allBtn.style.cssText="background:linear-gradient(135deg,#cc5600,var(--orange));color:#fff;font-weight:700;margin-top:8px;";
+      allBtn.textContent="📤 Tout pousser ("+pushables.length+" fichiers) 🚀";
+      allBtn.onclick=function(){ TC.pousserTout(pushables, allBtn); };
+      wrap.appendChild(allBtn);
+    }
     if(apres.trim()){ var p2=document.createElement("div"); p2.innerHTML=inline(apres); wrap.appendChild(p2); }
     corpsEl.appendChild(wrap);
   }
@@ -555,6 +574,20 @@
         var r=await gh(body);
         btn.textContent="✅ Poussé ("+(r.commit||"ok")+")"; btn.classList.add("done");
       }catch(e){ btn.textContent="❌ "+e.message; btn.disabled=false; }
+    },
+
+    // Pousse TOUS les fichiers proposés d'un coup (déploiement Vercel auto).
+    pousserTout:async function(list, btn){
+      if(!S.repo||!S.branch){ ajouterMsg("sys","❌ Choisis un projet + branche d'abord."); return; }
+      if(!confirm("Pousser "+list.length+" fichiers vers "+S.repo.owner+"/"+S.repo.name+" @ "+S.branch+" ?\nVercel déploiera automatiquement.")) return;
+      btn.disabled=true; var ok=0;
+      for(var i=0;i<list.length;i++){
+        btn.textContent="⏳ Push "+(i+1)+"/"+list.length+"…";
+        try{ await pousserUn(list[i]); ok++; }catch(e){ ajouterMsg("sys","❌ "+(e&&e.message||"push")); }
+      }
+      btn.textContent="✅ "+ok+"/"+list.length+" poussé(s) — 🚀 Vercel déploie";
+      btn.classList.add("done");
+      ajouterMsg("sys","🚀 "+ok+" fichier(s) poussé(s) sur "+S.branch+". Vercel déploie automatiquement la dernière version.");
     },
 
     // ── Bouton + : ajouter des fichiers à lire (contexte de l'IA) ──

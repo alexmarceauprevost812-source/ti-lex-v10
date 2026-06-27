@@ -5656,6 +5656,13 @@ async function studioScanAll(){
     summary.textContent=scanned+" fichiers scannés · 0 erreurs · Prêt pour déploiement ✓";
     summary.style.color="var(--green)";
   }else{
+    window._studioErrors=allErrors;
+    var fixAll=document.createElement("button");
+    fixAll.className="scan-fix-btn";
+    fixAll.style.cssText="width:100%;margin-bottom:12px;background:linear-gradient(135deg,#FF6B00,#cc5500);color:#fff;font-weight:700;letter-spacing:1px;";
+    fixAll.textContent="🔧 Tout corriger + 🚀 Déployer ("+allErrors.length+")";
+    fixAll.onclick=function(){ studioFixAllDeploy(); };
+    container.appendChild(fixAll);
     for(var k=0;k<allErrors.length;k++){
       var err=allErrors[k];
       var div=document.createElement("div");div.className="scan-result "+(err.severity==="error"?"error":"warning");
@@ -5770,6 +5777,57 @@ async function studioAutoFix(file,line,errMsg){
     if(!res.ok){var errData=await res.json().catch(function(){return{};});addMsg("a",errData.error||"Erreur de connexion.");return;}
     var reply=await readSSE(res);
     addMsg("a",reply||"(réponse vide)");
+  }catch(e){addMsg("a","Erreur: "+e.message);}
+}
+
+/* ── STUDIO — TOUT CORRIGER + DÉPLOYER (auto-fix toutes les erreurs puis push → Vercel déploie) ── */
+function parseFichiersCorriges(txt){
+  var out=[];var re=/```[\w-]*\n?([\s\S]*?)```/g;var m;
+  while((m=re.exec(txt))){
+    var code=m[1];var fl=(code.split("\n")[0]||"").trim();
+    var pm=fl.match(/^\/\/\s*path:\s*(.+)$/);
+    if(pm){ out.push({path:pm[1].trim(),code:code.replace(/^[^\n]*path:[^\n]*\n/i,"")}); }
+  }
+  return out;
+}
+async function studioFixAllDeploy(){
+  var errs=window._studioErrors||[];
+  if(!errs.length){showToastMsg("Aucune erreur à corriger.");return;}
+  if(!ghConnected||!ghCurrentBranch){showToastMsg("Connecte GitHub d'abord.");return;}
+  var byFile={};errs.forEach(function(e){(byFile[e.file]=byFile[e.file]||[]).push(e);});
+  var files=Object.keys(byFile).slice(0,5);
+  showTab("chat");
+  addMsg("u","🔧 Corrige toutes les erreurs détectées dans le projet et prépare le déploiement.");
+  var ctx="";
+  files.forEach(function(fp){
+    var content=ghFileCache[ghCurrentBranch+"/"+fp]||"";
+    var elist=byFile[fp].map(function(e){return "- ligne "+e.line+": "+e.message;}).join("\n");
+    ctx+="\n\n=== "+fp+" ===\nErreurs:\n"+elist+"\n\nCode actuel:\n```\n"+content+"\n```";
+  });
+  var sysPrompt="Tu es un correcteur de code expert. Corrige TOUTES les erreurs indiquées. "+
+    "Pour CHAQUE fichier corrigé, renvoie le fichier COMPLET dans un bloc de code dont la 1re ligne est EXACTEMENT `// path: <chemin/du/fichier>`. "+
+    "Ne renvoie que les fichiers modifiés. Explique brièvement les corrections en français québécois.";
+  try{
+    var tk=getToken();var h={"Content-Type":"application/json"};if(tk)h["Authorization"]="Bearer "+tk;
+    var res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({kind:"chat",model:"claude-sonnet-4-6",max_tokens:8000,system:sysPrompt,messages:[{role:"user",content:ctx}]})});
+    if(!res.ok){var ed=await res.json().catch(function(){return{};});addMsg("a",ed.error||"Erreur de connexion.");return;}
+    var reply=await readSSE(res);
+    addMsg("a",reply||"(réponse vide)");
+    var fixes=parseFichiersCorriges(reply);
+    if(!fixes.length){addMsg("a","⚠️ Aucun fichier corrigé détecté — vérifie manuellement avant de déployer.");return;}
+    var liste=fixes.map(function(f){return "• "+f.path;}).join("\n");
+    if(!confirm("Pousser "+fixes.length+" fichier(s) corrigé(s) vers "+ghGetRepo()+" @ "+ghCurrentBranch+" ?\n\n"+liste+"\n\nVercel déploiera automatiquement.")){addMsg("a","Déploiement annulé.");return;}
+    var ok=0;
+    for(var i=0;i<fixes.length;i++){
+      try{
+        var sha;try{var ex=await ghProxyCall({action:"readFile",path:fixes[i].path,branch:ghCurrentBranch});sha=ex.sha;}catch(e){}
+        var body={action:"pushFile",path:fixes[i].path,branch:ghCurrentBranch,content:btoa(unescape(encodeURIComponent(fixes[i].code))),message:"fix: "+fixes[i].path+" (auto-correction Studio)"};
+        if(sha)body.sha=sha;
+        await ghProxyCall(body);ok++;
+        ghFileCache[ghCurrentBranch+"/"+fixes[i].path]=fixes[i].code;
+      }catch(e){addMsg("a","❌ "+fixes[i].path+" : "+e.message);}
+    }
+    addMsg("a","✅ "+ok+"/"+fixes.length+" fichier(s) poussé(s) sur "+ghCurrentBranch+". 🚀 Vercel déploie automatiquement la dernière version.");
   }catch(e){addMsg("a","Erreur: "+e.message);}
 }
 
