@@ -34,17 +34,18 @@
   --bg:#0a0a0a;--bg2:#0d0d0d;--bg3:#111111;--bg4:#1a1a1a;
   --or:#ff7f27;--or2:#ff9a3c;--or3:#cc6520;
   --orange:#ff7f27;--orange2:#ff9a3c;--og:rgba(255,127,39,.2);
-  --txt:#ffffff;--muted:rgba(255,255,255,.42);
+  --txt:#ffffff;--muted:rgba(255,255,255,.42);--agent-text-color:#ffffff;
   --border:#23232c;--grid:rgba(35,35,44,.3);
   --green:#00a86b;--red:#ff3b3b;--radius:10px;
   --gold:#ffcf4a;--blue:#4a9eff;--purple:#c084fc;
   --tb:56px;--sb-w:252px;--sb-c:62px;
 }
 [data-theme="day"]{
-  --bg:#E6DAC4;--bg2:#EFE7D7;--bg3:#DED1B8;--bg4:#D4C9B0;
-  --txt:#111111;--muted:#4a4540;
-  --border:rgba(180,155,100,.25);--grid:rgba(180,155,100,.08);
+  --bg:#d4d6d9;--bg2:#dde0e3;--bg3:#c9ccd0;--bg4:#bcbfc4;
+  --txt:#000000;--muted:#4a4d52;
+  --border:rgba(80,85,95,.22);--grid:rgba(80,85,95,.08);
   --or:#5A4000;--or2:#7A5800;--or3:#3D2B00;
+  --agent-text-color:#000000;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-tilex)!important;}
 html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
@@ -477,14 +478,14 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.6;white-space:pre-wrap;
   overflow-wrap:break-word;word-break:normal;word-wrap:break-word;min-width:0;max-width:100%;}
 .cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:#ffffff;border-bottom-right-radius:3px;}
-.cmsg-bbl.a{background:none;border:none;color:var(--agent-text-color,#f5d45a);padding:4px 0;
-  text-shadow:0 0 10px rgba(245,212,90,.45),0 0 3px rgba(255,220,80,.3),0 0 1px rgba(255,255,200,.15);}
+.cmsg-bbl.a{background:none;border:none;color:var(--agent-text-color,#ffffff);padding:4px 0;
+  text-shadow:0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18);}
 .al-letter-glow{animation:alGlow .6s ease-out forwards;}
 @keyframes alGlow{
-  0%{color:#fffce8;text-shadow:0 0 16px rgba(255,220,80,.85),0 0 6px rgba(255,200,60,.6);}
-  100%{color:var(--agent-text-color,#f5d45a);text-shadow:0 0 10px rgba(245,212,90,.45),0 0 3px rgba(255,220,80,.3);}
+  0%{color:#ffffff;text-shadow:0 0 16px rgba(255,255,255,.85),0 0 6px rgba(255,255,255,.6);}
+  100%{color:var(--agent-text-color,#ffffff);text-shadow:0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18);}
 }
-[data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;color:#1a1a1a;}
+[data-theme="day"] .cmsg-bbl.a{background:var(--bg2);border-radius:11px;padding:8px 12px;color:#000000;text-shadow:none;}
 [data-theme="day"] .cmsg-bbl.u{background:rgba(255,106,0,.1);border-color:rgba(255,106,0,.18);color:#1a1a1a;}
 .cmsg-actions{display:flex;gap:6px;margin-top:4px;}
 .cmsg-act-btn{border:1px solid var(--border);background:var(--bg3);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
@@ -2634,47 +2635,10 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
           </div>
           <div id="device-profil-hint" style="font-size:11px;margin-top:8px;color:var(--muted);min-height:14px;"></div>
         </div>
+        <!-- 🔒 Réglages de couleur retirés : thèmes nuit/jour verrouillés (écriture + boutons fixes) -->
         <div class="settings-section">
-          <div class="settings-label">🎨 COULEUR DU TEXTE AGENT</div>
-          <div class="settings-hint" style="margin-bottom:8px;">Change la couleur des réponses de l'agent AL.</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;" id="settings-colors">
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#ff3b3b')" style="background:#ff3b3b;" title="Rouge"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#ffcf4a')" style="background:#ffcf4a;" title="Jaune"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#1a1a1a')" style="background:#1a1a1a;border:1px solid #666;" title="Noir"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#ffffff')" style="background:#ffffff;" title="Blanc"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#1400f5')" style="background:#1400f5;" title="Bleu"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#37e0a0')" style="background:#37e0a0;" title="Vert menthe"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#59b300')" style="background:#59b300;" title="Vert vif"></button>
-            <button class="cmi-color-dot" onclick="setCouleurAgent('#e8b830')" style="background:#e8b830;" title="Or (défaut)"></button>
-          </div>
-        </div>
-        <div class="settings-section">
-          <div class="settings-label">🔘 COULEUR DES BOUTONS</div>
-          <div class="settings-hint" style="margin-bottom:8px;">Change la couleur des boutons de l'interface.</div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;" id="settings-btn-colors">
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ff3b3b')" style="background:#ff3b3b;" title="Rouge"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ffcf4a')" style="background:#ffcf4a;" title="Jaune"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#1a1a1a')" style="background:#1a1a1a;border:1px solid #666;" title="Noir"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ffffff')" style="background:#ffffff;" title="Blanc"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#1400f5')" style="background:#1400f5;" title="Bleu"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#37e0a0')" style="background:#37e0a0;" title="Vert menthe"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#59b300')" style="background:#59b300;" title="Vert vif"></button>
-            <button class="cmi-color-dot cmi-btn-dot" onclick="setCouleurBoutons('#ff7f27')" style="background:#ff7f27;" title="Orange (défaut)"></button>
-          </div>
-        </div>
-        <div class="settings-section" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
-          <div class="settings-label">🛡️ COULEURS PAR AGENT (INDAR)</div>
-          <div class="settings-hint" style="margin-bottom:10px;">Personnalise la couleur de police de chaque agent. Sauvegardé sur ton compte Supabase.</div>
-          <div id="agent-theme-colors" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
-          <div class="settings-label" style="margin-top:14px;">🔘 BOUTONS (THÈME)</div>
-          <div id="btn-theme-colors" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;"></div>
-          <div class="settings-label" style="margin-top:14px;">👁️ APERÇU</div>
-          <div id="theme-preview" style="background:#0a0a0a;border:1px solid #222;border-radius:10px;padding:14px;margin-bottom:14px;"></div>
-          <div style="display:flex;gap:10px;">
-            <button class="btn-orange" id="theme-save-btn" style="flex:1;padding:11px;font-size:13px;">💾 SAUVEGARDER MON THÈME</button>
-            <button class="btn-ghost" id="theme-reset-btn" style="padding:11px 16px;font-size:13px;">↺ RÉINITIALISER</button>
-          </div>
-          <div id="theme-msg" style="font-size:11px;margin-top:8px;min-height:14px;color:var(--muted);"></div>
+          <div class="settings-label">🎨 THÈME</div>
+          <div class="settings-hint">Deux thèmes soignés et verrouillés — 🌙 Nuit (fond noir, écriture blanche lumineuse, boutons orange) et ☀️ Jour (gris mat, écriture noire franche, boutons orange). Bascule avec le bouton jour/nuit en haut.</div>
         </div>
       </div>
     </div>
@@ -4295,7 +4259,7 @@ async function sendChat(){
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
-      var _agentColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#1a1a1a":"#e8b830");
+      var _agentColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#000000":"#ffffff");
       EcritureFluide.demarrer(bblText,msgs);
       var _toolStatusEl=null;
       var reply=await readSSEStream(res,function(delta){
@@ -4318,7 +4282,7 @@ async function sendChat(){
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
       bblText.style.color=_agentColor;
-      if(!_isDay)bblText.style.textShadow="0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
+      if(!_isDay)bblText.style.textShadow="0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18)";
       var _replyPlain=reply||"";
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
       if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);}
@@ -7193,19 +7157,10 @@ function setDeviceProfil(profil){
     document.documentElement.style.setProperty('--font-tilex',POLICES_MAP[savedFont]);
     document.querySelectorAll('.cmi-chip[data-font="'+savedFont+'"]').forEach(function(b){b.classList.add('active');});
   }
-  var savedColor=localStorage.getItem('tilex-agent-color');
-  // 🌙 Garde-fou lisibilité : une couleur trop sombre rend le texte de l'agent
-  // illisible sur le fond noir du thème nuit. On la rejette → doré clair par défaut.
-  if(savedColor&&_couleurAssezClaire(savedColor)){
-    document.documentElement.style.setProperty('--agent-text-color',savedColor);
-  }else if(savedColor){
-    localStorage.removeItem('tilex-agent-color');
-  }
-  var savedBtn=localStorage.getItem('tilex-btn-color');
-  if(savedBtn){
-    document.documentElement.style.setProperty('--orange',savedBtn);
-    document.documentElement.style.setProperty('--or',savedBtn);
-  }
+  // 🔒 Thèmes verrouillés : on purge toute ancienne couleur perso (écriture + boutons)
+  // pour que les palettes fixes nuit/jour s'appliquent toujours proprement.
+  localStorage.removeItem('tilex-agent-color');
+  localStorage.removeItem('tilex-btn-color');
   var savedDevice=localStorage.getItem('tilex_device_profil');
   var activeDevice=savedDevice||_efAutoDetect;
   document.querySelectorAll('[data-device]').forEach(function(b){
@@ -7527,8 +7482,8 @@ function alRenderAgentReply(text,data){
   var injectRegex=/```INJECT:([\w.\-\/]+)\n([\s\S]*?)```/g;
   var injects=[];var m;
   while((m=injectRegex.exec(text))!==null){injects.push({path:m[1],content:m[2]});}
-  var textColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#1a1a1a":"#e8b830");
-  var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(232,184,48,.35),0 0 2px rgba(255,200,60,.2)";
+  var textColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#000000":"#ffffff");
+  var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18)";
   var htmlContent='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>';
   htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[0]||"");
   for(var i=0;i<injects.length;i++){
