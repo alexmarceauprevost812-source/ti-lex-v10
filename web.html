@@ -429,6 +429,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .tb-search{display:none}.chat-layout{grid-template-columns:1fr}.chat-sidebar{display:none}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/tilex-config.js"></script>
 </head>
 <body>
@@ -1093,7 +1094,11 @@ function showErr(id,msg){
   if(inp) inp.classList.add('input-err');
 }
 
-function doRegister(){
+// 🔗 Client Supabase partagé avec l'app ti-lex-v10 (même connexion, aucun compte séparé)
+function sbClient(){ if(window._sbAuth) return window._sbAuth; if(window.supabase&&window.supabase.createClient&&window.SB_URL){ window._sbAuth=window.supabase.createClient(window.SB_URL,window.SB_ANON); } return window._sbAuth; }
+function userFromSession(u){ const md=u.user_metadata||{}; const email=(u.email||'').toLowerCase(); return {id:u.id,email:email,firstName:md.first_name||md.firstName||(email.split('@')[0]||'Utilisateur'),lastName:md.last_name||md.lastName||'',color:avatarColor(email||u.id),joinedAt:u.created_at||new Date().toISOString()}; }
+
+async function doRegister(){
   clearAuthErrors();
   const first=document.getElementById('reg-first').value.trim();
   const last=document.getElementById('reg-last').value.trim();
@@ -1107,33 +1112,29 @@ function doRegister(){
   if(pass.length<8){showErr('reg-pass-err','8 caractères minimum');valid=false}
   if(pass!==pass2){showErr('reg-pass2-err','Les mots de passe ne correspondent pas');valid=false}
   if(!valid) return;
-  const accounts=DB.getAccounts();
-  if(accounts[email]){showErr('reg-email-err','Ce courriel est déjà utilisé');return}
-  const userId='u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-  const user={id:userId,email,firstName:first,lastName:last,color:avatarColor(email),joinedAt:new Date().toISOString(),hash:hashPass(pass)};
-  accounts[email]=user;
-  DB.setAccounts(accounts);
-  if(apikey) DB.setData(userId,'settings',{apiKey:apikey,ghToken:''});
-  DB.setData(userId,'activity',[
-    {icon:'🎉',text:'Compte créé avec succès',time:'Maintenant'},
-    {icon:'🚀',text:'Projet <strong>tilex.</strong> connecté',time:'Maintenant'},
-  ]);
-  loginUser(user);
-  showToast(`Bienvenue, ${first}! Compte créé avec succès 🎉`,'success');
+  const cl=sbClient(); if(!cl){showErr('reg-global-err','Service indisponible');return}
+  try{
+    const {data,error}=await cl.auth.signUp({email,password:pass,options:{data:{first_name:first,last_name:last}}});
+    if(error){showErr('reg-email-err',error.message);return}
+    if(apikey&&data.user) DB.setData(data.user.id,'settings',{apiKey:apikey,ghToken:''});
+    if(data.session&&data.user){ loginUser(userFromSession(data.user)); showToast(`Bienvenue, ${first}! 🎉`,'success'); }
+    else { showToast('Compte créé! Confirme ton courriel puis connecte-toi.','info'); switchTab('login'); }
+  }catch(e){ showErr('reg-global-err',e.message||'Erreur'); }
 }
 
-function doLogin(){
+async function doLogin(){
   clearAuthErrors();
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pass=document.getElementById('login-pass').value;
   if(!email){showErr('login-email-err','Courriel requis');return}
   if(!pass){showErr('login-pass-err','Mot de passe requis');return}
-  const accounts=DB.getAccounts();
-  const user=accounts[email];
-  if(!user){showErr('login-global-err','Aucun compte trouvé avec ce courriel.');return}
-  if(user.hash!==hashPass(pass)){showErr('login-pass-err','Mot de passe incorrect');return}
-  loginUser(user);
-  showToast(`Content de te revoir, ${user.firstName||user.email}! 🍁`,'success');
+  const cl=sbClient(); if(!cl){showErr('login-global-err','Service indisponible');return}
+  try{
+    const {data,error}=await cl.auth.signInWithPassword({email,password:pass});
+    if(error){showErr('login-global-err',error.message||'Connexion échouée');return}
+    loginUser(userFromSession(data.user));
+    showToast(`Content de te revoir! 🍁`,'success');
+  }catch(e){ showErr('login-global-err',e.message||'Erreur'); }
 }
 
 function demoLogin(){
@@ -1169,7 +1170,8 @@ function loginUser(user){
   navigateTo('dashboard');
 }
 
-function doLogout(){
+async function doLogout(){
+  try{ const cl=sbClient(); if(cl) await cl.auth.signOut(); }catch(e){}
   currentUser=null;
   DB.clearSession();
   document.getElementById('view-platform').classList.add('hidden');
@@ -1848,15 +1850,19 @@ function esc(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/<
 // ═══════════════════════════════════════
 //   INIT
 // ═══════════════════════════════════════
-window.onload=()=>{
+window.onload=async ()=>{
   buildParticles();
   buildToolsGrid();
+  // 1) Session Supabase RÉELLE partagée avec l'app ti-lex-v10 → connexion automatique, même compte
+  try{ const cl=sbClient(); if(cl){ const {data}=await cl.auth.getSession(); if(data&&data.session&&data.session.user){ loginUser(userFromSession(data.session.user)); return; } } }catch(e){}
+  // 2) Sinon, session démo locale (compte démo seulement)
   const session=DB.getSession();
-  if(session){
+  if(session&&session.id&&String(session.id).indexOf('u_demo')===0){
     const accounts=DB.getAccounts();
     const user=accounts[session.email];
     if(user){loginUser(user);return}
   }
+  // 3) Écran de connexion
   document.getElementById('view-auth').classList.remove('hidden');
 };
 
