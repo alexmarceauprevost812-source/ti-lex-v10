@@ -8178,47 +8178,66 @@ function toggleMicro(){
   startMicro();
 }
 
+function _micIsMobile(){
+  return /iP(hone|od|ad)|Android|Mobi/i.test(navigator.userAgent||"")
+    || ((navigator.maxTouchPoints||0)>1 && /Mac/.test(navigator.platform||""));
+}
+
 function startMicro(){
   var SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition;
-  // 1) Web Speech API (desktop Chrome/Edge) — dictée temps réel
-  if(SpeechRec){
-    try{
-      _micRecognition=new SpeechRec();
-      _micRecognition.lang="fr-CA";
-      _micRecognition.continuous=true;
-      _micRecognition.interimResults=true;
-      var inp=document.getElementById("composer-input");
-      var baseText=inp?inp.value:"";
-      _micRecognition.onresult=function(e){
-        var transcript="";
-        for(var i=e.resultIndex;i<e.results.length;i++){ transcript+=e.results[i][0].transcript; }
-        if(inp){inp.value=baseText+(baseText?" ":"")+transcript;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
-      };
-      _micRecognition.onerror=function(e){
-        if(e.error==="not-allowed"||e.error==="service-not-allowed"){showToastMsg("⚠️ Accès micro refusé — autorise-le dans les réglages.");stopMicro();}
-        else if(e.error!=="no-speech"&&e.error!=="aborted"){stopMicro();}
-      };
-      _micRecognition.onend=function(){
-        if(_micActive&&_micEngine==="speech"&&_micRecognition){try{_micRecognition.start();}catch(e){}}
-      };
-      _micActive=true;_micEngine="speech";
-      _micRecognition.start();
-      majMicBtn();showToastMsg("🎙️ Micro activé — parle!");closeComposerMenu();
-      return;
-    }catch(e){ try{if(_micRecognition)_micRecognition.onend=null;}catch(_){ } _micRecognition=null; /* on tente le fallback */ }
-  }
-  // 2) Fallback mobile (iOS Safari : pas de Web Speech) — enregistre puis transcrit côté serveur
-  if(window.TilexVocal){
-    _micActive=true;_micEngine="vocal";
-    window.onTilexVocalInput=function(txt){
-      var inp=document.getElementById("composer-input");
-      if(inp&&txt){inp.value+=(inp.value?" ":"")+txt;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
-    };
-    try{ TilexVocal.demarrerEcoute(); }catch(e){ _micActive=false;_micEngine=null;majMicBtn();showToastMsg("⚠️ Micro indisponible");return; }
-    majMicBtn();showToastMsg("🎙️ Micro activé — parle, puis touche encore pour arrêter.");closeComposerMenu();
-    return;
-  }
+  // Sur mobile (surtout iOS), webkitSpeechRecognition existe mais est instable :
+  // il se coupe tout seul après l'activation. On privilégie donc l'enregistrement
+  // + transcription serveur (TilexVocal) qui reste actif jusqu'au 2e click.
+  var preferVocal=_micIsMobile()&&window.TilexVocal;
+  if(SpeechRec&&!preferVocal){ if(startSpeechMic(SpeechRec))return; }
+  if(window.TilexVocal){ startVocalMic();return; }
+  if(SpeechRec){ if(startSpeechMic(SpeechRec))return; } // dernier recours (desktop sans TilexVocal)
   showToastMsg("⚠️ Micro non supporté sur ce navigateur");closeComposerMenu();
+}
+
+// Web Speech API (desktop) — dictée temps réel, relance auto à chaque pause
+function startSpeechMic(SpeechRec){
+  try{
+    _micRecognition=new SpeechRec();
+    _micRecognition.lang="fr-CA";
+    _micRecognition.continuous=true;
+    _micRecognition.interimResults=true;
+    var inp=document.getElementById("composer-input");
+    var baseText=inp?inp.value:"";
+    _micRecognition.onresult=function(e){
+      var transcript="";
+      for(var i=e.resultIndex;i<e.results.length;i++){ transcript+=e.results[i][0].transcript; }
+      if(inp){inp.value=baseText+(baseText?" ":"")+transcript;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
+    };
+    _micRecognition.onerror=function(e){
+      // on ne coupe QUE sur erreur fatale ; no-speech/aborted/network = transitoire (onend relance)
+      if(e.error==="not-allowed"||e.error==="service-not-allowed"||e.error==="audio-capture"){
+        showToastMsg("⚠️ Accès micro refusé — autorise-le dans les réglages.");stopMicro();
+      }
+    };
+    _micRecognition.onend=function(){
+      // Web Speech s'arrête à chaque silence : on relance tant que l'utilisateur n'a pas coupé
+      if(_micActive&&_micEngine==="speech"&&_micRecognition){
+        setTimeout(function(){ if(_micActive&&_micEngine==="speech"&&_micRecognition){try{_micRecognition.start();}catch(e){}} },300);
+      }
+    };
+    _micActive=true;_micEngine="speech";
+    _micRecognition.start();
+    majMicBtn();showToastMsg("🎙️ Micro activé — parle!");closeComposerMenu();
+    return true;
+  }catch(e){ try{if(_micRecognition)_micRecognition.onend=null;}catch(_){ } _micRecognition=null;_micActive=false;_micEngine=null; return false; }
+}
+
+// Mobile / fallback — enregistre puis transcrit côté serveur (vocal-proxy). Reste actif jusqu'au 2e click.
+function startVocalMic(){
+  _micActive=true;_micEngine="vocal";
+  window.onTilexVocalInput=function(txt){
+    var inp=document.getElementById("composer-input");
+    if(inp&&txt){inp.value+=(inp.value?" ":"")+txt;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
+  };
+  window.onTilexVocalError=function(){ _micActive=false;_micEngine=null;majMicBtn(); };
+  try{ TilexVocal.demarrerEcoute(); }catch(e){ _micActive=false;_micEngine=null;majMicBtn();showToastMsg("⚠️ Micro indisponible");return; }
+  majMicBtn();showToastMsg("🎙️ Micro activé — parle, puis touche encore pour arrêter.");closeComposerMenu();
 }
 
 function stopMicro(){

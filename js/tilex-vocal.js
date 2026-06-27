@@ -29,8 +29,10 @@ const TilexVocal = {
       this.mediaRecorder.start(); this.enEcoute = true;
       if (window.TilexToast) TilexToast.info("\u{1F399}️ Ti-lex t'écoute...");
     } catch (err) {
+      this.enEcoute = false;
       if (window.TilexToast) TilexToast.error("Micro refusé");
       else if (window.showToastMsg) showToastMsg("⚠️ Accès micro refusé");
+      if (window.onTilexVocalError) window.onTilexVocalError(err);
     }
   },
 
