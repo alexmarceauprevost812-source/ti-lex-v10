@@ -117,6 +117,22 @@
   .tc-sheet-item:active{background:var(--bg3);}
   .tc-sheet-search{margin:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--bord);border-radius:10px;
     color:#e8f0ff;font-size:14px;outline:none;}
+
+  /* ===== VUE DIFF ===== */
+  .tc-diff{border-radius:10px;overflow:hidden;margin:8px 0;border:1px solid var(--bord);}
+  .tc-diff-header{display:flex;align-items:center;gap:8px;background:#1a1a24;padding:7px 12px;
+    font-family:var(--mono);font-size:11px;color:var(--muet);border-bottom:1px solid var(--bord);}
+  .tc-diff-header b{color:var(--bleu);font-weight:700;}
+  .tc-diff-body{background:#0e0e16;padding:8px 0;font-family:var(--mono);font-size:12.5px;line-height:1.6;overflow-x:auto;}
+  .tc-diff-line{padding:1px 12px;display:flex;gap:6px;white-space:pre;}
+  .tc-diff-line.add{background:rgba(55,224,160,.09);color:#37e0a0;}
+  .tc-diff-line.add::before{content:"+";flex-shrink:0;}
+  .tc-diff-line.del{background:rgba(255,77,77,.09);color:#ff6b6b;}
+  .tc-diff-line.del::before{content:"-";flex-shrink:0;}
+  .tc-diff-line.ctx{color:#6a6a7a;}
+  .tc-diff-line.ctx::before{content:" ";flex-shrink:0;}
+  .tc-diff-line.hunk{color:#4a9eff;background:rgba(74,158,255,.06);}
+  .tc-diff-line.hunk::before{content:"";flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -137,9 +153,10 @@
 <!-- TOPBAR -->
 <header class="tc-top">
   <div class="tc-icon-btn" onclick="TC.ouvrirDrawer()">☰</div>
+  <img src="/assets/tilex-logo.png" alt="TI-LEX-AL" style="width:28px;height:28px;border-radius:7px;object-fit:contain;flex-shrink:0;">
   <div class="tc-title">TILEX<b>CODE</b></div>
   <div class="tc-repo-chip" id="tc-repo-chip">aucun projet</div>
-  <a class="tc-icon-btn" href="/app" title="Retour à l'app" style="text-decoration:none;">⮐</a>
+  <a class="tc-icon-btn" href="/pro" title="Retour à l'app" style="text-decoration:none;">⮐</a>
 </header>
 
 <!-- BARRE PROJET -->
@@ -242,13 +259,40 @@
     var wrap=document.createElement("div");
     blocs.forEach(function(b){
       if(b.avant.trim()){ var p=document.createElement("div"); p.innerHTML=inline(b.avant); wrap.appendChild(p); }
-      var pre=document.createElement("pre"); var c=document.createElement("code");
-      c.textContent=b.code; pre.appendChild(c); wrap.appendChild(pre);
-      // bouton pousser
-      var btn=document.createElement("button"); btn.className="tc-push";
-      btn.textContent="📤 Pousser ce fichier";
-      btn.onclick=function(){ TC.pousser(b.code, btn); };
-      wrap.appendChild(btn);
+      // ── Détection diff : 1re ligne = // path: fichier
+      var firstLine=(b.code.split('\n')[0]||"").trim();
+      var pathMatch=firstLine.match(/^\/\/\s*path:\s*(.+)$/);
+      if(pathMatch){
+        var fname=esc(pathMatch[1].trim());
+        var codeLines=b.code.split('\n').slice(1);
+        var isDiff=codeLines.some(function(l){return /^[+\-]/.test(l);});
+        var diffDiv=document.createElement('div'); diffDiv.className='tc-diff';
+        var hdr=document.createElement('div'); hdr.className='tc-diff-header';
+        hdr.innerHTML='📄 <b>'+fname+'</b>'+(isDiff?' <span style="margin-left:auto;color:var(--bleu-faible);font-size:10px;">diff</span>':'');
+        diffDiv.appendChild(hdr);
+        var body=document.createElement('div'); body.className='tc-diff-body';
+        codeLines.forEach(function(ln){
+          var row=document.createElement('div');
+          if(/^\+/.test(ln)){row.className='tc-diff-line add';row.textContent=ln.slice(1);}
+          else if(/^-/.test(ln)){row.className='tc-diff-line del';row.textContent=ln.slice(1);}
+          else if(/^@@/.test(ln)){row.className='tc-diff-line hunk';row.textContent=ln;}
+          else{row.className='tc-diff-line ctx';row.textContent=ln;}
+          body.appendChild(row);
+        });
+        diffDiv.appendChild(body);
+        wrap.appendChild(diffDiv);
+        var btn=document.createElement("button"); btn.className="tc-push";
+        btn.textContent=isDiff?"📤 Appliquer le diff":"📤 Pousser ce fichier";
+        btn.onclick=function(){ TC.pousser(b.code, btn); };
+        wrap.appendChild(btn);
+      }else{
+        var pre=document.createElement("pre"); var c=document.createElement("code");
+        c.textContent=b.code; pre.appendChild(c); wrap.appendChild(pre);
+        var btn=document.createElement("button"); btn.className="tc-push";
+        btn.textContent="📤 Pousser ce fichier";
+        btn.onclick=function(){ TC.pousser(b.code, btn); };
+        wrap.appendChild(btn);
+      }
     });
     if(apres.trim()){ var p2=document.createElement("div"); p2.innerHTML=inline(apres); wrap.appendChild(p2); }
     corpsEl.appendChild(wrap);
@@ -270,7 +314,8 @@
       "Projet GitHub branché : "+proj+".\n"+
       "Arborescence complète du projet :\n"+arbre+trop+"\n"+
       (ctx ? ("\nContenu des fichiers ouverts :"+ctx+"\n") : "")+
-      "\nRègles : donne du code complet (jamais de TODO/placeholder). Pour proposer un fichier, mets son chemin en 1re ligne du bloc de code sous forme `// path: chemin/du/fichier`. "+
+      "\nRègles : Pour MODIFIER un fichier existant — utilise le format diff (lignes `+` pour les ajouts, `-` pour les suppressions, lignes sans préfixe pour le contexte). "+
+      "Pour un NOUVEAU fichier — donne le contenu complet. Dans les deux cas, mets le chemin en 1re ligne du bloc de code sous forme `// path: chemin/du/fichier`. "+
       "Si tu as besoin de voir un fichier non fourni, demande à l'utilisateur de l'ouvrir via le menu 📁.";
   }
 
@@ -448,10 +493,10 @@
       try{
         var msgs=c.messages.slice(-16).map(function(m){return {role:m.role,content:m.content};});
         var rep=await streamIA(msgs, el.querySelector(".tc-corps"));
-        rendreMarkdown(el.querySelector(".tc-corps"), rep||"(réponse vide)");
+        rendreMarkdown(el, rep||"(réponse vide)");
         c.messages.push({role:"assistant",content:rep||""}); sauverConvs();
       }catch(e){
-        el.querySelector(".tc-corps").innerHTML='<span style="color:var(--rouge);">❌ '+esc(e.message)+'</span>';
+        el.innerHTML='<div class="tc-who">TILEXCODE</div><div class="tc-corps"><span style="color:var(--rouge);">❌ '+esc(e.message)+'</span></div>';
       }
       S.busy=false; $("tc-send").disabled=false; scrollBas();
     },

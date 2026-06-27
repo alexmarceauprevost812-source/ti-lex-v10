@@ -119,6 +119,7 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
   background-size:300% 100%;-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;animation:logo-sh 4.5s ease-in-out infinite;}
 @keyframes logo-sh{0%{background-position:220% center}100%{background-position:-80% center}}
+@media(max-width:480px){.tb-logo-txt{display:none!important;}}
 .tb-logo-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;}
 
 /* Plan badge topbar */
@@ -2168,7 +2169,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 
   <!-- TILEXCODE (codex plein écran) -->
   <div class="sb-item" onclick="window.location.href='/codex'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#4a9eff">🤖</span><span class="sb-label" data-txt="TILEXCODE"></span>
+    <span class="sb-icon" style="color:#4a9eff;font-family:monospace;font-weight:700;font-size:13px;letter-spacing:-1px;">[&lt;&gt;]</span><span class="sb-label" data-txt="TILEXCODE"></span>
   </div>
 
   <!-- WEB — PLATEFORME -->
@@ -4249,7 +4250,7 @@ async function sendChat(){
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
       var _replyPlain=reply||"";
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
-      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);}
+      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);}
       else{applySyntaxHL(bblText);}
       // 🪙 Badges crypto : branchement géré par js/tilex-crypto-connect.js (observer).
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
@@ -4388,6 +4389,32 @@ function renderMd(txt){
     result=result.replace("%%CODEBLOCK_"+ci+"%%",codeBlocks[ci]);
   }
   return result;
+}
+/* ── RÉVÉLATION 3 PHASES : les blocs du message apparaissent en cascade ── */
+function applyPhaseReveal(container){
+  var blocks=Array.from(container.children);
+  var n=blocks.length;
+  if(n<3)return;
+  var perItem=65; // ms entre chaque bloc dans la même phase
+  var p1End=Math.floor(n/3);
+  var p2End=Math.floor(n*2/3);
+  var p1Duration=p1End*perItem;
+  blocks.forEach(function(el,i){
+    var delay;
+    if(i<p1End){
+      delay=i*perItem;
+    }else if(i<p2End){
+      // Phase 2 démarre quand Phase 1 est à 40%
+      delay=Math.round(p1Duration*0.4)+(i-p1End)*perItem;
+    }else{
+      // Phase 3 démarre quand Phase 1 est à 70%
+      delay=Math.round(p1Duration*0.7)+(i-p2End)*perItem;
+    }
+    el.style.opacity='0';
+    el.style.transform='translateY(7px)';
+    el.style.transition='opacity .48s ease, transform .48s ease';
+    setTimeout(function(){el.style.opacity='1';el.style.transform='none';},delay);
+  });
 }
 /* ── SCHÉMAS DANS LE CHAT — rend les blocs ```tilex-schema en SVG (TilexSchemaManager) ── */
 function renderSchemasInBubble(el){
@@ -4702,7 +4729,7 @@ function showSub(sub){
   if(sub==="convos")renderConvList();
   else if(sub==="favs")renderFavsList();
   else if(sub==="projs")renderProjsList();
-  else if(sub==="cerveau")cervRenderList();
+  else if(sub==="cerveau")cervSbLoad();
 }
 
 /* ── CONVERSATION LIST ── */
@@ -4931,10 +4958,61 @@ function saveCurrentProject(){
   saveProjStorage();
 }
 
-/* ── CERVEAU (Deuxième Cerveau / Notes) ── */
-var cervNotes=JSON.parse(localStorage.getItem("tilex-cerveau-notes")||"[]");
+/* ── CERVEAU (Deuxième Cerveau / Notes) — synchronisé Supabase ── */
+var cervNotes=[];
 var cervCurrentId=null;var cervActiveTag=null;
-function cervLocalSave(){localStorage.setItem("tilex-cerveau-notes",JSON.stringify(cervNotes));}
+
+function cervLocalSave(){
+  try{localStorage.setItem("tilex-cerveau-notes",JSON.stringify(cervNotes));}catch(e){}
+}
+
+async function cervSbLoad(){
+  var uid=null;
+  try{var r=await supabase.auth.getUser();uid=r.data&&r.data.user&&r.data.user.id;}catch(e){}
+  if(!uid){
+    try{cervNotes=JSON.parse(localStorage.getItem("tilex-cerveau-notes")||"[]");}catch(e){cervNotes=[];}
+    cervRenderList();return;
+  }
+  try{
+    var res=await supabase.from("cerveau_notes")
+      .select("id,title,content,tags,created_at,updated_at")
+      .eq("user_id",uid)
+      .order("updated_at",{ascending:false});
+    if(res.error)throw res.error;
+    cervNotes=(res.data||[]).map(function(row){
+      return{id:row.id,title:row.title||"Sans titre",tags:row.tags||[],
+        content:row.content||"",created:new Date(row.created_at).getTime(),
+        updated:new Date(row.updated_at||row.created_at).getTime()};
+    });
+    cervLocalSave();
+  }catch(e){
+    console.warn("[cerveau] load:",e);
+    try{cervNotes=JSON.parse(localStorage.getItem("tilex-cerveau-notes")||"[]");}catch(ex){cervNotes=[];}
+  }
+  cervRenderList();
+}
+
+async function _cervSbSave(note){
+  var uid=null;
+  try{var r=await supabase.auth.getUser();uid=r.data&&r.data.user&&r.data.user.id;}catch(e){}
+  if(!uid)return;
+  try{
+    await supabase.from("cerveau_notes").upsert(
+      {id:note.id,user_id:uid,title:note.title,content:note.content,tags:note.tags},
+      {onConflict:"id"}
+    );
+  }catch(e){console.warn("[cerveau] save:",e);}
+}
+
+async function _cervSbDelete(id){
+  var uid=null;
+  try{var r=await supabase.auth.getUser();uid=r.data&&r.data.user&&r.data.user.id;}catch(e){}
+  if(!uid)return;
+  try{
+    await supabase.from("cerveau_notes").delete().eq("id",id).eq("user_id",uid);
+  }catch(e){console.warn("[cerveau] delete:",e);}
+}
+
 function cervNewNote(){
   cervCurrentId=null;
   document.getElementById("cerv-title").value="";
@@ -4949,9 +5027,10 @@ function cervSaveNote(){
   var content=document.getElementById("cerv-content").value;
   if(cervCurrentId){
     var n=cervNotes.find(function(x){return x.id===cervCurrentId;});
-    if(n){n.title=title;n.tags=tags;n.content=content;n.updated=Date.now();}
+    if(n){n.title=title;n.tags=tags;n.content=content;n.updated=Date.now();_cervSbSave(n);}
   }else{
-    cervNotes.push({id:Date.now().toString()+Math.random().toString(36).slice(2,6),title:title,tags:tags,content:content,created:Date.now(),updated:Date.now()});
+    var nn={id:crypto.randomUUID(),title:title,tags:tags,content:content,created:Date.now(),updated:Date.now()};
+    cervNotes.push(nn);_cervSbSave(nn);
   }
   cervLocalSave();cervCancelEdit();cervRenderList();
 }
@@ -4971,6 +5050,7 @@ function cervEditNote(id){
 function cervDeleteNote(){
   if(!cervCurrentId)return;
   if(!confirm("Supprimer cette note?"))return;
+  _cervSbDelete(cervCurrentId);
   cervNotes=cervNotes.filter(function(n){return n.id!==cervCurrentId;});
   cervLocalSave();cervCancelEdit();cervRenderList();
 }
@@ -5381,8 +5461,8 @@ function saveToCerveau(btn){
   var text=bbl.textContent||"";
   if(!text.trim()){if(typeof pushNotif==="function")pushNotif("⚠️","Cerveau","Rien à sauvegarder.","warn");return;}
   var title="Note du "+new Date().toLocaleDateString("fr-CA")+" "+new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
-  cervNotes.push({id:Date.now().toString()+Math.random().toString(36).slice(2,6),title:title,tags:["agent-al","chat"],content:text,created:Date.now(),updated:Date.now()});
-  cervLocalSave();
+  var nn={id:crypto.randomUUID(),title:title,tags:["agent-al","chat"],content:text,created:Date.now(),updated:Date.now()};
+  cervNotes.push(nn);_cervSbSave(nn);cervLocalSave();
   btn.textContent="✓";btn.style.color="var(--green)";
   setTimeout(function(){btn.textContent="🧠";btn.style.color="";},2000);
   if(typeof pushNotif==="function")pushNotif("🧠","Cerveau","Sauvegardé dans le Deuxième Cerveau!","ok");
@@ -8922,6 +9002,31 @@ document.addEventListener("keydown",function(e){
 
 /* ── Update micro action to open voice modal ── */
 trackFeatureUsage("app_load");
+
+/* ── Notification de déploiement automatique ── */
+var _DEPLOY_VERSION="tilex-v10-484";
+var _DEPLOY_NOTES={
+  "tilex-v10-484":[
+    "**Cerveau (2ème cerveau)** : notes sauvegardées sur tous vos appareils via Supabase",
+    "**TilexCode** : retour vers l'app corrigé — réponses IA actives + logo TI-LEX ajouté",
+    "**Révélation 3 phases** : les réponses longues s'affichent en cascade fluide",
+    "**Menu gauche** : icône `[<>]` TilexCode directement dans la barre de navigation",
+    "**Mobile** : topbar allégée — logo + ⚡ STUDIO + 🔔 seulement"
+  ]
+};
+function _checkDeployVersion(){
+  var last=localStorage.getItem("tilex-deploy-version");
+  if(last===_DEPLOY_VERSION)return;
+  var notes=_DEPLOY_NOTES[_DEPLOY_VERSION];
+  if(!notes||!notes.length){localStorage.setItem("tilex-deploy-version",_DEPLOY_VERSION);return;}
+  setTimeout(function(){
+    var lines=notes.map(function(n){return "• "+n;}).join("\n");
+    var txt="**✦ Mise à jour "+_DEPLOY_VERSION+"**\n\n"+lines+"\n\n*— Déploiement Vercel automatique*";
+    addMsg("a",txt);
+    localStorage.setItem("tilex-deploy-version",_DEPLOY_VERSION);
+  },1800);
+}
+_checkDeployVersion();
 
 </script>
 
