@@ -3768,10 +3768,10 @@ var EcritureFluide={
     var n=E._totalChars;
     var base;
     if(_efProfil==='telephone'){
-      if(n<15)base=22;
-      else if(n<50)base=14;
-      else if(n<120)base=8;
-      else if(n<300)base=4;
+      if(n<15)base=16;
+      else if(n<50)base=10;
+      else if(n<120)base=6;
+      else if(n<300)base=3;
       else base=2;
     }else if(_efProfil==='tablette'){
       if(n<15)base=35;
@@ -3806,12 +3806,11 @@ var EcritureFluide={
       var char=buf[0];
       var delai=E._calculerDelai(char);
       if(now-E._lastTime>=delai){
-        // chunk plafonné (mobile: max 2) → évite les pics de débit qui saccadent
-        var chunkMax=_efMobile?2:4;
+        // ✍️ Lettre par lettre TANT que le flux suit ; on ne groupe QUE si le buffer
+        // prend du retard (rattrapage doux) → reste "lettre par lettre" et vif, sans lag.
         var chunk=1;
-        if(E._totalChars>250&&buf.length>15)chunk=Math.min(chunkMax,buf.length);
-        else if(E._totalChars>120&&buf.length>10)chunk=Math.min(_efMobile?2:3,buf.length);
-        else if(E._totalChars>50&&buf.length>5)chunk=Math.min(2,buf.length);
+        if(buf.length>120)chunk=Math.min(_efMobile?3:4,buf.length);
+        else if(buf.length>50)chunk=Math.min(_efMobile?2:3,buf.length);
         // mesure "collé en bas" AVANT d'écrire (évite le reflow forcé write→read→write)
         var c=E._container;
         var stick=c?(c.scrollHeight-c.scrollTop-c.clientHeight<80):false;
