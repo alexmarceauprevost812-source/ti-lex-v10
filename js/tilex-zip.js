@@ -194,3 +194,80 @@ document.addEventListener("DOMContentLoaded", function () {
     window.ZipManager._render();
   }
 });
+
+/* ============================================================
+   TilexZip — API simple de lecture / création de ZIP
+   • TilexZip.lire(file)            → [{nom, taille, contenu}, ...]
+   • TilexZip.creer(fichiers, nom)  → génère + télécharge un .zip
+   • TilexZip.brancherInput(sel, cb)→ relie un <input type=file>
+   Dépendance : JSZip (chargé via CDN avant ce script).
+   ============================================================ */
+(function () {
+  "use strict";
+
+  // Charge JSZip à la demande si le CDN n'a pas été inclus dans la page
+  function assurerJSZip() {
+    if (typeof JSZip !== "undefined") return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error("JSZip introuvable (CDN bloqué).")); };
+      document.head.appendChild(s);
+    });
+  }
+
+  var TilexZip = {
+
+    // ===== LIRE un ZIP choisi par l'utilisateur =====
+    lire: function (file) {
+      if (!file) { console.warn("[TilexZip] aucun fichier"); return Promise.resolve([]); }
+      return assurerJSZip().then(function () {
+        return JSZip.loadAsync(file);
+      }).then(function (zip) {
+        var noms = Object.keys(zip.files);
+        return Promise.all(noms.map(function (nom) {
+          var entree = zip.files[nom];
+          if (entree.dir) return null;
+          return entree.async("string").then(function (contenu) {
+            return { nom: nom, taille: contenu.length, contenu: contenu };
+          });
+        })).then(function (arr) {
+          return arr.filter(Boolean);
+        });
+      });
+    },
+
+    // ===== CRÉER un ZIP à partir de fichiers =====
+    // fichiers = [{ nom:'index.html', contenu:'...' }, ...]
+    creer: function (fichiers, nomZip) {
+      nomZip = nomZip || "tilex-export.zip";
+      return assurerJSZip().then(function () {
+        var zip = new JSZip();
+        (fichiers || []).forEach(function (f) { zip.file(f.nom, f.contenu || ""); });
+        return zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      }).then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = nomZip;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log("[TilexZip] ✅ " + nomZip + " créé (" + ((fichiers || []).length) + " fichiers)");
+      });
+    },
+
+    // ===== Brancher un <input type="file"> pour lire =====
+    brancherInput: function (inputSelector, callback) {
+      var input = document.querySelector(inputSelector);
+      if (!input) { console.warn("[TilexZip] input introuvable"); return; }
+      input.addEventListener("change", function (e) {
+        var file = e.target.files && e.target.files[0];
+        TilexZip.lire(file).then(function (fichiers) {
+          if (callback) callback(fichiers);
+        }).catch(function (err) { console.error("[TilexZip]", err); });
+      });
+    }
+  };
+
+  window.TilexZip = TilexZip;
+})();
