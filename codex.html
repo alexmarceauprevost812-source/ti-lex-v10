@@ -14,6 +14,7 @@
 <title>TilexCode — Codex 🤖</title>
 <script src="js/tilex-config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="js/tilex-zip.js"></script>
 <style>
   :root{
     --bg:#0a0a0a; --bg2:#101015; --bg3:#15151c; --bord:#22222c;
@@ -423,6 +424,12 @@
       allBtn.textContent="📤 Tout pousser ("+pushables.length+" fichiers) 🚀";
       allBtn.onclick=function(){ TC.pousserTout(pushables, allBtn); };
       wrap.appendChild(allBtn);
+      // 📦 Téléchargement ZIP automatique des fichiers générés
+      var zipBtn=document.createElement("button"); zipBtn.className="tc-push";
+      zipBtn.style.cssText="background:linear-gradient(135deg,#1b6,#0a8f5b);color:#fff;font-weight:700;margin-top:8px;";
+      zipBtn.textContent="📦 Télécharger en ZIP ("+pushables.length+")";
+      zipBtn.onclick=function(){ TC.telechargerZip(pushables, zipBtn); };
+      wrap.appendChild(zipBtn);
     }
     if(apres.trim()){ var p2=document.createElement("div"); p2.innerHTML=inline(apres); wrap.appendChild(p2); }
     corpsEl.appendChild(wrap);
@@ -668,6 +675,28 @@
       btn.textContent="✅ "+ok+"/"+list.length+" poussé(s) — 🚀 Vercel déploie";
       btn.classList.add("done");
       ajouterMsg("sys","🚀 "+ok+" fichier(s) poussé(s) sur "+S.branch+". Vercel déploie automatiquement la dernière version.");
+    },
+
+    // Télécharge les fichiers générés en un .zip (via TilexZip).
+    telechargerZip:async function(list, btn){
+      if(!window.TilexZip){ ajouterMsg("sys","❌ Module ZIP indisponible."); return; }
+      var fichiers=(list||[]).map(function(code){
+        var lines=String(code).split("\n");
+        var m=(lines[0]||"").match(/^\/\/\s*path:\s*(.+)$/);
+        return m ? { nom:m[1].trim(), contenu:lines.slice(1).join("\n") }
+                 : { nom:"fichier.txt", contenu:String(code) };
+      });
+      var old=btn?btn.textContent:"";
+      if(btn){ btn.disabled=true; btn.textContent="📦 Création du ZIP…"; }
+      try{
+        var nom=(S.repo&&S.repo.name?S.repo.name:"tilex-projet")+".zip";
+        await TilexZip.creer(fichiers, nom);
+        if(btn){ btn.textContent="✅ ZIP téléchargé ("+fichiers.length+")"; btn.classList.add("done"); }
+        ajouterMsg("sys","📦 ZIP « "+esc(nom)+" » téléchargé ("+fichiers.length+" fichiers).");
+      }catch(e){
+        ajouterMsg("sys","❌ ZIP : "+esc(e&&e.message||"erreur"));
+        if(btn){ btn.disabled=false; btn.textContent=old; }
+      }
     },
 
     // ── Bouton + : ajouter des fichiers à lire (contexte de l'IA) ──
