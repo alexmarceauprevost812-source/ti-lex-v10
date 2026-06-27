@@ -24,7 +24,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sans);}
-  body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+  body{display:flex;flex-direction:column;height:var(--app-height,100dvh);overflow:hidden;}
 
   /* ===== TOPBAR ===== */
   .tc-top{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;
@@ -316,7 +316,8 @@
       (ctx ? ("\nContenu des fichiers ouverts :"+ctx+"\n") : "")+
       "\nRègles : Pour MODIFIER un fichier existant — utilise le format diff (lignes `+` pour les ajouts, `-` pour les suppressions, lignes sans préfixe pour le contexte). "+
       "Pour un NOUVEAU fichier — donne le contenu complet. Dans les deux cas, mets le chemin en 1re ligne du bloc de code sous forme `// path: chemin/du/fichier`. "+
-      "Si tu as besoin de voir un fichier non fourni, demande à l'utilisateur de l'ouvrir via le menu 📁.";
+      "Tu connais déjà toute l'arborescence ci-dessus (projet indexé et gardé en mémoire entre les conversations) : sers-t'en pour savoir où placer le code. "+
+      "Demande à ouvrir un fichier via le menu 📁 seulement si tu as besoin de son contenu exact pour un diff précis.";
   }
 
   async function streamIA(messages, corpsEl){
@@ -367,6 +368,41 @@
     return plein;
   }
 
+  // ═══ FONCTIONS PRIVÉES — projet persistant (scan complet conservé) ═══
+  // Le projet branché (repo/branche + arborescence complète + fichiers ouverts) est
+  // sauvegardé en localStorage : il survit aux rechargements ET aux nouvelles
+  // conversations, donc TilexCode sait toujours où écrire le code.
+  var PROJ_LS="tilexcode-projet";
+  function sauverProjet(){
+    try{
+      localStorage.setItem(PROJ_LS, JSON.stringify({repo:S.repo,branch:S.branch,tree:S.tree,ouverts:S.ouverts,ts:Date.now()}));
+    }catch(e){
+      // quota dépassé : on garde au moins l'arborescence (structure = savoir où écrire)
+      try{ localStorage.setItem(PROJ_LS, JSON.stringify({repo:S.repo,branch:S.branch,tree:S.tree,ouverts:{},ts:Date.now()})); }catch(_){}
+    }
+  }
+  function chargerProjet(){
+    try{ var p=JSON.parse(localStorage.getItem(PROJ_LS)||"null");
+      if(p&&p.repo){ S.repo=p.repo; S.branch=p.branch||null; S.tree=p.tree||[]; S.ouverts=p.ouverts||{}; return true; }
+    }catch(e){}
+    return false;
+  }
+  function majBarreProjet(){
+    if(!S.repo) return;
+    var g=$("tc-gh"); g.textContent="✅ GitHub"; g.classList.add("on");
+    $("tc-repo").classList.add("act");
+    if(S.branch) $("tc-branch").classList.add("act");
+    $("tc-repo-chip").textContent=S.repo.owner+"/"+S.repo.name+(S.branch?(" @ "+S.branch):"");
+  }
+  // re-scan complet en arrière-plan (silencieux) — garde l'arborescence à jour
+  async function rescanSilencieux(){
+    if(!S.repo||!S.branch) return;
+    try{
+      var d=await gh({action:"listFiles",repo:S.repo.owner+"/"+S.repo.name,branch:S.branch});
+      if(d&&d.tree){ S.tree=d.tree.map(function(f){return f.path;}).sort(); sauverProjet(); rendreFichiers(); }
+    }catch(e){ /* hors-ligne ou non connecté : on garde le cache */ }
+  }
+
   // ═══ FONCTIONS PRIVÉES — conversations (localStorage) ═══
   var LS="tilexcode-convs";
   function chargerConvs(){ try{ S.convs=JSON.parse(localStorage.getItem(LS)||"[]"); }catch(e){ S.convs=[]; } }
@@ -403,7 +439,12 @@
     nouvelleConv:function(){
       var c={id:"c"+Date.now(), titre:"Nouvelle conversation", messages:[]};
       S.convs.unshift(c); S.convId=c.id; sauverConvs(); $("tc-chat").innerHTML="";
-      ajouterMsg("sys","Nouvelle conversation — "+(S.repo?(S.repo.owner+"/"+S.repo.name):"branche un projet GitHub pour commencer"));
+      if(S.repo){
+        ajouterMsg("sys","Nouvelle conversation — projet "+S.repo.owner+"/"+S.repo.name+(S.branch?(" @ "+S.branch):"")+" ("+S.tree.length+" fichiers en mémoire).");
+        rescanSilencieux(); // re-scan complet à chaque nouvelle conversation
+      } else {
+        ajouterMsg("sys","Nouvelle conversation — branche un projet GitHub pour commencer.");
+      }
       rendreConvs(); this.fermerDrawer();
     },
 
@@ -426,6 +467,7 @@
         var parts=full.split("/"); S.repo={owner:parts[0],name:parts[1]}; S.branch=null; S.tree=[]; S.ouverts={};
         $("tc-repo").classList.add("act"); $("tc-repo-chip").textContent=full;
         $("tc-branch").classList.remove("act");
+        sauverProjet();
         TC.fermerModal(); TC.choisirBranche();
       });
     },
@@ -437,6 +479,7 @@
         var branches=d.branches||["main"];
         ouvrirSheet("🌿 Choisir une branche", branches, function(b){
           S.branch=b; $("tc-branch").classList.add("act"); $("tc-repo-chip").textContent=S.repo.owner+"/"+S.repo.name+" @ "+b;
+          sauverProjet();
           TC.fermerModal(); TC.chargerArbre();
         });
       }catch(e){ ajouterMsg("sys","❌ Branches : "+e.message); }
@@ -447,8 +490,9 @@
       try{
         var d=await gh({action:"listFiles",repo:S.repo.owner+"/"+S.repo.name,branch:S.branch});
         S.tree=(d.tree||[]).map(function(f){return f.path;}).sort();
+        sauverProjet();
         rendreFichiers();
-        ajouterMsg("sys","✅ "+S.tree.length+" fichiers indexés. TilexCode voit tout le projet — pose ta question.");
+        ajouterMsg("sys","✅ "+S.tree.length+" fichiers indexés et mémorisés. TilexCode voit tout le projet — même après un redémarrage.");
       }catch(e){ ajouterMsg("sys","❌ Fichiers : "+e.message); }
     },
 
@@ -457,8 +501,9 @@
       try{
         var d=await gh({action:"readFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch});
         S.ouverts[path]=b64decode(d.content||"");
+        sauverProjet();
         rendreFichiers();
-        ajouterMsg("sys","📄 "+path+" ajouté au contexte de TilexCode.");
+        ajouterMsg("sys","📄 "+path+" ajouté au contexte (gardé en mémoire).");
       }catch(e){ ajouterMsg("sys","❌ Lecture "+path+" : "+e.message); }
     },
 
@@ -534,11 +579,33 @@
   $("tc-input").addEventListener("input",function(){ this.style.height="auto"; this.style.height=Math.min(this.scrollHeight,140)+"px"; });
   $("tc-input").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); TC.envoyer(); } });
 
+  // ═══ HAUTEUR MOBILE — bloque la hauteur sur le viewport réellement visible ═══
+  // (corrige le composer inatteignable en bas d'écran sur téléphone : certains
+  //  navigateurs/webviews calculent mal 100dvh/100vh.)
+  function setAppHeight(){
+    var h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', h+'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', function(){ setTimeout(setAppHeight,120); });
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', setAppHeight); }
+  // quand on focus le champ, on s'assure qu'il est visible (clavier mobile)
+  $("tc-input").addEventListener('focus', function(){ setTimeout(function(){ scrollBas(); },250); });
+
   // ═══ DÉMARRAGE ═══
   window.TC=TC;
-  chargerConvs(); rendreConvs(); rendreFichiers();
+  chargerConvs();
+  var projOK=chargerProjet();   // restaure le projet branché (scan complet conservé)
+  majBarreProjet();
+  rendreConvs(); rendreFichiers();
   if(!S.convs.length){ TC.nouvelleConv(); } else { ouvrirConv(S.convs[0].id); }
-  ajouterMsg("sys","👋 Bienvenue dans TilexCode. Touche 🔗 GitHub pour brancher ton projet, puis pose ta question.");
+  if(projOK&&S.repo){
+    ajouterMsg("sys","🔄 Projet "+S.repo.owner+"/"+S.repo.name+(S.branch?(" @ "+S.branch):"")+" rechargé — "+S.tree.length+" fichiers en mémoire. TilexCode sait déjà où écrire le code.");
+    rescanSilencieux(); // re-scan complet à jour au démarrage
+  } else {
+    ajouterMsg("sys","👋 Bienvenue dans TilexCode. Touche 🔗 GitHub pour brancher ton projet, puis pose ta question.");
+  }
 })();
 </script>
 </body>
