@@ -2116,11 +2116,6 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
     </div>
   </div>
 
-  <!-- CODEX -->
-  <div class="sb-item" id="si-codex" onclick="showTab('codex')">
-    <span class="sb-icon" style="color:var(--green);">‹›</span><span class="sb-label" data-txt="PROJET GIT"></span>
-  </div>
-
   <!-- FICHIERS -->
   <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
     <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIERS"></span>
@@ -2406,59 +2401,50 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
 
   </div>
 
-  <!-- PROJET GITHUB — sélecteur repo/branche (utilisé par Studio, Scanner, SILEX) -->
-  <div id="view-codex" class="view" style="padding:0;position:relative;">
-    <div class="codex-wrap">
-      <!-- BARRE GITHUB -->
-      <div class="codex-github-toggle" id="codex-github-toggle">
-        <button class="cgb-toggle-btn" id="cgb-toggle-btn" onclick="toggleCodexGithubBar()">
-          <span id="cgb-toggle-label">🔗 GITHUB</span>
-          <span id="cgb-toggle-chevron" style="font-size:10px;margin-left:4px;">▼</span>
-        </button>
-        <span class="cgb-toggle-info" id="cgb-toggle-info"></span>
-      </div>
-      <div class="codex-github-bar codex-ghbar-collapsible" id="codex-github-bar">
-        <span class="cgb-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></span>
-        <div class="cgb-select-wrap" id="cgb-repo-wrap">
-          <button class="cgb-select-btn" id="cgb-repo-btn" title="Choisir un projet GitHub">
-            <span class="cgb-select-label" id="cgb-repo-label">PROJET</span>
-            <span class="cgb-chevron">&#9662;</span>
-          </button>
-          <div class="cgb-dropdown" id="cgb-repo-dropdown" style="display:none;">
-            <div class="cgb-dropdown-search"><input type="text" id="cgb-repo-search" placeholder="Chercher un repo..." class="cgb-search-input"/></div>
-            <div class="cgb-dropdown-list" id="cgb-repo-list"><div class="cgb-dropdown-loading">Chargement...</div></div>
-          </div>
-        </div>
-        <span class="cgb-sep">/</span>
-        <div class="cgb-select-wrap" id="cgb-branch-wrap">
-          <button class="cgb-select-btn" id="cgb-branch-btn" title="Choisir une branche" disabled>
-            <span class="cgb-select-label" id="cgb-branch-label">BRANCHE</span>
-            <span class="cgb-chevron">&#9662;</span>
-          </button>
-          <div class="cgb-dropdown" id="cgb-branch-dropdown" style="display:none;">
-            <div class="cgb-dropdown-list" id="cgb-branch-list"><div class="cgb-dropdown-loading">Choisis un projet d'abord</div></div>
-          </div>
-        </div>
-        <div class="cgb-spacer"></div>
-        <button class="cgb-action-btn" id="cgb-files-btn" style="display:none;" title="Parcourir les fichiers">FICHIERS</button>
-        <button class="cgb-action-btn cgb-push" id="cgb-push-btn" style="display:none;" title="Push le code">PUSH</button>
-        <div class="cgb-status-wrap">
-          <span class="cgb-status-dot" id="cgb-status-dot"></span>
-          <span class="cgb-status-text" id="cgb-status-text">NON CONNECT&#201;</span>
-          <button class="cgb-connect-btn" id="cgb-connect-btn">CONNECTER</button>
-        </div>
-      </div>
-      <div class="gh-files" id="gh-files"></div>
-      <div class="codex-empty">
-        <div class="codex-empty-ico">🔗</div>
-        <div class="codex-empty-txt">PROJET GITHUB<br>Choisis ton repo et ta branche ci-haut.<br>Ils servent au Studio, au Scanner et à SILEX.<br><br>Pour coder avec l'IA, ouvre <strong>TILEXCODE</strong> (🤖) dans le menu.</div>
-      </div>
-    </div>
-  </div>
-
   <!-- STUDIO -->
   <div id="view-studio" class="view">
     <div class="sec-title">🚀 <span class="accent">STUDIO</span></div>
+
+    <!-- BARRE GITHUB (repo/branche — sert au Scanner, au Push et à SILEX) -->
+    <div class="codex-github-toggle" id="codex-github-toggle">
+      <button class="cgb-toggle-btn" id="cgb-toggle-btn" onclick="toggleCodexGithubBar()">
+        <span id="cgb-toggle-label">🔗 GITHUB</span>
+        <span id="cgb-toggle-chevron" style="font-size:10px;margin-left:4px;">▼</span>
+      </button>
+      <span class="cgb-toggle-info" id="cgb-toggle-info"></span>
+    </div>
+    <div class="codex-github-bar codex-ghbar-collapsible" id="codex-github-bar" style="margin-bottom:14px;">
+      <span class="cgb-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></span>
+      <div class="cgb-select-wrap" id="cgb-repo-wrap">
+        <button class="cgb-select-btn" id="cgb-repo-btn" title="Choisir un projet GitHub">
+          <span class="cgb-select-label" id="cgb-repo-label">PROJET</span>
+          <span class="cgb-chevron">&#9662;</span>
+        </button>
+        <div class="cgb-dropdown" id="cgb-repo-dropdown" style="display:none;">
+          <div class="cgb-dropdown-search"><input type="text" id="cgb-repo-search" placeholder="Chercher un repo..." class="cgb-search-input"/></div>
+          <div class="cgb-dropdown-list" id="cgb-repo-list"><div class="cgb-dropdown-loading">Chargement...</div></div>
+        </div>
+      </div>
+      <span class="cgb-sep">/</span>
+      <div class="cgb-select-wrap" id="cgb-branch-wrap">
+        <button class="cgb-select-btn" id="cgb-branch-btn" title="Choisir une branche" disabled>
+          <span class="cgb-select-label" id="cgb-branch-label">BRANCHE</span>
+          <span class="cgb-chevron">&#9662;</span>
+        </button>
+        <div class="cgb-dropdown" id="cgb-branch-dropdown" style="display:none;">
+          <div class="cgb-dropdown-list" id="cgb-branch-list"><div class="cgb-dropdown-loading">Choisis un projet d'abord</div></div>
+        </div>
+      </div>
+      <div class="cgb-spacer"></div>
+      <button class="cgb-action-btn" id="cgb-files-btn" style="display:none;" title="Parcourir les fichiers">FICHIERS</button>
+      <button class="cgb-action-btn cgb-push" id="cgb-push-btn" style="display:none;" title="Push le code">PUSH</button>
+      <div class="cgb-status-wrap">
+        <span class="cgb-status-dot" id="cgb-status-dot"></span>
+        <span class="cgb-status-text" id="cgb-status-text">NON CONNECT&#201;</span>
+        <button class="cgb-connect-btn" id="cgb-connect-btn">CONNECTER</button>
+      </div>
+    </div>
+    <div class="gh-files" id="gh-files"></div>
 
     <!-- SCANNER DE CODE -->
     <div class="card" style="margin-bottom:14px;">
@@ -3424,12 +3410,12 @@ function ouvriConvSidebar(){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-codex","si-studio","si-settings","si-marceau","si-silex","si-fichiers","si-indar"].forEach(id=>{
+  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-silex","si-fichiers","si-indar"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",codex:"si-codex",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers",indar:"si-indar"};
+  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",silex:"si-silex",fichiers:"si-fichiers",indar:"si-indar"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
@@ -5773,7 +5759,7 @@ async function ghRefreshProjects(){
     var gh=window._codexGithub;
     var repoName=gh?gh.repo.name:"projet";
     card.innerHTML='<div class="sp-ico">&#9889;</div><div class="sp-info"><div class="sp-name">'+escHtml(repoName)+'</div><div class="sp-meta">'+((data.branches||[]).length)+" branches · "+ghCurrentBranch+'</div></div>'+
-      '<span class="sp-status sp-live" style="cursor:pointer;" onclick="showTab(\'codex\');">OUVRIR</span>';
+      '<span class="sp-status sp-live" style="cursor:pointer;" onclick="showTab(\'studio\');">OUVRIR</span>';
     container.appendChild(card);
   }catch(e){
     container.innerHTML='<div style="color:var(--red);font-family:Share Tech Mono,monospace;font-size:11px;">'+escHtml(e.message)+'</div>';
@@ -8022,7 +8008,7 @@ function initMobileUX(){
   var input=document.getElementById("composer-input");
   if(input){input.addEventListener("input",function(){this.style.height="38px";this.style.height=Math.min(this.scrollHeight,120)+"px";});}
   if(window.innerWidth<=680){
-    var tabOrder=["chat","codex","studio","settings"];
+    var tabOrder=["chat","studio","settings"];
     var touchStartX=0,touchStartY=0;
     document.addEventListener("touchstart",function(e){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;},{passive:true});
     document.addEventListener("touchend",function(e){
