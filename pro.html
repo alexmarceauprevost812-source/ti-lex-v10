@@ -2005,6 +2005,27 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 #connectors-hub .connector-logo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;}
 #connectors-hub .connector-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
 
+/* ═══ COMPACTAGE — modale conversations résumées ═══ */
+.cc-modal{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.7);backdrop-filter:blur(5px);display:none;align-items:flex-end;justify-content:center;}
+.cc-modal.open{display:flex;}
+.cc-sheet{width:100%;max-width:560px;max-height:80vh;background:var(--bg2);border:1px solid var(--border);border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);animation:ccIn .25s ease;}
+@keyframes ccIn{from{transform:translateY(24px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.cc-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--txt);font-size:15px;}
+.cc-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:8px;}
+.cc-close:hover{background:rgba(255,255,255,.08);color:var(--txt);}
+.cc-actions{padding:12px 18px;border-bottom:1px solid var(--border);}
+.cc-compact-btn{width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1.5px;font-size:15px;
+  background:linear-gradient(135deg,#cc5600,var(--orange));color:#fff;}
+.cc-compact-btn:active{transform:scale(.98);}
+.cc-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 16px;display:flex;flex-direction:column;gap:8px;}
+.tilex-conv-item{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+.tilex-conv-item .conv-date{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);}
+.tilex-conv-item .conv-resume{margin:0;font-size:13px;color:var(--txt);line-height:1.5;}
+.tilex-conv-item .btn-continuer{align-self:flex-start;margin-top:2px;padding:7px 14px;border:1px solid rgba(255,106,0,.4);background:rgba(255,106,0,.08);color:var(--orange);border-radius:9px;font-size:12px;cursor:pointer;}
+.tilex-conv-item .btn-continuer:hover{background:rgba(255,106,0,.16);}
+.cc-empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 10px;line-height:1.6;}
+[data-theme="day"] .cc-sheet{background:#EFE7D7;}
+
 </style>
 </head>
 <body>
@@ -2953,6 +2974,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="composeAction('photo')"><span class="cmi-ico">📸</span> Prendre une photo</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
       <div class="composer-menu-item" id="composer-mic-menu-item" onclick="toggleMicro()"><span class="cmi-ico" id="composer-mic-ico">🎙️</span> <span id="composer-mic-label">Activer le micro</span></div>
+      <div class="composer-menu-item" onclick="compacterChat()"><span class="cmi-ico">🗜️</span> Compacter la conversation</div>
+      <div class="composer-menu-item" onclick="ouvrirConvCompact()"><span class="cmi-ico">📜</span> Conversations résumées</div>
       <div class="composer-menu-sep"></div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
       <div class="composer-menu-item" onclick="showTab('settings');closeComposerMenu()"><span class="cmi-ico">⚙️</span> Paramètres</div>
@@ -3775,10 +3798,40 @@ async function rafraichirTilexMem(){
 function _detecterSouvenir(txt){
   return /\b(souviens?[- ]toi|retiens|rappelle[- ]toi|garde (?:ça |cela |ceci )?en m[ée]moire|n['’]oublie pas|remember this|ma pr[ée]f[ée]rence|je pr[ée]f[èe]re|mon nom est|j['’]aime\b|note que)\b/i.test(txt||"");
 }
+
+/* ── COMPACTAGE — UI ── */
+async function compacterChat(){
+  if(typeof closeComposerMenu==="function")closeComposerMenu();
+  if(!window.TilexMemoryCompact)return;
+  if(typeof showToastMsg==="function")showToastMsg("🗜️ Compactage en cours…");
+  try{
+    var resume=await TilexMemoryCompact.compacterDepuisChat(chatHistory);
+    if(resume){
+      addMsg("a","🗜️ **Conversation compactée** — résumé sauvegardé et activé comme contexte :\n\n"+resume);
+      if(typeof rafraichirTilexMem==="function")rafraichirTilexMem();
+    }else{
+      addMsg("a","⚠️ Rien à compacter (conversation vide) ou tu n'es pas connecté.");
+    }
+  }catch(e){ addMsg("a","⚠️ Compactage : "+e.message); }
+}
+async function ouvrirConvCompact(){
+  if(typeof closeComposerMenu==="function")closeComposerMenu();
+  var modal=document.getElementById("tilex-conv-modal"); if(modal)modal.classList.add("open");
+  var panel=document.getElementById("tilex-conv-panel");
+  if(panel)panel.innerHTML='<div class="cc-empty">Chargement…</div>';
+  if(window.TilexMemoryCompact){
+    try{
+      var arr=await TilexMemoryCompact.listerConversations();
+      if(panel&&(!arr||!arr.length))panel.innerHTML='<div class="cc-empty">Aucune conversation résumée pour l\'instant.<br>Touche « 🗜️ Compacter » pour créer un résumé.</div>';
+    }catch(e){ if(panel)panel.innerHTML='<div class="cc-empty">Erreur de chargement.</div>'; }
+  }
+}
+function fermerConvCompact(){ var m=document.getElementById("tilex-conv-modal"); if(m)m.classList.remove("open"); }
 function getSystemPrompt(){
   var base=(_webAgent&&_webAgent.system)?_webAgent.system:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD);
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_tilexMemCache)base+="\n"+_tilexMemCache;
+  if(window.TilexMemoryCompact){var _cc=TilexMemoryCompact.getContexteActif();if(_cc)base+="\n\n[Contexte de conversation repris]:\n"+_cc;}
   if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
   if(TilexConfig.githubToken&&TilexConfig.githubRepo){
     base+="\n\nProjet GitHub connecté: "+TilexConfig.githubUser+"/"+TilexConfig.githubRepo+" (branche: "+TilexConfig.githubBranch+"). L'utilisateur peut demander de lire des fichiers du projet.";
@@ -8803,6 +8856,20 @@ _checkDeployVersion();
   <span class="fab-icon">+</span>
   <span class="fab-label" data-i18n="new-conv-fab">Nouvelle conv.</span>
 </button>
+
+<!-- CONVERSATIONS RÉSUMÉES (compactage mémoire) -->
+<div class="cc-modal" id="tilex-conv-modal" onclick="if(event.target===this)fermerConvCompact()">
+  <div class="cc-sheet">
+    <div class="cc-hd">
+      <span>📜 Conversations résumées</span>
+      <button class="cc-close" onclick="fermerConvCompact()">✕</button>
+    </div>
+    <div class="cc-actions">
+      <button class="cc-compact-btn" onclick="compacterChat()">🗜️ Compacter la conversation en cours</button>
+    </div>
+    <div id="tilex-conv-panel" class="cc-list"></div>
+  </div>
+</div>
 
 <!-- VOICE AGENT MODAL -->
 <div class="voice-modal" id="voice-modal">
