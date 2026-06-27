@@ -3092,6 +3092,9 @@ let night=(localStorage.getItem("tilex-al-theme")||"night")!=="day";
 function toggleTheme(){
   night=!night;
   document.documentElement.setAttribute("data-theme",night?"night":"day");
+  // Répare les anciens messages dont la couleur/ombre avait été figée en ligne
+  // (sinon le texte reste sombre/invisible quand on revient en mode nuit).
+  document.querySelectorAll(".cmsg-bbl.a").forEach(function(b){b.style.color="";b.style.textShadow="";});
   var btn=document.getElementById("theme-toggle-btn");
   if(btn&&typeof t==="function")btn.textContent=night?("🌙 "+t("theme-night")):("☀️ "+t("theme-day"));
   else if(btn)btn.textContent=night?"🌙 NUIT":"☀️ JOUR";
@@ -4003,7 +4006,7 @@ async function sendChat(){
       chargerCredits();
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
       bblText.classList.remove("stream-active");
-      bblText.style.color=_agentColor;
+      bblText.style.color="";  // couleur gérée par la CSS (.cmsg-bbl.a) pour suivre le thème jour/nuit
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
       var _replyPlain=reply||"";
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
@@ -6866,13 +6869,13 @@ function alRenderAgentReply(text,data){
   var textColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#000000":"#ffffff");
   var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18)";
   var htmlContent='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>';
-  htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[0]||"");
+  htmlContent+='<div class="cmsg-bbl a">'+escHtml(parts[0]||"");
   for(var i=0;i<injects.length;i++){
     htmlContent+='</div>';
     htmlContent+='<div class="al-inject-card"><div class="al-inject-hd"><span>📄 '+escHtml(injects[i].path)+'</span>';
     htmlContent+='<button onclick="alAddPendingFile(\''+escHtml(injects[i].path).replace(/'/g,"\\'")+'\',this.dataset.code)" data-code="'+escHtml(injects[i].content).replace(/"/g,"&quot;")+'">+ Ajouter</button></div>';
     htmlContent+='<div class="al-inject-pre">'+escHtml(injects[i].content.slice(0,300))+(injects[i].content.length>300?"\n…":"")+'</div></div>';
-    if(parts[i+1]){htmlContent+='<div class="cmsg-bbl a" style="color:'+textColor+';'+shadowStyle+';">'+escHtml(parts[i+1]);}
+    if(parts[i+1]){htmlContent+='<div class="cmsg-bbl a">'+escHtml(parts[i+1]);}
   }
   htmlContent+='</div>';
   // Actions
@@ -8503,6 +8506,7 @@ document.addEventListener("keydown",function(e){
     var html=document.documentElement;
     var cur=html.getAttribute("data-theme");
     html.setAttribute("data-theme",cur==="day"?"night":"day");
+    document.querySelectorAll(".cmsg-bbl.a").forEach(function(b){b.style.color="";b.style.textShadow="";});
     localStorage.setItem("tilex-theme",html.getAttribute("data-theme"));
     showToastMsg(html.getAttribute("data-theme")==="day"?"☀️ Thème jour":"🌙 Thème nuit");
     trackFeatureUsage("shortcut_theme");
