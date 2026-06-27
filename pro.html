@@ -502,6 +502,9 @@ body.sb-open .content{margin-left:var(--sb-w);}
 @media (prefers-reduced-motion:reduce){.cmsg-ico.u img.tilex-ava{animation:none;}}
 .cmsg-ico.a{background:none;padding:0;overflow:hidden;}
 .cmsg-ico.a img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+/* Avatar vidéo animé de TI-LEX-AL à côté de ses réponses */
+.cmsg-ico.a video.cmsg-ava-vid,.cmsg-ty-avatar video.cmsg-ava-vid{width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;}
+.cmsg-ico.a{box-shadow:0 0 6px rgba(26,107,255,.30);}
 .cmsg-bbl{padding:8px 12px;border-radius:11px;font-size:14px;line-height:1.6;white-space:pre-wrap;
   overflow-wrap:break-word;word-break:normal;word-wrap:break-word;min-width:0;max-width:100%;}
 .cmsg-bbl.u{background:rgba(255,106,0,.12);border:1px solid rgba(255,106,0,.2);color:#ffffff;border-bottom-right-radius:3px;}
@@ -3990,7 +3993,7 @@ async function sendChat(){
   }
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
-  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
+  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar">'+alAvaVid()+'</div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
   setTimeout(function(){var dots=td.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
@@ -4025,7 +4028,7 @@ async function sendChat(){
         window._reflexionAbort=null;
       }
       var td2=document.createElement("div");td2.className="cmsg a";td2.id="tyd";
-      td2.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
+      td2.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar">'+alAvaVid()+'</div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
       msgs.appendChild(td2);msgs.scrollTop=msgs.scrollHeight;
       setTimeout(function(){td2.querySelectorAll(".tyd").forEach(function(d){d.classList.add("tyd-loop");});},300);
       var tdRef=td2;
@@ -4055,7 +4058,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
@@ -4336,12 +4339,33 @@ function addMsg(role,txt){
   else{content=escHtml(txt).replace(/\n/g,"<br>");}
   var icoHtml;
   if(role==="u"){var pav=localStorage.getItem("tilex-profile-avatar");icoHtml=pav?'<img src="'+pav+'" alt="U">':'<img src="assets/tilex-user-avatar.png" class="tilex-ava" alt="U">';}
-  else{icoHtml='<img src="assets/tilex-logo.png" alt="AL">';}
+  else{icoHtml=''+alAvaVid()+'';}
   var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
 }
+
+/* Avatar vidéo de TI-LEX-AL (réponses de l'agent) — clip muet en boucle */
+function alAvaVid(){
+  return '<video class="cmsg-ava-vid" autoplay loop muted playsinline preload="metadata" poster="assets/tilex-logo.png"><source src="assets/tilex-al-avatar.mp4" type="video/mp4"></video>';
+}
+/* Ne joue que les avatars visibles (perf + batterie mobile) */
+(function(){
+  function setup(){
+    var box=document.getElementById("chat-msgs"); if(!box)return;
+    var io=("IntersectionObserver" in window)?new IntersectionObserver(function(es){
+      es.forEach(function(e){var v=e.target; if(e.isIntersecting){ if(v.paused)v.play().catch(function(){}); } else { if(!v.paused)v.pause(); }});
+    },{threshold:0.1}):null;
+    function scan(){
+      var vids=box.querySelectorAll("video.cmsg-ava-vid:not([data-io])");
+      for(var i=0;i<vids.length;i++){ vids[i].setAttribute("data-io","1"); if(io)io.observe(vids[i]); }
+    }
+    scan();
+    new MutationObserver(scan).observe(box,{childList:true,subtree:true});
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup); else setup();
+})();
 
 /* ── FORFAITS — source de vérité : profiles.plan + plan_limits ── */
 var _planCache=null;
@@ -4597,7 +4621,7 @@ function newConversation(){
   var current=chatConvs.find(function(c){return c.active;});
   if(current&&(!current.messages||current.messages.length===0)){
     chatHistory=[];chatSessionId=null;cvpActiveConvId=null;
-    document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+    document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
     newConvCreateSupabase();
     return;
   }
@@ -4606,7 +4630,7 @@ function newConversation(){
   chatConvs.push(nc);
   activeChatConv=chatConvs.length-1;
   chatHistory=[];chatSessionId=null;cvpActiveConvId=null;
-  document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+  document.getElementById("chat-msgs").innerHTML='<div class="cmsg a"><div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a">Salut! Nouvelle conversation démarrée. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
   localStorage.setItem("tilex-chat-convs",JSON.stringify(chatConvs));
   renderConvList();
   newConvCreateSupabase();
@@ -6764,7 +6788,7 @@ async function sbChatSend(){
   window._sbPendingConn=conn;
   var msgs=document.getElementById("chat-msgs");
   var d=document.createElement("div");d.className="cmsg a";d.id="sb-confirm-block";
-  d.innerHTML='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>'+confirmHtml+'</div>';
+  d.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div>'+confirmHtml+'</div>';
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
 
@@ -6969,7 +6993,7 @@ async function alSendToAgent(question){
   chatHistory.push({role:"user",content:question});
   var msgs=document.getElementById("chat-msgs");
   var td=document.createElement("div");td.className="cmsg a";td.id="tyd-al";
-  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div></div></div>';
+  td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar">'+alAvaVid()+'</div><div class="tydots"><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div><div class="tyd tyd-loop"></div></div></div>';
   msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
   try{
     var tk=getToken();
@@ -7026,7 +7050,7 @@ function alRenderAgentReply(text,data){
   while((m=injectRegex.exec(text))!==null){injects.push({path:m[1],content:m[2]});}
   var textColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#000000":"#ffffff");
   var shadowStyle=_isDay?"":"text-shadow:0 0 8px rgba(255,255,255,.30),0 0 3px rgba(255,255,255,.18)";
-  var htmlContent='<div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div>';
+  var htmlContent='<div class="cmsg-ico a">'+alAvaVid()+'</div><div>';
   htmlContent+='<div class="cmsg-bbl a">'+escHtml(parts[0]||"");
   for(var i=0;i<injects.length;i++){
     htmlContent+='</div>';
@@ -7391,14 +7415,14 @@ async function cvpOpenInChat(id){
   var welcome=document.getElementById("chat-welcome");
   if(welcome)welcome.style.display="none";
   var msgs=document.getElementById("chat-msgs");
-  msgs.innerHTML='<div class="cmsg a"><div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
+  msgs.innerHTML='<div class="cmsg a"><div class="cmsg-typing"><div class="cmsg-ty-avatar">'+alAvaVid()+'</div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div></div>';
   setTimeout(function(){var dots=msgs.querySelectorAll(".tyd");dots.forEach(function(d){d.classList.add("tyd-loop");});},900);
   try{
     var rows=await sbRest("/messages?conversation_id=eq."+id+"&select=id,role,content,created_at&order=created_at.asc")||[];
     chatHistory=[];
     msgs.innerHTML="";
     if(rows.length===0){
-      msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Conversation ouverte. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
+      msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a">Conversation ouverte. Comment puis-je t\'aider?</div><div class="cmsg-time">Maintenant</div></div></div>';
     }else{
       for(var i=0;i<rows.length;i++){
         var r=rows[i].role==="user"?"user":"assistant";
@@ -7408,7 +7432,7 @@ async function cvpOpenInChat(id){
     }
     msgs.scrollTop=msgs.scrollHeight;
   }catch(e){
-    msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a"><img src="assets/tilex-logo.png" alt="AL"></div><div><div class="cmsg-bbl a">Erreur chargement: '+escHtml(e.message)+'</div><div class="cmsg-time">Maintenant</div></div></div>';
+    msgs.innerHTML='<div class="cmsg a"><div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a">Erreur chargement: '+escHtml(e.message)+'</div><div class="cmsg-time">Maintenant</div></div></div>';
   }
 }
 
