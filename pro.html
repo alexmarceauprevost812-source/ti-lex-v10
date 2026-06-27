@@ -7131,7 +7131,29 @@ function setPolice(nom){
   showToastMsg('🔤 Police : '+nom);
 }
 
+// 🌙 Vrai/faux : la couleur est-elle assez claire pour être lisible sur fond noir ?
+function _couleurAssezClaire(c){
+  try{
+    var m=String(c).trim(),r,g,b;
+    if(m.charAt(0)==='#'){
+      if(m.length===4){r=parseInt(m.charAt(1)+m.charAt(1),16);g=parseInt(m.charAt(2)+m.charAt(2),16);b=parseInt(m.charAt(3)+m.charAt(3),16);}
+      else{r=parseInt(m.slice(1,3),16);g=parseInt(m.slice(3,5),16);b=parseInt(m.slice(5,7),16);}
+    }else{
+      var mm=m.match(/(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+      if(!mm)return true; // format inconnu → on laisse passer
+      r=+mm[1];g=+mm[2];b=+mm[3];
+    }
+    if([r,g,b].some(function(x){return isNaN(x);}))return true;
+    var lum=(0.2126*r+0.7152*g+0.0722*b)/255; // luminance relative (0=noir, 1=blanc)
+    return lum>=0.45; // seuil lisible sur fond ~#0a0a0a
+  }catch(e){return true;}
+}
+
 function setCouleurAgent(couleur){
+  if(!_couleurAssezClaire(couleur)){
+    showToastMsg('⚠️ Couleur trop sombre pour le mode nuit — choisis-en une plus claire');
+    return;
+  }
   document.documentElement.style.setProperty('--agent-text-color',couleur);
   localStorage.setItem('tilex-agent-color',couleur);
   document.querySelectorAll('#settings-colors .cmi-color-dot').forEach(function(d){
@@ -7172,8 +7194,12 @@ function setDeviceProfil(profil){
     document.querySelectorAll('.cmi-chip[data-font="'+savedFont+'"]').forEach(function(b){b.classList.add('active');});
   }
   var savedColor=localStorage.getItem('tilex-agent-color');
-  if(savedColor){
+  // 🌙 Garde-fou lisibilité : une couleur trop sombre rend le texte de l'agent
+  // illisible sur le fond noir du thème nuit. On la rejette → doré clair par défaut.
+  if(savedColor&&_couleurAssezClaire(savedColor)){
     document.documentElement.style.setProperty('--agent-text-color',savedColor);
+  }else if(savedColor){
+    localStorage.removeItem('tilex-agent-color');
   }
   var savedBtn=localStorage.getItem('tilex-btn-color');
   if(savedBtn){
