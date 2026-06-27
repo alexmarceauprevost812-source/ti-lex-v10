@@ -432,6 +432,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/tilex-config.js"></script>
+<script src="js/tilex-intro.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -1136,7 +1137,7 @@ async function doRegister(){
     const {data,error}=await cl.auth.signUp({email,password:pass,options:{data:{first_name:first,last_name:last}}});
     if(error){showErr('reg-email-err',error.message);return}
     if(apikey&&data.user) DB.setData(data.user.id,'settings',{apiKey:apikey,ghToken:''});
-    if(data.session&&data.user){ loginUser(userFromSession(data.user)); showToast(`Bienvenue, ${first}! 🎉`,'success'); }
+    if(data.session&&data.user){ loginUser(userFromSession(data.user), true); showToast(`Bienvenue, ${first}! 🎉`,'success'); }
     else { showToast('Compte créé! Confirme ton courriel puis connecte-toi.','info'); switchTab('login'); }
   }catch(e){ showErr('reg-global-err',e.message||'Erreur'); }
 }
@@ -1151,7 +1152,7 @@ async function doLogin(){
   try{
     const {data,error}=await cl.auth.signInWithPassword({email,password:pass});
     if(error){showErr('login-global-err',error.message||'Connexion échouée');return}
-    loginUser(userFromSession(data.user));
+    loginUser(userFromSession(data.user), true);
     showToast(`Content de te revoir! 🍁`,'success');
   }catch(e){ showErr('login-global-err',e.message||'Erreur'); }
 }
@@ -1174,11 +1175,11 @@ function demoLogin(){
       {icon:'🚀',text:'Déploiement <strong>v10.2.1</strong> réussi',time:'Il y a 1h'},
     ]);
   }
-  loginUser(accounts[demoEmail]);
+  loginUser(accounts[demoEmail], true);
   showToast('Connexion démo! Explorez la plateforme 🎮','info');
 }
 
-function loginUser(user){
+function loginUser(user, animate){
   currentUser=user;
   DB.setSession(user);
   document.getElementById('view-auth').classList.add('hidden');
@@ -1187,6 +1188,9 @@ function loginUser(user){
   refreshUserUI();
   navigateTo('dashboard');
   loadAgents();
+  // Animation d'accueil « DevilScene » — une fois, après la connexion,
+  // par-dessus la plateforme qui se révèle quand l'animation se termine.
+  if(animate && window.TilexIntro){ try{ TilexIntro.play(); }catch(e){} }
 }
 
 async function doLogout(){
