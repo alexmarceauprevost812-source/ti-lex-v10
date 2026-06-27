@@ -3762,9 +3762,19 @@ async function initAlMemoryRecall(){
 }
 var _webAgent=null; /* agent de la plateforme /web actuellement actif dans le chat (persona) */
 var SCHEMA_HINT="\n\n## SCHÉMAS / DIAGRAMMES\nQuand un schéma aide à comprendre (étapes, architecture, flux, pipeline, comparaison), dessine-le directement dans le chat. Mets un bloc de code ```tilex-schema contenant UNIQUEMENT du JSON valide de cette forme :\n```tilex-schema\n{\"titre\":\"Titre court\",\"noeuds\":[{\"id\":\"a\",\"titre\":\"Étape\",\"sous\":\"détail court\",\"couleur\":1}],\"liens\":[{\"de\":\"a\",\"a\":\"b\"}]}\n```\nRègles : 3 à 7 nœuds max, titres courts ; `couleur` = 1, 2, 3 ou \"neutre\" ; `liens` optionnel (sans lui, le flux est séquentiel haut→bas). N'explique jamais le JSON, ne mets rien d'autre dans ce bloc. Utilise un schéma seulement quand c'est vraiment utile.";
+/* ── Mémoire long-terme TilexMemory : cache injecté dans le prompt ── */
+var _tilexMemCache="";
+async function rafraichirTilexMem(){
+  if(window.TilexMemory){ try{ _tilexMemCache=await TilexMemory.toPromptContext(8); }catch(e){} }
+}
+// détecte une intention « retiens ceci » pour sauvegarder un souvenir durable
+function _detecterSouvenir(txt){
+  return /\b(souviens?[- ]toi|retiens|rappelle[- ]toi|garde (?:ça |cela |ceci )?en m[ée]moire|n['’]oublie pas|remember this|ma pr[ée]f[ée]rence|je pr[ée]f[èe]re|mon nom est|j['’]aime\b|note que)\b/i.test(txt||"");
+}
 function getSystemPrompt(){
   var base=(_webAgent&&_webAgent.system)?_webAgent.system:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD);
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
+  if(_tilexMemCache)base+="\n"+_tilexMemCache;
   if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
   if(TilexConfig.githubToken&&TilexConfig.githubRepo){
     base+="\n\nProjet GitHub connecté: "+TilexConfig.githubUser+"/"+TilexConfig.githubRepo+" (branche: "+TilexConfig.githubBranch+"). L'utilisateur peut demander de lire des fichiers du projet.";
@@ -3925,6 +3935,11 @@ async function sendChat(){
   }else{
     chatHistory.push({role:"user",content:txt});
   }
+  // ── Branche TilexMemory + TilexContext ──
+  if(window.TilexContext)TilexContext.ajouterMessage("user",txt);
+  if(window.TilexMemory&&txt&&_detecterSouvenir(txt)){
+    TilexMemory.save("preference",txt,3).then(rafraichirTilexMem);
+  }
   const msgs=document.getElementById("chat-msgs");
   const td=document.createElement("div");td.className="cmsg a";td.id="tyd";
   td.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar"><img src="assets/tilex-logo.png" alt="AL"></div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
@@ -4017,6 +4032,7 @@ async function sendChat(){
       EcritureFluide._terminer();
       chargerCredits();
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
+      if(window.TilexContext)TilexContext.enregistrerReponse(reply||"");
       bblText.classList.remove("stream-active");
       bblText.style.color="";  // couleur gérée par la CSS (.cmsg-bbl.a) pour suivre le thème jour/nuit
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
@@ -8132,6 +8148,8 @@ supabase.auth.onAuthStateChange(function(event,session){
     demarrerConversation(session.user.id).catch(function(){});
     chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
+    if(window.TilexMemory){TilexMemory.init(supabase);rafraichirTilexMem();}
+    if(window.TilexContext){TilexContext.init(getSystemPrompt());TilexContext.syncMemoire();}
     chargerCredits().catch(function(){});
     chargerAgentsWeb().catch(function(){});
     if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
