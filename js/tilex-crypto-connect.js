@@ -24,6 +24,8 @@
   let pending = null;
   function planifier() {
     if (pending) return;
+    // Pas de scan pendant qu'une bulle est en cours d'écriture (évite le reflow concurrent → saccade).
+    if (document.querySelector(".cmsg-bbl.stream-active, .cmsg-bbl.ecriture-active")) return;
     pending = setTimeout(function () { pending = null; scan(); }, 150); // debounce (pas une anim)
   }
 
