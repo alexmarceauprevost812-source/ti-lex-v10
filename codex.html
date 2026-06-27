@@ -13,6 +13,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>TilexCode — Codex 🤖</title>
 <script src="js/tilex-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
     --bg:#0a0a0a; --bg2:#101015; --bg3:#15151c; --bord:#22222c;
@@ -80,6 +81,15 @@
     box-shadow:0 4px 16px rgba(255,107,0,.4);display:flex;align-items:center;justify-content:center;}
   .tc-send:active{transform:scale(.92);}
   .tc-send:disabled{opacity:.5;}
+  /* bouton + (ajouter fichier / zip à lire) */
+  .tc-plus{width:46px;height:46px;flex-shrink:0;border:1px solid var(--bord);background:var(--bg3);color:var(--orange);
+    border-radius:14px;font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .tc-plus:active{transform:scale(.93);}
+  .tc-plus-menu{position:fixed;left:12px;bottom:84px;z-index:120;background:var(--bg2);border:1px solid var(--bord);
+    border-radius:14px;padding:6px;display:none;box-shadow:0 10px 34px rgba(0,0,0,.55);min-width:230px;}
+  .tc-plus-menu.show{display:block;}
+  .tc-plus-item{padding:13px 14px;border-radius:10px;font-size:14px;color:var(--txt);cursor:pointer;display:flex;gap:10px;align-items:center;white-space:nowrap;}
+  .tc-plus-item:active,.tc-plus-item:hover{background:var(--bg3);color:var(--orange);}
 
   /* ===== DRAWER (conversations + fichiers) ===== */
   .tc-drawer{position:fixed;top:0;bottom:0;left:0;width:84%;max-width:330px;z-index:200;
@@ -170,7 +180,15 @@
 <main class="tc-chat" id="tc-chat"></main>
 
 <!-- COMPOSER -->
+<!-- Menu du bouton + (ajouter un fichier / un zip à lire) -->
+<div class="tc-plus-menu" id="tc-plus-menu">
+  <div class="tc-plus-item" onclick="TC.pickFichier()">📄 Ajouter un fichier</div>
+  <div class="tc-plus-item" onclick="TC.pickZip()">🗜️ Ajouter un fichier ZIP</div>
+</div>
 <div class="tc-composer">
+  <button class="tc-plus" id="tc-plus" onclick="TC.plusMenu(event)" title="Ajouter un fichier à lire">+</button>
+  <input type="file" id="tc-file-input" multiple style="display:none" onchange="TC.ajouterFichier(this)">
+  <input type="file" id="tc-zip-input" accept=".zip,application/zip" style="display:none" onchange="TC.ajouterZip(this)">
   <textarea class="tc-input" id="tc-input" rows="1" placeholder="Demande à TilexCode… (il voit tout ton projet)"></textarea>
   <button class="tc-send" id="tc-send" onclick="TC.envoyer()">➤</button>
 </div>
@@ -220,6 +238,19 @@
   function b64decode(b64){ try{ return decodeURIComponent(escape(atob(String(b64).replace(/\n/g,"")))); }catch(e){ try{return atob(String(b64).replace(/\n/g,""));}catch(_){return "";} } }
   function b64encode(txt){ return btoa(unescape(encodeURIComponent(txt))); }
   function scrollBas(){ var c=$("tc-chat"); c.scrollTop=c.scrollHeight; }
+  // fichiers texte (on n'ajoute pas les binaires au contexte de l'IA)
+  function estTexte(n){
+    return /\.(js|jsx|ts|tsx|mjs|cjs|html?|css|scss|sass|less|json5?|jsonc|md|markdown|txt|py|rb|go|rs|java|kt|swift|c|h|cpp|hpp|cc|cs|php|vue|svelte|astro|yml|yaml|toml|ini|env|cfg|conf|sh|bash|zsh|sql|xml|svg|csv|tsv|gradle|properties|lock|tf|graphql|gql|prisma)$/i.test(n)
+      || /(^|\/)(dockerfile|makefile|readme|license|\.gitignore|\.env[\w.]*)$/i.test(n);
+  }
+  function lireFichierTexte(file){
+    return new Promise(function(res){
+      var r=new FileReader();
+      r.onload=function(){ S.ouverts[file.name]=String(r.result||""); ajouterMsg("sys","📄 "+esc(file.name)+" ajouté au contexte (gardé en mémoire)."); res(); };
+      r.onerror=function(){ ajouterMsg("sys","❌ Lecture "+esc(file.name)+" échouée."); res(); };
+      r.readAsText(file);
+    });
+  }
 
   // appel GitHub via le proxy serveur (PAT côté serveur — aucun token client)
   async function gh(body){
@@ -509,9 +540,10 @@
 
     pousser:async function(code, btn){
       if(!S.repo||!S.branch){ ajouterMsg("sys","❌ Choisis un projet + branche d'abord."); return; }
-      // chemin : 1re ligne "// path: ..." sinon on demande
+      // chemin : 1re ligne "// path: ..." → utilisé AUTOMATIQUEMENT (bon nom de fichier).
+      // On ne demande que s'il est absent.
       var path=null; var m=code.match(/^[^\n]*?path:\s*([^\s*]+)/i); if(m) path=m[1].trim();
-      path=prompt("Chemin du fichier dans "+S.repo.name+" @ "+S.branch+" :", path||"");
+      if(!path){ path=prompt("Chemin du fichier dans "+S.repo.name+" @ "+S.branch+" :",""); }
       if(!path) return;
       var contenu=code.replace(/^[^\n]*path:[^\n]*\n/i,""); // enlève la ligne path si présente
       btn.textContent="⏳ Push…"; btn.disabled=true;
@@ -523,6 +555,37 @@
         var r=await gh(body);
         btn.textContent="✅ Poussé ("+(r.commit||"ok")+")"; btn.classList.add("done");
       }catch(e){ btn.textContent="❌ "+e.message; btn.disabled=false; }
+    },
+
+    // ── Bouton + : ajouter des fichiers à lire (contexte de l'IA) ──
+    plusMenu:function(e){ if(e&&e.stopPropagation)e.stopPropagation(); $("tc-plus-menu").classList.toggle("show"); },
+    fermerPlus:function(){ var m=$("tc-plus-menu"); if(m)m.classList.remove("show"); },
+    pickFichier:function(){ this.fermerPlus(); var i=$("tc-file-input"); i.value=""; i.click(); },
+    pickZip:function(){ this.fermerPlus(); var i=$("tc-zip-input"); i.value=""; i.click(); },
+    ajouterFichier:async function(inp){
+      var files=inp.files; if(!files||!files.length) return;
+      for(var i=0;i<files.length;i++){ await lireFichierTexte(files[i]); }
+      rendreFichiers(); sauverProjet();
+    },
+    ajouterZip:async function(inp){
+      var f=inp.files&&inp.files[0]; if(!f) return;
+      if(typeof JSZip==="undefined"){ ajouterMsg("sys","❌ Lecteur ZIP indisponible (hors-ligne?)."); return; }
+      ajouterMsg("sys","🗜️ Lecture du ZIP "+esc(f.name)+"…");
+      try{
+        var zip=await JSZip.loadAsync(f);
+        var names=Object.keys(zip.files).filter(function(n){return !zip.files[n].dir;});
+        var added=0, budget=220000;
+        for(var i=0;i<names.length;i++){
+          var n=names[i];
+          if(!estTexte(n)) continue;
+          var content=await zip.files[n].async("string");
+          if(content.length>budget){ continue; }
+          S.ouverts[n]=content; budget-=content.length; added++;
+          if(budget<=0) break;
+        }
+        sauverProjet(); rendreFichiers();
+        ajouterMsg("sys","✅ "+added+" fichier(s) texte du ZIP ajouté(s) au contexte de TilexCode.");
+      }catch(e){ ajouterMsg("sys","❌ ZIP : "+esc(e.message)); }
     },
 
     envoyer:async function(){
@@ -578,6 +641,8 @@
   // auto-grow textarea
   $("tc-input").addEventListener("input",function(){ this.style.height="auto"; this.style.height=Math.min(this.scrollHeight,140)+"px"; });
   $("tc-input").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); TC.envoyer(); } });
+  // ferme le menu + si on touche ailleurs
+  document.addEventListener("click",function(e){ var m=$("tc-plus-menu"); var b=$("tc-plus"); if(m&&m.classList.contains("show")&&!m.contains(e.target)&&e.target!==b){ m.classList.remove("show"); } });
 
   // ═══ HAUTEUR MOBILE — bloque la hauteur sur le viewport réellement visible ═══
   // (corrige le composer inatteignable en bas d'écran sur téléphone : certains
