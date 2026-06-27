@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<!-- ============================================
+     📁 tilexcode.html
+     TILEXCODE — Codex intelligent mobile · ti-lex-AL v10
+     Branché direct au projet GitHub (sans token côté client).
+     Thème: fond noir, écriture bleue #4a9eff, boutons orange #FF6B00.
+     Auteur: Alex Marceau-Prévost
+     🔒 Aucune clé exposée (GitHub via github-proxy, IA via ai-proxy).
+     ============================================ -->
+<html lang="fr-CA" data-theme="night">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>TilexCode — Codex 🤖</title>
+<script src="js/tilex-config.js"></script>
+<style>
+  :root{
+    --bg:#0a0a0a; --bg2:#101015; --bg3:#15151c; --bord:#22222c;
+    --bleu:#4a9eff; --bleu2:#7db8ff; --bleu-faible:#3a6ea5;
+    --orange:#FF6B00; --orange2:#ff8534;
+    --txt:#4a9eff; --muet:#6c7a90; --vert:#37e0a0; --rouge:#ff4d4d;
+    --mono:'JetBrains Mono',ui-monospace,'Share Tech Mono',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sans);}
+  body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+
+  /* ===== TOPBAR ===== */
+  .tc-top{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;
+    background:linear-gradient(180deg,#0d0d12,#0a0a0a);border-bottom:1px solid var(--bord);z-index:50;}
+  .tc-icon-btn{width:38px;height:38px;flex-shrink:0;border:1px solid var(--bord);background:var(--bg2);color:var(--bleu);
+    border-radius:10px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .tc-icon-btn:active{transform:scale(.93);}
+  .tc-title{font-family:var(--mono);font-weight:800;letter-spacing:1px;color:var(--bleu);font-size:15px;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tc-title b{color:var(--orange);}
+  .tc-repo-chip{font-family:var(--mono);font-size:11px;color:var(--muet);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  /* ===== BARRE PROJET ===== */
+  .tc-bar{flex-shrink:0;display:flex;gap:8px;align-items:center;padding:8px 12px;background:var(--bg2);
+    border-bottom:1px solid var(--bord);overflow-x:auto;}
+  .tc-pill{flex-shrink:0;font-family:var(--mono);font-size:11px;padding:6px 12px;border-radius:20px;
+    border:1px solid var(--bleu-faible);background:transparent;color:var(--bleu);cursor:pointer;white-space:nowrap;}
+  .tc-pill:active{transform:scale(.96);}
+  .tc-pill.on{border-color:var(--vert);color:var(--vert);}
+  .tc-pill.act{background:var(--orange);border-color:var(--orange);color:#000;font-weight:700;}
+
+  /* ===== ZONE CHAT ===== */
+  .tc-chat{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;padding:14px 12px 20px;display:flex;flex-direction:column;gap:14px;}
+  .tc-msg{max-width:94%;font-size:15px;line-height:1.55;word-break:break-word;}
+  .tc-msg.u{align-self:flex-end;background:rgba(255,107,0,.12);border:1px solid rgba(255,107,0,.25);
+    color:#ffd9bf;border-radius:14px 14px 4px 14px;padding:10px 13px;}
+  .tc-msg.a{align-self:flex-start;color:var(--txt);}
+  .tc-msg.a .tc-who{font-family:var(--mono);font-size:11px;color:var(--orange);margin-bottom:4px;letter-spacing:1px;}
+  .tc-msg.sys{align-self:center;color:var(--muet);font-size:12px;font-style:italic;text-align:center;}
+  .tc-msg pre{background:#0e0e16;border:1px solid var(--bord);border-radius:10px;padding:12px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.5;color:var(--bleu2);margin:8px 0;}
+  .tc-msg code{font-family:var(--mono);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.2);
+    border-radius:4px;padding:1px 5px;font-size:.9em;color:var(--bleu2);}
+  .tc-msg pre code{background:none;border:none;padding:0;}
+  .tc-push{display:inline-flex;align-items:center;gap:5px;margin:4px 0 0;font-family:var(--mono);font-size:11px;
+    background:var(--orange);color:#000;border:none;border-radius:7px;padding:6px 12px;font-weight:700;cursor:pointer;}
+  .tc-push:active{transform:scale(.96);}
+  .tc-push.done{background:var(--vert);}
+  .tc-curseur{display:inline-block;width:7px;height:1em;background:var(--orange);vertical-align:text-bottom;
+    margin-left:1px;animation:tcblink .8s step-end infinite;}
+  @keyframes tcblink{50%{opacity:0;}}
+
+  /* ===== COMPOSER ===== */
+  .tc-composer{flex-shrink:0;display:flex;align-items:flex-end;gap:8px;padding:8px 12px;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:var(--bg2);border-top:1px solid var(--bord);}
+  .tc-input{flex:1;min-height:46px;max-height:140px;resize:none;background:var(--bg3);border:1px solid var(--bord);
+    border-radius:14px;padding:12px 14px;color:#e8f0ff;font-family:var(--sans);font-size:16px;line-height:1.4;outline:none;}
+  .tc-input:focus{border-color:var(--bleu-faible);}
+  .tc-input::placeholder{color:var(--muet);}
+  .tc-send{width:46px;height:46px;flex-shrink:0;border:none;border-radius:50%;cursor:pointer;
+    background:linear-gradient(135deg,#cc5600,var(--orange),var(--orange2));color:#fff;font-size:20px;
+    display:flex;align-items:center;justify-content:center;}
+  .tc-send:active{transform:scale(.92);}
+  .tc-send:disabled{opacity:.5;}
+
+  /* ===== DRAWER (conversations + fichiers) ===== */
+  .tc-drawer{position:fixed;top:0;bottom:0;left:0;width:84%;max-width:330px;z-index:200;
+    background:var(--bg2);border-right:1px solid var(--bord);transform:translateX(-105%);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+  .tc-drawer.open{transform:translateX(0);}
+  .tc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150;opacity:0;pointer-events:none;transition:opacity .25s;}
+  .tc-overlay.show{opacity:1;pointer-events:auto;}
+  .tc-drawer-hd{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 14px 12px;border-bottom:1px solid var(--bord);}
+  .tc-drawer-hd span{font-family:var(--mono);font-weight:800;color:var(--bleu);letter-spacing:1px;}
+  .tc-newconv{margin:12px 14px;padding:11px;border-radius:10px;border:1px solid var(--orange);background:rgba(255,107,0,.08);
+    color:var(--orange);font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;text-align:center;}
+  .tc-newconv:active{transform:scale(.98);}
+  .tc-tabs{display:flex;margin:0 14px 8px;border:1px solid var(--bord);border-radius:9px;overflow:hidden;}
+  .tc-tab{flex:1;padding:8px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muet);cursor:pointer;background:var(--bg3);}
+  .tc-tab.act{background:var(--bleu);color:#001022;font-weight:700;}
+  .tc-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 10px 16px;}
+  .tc-conv{padding:11px 12px;border-radius:9px;margin-bottom:6px;background:var(--bg3);border:1px solid transparent;
+    cursor:pointer;font-size:13px;color:var(--bleu2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tc-conv.act{border-color:var(--bleu);}
+  .tc-file{padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--muet);cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tc-file:active{background:var(--bg3);}
+  .tc-file.open{color:var(--vert);}
+  .tc-file-hint{font-family:var(--mono);font-size:11px;color:var(--muet);padding:6px 10px;}
+
+  /* picker modal (repos/branches) */
+  .tc-modal{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);display:none;align-items:flex-end;}
+  .tc-modal.show{display:flex;}
+  .tc-sheet{width:100%;max-height:75vh;background:var(--bg2);border-top:1px solid var(--bord);border-radius:18px 18px 0 0;
+    display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px);}
+  .tc-sheet-hd{padding:14px;border-bottom:1px solid var(--bord);font-family:var(--mono);font-weight:800;color:var(--bleu);}
+  .tc-sheet-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;}
+  .tc-sheet-item{padding:12px;border-radius:9px;font-size:14px;color:var(--bleu2);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);}
+  .tc-sheet-item:active{background:var(--bg3);}
+  .tc-sheet-search{margin:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--bord);border-radius:10px;
+    color:#e8f0ff;font-size:14px;outline:none;}
+</style>
+</head>
+<body>
+
+<!-- DRAWER -->
+<div class="tc-overlay" id="tc-overlay" onclick="TC.fermerDrawer()"></div>
+<aside class="tc-drawer" id="tc-drawer">
+  <div class="tc-drawer-hd"><span>🤖 TILEXCODE</span><div class="tc-icon-btn" onclick="TC.fermerDrawer()">✕</div></div>
+  <button class="tc-newconv" onclick="TC.nouvelleConv()">+ Nouvelle conversation</button>
+  <div class="tc-tabs">
+    <div class="tc-tab act" id="tab-conv" onclick="TC.onglet('conv')">💬 Conversations</div>
+    <div class="tc-tab" id="tab-files" onclick="TC.onglet('files')">📁 Fichiers</div>
+  </div>
+  <div class="tc-list" id="tc-list-conv"></div>
+  <div class="tc-list" id="tc-list-files" style="display:none;"></div>
+</aside>
+
+<!-- TOPBAR -->
+<header class="tc-top">
+  <div class="tc-icon-btn" onclick="TC.ouvrirDrawer()">☰</div>
+  <div class="tc-title">TILEX<b>CODE</b></div>
+  <div class="tc-repo-chip" id="tc-repo-chip">aucun projet</div>
+  <a class="tc-icon-btn" href="/app" title="Retour à l'app" style="text-decoration:none;">⮐</a>
+</header>
+
+<!-- BARRE PROJET -->
+<div class="tc-bar">
+  <button class="tc-pill" id="tc-gh" onclick="TC.connecterGitHub()">🔗 GitHub</button>
+  <button class="tc-pill" id="tc-repo" onclick="TC.choisirRepo()">📦 Projet</button>
+  <button class="tc-pill" id="tc-branch" onclick="TC.choisirBranche()">🌿 Branche</button>
+</div>
+
+<!-- CHAT -->
+<main class="tc-chat" id="tc-chat"></main>
+
+<!-- COMPOSER -->
+<div class="tc-composer">
+  <textarea class="tc-input" id="tc-input" rows="1" placeholder="Demande à TilexCode… (il voit tout ton projet)"></textarea>
+  <button class="tc-send" id="tc-send" onclick="TC.envoyer()">➤</button>
+</div>
+
+<!-- MODAL picker -->
+<div class="tc-modal" id="tc-modal" onclick="if(event.target===this)TC.fermerModal()">
+  <div class="tc-sheet">
+    <div class="tc-sheet-hd" id="tc-sheet-hd">Choisir</div>
+    <input class="tc-sheet-search" id="tc-sheet-search" placeholder="🔍 Filtrer…" oninput="TC.filtrerSheet(this.value)">
+    <div class="tc-sheet-list" id="tc-sheet-list"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// TILEXCODE — moteur codex mobile
+// ═══ CONFIG ═══
+// ═══ ÉTAT ═══
+// ═══ FONCTIONS PUBLIQUES ═══
+// ═══ FONCTIONS PRIVÉES ═══
+// ============================================================================
+(function(){
+  "use strict";
+
+  // ═══ CONFIG ═══
+  var SB_URL  = window.SB_URL;
+  var SB_ANON = window.SB_ANON;
+  var AI_PROXY= window.AI_PROXY || (SB_URL + "/functions/v1/ai-proxy");
+  var GH_PROXY= SB_URL + "/functions/v1/github-proxy";
+  var MODELE  = "claude-sonnet-4-6";
+  var MAX_TREE = 900;          // nb max de fichiers listés envoyés à l'IA
+  var MAX_CTX_FICHIERS = 60000; // budget de caractères pour les fichiers ouverts
+
+  // ═══ ÉTAT ═══
+  var S = {
+    repo:null, branch:null, tree:[], ouverts:{}, // path -> contenu
+    convs:[], convId:null, busy:false, sheetItems:[], sheetPick:null
+  };
+
+  // ═══ FONCTIONS PRIVÉES — utils ═══
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function getToken(){
+    try{ var r=localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token"); if(r){ var s=JSON.parse(r); if(s&&s.access_token) return s.access_token; } }catch(e){}
+    return SB_ANON;
+  }
+  function b64decode(b64){ try{ return decodeURIComponent(escape(atob(String(b64).replace(/\n/g,"")))); }catch(e){ try{return atob(String(b64).replace(/\n/g,""));}catch(_){return "";} } }
+  function b64encode(txt){ return btoa(unescape(encodeURIComponent(txt))); }
+  function scrollBas(){ var c=$("tc-chat"); c.scrollTop=c.scrollHeight; }
+
+  // appel GitHub via le proxy serveur (PAT côté serveur — aucun token client)
+  async function gh(body){
+    var tk=getToken();
+    var r=await fetch(GH_PROXY,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk,"apikey":SB_ANON},body:JSON.stringify(body)});
+    if(!r.ok){ var e; try{e=await r.json();}catch(x){e={};} throw new Error(e.error||("GitHub "+r.status)); }
+    return r.json();
+  }
+
+  // ═══ FONCTIONS PRIVÉES — rendu ═══
+  function ajouterMsg(role, texte){
+    var d=document.createElement("div");
+    d.className="tc-msg "+role;
+    if(role==="a"){ d.innerHTML='<div class="tc-who">TILEXCODE</div>'; var span=document.createElement("div"); span.className="tc-corps"; d.appendChild(span); }
+    else { d.textContent=texte; }
+    $("tc-chat").appendChild(d); scrollBas();
+    return d;
+  }
+
+  // markdown-léger SÛR : on échappe tout, puis on reconstruit code/gras/inline + boutons push
+  function rendreMarkdown(corpsEl, texte){
+    var html=""; var reste=texte; var idx=0;
+    var re=/```([a-zA-Z0-9_+\-]*)\n?([\s\S]*?)```/g; var m; var last=0;
+    var blocs=[];
+    while((m=re.exec(texte))){
+      blocs.push({avant:texte.slice(last,m.index), lang:m[1]||"", code:m[2]});
+      last=m.index+m[0].length;
+    }
+    var apres=texte.slice(last);
+    function inline(t){
+      return esc(t)
+        .replace(/\*\*([^*]+)\*\*/g,'<b style="color:#9ecbff;">$1</b>')
+        .replace(/`([^`]+)`/g,'<code>$1</code>')
+        .replace(/\n/g,"<br>");
+    }
+    corpsEl.innerHTML='<div class="tc-who">TILEXCODE</div>';
+    var wrap=document.createElement("div");
+    blocs.forEach(function(b){
+      if(b.avant.trim()){ var p=document.createElement("div"); p.innerHTML=inline(b.avant); wrap.appendChild(p); }
+      var pre=document.createElement("pre"); var c=document.createElement("code");
+      c.textContent=b.code; pre.appendChild(c); wrap.appendChild(pre);
+      // bouton pousser
+      var btn=document.createElement("button"); btn.className="tc-push";
+      btn.textContent="📤 Pousser ce fichier";
+      btn.onclick=function(){ TC.pousser(b.code, btn); };
+      wrap.appendChild(btn);
+    });
+    if(apres.trim()){ var p2=document.createElement("div"); p2.innerHTML=inline(apres); wrap.appendChild(p2); }
+    corpsEl.appendChild(wrap);
+  }
+
+  // ═══ FONCTIONS PRIVÉES — IA (stream ai-proxy) ═══
+  function systeme(){
+    var arbre = S.tree.slice(0,MAX_TREE).join("\n");
+    var trop = S.tree.length>MAX_TREE ? ("\n…(+"+(S.tree.length-MAX_TREE)+" autres fichiers)") : "";
+    var ctx = "";
+    var budget = MAX_CTX_FICHIERS;
+    for(var p in S.ouverts){
+      var bloc = "\n\n=== "+p+" ===\n"+S.ouverts[p];
+      if(bloc.length>budget) break;
+      ctx += bloc; budget -= bloc.length;
+    }
+    var proj = S.repo ? (S.repo.owner+"/"+S.repo.name+" @ "+(S.branch||"?")) : "(aucun projet sélectionné)";
+    return "Tu es TilexCode, un assistant de développement expert, en français québécois, direct et clair. "+
+      "Projet GitHub branché : "+proj+".\n"+
+      "Arborescence complète du projet :\n"+arbre+trop+"\n"+
+      (ctx ? ("\nContenu des fichiers ouverts :"+ctx+"\n") : "")+
+      "\nRègles : donne du code complet (jamais de TODO/placeholder). Pour proposer un fichier, mets son chemin en 1re ligne du bloc de code sous forme `// path: chemin/du/fichier`. "+
+      "Si tu as besoin de voir un fichier non fourni, demande à l'utilisateur de l'ouvrir via le menu 📁.";
+  }
+
+  async function streamIA(messages, corpsEl){
+    var tk=getToken();
+    var res=await fetch(AI_PROXY,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+tk,"apikey":SB_ANON},
+      body:JSON.stringify({kind:"chat",model:MODELE,max_tokens:4096,system:systeme(),messages:messages})});
+    if(!res.ok || !res.body){ var t=""; try{t=await res.text();}catch(e){} throw new Error("IA "+res.status+" "+t); }
+    var reader=res.body.getReader(); var dec=new TextDecoder(); var buf=""; var plein="";
+    var span=document.createElement("span"); var cur=document.createElement("span"); cur.className="tc-curseur";
+    corpsEl.appendChild(span); corpsEl.appendChild(cur);
+    while(true){
+      var ch=await reader.read(); if(ch.done) break;
+      buf+=dec.decode(ch.value,{stream:true});
+      var parts=buf.split("\n\n"); buf=parts.pop()||"";
+      for(var i=0;i<parts.length;i++){
+        var ln=parts[i].split("\n").find(function(l){return l.indexOf("data:")===0;});
+        if(!ln) continue;
+        var data=ln.slice(5).trim();
+        if(data==="[DONE]") continue;
+        try{ var o=JSON.parse(data);
+          if(o.type==="content_block_delta" && o.delta && o.delta.text){ plein+=o.delta.text; span.textContent=plein; scrollBas(); }
+        }catch(e){}
+      }
+    }
+    if(cur.parentNode) cur.remove();
+    return plein;
+  }
+
+  // ═══ FONCTIONS PRIVÉES — conversations (localStorage) ═══
+  var LS="tilexcode-convs";
+  function chargerConvs(){ try{ S.convs=JSON.parse(localStorage.getItem(LS)||"[]"); }catch(e){ S.convs=[]; } }
+  function sauverConvs(){ try{ localStorage.setItem(LS, JSON.stringify(S.convs.slice(0,50))); }catch(e){} }
+  function convActive(){ return S.convs.find(function(c){return c.id===S.convId;}); }
+  function rendreConvs(){
+    var box=$("tc-list-conv"); box.innerHTML="";
+    if(!S.convs.length){ box.innerHTML='<div class="tc-file-hint">Aucune conversation.</div>'; return; }
+    S.convs.forEach(function(c){
+      var d=document.createElement("div"); d.className="tc-conv"+(c.id===S.convId?" act":"");
+      d.textContent=c.titre||"Sans titre"; d.onclick=function(){ ouvrirConv(c.id); };
+      box.appendChild(d);
+    });
+  }
+  function ouvrirConv(id){
+    S.convId=id; var c=convActive(); $("tc-chat").innerHTML="";
+    if(c){ c.messages.forEach(function(m){
+      if(m.role==="user") ajouterMsg("u",m.content);
+      else { var el=ajouterMsg("a",""); rendreMarkdown(el, m.content); }
+    }); }
+    rendreConvs(); TC.fermerDrawer();
+  }
+
+  // ═══ FONCTIONS PUBLIQUES (window.TC) ═══
+  var TC = {
+    ouvrirDrawer:function(){ $("tc-drawer").classList.add("open"); $("tc-overlay").classList.add("show"); },
+    fermerDrawer:function(){ $("tc-drawer").classList.remove("open"); $("tc-overlay").classList.remove("show"); },
+    onglet:function(t){
+      $("tab-conv").classList.toggle("act",t==="conv"); $("tab-files").classList.toggle("act",t==="files");
+      $("tc-list-conv").style.display=t==="conv"?"block":"none";
+      $("tc-list-files").style.display=t==="files"?"block":"none";
+    },
+
+    nouvelleConv:function(){
+      var c={id:"c"+Date.now(), titre:"Nouvelle conversation", messages:[]};
+      S.convs.unshift(c); S.convId=c.id; sauverConvs(); $("tc-chat").innerHTML="";
+      ajouterMsg("sys","Nouvelle conversation — "+(S.repo?(S.repo.owner+"/"+S.repo.name):"branche un projet GitHub pour commencer"));
+      rendreConvs(); this.fermerDrawer();
+    },
+
+    connecterGitHub:async function(){
+      var btn=$("tc-gh"); btn.textContent="⏳…";
+      try{
+        var d=await gh({action:"listRepos"});
+        S._repos=(d.repos||[]).map(function(r){return r.full_name;});
+        btn.textContent="✅ GitHub"; btn.classList.add("on");
+        this.choisirRepo();
+      }catch(e){
+        btn.textContent="🔗 GitHub";
+        ajouterMsg("sys","❌ GitHub : "+e.message+" — connecte ton compte GitHub dans l'app (Paramètres → Connexions).");
+      }
+    },
+
+    choisirRepo:async function(){
+      if(!S._repos){ return this.connecterGitHub(); }
+      ouvrirSheet("📦 Choisir un projet", S._repos, function(full){
+        var parts=full.split("/"); S.repo={owner:parts[0],name:parts[1]}; S.branch=null; S.tree=[]; S.ouverts={};
+        $("tc-repo").classList.add("act"); $("tc-repo-chip").textContent=full;
+        $("tc-branch").classList.remove("act");
+        TC.fermerModal(); TC.choisirBranche();
+      });
+    },
+
+    choisirBranche:async function(){
+      if(!S.repo){ return this.choisirRepo(); }
+      try{
+        var d=await gh({action:"listBranches",repo:S.repo.owner+"/"+S.repo.name});
+        var branches=d.branches||["main"];
+        ouvrirSheet("🌿 Choisir une branche", branches, function(b){
+          S.branch=b; $("tc-branch").classList.add("act"); $("tc-repo-chip").textContent=S.repo.owner+"/"+S.repo.name+" @ "+b;
+          TC.fermerModal(); TC.chargerArbre();
+        });
+      }catch(e){ ajouterMsg("sys","❌ Branches : "+e.message); }
+    },
+
+    chargerArbre:async function(){
+      ajouterMsg("sys","📂 Chargement de l'arborescence de "+S.repo.name+" @ "+S.branch+"…");
+      try{
+        var d=await gh({action:"listFiles",repo:S.repo.owner+"/"+S.repo.name,branch:S.branch});
+        S.tree=(d.tree||[]).map(function(f){return f.path;}).sort();
+        rendreFichiers();
+        ajouterMsg("sys","✅ "+S.tree.length+" fichiers indexés. TilexCode voit tout le projet — pose ta question.");
+      }catch(e){ ajouterMsg("sys","❌ Fichiers : "+e.message); }
+    },
+
+    ouvrirFichier:async function(path){
+      if(S.ouverts[path]){ ajouterMsg("sys","📄 "+path+" déjà dans le contexte."); return; }
+      try{
+        var d=await gh({action:"readFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch});
+        S.ouverts[path]=b64decode(d.content||"");
+        rendreFichiers();
+        ajouterMsg("sys","📄 "+path+" ajouté au contexte de TilexCode.");
+      }catch(e){ ajouterMsg("sys","❌ Lecture "+path+" : "+e.message); }
+    },
+
+    pousser:async function(code, btn){
+      if(!S.repo||!S.branch){ ajouterMsg("sys","❌ Choisis un projet + branche d'abord."); return; }
+      // chemin : 1re ligne "// path: ..." sinon on demande
+      var path=null; var m=code.match(/^[^\n]*?path:\s*([^\s*]+)/i); if(m) path=m[1].trim();
+      path=prompt("Chemin du fichier dans "+S.repo.name+" @ "+S.branch+" :", path||"");
+      if(!path) return;
+      var contenu=code.replace(/^[^\n]*path:[^\n]*\n/i,""); // enlève la ligne path si présente
+      btn.textContent="⏳ Push…"; btn.disabled=true;
+      try{
+        var sha; try{ var ex=await gh({action:"readFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch}); sha=ex.sha; }catch(e){}
+        var body={action:"pushFile",repo:S.repo.owner+"/"+S.repo.name,path:path,branch:S.branch,
+          content:b64encode(contenu),message:"feat: "+path+" via TilexCode"};
+        if(sha) body.sha=sha;
+        var r=await gh(body);
+        btn.textContent="✅ Poussé ("+(r.commit||"ok")+")"; btn.classList.add("done");
+      }catch(e){ btn.textContent="❌ "+e.message; btn.disabled=false; }
+    },
+
+    envoyer:async function(){
+      if(S.busy) return;
+      var inp=$("tc-input"); var q=inp.value.trim(); if(!q) return;
+      if(!S.convId) this.nouvelleConv();
+      var c=convActive(); if(!c) return;
+      inp.value=""; inp.style.height="auto";
+      ajouterMsg("u",q); c.messages.push({role:"user",content:q});
+      if(c.titre==="Nouvelle conversation"){ c.titre=q.slice(0,40); rendreConvs(); }
+      S.busy=true; $("tc-send").disabled=true;
+      var el=ajouterMsg("a","");
+      try{
+        var msgs=c.messages.slice(-16).map(function(m){return {role:m.role,content:m.content};});
+        var rep=await streamIA(msgs, el.querySelector(".tc-corps"));
+        rendreMarkdown(el.querySelector(".tc-corps"), rep||"(réponse vide)");
+        c.messages.push({role:"assistant",content:rep||""}); sauverConvs();
+      }catch(e){
+        el.querySelector(".tc-corps").innerHTML='<span style="color:var(--rouge);">❌ '+esc(e.message)+'</span>';
+      }
+      S.busy=false; $("tc-send").disabled=false; scrollBas();
+    },
+
+    // modal picker
+    fermerModal:function(){ $("tc-modal").classList.remove("show"); },
+    filtrerSheet:function(v){
+      v=v.toLowerCase();
+      var list=$("tc-sheet-list"); list.innerHTML="";
+      S.sheetItems.filter(function(x){return x.toLowerCase().indexOf(v)>=0;}).slice(0,200).forEach(function(x){
+        var d=document.createElement("div"); d.className="tc-sheet-item"; d.textContent=x; d.onclick=function(){ S.sheetPick(x); }; list.appendChild(d);
+      });
+    }
+  };
+
+  function ouvrirSheet(titre, items, onPick){
+    S.sheetItems=items; S.sheetPick=onPick;
+    $("tc-sheet-hd").textContent=titre; $("tc-sheet-search").value="";
+    TC.filtrerSheet("");
+    $("tc-modal").classList.add("show");
+  }
+
+  function rendreFichiers(){
+    var box=$("tc-list-files"); box.innerHTML="";
+    if(!S.tree.length){ box.innerHTML='<div class="tc-file-hint">Branche un projet GitHub pour voir les fichiers.</div>'; return; }
+    box.innerHTML='<div class="tc-file-hint">'+S.tree.length+' fichiers — touche pour ajouter au contexte 📄</div>';
+    S.tree.slice(0,400).forEach(function(p){
+      var d=document.createElement("div"); d.className="tc-file"+(S.ouverts[p]?" open":""); d.textContent=(S.ouverts[p]?"✅ ":"")+p;
+      d.onclick=function(){ TC.ouvrirFichier(p); }; box.appendChild(d);
+    });
+    if(S.tree.length>400){ var h=document.createElement("div"); h.className="tc-file-hint"; h.textContent="…(+"+(S.tree.length-400)+") — utilise la recherche de l'IA"; box.appendChild(h); }
+  }
+
+  // auto-grow textarea
+  $("tc-input").addEventListener("input",function(){ this.style.height="auto"; this.style.height=Math.min(this.scrollHeight,140)+"px"; });
+  $("tc-input").addEventListener("keydown",function(e){ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); TC.envoyer(); } });
+
+  // ═══ DÉMARRAGE ═══
+  window.TC=TC;
+  chargerConvs(); rendreConvs(); rendreFichiers();
+  if(!S.convs.length){ TC.nouvelleConv(); } else { ouvrirConv(S.convs[0].id); }
+  ajouterMsg("sys","👋 Bienvenue dans TilexCode. Touche 🔗 GitHub pour brancher ton projet, puis pose ta question.");
+})();
+</script>
+</body>
+</html>
