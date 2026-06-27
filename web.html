@@ -429,6 +429,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .tb-search{display:none}.chat-layout{grid-template-columns:1fr}.chat-sidebar{display:none}
 }
 </style>
+<script src="js/tilex-config.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -1422,21 +1423,16 @@ function chatWith(agentId){
   clearChat(agent);
 }
 
-const REPLIES=[
-  "Bonne question! Laisse-moi analyser ça pour toi…",
-  "D'après mes données, voici la meilleure approche:",
-  "Sure, mon ami! Voici comment on va régler ça:",
-  "J'ai analysé ton projet et voici mes suggestions:",
-  "Pas de problème! Je suis là pour t'aider.",
-  "Parfait, laisse-moi travailler là-dessus!",
-  "Allô! Voici ce que j'ai trouvé pour toi:",
-  "Câline, belle question! Voici ma réponse:",
-];
+// ── Vrai chat IA via ai-proxy (Claude, streaming) ──
+const AIP_URL=(window.SB_URL||'')+'/functions/v1/ai-proxy';
+const AIP_KEY=window.SB_ANON||'';
+function aipToken(){try{var r=localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');if(r){var s=JSON.parse(r);if(s&&s.access_token)return s.access_token;}}catch(e){}return AIP_KEY;}
+let chatHistory=[];
 
 function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
 
-function sendMessage(){
+async function sendMessage(){
   if(!currentAgentId){showToast("Sélectionnez d'abord un agent",'error');return}
   const ta=document.getElementById('chat-textarea');
   const text=ta.value.trim();if(!text) return;
@@ -1449,22 +1445,40 @@ function sendMessage(){
   uDiv.innerHTML=`<div class="msg-av user-av" style="background:${userCol}">${userAv}</div><div><div class="msg-bubble">${esc(text)}</div><div class="msg-time" style="text-align:right">Aujourd'hui à ${now}</div></div>`;
   msgs.appendChild(uDiv);
   ta.value='';ta.style.height='auto';
-  const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
+  chatHistory.push({role:'user',content:text});
   const agent=getAgents().find(a=>a.id===currentAgentId);
+  const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
   typ.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div class="msg-bubble" style="color:var(--grey)"><span class="spinner"></span></div>`;
   msgs.appendChild(typ);msgs.scrollTop=msgs.scrollHeight;
-  setTimeout(()=>{
-    const t=document.getElementById('typing');if(t)t.remove();
-    const reply=REPLIES[Math.floor(Math.random()*REPLIES.length)];
-    const now2=new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});
+  try{
+    const res=await fetch(AIP_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aipToken(),'apikey':AIP_KEY},
+      body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,
+        system:(agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."),
+        messages:chatHistory.slice(-16)})});
+    const t0=document.getElementById('typing');if(t0)t0.remove();
+    if(!res.ok||!res.body){let tx='';try{tx=await res.text();}catch(e){}throw new Error('HTTP '+res.status+' '+tx);}
     const aDiv=document.createElement('div');aDiv.className='msg-wrap';
-    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble">${reply}</div><div class="msg-time">Aujourd'hui à ${now2}</div></div>`;
-    msgs.appendChild(aDiv);msgs.scrollTop=msgs.scrollHeight;
-    if(agent){agent.convs=(agent.convs||0)+1;saveAgents(getAgents())}
-  },1000+Math.random()*800);
+    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble"><span class="ai-corps"></span></div><div class="msg-time">Maintenant</div></div>`;
+    msgs.appendChild(aDiv);
+    const corps=aDiv.querySelector('.ai-corps');
+    const reader=res.body.getReader();const dec=new TextDecoder();let buf='',plein='';
+    while(true){const ch=await reader.read();if(ch.done)break;buf+=dec.decode(ch.value,{stream:true});
+      const parts=buf.split('\n\n');buf=parts.pop()||'';
+      for(const p of parts){const ln=p.split('\n').find(l=>l.indexOf('data:')===0);if(!ln)continue;
+        const d=ln.slice(5).trim();if(d==='[DONE]')continue;
+        try{const o=JSON.parse(d);if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}}catch(e){}}}
+    chatHistory.push({role:'assistant',content:plein||'(réponse vide)'});
+    if(agent){agent.convs=(agent.convs||0)+1;saveAgents(getAgents());}
+  }catch(e){
+    const t1=document.getElementById('typing');if(t1)t1.remove();
+    const eDiv=document.createElement('div');eDiv.className='msg-wrap';
+    eDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble" style="color:#ff6b6b">⚠️ Erreur IA : ${esc(e.message)}</div></div>`;
+    msgs.appendChild(eDiv);msgs.scrollTop=msgs.scrollHeight;
+  }
 }
 
 function clearChat(agent){
+  chatHistory=[];
   const msgs=document.getElementById('chat-messages');
   const a=agent||getAgents().find(x=>x.id===currentAgentId);
   if(!a){msgs.innerHTML='<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--grey)">Sélectionnez un agent</div>';return}
