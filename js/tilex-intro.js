@@ -59,7 +59,7 @@
 
       function eye(cx,cy){
         var d=document.createElement('div');
-        d.style.cssText='position:absolute;left:'+(cx/W*100)+'%;top:'+(cy/H*100)+'%;width:'+(156/W*100)+'%;height:'+(104/H*100)+'%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center, rgba(255,255,255,0.9) 0%, rgba(255,210,150,0.45) 38%, rgba(255,120,30,0) 72%);filter:blur(5px);mix-blend-mode:screen;pointer-events:none;opacity:0;';
+        d.style.cssText='position:absolute;left:'+(cx/W*100)+'%;top:'+(cy/H*100)+'%;width:'+(156/W*100)+'%;height:'+(104/H*100)+'%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center, rgba(255,90,70,0.95) 0%, rgba(255,20,10,0.6) 40%, rgba(200,0,0,0) 72%);filter:blur(5px);mix-blend-mode:screen;pointer-events:none;opacity:0;';
         return d;
       }
       var eye1=eye(645,376), eye2=eye(800,362);
