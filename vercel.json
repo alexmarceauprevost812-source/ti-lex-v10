@@ -15,6 +15,7 @@
     { "source": "/codex", "destination": "/codex.html" },
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
+    { "source": "/pro", "destination": "/pro.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/app", "destination": "/pro.html" }
   ],
