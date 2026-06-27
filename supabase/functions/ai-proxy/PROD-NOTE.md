@@ -1,5 +1,13 @@
 # ⚠️ ai-proxy — état du déploiement en production
 
+## v43 (correctif CORS) — 2026-06-27
+Le préflight CORS bloquait l'en-tête `apikey` envoyé par les clients
+(codex/web/pro) → POST refusé par le navigateur → « Failed to fetch ».
+Corrigé : `Access-Control-Allow-Headers` inclut maintenant
+`authorization, x-client-info, apikey, content-type, x-anthropic-key`
+(aligné sur github-proxy). Seule la ligne CORS a changé ; aucun verrou
+d'abonnement ajouté. Snapshot exact : `index.prod-deployed.ts.txt`.
+
 ## Ce qui tourne EN LIGNE (Supabase, version 42+)
 Une version **chirurgicale** basée sur l'ancienne version en ligne, à laquelle on a
 ajouté **uniquement** :
