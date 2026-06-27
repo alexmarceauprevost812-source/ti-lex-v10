@@ -433,6 +433,8 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
+<script src="js/tilex-memory.js"></script>
+<script src="js/tilex-context.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -1188,6 +1190,9 @@ function loginUser(user, animate){
   refreshUserUI();
   navigateTo('dashboard');
   loadAgents();
+  // Mémoire long-terme + contexte de session (par utilisateur, RLS)
+  if(window.TilexMemory){TilexMemory.init(sbClient());}
+  if(window.TilexContext){TilexContext.init('');TilexContext.syncMemoire();}
   // Animation d'accueil « DevilScene » — une fois, après la connexion,
   // par-dessus la plateforme qui se révèle quand l'animation se termine.
   if(animate && window.TilexIntro){ try{ TilexIntro.play(); }catch(e){} }
@@ -1486,6 +1491,10 @@ async function sendMessage(){
   msgs.appendChild(uDiv);
   ta.value='';ta.style.height='auto';
   chatHistory.push({role:'user',content:text});
+  // ── Branche TilexMemory + TilexContext ──
+  if(window.TilexContext)TilexContext.ajouterMessage('user',text);
+  if(window.TilexMemory&&/\b(souviens?[- ]toi|retiens|rappelle[- ]toi|garde (?:ça |cela |ceci )?en m[ée]moire|n['’]oublie pas|remember this|ma pr[ée]f[ée]rence|je pr[ée]f[èe]re|mon nom est|j['’]aime\b|note que)\b/i.test(text)){ TilexMemory.save('preference',text,3); }
+  let memCtx='';if(window.TilexMemory){try{memCtx=await TilexMemory.toPromptContext(8);}catch(e){}}
   const agent=getAgents().find(a=>a.id===currentAgentId);
   const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
   typ.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div class="msg-bubble" style="color:var(--grey)"><span class="spinner"></span></div>`;
@@ -1493,7 +1502,7 @@ async function sendMessage(){
   try{
     const res=await fetch(AIP_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aipToken(),'apikey':AIP_KEY},
       body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,
-        system:(agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."),
+        system:((agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."))+(memCtx||''),
         messages:chatHistory.slice(-16)})});
     const t0=document.getElementById('typing');if(t0)t0.remove();
     if(!res.ok||!res.body){let tx='';try{tx=await res.text();}catch(e){}throw new Error('HTTP '+res.status+' '+tx);}
@@ -1508,6 +1517,7 @@ async function sendMessage(){
         const d=ln.slice(5).trim();if(d==='[DONE]')continue;
         try{const o=JSON.parse(d);if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}}catch(e){}}}
     chatHistory.push({role:'assistant',content:plein||'(réponse vide)'});
+    if(window.TilexContext)TilexContext.enregistrerReponse(plein||'');
     if(agent){agent.convs=(agent.convs||0)+1;}
   }catch(e){
     const t1=document.getElementById('typing');if(t1)t1.remove();
