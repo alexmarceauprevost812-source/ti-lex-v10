@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI-LEX-AL V10 — Plateforme IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;
+  --orange:#FF6B00;--orange2:#FF8C00;--orange-dim:rgba(255,107,0,.15);
+  --red:#cc2200;--white:#fff;--grey:#888;--grey2:#555;
+  --border:rgba(255,255,255,.07);--glow:0 0 40px rgba(255,107,0,.3);
+  --font:'Space Grotesk',sans-serif;--mono:'Space Mono',monospace;
+  --r:12px;--r2:8px;
+  --accent:#FF6B00;--accent2:#FF8C00;--accent-dim:rgba(255,107,0,.15);
+  --accent-glow:0 0 40px rgba(255,107,0,.3);
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--white);overflow:hidden;transition:background .25s,color .25s}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--orange);border-radius:4px}
+.hidden{display:none!important}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:600;font-size:14px;border-radius:var(--r2);padding:10px 20px;transition:all .2s;white-space:nowrap}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-orange:hover{background:var(--orange2);box-shadow:var(--glow);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--grey);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--orange);color:var(--white)}
+.btn-red{background:rgba(204,34,0,.15);color:#ff4444;border:1px solid rgba(204,34,0,.3)}
+.btn-red:hover{background:rgba(204,34,0,.3)}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-icon{padding:9px;border-radius:var(--r2)}
+
+/* ── INPUTS ── */
+.input,.textarea,.select{background:var(--bg3);border:1px solid var(--border);color:var(--white);font-family:var(--font);font-size:14px;border-radius:var(--r2);padding:10px 14px;outline:none;transition:border-color .2s;width:100%}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--orange)}
+.textarea{resize:vertical;min-height:100px}
+.select{cursor:pointer}.select option{background:var(--bg3)}
+.label{font-size:12px;font-weight:600;color:var(--grey);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block}
+.input-err{border-color:#ff4444!important}
+.err-msg{font-size:12px;color:#ff4444;margin-top:4px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.badge-green{background:rgba(0,200,100,.15);color:#00c864}
+.badge-orange{background:var(--orange-dim);color:var(--orange)}
+.badge-grey{background:rgba(255,255,255,.08);color:var(--grey)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot-green{background:#00c864;box-shadow:0 0 6px #00c864}
+.dot-orange{background:var(--orange);box-shadow:0 0 6px var(--orange)}
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:border-color .2s}
+.card:hover{border-color:rgba(255,107,0,.3)}
+
+/* ═══════════════════════════
+   AUTH SCREEN
+═══════════════════════════ */
+#view-auth{
+  height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);position:relative;overflow:hidden;
+}
+.grid-bg{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:60px 60px;opacity:.4}
+.auth-glow{position:absolute;top:-300px;left:50%;transform:translateX(-50%);width:900px;height:700px;background:radial-gradient(ellipse,rgba(255,107,0,.13) 0%,transparent 65%);pointer-events:none}
+.auth-glow2{position:absolute;bottom:-200px;right:-100px;width:500px;height:500px;background:radial-gradient(ellipse,rgba(204,34,0,.07) 0%,transparent 65%);pointer-events:none}
+.particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;width:2px;height:2px;background:var(--orange);border-radius:50%;opacity:0;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.7}90%{opacity:.2}100%{transform:translateY(-700px) translateX(var(--dx));opacity:0}}
+
+.auth-box{position:relative;z-index:2;width:440px;display:flex;flex-direction:column;gap:0;align-items:center}
+
+/* LOGO AREA */
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:16px}
+.logo-img-wrap{width:220px;height:160px;position:relative;display:flex;align-items:center;justify-content:center}
+.logo-img-wrap img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 30px rgba(255,107,0,.5));animation:logoFloat 4s ease-in-out infinite}
+.logo-img-fallback{
+  width:180px;height:130px;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(255,107,0,.2) 0%,transparent 70%);
+  border-radius:50%;position:relative;
+}
+.logo-img-fallback .demon{font-size:70px;filter:drop-shadow(0 0 20px var(--orange));animation:logoFloat 4s ease-in-out infinite}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.logo-title{font-size:30px;font-weight:700;letter-spacing:-.02em;text-align:center;line-height:1}
+.logo-title .lex{color:var(--orange)}
+.logo-title .al{color:#FF8C00}
+.logo-ver-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,rgba(255,107,0,.2),rgba(255,68,0,.1));
+  border:1px solid rgba(255,107,0,.4);border-radius:20px;
+  padding:3px 12px;font-size:11px;font-weight:700;color:var(--orange);
+  font-family:var(--mono);letter-spacing:.1em;margin-top:4px;
+}
+
+/* AUTH CARD */
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;overflow:hidden}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border)}
+.auth-tab{flex:1;padding:14px;text-align:center;cursor:pointer;font-size:14px;font-weight:600;color:var(--grey);transition:all .2s;background:none;border:none;font-family:var(--font)}
+.auth-tab.active{color:var(--orange);background:var(--orange-dim);border-bottom:2px solid var(--orange)}
+.auth-tab:hover:not(.active){color:var(--white);background:var(--bg3)}
+.auth-panel{padding:28px;display:flex;flex-direction:column;gap:16px}
+.auth-panel.hidden{display:none}
+.form-group{display:flex;flex-direction:column}
+.auth-footer{font-size:12px;color:var(--grey2);text-align:center;padding:14px;border-top:1px solid var(--border)}
+.auth-footer a{color:var(--orange);text-decoration:none}
+
+/* ═══════════════════════════
+   PLATFORM
+═══════════════════════════ */
+#view-platform{height:100vh;display:flex;flex-direction:column}
+.topbar{height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:12px;flex-shrink:0;z-index:100;position:relative}
+.tb-logo{display:flex;align-items:center;gap:8px;flex-shrink:0;cursor:pointer}
+.tb-logo-img{height:34px;width:auto;object-fit:contain;filter:drop-shadow(0 0 8px rgba(255,107,0,.4))}
+.tb-logo-text{display:flex;flex-direction:column;line-height:1}
+.tb-logo-name{font-size:14px;font-weight:700;letter-spacing:-.01em}
+.tb-logo-name .lex{color:var(--orange)}
+.tb-logo-ver{font-size:9px;color:var(--orange);font-family:var(--mono);font-weight:700;letter-spacing:.12em}
+.tb-divider{width:1px;height:26px;background:var(--border)}
+.tb-search{flex:1;max-width:360px;position:relative}
+.tb-search input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:var(--font);font-size:13px;padding:6px 12px 6px 34px;width:100%;outline:none;transition:border-color .2s}
+.tb-search input:focus{border-color:var(--orange)}
+.tb-search input::placeholder{color:var(--grey2)}
+.tb-search .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--grey2);pointer-events:none}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.tb-badge{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px}
+.user-pill{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 12px 4px 4px;cursor:pointer;transition:border-color .2s}
+.user-pill:hover{border-color:var(--orange)}
+.user-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+.user-name-pill{font-size:12px;font-weight:600}
+.tb-progress{position:absolute;bottom:0;left:0;height:2px;background:linear-gradient(90deg,var(--orange),var(--orange2));width:0%;transition:width .3s}
+
+/* ── BODY ── */
+.platform-body{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;padding:12px 8px}
+.sb-brand{display:flex;align-items:center;justify-content:center;padding:6px 8px 14px;margin-bottom:6px;border-bottom:1px solid var(--border)}
+.sb-brand img{max-width:100%;height:auto;max-height:92px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(255,107,0,.45))}
+.sb-brand .sb-brand-fallback{font-size:34px;filter:drop-shadow(0 0 14px var(--orange))}
+.sb-label{font-size:10px;font-weight:700;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r2);cursor:pointer;font-size:13px;font-weight:500;color:var(--grey);transition:all .15s;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--white)}
+.nav-item.active{background:var(--orange-dim);color:var(--orange)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-count{margin-left:auto;background:var(--bg4);font-size:10px;font-weight:700;color:var(--grey);padding:1px 6px;border-radius:10px;font-family:var(--mono)}
+.nav-item.active .nav-count{background:var(--orange-dim);color:var(--orange)}
+.sb-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+.sb-user-card{background:var(--orange-dim);border:1px solid rgba(255,107,0,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.sb-user-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;color:#fff}
+.sb-user-info{flex:1;min-width:0}
+.sb-user-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:10px;color:var(--orange)}
+
+/* ── SECTIONS ── */
+.view-section{display:none}
+.view-section.active-section{display:flex;flex-direction:column;gap:24px;flex:1;overflow-y:auto;padding:24px}
+.page-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.page-title{font-size:22px;font-weight:700}
+.page-subtitle{font-size:13px;color:var(--grey);margin-top:2px}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.stat-label{font-size:11px;color:var(--grey);font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.stat-value{font-size:32px;font-weight:700;font-family:var(--mono);line-height:1}
+.stat-value.orange{color:var(--orange)}
+.stat-delta{font-size:11px;color:#00c864;font-weight:600}
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;color:var(--grey2);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+tbody tr:hover{background:var(--bg3)}
+tbody td{padding:11px 12px;color:var(--white)}
+
+/* ── ACTIVITY ── */
+.activity-list{display:flex;flex-direction:column}
+.act-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.act-text{font-size:13px;line-height:1.5}
+.act-text strong{color:var(--orange)}
+.act-time{font-size:11px;color:var(--grey2);margin-top:2px;font-family:var(--mono)}
+
+/* ── AGENTS GRID ── */
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.agent-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:12px;transition:all .2s;cursor:pointer}
+.agent-card:hover{border-color:var(--orange);box-shadow:var(--glow);transform:translateY(-2px)}
+.agent-av{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:linear-gradient(135deg,rgba(255,107,0,.2),rgba(255,107,0,.05));border:1px solid var(--border)}
+.agent-name{font-size:15px;font-weight:700}
+.agent-model{font-size:11px;color:var(--grey);font-family:var(--mono)}
+.agent-desc{font-size:13px;color:var(--grey);line-height:1.5;flex:1}
+.agent-footer{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border)}
+.agent-stats{font-size:11px;color:var(--grey2);font-family:var(--mono)}
+.agent-actions{display:flex;gap:6px}
+.empty-state{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:60px 20px;color:var(--grey);text-align:center}
+.empty-state .es-icon{font-size:48px;opacity:.4}
+.empty-state p{font-size:14px}
+
+/* ── CREATE AGENT ── */
+.creator-layout{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.creator-form{display:flex;flex-direction:column;gap:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tool-toggle{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--grey);transition:all .15s;user-select:none}
+.tool-toggle:hover{border-color:var(--grey2);color:var(--white)}
+.tool-toggle.on{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
+.preview-panel{position:sticky;top:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:14px}
+.preview-title{font-size:11px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.1em}
+.prev-av{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--orange),#ff4400);display:flex;align-items:center;justify-content:center;font-size:22px}
+.chat-preview{background:var(--bg3);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cp-msg{display:flex;gap:8px;align-items:flex-start}
+.cp-bubble{background:var(--bg4);border-radius:8px;padding:8px 12px;font-size:12px;line-height:1.5;max-width:85%}
+.cp-msg.user .cp-bubble{background:var(--orange-dim);margin-left:auto}
+.cp-msg.user{flex-direction:row-reverse}
+.cp-input{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--grey2);display:flex;align-items:center;justify-content:space-between}
+
+/* ── CHAT ── */
+.chat-layout{display:grid;grid-template-columns:240px 1fr;height:100%;overflow:hidden}
+.chat-sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;padding:12px}
+.conv-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.conv-item{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--grey);transition:all .15s;display:flex;align-items:center;gap:8px}
+.conv-item:hover{background:var(--bg3);color:var(--white)}
+.conv-item.active{background:var(--orange-dim);color:var(--orange)}
+.conv-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-main{display:flex;flex-direction:column;overflow:hidden}
+.chat-topbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.msg-wrap{display:flex;gap:10px;align-items:flex-start;max-width:720px}
+.msg-wrap.user{margin-left:auto;flex-direction:row-reverse}
+.msg-av{width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
+.msg-av.agent-av{background:linear-gradient(135deg,var(--orange),#ff4400)}
+.msg-av.user-av{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.msg-bubble{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.65;max-width:600px}
+.msg-wrap.user .msg-bubble{background:var(--orange-dim);border-color:rgba(255,107,0,.25)}
+.msg-time{font-size:10px;color:var(--grey2);margin-top:5px;font-family:var(--mono)}
+.chat-input-area{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0}
+.chat-input-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-end;gap:10px;transition:border-color .2s}
+.chat-input-box:focus-within{border-color:var(--orange)}
+.chat-input-box textarea{flex:1;background:none;border:none;outline:none;color:var(--white);font-family:var(--font);font-size:14px;resize:none;max-height:120px;line-height:1.5}
+.chat-input-box textarea::placeholder{color:var(--grey2)}
+.send-btn{width:34px;height:34px;background:var(--orange);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;transition:all .2s;color:#fff}
+.send-btn:hover{background:var(--orange2);box-shadow:var(--glow)}
+.chat-hint{font-size:11px;color:var(--grey2);text-align:center;margin-top:8px}
+
+/* ── PROJECT ── */
+.project-header-card{background:linear-gradient(135deg,rgba(255,107,0,.12),rgba(255,107,0,.03));border:1px solid rgba(255,107,0,.25);border-radius:var(--r);padding:24px}
+.project-meta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.project-meta-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--grey)}
+.project-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.file-list{display:flex;flex-direction:column;gap:2px}
+.file-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--grey);transition:all .15s}
+.file-item:hover{background:var(--bg3);color:var(--white)}
+.file-size{font-size:11px;font-family:var(--mono);color:var(--grey2);margin-left:auto}
+.branch-tag{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-family:var(--mono);font-size:12px;color:var(--orange)}
+
+/* ── PROFILE ── */
+.profile-header{display:flex;align-items:center;gap:20px;padding:24px;background:linear-gradient(135deg,rgba(255,107,0,.12),rgba(255,107,0,.03));border:1px solid rgba(255,107,0,.2);border-radius:var(--r)}
+.profile-big-av{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;flex-shrink:0;border:3px solid rgba(255,107,0,.4)}
+.profile-info-name{font-size:22px;font-weight:700}
+.profile-info-email{font-size:13px;color:var(--grey);margin-top:3px}
+.profile-info-joined{font-size:11px;color:var(--grey2);margin-top:6px;font-family:var(--mono)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ── SETTINGS ── */
+.settings-layout{display:grid;grid-template-columns:200px 1fr;gap:20px}
+.settings-nav{display:flex;flex-direction:column;gap:2px}
+.settings-nav-item{padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--grey);transition:all .15s}
+.settings-nav-item:hover{background:var(--bg3);color:var(--white)}
+.settings-nav-item.active{background:var(--orange-dim);color:var(--orange)}
+.settings-section{display:flex;flex-direction:column;gap:18px}
+.settings-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.settings-block-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700}
+.settings-block-body{padding:18px;display:flex;flex-direction:column;gap:14px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none;padding-bottom:0}
+.settings-row-label{font-size:14px;font-weight:600}
+.settings-row-desc{font-size:12px;color:var(--grey);margin-top:2px}
+.toggle{width:40px;height:22px;background:var(--bg4);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:1px solid var(--border)}
+.toggle.on{background:var(--orange);border-color:var(--orange)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.on::after{transform:translateX(18px)}
+.api-key-row{display:flex;gap:8px}
+.api-key-val{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:13px;color:var(--grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:480px;max-width:95vw;display:flex;flex-direction:column;gap:18px}
+.modal-header{display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:18px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;color:var(--grey);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.modal-close:hover{color:var(--white);border-color:var(--grey)}
+
+/* ── TOAST ── */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slideIn .25s ease;pointer-events:all;min-width:240px}
+.toast.success{border-color:rgba(0,200,100,.4)}.toast.error{border-color:rgba(255,68,102,.4)}.toast.info{border-color:rgba(255,107,0,.4)}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{transform:translateX(40px);opacity:0}}
+.toast.removing{animation:fadeOut .25s ease forwards}
+
+/* ── SPINNER ── */
+.spinner{width:18px;height:18px;border:2px solid var(--bg4);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════════════════════
+   THEME SYSTEM
+══════════════════════════════ */
+
+/* Replace orange refs with accent variable */
+.btn-orange{background:var(--accent)!important;color:#fff}
+.btn-orange:hover{background:var(--accent2)!important;box-shadow:var(--accent-glow)!important}
+.nav-item.active{background:var(--accent-dim)!important;color:var(--accent)!important}
+.nav-item.active .nav-count{background:var(--accent-dim)!important;color:var(--accent)!important}
+.auth-tab.active{color:var(--accent)!important;background:var(--accent-dim)!important;border-bottom-color:var(--accent)!important}
+.input:focus,.textarea:focus,.select:focus{border-color:var(--accent)!important}
+.dot-orange{background:var(--accent)!important;box-shadow:0 0 6px var(--accent)!important}
+.badge-orange{background:var(--accent-dim)!important;color:var(--accent)!important}
+.toggle.on{background:var(--accent)!important;border-color:var(--accent)!important}
+.tool-toggle.on{background:var(--accent-dim)!important;border-color:var(--accent)!important;color:var(--accent)!important}
+.conv-item.active{background:var(--accent-dim)!important;color:var(--accent)!important}
+.send-btn{background:var(--accent)!important}
+.send-btn:hover{background:var(--accent2)!important;box-shadow:var(--accent-glow)!important}
+.logo-icon{background:var(--accent)!important}
+.logo-icon-big{background:var(--accent)!important}
+.agent-card:hover{border-color:var(--accent)!important;box-shadow:var(--accent-glow)!important}
+.sb-user-card{background:var(--accent-dim)!important;border-color:rgba(var(--accent-rgb,255,107,0),.2)!important}
+.user-pill:hover{border-color:var(--accent)!important}
+.branch-tag{color:var(--accent)!important}
+.preview-panel,.creator-layout .preview-panel{border-color:var(--border)}
+.topbar-search input:focus,.tb-search input:focus{border-color:var(--accent)!important}
+.stat-value.orange{color:var(--accent)!important}
+.logo-ver-badge{background:linear-gradient(135deg,var(--accent-dim),rgba(255,68,0,.1))!important;border-color:var(--accent)!important;color:var(--accent)!important}
+.logo-title .lex,.logo-title .al{color:var(--accent)!important}
+.tb-logo-name .lex{color:var(--accent)!important}
+.tb-logo-ver{color:var(--accent)!important}
+.msg-wrap.user .msg-bubble{background:var(--accent-dim)!important;border-color:rgba(var(--accent-rgb,255,107,0),.25)!important}
+.chat-input-box:focus-within{border-color:var(--accent)!important}
+.act-text strong{color:var(--accent)!important}
+.profile-header{background:linear-gradient(135deg,var(--accent-dim),rgba(255,107,0,.02))!important;border-color:var(--accent-dim)!important}
+.project-header-card{background:linear-gradient(135deg,var(--accent-dim),rgba(255,107,0,.02))!important;border-color:var(--accent-dim)!important}
+.auth-glow{background:radial-gradient(ellipse,rgba(var(--accent-rgb,255,107,0),.13) 0%,transparent 65%)!important}
+::-webkit-scrollbar-thumb{background:var(--accent)!important}
+.btn-ghost:hover{border-color:var(--accent)!important;color:var(--white)!important}
+.settings-nav-item.active{background:var(--accent-dim)!important;color:var(--accent)!important}
+.prev-av,.msg-av.agent-av{background:linear-gradient(135deg,var(--accent),#ff4400)!important}
+
+/* ── LIGHT MODE ── */
+body.mode-light{
+  --bg:#f0f0f0;--bg2:#ffffff;--bg3:#e8e8e8;--bg4:#d8d8d8;
+  --white:#111111;--grey:#555555;--grey2:#888888;
+  --border:rgba(0,0,0,0.1);--accent-glow:0 0 30px rgba(var(--accent-rgb,255,107,0),.2);
+}
+body.mode-light .topbar,body.mode-light .sidebar{box-shadow:0 1px 8px rgba(0,0,0,.08)}
+body.mode-light .auth-card,body.mode-light .modal{box-shadow:0 8px 32px rgba(0,0,0,.12)}
+body.mode-light .badge-grey{background:rgba(0,0,0,.08);color:var(--grey)}
+body.mode-light .grid-bg{opacity:.15}
+body.mode-light .auth-glow{opacity:.5}
+body.mode-light .card:hover{border-color:rgba(var(--accent-rgb,255,107,0),.3)}
+body.mode-light code{background:#d0d0d0}
+body.mode-light .logo-img-wrap img{filter:drop-shadow(0 0 20px rgba(var(--accent-rgb,255,107,0),.3))}
+
+/* ── THEME PANEL ── */
+.theme-section{display:flex;flex-direction:column;gap:20px}
+.theme-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:background .25s,border-color .25s}
+.theme-block-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.theme-block-body{padding:18px;display:flex;flex-direction:column;gap:16px}
+
+/* Mode toggle pill */
+.mode-toggle{display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:4px;width:fit-content}
+.mode-btn{padding:8px 20px;border-radius:8px;border:none;background:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:var(--grey);transition:all .2s;display:flex;align-items:center;gap:7px}
+.mode-btn.active{background:var(--bg2);color:var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+
+/* Color swatches */
+.color-presets{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.color-swatch{width:36px;height:36px;border-radius:10px;cursor:pointer;border:3px solid transparent;transition:all .2s;position:relative;flex-shrink:0}
+.color-swatch:hover{transform:scale(1.12)}
+.color-swatch.selected{border-color:var(--white);box-shadow:0 0 0 2px var(--accent)}
+.color-swatch .cs-check{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5);opacity:0}
+.color-swatch.selected .cs-check{opacity:1}
+
+/* Custom color picker */
+.color-picker-wrap{display:flex;align-items:center;gap:12px}
+.color-picker-wrap input[type=color]{width:46px;height:46px;border:2px solid var(--border);border-radius:10px;cursor:pointer;background:none;padding:2px}
+.color-picker-wrap input[type=color]::-webkit-color-swatch{border-radius:7px;border:none}
+.color-hex-input{width:110px;font-family:var(--mono);font-size:13px;text-transform:uppercase}
+
+/* Font cards */
+.font-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.font-card{background:var(--bg3);border:2px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .2s}
+.font-card:hover{border-color:var(--accent);background:var(--bg4)}
+.font-card.selected{border-color:var(--accent);background:var(--accent-dim)}
+.font-card-name{font-size:12px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.font-card-sample{font-size:18px;font-weight:600;color:var(--white);line-height:1.2}
+
+/* Radius options */
+.radius-options{display:flex;gap:10px;flex-wrap:wrap}
+.radius-card{background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:10px 16px;cursor:pointer;transition:all .2s;font-size:13px;font-weight:600;color:var(--grey);display:flex;align-items:center;gap:8px}
+.radius-card:hover{border-color:var(--accent);color:var(--white)}
+.radius-card.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent)}
+.radius-preview{width:24px;height:24px;background:var(--accent);opacity:.7}
+
+/* Live preview card */
+.theme-preview-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.tpc-topbar{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:10px}
+.tpc-logo{width:22px;height:22px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;font-family:var(--mono)}
+.tpc-title{font-size:12px;font-weight:700}
+.tpc-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:10px;font-weight:700;cursor:default;margin-left:auto;font-family:var(--font)}
+.tpc-body{display:flex;gap:10px}
+.tpc-sidebar{width:60px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px}
+.tpc-nav{height:8px;border-radius:4px;background:var(--accent-dim)}
+.tpc-nav.active{background:var(--accent);opacity:.7}
+.tpc-main{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.tpc-card{height:36px;background:var(--bg3);border:1px solid var(--border);border-radius:6px}
+.tpc-msg{padding:6px 10px;border-radius:8px;font-size:10px;max-width:80%}
+.tpc-msg.agent{background:var(--bg3);border:1px solid var(--border)}
+.tpc-msg.user{background:var(--accent-dim);border:1px solid var(--accent);opacity:.8;margin-left:auto}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-grid,.creator-layout,.project-grid,.settings-layout,.profile-grid{grid-template-columns:1fr}
+  .sidebar{width:56px}.sidebar .nav-item span:not(.nav-icon):not(.nav-count){display:none}
+  .sidebar .sb-label{display:none}.sidebar .nav-count{display:none}
+  .sidebar .sb-brand img{max-height:40px}
+  .tb-search{display:none}.chat-layout{grid-template-columns:1fr}.chat-sidebar{display:none}
+}
+</style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- ═══════════════ AUTH ═══════════════ -->
+<div id="view-auth">
+  <div class="grid-bg"></div>
+  <div class="auth-glow"></div>
+  <div class="auth-glow2"></div>
+  <div class="particles" id="particles"></div>
+
+  <div class="auth-box">
+    <!-- LOGO -->
+    <div class="auth-logo">
+      <div class="logo-img-wrap">
+        <img src="logo.png" alt="TI-LEX-AL V10"
+          onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex'">
+        <div class="logo-img-fallback hidden" id="logo-fallback">
+          <span class="demon">🌐</span>
+        </div>
+      </div>
+      <div class="logo-title">TI-<span class="lex">LEX</span>-<span class="al">PLATEFORME</span></div>
+      <div class="logo-ver-badge">🌐 VERSION 10</div>
+    </div>
+
+    <!-- AUTH CARD -->
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Créer un compte</button>
+      </div>
+
+      <!-- LOGIN PANEL -->
+      <div class="auth-panel" id="panel-login">
+        <div class="form-group">
+          <label class="label">Courriel</label>
+          <input class="input" id="login-email" type="email" placeholder="vous@exemple.com" autocomplete="email">
+          <span class="err-msg hidden" id="login-email-err"></span>
+        </div>
+        <div class="form-group">
+          <label class="label">Mot de passe</label>
+          <input class="input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+          <span class="err-msg hidden" id="login-pass-err"></span>
+        </div>
+        <span class="err-msg hidden" id="login-global-err" style="text-align:center;font-size:13px"></span>
+        <button class="btn btn-orange" style="width:100%;justify-content:center;padding:13px" onclick="doLogin()">
+          Se connecter →
+        </button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="flex:1;justify-content:center;font-size:13px" onclick="demoLogin()">
+            🎮 Compte démo
+          </button>
+        </div>
+      </div>
+
+      <!-- REGISTER PANEL -->
+      <div class="auth-panel hidden" id="panel-register">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="label">Prénom</label>
+            <input class="input" id="reg-first" placeholder="Alex">
+            <span class="err-msg hidden" id="reg-first-err"></span>
+          </div>
+          <div class="form-group">
+            <label class="label">Nom</label>
+            <input class="input" id="reg-last" placeholder="Marceau">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Courriel *</label>
+          <input class="input" id="reg-email" type="email" placeholder="vous@exemple.com" autocomplete="email">
+          <span class="err-msg hidden" id="reg-email-err"></span>
+        </div>
+        <div class="form-group">
+          <label class="label">Mot de passe *</label>
+          <input class="input" id="reg-pass" type="password" placeholder="8 caractères minimum" autocomplete="new-password">
+          <span class="err-msg hidden" id="reg-pass-err"></span>
+        </div>
+        <div class="form-group">
+          <label class="label">Confirmer mot de passe *</label>
+          <input class="input" id="reg-pass2" type="password" placeholder="••••••••" autocomplete="new-password">
+          <span class="err-msg hidden" id="reg-pass2-err"></span>
+        </div>
+        <div class="form-group">
+          <label class="label">Clé API Anthropic (optionnel)</label>
+          <input class="input" id="reg-apikey" type="password" placeholder="sk-ant-…">
+          <span style="font-size:11px;color:var(--grey2);margin-top:4px">Peut être ajoutée plus tard dans les paramètres</span>
+        </div>
+        <span class="err-msg hidden" id="reg-global-err" style="text-align:center;font-size:13px"></span>
+        <button class="btn btn-orange" style="width:100%;justify-content:center;padding:13px" onclick="doRegister()">
+          Créer mon compte ✦
+        </button>
+      </div>
+
+      <div class="auth-footer">
+        Plateforme privée · Chaque compte est indépendant
+        &nbsp;·&nbsp; <a href="#">Aide</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PLATFORM ═══════════════ -->
+<div id="view-platform" class="hidden" style="height:100vh;display:flex;flex-direction:column">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo" onclick="navigateTo('dashboard')">
+      <img src="logo.png" class="tb-logo-img" alt="TI-LEX-AL"
+        onerror="this.style.display='none';document.getElementById('tb-logo-fallback').style.display='flex'">
+      <div class="hidden" id="tb-logo-fallback" style="width:28px;height:28px;background:var(--orange);border-radius:7px;align-items:center;justify-content:center;font-size:14px">🌐</div>
+      <div class="tb-logo-text">
+        <span class="tb-logo-name">TI-<span class="lex">LEX</span>-AL</span>
+        <span class="tb-logo-ver">V10 · PLATEFORME IA</span>
+      </div>
+    </div>
+    <div class="tb-divider"></div>
+    <div class="tb-search">
+      <span class="si">🔍</span>
+      <input placeholder="Chercher dans vos agents, projets…">
+    </div>
+    <div class="tb-right">
+      <div class="tb-badge"><span class="dot dot-green"></span><span style="font-size:12px;color:var(--grey)">tilex.</span></div>
+      <button class="btn btn-orange btn-sm" onclick="navigateTo('create')">+ Nouvel agent</button>
+      <div class="user-pill" onclick="navigateTo('profile')" id="tb-user-pill">
+        <div class="user-av" id="tb-user-av" style="background:var(--orange)">A</div>
+        <span class="user-name-pill" id="tb-user-name">Alex</span>
+      </div>
+    </div>
+    <div class="tb-progress" id="tb-progress"></div>
+  </div>
+
+  <div class="platform-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-brand">
+        <img src="logo.png" alt="TI-LEX-AL V10"
+          onerror="this.style.display='none';document.getElementById('sb-brand-fallback').style.display='inline'">
+        <span class="sb-brand-fallback hidden" id="sb-brand-fallback">🌐</span>
+      </div>
+      <div class="sb-label">Navigation</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')"><span class="nav-icon">⊞</span><span>Dashboard</span></div>
+      <div class="nav-item" id="nav-agents" onclick="navigateTo('agents')"><span class="nav-icon">🤖</span><span>Mes agents</span><span class="nav-count" id="agents-count">0</span></div>
+      <div class="nav-item" id="nav-chat" onclick="navigateTo('chat')"><span class="nav-icon">💬</span><span>Conversations</span><span class="nav-count" id="conv-count">0</span></div>
+      <div class="nav-item" id="nav-create" onclick="navigateTo('create')"><span class="nav-icon">✦</span><span>Créer agent</span></div>
+      <div class="divider"></div>
+      <div class="sb-label">Projet</div>
+      <div class="nav-item" id="nav-project" onclick="navigateTo('project')"><span class="nav-icon">📁</span><span>tilex.</span></div>
+      <div class="nav-item" onclick="openGitHub()"><span class="nav-icon">⑂</span><span>GitHub</span></div>
+      <div class="nav-item" onclick="showToast('Déploiement lancé! 🚀','success')"><span class="nav-icon">🚀</span><span>Déployer</span></div>
+      <div class="divider"></div>
+      <div class="sb-label">Compte</div>
+      <div class="nav-item" id="nav-profile" onclick="navigateTo('profile')"><span class="nav-icon">👤</span><span>Mon profil</span></div>
+      <div class="nav-item" id="nav-theme" onclick="goToTheme()"><span class="nav-icon">🎨</span><span>Thème</span></div>
+      <div class="nav-item" id="nav-settings" onclick="navigateTo('settings')"><span class="nav-icon">⚙</span><span>Paramètres</span></div>
+      <a class="nav-item" href="/app" style="color:var(--grey);text-decoration:none"><span class="nav-icon">⮐</span><span>Retour à l'app</span></a>
+      <div class="nav-item" onclick="doLogout()" style="color:var(--grey)"><span class="nav-icon">→</span><span>Déconnexion</span></div>
+      <div class="sb-footer">
+        <div class="sb-user-card">
+          <div class="sb-user-av" id="sb-user-av" style="background:var(--orange)">A</div>
+          <div class="sb-user-info">
+            <div class="sb-user-name" id="sb-user-name">Utilisateur</div>
+            <div class="sb-user-role">Compte privé</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+
+      <!-- DASHBOARD -->
+      <div class="view-section active-section" id="section-dashboard">
+        <div class="page-header">
+          <div><div class="page-title" id="dash-welcome">Dashboard</div><div class="page-subtitle">Votre plateforme TI-LEX-AL V10 personnelle</div></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="refreshDash()">↺ Actualiser</button>
+            <button class="btn btn-orange btn-sm" onclick="navigateTo('create')">+ Nouvel agent</button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-label">Mes agents</div><div class="stat-value orange" id="stat-agents">0</div><div class="stat-delta" id="stat-agents-delta">Aucun agent</div></div>
+          <div class="stat-card"><div class="stat-label">Conversations</div><div class="stat-value" id="stat-convs">0</div><div class="stat-delta">Privées</div></div>
+          <div class="stat-card"><div class="stat-label">Projets</div><div class="stat-value">1</div><div class="stat-delta">tilex.</div></div>
+          <div class="stat-card"><div class="stat-label">Statut</div><div class="stat-value" style="font-size:22px">🟢</div><div class="stat-delta">En ligne</div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="card" style="padding:0">
+            <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+              <div style="font-size:14px;font-weight:700">Mes agents récents</div>
+              <button class="btn btn-ghost btn-sm" onclick="navigateTo('agents')">Voir tout</button>
+            </div>
+            <div id="dash-agents-table" style="padding:16px">
+              <div class="empty-state" style="padding:30px 20px">
+                <div class="es-icon">🤖</div>
+                <p>Aucun agent pour l'instant.<br>Créez votre premier agent!</p>
+                <button class="btn btn-orange btn-sm" onclick="navigateTo('create')">+ Créer un agent</button>
+              </div>
+            </div>
+          </div>
+          <div class="card" style="padding:0">
+            <div style="padding:16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700">Activité récente</div>
+            <div class="activity-list" style="padding:0 16px" id="activity-list">
+              <div class="act-item"><div class="act-dot">🔑</div><div><div class="act-text">Compte <strong>créé</strong> avec succès</div><div class="act-time">Bienvenue!</div></div></div>
+              <div class="act-item"><div class="act-dot">🚀</div><div><div class="act-text">Projet <strong>tilex.</strong> connecté</div><div class="act-time">Maintenant</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENTS -->
+      <div class="view-section" id="section-agents">
+        <div class="page-header">
+          <div><div class="page-title">Mes agents IA</div><div class="page-subtitle">Gérez vos agents personnels</div></div>
+          <button class="btn btn-orange" onclick="navigateTo('create')">+ Créer un agent</button>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <input class="input" id="agent-search" placeholder="🔍  Chercher un agent…" style="max-width:280px" oninput="filterAgents()">
+          <select class="select" style="width:160px" id="agent-filter-model" onchange="filterAgents()">
+            <option value="">Tous les modèles</option>
+            <option>claude-sonnet-4-6</option><option>claude-opus-4-8</option><option>claude-haiku-4-5</option>
+          </select>
+          <select class="select" style="width:130px" id="agent-filter-status" onchange="filterAgents()">
+            <option value="">Tous statuts</option><option value="active">Actif</option><option value="paused">En pause</option>
+          </select>
+        </div>
+        <div class="agents-grid" id="agents-grid">
+          <div class="empty-state"><div class="es-icon">🤖</div><p>Vous n'avez pas encore d'agents.<br>Créez votre premier agent IA!</p><button class="btn btn-orange btn-sm" onclick="navigateTo('create')">+ Créer un agent</button></div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="view-section" id="section-chat" style="padding:0;gap:0">
+        <div class="chat-layout">
+          <div class="chat-sidebar">
+            <button class="btn btn-orange" style="width:100%;justify-content:center" onclick="newConversation()">+ Nouvelle conversation</button>
+            <div class="conv-list" id="conv-list">
+              <div class="empty-state" style="padding:20px 10px;font-size:12px"><div class="es-icon" style="font-size:28px">💬</div><p>Aucune conversation</p></div>
+            </div>
+            <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--grey2);text-align:center" id="conv-footer">Aucune conversation</div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-topbar">
+              <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--orange),#ff4400);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0" id="chat-agent-icon">🤖</div>
+              <div style="flex:1">
+                <div style="font-size:15px;font-weight:700" id="chat-agent-name">Sélectionnez un agent</div>
+                <div style="font-size:11px;color:var(--grey);display:flex;align-items:center;gap:5px;margin-top:2px" id="chat-agent-status"><span class="dot dot-orange"></span> Choisir un agent pour commencer</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑 Effacer</button>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;flex:1;color:var(--grey);text-align:center;padding:40px" id="chat-empty">
+                <div style="font-size:48px;opacity:.3">🤖</div>
+                <p style="font-size:14px">Créez un agent et commencez une conversation!</p>
+                <button class="btn btn-orange btn-sm" onclick="navigateTo('create')">Créer un agent</button>
+              </div>
+            </div>
+            <div class="chat-input-area">
+              <div class="chat-input-box">
+                <textarea id="chat-textarea" placeholder="Envoyer un message…" rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)" disabled></textarea>
+                <button class="send-btn" onclick="sendMessage()" id="send-btn" disabled style="opacity:.5">➤</button>
+              </div>
+              <div class="chat-hint">Entrée pour envoyer · Maj+Entrée pour saut de ligne</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE AGENT -->
+      <div class="view-section" id="section-create">
+        <div class="page-header">
+          <div><div class="page-title">Créer un agent</div><div class="page-subtitle">Configurez votre nouvel agent IA privé</div></div>
+        </div>
+        <div class="creator-layout">
+          <div class="creator-form">
+            <div class="form-row">
+              <div class="form-group"><label class="label">Nom de l'agent *</label><input class="input" id="c-name" placeholder="Ex: Mon Assistant" oninput="updatePreview()"></div>
+              <div class="form-group"><label class="label">Emoji / Icône</label><input class="input" id="c-emoji" value="🤖" maxlength="4" oninput="updatePreview()"></div>
+            </div>
+            <div class="form-group"><label class="label">Description</label><input class="input" id="c-desc" placeholder="Ce que fait cet agent…" oninput="updatePreview()"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="label">Modèle Claude *</label>
+                <select class="select" id="c-model" onchange="updatePreview()">
+                  <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recommandé)</option>
+                  <option value="claude-opus-4-8">claude-opus-4-8 (Plus puissant)</option>
+                  <option value="claude-haiku-4-5">claude-haiku-4-5 (Plus rapide)</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="label">Température</label>
+                <select class="select" id="c-temp">
+                  <option value="0">0.0 — Déterministe</option>
+                  <option value="0.7" selected>0.7 — Équilibré</option>
+                  <option value="1">1.0 — Créatif</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label class="label">Prompt système</label><textarea class="textarea" id="c-system" placeholder="Tu es un assistant IA spécialisé dans…&#10;&#10;Ton rôle est de…" style="min-height:130px" oninput="updatePreview()"></textarea></div>
+            <div class="form-group"><label class="label">Outils & capacités</label><div class="tools-grid" id="tools-grid"></div></div>
+            <div class="form-group"><label class="label">Projet lié</label>
+              <select class="select" id="c-project"><option>tilex. (actuel)</option><option>test-01</option><option>Aucun projet</option></select>
+            </div>
+            <div class="form-row">
+              <button class="btn btn-ghost" onclick="navigateTo('agents')">Annuler</button>
+              <button class="btn btn-orange" style="flex:1;justify-content:center" onclick="createAgent()">✦ Créer l'agent</button>
+            </div>
+          </div>
+          <div class="preview-panel">
+            <div class="preview-title">Aperçu</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="prev-av" id="prev-emoji">🤖</div>
+              <div><div style="font-size:17px;font-weight:700" id="prev-name">Nom de l'agent</div><div style="font-size:11px;color:var(--grey);font-family:var(--mono);margin-top:2px" id="prev-model">claude-sonnet-4-6</div></div>
+            </div>
+            <div style="font-size:13px;color:var(--grey);line-height:1.6" id="prev-desc">La description apparaîtra ici…</div>
+            <div class="divider"></div>
+            <div style="font-size:11px;font-weight:700;color:var(--grey);margin-bottom:8px">PRÉVISUALISATION CHAT</div>
+            <div class="chat-preview">
+              <div class="cp-msg">
+                <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,var(--orange),#ff4400);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0" id="prev-chat-icon">🤖</div>
+                <div class="cp-bubble">Allô! Comment je peux vous aider?</div>
+              </div>
+              <div class="cp-msg user"><div class="cp-bubble">Bonjour, j'ai besoin d'aide.</div></div>
+              <div class="cp-input"><span>Envoyer un message…</span><span>➤</span></div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+              <div style="display:flex;justify-content:space-between;color:var(--grey)"><span>Modèle</span><span style="color:var(--orange);font-family:var(--mono)" id="prev-model-info">claude-sonnet-4-6</span></div>
+              <div style="display:flex;justify-content:space-between;color:var(--grey)"><span>Propriétaire</span><span style="color:var(--white)" id="prev-owner">Vous</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJECT -->
+      <div class="view-section" id="section-project">
+        <div class="page-header">
+          <div><div class="page-title">Projet tilex.</div><div class="page-subtitle">Connecté au repo GitHub · TI-LEX-AL V10</div></div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="branch-tag">⑂ main</span>
+            <button class="btn btn-ghost btn-sm" onclick="showToast('Synchronisation…','info')">⟳ Sync</button>
+            <button class="btn btn-orange btn-sm" onclick="showToast('Déploiement lancé! 🚀','success')">🚀 Déployer</button>
+          </div>
+        </div>
+        <div class="project-header-card">
+          <div style="font-size:24px;font-weight:700;margin-bottom:6px">🗂 tilex.</div>
+          <div class="project-meta">
+            <div class="project-meta-item">⑂ <strong>main</strong></div>
+            <div class="project-meta-item">📦 TI-LEX-AL V10</div>
+            <div class="project-meta-item">🕒 Dernier commit: il y a 22 min</div>
+            <div class="project-meta-item"><span class="badge badge-green"><span class="dot dot-green"></span>Déployé</span></div>
+          </div>
+        </div>
+        <div class="project-grid">
+          <div class="card" style="padding:0">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              Fichiers<button class="btn btn-ghost btn-sm" onclick="openGitHub()">Voir sur GitHub</button>
+            </div>
+            <div class="file-list" style="padding:8px">
+              <div class="file-item"><span>📄</span><span>index.html</span><span class="file-size">64 KB</span></div>
+              <div class="file-item"><span>⚙</span><span>tilex.config.js</span><span class="file-size">2.1 KB</span></div>
+              <div class="file-item"><span>🤖</span><span>agents/</span><span class="file-size">4 fichiers</span></div>
+              <div class="file-item"><span>🎨</span><span>assets/</span><span class="file-size">12 fichiers</span></div>
+              <div class="file-item"><span>📦</span><span>package.json</span><span class="file-size">890 B</span></div>
+              <div class="file-item"><span>📝</span><span>README.md</span><span class="file-size">3.4 KB</span></div>
+              <div class="file-item"><span>🖼</span><span>logo.png</span><span class="file-size">1.2 MB</span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+              <div style="font-size:14px;font-weight:700;margin-bottom:12px">Commits récents</div>
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+                <div style="display:flex;gap:10px"><span style="color:var(--orange);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-top:2px">a3f9c12</span><div><div>feat: multi-user auth + logo</div><div style="font-size:11px;color:var(--grey2);margin-top:2px">il y a 22 min · alex</div></div></div>
+                <div style="display:flex;gap:10px"><span style="color:var(--orange);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-top:2px">b1e7d45</span><div><div>feat: agent routing system</div><div style="font-size:11px;color:var(--grey2);margin-top:2px">il y a 1h · alex</div></div></div>
+                <div style="display:flex;gap:10px"><span style="color:var(--orange);font-family:var(--mono);font-size:11px;flex-shrink:0;margin-top:2px">c9a2f88</span><div><div>chore: initial platform setup</div><div style="font-size:11px;color:var(--grey2);margin-top:2px">hier · alex</div></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div style="font-size:14px;font-weight:700;margin-bottom:12px">Mes agents liés</div>
+              <div id="project-agents-list" style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+                <div style="color:var(--grey);font-size:13px">Aucun agent lié pour l'instant.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="view-section" id="section-profile">
+        <div class="page-header">
+          <div><div class="page-title">Mon profil</div><div class="page-subtitle">Votre espace personnel TI-LEX-AL V10</div></div>
+          <button class="btn btn-orange btn-sm" onclick="saveProfile()">💾 Sauvegarder</button>
+        </div>
+        <div class="profile-header">
+          <div class="profile-big-av" id="profile-big-av" style="background:var(--orange)">A</div>
+          <div>
+            <div class="profile-info-name" id="profile-fullname">Utilisateur</div>
+            <div class="profile-info-email" id="profile-email-display">email@exemple.com</div>
+            <div class="profile-info-joined" id="profile-joined">Inscrit le —</div>
+          </div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+            <span class="badge badge-green"><span class="dot dot-green"></span>Compte actif</span>
+            <span class="badge badge-grey">Compte privé & isolé</span>
+          </div>
+        </div>
+        <div class="profile-grid">
+          <div class="settings-block">
+            <div class="settings-block-header">Informations personnelles</div>
+            <div class="settings-block-body">
+              <div class="form-row">
+                <div class="form-group"><label class="label">Prénom</label><input class="input" id="prof-first" placeholder="Prénom"></div>
+                <div class="form-group"><label class="label">Nom</label><input class="input" id="prof-last" placeholder="Nom"></div>
+              </div>
+              <div class="form-group"><label class="label">Courriel</label><input class="input" id="prof-email" type="email" readonly style="opacity:.6"></div>
+              <div class="form-group"><label class="label">Changer le mot de passe</label><input class="input" id="prof-newpass" type="password" placeholder="Nouveau mot de passe (laisser vide = inchangé)"></div>
+            </div>
+          </div>
+          <div class="settings-block">
+            <div class="settings-block-header">Statistiques de mon compte</div>
+            <div class="settings-block-body">
+              <div class="settings-row">
+                <div><div class="settings-row-label">Agents créés</div></div>
+                <div style="font-size:20px;font-weight:700;color:var(--orange);font-family:var(--mono)" id="prof-stat-agents">0</div>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-row-label">Conversations</div></div>
+                <div style="font-size:20px;font-weight:700;font-family:var(--mono)" id="prof-stat-convs">0</div>
+              </div>
+              <div class="settings-row">
+                <div><div class="settings-row-label">Projets liés</div></div>
+                <div style="font-size:20px;font-weight:700;font-family:var(--mono)">1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-block">
+          <div class="settings-block-header" style="color:#ff4444">Zone de danger</div>
+          <div class="settings-block-body">
+            <div class="settings-row">
+              <div><div class="settings-row-label">Supprimer mon compte</div><div class="settings-row-desc">Supprime définitivement votre compte et tous vos agents, conversations et données.</div></div>
+              <button class="btn btn-red btn-sm" onclick="askDeleteAccount()">Supprimer le compte</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="view-section" id="section-settings">
+        <div class="page-header">
+          <div><div class="page-title">Paramètres</div><div class="page-subtitle">Configuration de votre espace TI-LEX-AL V10</div></div>
+        </div>
+        <div class="settings-layout">
+          <div class="settings-nav">
+            <div class="settings-nav-item active" id="stab-api" onclick="setSettingsTab(this,'s-api')">🔑 API & Clés</div>
+            <div class="settings-nav-item" id="stab-theme" onclick="setSettingsTab(this,'s-theme')">🎨 Thème</div>
+            <div class="settings-nav-item" id="stab-prefs" onclick="setSettingsTab(this,'s-prefs')">⚙ Préférences</div>
+          </div>
+          <div>
+            <!-- API PANEL -->
+            <div class="settings-section" id="s-api">
+              <div class="settings-block">
+                <div class="settings-block-header">Clé API Anthropic</div>
+                <div class="settings-block-body">
+                  <div class="form-group"><label class="label">Votre clé API personnelle</label>
+                    <div class="api-key-row">
+                      <input class="input" id="settings-apikey" type="password" placeholder="sk-ant-…">
+                      <button class="btn btn-orange btn-sm" onclick="saveApiKey()">Sauvegarder</button>
+                    </div>
+                    <span style="font-size:11px;color:var(--grey2);margin-top:6px">Chaque utilisateur a sa propre clé. Jamais partagée.</span>
+                  </div>
+                  <div class="form-group"><label class="label">GitHub Token</label>
+                    <div class="api-key-row">
+                      <input class="input" id="settings-ghtoken" type="password" placeholder="ghp_…">
+                      <button class="btn btn-orange btn-sm" onclick="saveGhToken()">Sauvegarder</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- THEME PANEL -->
+            <div class="theme-section hidden" id="s-theme">
+
+              <!-- LIVE PREVIEW -->
+              <div class="theme-block">
+                <div class="theme-block-header">👁 Aperçu en direct</div>
+                <div class="theme-block-body">
+                  <div class="theme-preview-card">
+                    <div class="tpc-topbar">
+                      <div class="tpc-logo">TL</div>
+                      <span class="tpc-title">TI-LEX-AL V10</span>
+                      <div class="tpc-btn">+ Agent</div>
+                    </div>
+                    <div class="tpc-body">
+                      <div class="tpc-sidebar">
+                        <div class="tpc-nav active"></div>
+                        <div class="tpc-nav"></div>
+                        <div class="tpc-nav"></div>
+                        <div class="tpc-nav"></div>
+                      </div>
+                      <div class="tpc-main">
+                        <div class="tpc-card"></div>
+                        <div style="display:flex;flex-direction:column;gap:5px">
+                          <div class="tpc-msg agent">Allô! Comment je peux t'aider? 🍁</div>
+                          <div class="tpc-msg user">Créer un agent IA!</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- COULEUR D'ACCENT -->
+              <div class="theme-block">
+                <div class="theme-block-header">🎨 Couleur principale</div>
+                <div class="theme-block-body">
+                  <div style="font-size:12px;color:var(--grey);margin-bottom:4px">Palettes prédéfinies</div>
+                  <div class="color-presets" id="color-presets">
+                    <!-- filled by JS -->
+                  </div>
+                  <div class="divider"></div>
+                  <div style="font-size:12px;color:var(--grey);margin-bottom:8px">Couleur personnalisée</div>
+                  <div class="color-picker-wrap">
+                    <input type="color" id="custom-color-picker" value="#FF6B00" oninput="setAccentFromPicker(this.value)">
+                    <input class="input color-hex-input" id="custom-color-hex" placeholder="#FF6B00" value="#FF6B00" oninput="setAccentFromHex(this.value)">
+                    <button class="btn btn-orange btn-sm" onclick="applyCustomColor()">Appliquer</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- POLICE -->
+              <div class="theme-block">
+                <div class="theme-block-header">🔤 Police d'écriture</div>
+                <div class="theme-block-body">
+                  <div class="font-options" id="font-options">
+                    <!-- filled by JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- RAYON DES COINS -->
+              <div class="theme-block">
+                <div class="theme-block-header">⬛ Style des coins</div>
+                <div class="theme-block-body">
+                  <div class="radius-options" id="radius-options">
+                    <!-- filled by JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- RESET -->
+              <div style="display:flex;justify-content:flex-end;gap:10px">
+                <button class="btn btn-ghost btn-sm" onclick="resetTheme()">↺ Réinitialiser le thème</button>
+                <button class="btn btn-orange" onclick="saveTheme()">💾 Sauvegarder le thème</button>
+              </div>
+
+            </div>
+
+            <!-- PREFS PANEL -->
+            <div class="settings-section hidden" id="s-prefs">
+              <div class="settings-block">
+                <div class="settings-block-header">Préférences</div>
+                <div class="settings-block-body">
+                  <div class="settings-row"><div><div class="settings-row-label">Streaming en temps réel</div><div class="settings-row-desc">Afficher les réponses token par token</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+                  <div class="settings-row"><div><div class="settings-row-label">Sauvegarde automatique</div><div class="settings-row-desc">Sauvegarder les conversations</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+                  <div class="settings-row"><div><div class="settings-row-label">Mode développeur</div><div class="settings-row-desc">Afficher les logs et métadonnées</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+                  <div class="settings-row"><div><div class="settings-row-label">Animations réduites</div><div class="settings-row-desc">Désactiver les animations de l'interface</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /platform-body -->
+</div><!-- /view-platform -->
+
+<!-- MODAL DELETE AGENT -->
+<div class="modal-overlay hidden" id="modal-delete-agent">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Supprimer cet agent?</div><div class="modal-close" onclick="closeModal('modal-delete-agent')">✕</div></div>
+    <p style="font-size:13px;color:var(--grey);line-height:1.6">Cet agent et toutes ses conversations seront supprimés définitivement. Action irréversible.</p>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete-agent')">Annuler</button>
+      <button class="btn btn-red" onclick="confirmDeleteAgent()">🗑 Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DELETE ACCOUNT -->
+<div class="modal-overlay hidden" id="modal-delete-account">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" style="color:#ff4444">⚠ Supprimer mon compte</div><div class="modal-close" onclick="closeModal('modal-delete-account')">✕</div></div>
+    <p style="font-size:13px;color:var(--grey);line-height:1.6">Cette action supprimera définitivement votre compte, tous vos agents, conversations et données. <strong style="color:#ff4444">Cette action est irréversible.</strong></p>
+    <div class="form-group"><label class="label">Tapez votre courriel pour confirmer</label><input class="input input-err" id="delete-confirm-email" placeholder="votre@courriel.com"></div>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete-account')">Annuler</button>
+      <button class="btn btn-red" onclick="confirmDeleteAccount()">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//   STORAGE HELPERS — données isolées par user
+// ═══════════════════════════════════════
+const DB = {
+  getAccounts(){ try{return JSON.parse(localStorage.getItem('tilex_accounts')||'{}')}catch(e){return{}} },
+  setAccounts(a){ localStorage.setItem('tilex_accounts',JSON.stringify(a)) },
+  getSession(){ try{return JSON.parse(sessionStorage.getItem('tilex_session')||'null')}catch(e){return null} },
+  setSession(u){ sessionStorage.setItem('tilex_session',JSON.stringify(u)) },
+  clearSession(){ sessionStorage.removeItem('tilex_session') },
+  key(userId,type){ return `tilex_user_${userId}_${type}` },
+  getData(userId,type,def){ try{return JSON.parse(localStorage.getItem(DB.key(userId,type)))||def}catch(e){return def} },
+  setData(userId,type,val){ localStorage.setItem(DB.key(userId,type),JSON.stringify(val)) },
+  removeAllData(userId){
+    ['agents','convs','settings','activity'].forEach(t=>localStorage.removeItem(DB.key(userId,t)));
+  },
+};
+
+// ═══════════════════════════════════════
+//   AUTH STATE
+// ═══════════════════════════════════════
+let currentUser = null;
+
+function hashPass(p){
+  let h=0; for(let c of p){h=(h<<5)-h+c.charCodeAt(0);h|=0} return h.toString(36);
+}
+
+function avatarColor(email){
+  const colors=['#FF6B00','#9B59B6','#27AE60','#2980B9','#E74C3C','#F39C12','#1ABC9C','#E91E63'];
+  let h=0; for(let c of email){h=(h<<5)-h+c.charCodeAt(0);h|=0}
+  return colors[Math.abs(h)%colors.length];
+}
+
+function initials(u){
+  const f=(u.firstName||'').charAt(0).toUpperCase();
+  const l=(u.lastName||'').charAt(0).toUpperCase();
+  return (f+l)||u.email.charAt(0).toUpperCase();
+}
+
+function switchTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  document.getElementById('panel-login').classList.toggle('hidden',tab!=='login');
+  document.getElementById('panel-register').classList.toggle('hidden',tab!=='register');
+  clearAuthErrors();
+}
+
+function clearAuthErrors(){
+  ['login-email-err','login-pass-err','login-global-err','reg-first-err','reg-email-err','reg-pass-err','reg-pass2-err','reg-global-err']
+    .forEach(id=>{const el=document.getElementById(id);if(el){el.classList.add('hidden');el.textContent=''}});
+  ['login-email','login-pass','reg-email','reg-pass','reg-pass2']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('input-err')});
+}
+
+function showErr(id,msg){
+  const el=document.getElementById(id);
+  if(el){el.textContent=msg;el.classList.remove('hidden')}
+  const inputId=id.replace('-err','');
+  const inp=document.getElementById(inputId);
+  if(inp) inp.classList.add('input-err');
+}
+
+function doRegister(){
+  clearAuthErrors();
+  const first=document.getElementById('reg-first').value.trim();
+  const last=document.getElementById('reg-last').value.trim();
+  const email=document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass=document.getElementById('reg-pass').value;
+  const pass2=document.getElementById('reg-pass2').value;
+  const apikey=document.getElementById('reg-apikey').value.trim();
+  let valid=true;
+  if(!first){showErr('reg-first-err','Prénom requis');valid=false}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showErr('reg-email-err','Courriel invalide');valid=false}
+  if(pass.length<8){showErr('reg-pass-err','8 caractères minimum');valid=false}
+  if(pass!==pass2){showErr('reg-pass2-err','Les mots de passe ne correspondent pas');valid=false}
+  if(!valid) return;
+  const accounts=DB.getAccounts();
+  if(accounts[email]){showErr('reg-email-err','Ce courriel est déjà utilisé');return}
+  const userId='u_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const user={id:userId,email,firstName:first,lastName:last,color:avatarColor(email),joinedAt:new Date().toISOString(),hash:hashPass(pass)};
+  accounts[email]=user;
+  DB.setAccounts(accounts);
+  if(apikey) DB.setData(userId,'settings',{apiKey:apikey,ghToken:''});
+  DB.setData(userId,'activity',[
+    {icon:'🎉',text:'Compte créé avec succès',time:'Maintenant'},
+    {icon:'🚀',text:'Projet <strong>tilex.</strong> connecté',time:'Maintenant'},
+  ]);
+  loginUser(user);
+  showToast(`Bienvenue, ${first}! Compte créé avec succès 🎉`,'success');
+}
+
+function doLogin(){
+  clearAuthErrors();
+  const email=document.getElementById('login-email').value.trim().toLowerCase();
+  const pass=document.getElementById('login-pass').value;
+  if(!email){showErr('login-email-err','Courriel requis');return}
+  if(!pass){showErr('login-pass-err','Mot de passe requis');return}
+  const accounts=DB.getAccounts();
+  const user=accounts[email];
+  if(!user){showErr('login-global-err','Aucun compte trouvé avec ce courriel.');return}
+  if(user.hash!==hashPass(pass)){showErr('login-pass-err','Mot de passe incorrect');return}
+  loginUser(user);
+  showToast(`Content de te revoir, ${user.firstName||user.email}! 🍁`,'success');
+}
+
+function demoLogin(){
+  const demoEmail='demo@tilex-v10.ca';
+  const accounts=DB.getAccounts();
+  if(!accounts[demoEmail]){
+    const userId='u_demo_tilex';
+    const user={id:userId,email:demoEmail,firstName:'Démo',lastName:'TiLex',color:'#FF6B00',joinedAt:new Date().toISOString(),hash:hashPass('demo1234')};
+    accounts[demoEmail]=user;
+    DB.setAccounts(accounts);
+    DB.setData(userId,'agents',[
+      {id:'a1',name:'Ti-Lex Assistant',emoji:'🤖',model:'claude-sonnet-4-6',status:'active',desc:'Agent polyvalent branché sur tilex. Répond en québécois.',convs:18,tokens:'412K',createdAt:new Date().toISOString()},
+      {id:'a2',name:'Code Reviewer',emoji:'⚡',model:'claude-opus-4-8',status:'active',desc:'Révise le code GitHub, identifie les bugs.',convs:34,tokens:'891K',createdAt:new Date().toISOString()},
+    ]);
+    DB.setData(userId,'activity',[
+      {icon:'✦',text:'Agent <strong>Ti-Lex Assistant</strong> actif',time:'Il y a 5 min'},
+      {icon:'⑂',text:'Commit sur <strong>tilex.</strong> — "feat: multi-user"',time:'Il y a 22 min'},
+      {icon:'🚀',text:'Déploiement <strong>v10.2.1</strong> réussi',time:'Il y a 1h'},
+    ]);
+  }
+  loginUser(accounts[demoEmail]);
+  showToast('Connexion démo! Explorez la plateforme 🎮','info');
+}
+
+function loginUser(user){
+  currentUser=user;
+  DB.setSession(user);
+  document.getElementById('view-auth').classList.add('hidden');
+  document.getElementById('view-platform').classList.remove('hidden');
+  loadUserTheme();
+  ensureFlagship();
+  refreshUserUI();
+  navigateTo('dashboard');
+}
+
+function doLogout(){
+  currentUser=null;
+  DB.clearSession();
+  document.getElementById('view-platform').classList.add('hidden');
+  document.getElementById('view-auth').classList.remove('hidden');
+  clearAuthErrors();
+  showToast('Déconnecté.','info');
+}
+
+// ═══════════════════════════════════════
+//   UI UPDATE AFTER LOGIN
+// ═══════════════════════════════════════
+function refreshUserUI(){
+  if(!currentUser) return;
+  const name=(currentUser.firstName||'') + (currentUser.lastName?' '+currentUser.lastName:'') || currentUser.email;
+  const short=currentUser.firstName||currentUser.email.split('@')[0];
+  const ini=initials(currentUser);
+  const col=currentUser.color||'#FF6B00';
+  document.getElementById('tb-user-name').textContent=short;
+  const tbAv=document.getElementById('tb-user-av');
+  tbAv.textContent=ini; tbAv.style.background=col;
+  document.getElementById('sb-user-name').textContent=name;
+  const sbAv=document.getElementById('sb-user-av');
+  sbAv.textContent=ini; sbAv.style.background=col;
+  document.getElementById('dash-welcome').textContent=`Bonjour, ${short}! 👋`;
+  document.getElementById('profile-big-av').textContent=ini;
+  document.getElementById('profile-big-av').style.background=col;
+  document.getElementById('profile-fullname').textContent=name;
+  document.getElementById('profile-email-display').textContent=currentUser.email;
+  document.getElementById('profile-joined').textContent='Inscrit le '+new Date(currentUser.joinedAt||Date.now()).toLocaleDateString('fr-CA',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('prof-first').value=currentUser.firstName||'';
+  document.getElementById('prof-last').value=currentUser.lastName||'';
+  document.getElementById('prof-email').value=currentUser.email;
+  document.getElementById('prev-owner').textContent=short;
+  const settings=DB.getData(currentUser.id,'settings',{});
+  if(settings.apiKey) document.getElementById('settings-apikey').value=settings.apiKey;
+  if(settings.ghToken) document.getElementById('settings-ghtoken').value=settings.ghToken;
+  renderAgentsGrid();
+  refreshDash();
+}
+
+// ═══════════════════════════════════════
+//   NAVIGATION
+// ═══════════════════════════════════════
+function navigateTo(section){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const nav=document.getElementById('nav-'+section);
+  if(nav) nav.classList.add('active');
+  document.querySelectorAll('.view-section').forEach(el=>el.classList.remove('active-section'));
+  const target=document.getElementById('section-'+section);
+  if(target){
+    target.classList.add('active-section');
+    if(section==='chat'){target.style.padding='0';target.style.gap='0'}
+    if(section==='profile') refreshProfile();
+  }
+  const bar=document.getElementById('tb-progress');
+  bar.style.width='70%';setTimeout(()=>{bar.style.width='100%'},200);setTimeout(()=>{bar.style.width='0%'},600);
+}
+
+// ═══════════════════════════════════════
+//   AGENTS
+// ═══════════════════════════════════════
+function getAgents(){ return currentUser ? DB.getData(currentUser.id,'agents',[]) : [] }
+function saveAgents(agents){ if(currentUser) DB.setData(currentUser.id,'agents',agents) }
+
+function agentIcon(agent){
+  if(agent&&agent.avatarImg) return `<img src="${agent.avatarImg}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`;
+  return agent?agent.emoji:'🤖';
+}
+function agentIconInline(agent,size){
+  size=size||18;
+  if(agent&&agent.avatarImg) return `<img src="${agent.avatarImg}" alt="" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;border-radius:4px">`;
+  return agent?agent.emoji:'🤖';
+}
+
+const FLAGSHIP_AGENT={
+  id:'a_tilexal',name:'TI-LEX-AL',avatarImg:'logo.png',emoji:'🔥',
+  model:'claude-opus-4-8',status:'active',
+  desc:"L'agent IA officiel de TI-LEX-AL V10. Polyvalent, branché sur le projet tilex. Répond en québécois. 🔥",
+  system:"Tu es TI-LEX-AL, l'agent IA officiel de la plateforme TI-LEX-AL V10. Tu réponds en français québécois, de façon amicale, directe et efficace.",
+  tools:['web','files','code','github'],convs:0,tokens:'0'
+};
+function ensureFlagship(){
+  if(!currentUser) return;
+  const settings=DB.getData(currentUser.id,'settings',{});
+  if(settings.flagshipSeeded) return;
+  const agents=getAgents();
+  if(!agents.some(a=>a.id===FLAGSHIP_AGENT.id)){
+    agents.unshift({...FLAGSHIP_AGENT,createdAt:new Date().toISOString(),ownerId:currentUser.id});
+    saveAgents(agents);
+  }
+  settings.flagshipSeeded=true;
+  DB.setData(currentUser.id,'settings',settings);
+}
+
+let deleteTargetId=null;
+
+function renderAgentsGrid(filtered){
+  const grid=document.getElementById('agents-grid');
+  if(!grid) return;
+  const agents=filtered||getAgents();
+  document.getElementById('agents-count').textContent=getAgents().length;
+  if(agents.length===0){
+    grid.innerHTML='<div class="empty-state"><div class="es-icon">🤖</div><p>Aucun agent trouvé.<br>Créez votre premier agent IA!</p><button class="btn btn-orange btn-sm" onclick="navigateTo(\'create\')">+ Créer un agent</button></div>';
+    return;
+  }
+  grid.innerHTML='';
+  agents.forEach(agent=>{
+    const badge=agent.status==='active'
+      ?`<span class="badge badge-green"><span class="dot dot-green"></span>Actif</span>`
+      :`<span class="badge badge-orange"><span class="dot dot-orange"></span>En pause</span>`;
+    const div=document.createElement('div');
+    div.className='agent-card';
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="agent-av">${agentIcon(agent)}</div>
+        <div><div class="agent-name">${esc(agent.name)}</div><div class="agent-model">${agent.model}</div></div>
+        <div style="margin-left:auto">${badge}</div>
+      </div>
+      <div class="agent-desc">${esc(agent.desc||'')}</div>
+      <div class="agent-footer">
+        <div class="agent-stats">${agent.convs||0} conv</div>
+        <div class="agent-actions">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();chatWith('${agent.id}')" title="Chat">💬</button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();toggleAgentStatus('${agent.id}')" title="Activer/Pause">${agent.status==='active'?'⏸':'▶'}</button>
+          <button class="btn btn-ghost btn-sm btn-icon" style="color:#ff4466" onclick="event.stopPropagation();askDeleteAgent('${agent.id}')" title="Supprimer">🗑</button>
+        </div>
+      </div>`;
+    div.onclick=()=>chatWith(agent.id);
+    grid.appendChild(div);
+  });
+}
+
+function filterAgents(){
+  const q=(document.getElementById('agent-search').value||'').toLowerCase();
+  const model=document.getElementById('agent-filter-model').value;
+  const status=document.getElementById('agent-filter-status').value;
+  let agents=getAgents();
+  if(q) agents=agents.filter(a=>(a.name+a.desc).toLowerCase().includes(q));
+  if(model) agents=agents.filter(a=>a.model===model);
+  if(status) agents=agents.filter(a=>a.status===status);
+  renderAgentsGrid(agents);
+}
+
+function toggleAgentStatus(id){
+  const agents=getAgents();
+  const a=agents.find(x=>x.id===id);
+  if(!a) return;
+  a.status=a.status==='active'?'paused':'active';
+  saveAgents(agents);
+  renderAgentsGrid();
+  showToast(`Agent "${a.name}" ${a.status==='active'?'activé':'mis en pause'}.`,'info');
+}
+
+function askDeleteAgent(id){ deleteTargetId=id; document.getElementById('modal-delete-agent').classList.remove('hidden') }
+
+function confirmDeleteAgent(){
+  const agents=getAgents().filter(a=>a.id!==deleteTargetId);
+  saveAgents(agents);
+  renderAgentsGrid();
+  closeModal('modal-delete-agent');
+  showToast('Agent supprimé.','success');
+  refreshDash();
+}
+
+// ═══════════════════════════════════════
+//   CREATE AGENT
+// ═══════════════════════════════════════
+const TOOLS=[
+  {id:'web',icon:'🌐',label:'Recherche web'},
+  {id:'code',icon:'⚡',label:'Code'},
+  {id:'files',icon:'📁',label:'Fichiers'},
+  {id:'github',icon:'⑂',label:'GitHub'},
+  {id:'memory',icon:'🧠',label:'Mémoire'},
+  {id:'images',icon:'🖼',label:'Images'},
+  {id:'voice',icon:'🎙',label:'Voix'},
+  {id:'email',icon:'📧',label:'Courriel'},
+  {id:'api',icon:'🔌',label:'API externe'},
+];
+let activeTools=new Set(['web','files']);
+
+function buildToolsGrid(){
+  const grid=document.getElementById('tools-grid');
+  if(!grid||grid.children.length>0) return;
+  TOOLS.forEach(tool=>{
+    const div=document.createElement('div');
+    div.className='tool-toggle'+(activeTools.has(tool.id)?' on':'');
+    div.innerHTML=`<span>${tool.icon}</span>${tool.label}`;
+    div.onclick=()=>{activeTools.has(tool.id)?activeTools.delete(tool.id):activeTools.add(tool.id);div.classList.toggle('on')};
+    grid.appendChild(div);
+  });
+}
+
+function updatePreview(){
+  const name=document.getElementById('c-name').value||"Nom de l'agent";
+  const emoji=document.getElementById('c-emoji').value||'🤖';
+  const desc=document.getElementById('c-desc').value||'La description apparaîtra ici…';
+  const model=document.getElementById('c-model').value;
+  document.getElementById('prev-name').textContent=name;
+  document.getElementById('prev-emoji').textContent=emoji;
+  document.getElementById('prev-chat-icon').textContent=emoji;
+  document.getElementById('prev-desc').textContent=desc;
+  document.getElementById('prev-model').textContent=model;
+  document.getElementById('prev-model-info').textContent=model;
+}
+
+function createAgent(){
+  if(!currentUser){showToast('Connexion requise','error');return}
+  const name=document.getElementById('c-name').value.trim();
+  if(!name){showToast("Donnez un nom à l'agent!",'error');return}
+  const emoji=document.getElementById('c-emoji').value||'🤖';
+  const desc=document.getElementById('c-desc').value||'';
+  const model=document.getElementById('c-model').value;
+  const system=document.getElementById('c-system').value;
+  const newAgent={
+    id:'a_'+Date.now(),name,emoji,model,status:'active',desc,
+    system,tools:[...activeTools],convs:0,tokens:'0',
+    createdAt:new Date().toISOString(),ownerId:currentUser.id
+  };
+  const agents=getAgents();
+  agents.unshift(newAgent);
+  saveAgents(agents);
+  addActivity(`✦`,`Agent <strong>${name}</strong> créé`,'Maintenant');
+  renderAgentsGrid();
+  refreshDash();
+  showToast(`Agent "${name}" créé! 🤖`,'success');
+  document.getElementById('c-name').value='';
+  document.getElementById('c-desc').value='';
+  document.getElementById('c-emoji').value='🤖';
+  document.getElementById('c-system').value='';
+  updatePreview();
+  navigateTo('agents');
+}
+
+// ═══════════════════════════════════════
+//   CHAT
+// ═══════════════════════════════════════
+let currentAgentId=null;
+
+function chatWith(agentId){
+  const agents=getAgents();
+  const agent=agents.find(a=>a.id===agentId);
+  if(!agent) return;
+  currentAgentId=agentId;
+  navigateTo('chat');
+  document.getElementById('chat-agent-icon').innerHTML=agentIcon(agent);
+  document.getElementById('chat-agent-name').textContent=agent.name;
+  document.getElementById('chat-agent-status').innerHTML=`<span class="dot dot-green"></span> En ligne · ${agent.model}`;
+  document.getElementById('chat-textarea').disabled=false;
+  document.getElementById('send-btn').disabled=false;
+  document.getElementById('send-btn').style.opacity='1';
+  clearChat(agent);
+}
+
+const REPLIES=[
+  "Bonne question! Laisse-moi analyser ça pour toi…",
+  "D'après mes données, voici la meilleure approche:",
+  "Sure, mon ami! Voici comment on va régler ça:",
+  "J'ai analysé ton projet et voici mes suggestions:",
+  "Pas de problème! Je suis là pour t'aider.",
+  "Parfait, laisse-moi travailler là-dessus!",
+  "Allô! Voici ce que j'ai trouvé pour toi:",
+  "Câline, belle question! Voici ma réponse:",
+];
+
+function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
+
+function sendMessage(){
+  if(!currentAgentId){showToast("Sélectionnez d'abord un agent",'error');return}
+  const ta=document.getElementById('chat-textarea');
+  const text=ta.value.trim();if(!text) return;
+  const msgs=document.getElementById('chat-messages');
+  const now=new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});
+  const uDiv=document.createElement('div');
+  uDiv.className='msg-wrap user';
+  const userAv=currentUser?initials(currentUser):'A';
+  const userCol=currentUser?currentUser.color:'#FF6B00';
+  uDiv.innerHTML=`<div class="msg-av user-av" style="background:${userCol}">${userAv}</div><div><div class="msg-bubble">${esc(text)}</div><div class="msg-time" style="text-align:right">Aujourd'hui à ${now}</div></div>`;
+  msgs.appendChild(uDiv);
+  ta.value='';ta.style.height='auto';
+  const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
+  const agent=getAgents().find(a=>a.id===currentAgentId);
+  typ.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div class="msg-bubble" style="color:var(--grey)"><span class="spinner"></span></div>`;
+  msgs.appendChild(typ);msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    const t=document.getElementById('typing');if(t)t.remove();
+    const reply=REPLIES[Math.floor(Math.random()*REPLIES.length)];
+    const now2=new Date().toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'});
+    const aDiv=document.createElement('div');aDiv.className='msg-wrap';
+    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble">${reply}</div><div class="msg-time">Aujourd'hui à ${now2}</div></div>`;
+    msgs.appendChild(aDiv);msgs.scrollTop=msgs.scrollHeight;
+    if(agent){agent.convs=(agent.convs||0)+1;saveAgents(getAgents())}
+  },1000+Math.random()*800);
+}
+
+function clearChat(agent){
+  const msgs=document.getElementById('chat-messages');
+  const a=agent||getAgents().find(x=>x.id===currentAgentId);
+  if(!a){msgs.innerHTML='<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--grey)">Sélectionnez un agent</div>';return}
+  msgs.innerHTML=`<div class="msg-wrap"><div class="msg-av agent-av">${agentIcon(a)}</div><div><div class="msg-bubble">Allô! Chui <strong>${esc(a.name)}</strong>. Comment je peux t'aider? 🍁</div><div class="msg-time">Maintenant</div></div></div>`;
+}
+
+function newConversation(){
+  if(!currentAgentId&&getAgents().length>0){
+    chatWith(getAgents()[0].id);
+  } else if(!currentAgentId){
+    showToast("Créez d'abord un agent!",'error');navigateTo('create');
+  } else {
+    clearChat();
+  }
+}
+
+// ═══════════════════════════════════════
+//   DASHBOARD
+// ═══════════════════════════════════════
+function refreshDash(){
+  if(!currentUser) return;
+  const agents=getAgents();
+  const count=agents.length;
+  document.getElementById('stat-agents').textContent=count;
+  document.getElementById('agents-count').textContent=count;
+  document.getElementById('stat-agents-delta').textContent=count===0?'Aucun agent':`${agents.filter(a=>a.status==='active').length} actif(s)`;
+  const table=document.getElementById('dash-agents-table');
+  if(agents.length===0){
+    table.innerHTML='<div class="empty-state" style="padding:30px 20px"><div class="es-icon">🤖</div><p>Aucun agent pour l\'instant.<br>Créez votre premier agent!</p><button class="btn btn-orange btn-sm" onclick="navigateTo(\'create\')">+ Créer un agent</button></div>';
+  } else {
+    const rows=agents.slice(0,5).map(a=>`<tr onclick="chatWith('${a.id}')"><td><div style="display:flex;align-items:center;gap:8px">${agentIconInline(a,20)} ${esc(a.name)}</div></td><td><span style="font-family:var(--mono);font-size:11px;color:var(--orange)">${a.model.split('-').slice(0,3).join('-')}</span></td><td>${a.status==='active'?'<span class="badge badge-green"><span class="dot dot-green"></span>Actif</span>':'<span class="badge badge-orange"><span class="dot dot-orange"></span>En pause</span>'}</td></tr>`).join('');
+    table.innerHTML=`<table><thead><tr><th>Nom</th><th>Modèle</th><th>Statut</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  const activity=DB.getData(currentUser.id,'activity',[]);
+  const actList=document.getElementById('activity-list');
+  if(activity.length===0){
+    actList.innerHTML='<div class="act-item"><div class="act-dot">💡</div><div><div class="act-text">Aucune activité encore</div></div></div>';
+  } else {
+    actList.innerHTML=activity.slice(0,5).map(a=>`<div class="act-item"><div class="act-dot">${a.icon}</div><div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div></div>`).join('');
+  }
+  const pal=document.getElementById('project-agents-list');
+  if(agents.length===0){
+    pal.innerHTML='<div style="color:var(--grey);font-size:13px">Aucun agent lié pour l\'instant.</div>';
+  } else {
+    pal.innerHTML=agents.slice(0,4).map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px"><div style="display:flex;align-items:center;gap:8px">${agentIconInline(a,20)} ${esc(a.name)}</div><span class="badge ${a.status==='active'?'badge-green':'badge-orange'}">${a.status==='active'?'Actif':'En pause'}</span></div>`).join('');
+  }
+}
+
+function addActivity(icon,text,time){
+  if(!currentUser) return;
+  const act=DB.getData(currentUser.id,'activity',[]);
+  act.unshift({icon,text,time});
+  DB.setData(currentUser.id,'activity',act.slice(0,20));
+}
+
+// ═══════════════════════════════════════
+//   PROFILE
+// ═══════════════════════════════════════
+function refreshProfile(){
+  if(!currentUser) return;
+  const agents=getAgents();
+  document.getElementById('prof-stat-agents').textContent=agents.length;
+  document.getElementById('prof-stat-convs').textContent=agents.reduce((s,a)=>s+(a.convs||0),0);
+}
+
+function saveProfile(){
+  if(!currentUser) return;
+  const first=document.getElementById('prof-first').value.trim();
+  const last=document.getElementById('prof-last').value.trim();
+  const newpass=document.getElementById('prof-newpass').value;
+  const accounts=DB.getAccounts();
+  const user=accounts[currentUser.email];
+  if(!user) return;
+  user.firstName=first;user.lastName=last;
+  if(newpass.length>=8) user.hash=hashPass(newpass);
+  else if(newpass.length>0&&newpass.length<8){showToast('Mot de passe: 8 caractères minimum','error');return}
+  accounts[currentUser.email]=user;
+  DB.setAccounts(accounts);
+  currentUser=user;DB.setSession(user);
+  refreshUserUI();
+  showToast('Profil sauvegardé!','success');
+}
+
+function saveApiKey(){
+  if(!currentUser) return;
+  const apiKey=document.getElementById('settings-apikey').value.trim();
+  const settings=DB.getData(currentUser.id,'settings',{});
+  settings.apiKey=apiKey;
+  DB.setData(currentUser.id,'settings',settings);
+  showToast('Clé API sauvegardée!','success');
+}
+function saveGhToken(){
+  if(!currentUser) return;
+  const ghToken=document.getElementById('settings-ghtoken').value.trim();
+  const settings=DB.getData(currentUser.id,'settings',{});
+  settings.ghToken=ghToken;
+  DB.setData(currentUser.id,'settings',settings);
+  showToast('Token GitHub sauvegardé!','success');
+}
+
+function askDeleteAccount(){ document.getElementById('modal-delete-account').classList.remove('hidden') }
+
+function confirmDeleteAccount(){
+  const email=document.getElementById('delete-confirm-email').value.trim().toLowerCase();
+  if(email!==currentUser.email){showToast('Courriel incorrect','error');return}
+  const accounts=DB.getAccounts();
+  DB.removeAllData(currentUser.id);
+  delete accounts[currentUser.email];
+  DB.setAccounts(accounts);
+  closeModal('modal-delete-account');
+  doLogout();
+  showToast('Compte supprimé.','info');
+}
+
+// ═══════════════════════════════════════
+//   SETTINGS
+// ═══════════════════════════════════════
+function setSettingsTab(el,panelId){
+  document.querySelectorAll('.settings-nav-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  ['s-api','s-theme','s-prefs'].forEach(id=>{
+    const p=document.getElementById(id);
+    if(p) p.classList.add('hidden');
+  });
+  if(panelId){const p=document.getElementById(panelId);if(p)p.classList.remove('hidden')}
+  if(panelId==='s-theme') buildThemePanel();
+}
+
+// ═══════════════════════════════════════
+//   THEME SYSTEM
+// ═══════════════════════════════════════
+const COLOR_PRESETS=[
+  {name:'Ti-Lex 🔥',   hex:'#FF6B00', rgb:'255,107,0'},
+  {name:'Rouge vif',    hex:'#E53935', rgb:'229,57,53'},
+  {name:'Violet',       hex:'#7C3AED', rgb:'124,58,237'},
+  {name:'Bleu',         hex:'#2563EB', rgb:'37,99,235'},
+  {name:'Cyan',         hex:'#0891B2', rgb:'8,145,178'},
+  {name:'Vert',         hex:'#16A34A', rgb:'22,163,74'},
+  {name:'Rose',         hex:'#DB2777', rgb:'219,39,119'},
+  {name:'Jaune doré',   hex:'#D97706', rgb:'217,119,6'},
+  {name:'Teal',         hex:'#0D9488', rgb:'13,148,136'},
+  {name:'Indigo',       hex:'#4F46E5', rgb:'79,70,229'},
+];
+
+const FONT_OPTIONS=[
+  {id:'space',   name:'Space Grotesk', family:"'Space Grotesk',sans-serif",   sample:'Aa Bb 123'},
+  {id:'inter',   name:'Inter',         family:"'Inter',sans-serif",            sample:'Aa Bb 123'},
+  {id:'syne',    name:'Syne',          family:"'Syne',sans-serif",             sample:'Aa Bb 123'},
+  {id:'dm',      name:'DM Sans',       family:"'DM Sans',sans-serif",          sample:'Aa Bb 123'},
+  {id:'jetbrains',name:'JetBrains Mono',family:"'JetBrains Mono',monospace",  sample:'Aa Bb 123'},
+];
+
+const RADIUS_OPTIONS=[
+  {id:'sharp',  label:'Carré',    r:'4px',  r2:'4px'},
+  {id:'soft',   label:'Doux',     r:'10px', r2:'6px'},
+  {id:'round',  label:'Arrondi',  r:'14px', r2:'10px'},
+  {id:'pill',   label:'Pill',     r:'20px', r2:'14px'},
+];
+
+let currentTheme={
+  mode:'dark',
+  accent:'#FF6B00',
+  accentRgb:'255,107,0',
+  font:'space',
+  radius:'soft',
+};
+
+function buildThemePanel(){
+  const cp=document.getElementById('color-presets');
+  if(cp&&cp.children.length===0){
+    COLOR_PRESETS.forEach(c=>{
+      const sw=document.createElement('div');
+      sw.className='color-swatch'+(currentTheme.accent===c.hex?' selected':'');
+      sw.title=c.name;
+      sw.style.background=c.hex;
+      sw.innerHTML='<span class="cs-check">✓</span>';
+      sw.onclick=()=>setAccent(c.hex,c.rgb);
+      sw.dataset.hex=c.hex;
+      cp.appendChild(sw);
+    });
+  }
+  const fo=document.getElementById('font-options');
+  if(fo&&fo.children.length===0){
+    FONT_OPTIONS.forEach(f=>{
+      const div=document.createElement('div');
+      div.className='font-card'+(currentTheme.font===f.id?' selected':'');
+      div.dataset.fontId=f.id;
+      div.innerHTML=`<div class="font-card-name">${f.name}</div><div class="font-card-sample" style="font-family:${f.family}">${f.sample}</div>`;
+      div.onclick=()=>setFont(f.id,f.family,div);
+      fo.appendChild(div);
+    });
+  }
+  const ro=document.getElementById('radius-options');
+  if(ro&&ro.children.length===0){
+    RADIUS_OPTIONS.forEach(r=>{
+      const div=document.createElement('div');
+      div.className='radius-card'+(currentTheme.radius===r.id?' selected':'');
+      div.dataset.radId=r.id;
+      div.innerHTML=`<div class="radius-preview" style="border-radius:${r.r2}"></div>${r.label}`;
+      div.onclick=()=>setRadius(r.id,r.r,r.r2,div);
+      ro.appendChild(div);
+    });
+  }
+  const cp2=document.getElementById('custom-color-picker');
+  const ch=document.getElementById('custom-color-hex');
+  if(cp2) cp2.value=currentTheme.accent;
+  if(ch) ch.value=currentTheme.accent;
+}
+
+function setAccent(hex,rgb){
+  currentTheme.accent=hex;
+  currentTheme.accentRgb=rgb||hexToRgb(hex);
+  applyTheme();
+  document.querySelectorAll('.color-swatch').forEach(s=>{
+    s.classList.toggle('selected',s.dataset.hex===hex);
+  });
+  const cp=document.getElementById('custom-color-picker');
+  const ch=document.getElementById('custom-color-hex');
+  if(cp) cp.value=hex;
+  if(ch) ch.value=hex;
+}
+
+function setAccentFromPicker(val){
+  document.getElementById('custom-color-hex').value=val;
+  currentTheme.accent=val;
+  currentTheme.accentRgb=hexToRgb(val);
+  applyTheme();
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+}
+
+function setAccentFromHex(val){
+  if(!/^#[0-9A-Fa-f]{6}$/.test(val)) return;
+  document.getElementById('custom-color-picker').value=val;
+  currentTheme.accent=val;
+  currentTheme.accentRgb=hexToRgb(val);
+  applyTheme();
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+}
+
+function applyCustomColor(){
+  const val=document.getElementById('custom-color-hex').value;
+  if(!/^#[0-9A-Fa-f]{6}$/.test(val)){showToast('Format invalide: ex. #FF6B00','error');return}
+  setAccent(val,hexToRgb(val));
+  showToast('Couleur appliquée!','success');
+}
+
+function setFont(fontId,fontFamily,el){
+  currentTheme.font=fontId;
+  document.documentElement.style.setProperty('--font',fontFamily);
+  document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+}
+
+function setRadius(radId,r,r2,el){
+  currentTheme.radius=radId;
+  document.documentElement.style.setProperty('--r',r);
+  document.documentElement.style.setProperty('--r2',r2);
+  document.querySelectorAll('.radius-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+}
+
+function applyTheme(){
+  const t=currentTheme;
+  const root=document.documentElement;
+  root.style.setProperty('--accent',t.accent);
+  root.style.setProperty('--accent2',lightenHex(t.accent,20));
+  const rgb=t.accentRgb||hexToRgb(t.accent);
+  root.style.setProperty('--accent-rgb',rgb);
+  root.style.setProperty('--accent-dim',`rgba(${rgb},.15)`);
+  root.style.setProperty('--accent-glow',`0 0 40px rgba(${rgb},.3)`);
+  root.style.setProperty('--orange',t.accent);
+  root.style.setProperty('--orange2',lightenHex(t.accent,20));
+  root.style.setProperty('--orange-dim',`rgba(${rgb},.15)`);
+  root.style.setProperty('--glow',`0 0 40px rgba(${rgb},.3)`);
+  const fontObj=FONT_OPTIONS.find(f=>f.id===t.font);
+  if(fontObj) root.style.setProperty('--font',fontObj.family);
+  const radObj=RADIUS_OPTIONS.find(r=>r.id===t.radius);
+  if(radObj){root.style.setProperty('--r',radObj.r);root.style.setProperty('--r2',radObj.r2)}
+  document.body.classList.remove('mode-light');
+}
+
+function saveTheme(){
+  if(!currentUser){showToast('Connexion requise','error');return}
+  const settings=DB.getData(currentUser.id,'settings',{});
+  settings.theme=currentTheme;
+  DB.setData(currentUser.id,'settings',settings);
+  showToast('Thème sauvegardé! 🎨','success');
+  addActivity('🎨','Thème personnalisé sauvegardé','Maintenant');
+}
+
+function resetTheme(){
+  currentTheme={mode:'dark',accent:'#FF6B00',accentRgb:'255,107,0',font:'space',radius:'soft'};
+  applyTheme();
+  document.getElementById('font-options').innerHTML='';
+  document.getElementById('radius-options').innerHTML='';
+  document.getElementById('color-presets').innerHTML='';
+  buildThemePanel();
+  showToast('Thème réinitialisé','info');
+}
+
+function loadUserTheme(){
+  if(!currentUser) return;
+  const settings=DB.getData(currentUser.id,'settings',{});
+  if(settings.theme){
+    currentTheme={...currentTheme,...settings.theme};
+    currentTheme.mode='dark';
+    applyTheme();
+  }
+}
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16);
+  const g=parseInt(hex.slice(3,5),16);
+  const b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function lightenHex(hex,amount){
+  let r=parseInt(hex.slice(1,3),16);
+  let g=parseInt(hex.slice(3,5),16);
+  let b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,r+amount);g=Math.min(255,g+amount);b=Math.min(255,b+amount);
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════
+//   MISC
+// ═══════════════════════════════════════
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+function openGitHub(){showToast('Ouverture du repo GitHub tilex.…','info')}
+
+function showToast(msg,type='info'){
+  const c=document.getElementById('toast-container');
+  const icons={success:'✓',error:'✕',info:'●'};
+  const colors={success:'#00c864',error:'#ff4466',info:'var(--orange)'};
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span style="color:${colors[type]};font-size:15px;flex-shrink:0">${icons[type]}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.classList.add('removing');setTimeout(()=>t.remove(),250)},3500);
+}
+
+function buildParticles(){
+  const c=document.getElementById('particles');if(!c)return;
+  for(let i=0;i<25;i++){
+    const p=document.createElement('div');p.className='particle';
+    p.style.left=Math.random()*100+'%';p.style.bottom='-10px';
+    p.style.setProperty('--dx',(Math.random()*120-60)+'px');
+    p.style.animationDuration=(7+Math.random()*8)+'s';
+    p.style.animationDelay=(Math.random()*10)+'s';
+    c.appendChild(p);
+  }
+}
+
+function goToTheme(){
+  navigateTo('settings');
+  setTimeout(()=>{
+    const themeTab=document.getElementById('stab-theme');
+    if(themeTab){themeTab.click();}
+  },50);
+}
+
+function esc(t){if(!t)return'';return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ═══════════════════════════════════════
+//   INIT
+// ═══════════════════════════════════════
+window.onload=()=>{
+  buildParticles();
+  buildToolsGrid();
+  const session=DB.getSession();
+  if(session){
+    const accounts=DB.getAccounts();
+    const user=accounts[session.email];
+    if(user){loginUser(user);return}
+  }
+  document.getElementById('view-auth').classList.remove('hidden');
+};
+
+document.addEventListener('keydown',e=>{
+  const auth=document.getElementById('view-auth');
+  if(e.key==='Enter'&&auth&&!auth.classList.contains('hidden')){
+    const activePanel=document.getElementById('panel-login').classList.contains('hidden')?'register':'login';
+    if(activePanel==='login') doLogin(); else doRegister();
+  }
+});
+</script>
+</body>
+</html>

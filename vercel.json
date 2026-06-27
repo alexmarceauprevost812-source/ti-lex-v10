@@ -13,6 +13,7 @@
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
     { "source": "/bourse", "destination": "/bourse.html" },
     { "source": "/codex", "destination": "/codex.html" },
+    { "source": "/web", "destination": "/web.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/app", "destination": "/pro.html" }
   ],
