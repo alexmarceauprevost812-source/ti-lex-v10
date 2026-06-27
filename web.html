@@ -1165,9 +1165,9 @@ function loginUser(user){
   document.getElementById('view-auth').classList.add('hidden');
   document.getElementById('view-platform').classList.remove('hidden');
   loadUserTheme();
-  ensureFlagship();
   refreshUserUI();
   navigateTo('dashboard');
+  loadAgents();
 }
 
 async function doLogout(){
@@ -1233,8 +1233,28 @@ function navigateTo(section){
 // ═══════════════════════════════════════
 //   AGENTS
 // ═══════════════════════════════════════
-function getAgents(){ return currentUser ? DB.getData(currentUser.id,'agents',[]) : [] }
-function saveAgents(agents){ if(currentUser) DB.setData(currentUser.id,'agents',agents) }
+// ── AGENTS via Supabase (MÊME table `agents` que l'app ti-lex — partagée) ──
+let agentsCache=[];
+function getAgents(){ return agentsCache; }
+function isDbAgent(a){ return a && a.id && !a.virtual; }
+function rowToAgent(r){
+  return {id:r.id,name:r.name,emoji:r.emoji||'🤖',model:r.default_model||'claude-sonnet-4-6',
+    status:r.is_active?'active':'paused',desc:r.specialty||'',system:r.personality||'',
+    can_search:!!r.can_search,convs:0,createdAt:r.created_at,ownerId:r.user_id};
+}
+async function loadAgents(){
+  // Agent vedette virtuel (non stocké en base) toujours en tête
+  agentsCache=[{...FLAGSHIP_AGENT,virtual:true}];
+  const cl=sbClient();
+  if(cl&&currentUser){
+    try{
+      const {data,error}=await cl.from('agents').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+      if(!error&&Array.isArray(data)) agentsCache=agentsCache.concat(data.map(rowToAgent));
+    }catch(e){ console.warn('[agents] load',e); }
+  }
+  renderAgentsGrid();
+  refreshDash();
+}
 
 function agentIcon(agent){
   if(agent&&agent.avatarImg) return `<img src="${agent.avatarImg}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:inherit">`;
@@ -1253,18 +1273,7 @@ const FLAGSHIP_AGENT={
   system:"Tu es TI-LEX-AL, l'agent IA officiel de la plateforme TI-LEX-AL V10. Tu réponds en français québécois, de façon amicale, directe et efficace.",
   tools:['web','files','code','github'],convs:0,tokens:'0'
 };
-function ensureFlagship(){
-  if(!currentUser) return;
-  const settings=DB.getData(currentUser.id,'settings',{});
-  if(settings.flagshipSeeded) return;
-  const agents=getAgents();
-  if(!agents.some(a=>a.id===FLAGSHIP_AGENT.id)){
-    agents.unshift({...FLAGSHIP_AGENT,createdAt:new Date().toISOString(),ownerId:currentUser.id});
-    saveAgents(agents);
-  }
-  settings.flagshipSeeded=true;
-  DB.setData(currentUser.id,'settings',settings);
-}
+// L'agent vedette est désormais virtuel (injecté par loadAgents), plus rien à « seeder ».
 
 let deleteTargetId=null;
 
@@ -1315,25 +1324,28 @@ function filterAgents(){
   renderAgentsGrid(agents);
 }
 
-function toggleAgentStatus(id){
-  const agents=getAgents();
-  const a=agents.find(x=>x.id===id);
+async function toggleAgentStatus(id){
+  const a=getAgents().find(x=>x.id===id);
   if(!a) return;
-  a.status=a.status==='active'?'paused':'active';
-  saveAgents(agents);
-  renderAgentsGrid();
-  showToast(`Agent "${a.name}" ${a.status==='active'?'activé':'mis en pause'}.`,'info');
+  if(a.virtual){ showToast("L'agent vedette est toujours actif.",'info'); return; }
+  const next=a.status==='active'?'paused':'active';
+  a.status=next; renderAgentsGrid();
+  const cl=sbClient();
+  if(cl){ try{ await cl.from('agents').update({is_active:next==='active'}).eq('id',id); }catch(e){} }
+  showToast(`Agent "${a.name}" ${next==='active'?'activé':'mis en pause'}.`,'info');
 }
 
 function askDeleteAgent(id){ deleteTargetId=id; document.getElementById('modal-delete-agent').classList.remove('hidden') }
 
-function confirmDeleteAgent(){
-  const agents=getAgents().filter(a=>a.id!==deleteTargetId);
-  saveAgents(agents);
-  renderAgentsGrid();
+async function confirmDeleteAgent(){
+  const id=deleteTargetId;
+  const a=getAgents().find(x=>x.id===id);
   closeModal('modal-delete-agent');
+  if(a&&a.virtual){ showToast("L'agent vedette ne peut pas être supprimé.",'info'); return; }
+  const cl=sbClient();
+  if(cl&&id){ try{ const {error}=await cl.from('agents').delete().eq('id',id); if(error){showToast('Erreur: '+error.message,'error');return;} }catch(e){showToast('Erreur réseau','error');return;} }
+  await loadAgents();
   showToast('Agent supprimé.','success');
-  refreshDash();
 }
 
 // ═══════════════════════════════════════
@@ -1377,25 +1389,28 @@ function updatePreview(){
   document.getElementById('prev-model-info').textContent=model;
 }
 
-function createAgent(){
+async function createAgent(){
   if(!currentUser){showToast('Connexion requise','error');return}
+  const cl=sbClient();
+  if(!cl){showToast('Connexion Supabase indisponible','error');return}
   const name=document.getElementById('c-name').value.trim();
   if(!name){showToast("Donnez un nom à l'agent!",'error');return}
   const emoji=document.getElementById('c-emoji').value||'🤖';
   const desc=document.getElementById('c-desc').value||'';
   const model=document.getElementById('c-model').value;
   const system=document.getElementById('c-system').value;
-  const newAgent={
-    id:'a_'+Date.now(),name,emoji,model,status:'active',desc,
-    system,tools:[...activeTools],convs:0,tokens:'0',
-    createdAt:new Date().toISOString(),ownerId:currentUser.id
+  const row={
+    user_id:currentUser.id, name, emoji, default_model:model,
+    specialty: desc || 'Agent personnalisé',
+    personality: system || ("Tu es "+name+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."),
+    is_active:true, can_search:activeTools.has('web')
   };
-  const agents=getAgents();
-  agents.unshift(newAgent);
-  saveAgents(agents);
+  try{
+    const {error}=await cl.from('agents').insert(row);
+    if(error){showToast('Erreur: '+error.message,'error');return;}
+  }catch(e){showToast('Erreur réseau','error');return;}
   addActivity(`✦`,`Agent <strong>${name}</strong> créé`,'Maintenant');
-  renderAgentsGrid();
-  refreshDash();
+  await loadAgents();
   showToast(`Agent "${name}" créé! 🤖`,'success');
   document.getElementById('c-name').value='';
   document.getElementById('c-desc').value='';
@@ -1470,7 +1485,7 @@ async function sendMessage(){
         const d=ln.slice(5).trim();if(d==='[DONE]')continue;
         try{const o=JSON.parse(d);if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}}catch(e){}}}
     chatHistory.push({role:'assistant',content:plein||'(réponse vide)'});
-    if(agent){agent.convs=(agent.convs||0)+1;saveAgents(getAgents());}
+    if(agent){agent.convs=(agent.convs||0)+1;}
   }catch(e){
     const t1=document.getElementById('typing');if(t1)t1.remove();
     const eDiv=document.createElement('div');eDiv.className='msg-wrap';

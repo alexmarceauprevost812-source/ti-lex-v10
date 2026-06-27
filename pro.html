@@ -2246,7 +2246,7 @@ body[data-theme="jour"]{background:#f5f7fa;color:#1a1f2e;}
             <div class="ag-stat"><div class="sdot g"></div> MAÎTRE DE TOUS LES AGENTS</div>
             <div class="ag-tags"><span class="atag or">MASTER</span><span class="atag or">LOI 25</span></div>
           </div>
-          <div class="ag-card" onclick="showTab('chat')">
+          <div class="ag-card" onclick="chatAL()">
             <div class="ag-top"><div class="ag-ico dark">💬</div>
               <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
@@ -4030,8 +4030,9 @@ async function initAlMemoryRecall(){
     }
   }catch(e){console.error("[AL memory] initAlMemoryRecall:",e);}
 }
+var _webAgent=null; /* agent de la plateforme /web actuellement actif dans le chat (persona) */
 function getSystemPrompt(){
-  var base=isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD;
+  var base=(_webAgent&&_webAgent.system)?_webAgent.system:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD);
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
   if(TilexConfig.githubToken&&TilexConfig.githubRepo){
@@ -4202,6 +4203,7 @@ async function sendChat(){
     const h={"Content-Type":"application/json"};
     if(tk)h["Authorization"]="Bearer "+tk;
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-4-6";
+    if(_webAgent&&_webAgent.model)chatModel=_webAgent.model;
     if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-4-6";
     if(reflexionMode){
       td.remove();
@@ -6712,7 +6714,60 @@ function renderAgentCards(){
     if(add)grid.insertBefore(card,add);else grid.appendChild(card);
   }
   var mEl=document.getElementById("m-agents");
-  if(mEl)mEl.textContent=3+customAgents.length;
+  if(mEl)mEl.textContent=3+customAgents.length+(typeof webAgents!=="undefined"?webAgents.length:0);
+}
+
+/* ── AGENTS DE LA PLATEFORME /web (table Supabase partagée `agents`) ── */
+var webAgents=[];
+function webAgentCardHtml(a){
+  var role=escHtml(a.specialty||"AGENT · PLATEFORME");
+  return '<div class="ag-top"><div class="ag-ico dark">'+(a.emoji||"🤖")+'</div>'+
+    '<div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>'+
+    '<span style="font-family:\'Share Tech Mono\',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div></div>'+
+    '<div class="ag-name">'+escHtml((a.name||"").toUpperCase())+'</div>'+
+    '<div class="ag-role">'+role+'</div>'+
+    '<div class="ag-model">'+escHtml(a.default_model||"claude-sonnet-4-6")+'</div>'+
+    '<div class="ag-stat"><div class="sdot g"></div> '+(a.is_active?"ACTIF":"EN PAUSE")+'</div>'+
+    '<div class="ag-tags"><span class="atag og">🌐 WEB</span><span class="atag">PLATEFORME</span></div>';
+}
+function renderWebAgentCards(){
+  var grid=document.getElementById("agents-grid");if(!grid)return;
+  var add=grid.querySelector(".add-card");
+  var old=grid.querySelectorAll(".ag-card.ag-web");
+  for(var i=0;i<old.length;i++)old[i].remove();
+  for(var i=0;i<webAgents.length;i++){
+    var a=webAgents[i];
+    var card=document.createElement("div");card.className="ag-card ag-web";
+    card.innerHTML=webAgentCardHtml(a);
+    card.style.cursor="pointer";
+    (function(ag){card.onclick=function(){activerAgentWeb(ag);};})(a);
+    if(add)grid.insertBefore(card,add);else grid.appendChild(card);
+  }
+  var mEl=document.getElementById("m-agents");
+  if(mEl)mEl.textContent=3+customAgents.length+webAgents.length;
+}
+async function chargerAgentsWeb(){
+  try{
+    var sess=await supabase.auth.getSession();
+    if(!sess.data||!sess.data.session)return;
+    var uid=sess.data.session.user.id;
+    var res=await supabase.from("agents").select("*").eq("user_id",uid).order("created_at",{ascending:false});
+    if(res.error){console.warn("[agents web]",res.error.message);return;}
+    webAgents=res.data||[];
+    renderWebAgentCards();
+  }catch(e){console.warn("[agents web] charge",e);}
+}
+function activerAgentWeb(a){
+  _webAgent={name:a.name,model:a.default_model||"claude-sonnet-4-6",system:a.personality||""};
+  showTab("chat");
+  chatHistory=[];
+  var msgs=document.getElementById("chat-msgs");if(msgs)msgs.innerHTML="";
+  if(typeof addMsg==="function")addMsg("a","Allô! Chui « "+(a.name||"agent")+" » 🤖 ("+(a.specialty||"agent plateforme")+"). Comment je peux t'aider?");
+  if(typeof showToastMsg==="function")showToastMsg("Agent « "+a.name+" » activé.");
+}
+function chatAL(){
+  _webAgent=null;
+  showTab("chat");
 }
 
 /* ── SETTINGS INIT ── */
@@ -8896,6 +8951,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
     chargerCredits().catch(function(){});
+    chargerAgentsWeb().catch(function(){});
     if(window.MemoireIA){MemoireIA.initialiser(session.user.id,{email:session.user.email}).catch(function(){});}
     if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
   }
@@ -8912,6 +8968,7 @@ supabase.auth.onAuthStateChange(function(event,session){
       demarrerConversation(u.data.user.id).catch(function(){});
       chargerSessionAgentAL().catch(function(){});
       chargerMemoireContexte().catch(function(){});
+      chargerAgentsWeb().catch(function(){});
       if(window.AlMemory){initAlMemoryRecall().catch(function(){});}
     }
   }catch(e){}
