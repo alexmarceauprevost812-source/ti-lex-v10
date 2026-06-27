@@ -121,6 +121,9 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
   -webkit-text-fill-color:transparent;animation:logo-sh 4.5s ease-in-out infinite;}
 @keyframes logo-sh{0%{background-position:220% center}100%{background-position:-80% center}}
 @media(max-width:480px){.tb-logo-txt{display:none!important;}}
+/* Téléphone : on cache les pastilles de connecteurs (Supabase/Anthropic/GitHub/Vercel)
+   pour laisser la place au bouton ⚡ STUDIO et à la cloche 🔔 à droite. */
+@media(max-width:600px){#connectors-hub,[data-connectors-hub]{display:none!important;}}
 .tb-logo-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;}
 
 /* Plan badge topbar */
