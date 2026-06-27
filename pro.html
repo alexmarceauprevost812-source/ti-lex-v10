@@ -3726,7 +3726,7 @@ var EcritureFluide={
     var E=EcritureFluide;
     E._element=el;E._container=container;
     E._buffer='';E._affiche='';E._totalChars=0;
-    E._fini=false;E._lastTime=0;E._scrollTimer=null;
+    E._fini=false;E._lastTime=0;E._scrollTimer=null;E._carry=0;
     el.classList.add('ecriture-active');
     el.textContent='';
     var tn=document.createTextNode('');
@@ -3754,38 +3754,35 @@ var EcritureFluide={
     E._buffer+=delta;
   },
 
-  _calculerDelai:function(char){
+  // ✍️ Moteur temps-réel : on révèle un nombre de caractères proportionnel au
+  // TEMPS écoulé (indépendant du FPS), avec report de la fraction → rythme
+  // CONSTANT et lisse, du début à la fin. Accélération DOUCE et progressive
+  // seulement si le buffer prend de l'avance (réseau rapide), jamais par à-coups.
+  _boucle:function(ts){
     var E=EcritureFluide;
-    // ⏱️ Vitesse CONSTANTE du début à la fin (pas de démarrage lent, pas de pause sur la ponctuation)
-    var base=(_efProfil==='ordinateur')?16:20;
-    // rattrapage doux UNIQUEMENT si le réseau a pris du retard (sinon la vitesse reste stable)
-    if(E._buffer.length>120)base=Math.min(base,4);
-    else if(E._buffer.length>60)base=Math.min(base,8);
-    return Math.max(base,1);
-  },
-
-  _boucle:function(){
-    var E=EcritureFluide;
-    var now=performance.now();
-    var buf=E._buffer;
-    if(buf.length>0){
-      var char=buf[0];
-      var delai=E._calculerDelai(char);
-      if(now-E._lastTime>=delai){
-        // ✍️ Lettre par lettre TANT que le flux suit ; on ne groupe QUE si le buffer
-        // prend du retard (rattrapage doux) → reste "lettre par lettre" et vif, sans lag.
-        var chunk=1;
-        if(buf.length>120)chunk=Math.min(_efMobile?3:4,buf.length);
-        else if(buf.length>50)chunk=Math.min(_efMobile?2:3,buf.length);
+    if(ts===undefined)ts=performance.now();
+    // 1re frame : on cale l'horloge sans rien écrire (évite un saut au démarrage)
+    if(!E._lastTime){E._lastTime=ts;E._raf=requestAnimationFrame(E._boucle);return;}
+    var dt=ts-E._lastTime;E._lastTime=ts;
+    if(dt>50)dt=50; // après un gel d'onglet : pas de saut brusque
+    var pending=E._buffer.length;
+    if(pending>0){
+      var base=_efMobile?0.07:0.085;            // ~70–85 caractères/seconde, vitesse de croisière
+      var rate=base;
+      if(pending>40)rate=base*(1+Math.min((pending-40)/200,2.5)); // jusqu'à ~3.5× en douceur si en retard
+      var exact=dt*rate+(E._carry||0);
+      var n=Math.floor(exact);
+      E._carry=exact-n;                          // garde la fraction → transitions fluides
+      if(n>0){
+        if(n>pending)n=pending;
         // mesure "collé en bas" AVANT d'écrire (évite le reflow forcé write→read→write)
         var c=E._container;
         var stick=c?(c.scrollHeight-c.scrollTop-c.clientHeight<80):false;
-        E._affiche+=buf.slice(0,chunk);
-        E._buffer=buf.slice(chunk);
-        E._totalChars+=chunk;
-        E._lastTime=now;
+        E._affiche+=E._buffer.slice(0,n);
+        E._buffer=E._buffer.slice(n);
+        E._totalChars+=n;
         if(E._textNode)E._textNode.data=E._affiche;
-        // scroll DANS la frame rAF (synchronisé au paint), seulement si l'utilisateur est déjà en bas
+        // scroll DANS la frame rAF (synchronisé au paint), seulement si déjà en bas
         if(c&&stick)c.scrollTop=c.scrollHeight;
       }
     }else if(E._fini){

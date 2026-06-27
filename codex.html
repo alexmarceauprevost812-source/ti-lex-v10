@@ -283,16 +283,19 @@
     var span=document.createElement("span"); var cur=document.createElement("span"); cur.className="tc-curseur";
     corpsEl.appendChild(span); corpsEl.appendChild(cur);
 
-    // ── Écriture fluide (rAF, lettre par lettre, rattrapage doux) ──
+    // ── Écriture fluide temps-réel (rAF, rythme constant, même moteur que le chat) ──
     var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var affiche=0, finFlux=false, raf=null;
-    function boucle(){
-      if(plein.length>affiche){
-        var rem=plein.length-affiche;
-        var pas=rem>120?4:(rem>50?2:1);   // rattrapage seulement si le réseau a de l'avance
-        affiche+=pas;
-        span.textContent=plein.slice(0,affiche);
-        scrollBas();
+    var affiche=0, finFlux=false, raf=null, _last=0, _carry=0;
+    function boucle(ts){
+      if(ts===undefined)ts=performance.now();
+      if(!_last){_last=ts;raf=requestAnimationFrame(boucle);return;}
+      var dt=ts-_last;_last=ts;if(dt>50)dt=50;
+      var pending=plein.length-affiche;
+      if(pending>0){
+        var base=0.085,rate=base;                // ~85 caractères/seconde
+        if(pending>40)rate=base*(1+Math.min((pending-40)/200,2.5)); // accélère en douceur si en retard
+        var exact=dt*rate+_carry,n=Math.floor(exact);_carry=exact-n;
+        if(n>0){affiche+=n;if(affiche>plein.length)affiche=plein.length;span.textContent=plein.slice(0,affiche);scrollBas();}
       }else if(finFlux){ if(cur.parentNode)cur.remove(); raf=null; return; }
       raf=requestAnimationFrame(boucle);
     }
