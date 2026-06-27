@@ -1091,6 +1091,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             <label class="ctl-label">Traînée (fondu) : <b id="mxFadeVal">8</b></label>
             <input type="range" id="mxFade" class="ctl-range" min="2" max="20" value="8" oninput="document.getElementById('mxFadeVal').textContent=this.value;updateMatrix()">
             <div class="ctl-preview" style="padding:0;overflow:hidden;"><canvas id="mxCanvas" style="width:100%;height:160px;display:block;background:#000;border-radius:10px;"></canvas></div>
+            <div class="ctl-switch" style="margin-top:10px;"><div><b>Afficher en fond</b><br><small>Sur toute la plateforme (pro.html)</small></div><div class="toggle" id="mxEnabled" onclick="this.classList.toggle('on')"></div></div>
             <div style="display:flex;gap:10px;margin-top:12px;">
               <button class="btn btn-orange" onclick="appliquerMatrix()">✅ Appliquer</button>
               <button class="btn btn-ghost" onclick="resetMatrix()">↺ Reset</button>
@@ -1492,11 +1493,13 @@ function updateMatrix(){
 function appliquerMatrix(){
   updateMatrix();
   const cfg=Object.assign({},MatrixEngine.cfg);
+  const en=document.getElementById('mxEnabled'); cfg.enabled=!!(en&&en.classList.contains('on'));
   ctlConfig.matrix=cfg;
   try{localStorage.setItem('tilex_matrix',JSON.stringify(cfg));}catch(e){}
   window.dispatchEvent(new CustomEvent('tilex:matrix',{detail:cfg}));
+  if(window.TilexMatrixBG)TilexMatrixBG.apply(cfg); // si jamais un fond existe sur cette page
   ctlSave(); // persiste toute la config plateforme (incluant matrix) dans Supabase
-  if(typeof showToast==='function')showToast('🟥 Matrix appliquée et sauvegardée','success');
+  if(typeof showToast==='function')showToast(cfg.enabled?'🟥 Matrix activée en fond + sauvegardée':'🟥 Matrix sauvegardée (fond désactivé)','success');
 }
 function resetMatrix(){
   const g=id=>document.getElementById(id);
@@ -1514,6 +1517,7 @@ function ctlMatrixPopuler(){
   g('mxSpeed').value=m.speed||50; g('mxSpeedVal').textContent=String(m.speed||50);
   g('mxDens').value=m.dens||14; g('mxDensVal').textContent=String(m.dens||14);
   g('mxFade').value=m.fade||8; g('mxFadeVal').textContent=String(m.fade||8);
+  const en=g('mxEnabled'); if(en)en.classList.toggle('on',!!m.enabled);
   updateMatrix();
 }
 
