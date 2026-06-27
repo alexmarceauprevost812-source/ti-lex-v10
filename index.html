@@ -25,6 +25,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <!-- Typewriter (phrases chevauchées à 70%) — doit être chargé avant l'usage -->
   <script src="js/tilex-typewriter.js"></script>
+  <script src="js/tilex-intro.js"></script>
 
   <style>
     /* ═══════════════════════════════════════════════
@@ -608,8 +609,8 @@
 ═══════════════════════════════════════════════ -->
 <div class="wrap">
 
-  <!-- LOGO -->
-  <div class="logo-box">
+  <!-- LOGO — animation DevilScene en boucle infinie (img = poster de secours) -->
+  <div class="logo-box" id="logo-box">
     <img src="logo.png" alt="TI-LEX-AL V10"
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="logo-fallback">TI-LEX-AL V10</div>
@@ -1410,6 +1411,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const iv = document.getElementById('introVideo');
   if (iv) { iv.addEventListener('ended', skipIntro); iv.addEventListener('error', skipIntro); }
+
+  // Animation DevilScene en boucle infinie dans le logo d'accueil
+  if (window.TilexIntro) { try { TilexIntro.mountLoop(document.getElementById('logo-box')); } catch(e){} }
 
   const consent = JSON.parse(localStorage.getItem('tilex-consent') || 'null');
   if (!consent) document.getElementById('consentBanner').classList.remove('hidden');
