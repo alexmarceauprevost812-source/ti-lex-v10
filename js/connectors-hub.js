@@ -28,10 +28,8 @@
       id: 'github', label: 'GitHub', logo: 'public/img/connectors/github.svg',
       color: '#c084fc', initial: 'G',
       check: async function() {
-        try {
-          var r = await window.supabase.functions.invoke('tilex-realize', { body: { action: 'check_github' } });
-          return r.data && r.data.connected === true;
-        } catch(e) { return false; }
+        // tilex-realize non déployée → on reflète l'état GitHub local sans appeler le serveur (évite un 404).
+        try { return !!(window._codexGithub && window._codexGithub.repo); } catch(e) { return false; }
       },
     },
     {

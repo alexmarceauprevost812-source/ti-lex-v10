@@ -269,6 +269,10 @@
   };
 
   async function _realizeFlow(code, btn) {
+    // ⚠️ tilex-realize non déployée (404) → flow désactivé pour éviter les erreurs en prod.
+    // TODO: réactiver quand l'Edge Function tilex-realize existera côté Supabase.
+    if (typeof showToast === 'function') showToast("⚙️ Réalisation auto (SQL/GitHub) bientôt disponible — copie ton code en attendant.", "info");
+    return;
     btn.disabled = true;
     btn.textContent = '⏳ Analyse...';
 
