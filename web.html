@@ -21,6 +21,36 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--w
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--orange);border-radius:4px}
 .hidden{display:none!important}
 
+/* ════════════════════════════════════════════════
+   ☀️ THÈME JOUR — beige Anthropic / Claude
+   (palette chaude crème + accent argile, fond d'écran doux)
+   ════════════════════════════════════════════════ */
+html[data-theme="jour"]{
+  --bg:#f4f0e6;--bg2:#faf8f2;--bg3:#efe9db;--bg4:#e6dfcd;
+  --orange:#c96442;--orange2:#d97757;--orange-dim:rgba(201,100,66,.12);
+  --red:#b3401f;--white:#2b2a27;--grey:#6b6258;--grey2:#9a8f7e;
+  --border:rgba(60,45,30,.14);--glow:0 0 40px rgba(201,100,66,.22);
+  --accent:#c96442;--accent2:#d97757;--accent-dim:rgba(201,100,66,.12);
+  --accent-glow:0 0 40px rgba(201,100,66,.22);
+  color-scheme:light;
+}
+/* Fond d'écran doux (papier crème + halos argile) — fixe, ne scrolle pas */
+html[data-theme="jour"] body{
+  background:
+    radial-gradient(1100px 620px at 12% -12%, rgba(217,119,87,.10), transparent 60%),
+    radial-gradient(820px 520px at 112% 8%, rgba(201,100,66,.07), transparent 55%),
+    radial-gradient(700px 700px at 90% 115%, rgba(180,150,110,.08), transparent 60%),
+    linear-gradient(180deg,#faf7ef 0%,#f4f0e6 48%,#ede6d6 100%);
+  background-attachment:fixed;
+}
+html[data-theme="jour"] .grid-bg{opacity:.5;background-image:linear-gradient(rgba(120,90,55,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,55,.10) 1px,transparent 1px)}
+html[data-theme="jour"] ::-webkit-scrollbar-track{background:var(--bg3)}
+html[data-theme="jour"] .btn-orange{color:#fff}
+html[data-theme="jour"] .card,html[data-theme="jour"] .stat-card,html[data-theme="jour"] .agent-card,
+html[data-theme="jour"] .auth-card,html[data-theme="jour"] .msg-bubble,html[data-theme="jour"] .preview-panel{
+  box-shadow:0 1px 3px rgba(60,45,30,.06),0 6px 18px rgba(60,45,30,.05);
+}
+
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:600;font-size:14px;border-radius:var(--r2);padding:10px 20px;transition:all .2s;white-space:nowrap}
 .btn-orange{background:var(--orange);color:#fff}
@@ -1348,7 +1378,7 @@ function navigateTo(section){
 const CTL_DEFAULTS={accent:'#FF6B00',bg:'#080808',txt:'#ffffff',preset:'nuit',modules:{vision:true,vocal:true,stream:true,offline:true,memory:true}};
 const CTL_PRESETS={
   nuit:{accent:'#FF6B00',bg:'#080808',txt:'#ffffff'},
-  jour:{accent:'#FF6B00',bg:'#f4f1ea',txt:'#1a1208'},
+  jour:{accent:'#c96442',bg:'#f4f0e6',txt:'#2b2a27'},
   matrix:{accent:'#e63946',bg:'#0a0a0f',txt:'#e8e8f0'},
   ocean:{accent:'#457b9d',bg:'#0b1d2a',txt:'#dff3ff'}
 };
@@ -1367,6 +1397,22 @@ function ctlAppliquerCSS(cfg){
   root.setProperty('--accent-glow','0 0 40px rgba('+argb.r+','+argb.g+','+argb.b+',.3)');
   root.setProperty('--bg',cfg.bg);root.setProperty('--bg2',_ctlShade(cfg.bg,0.06));root.setProperty('--bg3',_ctlShade(cfg.bg,0.12));root.setProperty('--bg4',_ctlShade(cfg.bg,0.18));
   root.setProperty('--white',cfg.txt);
+  // — Adapter bordures/gris selon la clarté du fond + activer le fond d'écran jour —
+  const bgr=_ctlHx(cfg.bg);const lum=0.299*bgr.r+0.587*bgr.g+0.114*bgr.b;const clair=lum>140;
+  if(cfg.preset==='jour'){
+    // Thème Claude complet (palette + fond d'écran beige géré par le CSS [data-theme="jour"])
+    document.documentElement.setAttribute('data-theme','jour');
+    root.removeProperty('--border');root.removeProperty('--grey');root.removeProperty('--grey2');
+  }else{
+    document.documentElement.setAttribute('data-theme','nuit');
+    if(clair){ // fond clair personnalisé : garder des bordures/gris lisibles
+      root.setProperty('--border','rgba(60,45,30,.16)');
+      root.setProperty('--grey','#6b6258');root.setProperty('--grey2','#9a8f7e');
+    }else{
+      root.setProperty('--border','rgba(255,255,255,.07)');
+      root.setProperty('--grey','#888');root.setProperty('--grey2','#555');
+    }
+  }
 }
 function ctlPopuler(){
   const a=document.getElementById('ctl-accent');if(a)a.value=ctlConfig.accent;
@@ -1436,6 +1482,8 @@ async function ctlLoad(){
   ctlPopuler();
 }
 window.TilexControl={get config(){return ctlConfig;},get modules(){return ctlConfig.modules;},apply(){ctlAppliquerCSS(ctlConfig);}};
+// Applique le thème sauvé dès le chargement (même sur l'écran de connexion).
+try{const _l=JSON.parse(localStorage.getItem('tilex-platform-config')||'null');if(_l){ctlConfig=Object.assign({},CTL_DEFAULTS,_l);ctlAppliquerCSS(ctlConfig);}}catch(e){}
 
 // ═══════════════════════════════════════
 //   MATRIX LIVE (canvas pluie configurable)
