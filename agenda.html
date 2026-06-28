@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📅 ti-lex Agenda Total</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#0a0a0f; color:#e8e8e8; min-height:100vh; padding-bottom:40px; }
+  header { padding:16px; background:#14141c; border-bottom:1px solid #26263a; text-align:center; }
+  h1 { font-size:1.3rem; color:#ff3b3b; }
+  .sub { color:#888; font-size:0.82rem; margin-top:2px; }
+  .wrap { max-width:600px; margin:0 auto; }
+  .meteo-wrap { padding:14px 16px 0; }
+
+  .saison { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:16px; }
+  .stat { background:#14141c; border:1px solid #26263a; border-radius:12px; padding:14px; text-align:center; }
+  .stat .lbl { color:#888; font-size:0.72rem; margin-bottom:5px; }
+  .stat .big { font-size:1.2rem; font-weight:700; color:#fff; }
+  .stat.banque .big { color:#2ecc71; }
+  .stat.argent .big { color:#ffb300; }
+
+  .navmois { display:flex; align-items:center; justify-content:space-between; margin:4px auto 8px; padding:0 16px; }
+  .navmois button { background:#1e1e2a; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:1.1rem; cursor:pointer; }
+  .navmois button:active { transform:scale(0.95); }
+  .moislbl { font-size:1.05rem; font-weight:700; color:#ff3b3b; text-transform:capitalize; }
+
+  .cal { padding:0 16px; }
+  .jours-head { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:4px; }
+  .jours-head div { text-align:center; color:#888; font-size:0.72rem; padding:4px 0; }
+  .grille { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .case { aspect-ratio:1; background:#14141c; border:1px solid #1e1e2a; border-radius:8px;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:4px 2px; cursor:pointer; position:relative; transition:background .15s; font-size:0.8rem; }
+  .case:active { background:#1e1e2a; }
+  .case.vide { background:transparent; border:none; cursor:default; }
+  .case.aujd { border:2px solid #ff3b3b; }
+  .case .num { color:#ccc; font-weight:600; }
+  .case .dots { display:flex; gap:2px; margin-top:auto; padding-bottom:2px; }
+  .case .pt { width:6px; height:6px; border-radius:50%; }
+  .pt.foret { background:#2ecc71; }
+  .pt.tilex { background:#3b82f6; }
+
+  .lien-rapport { display:block; text-align:center; margin:18px 16px 0; padding:14px;
+    background:#1e1e2a; color:#fff; border-radius:12px; text-decoration:none; font-weight:700; }
+
+  .modal { position:fixed; inset:0; background:#000c; display:none; align-items:flex-end; z-index:50; }
+  .modal.show { display:flex; }
+  .sheet { background:#14141c; width:100%; max-width:600px; margin:0 auto; border-radius:18px 18px 0 0;
+    padding:20px; max-height:90vh; overflow-y:auto; animation:up .25s; }
+  @keyframes up { from{transform:translateY(100%);} to{transform:translateY(0);} }
+  .sheet h2 { color:#ff3b3b; font-size:1.1rem; margin-bottom:14px; text-transform:capitalize; }
+  .sec { background:#0d0d14; border:1px solid #1e1e2a; border-radius:12px; padding:14px; margin-bottom:12px; }
+  .sec .titre { font-size:0.95rem; font-weight:700; margin-bottom:10px; }
+  .sec.foret .titre { color:#2ecc71; }
+  .sec.tilex .titre { color:#3b82f6; }
+  label { display:block; color:#999; font-size:0.78rem; margin:8px 0 4px; }
+  input, textarea { width:100%; padding:11px; background:#1a1a24; border:1px solid #2a2a3a; border-radius:9px;
+    color:#fff; font-size:0.95rem; font-family:inherit; }
+  .deux { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .calc { background:#0a2616; border:1px solid #2ecc7144; border-radius:10px; padding:12px; margin-top:10px; font-size:0.85rem; }
+  .calc .l { display:flex; justify-content:space-between; padding:3px 0; }
+  .calc .l .v { color:#2ecc71; font-weight:700; }
+  .calc .note { color:#7a7a8a; font-size:0.72rem; margin-top:6px; }
+  .btns { display:flex; gap:10px; margin-top:16px; }
+  .btns button { flex:1; padding:14px; border:none; border-radius:11px; font-size:1rem; font-weight:700; cursor:pointer; }
+  .save { background:#2ecc71; color:#062b14; }
+  .close { background:#1e1e2a; color:#fff; }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>📅 ti-lex AGENDA TOTAL</h1>
+    <div class="sub">Forêt 🌲 + ti-lex 💻 — Saison</div>
+  </header>
+
+  <div class="wrap">
+    <div class="meteo-wrap"><div id="meteoBox"></div></div>
+
+    <div class="saison">
+      <div class="stat"><div class="lbl">⏰ Heures saison</div><div class="big" id="sHeures">0</div></div>
+      <div class="stat banque"><div class="lbl">🏦 Banque heures</div><div class="big" id="sBanque">0</div></div>
+      <div class="stat argent"><div class="lbl">💰 $ saison</div><div class="big" id="sArgent">0 $</div></div>
+    </div>
+
+    <div class="navmois">
+      <button onclick="changeMois(-1)">‹</button>
+      <span class="moislbl" id="moisLbl">--</span>
+      <button onclick="changeMois(1)">›</button>
+    </div>
+
+    <div class="cal">
+      <div class="jours-head"><div>Dim</div><div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div></div>
+      <div class="grille" id="grille"></div>
+    </div>
+
+    <a class="lien-rapport" href="rapport.html">📊 Voir le rapport de saison →</a>
+  </div>
+
+  <!-- Modale jour -->
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <h2 id="modalDate">Jour</h2>
+
+      <div class="sec foret">
+        <div class="titre">🌲 Travail FORÊT</div>
+        <div class="deux">
+          <div><label>Début</label><input type="time" id="fDebut" oninput="calcule()"></div>
+          <div><label>Fin</label><input type="time" id="fFin" oninput="calcule()"></div>
+        </div>
+        <label>Pause (minutes)</label>
+        <input type="number" id="fPause" value="30" oninput="calcule()">
+        <div class="calc">
+          <div class="l"><span>Heures travaillées</span><span class="v" id="cHeures">0 h</span></div>
+          <div class="note">Paye 40 $/h, puis 60 $/h après 40 h/semaine. La banque d'heures se calcule sur la semaine complète à la sauvegarde.</div>
+        </div>
+      </div>
+
+      <div class="sec tilex">
+        <div class="titre">💻 Travail ti-lex</div>
+        <label>Sur quoi t'as travaillé?</label>
+        <input type="text" id="tProjet" placeholder="Ex: bug streaming, TilexVision...">
+        <label>Notes</label>
+        <textarea id="tNotes" rows="2" placeholder="Notes de session..."></textarea>
+      </div>
+
+      <div class="btns">
+        <button class="close" onclick="fermer()">Fermer</button>
+        <button class="save" onclick="sauvegarder()">💾 Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+<script src="js/tilex-config.js"></script>
+<script src="js/tilex-prive.js"></script>
+<script src="js/tilex-meteo.js"></script>
+<script src="js/tilex-paye.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_KEY = window.SB_ANON || '';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const MOIS_NOMS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  let courant = new Date();
+  let jourSelect = null;
+  let donnees = {}; // {dateISO: {f_debut,f_fin,f_pause,f_heures,f_paye,f_banque,t_projet,t_notes}}
+
+  function cle(y, m, d) { return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'); }
+
+  // --- Calcul live des heures (paye/banque finalisées à la sauvegarde) ---
+  window.calcule = function () {
+    const h = TilexPaye.calculerJour(
+      document.getElementById('fDebut').value,
+      document.getElementById('fFin').value,
+      parseInt(document.getElementById('fPause').value) || 0
+    );
+    document.getElementById('cHeures').textContent = TilexPaye.formatHeures(h) + ' (' + h.toFixed(2) + ' h)';
+    return h;
+  };
+
+  // --- Répartit les heures d'une semaine en normal/temps-sup (chronologique) ---
+  function repartirSemaine(joursHeures) {
+    const dates = Object.keys(joursHeures).sort();
+    let cumul = 0; const out = {};
+    for (const d of dates) {
+      const h = joursHeures[d] || 0;
+      const avant = cumul, apres = cumul + h;
+      const normal = Math.max(0, Math.min(apres, 40) - Math.min(avant, 40));
+      const sup = Math.max(0, h - normal);
+      out[d] = { paye: normal * 40 + sup * 60, banque: sup };
+      cumul = apres;
+    }
+    return out;
+  }
+
+  // --- Charger toutes les journées ---
+  async function charger() {
+    const { data, error } = await supabase.from('agenda_jour').select('*');
+    donnees = {};
+    if (!error && data) data.forEach(r => { donnees[r.date_jour] = r; });
+    rendreSaison();
+    rendreCalendrier();
+  }
+
+  function rendreSaison() {
+    const heuresParJour = {};
+    for (const d in donnees) if (donnees[d].f_heures) heuresParJour[d] = parseFloat(donnees[d].f_heures) || 0;
+    const s = TilexPaye.calculerSaison(heuresParJour);
+    document.getElementById('sHeures').textContent = TilexPaye.formatHeures(s.totalHeures);
+    document.getElementById('sBanque').textContent = TilexPaye.formatHeures(s.banqueTotale);
+    document.getElementById('sArgent').textContent = TilexPaye.format(s.payeTotale);
+  }
+
+  window.changeMois = function (delta) { courant.setMonth(courant.getMonth() + delta); rendreCalendrier(); };
+
+  function rendreCalendrier() {
+    const y = courant.getFullYear(), m = courant.getMonth();
+    document.getElementById('moisLbl').textContent = MOIS_NOMS[m] + ' ' + y;
+    const grille = document.getElementById('grille');
+    grille.innerHTML = '';
+    const premier = new Date(y, m, 1).getDay();
+    const nbJours = new Date(y, m + 1, 0).getDate();
+    const ajd = cle(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+    for (let i = 0; i < premier; i++) { const v = document.createElement('div'); v.className = 'case vide'; grille.appendChild(v); }
+    for (let d = 1; d <= nbJours; d++) {
+      const iso = cle(y, m, d);
+      const c = document.createElement('div');
+      c.className = 'case' + (iso === ajd ? ' aujd' : '');
+      const row = donnees[iso];
+      let dots = '';
+      if (row && row.f_heures > 0) dots += '<span class="pt foret"></span>';
+      if (row && (row.t_projet || row.t_notes)) dots += '<span class="pt tilex"></span>';
+      c.innerHTML = '<span class="num">' + d + '</span><span class="dots">' + dots + '</span>';
+      c.onclick = () => ouvrir(iso);
+      grille.appendChild(c);
+    }
+  }
+
+  window.ouvrir = function (iso) {
+    jourSelect = iso;
+    const r = donnees[iso] || {};
+    const [y, m, d] = iso.split('-');
+    document.getElementById('modalDate').textContent = d + ' ' + MOIS_NOMS[parseInt(m) - 1] + ' ' + y;
+    document.getElementById('fDebut').value = r.f_debut || '';
+    document.getElementById('fFin').value = r.f_fin || '';
+    document.getElementById('fPause').value = (r.f_pause != null ? r.f_pause : 30);
+    document.getElementById('tProjet').value = r.t_projet || '';
+    document.getElementById('tNotes').value = r.t_notes || '';
+    calcule();
+    document.getElementById('modal').classList.add('show');
+  };
+  window.fermer = function () { document.getElementById('modal').classList.remove('show'); };
+
+  window.sauvegarder = async function () {
+    if (!jourSelect) return;
+    const fDebut = document.getElementById('fDebut').value;
+    const fFin = document.getElementById('fFin').value;
+    const fPause = parseInt(document.getElementById('fPause').value) || 0;
+    const heures = TilexPaye.calculerJour(fDebut, fFin, fPause);
+
+    // maj locale du jour
+    donnees[jourSelect] = Object.assign({}, donnees[jourSelect], {
+      date_jour: jourSelect, f_debut: fDebut || null, f_fin: fFin || null, f_pause: fPause,
+      f_heures: heures, t_projet: document.getElementById('tProjet').value || null,
+      t_notes: document.getElementById('tNotes').value || null
+    });
+
+    // recalcul de TOUTE la semaine du jour (banque correcte)
+    const sem = TilexPaye.numeroSemaine(jourSelect);
+    const heuresSemaine = {};
+    for (const d in donnees) if (TilexPaye.numeroSemaine(d) === sem && donnees[d].f_heures) heuresSemaine[d] = parseFloat(donnees[d].f_heures) || 0;
+    const rep = repartirSemaine(heuresSemaine);
+
+    const rows = [];
+    for (const d in donnees) {
+      if (TilexPaye.numeroSemaine(d) !== sem) continue;
+      const r = donnees[d];
+      if (!r.f_heures && !r.t_projet && !r.t_notes) continue; // ignore jours vides
+      r.f_paye = rep[d] ? Math.round(rep[d].paye) : 0;
+      r.f_banque = rep[d] ? rep[d].banque : 0;
+      rows.push({
+        date_jour: d, f_debut: r.f_debut || null, f_fin: r.f_fin || null,
+        f_pause: r.f_pause != null ? r.f_pause : 30, f_heures: parseFloat(r.f_heures) || 0,
+        f_paye: r.f_paye, f_banque: r.f_banque,
+        t_projet: r.t_projet || null, t_notes: r.t_notes || null
+      });
+    }
+
+    const { error } = await supabase.from('agenda_jour').upsert(rows, { onConflict: 'user_id,date_jour' });
+    if (error) { alert('⚠️ Sauvegarde : ' + error.message); return; }
+    fermer();
+    rendreSaison();
+    rendreCalendrier();
+  };
+
+  // Météo
+  if (window.TilexMeteo) {
+    TilexMeteo.normandin()
+      .then(m => { document.getElementById('meteoBox').innerHTML = TilexMeteo.rendreHTML(m); })
+      .catch(() => { document.getElementById('meteoBox').innerHTML = TilexMeteo.rendreHTML(null); });
+  }
+
+  charger();
+</script>
+</body>
+</html>
