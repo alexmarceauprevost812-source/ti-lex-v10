@@ -1,5 +1,13 @@
 # ⚠️ ai-proxy — état du déploiement en production
 
+## v45 (événement « sources » Web) — 2026-06-28
+Déployée à partir de la version EN LIGNE v43/44 (chirurgicale, accès anonyme),
+avec **une seule ligne additive** : quand la recherche web Anthropic
+s'exécute, on émet `data: {"type":"sources","sources":["web"],"confirmed":true}`
+pour que le front affiche le logo Web. **Aucun** autre changement : accès
+anonyme conservé, **PAS** de verrou d'abonnement. Snapshot exact déployé :
+`index.prod-deployed.ts.txt` (c'est CE fichier qui est en ligne, pas `index.ts`).
+
 ## v43 (correctif CORS) — 2026-06-27
 Le préflight CORS bloquait l'en-tête `apikey` envoyé par les clients
 (codex/web/pro) → POST refusé par le navigateur → « Failed to fetch ».

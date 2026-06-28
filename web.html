@@ -1741,6 +1741,41 @@ let chatHistory=[];
 function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
 
+// ── Indicateur de SOURCES (vrais logos) — web.html ──
+// Seul moteur pertinent ici : la recherche web Anthropic ("web").
+var TLX_SRC={
+  web:{l:"Web",c:"#4a9eff",p:null},
+  supabase:{l:"Supabase",c:"#3ECF8E",p:"M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.377.113-3.405-1.645-3.405h-9.642z"},
+  github:{l:"GitHub",c:"#e8e8ec",p:"M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"},
+  google:{l:"Google",c:"#4285F4",p:"M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"}
+};
+function tlxSourceChip(src){
+  var d=TLX_SRC[src]; if(!d) return "";
+  var icon=d.p
+    ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="'+d.c+'"><path d="'+d.p+'"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="'+d.c+'" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
+  return '<span class="tlx-src-chip" title="'+d.l+'">'+icon+'<span>'+d.l+'</span></span>';
+}
+function tlxRenderSources(row, sources, confirmed){
+  if(!row) return;
+  var known=(sources||[]).filter(function(s){return TLX_SRC[s];});
+  if(!known.length){ row.innerHTML=""; return; }
+  row.innerHTML='<span class="tlx-src-lead">'+(confirmed?"🔎 Sources :":"… recherche :")+'</span>'+known.map(tlxSourceChip).join("");
+  row.setAttribute("data-confirmed", confirmed?"1":"0");
+}
+function tlxWebIntent(t){
+  t=" "+String(t||"").toLowerCase()+" ";
+  return /cherche|recherch|sur le web|internet|en ligne|actualit|nouvelle|m[ée]t[ée]o|aujourd|derni[èe]r|r[ée]cent|http|www\.|\.com|\.ca|prix de|cours de|qui est|c'est quoi|what is|latest|news/.test(t);
+}
+(function(){var st=document.createElement("style");st.textContent=
+  ".tlx-sources{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 5px}"+
+  ".tlx-sources:empty{display:none}"+
+  ".tlx-src-lead{font-size:10px;color:var(--grey);font-family:var(--mono,monospace);letter-spacing:.3px}"+
+  ".tlx-src-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--white);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 9px;line-height:1}"+
+  ".tlx-src-chip svg{display:block;flex-shrink:0}"+
+  ".tlx-sources[data-confirmed=\"1\"] .tlx-src-chip{border-color:var(--orange,#FF6B00);box-shadow:0 0 6px rgba(255,107,0,.25)}";
+  document.head.appendChild(st);})();
+
 async function sendMessage(){
   if(!currentAgentId){showToast("Sélectionnez d'abord un agent",'error');return}
   const ta=document.getElementById('chat-textarea');
@@ -1763,23 +1798,30 @@ async function sendMessage(){
   const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
   typ.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div class="msg-bubble" style="color:var(--grey)"><span class="spinner"></span></div>`;
   msgs.appendChild(typ);msgs.scrollTop=msgs.scrollHeight;
+  const wantWeb=tlxWebIntent(text);
   try{
     const res=await fetch(AIP_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aipToken(),'apikey':AIP_KEY},
-      body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,
+      body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,web_search:wantWeb,
         system:((agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."))+(memCtx||''),
         messages:chatHistory.slice(-16)})});
     const t0=document.getElementById('typing');if(t0)t0.remove();
     if(!res.ok||!res.body){let tx='';try{tx=await res.text();}catch(e){}throw new Error('HTTP '+res.status+' '+tx);}
     const aDiv=document.createElement('div');aDiv.className='msg-wrap';
-    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble"><span class="ai-corps"></span></div><div class="msg-time">Maintenant</div></div>`;
+    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="tlx-sources"></div><div class="msg-bubble"><span class="ai-corps"></span></div><div class="msg-time">Maintenant</div></div>`;
     msgs.appendChild(aDiv);
     const corps=aDiv.querySelector('.ai-corps');
+    const srcRow=aDiv.querySelector('.tlx-sources');
+    if(wantWeb)tlxRenderSources(srcRow,['web'],false);
     const reader=res.body.getReader();const dec=new TextDecoder();let buf='',plein='';
     while(true){const ch=await reader.read();if(ch.done)break;buf+=dec.decode(ch.value,{stream:true});
       const parts=buf.split('\n\n');buf=parts.pop()||'';
       for(const p of parts){const ln=p.split('\n').find(l=>l.indexOf('data:')===0);if(!ln)continue;
         const d=ln.slice(5).trim();if(d==='[DONE]')continue;
-        try{const o=JSON.parse(d);if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}}catch(e){}}}
+        try{const o=JSON.parse(d);
+          if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}
+          else if(o.type==='sources'){tlxRenderSources(srcRow,o.sources,o.confirmed);}
+          else if(o.type==='tool_status'&&o.tool_name==='web_search'){tlxRenderSources(srcRow,['web'],true);}
+        }catch(e){}}}
     chatHistory.push({role:'assistant',content:plein||'(réponse vide)'});
     if(window.TilexContext)TilexContext.enregistrerReponse(plein||'');
     if(agent){agent.convs=(agent.convs||0)+1;}

@@ -1,6 +1,10 @@
 // ti-lex-AL — Proxy IA securise (Anthropic chat + OpenAI images)
 // Cles API cote serveur. Valide le body, limite l'usage.
 // + Outils boursiers AL (FMP) exécutés côté serveur — clé jamais exposée.
+// [SOURCES] + 1 ligne additive : émet {type:"sources",sources:["web"],confirmed:true}
+//           quand la recherche web Anthropic s'exécute (pour le logo Web côté front).
+//           AUCUN autre changement vs la version EN LIGNE (accès anonyme conservé,
+//           PAS de verrou d'abonnement).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -316,6 +320,7 @@ function handleToolLoop(
                   blocks[ev.index] = { ...cb };
                   if (cb.type === "server_tool_use" && cb.name === "web_search") {
                     send(JSON.stringify({ type: "tool_status", tool_name: "web_search", status: "executing" }));
+                    send(JSON.stringify({ type: "sources", sources: ["web"], confirmed: true })); // [SOURCES]
                   }
                 }
               } else if (ev.type === "content_block_delta") {
