@@ -15,6 +15,8 @@
     { "source": "/codex", "destination": "/tilexcode.html" },
     { "source": "/tilexcode", "destination": "/tilexcode.html" },
     { "source": "/truck", "destination": "/truck.html" },
+    { "source": "/truck-map", "destination": "/truck-map.html" },
+    { "source": "/suivi", "destination": "/truck-map.html" },
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
     { "source": "/pro", "destination": "/pro.html" },
