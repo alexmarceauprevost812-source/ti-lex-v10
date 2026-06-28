@@ -74,6 +74,7 @@
 
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-prive.js"></script>
+<script src="js/tilex-core.js"></script>
 <script src="js/tilex-meteo.js"></script>
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -84,6 +85,9 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const TRUCK_ID = 'camion-alex'; // identifiant du camion
+
+  // Noyau : gardien anti-erreur + DB résiliente (retry/offline) + sync auto.
+  if (window.tilexDemarrer) tilexDemarrer();
 
   let watchId = null;
   let count = 0;
@@ -181,18 +185,18 @@
 
     await majMeteo(lat, lon); // météo réelle au point GPS (cache 5 min)
 
-    // user_id est rempli automatiquement par le défaut auth.uid() (RLS).
-    const { error } = await supabase.from('truck_position').insert({
-      truck_id: TRUCK_ID,
-      lat: lat,
-      lon: lon,
-      vitesse: spd,
-      meteo_temp: meteoCache ? meteoCache.temp : null,
-      meteo_code: meteoCache ? meteoCache.code : null
-    });
+    // user_id rempli auto (auth.uid()). Via TilexDB : retry 3x + sauvegarde
+    // offline si Starlink coupe (sync auto au retour du réseau).
+    const res = window.TilexDB
+      ? await TilexDB.inserer('truck_position', {
+          truck_id: TRUCK_ID, lat: lat, lon: lon, vitesse: spd,
+          meteo_temp: meteoCache ? meteoCache.temp : null,
+          meteo_code: meteoCache ? meteoCache.code : null
+        })
+      : { ok: false };
 
-    if (error) {
-      log('❌ Erreur envoi: ' + error.message);
+    if (!res.ok) {
+      log('📡 Hors-ligne — position gardée en local (sync auto au retour)');
     } else {
       count++;
       const t = new Date().toLocaleTimeString('fr-CA');

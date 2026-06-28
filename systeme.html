@@ -113,6 +113,7 @@
 
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-prive.js"></script>
+<script src="js/tilex-core.js"></script>
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -120,6 +121,7 @@
   const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
   const SUPABASE_KEY = window.SB_ANON || '';
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (window.tilexDemarrer) tilexDemarrer(); // gardien + sync offline
 
   const MAISON = { lat: 48.8290, lon: -72.5320 };
   const TRUCK_ID = 'camion-alex';
