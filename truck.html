@@ -86,6 +86,22 @@
   let watchId = null;
   let count = 0;
   let session = null;
+  let wakeLock = null;
+
+  // ── Wake Lock : empêche l'écran de s'éteindre (sinon le GPS se met en pause) ──
+  async function acquireWake() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+        log('🔆 Écran gardé allumé (wake lock)');
+      } else { log('⚠️ Wake lock non supporté — garde l’écran allumé manuellement'); }
+    } catch (e) { log('⚠️ Wake lock: ' + e.message); }
+  }
+  function releaseWake() { try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {} }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && watchId !== null && !wakeLock) acquireWake();
+  });
 
   // ── Compte : l'insert exige auth.uid() (RLS). On reflète l'état de session. ──
   async function refreshAccount() {
@@ -124,6 +140,7 @@
     const b = document.getElementById('btn');
     b.textContent = '⏹️ ARRÊTER LE TRACKING';
     b.className = 'stop';
+    acquireWake();
     log('▶️ Tracking démarré');
   }
 
@@ -135,6 +152,7 @@
     const b = document.getElementById('btn');
     b.textContent = '▶️ DÉMARRER LE TRACKING';
     b.className = 'start';
+    releaseWake();
     log('⏹️ Tracking arrêté');
   }
 

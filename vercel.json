@@ -17,6 +17,7 @@
     { "source": "/truck", "destination": "/truck.html" },
     { "source": "/truck-map", "destination": "/truck-map.html" },
     { "source": "/suivi", "destination": "/truck-map.html" },
+    { "source": "/maison", "destination": "/maison.html" },
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
     { "source": "/pro", "destination": "/pro.html" },
