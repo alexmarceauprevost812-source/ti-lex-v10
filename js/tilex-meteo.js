@@ -1,100 +1,186 @@
 // ============================================================
-// ti-lex-AL v10 — Module Météo Live (Open-Meteo, sans clé API)
+// ti-lex-AL v10 — Module Météo Live
 // Auteur: Alex Marceau-Prévost
-// API gratuite https://open-meteo.com — AUCUNE clé requise (rien à exposer).
-// Marche partout (Starlink). Alertes auto pour conditions dangereuses.
-//   TilexMeteo.fetch(lat,lon)  → {temp,ressenti,vent,precip,code,emoji,desc,...}
-//   TilexMeteo.normandin()     → météo de Normandin
-//   TilexMeteo.rendreHTML(m)   → carte HTML prête à afficher
-//   TilexMeteo.alertes(m)      → tableau d'alertes (verglas, froid, etc.)
+// API: Open-Meteo (gratuit, AUCUNE clé requise)
+// Marche partout via Starlink — météo exacte selon GPS
 // ============================================================
-(function () {
-  "use strict";
 
-  // Code WMO → emoji + description (fixe, donc rendu HTML sûr)
-  var WMO = {
-    0:["☀️","Dégagé"], 1:["🌤️","Plutôt dégagé"], 2:["⛅","Partiellement nuageux"], 3:["☁️","Couvert"],
-    45:["🌫️","Brouillard"], 48:["🌫️","Brouillard givrant"],
-    51:["🌦️","Bruine légère"], 53:["🌦️","Bruine"], 55:["🌦️","Bruine dense"],
-    56:["🧊","Bruine verglaçante"], 57:["🧊","Bruine verglaçante"],
-    61:["🌧️","Pluie légère"], 63:["🌧️","Pluie"], 65:["🌧️","Pluie forte"],
-    66:["🧊","Pluie verglaçante"], 67:["🧊","Pluie verglaçante forte"],
-    71:["❄️","Neige légère"], 73:["❄️","Neige"], 75:["❄️","Neige forte"], 77:["🌨️","Grains de neige"],
-    80:["🌦️","Averses"], 81:["🌦️","Averses"], 82:["🌦️","Averses violentes"],
-    85:["🌨️","Averses de neige"], 86:["🌨️","Averses de neige fortes"],
-    95:["⛈️","Orage"], 96:["⛈️","Orage + grêle"], 99:["⛈️","Orage violent + grêle"]
-  };
+const TilexMeteo = {
 
-  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-  function decode(code){ var w = WMO[code] || ["🌡️","Conditions inconnues"]; return { emoji:w[0], desc:w[1] }; }
+  // Codes météo WMO → emoji + texte français
+  CODES: {
+    0:  ['☀️','Ciel clair'],
+    1:  ['🌤️','Plutôt clair'],
+    2:  ['⛅','Partiellement nuageux'],
+    3:  ['☁️','Nuageux'],
+    45: ['🌫️','Brouillard'],
+    48: ['🌫️','Brouillard givrant'],
+    51: ['🌧️','Bruine légère'],
+    53: ['🌧️','Bruine'],
+    55: ['🌧️','Bruine forte'],
+    61: ['🌧️','Pluie légère'],
+    63: ['🌧️','Pluie'],
+    65: ['🌧️','Pluie forte'],
+    66: ['🌨️','Pluie verglaçante'],
+    67: ['🌨️','Pluie verglaçante forte'],
+    71: ['🌨️','Neige légère'],
+    73: ['❄️','Neige'],
+    75: ['❄️','Neige forte'],
+    77: ['🌨️','Grains de neige'],
+    80: ['🌦️','Averses légères'],
+    81: ['🌦️','Averses'],
+    82: ['⛈️','Averses violentes'],
+    85: ['🌨️','Averses de neige'],
+    86: ['❄️','Fortes averses de neige'],
+    95: ['⛈️','Orage'],
+    96: ['⛈️','Orage avec grêle'],
+    99: ['⛈️','Orage violent avec grêle']
+  },
 
-  function fetchMeteo(lat, lon){
-    var u = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
-      "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation&timezone=auto";
-    return fetch(u).then(function(r){
-      if(!r.ok) throw new Error("Météo HTTP " + r.status);
-      return r.json();
-    }).then(function(j){
-      var c = j.current || {};
-      var d = decode(c.weather_code);
+  // ============================================================
+  // 1. MÉTÉO ACTUELLE selon coords GPS
+  // ============================================================
+  async actuelle(lat, lon) {
+    const url = `https://api.open-meteo.com/v1/forecast`
+      + `?latitude=${lat}&longitude=${lon}`
+      + `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,precipitation`
+      + `&timezone=America%2FMontreal`;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Réseau');
+      const data = await res.json();
+      const c = data.current;
+      const [emoji, texte] = this.CODES[c.weather_code] || ['❓','Inconnu'];
+
       return {
-        lat: lat, lon: lon,
-        temp: c.temperature_2m, ressenti: c.apparent_temperature,
-        vent: c.wind_speed_10m, precip: c.precipitation,
-        code: c.weather_code, heure: c.time,
-        emoji: d.emoji, desc: d.desc
+        ok: true,
+        temp: Math.round(c.temperature_2m),
+        ressenti: Math.round(c.apparent_temperature),
+        emoji: emoji,
+        description: texte,
+        vent: Math.round(c.wind_speed_10m),
+        precip: c.precipitation,
+        code: c.weather_code
       };
+    } catch (e) {
+      return { ok: false, erreur: e.message };
+    }
+  },
+
+  // ============================================================
+  // 2. PRÉVISION 7 JOURS
+  // ============================================================
+  async prevision(lat, lon) {
+    const url = `https://api.open-meteo.com/v1/forecast`
+      + `?latitude=${lat}&longitude=${lon}`
+      + `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum`
+      + `&timezone=America%2FMontreal&forecast_days=7`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      const d = data.daily;
+      return {
+        ok: true,
+        jours: d.time.map((date, i) => {
+          const [emoji, texte] = this.CODES[d.weather_code[i]] || ['❓','?'];
+          return {
+            date: date,
+            emoji: emoji,
+            description: texte,
+            max: Math.round(d.temperature_2m_max[i]),
+            min: Math.round(d.temperature_2m_min[i]),
+            precip: d.precipitation_sum[i]
+          };
+        })
+      };
+    } catch (e) {
+      return { ok: false, erreur: e.message };
+    }
+  },
+
+  // ============================================================
+  // 3. ALERTE CONDITIONS DANGEREUSES (pour le bois!)
+  // ============================================================
+  alerteDanger(meteo) {
+    const alertes = [];
+    if (!meteo.ok) return alertes;
+
+    // Codes dangereux pour conduire dans le bois
+    const dangerCodes = [66, 67, 75, 86, 95, 96, 99, 82];
+    if (dangerCodes.includes(meteo.code)) {
+      alertes.push('⚠️ ' + meteo.description + ' — conditions difficiles!');
+    }
+    if (meteo.temp <= -25) {
+      alertes.push('🥶 Froid extrême (' + meteo.temp + '°C) — attention!');
+    }
+    if (meteo.vent >= 50) {
+      alertes.push('💨 Vents forts (' + meteo.vent + ' km/h)');
+    }
+    if (meteo.precip >= 10) {
+      alertes.push('🌧️ Grosses précipitations — chemins glissants');
+    }
+    return alertes;
+  },
+
+  // ============================================================
+  // 4. MÉTÉO POUR NORMANDIN (raccourci maison)
+  // ============================================================
+  async normandin() {
+    return this.actuelle(48.8290, -72.5320);
+  },
+
+  // ============================================================
+  // 5. MÉTÉO SELON GPS DU TÉLÉPHONE (dans le truck)
+  // ============================================================
+  async iciMaintenant() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ ok: false, erreur: 'GPS non disponible' });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const m = await this.actuelle(pos.coords.latitude, pos.coords.longitude);
+          resolve(m);
+        },
+        () => resolve({ ok: false, erreur: 'Position refusée' }),
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
     });
-  }
+  },
 
-  // Alertes conditions dangereuses (routes / travail forêt / camion)
-  function alertes(m){
-    if(!m) return [];
-    var a = [];
-    var code = m.code, vent = m.vent || 0, t = (m.ressenti != null ? m.ressenti : m.temp);
-    if (t != null && t <= -25) a.push("🥶 Froid extrême (" + Math.round(t) + "°) — protège-toi");
-    if ([56,57,66,67].indexOf(code) !== -1) a.push("🧊 VERGLAS — routes glacées, prudence");
-    if ([71,73,75,77,85,86].indexOf(code) !== -1 && vent >= 30) a.push("🌨️ Poudrerie / visibilité réduite");
-    else if ([75,86].indexOf(code) !== -1) a.push("❄️ Neige forte");
-    if (vent >= 40) a.push("💨 Vents forts (" + Math.round(vent) + " km/h)");
-    if ([95,96,99].indexOf(code) !== -1) a.push("⛈️ Orage");
-    return a;
-  }
+  // ============================================================
+  // 6. AFFICHAGE HTML (carte météo prête à coller)
+  // ============================================================
+  rendreHTML(meteo) {
+    if (!meteo || !meteo.ok) {
+      return `<div style="color:#888;padding:14px;">🌐 Météo indisponible (${(meteo && meteo.erreur) || 'réseau'})</div>`;
+    }
+    const alertes = this.alerteDanger(meteo);
+    const alertesHTML = alertes.length
+      ? `<div style="background:#ff3b3b22;border:1px solid #ff3b3b;border-radius:8px;padding:8px;margin-top:8px;font-size:0.8rem;color:#ffb38a;">${alertes.join('<br>')}</div>`
+      : '';
 
-  function rendreHTML(m){
-    if(!m) return '<div class="tlx-meteo tm-err">🌐 Météo indisponible</div>';
-    var al = alertes(m);
-    var alHtml = al.length ? '<div class="tm-alert">⚠️ ' + al.map(esc).join("<br>⚠️ ") + '</div>' : '';
-    return '<div class="tlx-meteo">' +
-      '<div class="tm-main"><span class="tm-emo">' + m.emoji + '</span>' +
-        '<div><div class="tm-temp">' + Math.round(m.temp) + '°C</div>' +
-        '<div class="tm-desc">' + esc(m.desc) + ' · ressenti ' + Math.round(m.ressenti) + '°</div></div></div>' +
-      '<div class="tm-row">💨 ' + Math.round(m.vent || 0) + ' km/h · 🌧️ ' + (m.precip || 0) + ' mm</div>' +
-      alHtml + '</div>';
+    return `
+      <div style="background:#14141c;border:1px solid #26263a;border-radius:14px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="font-size:2.8rem;">${meteo.emoji}</div>
+          <div>
+            <div style="font-size:1.8rem;font-weight:700;color:#fff;">${meteo.temp}°C</div>
+            <div style="color:#999;font-size:0.85rem;">${meteo.description} • ressenti ${meteo.ressenti}°C</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px;color:#aaa;font-size:0.82rem;">
+          <span>💨 ${meteo.vent} km/h</span>
+          <span>🌧️ ${meteo.precip} mm</span>
+        </div>
+        ${alertesHTML}
+      </div>`;
   }
+};
 
-  // CSS auto-injectée (marche sur n'importe quelle page)
-  function injectCSS(){
-    if(document.getElementById("tlx-meteo-css")) return;
-    var st = document.createElement("style"); st.id = "tlx-meteo-css";
-    st.textContent =
-      ".tlx-meteo{background:#14141c;border:1px solid #26263a;border-radius:14px;padding:14px 16px;color:#e8e8e8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}" +
-      ".tlx-meteo.tm-err{color:#888;text-align:center;font-size:.9rem;}" +
-      ".tm-main{display:flex;align-items:center;gap:14px;}" +
-      ".tm-emo{font-size:2.4rem;line-height:1;}" +
-      ".tm-temp{font-size:1.7rem;font-weight:800;color:#fff;}" +
-      ".tm-desc{color:#9aa;font-size:.85rem;margin-top:2px;}" +
-      ".tm-row{margin-top:10px;color:#bbb;font-size:.85rem;}" +
-      ".tm-alert{margin-top:10px;background:rgba(255,59,59,.12);border:1px solid #ff3b3b55;color:#ffb3b3;border-radius:10px;padding:8px 10px;font-size:.82rem;font-weight:600;line-height:1.5;}";
-    (document.head || document.documentElement).appendChild(st);
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", injectCSS); else injectCSS();
-
-  window.TilexMeteo = {
-    fetch: fetchMeteo,
-    normandin: function(){ return fetchMeteo(48.83, -72.53); },
-    decode: decode,
-    alertes: alertes,
-    rendreHTML: rendreHTML
-  };
-})();
+// Export global
+if (typeof window !== 'undefined') window.TilexMeteo = TilexMeteo;
+if (typeof module !== 'undefined') module.exports = TilexMeteo;

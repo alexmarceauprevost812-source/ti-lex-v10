@@ -163,8 +163,10 @@
     if (!window.TilexMeteo) return;
     const now = Date.now();
     if (meteoCache && (now - meteoTs) < 300000) return; // cache 5 min
-    try { meteoCache = await TilexMeteo.fetch(lat, lon); meteoTs = now;
-      log('🌦️ Météo: ' + Math.round(meteoCache.temp) + '° ' + meteoCache.desc); } catch (e) {}
+    try {
+      const m = await TilexMeteo.actuelle(lat, lon);
+      if (m && m.ok) { meteoCache = m; meteoTs = now; log('🌦️ Météo: ' + m.temp + '° ' + m.description); }
+    } catch (e) {}
   }
 
   async function onPos(pos) {
