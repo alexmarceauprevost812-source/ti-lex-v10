@@ -73,6 +73,18 @@
   .card .ttl{font-weight:700; margin-bottom:3px}
   .mini{color:var(--txt2); font-size:11.5px}
   .log{font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap; color:var(--txt2); margin-top:12px; border-top:1px dashed #1c1c22; padding-top:8px}
+  /* ===== Indicateur de recherche ti-lex — logos officiels des moteurs (Supabase, GitHub, Web/Google) ===== */
+  .tlx-logos{display:inline-flex;align-items:center;gap:6px;}
+  .tlx-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:var(--bg-elev,var(--bg3,#121216));border:1px solid var(--border,var(--bord,#23232b));font-size:12px;font-weight:600;color:var(--text-muted,var(--txt2,#9aa0aa));white-space:nowrap;opacity:0;transform:translateY(4px) scale(.96);animation:tlx-pop .34s cubic-bezier(.2,.8,.2,1) forwards;}
+  .tlx-chip svg{width:15px;height:15px;display:block;flex:0 0 auto;}
+  .tlx-state{font-size:13px;color:var(--text-muted,var(--txt2,#9aa0aa));display:inline-flex;align-items:center;gap:7px;}
+  .tlx-spin{width:13px;height:13px;border-radius:50%;border:2px solid var(--border,var(--bord,#23232b));border-top-color:var(--accent,var(--orange,#ff7a00));animation:tlx-spin .7s linear infinite;flex:0 0 auto;}
+  .tlx-dots::after{content:'';animation:tlx-dots 1.3s steps(4,end) infinite;}
+  .tlx-codexbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 11px;margin:0 0 9px;border:1px solid var(--bord,#23232b);border-radius:10px;background:var(--bg3,#121216);}
+  @keyframes tlx-pop{to{opacity:1;transform:none;}}
+  @keyframes tlx-spin{to{transform:rotate(360deg);}}
+  @keyframes tlx-dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
+  @media (prefers-reduced-motion:reduce){.tlx-chip,.tlx-spin{animation:none!important;opacity:1!important;transform:none!important;}}
   .log .u{color:var(--orange)} .log .a{color:var(--c-fn)} .log .e{color:var(--rouge)} .log .ok{color:var(--vert-ok)}
 
   /* Droite : le code */
@@ -230,9 +242,10 @@
     <button class="agentbtn" data-agent="COFFRE"><b>COFFRE</b> <span class="role">gardien</span></button>
   </div>
   <div class="inputrow">
-    <textarea id="prompt" placeholder="Écris ici ce que tu veux coder… (Entrée = envoyer · Maj+Entrée = nouvelle ligne)"></textarea>
-    <button class="btn orange" id="sendBtn" title="Envoyer à SCRIBE">➤</button>
+    <textarea id="prompt" placeholder="Décris ta tâche… Codex fait tout : écrit, analyse, corrige, scanne. (Entrée = lancer · Maj+Entrée = nouvelle ligne)"></textarea>
+    <button class="btn orange" id="sendBtn" title="Pipeline complet : SCRIBE → LOUPE → FORGE → ange gardien">⚡ Codex</button>
   </div>
+  <div class="mini">⚡ <b style="color:var(--orange)">Codex</b> = tout automatique. Ou clique un agent en haut pour le faire à la main.</div>
 </footer>
 
 <!-- Modale réglages -->
@@ -278,9 +291,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /* ====================== CONFIG ====================== */
-// Utilise EXACTEMENT la même config que pro.html/web.html (clé anon JWT) →
-// le login email/mot de passe marche pareil ET la session est partagée.
-// Repli sur la clé publishable si tilex-config.js n'est pas chargé.
+// Mêmes clés que la plateforme (pro/web) → session partagée + login qui marche.
 const SUPABASE_URL  = window.SB_URL  || "https://rnuripmfozlxenryxhdc.supabase.co";
 const SUPABASE_ANON = window.SB_ANON || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
 const FN_AGENT      = `${SUPABASE_URL}/functions/v1/tilexcode-agent`;
@@ -315,6 +326,26 @@ function stepOk(d){ if(d){ d.classList.remove("run"); d.classList.add("ok"); } }
 function stepErr(d){ if(d){ d.classList.remove("run"); d.classList.add("err"); } }
 function studioCard(cls,ttl,body){ $("studioOut").innerHTML=`<div class="card ${cls}"><div class="ttl">${esc(ttl)}</div><div class="mini">${esc(body).replace(/\n/g,"<br>")}</div></div>`; }
 function studioAppend(cls,ttl,body){ $("studioOut").innerHTML+=`<div class="card ${cls}"><div class="ttl">${esc(ttl)}</div><div class="mini">${esc(body).replace(/\n/g,"<br>")}</div></div>`; }
+
+/* ===== Indicateur de recherche ti-lex — logos OFFICIELS des moteurs =====
+   Pendant qu'un agent travaille, on affiche en haut des étapes les logos officiels
+   des moteurs branchés (Supabase = le moteur Codex, GitHub = ton repo) + l'état
+   « Réflexion + recherche », puis ça disparaît quand l'agent a fini. */
+const TLX_LOGOS={
+  google:`<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>`,
+  web:`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg>`,
+  supabase:`<svg viewBox="0 0 109 113" aria-hidden="true"><path d="M63.708 110.284c-2.86 3.601-8.658 1.629-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874l-43.151 54.347Z" fill="url(#tlxSbA)"/><path d="M63.708 110.284c-2.86 3.601-8.658 1.629-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874l-43.151 54.347Z" fill="url(#tlxSbB)" fill-opacity=".2"/><path d="M45.317 2.071c2.86-3.601 8.657-1.628 8.726 2.97l.442 67.251H9.831C1.64 72.292-2.928 62.832 2.165 56.418L45.317 2.071Z" fill="#3ECF8E"/><defs><linearGradient id="tlxSbA" x1="53.974" y1="54.974" x2="94.163" y2="71.829" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient><linearGradient id="tlxSbB" x1="36.156" y1="30.578" x2="54.484" y2="65.081" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-opacity="0"/></linearGradient></defs></svg>`,
+  github:`<svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`,
+};
+const TLX_LABELS={google:"Google",web:"Web",supabase:"Supabase",github:"GitHub"};
+function tlxChips(sources){ return (sources||[]).map(k=>`<span class="tlx-chip" title="Connecté à ${TLX_LABELS[k]||k}">${TLX_LOGOS[k]||""}<span>${TLX_LABELS[k]||k}</span></span>`).join(""); }
+// Affiche la barre d'indicateur en haut des étapes ; renvoie un objet avec .remove() (à appeler quand l'agent a fini).
+function tlxCodexStart(sources,label){
+  const el=document.createElement("div"); el.className="tlx-codexbar";
+  el.innerHTML=`<span class="tlx-logos">${tlxChips(sources)}</span><span class="tlx-state"><span class="tlx-spin"></span><span class="tlx-dots">${label||"Connexion + recherche"}</span></span>`;
+  stepsBox.prepend(el);
+  return { el, remove(){ try{ el.remove(); }catch(_e){} } };
+}
 
 /* ====================== COLORATION (7 couleurs) ====================== */
 const RULES = [
@@ -409,7 +440,7 @@ function showDiff(oldStr,newStr,title){
     html+=`<div class="dl ${x.t==="+"?"add":"del"}">${x.t} ${esc(x.text)}</div>`; }
   $("diffOut").innerHTML=html;
 }
-function applyAgentCode(newCode, title){ const oldCode=codeEl.value; setCode(newCode); showDiff(oldCode,newCode,title||"Changements du code"); if(isMobile()) setView("right"); }
+function applyAgentCode(newCode, title, noSwitch){ const oldCode=codeEl.value; setCode(newCode); showDiff(oldCode,newCode,title||"Changements du code"); if(isMobile() && !noSwitch) setView("right"); }
 
 /* ====================== ANGE GARDIEN (parle au milieu, style fantôme 👻) ====================== */
 const angeZone=$("angeZone"); let angeSig="";
@@ -526,6 +557,7 @@ async function injecter(){
   const path=$("filePath").value.trim();
   if(!path){ toast("Donne un chemin de fichier",1); return; }
   stepTitle("Injection 💉 au repo");
+  const tlxI=tlxCodexStart(["github"],"Connexion + injection");
   step("Cible : "+repo+" @ "+(branch||"main")+" → "+path);
   // 1) L'ange gardien jette un dernier coup d'œil
   const s1=step("L'ange gardien scanne le code ("+codeEl.value.split("\n").length+" lignes) avant l'injection");
@@ -535,7 +567,7 @@ async function injecter(){
     logLine("e","Ange gardien: "+found.length+" secret(s)."); angeShow(found,"inject");
     try{ fetch(FN_GARDIEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"report",raison:"scan-pre-injection",hote:location.host,chemin:path,canary:String(found.length)})}); }catch(_e){}
     const ok=confirm(`😇 L'ange gardien a vu ${found.length} secret(s) :\n\n`+found.map(f=>"• "+f.label+" (ligne "+f.line+")").join("\n")+`\n\n« OK » = injecter quand même.\n« Annuler » = je corrige d'abord (clique « Corriger » sur l'ange gardien).`);
-    if(!ok){ step("Tu corriges d'abord — injection en pause"); return; }
+    if(!ok){ step("Tu corriges d'abord — injection en pause"); tlxI.remove(); return; }
     step("Tu as choisi d'injecter quand même"); angeHide();
   } else { stepOk(s1); step("Aucun secret — code propre ✓"); }
   // 2) SHA
@@ -555,7 +587,7 @@ async function injecter(){
     stepOk(s3); step("Injecté ✓ ("+sha7+") — ton fichier est en ligne sur GitHub");
     toast("Injecté au repo ✓ "+sha7); logLine("ok",`Injection OK → ${path} (${sha7})`); loadTree();
   }catch(e){ stepErr(step("Erreur injection : "+e.message)); toast(e.message,1); logLine("e","Injection: "+e.message); }
-  finally{ $("pushBtn").disabled=false; }
+  finally{ $("pushBtn").disabled=false; tlxI.remove(); }
 }
 
 /* ====================== MOTEUR CODEX (tilexcode-agent) ====================== */
@@ -586,6 +618,7 @@ async function runAgent(agentId){
   const input = prompt || "Analyse / traite le code fourni en contexte.";
   logLine("u",`${agentId} ← ${input.slice(0,80)}`);
   stepTitle("Agent "+agentId);
+  const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
   step("Agent choisi : "+agentId+" — "+(AGENT_ROLES[agentId]||""));
   step("Ta demande : « "+input.slice(0,120)+(input.length>120?"…":"")+" »");
   const s1=step("Je vérifie que ton compte ti-lex est connecté (le cerveau roule côté serveur, ta clé reste cachée)"); toast(`▶ ${agentId}…`);
@@ -605,11 +638,13 @@ async function runAgent(agentId){
     else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
     toast("Moteur: "+e.message,1);
   }
+  finally{ if(tlxI) tlxI.remove(); }
 }
 async function scanErreurs(){
   if(!codeEl.value.trim()){ toast("Rien à analyser",1); return; }
   logLine("u","Studio erreur: LOUPE → FORGE");
   stepTitle("Studio erreur (LOUPE → FORGE)");
+  const tlxI=tlxCodexStart(["supabase"],"Réflexion + recherche");
   step("But : trouver les erreurs PUIS les corriger avant d'injecter");
   const s1=step("LOUPE lit le code ("+codeEl.value.split("\n").length+" lignes) et cherche bogues, failles et mauvaises pratiques"); toast("🔍 LOUPE analyse…");
   try{
@@ -627,6 +662,50 @@ async function scanErreurs(){
     if(cors) corsCard(); else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
     toast(e.message,1);
   }
+  finally{ if(tlxI) tlxI.remove(); }
+}
+
+/* ====================== CODEX ⚡ : pipeline automatique complet ====================== */
+async function runCodex(){
+  const prompt=$("prompt").value.trim();
+  if(!prompt && !codeEl.value.trim()){ toast("Écris ta demande en bas",1); $("prompt").focus(); return; }
+  const demande = prompt || "Améliore et complète le code fourni en contexte.";
+  logLine("u","Codex ← "+demande.slice(0,80));
+  stepTitle("Codex ⚡ — pipeline complet");
+  const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
+  step("Demande : « "+demande.slice(0,120)+(demande.length>120?"…":"")+" »");
+  $("studioOut").innerHTML=""; setSendBusy(true);
+  try{
+    // 1/4 SCRIBE écrit
+    let s=step("1/4 · SCRIBE écrit le code"); toast("⚡ 1/4 SCRIBE…");
+    const r1=await callAgent("SCRIBE", demande, codeEl.value);
+    const b1=firstCodeBlock(r1); studioAppend("","SCRIBE — code",r1);
+    if(b1){ applyAgentCode(b1,"SCRIBE — code généré",true); stepOk(s); step("SCRIBE a écrit "+b1.split("\n").length+" lignes (vert = ajouts)"); }
+    else { stepOk(s); step("SCRIBE a répondu (texte affiché au milieu)"); }
+    // 2/4 LOUPE analyse
+    s=step("2/4 · LOUPE cherche les erreurs"); toast("⚡ 2/4 LOUPE…");
+    const diag=await callAgent("LOUPE","Analyse ce code et liste les erreurs/bogues/failles à corriger.", codeEl.value);
+    studioAppend("","LOUPE — diagnostic",diag); stepOk(s); step("Diagnostic reçu ("+diag.length+" car.)");
+    // 3/4 FORGE corrige
+    s=step("3/4 · FORGE corrige les erreurs"); toast("⚡ 3/4 FORGE…");
+    const r3=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
+    const b3=firstCodeBlock(r3); studioAppend("good","FORGE — corrigé",r3);
+    if(b3){ applyAgentCode(b3,"FORGE — corrigé",true); stepOk(s); step("FORGE a corrigé le code (vert/rouge = changements)"); }
+    else { stepOk(s); step("FORGE a répondu (texte au milieu)"); }
+    // 4/4 Ange gardien scanne
+    s=step("4/4 · L'ange gardien scanne les secrets");
+    const found=scanSecrets(codeEl.value);
+    if(found.length){ stepErr(s); angeShow(found,"codex"); step("⚠ "+found.length+" secret(s) — clique « Corriger » sur l'ange gardien au milieu"); }
+    else { stepOk(s); step("Aucun secret — code propre ✓"); }
+    step("✅ Codex a fini. Lis le code à droite, pis clique « injection 💉 » quand t'es prêt.");
+    if(isMobile()) setView(found.length?"center":"right");
+    toast("Codex ⚡ fini ✓");
+  }catch(e){
+    const cors=String(e.message).startsWith("CORS_OR_NET");
+    stepErr(step("Erreur : "+(cors?"moteur bloqué (CORS)":e.message)));
+    if(cors) corsCard(); else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
+    toast("Codex: "+e.message,1);
+  } finally{ setSendBusy(false); if(tlxI) tlxI.remove(); }
 }
 
 /* ====================== RÉGLAGES ====================== */
@@ -643,12 +722,11 @@ $("savePatBtn").onclick=async()=>{
 };
 $("clearPatBtn").onclick=()=>{ pat=""; localStorage.removeItem(LS.pat); $("pat").value=""; setDot("dotGh",false); toast("Jeton oublié"); };
 
-/* ====================== BARRE DU BAS : agents + envoi ====================== */
-function setActiveAgent(a){ activeAgent=a; document.querySelectorAll(".agentbtn").forEach(b=>b.classList.toggle("active", b.dataset.agent===a)); $("sendBtn").title="Envoyer à "+a; }
-document.querySelectorAll(".agentbtn").forEach(b=>b.onclick=()=>setActiveAgent(b.dataset.agent));
-$("sendBtn").onclick=()=>runAgent(activeAgent);
-$("prompt").addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); runAgent(activeAgent); } });
-setActiveAgent("SCRIBE");
+/* ====================== BARRE DU BAS : Codex (auto) + agents (manuel) ====================== */
+function setSendBusy(b){ const s=$("sendBtn"); s.disabled=b; s.textContent=b?"⚡ …":"⚡ Codex"; }
+document.querySelectorAll(".agentbtn").forEach(b=>b.onclick=()=>runAgent(b.dataset.agent));
+$("sendBtn").onclick=runCodex;
+$("prompt").addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); runCodex(); } });
 
 /* ====================== ÉVÉNEMENTS ====================== */
 $("toggleLeft").onclick=()=>$("leftPanel").classList.toggle("collapsed");
@@ -683,8 +761,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
   const savedPath=localStorage.getItem(LS.path); if(savedPath) $("filePath").value=savedPath;
   renderCode();
   stepTitle("Démarrage");
-  // ── PONT SESSION : reprend la session déjà ouverte sur la plateforme ──
-  // (pro.html / web.html) → tilexcode est connecté direct, sans retaper.
+  // ── PONT SESSION : reprend la session déjà ouverte sur la plateforme (pro/web) ──
   try {
     const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
     if (raw) {
