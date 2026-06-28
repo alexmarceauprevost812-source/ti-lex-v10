@@ -273,12 +273,16 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="js/tilex-config.js"></script>
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /* ====================== CONFIG ====================== */
-const SUPABASE_URL  = "https://rnuripmfozlxenryxhdc.supabase.co";
-const SUPABASE_ANON = "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
+// Utilise EXACTEMENT la même config que pro.html/web.html (clé anon JWT) →
+// le login email/mot de passe marche pareil ET la session est partagée.
+// Repli sur la clé publishable si tilex-config.js n'est pas chargé.
+const SUPABASE_URL  = window.SB_URL  || "https://rnuripmfozlxenryxhdc.supabase.co";
+const SUPABASE_ANON = window.SB_ANON || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
 const FN_AGENT      = `${SUPABASE_URL}/functions/v1/tilexcode-agent`;
 const FN_GARDIEN    = `${SUPABASE_URL}/functions/v1/tilex-gardien`;
 const LS = { pat:"tilexcode_pat", repo:"tilexcode_repo", branch:"tilexcode_branch", path:"tilexcode_path", code:"tilexcode_code" };
