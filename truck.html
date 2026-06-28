@@ -73,6 +73,7 @@
   </div>
 
 <script src="js/tilex-config.js"></script>
+<script src="js/tilex-meteo.js"></script>
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -156,6 +157,16 @@
     log('⏹️ Tracking arrêté');
   }
 
+  // Météo en cache (rafraîchie aux 5 min) — enregistrée avec chaque position.
+  let meteoCache = null, meteoTs = 0;
+  async function majMeteo(lat, lon) {
+    if (!window.TilexMeteo) return;
+    const now = Date.now();
+    if (meteoCache && (now - meteoTs) < 300000) return; // cache 5 min
+    try { meteoCache = await TilexMeteo.fetch(lat, lon); meteoTs = now;
+      log('🌦️ Météo: ' + Math.round(meteoCache.temp) + '° ' + meteoCache.desc); } catch (e) {}
+  }
+
   async function onPos(pos) {
     const lat = pos.coords.latitude;
     const lon = pos.coords.longitude;
@@ -165,12 +176,16 @@
     document.getElementById('lon').textContent = lon.toFixed(5);
     document.getElementById('spd').textContent = spd.toFixed(0) + ' km/h';
 
+    await majMeteo(lat, lon); // météo réelle au point GPS (cache 5 min)
+
     // user_id est rempli automatiquement par le défaut auth.uid() (RLS).
     const { error } = await supabase.from('truck_position').insert({
       truck_id: TRUCK_ID,
       lat: lat,
       lon: lon,
-      vitesse: spd
+      vitesse: spd,
+      meteo_temp: meteoCache ? meteoCache.temp : null,
+      meteo_code: meteoCache ? meteoCache.code : null
     });
 
     if (error) {

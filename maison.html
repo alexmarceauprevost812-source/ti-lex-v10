@@ -56,6 +56,7 @@
   <div id="map"></div>
 
   <div class="panel">
+    <div id="meteoBox" style="margin-bottom:14px;"></div>
     <div class="authbar" id="authbar"></div>
     <div class="alert" id="alert">🚛 Le camion d'Alex arrive!</div>
 
@@ -69,6 +70,7 @@
   </div>
 
 <script src="js/tilex-config.js"></script>
+<script src="js/tilex-meteo.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -190,6 +192,16 @@
   }
   supabase.auth.onAuthStateChange(() => { if (!pollTimer) boot(); });
   boot();
+
+  // Météo Normandin (Open-Meteo, public — pas besoin de session)
+  function chargerMeteo(){
+    if(!window.TilexMeteo) return;
+    TilexMeteo.normandin()
+      .then(m => { var b=document.getElementById('meteoBox'); if(b) b.innerHTML = TilexMeteo.rendreHTML(m); })
+      .catch(()=>{ var b=document.getElementById('meteoBox'); if(b) b.innerHTML = TilexMeteo.rendreHTML(null); });
+  }
+  chargerMeteo();
+  setInterval(chargerMeteo, 600000); // rafraîchit aux 10 min
 </script>
 </body>
 </html>
