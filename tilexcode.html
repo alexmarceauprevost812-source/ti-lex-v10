@@ -454,8 +454,10 @@ async function refreshAuthUI(){
 async function login(create){
   const email=$("email").value.trim(), password=$("password").value;
   if(!email||!password){ toast("Courriel + mot de passe requis",1); return; }
-  const fn=create? sb.auth.signUp : sb.auth.signInWithPassword;
-  const { data, error } = await fn.call(sb.auth,{email,password});
+  // Appel direct (pas de .call) pour éviter tout souci de liaison this.
+  const { data, error } = create
+    ? await sb.auth.signUp({ email, password })
+    : await sb.auth.signInWithPassword({ email, password });
   if(error){ toast(error.message,1); logLine("e","Auth: "+error.message); return; }
   await refreshAuthUI(); toast(create?"Compte créé":"Connecté ✓"); logLine("ok","Connecté: "+(data?.user?.email||email));
 }
@@ -681,6 +683,17 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
   const savedPath=localStorage.getItem(LS.path); if(savedPath) $("filePath").value=savedPath;
   renderCode();
   stepTitle("Démarrage");
+  // ── PONT SESSION : reprend la session déjà ouverte sur la plateforme ──
+  // (pro.html / web.html) → tilexcode est connecté direct, sans retaper.
+  try {
+    const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (raw) {
+      const o = JSON.parse(raw); const sPF = o.currentSession || o;
+      if (sPF && sPF.access_token && sPF.refresh_token) {
+        await sb.auth.setSession({ access_token: sPF.access_token, refresh_token: sPF.refresh_token });
+      }
+    }
+  } catch (e) { /* pas de session plateforme → login manuel */ }
   const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); stepOk(a);
   if(pat){ const b=step("Je rebranche GitHub avec ton jeton déjà sauvegardé"); const ok=await testGitHub();
     if(ok){ stepOk(b); const c=step("Je recharge ton dernier repo"+(repo?" ("+repo+")":"")+" + sa branche + ses fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(c); step("Tout est branché — t'as rien eu à faire ✓"); }
