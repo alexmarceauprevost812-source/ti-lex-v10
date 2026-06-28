@@ -524,6 +524,14 @@ body.sb-open .content{margin-left:var(--sb-w);}
 .cmsg-typing{display:flex;flex-direction:column;align-items:flex-start;gap:6px;align-self:flex-start;}
 .cmsg-typing .cmsg-ty-avatar{width:28px;height:28px;border-radius:8px;overflow:hidden;}
 .cmsg-typing .cmsg-ty-avatar img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+/* Indicateur de sources — vrais logos des moteurs (Web/Google, Supabase, GitHub) */
+.tlx-sources{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 6px;}
+.tlx-sources:empty{display:none;}
+.tlx-src-lead{font-size:10px;color:var(--muted);font-family:'Share Tech Mono',monospace;letter-spacing:.3px;}
+.tlx-src-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--txt);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 9px;line-height:1;transition:border-color .2s,box-shadow .2s;}
+.tlx-src-chip svg{display:block;flex-shrink:0;}
+.tlx-sources[data-confirmed="1"] .tlx-src-chip{border-color:var(--orange,#FF6B00);box-shadow:0 0 6px rgba(255,107,0,.25);}
+.tydots.tlx-status-txt{font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace;align-self:center;}
 .tydots{display:flex;gap:6px;padding:4px 0;align-items:flex-end;}
 .tyd{width:8px;height:8px;background:var(--orange);border-radius:50%;opacity:0;animation:tdBounceIn .6s ease forwards;}
 .tyd:nth-child(1){animation-delay:.1s}
@@ -4350,6 +4358,29 @@ function addMsg(role,txt){
 function alAvaVid(){
   return '<video class="cmsg-ava-vid" autoplay loop muted playsinline preload="metadata" poster="assets/tilex-logo.png"><source src="assets/tilex-al-avatar.mp4" type="video/mp4"></video>';
 }
+/* ── Indicateur de SOURCES : vrais logos officiels des moteurs utilisés ──
+   Les clés viennent du backend (agent-al) mais on ne rend QUE les clés connues
+   ci-dessous (mapping fixe) → aucun HTML d'origine serveur, anti-XSS garanti. */
+var TLX_SRC={
+  supabase:{l:"Supabase",c:"#3ECF8E",p:"M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.377.113-3.405-1.645-3.405h-9.642z"},
+  github:{l:"GitHub",c:"#e8e8ec",p:"M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"},
+  google:{l:"Google",c:"#4285F4",p:"M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"},
+  web:{l:"Web",c:"#4a9eff",p:null}
+};
+function tlxSourceChip(src){
+  var d=TLX_SRC[src]; if(!d) return "";
+  var icon=d.p
+    ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="'+d.c+'"><path d="'+d.p+'"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="'+d.c+'" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
+  return '<span class="tlx-src-chip" title="'+d.l+'">'+icon+'<span>'+d.l+'</span></span>';
+}
+function tlxRenderSources(row, sources, confirmed){
+  if(!row) return;
+  var known=(sources||[]).filter(function(s){return TLX_SRC[s];});
+  if(!known.length){ row.innerHTML=""; return; }
+  row.innerHTML='<span class="tlx-src-lead">'+(confirmed?"🔎 Sources :":"… recherche :")+'</span>'+known.map(tlxSourceChip).join("");
+  row.setAttribute("data-confirmed", confirmed?"1":"0");
+}
 /* Ne joue que les avatars visibles (perf + batterie mobile) */
 (function(){
   function setup(){
@@ -7009,24 +7040,44 @@ async function alSendToAgent(question){
         project_context:_alProjectContext?{owner:_alProjectContext.owner,repo:_alProjectContext.repo,branch:_alProjectContext.branch,file_tree:_alProjectContext.file_tree}:null
       })
     });
-    td.remove();
-    var data=await res.json();
-    if(data.error){addMsg("a","❌ "+data.error);chatBusy=false;return;}
-    var reply=data.result||"Pas de réponse.";
-    chatHistory.push({role:"assistant",content:reply});
-    // Render reply with INJECT blocks
-    alRenderAgentReply(reply,data);
-    if(data.project_context_updated){
-      var prevRepo=_alProjectContext?_alProjectContext.repo:null;
-      _alProjectContext=data.project_context_updated;
-      alUpdateProjectInfo();
-      if(_alProjectContext.file_tree&&_alProjectContext.file_tree.length>0&&_alProjectContext.repo!==prevRepo){
-        alRenderScanReport(_alProjectContext);
+    // ── agent-al renvoie un FLUX SSE : on le LIT (avant: res.json() cassait) ──
+    if(!res.ok){ td.remove(); var em="Erreur "+res.status; try{var je=await res.json();em=je.error||em;}catch(_e){} addMsg("a","❌ "+em); chatBusy=false; return; }
+    var lastSources=[], lastConfirmed=false;
+    var reader=res.body.getReader(), dec=new TextDecoder(), buf="", answer="";
+    var sBubble=null, sBody=null;
+    var ensureStream=function(){ if(sBubble)return; td.remove();
+      sBubble=document.createElement("div"); sBubble.className="cmsg a";
+      sBubble.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="tlx-sources"></div><div class="cmsg-bbl a stream-active"></div></div>';
+      msgs.appendChild(sBubble); sBody=sBubble.querySelector(".cmsg-bbl");
+      if(lastSources.length) tlxRenderSources(sBubble.querySelector(".tlx-sources"), lastSources, lastConfirmed);
+    };
+    while(true){
+      var rd=await reader.read(); if(rd.done) break;
+      buf+=dec.decode(rd.value,{stream:true});
+      var parts=buf.split("\n\n"); buf=parts.pop()||"";
+      for(var pi=0; pi<parts.length; pi++){
+        var lnp=parts[pi].trim(); if(lnp.slice(0,5)!=="data:") continue;
+        var ds=lnp.slice(5).trim(); if(ds==="[DONE]") continue;
+        var evt; try{ evt=JSON.parse(ds); }catch(_p){ continue; }
+        if(evt.type==="sources"){
+          lastSources=evt.sources||[]; lastConfirmed=!!evt.confirmed;
+          tlxRenderSources(sBubble?sBubble.querySelector(".tlx-sources"):td.querySelector(".tlx-sources")||(function(){var r=document.createElement("div");r.className="tlx-sources";var w=td.querySelector(".cmsg-typing");if(w)w.appendChild(r);return r;})(), lastSources, lastConfirmed);
+        } else if(evt.type==="status"){
+          var dotsLbl=td.querySelector(".tydots"); if(dotsLbl && !sBubble){ dotsLbl.textContent=evt.text; dotsLbl.classList.add("tlx-status-txt"); }
+        } else if(evt.type==="token"){
+          ensureStream(); answer+=evt.text; sBody.textContent=answer; msgs.scrollTop=msgs.scrollHeight;
+        }
       }
     }
-    if(data.proposed_files){
-      for(var f in data.proposed_files){_alPendingFiles[f]=data.proposed_files[f];}
-      alUpdatePendingBar();
+    td.remove(); if(sBubble) sBubble.remove();
+    var reply=answer||"Pas de réponse.";
+    chatHistory.push({role:"assistant",content:reply});
+    alRenderAgentReply(reply,{});
+    // Vrais logos des moteurs réellement utilisés, en haut de la réponse finale
+    if(lastSources.length){
+      var fin=msgs.lastElementChild;
+      if(fin&&fin.classList.contains("cmsg")){ var col=fin.children[1]||fin; var row2=document.createElement("div"); row2.className="tlx-sources";
+        tlxRenderSources(row2, lastSources, lastConfirmed); col.insertBefore(row2, col.firstChild); }
     }
     sauvegarderMsgEnDB("user",question);
     sauvegarderMsgEnDB("assistant",reply);
