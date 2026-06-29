@@ -177,6 +177,21 @@
   }
   .col.left.open{transform:translateX(0);}
   .mobtabs{display:none !important;}
+  /* Bas du tiroir : conversations repliables + retour plateforme */
+  .leftfoot{flex:0 0 auto; border-top:1px solid var(--bord); padding:8px 10px; background:var(--bg2);}
+  .convhead{width:100%; text-align:left; background:var(--bg3); color:var(--txt); border:1px solid var(--bord);
+    border-radius:9px; padding:9px 11px; font-size:13px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;}
+  .convhead .chev{transition:transform .25s ease; color:var(--txt2);}
+  .convhead.open .chev{transform:rotate(90deg); color:var(--orange);}
+  .convlist{max-height:0; overflow:hidden; transition:max-height .28s ease; display:flex; flex-direction:column; gap:4px;}
+  .convlist.open{max-height:42vh; overflow-y:auto; margin-bottom:6px;}
+  .convitem{text-align:left; background:transparent; color:var(--txt); border:1px solid var(--bord);
+    border-radius:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; line-height:1.3;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .convitem:hover{background:var(--bg3); border-color:var(--orange);}
+  .convitem .when{display:block; font-size:10px; color:var(--txt2); margin-top:2px;}
+  .convempty{color:var(--txt2); font-size:12px; padding:8px 4px;}
 </style>
 </head>
 <body>
@@ -202,10 +217,10 @@
 </div>
 
 <main>
-  <!-- GAUCHE : connexion au projet + branche -->
+  <!-- GAUCHE (tiroir) : connexion projet/branche + conversations + retour plateforme -->
   <section class="col left" id="leftPanel">
     <div class="pane-h">🔌 Connexion au projet</div>
-    <div class="pane-b">
+    <div class="pane-b" style="flex:1 1 auto;overflow-y:auto;">
       <label class="fld">Dépôt (repo)</label>
       <select id="repoSel"><option value="">— choisir un repo —</option></select>
       <label class="fld">Branche</label>
@@ -216,6 +231,12 @@
       </div>
       <label class="fld" style="margin-top:12px">Fichiers</label>
       <div class="tree" id="tree"><span class="mini">Branche un repo pour voir les fichiers.</span></div>
+    </div>
+    <!-- Bas du tiroir : Conversations (repliable) + retour plateforme -->
+    <div class="leftfoot">
+      <div class="convlist" id="convList"></div>
+      <button class="convhead" id="convToggle">💬 Conversations <span class="chev" id="convChev">▸</span></button>
+      <button class="btn sm" id="backPlatBtn" style="width:100%;margin-top:6px;">← Retour à la plateforme</button>
     </div>
   </section>
 
@@ -304,7 +325,7 @@ const SUPABASE_URL  = window.SB_URL  || "https://rnuripmfozlxenryxhdc.supabase.c
 const SUPABASE_ANON = window.SB_ANON || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
 const FN_AGENT      = `${SUPABASE_URL}/functions/v1/tilexcode-agent`;
 const FN_GARDIEN    = `${SUPABASE_URL}/functions/v1/tilex-gardien`;
-const LS = { pat:"tilexcode_pat", repo:"tilexcode_repo", branch:"tilexcode_branch", path:"tilexcode_path", code:"tilexcode_code" };
+const LS = { pat:"tilexcode_pat", repo:"tilexcode_repo", branch:"tilexcode_branch", path:"tilexcode_path", code:"tilexcode_code", hist:"tilexcode_hist" };
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
 const $ = (id)=>document.getElementById(id);
@@ -324,6 +345,32 @@ function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").rep
 function explicationSeule(s){
   let t=String(s||"").replace(/```[\s\S]*?```/g,"").replace(/\n{3,}/g,"\n\n").trim();
   return t;
+}
+
+/* ====================== CONVERSATIONS (historique des demandes Codex) ====================== */
+function histLire(){ try{ return JSON.parse(localStorage.getItem(LS.hist)||"[]"); }catch(e){ return []; } }
+function histAjouter(t){
+  t=String(t||"").trim(); if(!t) return;
+  let arr=histLire().filter(x=>x.t!==t);
+  arr.unshift({ t:t.slice(0,200), at:Date.now() });
+  arr=arr.slice(0,30);
+  try{ localStorage.setItem(LS.hist, JSON.stringify(arr)); }catch(e){}
+  histRendre();
+}
+function histQuand(at){ const d=(Date.now()-at)/1000; if(d<60)return "à l'instant"; if(d<3600)return "il y a "+Math.floor(d/60)+" min"; if(d<86400)return "il y a "+Math.floor(d/3600)+" h"; return new Date(at).toLocaleDateString("fr-CA"); }
+function histRendre(){
+  const box=$("convList"); if(!box) return;
+  const arr=histLire();
+  if(!arr.length){ box.innerHTML='<div class="convempty">Aucune conversation encore.</div>'; return; }
+  box.innerHTML="";
+  arr.forEach(x=>{
+    const d=document.createElement("button"); d.className="convitem"; d.title=x.t;
+    const txt=document.createElement("span"); txt.textContent=x.t;
+    const w=document.createElement("span"); w.className="when"; w.textContent=histQuand(x.at);
+    d.appendChild(txt); d.appendChild(w);
+    d.onclick=()=>{ $("prompt").value=x.t; $("leftPanel").classList.remove("open"); $("prompt").focus(); };
+    box.appendChild(d);
+  });
 }
 function logLine(kind,txt){
   const c=$("consoleOut"); if(!c) return; const span=document.createElement("div");
@@ -628,6 +675,7 @@ async function runAgent(agentId){
   const prompt=$("prompt").value.trim();
   if(!prompt && !codeEl.value.trim()){ toast("Écris une demande en bas d'abord",1); $("prompt").focus(); return; }
   const input = prompt || "Analyse / traite le code fourni en contexte.";
+  if(prompt) histAjouter(prompt);
   diffuserCodex({ kind:"task", demande:input });   // 📲 suit sur tes autres appareils
   logLine("u",`${agentId} ← ${input.slice(0,80)}`);
   stepTitle("Agent "+agentId);
@@ -743,6 +791,7 @@ async function runCodex(){
   if(!prompt && !codeEl.value.trim()){ toast("Écris ta demande en bas",1); $("prompt").focus(); return; }
   const demande = prompt || "Améliore et complète le code fourni en contexte.";
   logLine("u","Codex ← "+demande.slice(0,80));
+  histAjouter(demande);
   diffuserCodex({ kind:"task", demande });   // 📲 suit sur tes autres appareils
   stepTitle("Codex ⚡ — pipeline complet");
   const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
@@ -800,6 +849,9 @@ $("prompt").addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey)
 
 /* ====================== ÉVÉNEMENTS ====================== */
 $("toggleLeft").onclick=()=>$("leftPanel").classList.toggle("open");
+$("convToggle").onclick=()=>{ $("convList").classList.toggle("open"); $("convToggle").classList.toggle("open"); };
+$("backPlatBtn").onclick=()=>{ window.location.href="/pro"; };
+histRendre();
 $("repoSel").onchange=async(e)=>{ repo=e.target.value; localStorage.setItem(LS.repo,repo); curFileSha=null;
   stepTitle("Connexion au projet");
   const a=step("Repo branché : "+(repo||"—")+" (gardé en mémoire)"); stepOk(a);
