@@ -474,12 +474,31 @@ function angeWatch(){
 /* ====================== SUPABASE AUTH ====================== */
 async function refreshAuthUI(){
   const { data } = await sb.auth.getSession(); const s=data?.session;
-  setDot("dotSb", !!s); setDot("dotAg", !!s);
+  setDot("dotSb", !!s);
   if(s){ $("loginBox").style.display="none"; $("accountBox").style.display="block"; $("whoami").textContent=s.user?.email||""; }
-  else { $("loginBox").style.display="block"; $("accountBox").style.display="none"; }
+  else { $("loginBox").style.display="block"; $("accountBox").style.display="none"; setDot("dotAg",false); }
   return s;
 }
-sb.auth.onAuthStateChange(()=>refreshAuthUI());
+sb.auth.onAuthStateChange(()=>{ refreshAuthUI(); checkMoteur(); });
+
+/* Vérifie pour de vrai que le moteur Codex répond (auth + CORS + clé secret côté serveur).
+   Ping volontairement avec input vide → le serveur répond 400 « Champ input vide » SANS
+   appeler l'IA : ça prouve que le compte est connecté, le CORS passe, et le moteur est vivant. */
+async function checkMoteur(){
+  try{
+    const { data } = await sb.auth.getSession(); const token=data?.session?.access_token;
+    if(!token){ setDot("dotAg",false); return false; }
+    const r=await fetch(FN_AGENT,{ method:"POST",
+      headers:{ "Authorization":"Bearer "+token, "apikey":SUPABASE_ANON, "Content-Type":"application/json" },
+      body:JSON.stringify({ agent_id:"SCRIBE", input:"" })
+    }).catch(()=>null);
+    if(!r){ setDot("dotAg",false); logLine("e","Moteur injoignable (origine bloquée / réseau)"); return false; }
+    if(r.status===400 || r.ok){ setDot("dotAg",true); logLine("ok","Moteur Codex prêt ✓ (clé secret active côté serveur)"); return true; }
+    if(r.status===401){ setDot("dotAg",false); logLine("e","Moteur: ton compte n'est pas connecté"); return false; }
+    if(r.status===500){ setDot("dotAg",false); logLine("e","Moteur: clé secrète manquante côté serveur"); return false; }
+    setDot("dotAg",false); logLine("e","Moteur: HTTP "+r.status); return false;
+  }catch(e){ setDot("dotAg",false); return false; }
+}
 
 /* ====================== GITHUB (direct, PAT navigateur) ====================== */
 async function gh(path, opts={}){
@@ -755,7 +774,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
       }
     }
   } catch (e) { /* pas de session plateforme → login manuel */ }
-  const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); stepOk(a);
+  const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); await checkMoteur(); stepOk(a);
   if(pat){ const b=step("Je rebranche GitHub avec ton jeton déjà sauvegardé"); const ok=await testGitHub();
     if(ok){ stepOk(b); const c=step("Je recharge ton dernier repo"+(repo?" ("+repo+")":"")+" + sa branche + ses fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(c); step("Tout est branché — t'as rien eu à faire ✓"); }
     else { stepErr(b); step("Jeton refusé par GitHub — reconnecte-toi dans Réglages"); }
