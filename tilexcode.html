@@ -163,6 +163,20 @@
     header{gap:8px; padding:9px 12px}
     .editor-top{flex-wrap:wrap}
   }
+
+  /* ════════ CODEX SUR UN SEUL ÉCRAN ════════
+     Une seule colonne (explication + diff). Le code complet est caché ;
+     la connexion au projet (repo/fichiers) devient un tiroir via le ☰. */
+  header{position:relative; z-index:500;}
+  .col.right{display:none !important;}
+  .col.center{flex:1 1 100% !important; width:100% !important; border-right:0 !important;}
+  .col.left{
+    position:fixed; top:52px; left:0; bottom:0; width:min(84vw,300px); z-index:400;
+    background:var(--bg2); border-right:1px solid var(--bord);
+    transform:translateX(-100%); transition:transform .25s ease; box-shadow:2px 0 24px rgba(0,0,0,.55);
+  }
+  .col.left.open{transform:translateX(0);}
+  .mobtabs{display:none !important;}
 </style>
 </head>
 <body>
@@ -205,29 +219,26 @@
     </div>
   </section>
 
-  <!-- MILIEU : tout ce que tilexcode fait (étapes) -->
+  <!-- ÉCRAN UNIQUE : ce que le Codex fait (explication + diff) + injection -->
   <section class="col center">
-    <div class="pane-h">📝 Étapes — <span class="acc">tout ce que tilexcode fait</span></div>
+    <div class="editor-top">
+      <input class="path" id="filePath" type="text" placeholder="chemin/du/fichier.js" />
+      <button class="btn orange sm" id="pushBtn" title="Injecter le code dans ton repo">injection 💉</button>
+    </div>
     <div class="pane-b">
-      <div id="angeZone"></div>
-      <div id="stepsBox"><span class="mini">Écris ta demande en bas. Les étapes détaillées de chaque action s'affichent ici : 1- 2- 3-…</span></div>
+      <div id="angeZone" style="display:none"></div>
+      <div id="stepsBox"><span class="mini">Écris ta demande en bas. Le Codex t'explique quoi il modifie, pis te montre juste les lignes changées (diff vert/rouge).</span></div>
       <div id="diffOut"></div>
       <div id="studioOut"></div>
       <div class="log" id="consoleOut"></div>
     </div>
   </section>
 
-  <!-- DROITE : tout le code -->
+  <!-- Code complet : caché (sert juste à garder le contenu pour l'injection) -->
   <section class="col right">
-    <div class="editor-top">
-      <input class="path" id="filePath" type="text" placeholder="chemin/du/fichier.js" />
-      <button class="btn sm" id="scanErrBtn" title="LOUPE + FORGE : trouve et corrige les erreurs">🔍 Scan erreurs</button>
-      <button class="btn orange sm" id="pushBtn" title="Injecter le code dans ton repo (lis-le avant)">injection 💉</button>
-    </div>
     <div class="code-area">
       <pre id="hl" aria-hidden="true"><code></code></pre>
-      <textarea id="code" spellcheck="false" placeholder="// Le code généré et corrigé s'affiche ici, en couleurs.
-// Lis-le au complet, pis clique « injection 💉 » quand t'es prêt."></textarea>
+      <textarea id="code" spellcheck="false" placeholder=""></textarea>
     </div>
   </section>
 </main>
@@ -240,11 +251,10 @@
     <button class="agentbtn" data-agent="SOCLE"><b>SOCLE</b> <span class="role">infra/SQL</span></button>
     <button class="agentbtn" data-agent="LOUPE"><b>LOUPE</b> <span class="role">analyse</span></button>
     <button class="agentbtn" data-agent="FORGE"><b>FORGE</b> <span class="role">studio erreur</span></button>
-    <button class="agentbtn" data-agent="COFFRE"><b>COFFRE</b> <span class="role">gardien</span></button>
   </div>
   <div class="inputrow">
-    <textarea id="prompt" placeholder="Décris ta tâche… Codex fait tout : écrit, analyse, corrige, scanne. (Entrée = lancer · Maj+Entrée = nouvelle ligne)"></textarea>
-    <button class="btn orange" id="sendBtn" title="Pipeline complet : SCRIBE → LOUPE → FORGE → ange gardien">⚡ Codex</button>
+    <textarea id="prompt" placeholder="Décris ta tâche… Codex écrit, analyse, corrige. (Entrée = lancer · Maj+Entrée = nouvelle ligne)"></textarea>
+    <button class="btn orange" id="sendBtn" title="Pipeline complet : SCRIBE → LOUPE → FORGE">⚡ Codex</button>
   </div>
   <div class="mini">⚡ <b style="color:var(--orange)">Codex</b> = tout automatique. Ou clique un agent en haut pour le faire à la main.</div>
 </footer>
@@ -379,7 +389,7 @@ function renderCode(){
   $("hl").scrollTop=codeEl.scrollTop; $("hl").scrollLeft=codeEl.scrollLeft;
   localStorage.setItem(LS.code, codeEl.value);
 }
-codeEl.addEventListener("input", ()=>{ renderCode(); angeWatch(); });
+codeEl.addEventListener("input", ()=>{ renderCode(); });
 codeEl.addEventListener("scroll", ()=>{ $("hl").scrollTop=codeEl.scrollTop; $("hl").scrollLeft=codeEl.scrollLeft; });
 codeEl.addEventListener("keydown",(e)=>{ if(e.key==="Tab"){ e.preventDefault(); const s=codeEl.selectionStart,en=codeEl.selectionEnd; codeEl.value=codeEl.value.slice(0,s)+"  "+codeEl.value.slice(en); codeEl.selectionStart=codeEl.selectionEnd=s+2; renderCode(); } });
 function setCode(txt){ codeEl.value=txt; renderCode(); }
@@ -572,17 +582,6 @@ async function injecter(){
   stepTitle("Injection 💉 au repo");
   const tlxI=tlxCodexStart(["github"],"Connexion + injection");
   step("Cible : "+repo+" @ "+(branch||"main")+" → "+path);
-  // 1) L'ange gardien jette un dernier coup d'œil
-  const s1=step("L'ange gardien scanne le code ("+codeEl.value.split("\n").length+" lignes) avant l'injection");
-  const found=scanSecrets(codeEl.value);
-  if(found.length){
-    stepErr(s1); step("⚠ "+found.length+" secret(s) : "+found.map(f=>f.label+" (l."+f.line+")").join(", "));
-    logLine("e","Ange gardien: "+found.length+" secret(s)."); angeShow(found,"inject");
-    try{ fetch(FN_GARDIEN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"report",raison:"scan-pre-injection",hote:location.host,chemin:path,canary:String(found.length)})}); }catch(_e){}
-    const ok=confirm(`😇 L'ange gardien a vu ${found.length} secret(s) :\n\n`+found.map(f=>"• "+f.label+" (ligne "+f.line+")").join("\n")+`\n\n« OK » = injecter quand même.\n« Annuler » = je corrige d'abord (clique « Corriger » sur l'ange gardien).`);
-    if(!ok){ step("Tu corriges d'abord — injection en pause"); tlxI.remove(); return; }
-    step("Tu as choisi d'injecter quand même"); angeHide();
-  } else { stepOk(s1); step("Aucun secret — code propre ✓"); }
   // 2) SHA
   const s2=step("Je regarde si "+path+" existe déjà sur GitHub (pour le bon SHA)");
   let sha=curFileSha;
@@ -751,7 +750,7 @@ async function runCodex(){
   $("studioOut").innerHTML=""; setSendBusy(true);
   try{
     // 1/4 SCRIBE écrit
-    let s=step("1/4 · SCRIBE écrit le code"); toast("⚡ 1/4 SCRIBE…");
+    let s=step("1/3 · SCRIBE écrit le code"); toast("⚡ 1/3 SCRIBE…");
     const r1=await callAgent("SCRIBE", demande, codeEl.value);
     const b1=firstCodeBlock(r1);
     const fichier = $("filePath").value ? "📄 "+$("filePath").value+"\n\n" : "";
@@ -760,22 +759,17 @@ async function runCodex(){
     if(b1){ applyAgentCode(b1,"Changements proposés (SCRIBE)",true); stepOk(s); step("SCRIBE a proposé des changements — voir le diff au-dessus (vert = ajout, rouge = retrait)"); }
     else { stepOk(s); step("SCRIBE a répondu (explication ci-dessus)"); }
     // 2/4 LOUPE analyse
-    s=step("2/4 · LOUPE cherche les erreurs"); toast("⚡ 2/4 LOUPE…");
+    s=step("2/3 · LOUPE cherche les erreurs"); toast("⚡ 2/3 LOUPE…");
     const diag=await callAgent("LOUPE","Analyse ce code et liste les erreurs/bogues/failles à corriger.", codeEl.value);
     studioAppend("","🔍 Ce que LOUPE a trouvé",explicationSeule(diag)||diag); stepOk(s); step("Diagnostic reçu");
     // 3/4 FORGE corrige
-    s=step("3/4 · FORGE corrige les erreurs"); toast("⚡ 3/4 FORGE…");
+    s=step("3/3 · FORGE corrige les erreurs"); toast("⚡ 3/3 FORGE…");
     const r3=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
     const b3=firstCodeBlock(r3);
     studioAppend("good", "🔧 Corrections appliquées", explicationSeule(r3) || "J'ai corrigé ce que LOUPE a trouvé.");
     diffuserCodex({ kind:"result", cls:"good", ttl:"🔧 FORGE", body:(explicationSeule(r3)||"").slice(0,8000) });
     if(b3){ applyAgentCode(b3,"Changements corrigés (FORGE)",true); stepOk(s); step("FORGE a corrigé — voir le diff au-dessus (vert/rouge = changements)"); }
     else { stepOk(s); step("FORGE a répondu (explication ci-dessus)"); }
-    // 4/4 Ange gardien scanne
-    s=step("4/4 · L'ange gardien scanne les secrets");
-    const found=scanSecrets(codeEl.value);
-    if(found.length){ stepErr(s); angeShow(found,"codex"); step("⚠ "+found.length+" secret(s) — clique « Corriger » sur l'ange gardien au milieu"); }
-    else { stepOk(s); step("Aucun secret — code propre ✓"); }
     step("✅ Codex a fini. Lis le résumé + le diff ici, pis clique « injection 💉 » quand t'es prêt.");
     if(isMobile()) setView("center");
     toast("Codex ⚡ fini ✓");
@@ -805,7 +799,7 @@ $("sendBtn").onclick=runCodex;
 $("prompt").addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); runCodex(); } });
 
 /* ====================== ÉVÉNEMENTS ====================== */
-$("toggleLeft").onclick=()=>$("leftPanel").classList.toggle("collapsed");
+$("toggleLeft").onclick=()=>$("leftPanel").classList.toggle("open");
 $("repoSel").onchange=async(e)=>{ repo=e.target.value; localStorage.setItem(LS.repo,repo); curFileSha=null;
   stepTitle("Connexion au projet");
   const a=step("Repo branché : "+(repo||"—")+" (gardé en mémoire)"); stepOk(a);
@@ -816,7 +810,6 @@ $("branchSel").onchange=async(e)=>{ branch=e.target.value; localStorage.setItem(
 $("refreshTreeBtn").onclick=loadTree;
 $("newFileBtn").onclick=()=>{ $("filePath").value=""; curFileSha=null; setCode(""); document.querySelectorAll(".tree .f").forEach(x=>x.classList.remove("sel")); $("filePath").focus(); };
 $("pushBtn").onclick=injecter;
-$("scanErrBtn").onclick=scanErreurs;
 
 /* ====================== RECONNEXION AUTOMATIQUE ====================== */
 async function reconnect(silent){
