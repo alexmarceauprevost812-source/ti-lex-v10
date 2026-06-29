@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 <title>ti-lex-AL v10 — Pro</title>
 <script src="js/tilex-guardian.js"></script>
 <script src="js/tilex-config.js"></script>
@@ -2030,6 +2031,49 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 #connectors-hub .connector-chip:hover{background:rgba(255,255,255,0.12);}
 #connectors-hub .connector-logo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;}
 #connectors-hub .connector-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
+
+/* ════════════════════════════════════════════════════════════
+   🎨 MENU DE GAUCHE — look « app Claude » (titre serif + items manuscrits)
+   Bloc placé en dernier : il habille la sidebar sans toucher la structure.
+   ════════════════════════════════════════════════════════════ */
+.sidebar, .sidebar.sidebar-open{ background:#0f0f0f; }
+.sidebar.sidebar-open{ border-right:1px solid rgba(255,255,255,.06); }
+
+/* En-tête : petit logo + gros titre serif aligné à gauche (comme « Claude ») */
+.sb-logo-box{ align-items:flex-start; padding:20px 20px 6px; flex-direction:row; gap:12px; }
+.sb-logo-img-wrap{ max-width:40px; width:40px; }
+.sb-logo-img-wrap img{ border-radius:9px; }
+.sb-heat{ display:none !important; }
+.sb-badge{ display:none !important; }
+.sb-logo-name{ font-family:Georgia,'Times New Roman',serif !important; font-size:30px; letter-spacing:0;
+  margin-top:2px; text-align:left; -webkit-text-fill-color:#f3f0e9 !important; background:none !important; color:#f3f0e9; align-self:center; }
+
+/* Séparateurs discrets + en-têtes de section type « Favoris / Récents » */
+.sb-sep{ background:rgba(255,255,255,.06); margin:10px 16px; }
+.sb-sec{ font-family:'Patrick Hand',cursive !important; font-size:15px !important; color:#7d7d7d !important;
+  letter-spacing:.4px !important; text-transform:none; padding:14px 22px 6px; }
+
+/* Items : police manuscrite, spacieux, pilule arrondie quand actif/hover */
+.sb-item{ font-family:'Patrick Hand',cursive !important; font-size:19px !important; letter-spacing:.2px !important;
+  padding:12px 16px !important; margin:2px 12px; border-radius:14px; border-left:none !important;
+  opacity:.95; color:#ececec !important; gap:14px !important; }
+.sb-item:hover{ background:rgba(255,255,255,.05) !important; border-left:none !important; opacity:1; }
+.sb-item.active{ background:rgba(255,255,255,.08) !important; color:#ffffff !important; border-left:none !important; }
+.sb-icon{ font-size:19px !important; width:26px !important; }
+/* Pas d'animation « techno » lettre-par-lettre dans ce thème */
+.sb-item:hover .ltr, .sb-item.active .ltr{ animation:none !important; text-shadow:none !important; color:inherit !important; }
+.sb-item .ltr{ color:inherit; }
+
+/* Sous-menu (Finances → Bourse + Midas) propre, sans les ├ └ */
+.sb-submenu{ margin:0 0 4px 30px; border-left:none; }
+.sb-sub-item{ font-family:'Patrick Hand',cursive !important; font-size:16px !important; letter-spacing:.2px !important;
+  color:rgba(236,236,236,.75) !important; padding:9px 14px; border-radius:11px; }
+.sb-sub-item::before{ content:'' !important; }
+.sb-sub-item:hover{ background:rgba(255,255,255,.05) !important; color:#fff !important; }
+.sb-item .chev{ font-size:13px; color:#7d7d7d; }
+
+/* Bas de menu (Compte / Paramètres) — même police manuscrite */
+.sb-plan-txt, .sb-plan-row{ font-family:'Patrick Hand',cursive !important; }
 
 </style>
 </head>
