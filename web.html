@@ -27,19 +27,19 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--w
    ════════════════════════════════════════════════ */
 html[data-theme="jour"]{
   --bg:#f4f0e6;--bg2:#faf8f2;--bg3:#efe9db;--bg4:#e6dfcd;
-  --orange:#c96442;--orange2:#d97757;--orange-dim:rgba(201,100,66,.12);
-  --red:#b3401f;--white:#2b2a27;--grey:#6b6258;--grey2:#9a8f7e;
-  --border:rgba(60,45,30,.14);--glow:0 0 40px rgba(201,100,66,.22);
-  --accent:#c96442;--accent2:#d97757;--accent-dim:rgba(201,100,66,.12);
-  --accent-glow:0 0 40px rgba(201,100,66,.22);
+  --orange:#FF6B00;--orange2:#FF8C00;--orange-dim:rgba(255,107,0,.14);
+  --red:#cc2200;--white:#1a1a1a;--grey:#5a5246;--grey2:#8a8072;
+  --border:rgba(40,30,15,.16);--glow:0 0 40px rgba(255,107,0,.25);
+  --accent:#FF6B00;--accent2:#FF8C00;--accent-dim:rgba(255,107,0,.14);
+  --accent-glow:0 0 40px rgba(255,107,0,.25);
   color-scheme:light;
 }
-/* Fond d'écran doux (papier crème + halos argile) — fixe, ne scrolle pas */
+/* Fond d'écran doux (papier crème + halos orange) — fixe, ne scrolle pas */
 html[data-theme="jour"] body{
   background:
-    radial-gradient(1100px 620px at 12% -12%, rgba(217,119,87,.10), transparent 60%),
-    radial-gradient(820px 520px at 112% 8%, rgba(201,100,66,.07), transparent 55%),
-    radial-gradient(700px 700px at 90% 115%, rgba(180,150,110,.08), transparent 60%),
+    radial-gradient(1100px 620px at 12% -12%, rgba(255,107,0,.10), transparent 60%),
+    radial-gradient(820px 520px at 112% 8%, rgba(255,140,0,.07), transparent 55%),
+    radial-gradient(700px 700px at 90% 115%, rgba(190,150,100,.08), transparent 60%),
     linear-gradient(180deg,#faf7ef 0%,#f4f0e6 48%,#ede6d6 100%);
   background-attachment:fixed;
 }
@@ -1379,7 +1379,7 @@ function navigateTo(section){
 const CTL_DEFAULTS={accent:'#FF6B00',bg:'#080808',txt:'#ffffff',preset:'nuit',modules:{vision:true,vocal:true,stream:true,offline:true,memory:true}};
 const CTL_PRESETS={
   nuit:{accent:'#FF6B00',bg:'#080808',txt:'#ffffff'},
-  jour:{accent:'#c96442',bg:'#f4f0e6',txt:'#2b2a27'},
+  jour:{accent:'#FF6B00',bg:'#f4f0e6',txt:'#1a1a1a'},
   matrix:{accent:'#e63946',bg:'#0a0a0f',txt:'#e8e8f0'},
   ocean:{accent:'#457b9d',bg:'#0b1d2a',txt:'#dff3ff'}
 };
