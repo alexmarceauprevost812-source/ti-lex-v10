@@ -309,6 +309,12 @@ let activeAgent = "SCRIBE";
 function toast(msg, err){ const t=$("toast"); t.textContent=msg; t.className="toast show"+(err?" err":""); setTimeout(()=>t.className="toast",3200); }
 function setDot(id,on){ $(id).className="dot "+(on?"on":"off"); }
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+/* Garde seulement l'explication (enlève les blocs de code ```…```) — on montre PAS
+   tout le fichier réécrit, juste ce que le Codex dit à l'utilisateur. */
+function explicationSeule(s){
+  let t=String(s||"").replace(/```[\s\S]*?```/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  return t;
+}
 function logLine(kind,txt){
   const c=$("consoleOut"); if(!c) return; const span=document.createElement("div");
   const cls={u:"u",a:"a",e:"e",ok:"ok"}[kind]||"";
@@ -438,7 +444,7 @@ function showDiff(oldStr,newStr,title){
     html+=`<div class="dl ${x.t==="+"?"add":"del"}">${x.t} ${esc(x.text)}</div>`; }
   $("diffOut").innerHTML=html;
 }
-function applyAgentCode(newCode, title, noSwitch){ const oldCode=codeEl.value; setCode(newCode); showDiff(oldCode,newCode,title||"Changements du code"); if(isMobile() && !noSwitch) setView("right"); }
+function applyAgentCode(newCode, title, noSwitch){ const oldCode=codeEl.value; setCode(newCode); showDiff(oldCode,newCode,title||"Changements du code"); if(isMobile()) setView("center"); }
 
 /* ====================== ANGE GARDIEN (parle au milieu, style fantôme 👻) ====================== */
 const angeZone=$("angeZone"); let angeSig="";
@@ -634,12 +640,18 @@ async function runAgent(agentId){
     stepOk(s1); const s2=step("J'envoie au moteur : "+input.length+" car. de demande + le code actuel en contexte ("+codeEl.value.length+" car.)");
     const out=await callAgent(agentId, input, codeEl.value);
     diffuserCodex({ kind:"result", ttl:agentId, body:String(out).slice(0,16000) });
-    stepOk(s2); const s3=step("Le moteur a répondu : "+out.length+" caractères reçus, je les lis…");
+    stepOk(s2); const s3=step("Le moteur a répondu — je te montre ce qui change…");
     logLine("a",`${agentId} a répondu (${out.length} car.)`);
-    studioCard("", agentId, out);
     const block=firstCodeBlock(out);
-    if(CODE_AGENTS.includes(agentId) && block){ applyAgentCode(block, agentId+" — code généré"); stepOk(s3); step("J'ai extrait le code ("+block.split("\n").length+" lignes), mis à droite, pis affiché les changements (vert = ajout, rouge = retrait) ✓"); toast(`${agentId} : code à droite ✓`); }
-    else { stepOk(s3); step("Pas de bloc de code à coller — j'affiche l'analyse complète ici au milieu ✓"); toast(`${agentId} ✓`); }
+    if(CODE_AGENTS.includes(agentId) && block){
+      const fichier = $("filePath").value ? "📄 "+$("filePath").value+"\n\n" : "";
+      studioCard("", "💬 "+agentId, fichier + (explicationSeule(out) || "Voici les changements proposés."));
+      applyAgentCode(block, "Changements proposés ("+agentId+")", true);
+      stepOk(s3); step("Changements affichés en diff (vert = ajout, rouge = retrait) ✓"); toast(`${agentId} ✓`);
+    } else {
+      studioCard("", "💬 "+agentId, explicationSeule(out) || out);
+      stepOk(s3); step("Réponse affichée ✓"); toast(`${agentId} ✓`);
+    }
   }catch(e){
     const cors=String(e.message).startsWith("CORS_OR_NET");
     stepErr(step("Erreur : "+(cors?"moteur bloqué (CORS)":e.message)));
@@ -741,28 +753,31 @@ async function runCodex(){
     // 1/4 SCRIBE écrit
     let s=step("1/4 · SCRIBE écrit le code"); toast("⚡ 1/4 SCRIBE…");
     const r1=await callAgent("SCRIBE", demande, codeEl.value);
-    const b1=firstCodeBlock(r1); studioAppend("","SCRIBE — code",r1);
-    diffuserCodex({ kind:"result", cls:"", ttl:"SCRIBE — code", body:r1.slice(0,16000) });
-    if(b1){ applyAgentCode(b1,"SCRIBE — code généré",true); stepOk(s); step("SCRIBE a écrit "+b1.split("\n").length+" lignes (vert = ajouts)"); }
-    else { stepOk(s); step("SCRIBE a répondu (texte affiché au milieu)"); }
+    const b1=firstCodeBlock(r1);
+    const fichier = $("filePath").value ? "📄 "+$("filePath").value+"\n\n" : "";
+    studioAppend("", "💬 Ce que je vais faire", fichier + (explicationSeule(r1) || "J'écris le code demandé."));
+    diffuserCodex({ kind:"result", cls:"", ttl:"💬 SCRIBE", body:(explicationSeule(r1)||"").slice(0,8000) });
+    if(b1){ applyAgentCode(b1,"Changements proposés (SCRIBE)",true); stepOk(s); step("SCRIBE a proposé des changements — voir le diff au-dessus (vert = ajout, rouge = retrait)"); }
+    else { stepOk(s); step("SCRIBE a répondu (explication ci-dessus)"); }
     // 2/4 LOUPE analyse
     s=step("2/4 · LOUPE cherche les erreurs"); toast("⚡ 2/4 LOUPE…");
     const diag=await callAgent("LOUPE","Analyse ce code et liste les erreurs/bogues/failles à corriger.", codeEl.value);
-    studioAppend("","LOUPE — diagnostic",diag); stepOk(s); step("Diagnostic reçu ("+diag.length+" car.)");
+    studioAppend("","🔍 Ce que LOUPE a trouvé",explicationSeule(diag)||diag); stepOk(s); step("Diagnostic reçu");
     // 3/4 FORGE corrige
     s=step("3/4 · FORGE corrige les erreurs"); toast("⚡ 3/4 FORGE…");
     const r3=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
-    const b3=firstCodeBlock(r3); studioAppend("good","FORGE — corrigé",r3);
-    diffuserCodex({ kind:"result", cls:"good", ttl:"FORGE — corrigé", body:r3.slice(0,16000) });
-    if(b3){ applyAgentCode(b3,"FORGE — corrigé",true); stepOk(s); step("FORGE a corrigé le code (vert/rouge = changements)"); }
-    else { stepOk(s); step("FORGE a répondu (texte au milieu)"); }
+    const b3=firstCodeBlock(r3);
+    studioAppend("good", "🔧 Corrections appliquées", explicationSeule(r3) || "J'ai corrigé ce que LOUPE a trouvé.");
+    diffuserCodex({ kind:"result", cls:"good", ttl:"🔧 FORGE", body:(explicationSeule(r3)||"").slice(0,8000) });
+    if(b3){ applyAgentCode(b3,"Changements corrigés (FORGE)",true); stepOk(s); step("FORGE a corrigé — voir le diff au-dessus (vert/rouge = changements)"); }
+    else { stepOk(s); step("FORGE a répondu (explication ci-dessus)"); }
     // 4/4 Ange gardien scanne
     s=step("4/4 · L'ange gardien scanne les secrets");
     const found=scanSecrets(codeEl.value);
     if(found.length){ stepErr(s); angeShow(found,"codex"); step("⚠ "+found.length+" secret(s) — clique « Corriger » sur l'ange gardien au milieu"); }
     else { stepOk(s); step("Aucun secret — code propre ✓"); }
-    step("✅ Codex a fini. Lis le code à droite, pis clique « injection 💉 » quand t'es prêt.");
-    if(isMobile()) setView(found.length?"center":"right");
+    step("✅ Codex a fini. Lis le résumé + le diff ici, pis clique « injection 💉 » quand t'es prêt.");
+    if(isMobile()) setView("center");
     toast("Codex ⚡ fini ✓");
   }catch(e){
     const cors=String(e.message).startsWith("CORS_OR_NET");
