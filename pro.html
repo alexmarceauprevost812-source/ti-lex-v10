@@ -2137,47 +2137,37 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">NAVIGATION</div>
 
-  <!-- ① CHAT -->
-  <div class="sb-item active" id="si-chat" onclick="showTab('chat')">
-    <span class="sb-icon">💬</span><span class="sb-label" data-txt="CHAT"></span>
+  <!-- ① COMMUNICATIONS (liste de toutes les communications) -->
+  <div class="sb-item active" id="si-communications" onclick="window.location.href='/communications'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#00e5a0;">💬</span><span class="sb-label" data-txt="COMMUNICATIONS"></span>
   </div>
 
-  <!-- ② CONVERSATION -->
-  <div class="sb-item" id="si-convos" onclick="ouvriConvSidebar()">
-    <span class="sb-icon" style="color:#9aa7ff;">🗂️</span><span class="sb-label" data-txt="CONVERSATION"></span>
-  </div>
-
-  <!-- ③ PROJET -->
+  <!-- ② PROJET -->
   <div class="sb-item" id="si-projet" onclick="window.location.href='/projets'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ffcf4a;">📂</span><span class="sb-label" data-txt="PROJET"></span>
   </div>
 
-  <!-- ④ TILEXCODE (Codex) -->
+  <!-- ③ TILEXCODE (Codex) -->
   <div class="sb-item" id="si-tilexcode" onclick="window.location.href='/tilexcode'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label" data-txt="TILEXCODE"></span>
   </div>
 
-  <!-- ⑤ MON SYSTÈME -->
+  <!-- ④ MON SYSTÈME -->
   <div class="sb-item" id="si-systeme" onclick="window.location.href='/systeme'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
   </div>
 
-  <!-- ⑥ COMMUNICATION AVEC ORDINATEUR -->
-  <div class="sb-item" id="si-comm" onclick="window.location.href='/communications'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#00e5a0;">🖥️</span><span class="sb-label" data-txt="COMMUNICATION ORDINATEUR"></span>
+  <!-- ⑤ COMMUNICATION ORDINATEUR (chat direct mobile <-> ordinateur : fichiers / codes) -->
+  <div class="sb-item" id="si-comm" onclick="window.location.href='/comm'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#2dd4e8;">🖥️</span><span class="sb-label" data-txt="COMMUNICATION ORDINATEUR"></span>
   </div>
 
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">OUTILS</div>
 
-  <!-- Cerveau (mémoire) -->
+  <!-- Cerveau (mémoire — branché aux communications pour retrouver tes notes) -->
   <div class="sb-item" id="si-cerveau" onclick="showSub('cerveau')">
     <span class="sb-icon" style="color:#c084fc;">🧠</span><span class="sb-label" data-txt="CERVEAU"></span>
-  </div>
-
-  <!-- FICHIERS -->
-  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
-    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIERS"></span>
   </div>
 
   <!-- AGENT MARCEAU -->
@@ -2189,10 +2179,45 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     </span><span class="sb-label" data-txt="MARCEAU"></span>
   </div>
 
-  <!-- SECURITY — Cybersécurité (page dédiée /security) -->
+  <!-- SÉCURITÉ — Cybersécurité (page dédiée /security) -->
   <div class="sb-item silex-admin-only" id="si-security" onclick="window.location.href='/security'" style="display:none;cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITY"></span>
+    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITE"></span>
     <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
+  </div>
+
+  <!-- FINANCES (accordéon : Bourse + Midas Finance regroupés) -->
+  <div class="sb-item" id="si-finances" data-toggle="sm-finances" aria-expanded="false">
+    <span class="sb-icon" style="color:#37e0a0;">💲</span><span class="sb-label" data-txt="FINANCES"></span>
+    <span class="chev sb-label">▶</span>
+  </div>
+  <div class="sb-submenu" id="sm-finances">
+    <div class="sb-sub-inner">
+      <div class="sb-sub-item" onclick="window.location.href='/bourse'">📈 Bourse</div>
+      <div class="sb-sub-item" onclick="window.location.href='/midas'">🔱 Midas Finance</div>
+    </div>
+  </div>
+
+  <div class="sb-sep"></div>
+  <div class="sb-sec sb-label">PLUS</div>
+
+  <!-- Chat (vue par défaut du /pro) -->
+  <div class="sb-item" id="si-chat" onclick="showTab('chat')">
+    <span class="sb-icon">💭</span><span class="sb-label" data-txt="CHAT"></span>
+  </div>
+
+  <!-- Conversations -->
+  <div class="sb-item" id="si-convos" onclick="ouvriConvSidebar()">
+    <span class="sb-icon" style="color:#9aa7ff;">🗂️</span><span class="sb-label" data-txt="CONVERSATIONS"></span>
+  </div>
+
+  <!-- FICHIERS -->
+  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
+    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIERS"></span>
+  </div>
+
+  <!-- CRÉER AGENT IA -->
+  <div class="sb-item" onclick="openModal()">
+    <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
   <!-- Dashboard Analytics -->
@@ -2203,21 +2228,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- Forfaits Cyber — admin only -->
   <div class="sb-item silex-admin-only" id="si-forfaits-cyber" onclick="window.location.href='forfaits-cyber.html'" style="display:none;cursor:pointer;">
     <span class="sb-icon" style="color:#a78bfa;">💼</span><span class="sb-label" data-txt="FORFAITS CYBER"></span>
-  </div>
-
-  <!-- CRÉER AGENT IA -->
-  <div class="sb-item" onclick="openModal()">
-    <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
-  </div>
-
-  <!-- MIDAS -->
-  <div class="sb-item" onclick="window.location.href='/midas'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ffcf4a">🔱</span><span class="sb-label" data-txt="MIDAS — FINANCE"></span>
-  </div>
-
-  <!-- BOURSE -->
-  <div class="sb-item" onclick="window.location.href='/bourse'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#37e0a0">📈</span><span class="sb-label" data-txt="BOURSE"></span>
   </div>
 
   <!-- WEB — PLATEFORME -->
