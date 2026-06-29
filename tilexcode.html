@@ -174,6 +174,7 @@
     <span class="chip"><span class="dot" id="dotSb"></span> Compte</span>
     <span class="chip"><span class="dot" id="dotGh"></span> GitHub</span>
     <span class="chip"><span class="dot" id="dotAg"></span> Moteur</span>
+    <span class="chip" id="syncChip" title="Synchro entre ton téléphone et ton ordinateur"><span class="dot" id="dotSync"></span> <span id="syncTxt">Solo</span></span>
   </div>
   <div class="spacer"></div>
   <button class="btn sm ghost" id="reconnectBtn" title="Forcer la reconnexion">↻ Reconnecter</button>
@@ -479,7 +480,7 @@ async function refreshAuthUI(){
   else { $("loginBox").style.display="block"; $("accountBox").style.display="none"; setDot("dotAg",false); }
   return s;
 }
-sb.auth.onAuthStateChange(()=>{ refreshAuthUI(); checkMoteur(); });
+sb.auth.onAuthStateChange(()=>{ refreshAuthUI(); checkMoteur(); initCodexSync(); });
 
 /* Vérifie pour de vrai que le moteur Codex répond (auth + CORS + clé secret côté serveur).
    Ping volontairement avec input vide → le serveur répond 400 « Champ input vide » SANS
@@ -622,6 +623,7 @@ async function runAgent(agentId){
   const prompt=$("prompt").value.trim();
   if(!prompt && !codeEl.value.trim()){ toast("Écris une demande en bas d'abord",1); $("prompt").focus(); return; }
   const input = prompt || "Analyse / traite le code fourni en contexte.";
+  diffuserCodex({ kind:"task", demande:input });   // 📲 suit sur tes autres appareils
   logLine("u",`${agentId} ← ${input.slice(0,80)}`);
   stepTitle("Agent "+agentId);
   const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
@@ -631,6 +633,7 @@ async function runAgent(agentId){
   try{
     stepOk(s1); const s2=step("J'envoie au moteur : "+input.length+" car. de demande + le code actuel en contexte ("+codeEl.value.length+" car.)");
     const out=await callAgent(agentId, input, codeEl.value);
+    diffuserCodex({ kind:"result", ttl:agentId, body:String(out).slice(0,16000) });
     stepOk(s2); const s3=step("Le moteur a répondu : "+out.length+" caractères reçus, je les lis…");
     logLine("a",`${agentId} a répondu (${out.length} car.)`);
     studioCard("", agentId, out);
@@ -672,11 +675,64 @@ async function scanErreurs(){
 }
 
 /* ====================== CODEX ⚡ : pipeline automatique complet ====================== */
+/* ====================== SYNCHRO CODEX — téléphone ⇆ ordinateur (temps réel) ======================
+   Les appareils du même compte rejoignent un canal Supabase Realtime « codex-<uid> ».
+   Ce que tu lances/reçois sur le téléphone SUIT sur l'ordinateur (et vice-versa). */
+const _devId = "d" + Math.floor(Math.random()*1e9).toString(36) + Date.now().toString(36);
+function _devKind(){ return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "téléphone" : "ordinateur"; }
+let codexChan=null, _syncUid=null;
+
+function majSyncBadge(autres){
+  const t=$("syncTxt"), d=$("dotSync");
+  if(autres>0){ if(t)t.textContent="Lié ("+(autres+1)+")"; if(d)d.className="dot on"; }
+  else { if(t)t.textContent="Solo"; if(d)d.className="dot off"; }
+}
+
+async function initCodexSync(){
+  try{
+    const { data } = await sb.auth.getSession(); const s=data?.session;
+    if(!s){ majSyncBadge(0); return; }
+    if(codexChan){ try{ sb.removeChannel(codexChan); }catch(e){} codexChan=null; }
+    _syncUid = s.user.id;
+    const chan = sb.channel("codex-"+_syncUid, { config:{ broadcast:{ self:false }, presence:{ key:_devId } } });
+    chan.on("broadcast", { event:"codex" }, ({ payload }) => recevoirCodex(payload));
+    chan.on("presence", { event:"sync" }, () => {
+      const st = chan.presenceState(); majSyncBadge(Math.max(0, Object.keys(st).length - 1));
+    });
+    chan.subscribe(async (status) => {
+      if(status==="SUBSCRIBED"){ try{ await chan.track({ dev:_devKind(), t:Date.now() }); }catch(e){}
+        logLine("ok","🔗 Synchro Codex active — tes appareils se suivent ("+_devKind()+")"); }
+    });
+    codexChan = chan;
+  }catch(e){ majSyncBadge(0); }
+}
+
+function diffuserCodex(payload){
+  if(!codexChan) return;
+  try{ codexChan.send({ type:"broadcast", event:"codex", payload: Object.assign({ from:_devId, dev:_devKind() }, payload) }); }catch(e){}
+}
+
+function recevoirCodex(p){
+  if(!p || p.from===_devId) return;
+  if(p.kind==="task"){
+    stepTitle("📲 Reçu de ton "+(p.dev||"autre appareil"));
+    step("Demande lancée sur ton "+(p.dev||"autre appareil")+" : « "+String(p.demande||"").slice(0,120)+" »");
+    logLine("u","📲 "+(p.dev||"autre")+" → "+String(p.demande||"").slice(0,80));
+    if(p.demande){ $("prompt").value=p.demande; }
+  } else if(p.kind==="result"){
+    studioAppend(p.cls||"", "📲 "+(p.ttl||"Résultat")+" — de ton "+(p.dev||"autre appareil"), p.body||"");
+    logLine("a","📲 résultat reçu ("+String(p.body||"").length+" car.)");
+  } else if(p.kind==="step"){
+    step("📲 "+String(p.txt||""));
+  }
+}
+
 async function runCodex(){
   const prompt=$("prompt").value.trim();
   if(!prompt && !codeEl.value.trim()){ toast("Écris ta demande en bas",1); $("prompt").focus(); return; }
   const demande = prompt || "Améliore et complète le code fourni en contexte.";
   logLine("u","Codex ← "+demande.slice(0,80));
+  diffuserCodex({ kind:"task", demande });   // 📲 suit sur tes autres appareils
   stepTitle("Codex ⚡ — pipeline complet");
   const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
   step("Demande : « "+demande.slice(0,120)+(demande.length>120?"…":"")+" »");
@@ -686,6 +742,7 @@ async function runCodex(){
     let s=step("1/4 · SCRIBE écrit le code"); toast("⚡ 1/4 SCRIBE…");
     const r1=await callAgent("SCRIBE", demande, codeEl.value);
     const b1=firstCodeBlock(r1); studioAppend("","SCRIBE — code",r1);
+    diffuserCodex({ kind:"result", cls:"", ttl:"SCRIBE — code", body:r1.slice(0,16000) });
     if(b1){ applyAgentCode(b1,"SCRIBE — code généré",true); stepOk(s); step("SCRIBE a écrit "+b1.split("\n").length+" lignes (vert = ajouts)"); }
     else { stepOk(s); step("SCRIBE a répondu (texte affiché au milieu)"); }
     // 2/4 LOUPE analyse
@@ -696,6 +753,7 @@ async function runCodex(){
     s=step("3/4 · FORGE corrige les erreurs"); toast("⚡ 3/4 FORGE…");
     const r3=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
     const b3=firstCodeBlock(r3); studioAppend("good","FORGE — corrigé",r3);
+    diffuserCodex({ kind:"result", cls:"good", ttl:"FORGE — corrigé", body:r3.slice(0,16000) });
     if(b3){ applyAgentCode(b3,"FORGE — corrigé",true); stepOk(s); step("FORGE a corrigé le code (vert/rouge = changements)"); }
     else { stepOk(s); step("FORGE a répondu (texte au milieu)"); }
     // 4/4 Ange gardien scanne
@@ -774,7 +832,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
       }
     }
   } catch (e) { /* pas de session plateforme → login manuel */ }
-  const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); await checkMoteur(); stepOk(a);
+  const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); await checkMoteur(); await initCodexSync(); stepOk(a);
   if(pat){ const b=step("Je rebranche GitHub avec ton jeton déjà sauvegardé"); const ok=await testGitHub();
     if(ok){ stepOk(b); const c=step("Je recharge ton dernier repo"+(repo?" ("+repo+")":"")+" + sa branche + ses fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(c); step("Tout est branché — t'as rien eu à faire ✓"); }
     else { stepErr(b); step("Jeton refusé par GitHub — reconnecte-toi dans Réglages"); }
