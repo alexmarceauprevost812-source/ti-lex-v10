@@ -2181,40 +2181,40 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">NAVIGATION</div>
 
-  <!-- ① COMMUNICATIONS (liste de toutes les communications) -->
-  <div class="sb-item active" id="si-communications" onclick="window.location.href='/communications'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#00e5a0;">💬</span><span class="sb-label" data-txt="COMMUNICATIONS"></span>
+  <!-- ① CHAT -->
+  <div class="sb-item active" id="si-chat" onclick="showTab('chat')">
+    <span class="sb-icon">💬</span><span class="sb-label" data-txt="CHAT"></span>
   </div>
 
-  <!-- ② PROJET -->
+  <!-- ② CONVERSATION -->
+  <div class="sb-item" id="si-convos" onclick="ouvriConvSidebar()">
+    <span class="sb-icon" style="color:#9aa7ff;">🗂️</span><span class="sb-label" data-txt="CONVERSATION"></span>
+  </div>
+
+  <!-- ③ PROJET -->
   <div class="sb-item" id="si-projet" onclick="window.location.href='/projets'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ffcf4a;">📂</span><span class="sb-label" data-txt="PROJET"></span>
   </div>
 
-  <!-- ③ TILEXCODE (Codex) -->
+  <!-- ④ TILEXCODE (Codex) -->
   <div class="sb-item" id="si-tilexcode" onclick="window.location.href='/tilexcode'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label" data-txt="TILEXCODE"></span>
   </div>
 
-  <!-- ④ MON SYSTÈME -->
-  <div class="sb-item" id="si-systeme" onclick="window.location.href='/systeme'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
-  </div>
-
-  <!-- ⑤ COMMUNICATION ORDINATEUR (chat direct mobile <-> ordinateur : fichiers / codes) -->
-  <div class="sb-item" id="si-comm" onclick="window.location.href='/comm'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#2dd4e8;">🖥️</span><span class="sb-label" data-txt="ORDINATEUR"></span>
+  <!-- ⑤ CERVEAU (mémoire — branché avec les chats pour sauvegarder/retrouver tes notes) -->
+  <div class="sb-item" id="si-cerveau" onclick="showSub('cerveau')">
+    <span class="sb-icon" style="color:#c084fc;">🧠</span><span class="sb-label" data-txt="CERVEAU"></span>
   </div>
 
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">OUTILS</div>
 
-  <!-- Cerveau (mémoire — branché aux communications pour retrouver tes notes) -->
-  <div class="sb-item" id="si-cerveau" onclick="showSub('cerveau')">
-    <span class="sb-icon" style="color:#c084fc;">🧠</span><span class="sb-label" data-txt="CERVEAU"></span>
+  <!-- Plateforme -->
+  <div class="sb-item" onclick="window.location.href='/web'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#FF6B00">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
   </div>
 
-  <!-- AGENT MARCEAU -->
+  <!-- Marceau -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
     <span class="sb-icon" style="color:#FF6B00;position:relative;">
       <img src="assets/agents/marceau-logo.png"
@@ -2223,13 +2223,13 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     </span><span class="sb-label" data-txt="MARCEAU"></span>
   </div>
 
-  <!-- SÉCURITÉ — Cybersécurité (page dédiée /security) -->
+  <!-- Sécurité — Cybersécurité (page dédiée /security) -->
   <div class="sb-item silex-admin-only" id="si-security" onclick="window.location.href='/security'" style="display:none;cursor:pointer;">
     <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITE"></span>
     <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
   </div>
 
-  <!-- FINANCES (accordéon : Bourse + Midas Finance regroupés) -->
+  <!-- Finances (accordéon : Bourse + Midas Finance regroupés) -->
   <div class="sb-item" id="si-finances" data-toggle="sm-finances" aria-expanded="false">
     <span class="sb-icon" style="color:#37e0a0;">💲</span><span class="sb-label" data-txt="FINANCES"></span>
     <span class="chev sb-label">▶</span>
@@ -2241,42 +2241,19 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     </div>
   </div>
 
-  <div class="sb-sep"></div>
-  <div class="sb-sec sb-label">PLUS</div>
-
-  <!-- Chat (vue par défaut du /pro) -->
-  <div class="sb-item" id="si-chat" onclick="showTab('chat')">
-    <span class="sb-icon">💭</span><span class="sb-label" data-txt="CHAT"></span>
+  <!-- Mon système -->
+  <div class="sb-item" id="si-systeme" onclick="window.location.href='/systeme'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
   </div>
 
-  <!-- Conversations -->
-  <div class="sb-item" id="si-convos" onclick="ouvriConvSidebar()">
-    <span class="sb-icon" style="color:#9aa7ff;">🗂️</span><span class="sb-label" data-txt="CONVERSATIONS"></span>
-  </div>
-
-  <!-- FICHIERS -->
-  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
-    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIERS"></span>
-  </div>
-
-  <!-- CRÉER AGENT IA -->
+  <!-- Créer agent IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
-  <!-- Dashboard Analytics -->
-  <div class="sb-item" id="si-dashboard" onclick="dashOpen()">
-    <span class="sb-icon" style="color:#4f8ef7;">📊</span><span class="sb-label" data-txt="DASHBOARD"></span>
-  </div>
-
-  <!-- Forfaits Cyber — admin only -->
-  <div class="sb-item silex-admin-only" id="si-forfaits-cyber" onclick="window.location.href='forfaits-cyber.html'" style="display:none;cursor:pointer;">
-    <span class="sb-icon" style="color:#a78bfa;">💼</span><span class="sb-label" data-txt="FORFAITS CYBER"></span>
-  </div>
-
-  <!-- WEB — PLATEFORME -->
-  <div class="sb-item" onclick="window.location.href='/web'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
+  <!-- Fichiers -->
+  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
+    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
   </div>
 
   <div style="flex:1"></div>
@@ -2285,15 +2262,25 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">COMPTE</div>
 
-  <div class="sb-item" id="si-dash" onclick="showTab('dash')">
-    <span class="sb-icon">👤</span><span class="sb-label" data-txt="COMPTE"></span>
+  <!-- Forfait -->
+  <div class="sb-item" onclick="window.location.href='forfaits.html'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ffcf4a;">🏆</span><span class="sb-label" data-txt="FORFAIT"></span>
+    <span class="sb-label" style="font-size:8px;background:linear-gradient(135deg,#FF6B00,#ffcf4a);color:#0a0a0a;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px;margin-left:auto;">UPGRADE</span>
   </div>
+
+  <!-- Paramètres -->
   <div class="sb-item" id="si-settings" onclick="showTab('settings')">
     <span class="sb-icon">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
   </div>
-  <div class="sb-item" onclick="window.location.href='forfaits.html'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ffcf4a;">🏆</span><span class="sb-label" data-txt="FORFAITS"></span>
-    <span class="sb-label" style="font-size:8px;background:linear-gradient(135deg,#FF6B00,#ffcf4a);color:#0a0a0a;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px;margin-left:auto;">UPGRADE</span>
+
+  <!-- Compte -->
+  <div class="sb-item" id="si-dash" onclick="showTab('dash')">
+    <span class="sb-icon">👤</span><span class="sb-label" data-txt="COMPTE"></span>
+  </div>
+
+  <!-- Déconnecter -->
+  <div class="sb-item" onclick="acctLogout()" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ff5555;">🚪</span><span class="sb-label" data-txt="DÉCONNECTER"></span>
   </div>
 
   <!-- STATS UTILISATION -->
