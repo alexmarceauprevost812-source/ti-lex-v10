@@ -430,6 +430,7 @@
 
     /* tilex-comm.js est chargé en global via le script ci-dessous */
     let comm = null;
+    let monUid = null;   // auth.uid de l'usager connecté (pour les push)
 
     /* --- Éléments du DOM --- */
     const $ = (id) => document.getElementById(id);
@@ -461,6 +462,7 @@
         const { data } = await supabase.auth.getSession();
         const u = data && data.session && data.session.user;
         if (u) {
+          monUid = u.id;
           const meta = u.user_metadata || {};
           const nom = meta.nom || meta.full_name || meta.name || (u.email ? u.email.split('@')[0] : '');
           const inp = $('nom-input'); if (inp && nom && !inp.value) inp.value = nom;
@@ -533,6 +535,15 @@
         champ.disabled = false;
         btnEnvoi.disabled = false;
         afficher({ texte: `${nom} est entré dans le salon`, type: 'systeme' });
+        // Abonne cet appareil aux notifications push (si session + clé VAPID dispo)
+        const vapid = window.TILEX_CONFIG && window.TILEX_CONFIG.VAPID_PUBLIC_KEY;
+        if (monUid && vapid && window.TilexPush) {
+          window.TilexPush.sabonner({
+            supabase,
+            vapidPublicKey: vapid,
+            deviceKind: (comm.device && comm.device.kind) || 'ordinateur',
+          }).catch((e) => console.warn('[ti-lex push]', e));
+        }
       });
 
       comm.on('disconnect', () => {
@@ -598,6 +609,12 @@
       champ.value = '';
       champ.style.height = 'auto';
       comm.sendTyping(false);
+      // Réveille mes autres appareils (téléphone/ordi) avec une push notif.
+      if (monUid) {
+        supabase.functions.invoke('tilex-push', {
+          body: { destinataire_uid: monUid, titre: comm.user.nom, corps: texte, url: '/comm' },
+        }).catch(() => {});
+      }
     }
 
     /* --- Événements UI --- */
@@ -648,7 +665,8 @@
     });
   </script>
 
-  <!-- Charge le moteur de communication en global -->
+  <!-- Charge le moteur de communication + le client push en global -->
   <script src="tilex-comm.js"></script>
+  <script src="tilex-push-client.js"></script>
 </body>
 </html>

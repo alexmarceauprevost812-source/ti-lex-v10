@@ -7,7 +7,7 @@
  * 🍁 Produit du Québec
  * ============================================================================ */
 
-const CACHE = 'ti-lex-v10-cache-v1';
+const CACHE = 'ti-lex-v10-cache-v2';
 
 // Coquille de l'app à mettre en cache dès l'installation
 const COQUILLE = [
@@ -85,9 +85,14 @@ self.addEventListener('push', (event) => {
     silent: false,
   };
 
-  event.waitUntil(
-    self.registration.showNotification(donnees.titre || 'ti-lex', options)
-  );
+  event.waitUntil((async () => {
+    // Si l'app est déjà ouverte ET visible sur cet appareil, pas de notif
+    // (évite de se faire pinger soi-même en écrivant). Sinon, on affiche.
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const visible = clients.some((c) => c.visibilityState === 'visible');
+    if (visible) return;
+    await self.registration.showNotification(donnees.titre || 'ti-lex', options);
+  })());
 });
 
 /* --- Clic sur une notification : ouvre/focus l'app --- */

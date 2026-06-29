@@ -9,8 +9,8 @@ window.TILEX_CONFIG = {
   SUPABASE_URL: 'https://rnuripmfozlxenryxhdc.supabase.co',
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA',
 
-  // Clé publique VAPID pour les push notifs — à remplir plus tard (npx web-push generate-vapid-keys)
-  VAPID_PUBLIC_KEY: '',
+  // Clé publique VAPID pour les push notifs (la privée reste côté serveur, dans tilex_secrets)
+  VAPID_PUBLIC_KEY: 'BOM7oUhhURyGKPVovivKL4EBGPyPbSjoONXL3TXiAPNN04WbmBYZMJHVWCp5r6ayK56Ilflf5EsoWWEtW1l6xm0',
 
   // Salon par défaut
   ROOM: 'ti-lex-al-global',

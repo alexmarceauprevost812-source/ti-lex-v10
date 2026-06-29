@@ -36,18 +36,28 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // --- Config VAPID ---
-    webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT') ?? 'mailto:contact@ti-lex.app',
-      Deno.env.get('VAPID_PUBLIC_KEY')!,
-      Deno.env.get('VAPID_PRIVATE_KEY')!,
-    );
-
-    // --- Client Supabase avec la clé service (lecture des abonnements) ---
+    // --- Client Supabase avec la clé service (lecture des abonnements + secrets) ---
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+
+    // --- Config VAPID : lues depuis le coffre tilex_secrets (RLS verrouillée,
+    //     service_role seulement), avec repli sur les variables d'environnement. ---
+    const { data: vapid } = await supabase
+      .from('tilex_secrets')
+      .select('public_key, private_key, subject')
+      .eq('nom', 'vapid')
+      .maybeSingle();
+
+    const vapidPublic  = vapid?.public_key  ?? Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivate = vapid?.private_key ?? Deno.env.get('VAPID_PRIVATE_KEY');
+    const vapidSubject = vapid?.subject     ?? Deno.env.get('VAPID_SUBJECT') ?? 'mailto:contact@ti-lex.app';
+
+    if (!vapidPublic || !vapidPrivate) {
+      return json({ erreur: 'clés VAPID introuvables (coffre tilex_secrets vide)' }, 500);
+    }
+    webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
     const charge: Charge = await req.json();
     if (!charge.destinataire_uid || !charge.corps) {
