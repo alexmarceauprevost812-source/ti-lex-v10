@@ -22,6 +22,8 @@
     { "source": "/systeme", "destination": "/systeme.html" },
     { "source": "/agenda", "destination": "/agenda.html" },
     { "source": "/comm", "destination": "/comm/index.html" },
+    { "source": "/communications", "destination": "/communications.html" },
+    { "source": "/projets", "destination": "/projets.html" },
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
     { "source": "/pro", "destination": "/pro.html" },

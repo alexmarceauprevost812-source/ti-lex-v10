@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f0f0f" />
+<title>Communications — ti-lex</title>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#0f0f0f; --bg2:#1a1a1a; --bg3:#222; --txt:#ececec; --muted:#8a8a8a;
+    --accent:#d97757; --line:rgba(255,255,255,.06);
+    --font:'Patrick Hand','Segoe UI',sans-serif;
+  }
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--txt);font-family:var(--font);font-size:18px;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow-x:hidden;}
+  .wrap{max-width:680px;margin:0 auto;padding:14px 20px 120px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px;}
+  .ico-btn{width:42px;height:42px;border:none;background:none;color:var(--txt);font-size:22px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;}
+  .ico-btn:active{background:var(--bg2);}
+  .topbar .right{display:flex;gap:6px;}
+
+  h1{font-size:40px;font-weight:400;margin:14px 4px 18px;letter-spacing:.5px;}
+
+  .search{display:flex;align-items:center;gap:12px;background:var(--bg2);
+    border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:10px;}
+  .search svg{flex-shrink:0;opacity:.6;}
+  .search input{flex:1;background:none;border:none;outline:none;color:var(--txt);
+    font-family:var(--font);font-size:19px;}
+  .search input::placeholder{color:var(--muted);}
+
+  .list{display:flex;flex-direction:column;}
+  .item{padding:16px 6px;cursor:pointer;border-radius:12px;transition:background .12s;}
+  .item:active{background:var(--bg2);}
+  .item .t{font-size:21px;color:var(--txt);line-height:1.25;}
+  .item .s{font-size:16px;color:var(--muted);margin-top:3px;}
+  .item .p{font-size:15px;color:#6f6f6f;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .vide{color:var(--muted);text-align:center;padding:60px 20px;font-size:19px;line-height:1.6;}
+  .vide a{color:var(--accent);}
+
+  .fab{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:10px;background:#f3f0e9;color:#1a1a1a;
+    border:none;border-radius:999px;padding:16px 24px;font-family:var(--font);font-size:20px;
+    cursor:pointer;box-shadow:0 8px 28px rgba(0,0,0,.5);}
+  .fab:active{transform:scale(.97);}
+  .fab .plus{font-size:24px;line-height:1;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <button class="ico-btn" title="Menu" onclick="window.location.href='/pro'">☰</button>
+      <div class="right">
+        <button class="ico-btn" title="Filtrer" onclick="document.getElementById('q').focus()">⛃</button>
+      </div>
+    </div>
+
+    <h1>Communications</h1>
+
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="text" placeholder="Rechercher des communications" autocomplete="off" />
+    </div>
+
+    <div class="list" id="list">
+      <div class="vide">Chargement…</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="window.location.href='/comm'"><span class="plus">+</span> Nouvelle communication</button>
+
+<script src="js/tilex-config.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_ANON = window.SB_ANON || '';
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const listEl = document.getElementById('list');
+  const q = document.getElementById('q');
+  let donnees = [];
+
+  // Reprend la session de la plateforme (web/pro) si présente.
+  async function pontSession(){
+    try{
+      const raw = localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');
+      if(raw){ const o=JSON.parse(raw); const s=o.currentSession||o;
+        if(s && s.access_token && s.refresh_token) await sb.auth.setSession({access_token:s.access_token,refresh_token:s.refresh_token}); }
+    }catch(e){}
+  }
+
+  function relTime(d){
+    const t=new Date(d); const diff=(Date.now()-t.getTime())/1000;
+    if(diff<60) return "À l'instant";
+    if(diff<3600){ const m=Math.floor(diff/60); return "Il y a "+m+" minute"+(m>1?"s":""); }
+    if(diff<7200) return "Il y a 1 heure";
+    if(diff<86400){ const h=Math.floor(diff/3600); return "Il y a "+h+" heures"; }
+    const j=Math.floor(diff/86400);
+    if(j===1) return "Hier"; if(j===2) return "Avant-hier";
+    if(j<7) return "Il y a "+j+" jours";
+    return t.toLocaleDateString('fr-CA');
+  }
+  function titreSalon(room){
+    if(!room) return 'Communication';
+    if(room==='ti-lex-al-global') return 'Communication ti-lex (générale)';
+    return room.replace(/[-_]/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+  }
+  function apercu(c){
+    if(!c) return '';
+    return String(c.texte || c.reponse || c.message || '').slice(0,80);
+  }
+
+  function rendre(items){
+    listEl.innerHTML='';
+    if(!items.length){
+      const v=document.createElement('div'); v.className='vide';
+      v.textContent='Aucune communication pour l’instant.';
+      const br=document.createElement('br');
+      const a=document.createElement('a'); a.href='/comm'; a.textContent='Démarrer une communication →';
+      v.appendChild(br); v.appendChild(a); listEl.appendChild(v); return;
+    }
+    items.forEach(it=>{
+      const d=document.createElement('div'); d.className='item';
+      d.onclick=()=>{ window.location.href='/comm'; };
+      const t=document.createElement('div'); t.className='t'; t.textContent=it.titre;
+      const s=document.createElement('div'); s.className='s'; s.textContent=relTime(it.lastAt);
+      d.appendChild(t); d.appendChild(s);
+      if(it.preview){ const p=document.createElement('div'); p.className='p'; p.textContent=it.preview; d.appendChild(p); }
+      listEl.appendChild(d);
+    });
+  }
+
+  async function charger(){
+    await pontSession();
+    const { data: sess } = await sb.auth.getSession();
+    if(!sess || !sess.session){
+      listEl.innerHTML='<div class="vide">🔒 Connecte-toi sur <a href="/web">la plateforme</a> pour voir tes communications.</div>';
+      return;
+    }
+    const { data, error } = await sb.from('tilex_messages')
+      .select('room, contenu, created_at, type')
+      .neq('type','ping').neq('type','signal')
+      .order('created_at',{ascending:false}).limit(500);
+    if(error){ listEl.innerHTML='<div class="vide">Erreur de chargement.</div>'; return; }
+    // Regroupe par salon (room) — la plus récente en premier.
+    const parSalon={};
+    (data||[]).forEach(m=>{
+      const r=m.room||'ti-lex-al-global';
+      if(!parSalon[r]){ parSalon[r]={titre:titreSalon(r), lastAt:m.created_at, preview:apercu(m.contenu), n:0}; }
+      parSalon[r].n++;
+    });
+    donnees=Object.values(parSalon).sort((a,b)=> new Date(b.lastAt)-new Date(a.lastAt));
+    rendre(donnees);
+  }
+
+  q.addEventListener('input',()=>{
+    const v=q.value.trim().toLowerCase();
+    rendre(!v?donnees:donnees.filter(it=>(it.titre+' '+(it.preview||'')).toLowerCase().includes(v)));
+  });
+
+  charger();
+</script>
+</body>
+</html>
