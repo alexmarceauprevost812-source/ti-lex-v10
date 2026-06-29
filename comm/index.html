@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Base /comm/ : les ressources relatives (config.js, tilex-comm.js, sw.js, icônes)
+       se résolvent sous /comm/ même quand la page est servie à /comm (sans slash). -->
+  <base href="/comm/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#05070d" />
+  <meta name="description" content="ti-lex v10 — communication temps réel mobile et ordinateur. Produit du Québec." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ti-lex v10 · communication</title>
+
+  <style>
+    /* =====================================================================
+     * ti-lex v10 — Aurore boréale + glassmorphism
+     * Palette : nuit du Nord, verts/cyans/violets de l'aurore
+     * ===================================================================== */
+    :root {
+      --nuit:        #05070d;
+      --nuit-2:      #0a0e1a;
+      --verre:       rgba(18, 26, 44, 0.45);
+      --verre-bord:  rgba(125, 200, 255, 0.14);
+      --aurore-vert: #00e5a0;
+      --aurore-cyan: #2dd4e8;
+      --aurore-viol: #7f77dd;
+      --aurore-rose: #c084fc;
+      --texte:       #e7f3ef;
+      --texte-doux:  #9fb4c4;
+      --texte-faible:#5d7185;
+      --radius:      18px;
+      --radius-sm:   12px;
+      --bulle-moi:   linear-gradient(135deg, rgba(0,229,160,0.22), rgba(45,212,232,0.18));
+      --bulle-autre: rgba(127, 119, 221, 0.16);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--nuit);
+      color: var(--texte);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- Ciel nocturne animé : l'aurore en arrière-plan --- */
+    .ciel {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(120% 80% at 15% -10%, rgba(0,229,160,0.16), transparent 50%),
+        radial-gradient(120% 80% at 85% 0%, rgba(127,119,221,0.18), transparent 55%),
+        radial-gradient(100% 60% at 50% 110%, rgba(45,212,232,0.10), transparent 60%),
+        var(--nuit);
+    }
+    .voile {
+      position: fixed;
+      inset: -20%;
+      z-index: 0;
+      background:
+        conic-gradient(from 200deg at 30% 20%, transparent, rgba(0,229,160,0.10), transparent 40%),
+        conic-gradient(from 20deg at 75% 30%, transparent, rgba(127,119,221,0.12), transparent 35%);
+      filter: blur(40px);
+      animation: ondoyer 22s ease-in-out infinite alternate;
+    }
+    @keyframes ondoyer {
+      0%   { transform: translate3d(0,0,0) scale(1); opacity: .85; }
+      50%  { transform: translate3d(-3%, 2%, 0) scale(1.08); opacity: 1; }
+      100% { transform: translate3d(3%, -2%, 0) scale(1.02); opacity: .9; }
+    }
+    @media (prefers-reduced-motion: reduce) { .voile { animation: none; } }
+
+    /* --- Structure de l'app --- */
+    .app {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+
+    /* --- En-tête en verre --- */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--verre);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      border-bottom: 1px solid var(--verre-bord);
+    }
+    .logo {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, var(--aurore-vert), var(--aurore-cyan), var(--aurore-viol));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo span { font-weight: 300; }
+    .header-info { flex: 1; }
+    .header-info small { color: var(--texte-faible); font-size: 11px; display: block; }
+
+    /* --- Pastille de statut --- */
+    .statut {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--texte-doux);
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--verre-bord);
+    }
+    .point {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--texte-faible);
+      transition: background .3s, box-shadow .3s;
+    }
+    .statut.live .point {
+      background: var(--aurore-vert);
+      box-shadow: 0 0 0 0 rgba(0,229,160,0.6);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(0,229,160,0.55); }
+      70%  { box-shadow: 0 0 0 8px rgba(0,229,160,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,229,160,0); }
+    }
+
+    /* --- Barre des appareils en ligne --- */
+    .appareils {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 10px 18px;
+      border-bottom: 1px solid rgba(125,200,255,0.07);
+    }
+    .appareil-chip {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11.5px; color: var(--texte-doux);
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(127,119,221,0.12);
+      border: 1px solid rgba(127,119,221,0.25);
+    }
+    .appareil-chip.moi {
+      background: rgba(0,229,160,0.12);
+      border-color: rgba(0,229,160,0.3);
+      color: var(--texte);
+    }
+    .appareils:empty { display: none; }
+
+    /* --- Fil de messages --- */
+    .fil {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+    .fil::-webkit-scrollbar { width: 6px; }
+    .fil::-webkit-scrollbar-thumb { background: rgba(127,119,221,0.3); border-radius: 3px; }
+
+    .bulle {
+      max-width: 80%;
+      padding: 11px 15px;
+      border-radius: var(--radius);
+      font-size: 14.5px;
+      line-height: 1.5;
+      border: 1px solid var(--verre-bord);
+      backdrop-filter: blur(8px);
+      animation: monter .35s ease;
+      word-wrap: break-word;
+    }
+    @keyframes monter {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .bulle .meta {
+      font-size: 11px;
+      color: var(--texte-faible);
+      margin-bottom: 4px;
+      display: flex; gap: 7px; align-items: center;
+    }
+    .bulle .dev {
+      font-size: 9.5px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .bulle.moi {
+      align-self: flex-end;
+      background: var(--bulle-moi);
+      border-color: rgba(0,229,160,0.25);
+    }
+    .bulle.autre {
+      align-self: flex-start;
+      background: var(--bulle-autre);
+      border-color: rgba(127,119,221,0.3);
+    }
+    .bulle.agent {
+      align-self: flex-start;
+      background: linear-gradient(135deg, rgba(127,119,221,0.2), rgba(192,132,252,0.14));
+      border-color: rgba(192,132,252,0.35);
+    }
+    .bulle.systeme {
+      align-self: center;
+      background: rgba(0,0,0,0.25);
+      font-size: 12px;
+      color: var(--texte-faible);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    /* --- Indicateur "en train d'écrire" --- */
+    .ecrit {
+      align-self: flex-start;
+      display: none; gap: 4px; padding: 12px 16px;
+    }
+    .ecrit.actif { display: flex; }
+    .ecrit span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--aurore-viol);
+      animation: rebond 1.3s infinite ease-in-out;
+    }
+    .ecrit span:nth-child(2) { animation-delay: .2s; }
+    .ecrit span:nth-child(3) { animation-delay: .4s; }
+    @keyframes rebond {
+      0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* --- Zone de saisie en verre --- */
+    .saisie {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 14px 18px;
+      background: var(--verre);
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
+      border-top: 1px solid var(--verre-bord);
+    }
+    textarea {
+      flex: 1;
+      resize: none;
+      max-height: 120px;
+      min-height: 44px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--verre-bord);
+      background: rgba(0,0,0,0.3);
+      color: var(--texte);
+      font-family: inherit;
+      font-size: 14.5px;
+      line-height: 1.4;
+      outline: none;
+      transition: border-color .2s;
+    }
+    textarea:focus { border-color: rgba(0,229,160,0.5); }
+    textarea::placeholder { color: var(--texte-faible); }
+
+    .btn-envoi {
+      width: 44px; height: 44px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--aurore-vert), var(--aurore-cyan));
+      color: var(--nuit);
+      font-size: 18px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      transition: transform .15s, opacity .2s;
+    }
+    .btn-envoi:hover { transform: scale(1.06); }
+    .btn-envoi:active { transform: scale(0.94); }
+    .btn-envoi:disabled { opacity: .4; cursor: default; transform: none; }
+
+    /* --- Écran de connexion --- */
+    .connexion {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      background: rgba(5,7,13,0.7);
+      backdrop-filter: blur(8px);
+      padding: 24px;
+    }
+    .carte-co {
+      width: 100%;
+      max-width: 340px;
+      padding: 28px 24px;
+      border-radius: 24px;
+      background: var(--verre);
+      border: 1px solid var(--verre-bord);
+      backdrop-filter: blur(20px);
+      text-align: center;
+    }
+    .carte-co h2 {
+      font-size: 22px; margin-bottom: 6px;
+      background: linear-gradient(120deg, var(--aurore-vert), var(--aurore-viol));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .carte-co p { color: var(--texte-doux); font-size: 13px; margin-bottom: 20px; }
+    .carte-co input {
+      width: 100%; padding: 12px 16px; margin-bottom: 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--verre-bord);
+      background: rgba(0,0,0,0.3);
+      color: var(--texte); font-size: 14px; outline: none;
+    }
+    .carte-co input:focus { border-color: rgba(0,229,160,0.5); }
+    .carte-co button {
+      width: 100%; padding: 13px;
+      border: none; border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--aurore-vert), var(--aurore-cyan));
+      color: var(--nuit); font-weight: 600; font-size: 15px; cursor: pointer;
+      transition: transform .15s;
+    }
+    .carte-co button:active { transform: scale(0.97); }
+    .produit {
+      margin-top: 18px; font-size: 10.5px; color: var(--texte-faible);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    /* --- Bouton d'installation PWA --- */
+    .btn-install {
+      display: none;
+      margin-left: auto;
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--aurore-cyan);
+      background: rgba(45,212,232,0.12);
+      color: var(--aurore-cyan);
+      cursor: pointer;
+    }
+    .btn-install.dispo { display: inline-block; }
+
+    @media (max-width: 480px) {
+      .bulle { max-width: 88%; }
+      header { padding: 12px 14px; }
+      .fil, .saisie, .appareils { padding-left: 14px; padding-right: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ciel"></div>
+  <div class="voile"></div>
+
+  <div class="app">
+    <!-- En-tête -->
+    <header>
+      <div>
+        <div class="logo">ti-lex<span>·v10</span></div>
+      </div>
+      <div class="header-info">
+        <small id="salon-nom">salon : ti-lex-al-global</small>
+      </div>
+      <button class="btn-install" id="btn-install">📲 Installer</button>
+      <div class="statut" id="statut">
+        <span class="point"></span>
+        <span id="statut-txt">hors ligne</span>
+      </div>
+    </header>
+
+    <!-- Appareils en ligne -->
+    <div class="appareils" id="appareils"></div>
+
+    <!-- Fil de messages -->
+    <div class="fil" id="fil">
+      <div class="bulle systeme">Bienvenue sur ti-lex v10 — connecte-toé pour jaser 🌌</div>
+    </div>
+
+    <!-- En train d'écrire -->
+    <div class="ecrit" id="ecrit"><span></span><span></span><span></span></div>
+
+    <!-- Saisie -->
+    <div class="saisie">
+      <textarea id="champ" placeholder="Écris ton message…" rows="1" disabled></textarea>
+      <button class="btn-envoi" id="btn-envoi" disabled aria-label="Envoyer">↑</button>
+    </div>
+  </div>
+
+  <!-- Écran de connexion -->
+  <div class="connexion" id="connexion">
+    <div class="carte-co">
+      <h2>ti-lex v10</h2>
+      <p>Communication temps réel — mobile pis ordinateur, ensemble.</p>
+      <input type="text" id="nom-input" placeholder="Ton nom" autocomplete="off" />
+      <button id="btn-connexion">Entrer dans le salon</button>
+      <div class="produit">🍁 Produit du Québec</div>
+    </div>
+  </div>
+
+  <!-- Config locale (copie config.example.js -> config.js) -->
+  <script src="config.js"></script>
+
+  <!-- =====================================================================
+       Logique de l'app — branche TilexComm sur Supabase Realtime
+       ===================================================================== -->
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+    /* -------------------------------------------------------------------
+     * CONFIG — vient de config.js (copie config.example.js -> config.js)
+     * Le projet : rnuripmfozlxenryxhdc
+     * La clé anon est publique (protégée par RLS) — c'est correct.
+     * ----------------------------------------------------------------- */
+    const cfg = window.TILEX_CONFIG || {};
+    const SUPABASE_URL = cfg.SUPABASE_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+    const SUPABASE_ANON_KEY = cfg.SUPABASE_ANON_KEY || 'TON_ANON_KEY_ICI';
+
+    if (SUPABASE_ANON_KEY === 'TON_ANON_KEY_ICI') {
+      console.warn('[ti-lex] ⚠️ Pas de clé anon — copie config.example.js vers config.js pis mets ta clé.');
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /* tilex-comm.js est chargé en global via le script ci-dessous */
+    let comm = null;
+
+    /* --- Éléments du DOM --- */
+    const $ = (id) => document.getElementById(id);
+    const fil = $('fil');
+    const champ = $('champ');
+    const btnEnvoi = $('btn-envoi');
+    const statut = $('statut');
+    const statutTxt = $('statut-txt');
+    const appareils = $('appareils');
+    const ecrit = $('ecrit');
+    const connexion = $('connexion');
+
+    let typingTimer = null;
+
+    /* --- PONT SESSION : reprend la session déjà ouverte sur la plateforme (web/pro) ---
+       Avec une session valide, auth.uid() existe → les politiques RLS (lecture/écriture
+       limitées au propriétaire) passent, et l'historique se persiste entre les appareils. */
+    async function pontSession() {
+      try {
+        const raw = localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');
+        if (raw) {
+          const o = JSON.parse(raw); const s = o.currentSession || o;
+          if (s && s.access_token && s.refresh_token) {
+            await supabase.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
+          }
+        }
+      } catch (e) { /* pas de session → mode direct sans historique */ }
+      try {
+        const { data } = await supabase.auth.getSession();
+        const u = data && data.session && data.session.user;
+        if (u) {
+          const meta = u.user_metadata || {};
+          const nom = meta.nom || meta.full_name || meta.name || (u.email ? u.email.split('@')[0] : '');
+          const inp = $('nom-input'); if (inp && nom && !inp.value) inp.value = nom;
+        }
+      } catch (e) {}
+    }
+    const pretSession = pontSession();
+
+    /* --- Affiche une bulle dans le fil --- */
+    function afficher({ texte, type = 'autre', nom = '', device = '', moi = false }) {
+      const bulle = document.createElement('div');
+      if (type === 'systeme') {
+        bulle.className = 'bulle systeme';
+        bulle.textContent = texte;
+      } else {
+        bulle.className = `bulle ${moi ? 'moi' : (type === 'agent' ? 'agent' : 'autre')}`;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<strong>${escapeHtml(nom)}</strong>` +
+          (device ? `<span class="dev">${escapeHtml(device)}</span>` : '');
+        const corps = document.createElement('div');
+        corps.textContent = texte;
+        bulle.appendChild(meta);
+        bulle.appendChild(corps);
+      }
+      fil.appendChild(bulle);
+      fil.scrollTop = fil.scrollHeight;
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+
+    /* --- Met à jour la barre des appareils --- */
+    function majAppareils(devices) {
+      appareils.innerHTML = '';
+      devices.forEach((d) => {
+        const chip = document.createElement('div');
+        chip.className = 'appareil-chip' + (d.self ? ' moi' : '');
+        const icone = d.device === 'mobile' ? '📱' : d.device === 'tablette' ? '📲' : '🖥️';
+        chip.innerHTML = `${icone} ${escapeHtml(d.nom)}${d.self ? ' (toé)' : ''}`;
+        appareils.appendChild(chip);
+      });
+    }
+
+    /* --- Connexion au salon --- */
+    async function entrer(nom) {
+      await pretSession; // s'assure que la session plateforme est rétablie avant de se connecter
+      const room = (window.TILEX_CONFIG && window.TILEX_CONFIG.ROOM) || 'ti-lex-al-global';
+
+      comm = new TilexComm({
+        supabase,
+        room,
+        user: { id: nom.toLowerCase().replace(/\s+/g, '-'), nom },
+        persist: true,
+        table: 'tilex_messages',
+      });
+
+      // Si pas de session plateforme, le live marche mais l'historique ne se garde pas (RLS).
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess || !sess.session) {
+        afficher({ texte: 'Direct seulement — connecte-toi sur la plateforme (/web) pour garder l’historique.', type: 'systeme' });
+      }
+
+      comm.on('connect', () => {
+        statut.classList.add('live');
+        statutTxt.textContent = 'en ligne';
+        champ.disabled = false;
+        btnEnvoi.disabled = false;
+        afficher({ texte: `${nom} est entré dans le salon`, type: 'systeme' });
+      });
+
+      comm.on('disconnect', () => {
+        statut.classList.remove('live');
+        statutTxt.textContent = 'hors ligne';
+      });
+
+      comm.on('reconnecting', ({ attempt }) => {
+        statutTxt.textContent = `reconnexion… (${attempt})`;
+      });
+
+      comm.on('presence', (devices) => majAppareils(devices));
+
+      comm.on('chat', (msg) => {
+        ecrit.classList.remove('actif');
+        afficher({
+          texte: msg.data.texte,
+          nom: msg.from.nom,
+          device: msg.from.device,
+          moi: false,
+        });
+      });
+
+      comm.on('agent', (msg) => {
+        afficher({ texte: msg.data.reponse || msg.data.prompt, nom: 'Agent AL', type: 'agent' });
+      });
+
+      comm.on('signal', (msg) => {
+        if (msg.data.signal === 'typing') {
+          ecrit.classList.toggle('actif', msg.data.actif);
+          if (msg.data.actif) {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => ecrit.classList.remove('actif'), 3000);
+          }
+        }
+      });
+
+      comm.on('history', (history) => {
+        history.forEach((h) => {
+          if (h.type === 'chat') {
+            afficher({
+              texte: h.contenu.texte,
+              nom: h.nom,
+              device: h.device,
+              moi: h.user_id === comm.user.id,
+            });
+          }
+        });
+      });
+
+      comm.on('error', (err) => console.error('[ti-lex]', err));
+
+      await comm.connect();
+      await comm.loadHistory(40);
+    }
+
+    /* --- Envoi --- */
+    async function envoyer() {
+      const texte = champ.value.trim();
+      if (!texte || !comm) return;
+      afficher({ texte, nom: comm.user.nom, device: comm.device.kind, moi: true });
+      await comm.sendChat(texte);
+      champ.value = '';
+      champ.style.height = 'auto';
+      comm.sendTyping(false);
+    }
+
+    /* --- Événements UI --- */
+    $('btn-connexion').addEventListener('click', () => {
+      const nom = $('nom-input').value.trim();
+      if (!nom) return;
+      connexion.style.display = 'none';
+      entrer(nom);
+    });
+
+    $('nom-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('btn-connexion').click();
+    });
+
+    btnEnvoi.addEventListener('click', envoyer);
+
+    champ.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); envoyer(); }
+    });
+
+    champ.addEventListener('input', () => {
+      champ.style.height = 'auto';
+      champ.style.height = Math.min(champ.scrollHeight, 120) + 'px';
+      if (comm) comm.sendTyping(champ.value.length > 0);
+    });
+
+    /* --- Service Worker (PWA) --- */
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('[ti-lex] Service Worker enregistré'))
+        .catch((e) => console.warn('[ti-lex] SW non enregistré', e));
+    }
+
+    /* --- Bouton d'installation PWA --- */
+    let deferredPrompt = null;
+    const btnInstall = $('btn-install');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstall.classList.add('dispo');
+    });
+    btnInstall.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      btnInstall.classList.remove('dispo');
+    });
+  </script>
+
+  <!-- Charge le moteur de communication en global -->
+  <script src="tilex-comm.js"></script>
+</body>
+</html>

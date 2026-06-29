@@ -1,0 +1,41 @@
+{
+  "name": "ti-lex v10 — communication",
+  "short_name": "ti-lex",
+  "description": "Communication temps réel mobile et ordinateur. Produit du Québec.",
+  "lang": "fr-CA",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "categories": ["communication", "productivity", "social"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agent AL",
+      "short_name": "AL",
+      "description": "Jaser direct avec Agent AL",
+      "url": "./index.html?agent=1"
+    }
+  ]
+}
