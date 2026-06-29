@@ -760,6 +760,16 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
     if(ok){ stepOk(b); const c=step("Je recharge ton dernier repo"+(repo?" ("+repo+")":"")+" + sa branche + ses fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(c); step("Tout est branché — t'as rien eu à faire ✓"); }
     else { stepErr(b); step("Jeton refusé par GitHub — reconnecte-toi dans Réglages"); }
   } else { setDot("dotGh",false); step("Pas encore de jeton GitHub — ouvre Réglages pour coller ton PAT"); }
+  // ── Tâche reçue du chat (bouton 💻 Codex dans pro.html) → remplit le prompt ──
+  try {
+    const tache = localStorage.getItem("tilex-codex-task");
+    if (tache && tache.trim()) {
+      localStorage.removeItem("tilex-codex-task");
+      const p = $("prompt"); if (p) { p.value = tache; p.focus(); }
+      step("Reçu du chat — j'ai rempli le prompt, t'as juste à lancer ⚡");
+      toast("💻 Tâche reçue du chat");
+    }
+  } catch (e) {}
   const { data } = await sb.auth.getSession();
   if(!data?.session || !pat) openSettings();
 })();

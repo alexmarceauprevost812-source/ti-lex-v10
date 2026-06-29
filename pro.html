@@ -2137,18 +2137,42 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">NAVIGATION</div>
 
-  <!-- CHAT (accordéon) -->
-  <div class="sb-item active" id="si-chat" data-toggle="sm-chat" aria-expanded="true">
+  <!-- ① CHAT -->
+  <div class="sb-item active" id="si-chat" onclick="showTab('chat')">
     <span class="sb-icon">💬</span><span class="sb-label" data-txt="CHAT"></span>
-    <span class="chev sb-label">▶</span>
   </div>
-  <div class="sb-submenu open" id="sm-chat">
-    <div class="sb-sub-inner">
-      <div class="sb-sub-item" id="sub-chat" onclick="showTab('chat')">💬 Chat</div>
-      <div class="sb-sub-item active" id="sub-convos" onclick="ouvriConvSidebar()" data-hide-in-chat="true">Conversations</div>
-      <div class="sb-sub-item" id="sub-projs" onclick="showTab('conversations');cvpSwitchTab('project');">Projet</div>
-      <div class="sb-sub-item" id="sub-cerveau" onclick="showSub('cerveau')">Cerveau</div>
-    </div>
+
+  <!-- ② CONVERSATION -->
+  <div class="sb-item" id="si-convos" onclick="ouvriConvSidebar()">
+    <span class="sb-icon" style="color:#9aa7ff;">🗂️</span><span class="sb-label" data-txt="CONVERSATION"></span>
+  </div>
+
+  <!-- ③ PROJET -->
+  <div class="sb-item" id="si-projet" onclick="showTab('conversations');cvpSwitchTab('project');">
+    <span class="sb-icon" style="color:#ffcf4a;">📂</span><span class="sb-label" data-txt="PROJET"></span>
+  </div>
+
+  <!-- ④ TILEXCODE (Codex) -->
+  <div class="sb-item" id="si-tilexcode" onclick="window.location.href='/tilexcode'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label" data-txt="TILEXCODE"></span>
+  </div>
+
+  <!-- ⑤ MON SYSTÈME -->
+  <div class="sb-item" id="si-systeme" onclick="window.location.href='/systeme'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
+  </div>
+
+  <!-- ⑥ COMMUNICATION AVEC ORDINATEUR -->
+  <div class="sb-item" id="si-comm" onclick="window.location.href='/comm'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#00e5a0;">🖥️</span><span class="sb-label" data-txt="COMMUNICATION ORDINATEUR"></span>
+  </div>
+
+  <div class="sb-sep"></div>
+  <div class="sb-sec sb-label">OUTILS</div>
+
+  <!-- Cerveau (mémoire) -->
+  <div class="sb-item" id="si-cerveau" onclick="showSub('cerveau')">
+    <span class="sb-icon" style="color:#c084fc;">🧠</span><span class="sb-label" data-txt="CERVEAU"></span>
   </div>
 
   <!-- FICHIERS -->
@@ -2194,21 +2218,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- BOURSE -->
   <div class="sb-item" onclick="window.location.href='/bourse'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#37e0a0">📈</span><span class="sb-label" data-txt="BOURSE"></span>
-  </div>
-
-  <!-- TILEXCODE — Mode Codex (moteur tilexcode-agent : SCRIBE/ARCHI/SOCLE/LOUPE/FORGE/COFFRE) -->
-  <div class="sb-item" onclick="window.location.href='/tilexcode'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label" data-txt="TILEXCODE"></span>
-  </div>
-
-  <!-- MON SYSTÈME (hub perso camion/forêt : tracking, agenda, rapport — owner-only) -->
-  <div class="sb-item" onclick="window.location.href='/systeme'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
-  </div>
-
-  <!-- COMMUNICATION DIRECTE (chat temps réel ordinateur <-> téléphone) -->
-  <div class="sb-item" onclick="window.location.href='/comm'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#00e5a0;">💬</span><span class="sb-label" data-txt="COMMUNICATION"></span>
   </div>
 
   <!-- WEB — PLATEFORME -->
@@ -4075,7 +4084,7 @@ async function sendChat(){
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
       var bbl=document.createElement("div");bbl.className="cmsg a";
-      bbl.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div><div class="cmsg-time">'+t+'</div></div>';
+      bbl.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div><div class="cmsg-time">'+t+'</div></div>';
       msgs.appendChild(bbl);
       var bblText=bbl.querySelector(".cmsg-bbl");
       var _isDay=document.documentElement.getAttribute("data-theme")==="day";
@@ -4357,7 +4366,7 @@ function addMsg(role,txt){
   var icoHtml;
   if(role==="u"){var pav=localStorage.getItem("tilex-profile-avatar");icoHtml=pav?'<img src="'+pav+'" alt="U">':'<img src="assets/tilex-user-avatar.png" class="tilex-ava" alt="U">';}
   else{icoHtml=''+alAvaVid()+'';}
-  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div>':"";
+  var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
@@ -5369,6 +5378,17 @@ function saveToCerveau(btn){
 }
 
 var _ttsUtterance=null;
+/* Envoie le contenu d'une réponse au Codex (tilexcode) — passation via localStorage. */
+function sendMsgToCodex(btn){
+  var cmsg=btn.closest(".cmsg"); var bbl=cmsg?cmsg.querySelector(".cmsg-bbl"):null;
+  var text=bbl?(bbl.innerText||bbl.textContent||""):"";
+  text=text.trim();
+  if(!text){ if(window.showToastMsg)showToastMsg("Rien à envoyer au Codex");return; }
+  try{ localStorage.setItem("tilex-codex-task", text); }catch(e){}
+  if(window.showToastMsg)showToastMsg("💻 Envoyé au Codex — ouverture…");
+  setTimeout(function(){ window.location.href="/tilexcode"; },350);
+}
+
 function speakMsg(btn){
   if(window.speechSynthesis.speaking){window.speechSynthesis.cancel();btn.textContent="▶";return;}
   var bbl=btn.closest(".cmsg").querySelector(".cmsg-bbl");
@@ -7128,7 +7148,7 @@ function alRenderAgentReply(text,data){
   if(data&&data.duration_ms){
     htmlContent+='<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--muted);">⏱ '+(data.duration_ms/1000).toFixed(1)+'s</div>';
   }
-  htmlContent+='<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button></div>';
+  htmlContent+='<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div>';
   htmlContent+='<div class="cmsg-time">'+t+'</div></div>';
   bbl.innerHTML=htmlContent;
   msgs.appendChild(bbl);msgs.scrollTop=msgs.scrollHeight;
