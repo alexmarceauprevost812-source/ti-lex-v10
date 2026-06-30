@@ -13,6 +13,7 @@
 <title>ti-lex-AL v10 — Pro</title>
 <script src="js/tilex-guardian.js"></script>
 <script src="js/tilex-config.js"></script>
+<script src="js/tilex-intro.js"></script>
 <script>
 /* 🔗 Thème piloté depuis la plateforme /web : applique la couleur d'accent choisie là-bas */
 (function(){try{var t=JSON.parse(localStorage.getItem('tilex_platform_theme')||'null');
@@ -8384,6 +8385,7 @@ TilexConfig.charger().catch(function(){});
 supabase.auth.onAuthStateChange(function(event,session){
   silexCheckAccess();applyPlanVisibility();highlightCurrentPlan();checkAdminStatus();initUserConnexions();verifierEtatChat();updateChatConnStatus();updateChatSbIcon();
   _currentUserEmail=session?.user?.email||null;
+  if(event==="SIGNED_IN" && session?.user && window.TilexIntro){ try{ TilexIntro.play({once:"pro-session"}); }catch(e){} }
   if(session?.user){
     if(!TilexConfig._chargee)TilexConfig.charger().catch(function(){});
     demarrerConversation(session.user.id).catch(function(){});
@@ -8406,6 +8408,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     var u=await supabase.auth.getUser();
     if(u.data?.user){
       _currentUserEmail=u.data.user.email||null;
+      if(window.TilexIntro){ try{ TilexIntro.play({once:"pro-session"}); }catch(e){} }
       demarrerConversation(u.data.user.id).catch(function(){});
       chargerSessionAgentAL().catch(function(){});
       chargerMemoireContexte().catch(function(){});
