@@ -9211,21 +9211,28 @@ import { ConversationSidebar } from './conversation-sidebar.js';
 <!-- Service Worker — mise à jour automatique au refresh -->
 <script>
 if ('serviceWorker' in navigator) {
+  var _hadCtrl = !!navigator.serviceWorker.controller;
+  var _maj = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (_maj) return;
+    if (!_hadCtrl) { _hadCtrl = true; return; } // 1er install : pas de reload
+    _maj = true; location.reload();
+  });
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    // Active tout de suite une version en attente
+    if (reg.waiting && navigator.serviceWorker.controller) { try{ reg.waiting.postMessage('SKIP_WAITING'); }catch(e){} }
     reg.addEventListener('updatefound', function() {
       var nw = reg.installing;
       if (!nw) return;
       nw.addEventListener('statechange', function() {
-        if (nw.state === 'activated' && navigator.serviceWorker.controller) {
-          location.reload();
-        }
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) { try{ nw.postMessage('SKIP_WAITING'); }catch(e){} }
       });
     });
+    // Vérifie les nouveaux déploiements Vercel : au chargement, chaque minute, et au retour sur l'onglet
     reg.update();
-  });
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    location.reload();
-  });
+    setInterval(function(){ reg.update(); }, 60000);
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') reg.update(); });
+  }).catch(function(){});
 }
 </script>
 

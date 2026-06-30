@@ -1427,21 +1427,26 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Service Worker — mise à jour automatique au refresh -->
 <script>
 if ('serviceWorker' in navigator) {
+  var _hadCtrl = !!navigator.serviceWorker.controller;
+  var _maj = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (_maj) return;
+    if (!_hadCtrl) { _hadCtrl = true; return; }
+    _maj = true; location.reload();
+  });
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    if (reg.waiting && navigator.serviceWorker.controller) { try{ reg.waiting.postMessage('SKIP_WAITING'); }catch(e){} }
     reg.addEventListener('updatefound', function() {
       var nw = reg.installing;
       if (!nw) return;
       nw.addEventListener('statechange', function() {
-        if (nw.state === 'activated' && navigator.serviceWorker.controller) {
-          location.reload();
-        }
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) { try{ nw.postMessage('SKIP_WAITING'); }catch(e){} }
       });
     });
     reg.update();
-  });
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    location.reload();
-  });
+    setInterval(function(){ reg.update(); }, 60000);
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') reg.update(); });
+  }).catch(function(){});
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
