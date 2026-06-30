@@ -155,35 +155,86 @@
   var TilexIntro={
     _playing:false,
 
-    // Plein écran, joue une fois (utilisé après la connexion)
+    // Plein écran, joue une fois (après la connexion) :
+    // ti-démon BLEU qui s'embrase en ROUGE/FEU, par-dessus une pluie matrix bleu↔rouge,
+    // avant d'arriver sur la plateforme.
     play:function(opts){
       opts=opts||{};
       if(this._playing) return;
       if(opts.once){ try{ if(sessionStorage.getItem('tilex-intro-'+opts.once)) return; sessionStorage.setItem('tilex-intro-'+opts.once,'1'); }catch(e){} }
       this._playing=true;
       var self=this, onDone=opts.onDone||function(){};
+      var reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+      var hold=(opts.hold!=null?opts.hold:3.8);
 
-      var ov=document.createElement('div');
-      ov.id='tilex-intro';
-      ov.style.cssText='position:fixed;inset:0;z-index:2147483600;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center;';
-      var skip=document.createElement('div');
-      skip.textContent='Toucher pour passer ›';
-      skip.style.cssText='position:absolute;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:rgba(255,255,255,.45);font:600 12px system-ui,sans-serif;letter-spacing:1px;pointer-events:none;';
+      if(!document.getElementById('tlx-intro-kf')){
+        var st=document.createElement('style'); st.id='tlx-intro-kf';
+        st.textContent=
+          '@keyframes tlxIgnite{0%{clip-path:inset(0 100% 0 0)}12%{clip-path:inset(0 100% 0 0)}58%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(0 0 0 0)}}'+
+          '@keyframes tlxGlowB{0%{opacity:1}58%{opacity:.18}100%{opacity:.18}}'+
+          '@keyframes tlxGlowO{0%{opacity:0}58%{opacity:.9}100%{opacity:.9}}'+
+          '@keyframes tlxBreathe{0%{transform:scale(.95)}60%{transform:scale(1.025)}100%{transform:scale(1)}}'+
+          '@keyframes tlxFront{0%{left:0;opacity:0}12%{opacity:0}20%{left:14%;opacity:1}58%{left:100%;opacity:1}66%{opacity:0}100%{left:100%;opacity:0}}'+
+          '@keyframes tlxRise{0%{transform:translateY(46px);opacity:0}100%{transform:translateY(0);opacity:1}}';
+        document.head.appendChild(st);
+      }
+
+      var ov=document.createElement('div'); ov.id='tilex-intro';
+      ov.style.cssText='position:fixed;inset:0;z-index:2147483600;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,#0b1024 0%,#05070f 60%,#120403 100%);';
+
+      var cv=document.createElement('canvas'); cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:.55;';
+      ov.appendChild(cv);
+
+      var box=document.createElement('div');
+      box.style.cssText='position:relative;width:min(78vmin,560px);height:min(78vmin,560px);animation:tlxRise .7s cubic-bezier(.22,1,.36,1) both;';
+      box.innerHTML=
+        '<div style="position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(circle,rgba(40,120,255,.5),transparent 60%);filter:blur(40px);animation:tlxGlowB '+hold+'s ease-in-out both;"></div>'+
+        '<div style="position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(circle,rgba(255,95,20,.5),transparent 60%);filter:blur(40px);animation:tlxGlowO '+hold+'s ease-in-out both;"></div>'+
+        '<div style="position:absolute;inset:0;animation:tlxBreathe '+hold+'s ease-in-out both;">'+
+          '<img src="/assets/tilex-demon-bleu.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 34px rgba(0,0,0,.55));"/>'+
+          '<img src="/assets/tilex-demon-feu.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;animation:tlxIgnite '+hold+'s ease-in-out both;filter:drop-shadow(0 10px 34px rgba(0,0,0,.55));"/>'+
+          '<div style="position:absolute;top:0;bottom:0;width:16%;transform:translateX(-50%);pointer-events:none;mix-blend-mode:screen;filter:blur(7px);background:linear-gradient(90deg,transparent,rgba(255,150,40,.85) 44%,rgba(255,235,150,1) 50%,rgba(255,150,40,.85) 56%,transparent);animation:tlxFront '+hold+'s ease-in-out both;"></div>'+
+        '</div>';
+      ov.appendChild(box);
+
+      var sub=document.createElement('div'); sub.textContent='Connexion à la plateforme…';
+      sub.style.cssText='position:absolute;bottom:calc(64px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#9fb4d8;font:600 13px/1 system-ui,sans-serif;letter-spacing:.22em;text-transform:uppercase;';
+      ov.appendChild(sub);
+      var skip=document.createElement('div'); skip.textContent='Toucher pour passer ›';
+      skip.style.cssText='position:absolute;bottom:calc(24px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font:600 12px system-ui,sans-serif;letter-spacing:1px;pointer-events:none;';
       ov.appendChild(skip);
+
       document.body.appendChild(ov);
       var prevOverflow=document.body.style.overflow; document.body.style.overflow='hidden';
 
-      var done=false, ctrl=null;
+      // Pluie matrix : bleu à gauche, rouge à droite (comme le démon)
+      var ctx=cv.getContext('2d'), raf=0, cols=[], cw=0, ch=0, dpr=Math.min(2,window.devicePixelRatio||1);
+      var glyphs='01ｱｲｳｴｵｶｷｸｹABCDEFTILEXAL$₿'.split('');
+      function resize(){ cw=cv.clientWidth; ch=cv.clientHeight; cv.width=cw*dpr; cv.height=ch*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); var n=Math.max(1,Math.floor(cw/16)); cols=[]; for(var i=0;i<n;i++) cols[i]=Math.random()*ch; }
+      resize();
+      function draw(){
+        ctx.fillStyle='rgba(5,7,15,.18)'; ctx.fillRect(0,0,cw,ch);
+        ctx.font='14px monospace';
+        for(var i=0;i<cols.length;i++){ var x=i*16, y=cols[i];
+          ctx.fillStyle = x < cw/2 ? 'rgba(60,140,255,.85)' : 'rgba(255,70,40,.85)';
+          ctx.fillText(glyphs[(Math.random()*glyphs.length)|0], x, y);
+          cols[i] = (y>ch+Math.random()*200) ? 0 : y+16;
+        }
+        raf=requestAnimationFrame(draw);
+      }
+      if(!reduce) draw();
+      window.addEventListener('resize',resize);
+
+      var done=false;
       function finish(){
         if(done) return; done=true;
-        if(ctrl) ctrl.stop();
+        cancelAnimationFrame(raf); window.removeEventListener('resize',resize);
         document.body.style.overflow=prevOverflow;
-        ov.style.transition='opacity .45s ease'; ov.style.opacity='0';
-        setTimeout(function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); self._playing=false; try{onDone();}catch(e){} },470);
+        ov.style.transition='opacity .5s ease'; ov.style.opacity='0';
+        setTimeout(function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); self._playing=false; try{onDone();}catch(e){} },520);
       }
-      ctrl=run(ov, {fullscreen:true, loop:false, hold:opts.hold, onFinish:finish});
       ov.addEventListener('click',finish);
-      setTimeout(finish,(ctrl.params.duration+1.5)*1000);
+      setTimeout(finish,(reduce?1.2:hold+0.7)*1000);
     },
 
     // Intégré dans un conteneur, boucle à l'infini (utilisé en page d'accueil)
