@@ -237,6 +237,48 @@
       setTimeout(finish,(reduce?1.2:hold+0.7)*1000);
     },
 
+    // Transition COURTE entre deux écrans : flash ti-démon + matrix (~0,8s).
+    // transition(label, onDone, keepOverlay) — keepOverlay=true pour une navigation
+    // de page (l'overlay reste pendant le chargement de la nouvelle page).
+    transition:function(label, onDone, keepOverlay){
+      onDone=onDone||function(){};
+      var reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+      if(reduce){ onDone(); return; }
+      if(!document.getElementById('tlx-trans-kf')){
+        var st=document.createElement('style'); st.id='tlx-trans-kf';
+        st.textContent='@keyframes tlxTzoom{0%{transform:scale(.62);opacity:0}45%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}';
+        document.head.appendChild(st);
+      }
+      var ov=document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;z-index:2147483640;overflow:hidden;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .16s ease;background:radial-gradient(circle at 50% 45%,#0b1024 0%,#05070f 60%,#120403 100%);';
+      var cv=document.createElement('canvas'); cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:.4;'; ov.appendChild(cv);
+      var box=document.createElement('div');
+      box.style.cssText='position:relative;width:min(52vmin,320px);height:min(52vmin,320px);animation:tlxTzoom .8s cubic-bezier(.22,1,.36,1) both;';
+      box.innerHTML='<div style="position:absolute;inset:-10%;border-radius:50%;background:radial-gradient(circle,rgba(255,95,20,.45),rgba(40,120,255,.22) 45%,transparent 66%);filter:blur(32px);"></div>'+
+        '<img src="/assets/tilex-demon-feu.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 26px rgba(0,0,0,.6));"/>';
+      ov.appendChild(box);
+      if(label){ var l=document.createElement('div'); l.textContent='→ '+label;
+        l.style.cssText='position:absolute;bottom:15%;left:0;right:0;text-align:center;color:#cfe0ff;font:700 14px/1 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;'; ov.appendChild(l); }
+      document.body.appendChild(ov);
+      requestAnimationFrame(function(){ ov.style.opacity='1'; });
+
+      var ctx=cv.getContext('2d'), raf=0, cols=[], cw=0, ch=0, dpr=Math.min(2,window.devicePixelRatio||1);
+      var glyphs='01ｱｲｳｴｶｷｸTILEXAL$₿'.split('');
+      function resize(){ cw=cv.clientWidth; ch=cv.clientHeight; cv.width=cw*dpr; cv.height=ch*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); var n=Math.max(1,Math.floor(cw/16)); cols=[]; for(var i=0;i<n;i++) cols[i]=Math.random()*ch; }
+      resize();
+      function draw(){ ctx.fillStyle='rgba(5,7,15,.2)'; ctx.fillRect(0,0,cw,ch); ctx.font='14px monospace';
+        for(var i=0;i<cols.length;i++){ var x=i*16; ctx.fillStyle = x<cw/2 ? 'rgba(60,140,255,.85)' : 'rgba(255,70,40,.85)'; ctx.fillText(glyphs[(Math.random()*glyphs.length)|0], x, cols[i]); cols[i]=(cols[i]>ch+Math.random()*180)?0:cols[i]+16; }
+        raf=requestAnimationFrame(draw); }
+      draw();
+
+      setTimeout(function(){
+        cancelAnimationFrame(raf);
+        try{ onDone(); }catch(e){}
+        if(keepOverlay){ setTimeout(function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }, 4000); }
+        else { ov.style.opacity='0'; setTimeout(function(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }, 200); }
+      }, 700);
+    },
+
     // Intégré dans un conteneur, boucle à l'infini (utilisé en page d'accueil)
     mountLoop:function(container, opts){
       if(!container) return null;

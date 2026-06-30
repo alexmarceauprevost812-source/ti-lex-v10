@@ -3374,12 +3374,17 @@ document.querySelectorAll("[data-toggle]").forEach(function(btn){
     var orig=it.getAttribute("onclick");
     var dur=reduce?0:280;
     if(orig){
-      // intercepte l'action inline pour laisser jouer l'animation
+      // intercepte l'action inline → joue une transition (démon + matrix) PUIS l'action
       e.preventDefault(); e.stopImmediatePropagation();
-      setTimeout(function(){
+      var lbEl=it.querySelector(".sb-label");
+      var label=(lbEl&&lbEl.getAttribute("data-txt"))||"";
+      var isNav=/location\.(href|assign|replace)/.test(orig);
+      var run=function(){
         it.classList.remove("tlx-fire"); it._tlxAnim=false;
         try{ (new Function(orig)).call(it); }catch(_e){}
-      }, dur);
+      };
+      if(!reduce && window.TilexIntro && TilexIntro.transition){ TilexIntro.transition(label, run, isNav); }
+      else { setTimeout(run, dur); }
     } else {
       // items sans onclick (ex: accordéon data-toggle) : juste l'animation
       setTimeout(function(){ it.classList.remove("tlx-fire"); it._tlxAnim=false; }, reduce?0:420);
