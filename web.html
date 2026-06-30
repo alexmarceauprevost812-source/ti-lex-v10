@@ -1307,9 +1307,12 @@ function loginUser(user, animate){
   if(window.TilexContext){TilexContext.init('');TilexContext.syncMemoire();}
   // Config plateforme (thème/couleurs/modules) — applique les réglages sauvés
   if(typeof ctlLoad==='function')ctlLoad();
-  // Animation d'accueil « DevilScene » — une fois, après la connexion,
-  // par-dessus la plateforme qui se révèle quand l'animation se termine.
-  if(animate && window.TilexIntro){ try{ TilexIntro.play(); }catch(e){} }
+  // Connexion réussie → animation ti-démon bleu↔feu + matrix, PUIS on arrive sur pro.html.
+  if(animate){
+    try{ sessionStorage.setItem('tilex-intro-pro-session','1'); }catch(e){} // pas de rejouer sur pro.html
+    if(window.TilexIntro){ try{ TilexIntro.play({ onDone:function(){ window.location.href='/pro'; } }); return; }catch(e){} }
+    window.location.href='/pro';
+  }
 }
 
 async function doLogout(){
