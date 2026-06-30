@@ -1,88 +1,139 @@
 # ti-lex-AL v10
 
-Plateforme IA tout-en-un. Chat, Codex, Studio, Finance, Cybersecurite, Generation d'images.
-Frontend statique (HTML / CSS / JS) sur Vercel, backend Supabase (Auth, Edge Functions, Postgres).
+**Plateforme IA tout-en-un, Produit du Québec 🍁**
+Chat (Agent AL), Codex (génération de code), Communication temps réel mobile ↔ ordinateur,
+Finance, Cybersécurité, génération d'images, et un système personnel privé (camion / forêt).
 
-> **Alex Marceau Prevost** — Quebec, Canada
+Frontend statique (HTML / CSS / JS vanilla, zéro build) déployé sur **Vercel**.
+Backend **Supabase** : Auth, Postgres + RLS, Edge Functions (Deno), Realtime.
+
+> Auteur : **Alex Marceau Prevost** — Saguenay–Lac-Saint-Jean, Québec
+> Projet Supabase : `rnuripmfozlxenryxhdc`
+
+---
+
+## Table des matières
+
+1. [Forfaits](#forfaits)
+2. [Fonctionnalités](#fonctionnalités)
+3. [Pages & routes](#pages--routes)
+4. [Animations & thèmes](#animations--thèmes)
+5. [Structure du projet](#structure-du-projet)
+6. [Architecture](#architecture)
+7. [Sécurité](#sécurité)
+8. [PWA & mises à jour automatiques](#pwa--mises-à-jour-automatiques)
+9. [Démarrage & déploiement](#démarrage--déploiement)
+10. [Variables d'environnement](#variables-denvironnement-supabase-secrets)
 
 ---
 
 ## Forfaits
 
-| Plan | Prix | Messages / fenetre | Credits / mois | Modeles |
+| Plan | Prix | Messages / fenêtre | Crédits / mois | Modèles |
 |------|------|-------------------|----------------|---------|
 | ESSAI | Gratuit | — | 50 | — |
-| TI | 29,99 $/mois | 40 | 500 | Sonnet 4.6 |
 | FLUX | 19,00 $/mois | 40 | 300 | Sonnet 4.6 |
+| TI | 29,99 $/mois | 40 | 500 | Sonnet 4.6 |
 | TI-LEX | 89,99 $/mois | 100 | 2 000 | Sonnet 4.6 |
 | TI-LEX-AL | 149,99 $/mois | 200 | 5 000 | Sonnet 4.6 + Opus 4.8 |
 
-Plans cybersecurite disponibles sur demande (admin uniquement).
-Deux fenetres de recharge par jour : 00h00 et 12h00 (heure de Montreal).
+Deux fenêtres de recharge par jour : **00h00** et **12h00** (heure de Montréal).
+Plans cybersécurité disponibles sur demande (admin uniquement).
 
 ---
 
-## Fonctionnalites
+## Fonctionnalités
 
-### Chat — Agent AL
-- Streaming SSE avec ecriture fluide (acceleration progressive lettre par lettre)
-- Mode reflexion (raisonnement etape par etape)
-- Conversations persistantes (Supabase) avec recherche, filtrage et favoris
-- Mode Maitre (admin : reponses directes) / Mode Standard (clarification d'abord)
-- Pieces jointes : images, fichiers, ZIP, dictee vocale, recherche web
-- Coloration syntaxique avec mots-cles copiables (clic pour copier)
-- Diagrammes Mermaid, text-to-speech, rendu Markdown
-- Animation gold flash a la fin du streaming
-- Bouton Codex sur chaque reponse pour envoyer vers le pipeline de code
+### 💬 Chat — Agent AL
+- Streaming SSE avec écriture fluide (accélération progressive lettre par lettre)
+- Mode réflexion (raisonnement étape par étape)
+- Conversations persistantes (Supabase, RLS) : recherche, filtrage, favoris
+- Pièces jointes : images, fichiers, **ZIP** (lecture du vrai contenu), photo, dictée vocale, recherche web
+- Coloration syntaxique, blocs de code copiables, diagrammes Mermaid, Markdown, text-to-speech
+- Avatars animés : logo TI-LEX-AL animé (utilisateur) + vidéo de l'agent
+- Actions sur chaque réponse : 🧠 garder au Cerveau · ▶ écouter · 📝 résumer · 💻 **envoyer au Codex**
 
-### Codex
-- Interface de generation de code avec deploy GitHub + auto-deploy Vercel
-- Bouton SCAN integre dans le composer (mode codex uniquement)
-- Error Studio : diagnostic et correction d'erreurs de deploiement
-- Pipeline Chat → Codex : table `codex_queue`, Edge Function, listener local
+### 💻 Tilexcode — le Codex (`/tilexcode`)
+Moteur de génération de code branché sur GitHub (Edge Function `tilexcode-agent`).
+- **Pipeline ⚡ Codex** : SCRIBE (écrit) → LOUPE (analyse) → FORGE (corrige). Agents aussi lançables à la main.
+- **Un seul écran** : explication de ce qui change + **diff** (lignes ajoutées/retirées seulement), pas le fichier complet réécrit
+- **Tiroir gauche (☰)** : connexion repo + branche, liste des **Conversations** (repliable), bouton **← Retour à la plateforme**
+- **Synchro temps réel téléphone ⇆ ordinateur** : ce que tu lances/reçois suit sur tes autres appareils (canal Supabase Realtime `codex-<uid>`, pastille « Solo / Lié »)
+- **Connexion automatique** via la session de la plateforme (aucun mot de passe à retaper — seul le jeton GitHub est requis)
+- Injection 💉 directe (commit) dans le repo/branche choisis
 
-### Studio
-- Editeur avec navigation arborescente des fichiers (depuis GitHub)
-- Modification et push direct vers la branche cible
+### 🖥️ Communication mobile ↔ ordinateur (`/comm`, `/communications`)
+- Chat temps réel **entre tes appareils** (Supabase Realtime + présence), installable en PWA
+- Pont de session automatique depuis la plateforme
+- **Notifications push** (Web Push / VAPID) — un appareil en arrière-plan reçoit la notif
+- `/communications` : liste de toutes tes communications, style épuré (recherche + bouton flottant)
+- RLS **privée par usager** : tes messages ne sont visibles que par tes propres appareils
 
-### Finance
-- Agent IA pour finances personnelles et crypto
+### 📂 Projets (`/projets`)
+- Liste de tes projets (table `projects`, RLS), recherche, création rapide
+- Thème noir, boutons orange, écriture blanche
 
-### Cybersecurite (SILEX)
-- Agent defensif avec autorisation SOW
-- Scans : reconnaissance passive, audit web, config, vulnerabilites, dark web
-- Indicateur flottant de scan en cours (top-right, navigable)
-- Timer de scan avec progression en temps reel
-- Dashboard et historique — admin uniquement
+### 🚛 Mon système — camion / forêt (privé, owner-only)
+Système personnel de suivi de camion et de travail en forêt, **accessible uniquement par le compte propriétaire** (garde côté UI `js/tilex-prive.js` + RLS côté données).
+- `/systeme` — hub (statut camion live + météo Normandin)
+- `/truck` — émetteur GPS (dans le camion) · `/maison` (`/suivi`, `/truck-map`) — tableau de bord ETA / alertes / météo + carte
+- `/agenda` — calendrier, paye (40 $/h puis 60 $/h après 40 h), **banque d'heures** (répartition hebdo de l'overtime)
+- `/rapport` — bilan de saison + estimation chômage (vue `v_resume_saison`)
+- Modules : `js/tilex-paye.js`, `js/tilex-meteo.js` (Open-Meteo), `js/tilex-core.js` (gardien d'erreurs + sync offline)
 
-### Centre INDAR
-- Systeme de cybersecurite autonome avec 6 agents IA
-- NEXUS-AL (supervision), MARCEAU (architecture), CIPHER (conformite), SENTINEL (incidents), ORACLE (securite IA), PHANTOM-RED (pentest simule)
-- Mode EN MARCHE : surveillance continue autonome avec flux d'evenements en temps reel
-- PHANTOM-RED : pentester en mode SIMULATION (100% legal, aucun systeme reel touche)
+### 🔱 Finance
+- **Midas** (`/midas`, `/midas-finance`) — agent finances perso + crypto
+- **Bourse** (`/bourse`) — suivi marché
+- Regroupés sous l'accordéon **Finances 💲** du menu
 
-### Moteur Economique (Credits)
-- Systeme de credits par action (chat, codex, scan, image, etc.)
-- Badge credits en temps reel dans la topbar
-- Recharge mensuelle automatique selon le forfait
-- Journal immutable des transactions (credits_ledger)
-- Fonctions SECURITY DEFINER : consume_credits, grant_credits, get_my_credits
-- Protection 402 (credits insuffisants) avec message utilisateur
-- Carte credits detaillee dans Parametres
+### 🛡️ Cybersécurité
+- **SILEX** (`/security`) — agent défensif avec autorisation SOW, scans (recon passive, audit web, config, vulnérabilités, dark web), dashboard & historique (admin)
+- **Centre INDAR** (`/centre-indar`) — 6 agents IA autonomes (NEXUS-AL, MARCEAU, CIPHER, SENTINEL, ORACLE, PHANTOM-RED en simulation 100 % légale)
 
-### Image Studio
-- Generation via OpenAI (gpt-image-1)
-- Suivi d'utilisation par plan
+### 🎨 Autres
+- **Image Studio** — génération via OpenAI (gpt-image-1), suivi par plan
+- **Agent Marceau** — dialogue multi-agents
+- **Cerveau** — mémoire long terme (cross-session, par usager)
+- **Moteur économique** — crédits par action, badge temps réel, recharge mensuelle, journal immuable (`credits_ledger`), fonctions `SECURITY DEFINER`
 
-### Agent Marceau
-- Dialogue multi-agents en 4 phases
+---
 
-### Parametres
-- Choix de police d'ecriture (6 presets : Systeme, Monospace, Serif, Arrondi, Elegant, Compact)
-- Couleur du texte agent (7 couleurs)
-- Theme jour / nuit
-- Connexions GitHub et Supabase
-- Affichage des credits et statistiques d'utilisation
+## Pages & routes
+
+| Route | Fichier | Description |
+|-------|---------|-------------|
+| `/` | `index.html` | Accueil + connexion |
+| `/pro`, `/app` | `pro.html` | Application principale (chat, menu, Studio) |
+| `/web` | `web.html` | Plateforme / écran de connexion |
+| `/tilexcode`, `/codex` | `tilexcode.html` | Le Codex |
+| `/comm` | `comm/index.html` | Communication temps réel (PWA dédiée) |
+| `/communications` | `communications.html` | Liste des communications |
+| `/projets` | `projets.html` | Liste des projets |
+| `/systeme` | `systeme.html` | Hub camion / forêt (privé) |
+| `/truck` · `/maison` · `/suivi` · `/truck-map` | — | Suivi camion (privé) |
+| `/agenda` · `/rapport` | — | Agenda / rapport de saison (privé) |
+| `/midas` · `/midas-finance` · `/bourse` | — | Finance |
+| `/security` · `/centre-indar` · `/cyber` | — | Cybersécurité |
+| `/forfaits` · `/forfaits-cyber` · `/abonnement` | — | Forfaits & abonnement |
+
+---
+
+## Animations & thèmes
+
+**Animation de connexion** — après une connexion réussie (sur `/web` comme sur `index.html`),
+le **ti-démon bleu qui s'embrase en feu** joue par-dessus une **pluie matrix** (bleu à gauche, rouge à droite),
+puis on arrive sur `pro.html`. (Remplace l'ancienne animation aux yeux rouges.)
+
+**Menu de gauche (style app Claude)** :
+- **Carré animé du ti-démon** (bleu ⇆ feu, boucle) en haut du menu
+- Titre serif + items en police manuscrite (Patrick Hand), item actif en pilule
+- **Animation de feu au clic** sur chaque bouton, puis **transition démon + matrix** avant d'arriver à la destination
+
+**Thèmes** :
+- 🌙 **Nuit** : fond noir, écriture blanche, accents + bouton ⚡ orange
+- ☀️ **Jour** : beige (style Anthropic/Claude), **bouton orange**, écriture bien noire
+
+Toutes les animations respectent `prefers-reduced-motion`.
 
 ---
 
@@ -90,198 +141,136 @@ Deux fenetres de recharge par jour : 00h00 et 12h00 (heure de Montreal).
 
 ```
 ti-lex-v10/
-├── index.html                  # Page d'accueil + connexion
-├── pro.html                    # Application principale (~8500 lignes inline)
-├── forfaits.html               # Page forfaits IA (Stripe Payment Links)
-├── forfaits-cyber.html         # Page forfaits cybersecurite
-├── centre-indar.html           # Centre INDAR — dashboard cybersecurite 6 agents
-├── cyber.html                  # Page cybersecurite (landing)
-├── choose.html                 # Ecran de choix d'interface
-├── sw.js                       # Service Worker PWA (cache v363)
-├── manifest.json               # Manifest PWA
-├── vercel.json                 # Rewrites + headers securite (HSTS, CSP, X-Frame)
-├── package.json                # Scripts : dev, scan, push, deploy, codex:listen
+├── index.html              # Accueil + connexion (intro démon+matrix après login → pro.html)
+├── pro.html                # App principale (chat, menu Claude, Studio) — inline
+├── web.html                # Plateforme / connexion (thèmes jour/nuit)
+├── tilexcode.html          # Codex (un écran, diff, synchro multi-appareils, tiroir)
+├── communications.html     # Liste des communications
+├── projets.html            # Liste des projets
+├── systeme.html · truck.html · maison.html · truck-map.html · agenda.html · rapport.html  # Système privé
+├── midas*.html · bourse.html · security.html · centre-indar.html · cyber.html · forfaits*.html
+├── sw.js                   # Service Worker PWA (CACHE_VERSION bumpé à chaque changement)
+├── manifest.json           # Manifest PWA
+├── vercel.json             # Rewrites + headers (HSTS, CSP, cache no-store pour HTML/JS/CSS/sw)
+│
+├── comm/                   # App de communication temps réel (PWA dédiée)
+│   ├── index.html · config.js · tilex-comm.js · tilex-push-client.js · sw.js · manifest.json
+│   └── supabase/functions/tilex-push/   # Edge Function d'envoi des push (VAPID)
 │
 ├── js/
-│   ├── agent-marceau.js        # Module agent multi-phases
-│   ├── al-memory.js            # Memoire long terme Agent AL
-│   ├── memoire-ia.js           # Systeme de memoire IA
-│   ├── centre-indar.js         # Dashboard Centre INDAR
-│   ├── scan-engine.js          # Moteur de scan cybersecurite
-│   ├── security-guard.js       # Garde de securite
-│   ├── guide-protection.js     # Guide de protection
-│   ├── tilex-typewriter.js     # Effet machine a ecrire
-│   ├── fichiers.js             # Gestionnaire de fichiers
-│   ├── fichiers-selection.js   # Selection de fichiers
-│   ├── fichiers-preview.js     # Preview de fichiers
-│   ├── fichiers-partage.js     # Partage de fichiers
-│   ├── fichiers-historique.js  # Historique de fichiers
-│   ├── fichiers-cli.js         # CLI fichiers
-│   └── fichiers-templates.js   # Templates fichiers
+│   ├── tilex-config.js     # window.SB_URL / SB_ANON / TILEX_CONFIG (clé anon publique)
+│   ├── tilex-intro.js      # Animations : intro démon+matrix, transition menu, carré animé
+│   ├── tilex-prive.js      # Garde owner-only (système camion)
+│   ├── tilex-core.js · tilex-paye.js · tilex-meteo.js   # Système camion/forêt
+│   ├── tilex-zip.js · tilex-vocal.js · tilex-push.js · tilex-platform-theme.js
+│   └── (chat, mémoire, studio, fichiers, midas, sécurité, …)
 │
-├── css/
-│   ├── security.css            # Styles securite
-│   ├── tilex-typewriter.css    # Styles typewriter
-│   ├── fichiers.css            # Styles fichiers
-│   ├── fichiers-selection.css
-│   ├── fichiers-preview.css
-│   ├── fichiers-partage.css
-│   └── fichiers-historique.css
+├── css/                    # Styles (sécurité, typewriter, fichiers, vision, …)
 │
-├── scripts/
-│   ├── codex-listener.js       # Polle codex_queue, ecrit les .md
-│   ├── scan-avant-deploy.sh    # Scan pre-deploy (secrets, JS, HTML)
-│   └── push-securise.sh        # Git push avec scan
-│
-├── assets/                     # Videos, logos, avatars
-│
-├── tilex-zip-generator/        # Generateur ZIP standalone
-│   ├── index.html
-│   ├── css/tilex.css
-│   └── js/                     # Core, preview, zip, share, history, theme
+├── assets/
+│   ├── tilex-demon-bleu.png · tilex-demon-feu.png   # Démon (animation connexion/menu)
+│   └── logos, avatars, vidéos, intro
 │
 ├── supabase/
-│   ├── functions/
-│   │   ├── ai-proxy/           # Proxy IA (Anthropic + OpenAI) — auth + plan + credits
-│   │   ├── check-abonnement/   # Verification abonnement (pre-check frontend)
-│   │   ├── create-checkout/    # Session Stripe Checkout
-│   │   ├── create-portal/      # Portail client Stripe
-│   │   ├── stripe-webhook/     # Webhook Stripe
-│   │   ├── receive-codex-instruction/ # Reception instructions Chat → Codex
-│   │   ├── validate-github/    # Validation PAT GitHub (user_connections)
-│   │   ├── validate-supabase/  # Validation credentials Supabase externes
-│   │   ├── billing-status/     # Statut facturation
-│   │   ├── github-proxy/       # Proxy GitHub
-│   │   ├── vercel-proxy/       # Proxy Vercel
-│   │   ├── marceau-reflection/ # Reflexion agent Marceau
-│   │   ├── verify-neq/         # Verification NEQ
-│   │   └── test-key/           # Test de cle API
-│   └── migrations/             # 40 migrations (0001 → 0040)
-│       ├── ...
-│       ├── 0038_security_fixes_audit.sql
-│       ├── 0039_moteur_eco.sql           # Tables credits (action_costs, user_credits, credits_ledger, usage_events)
-│       └── 0040_moteur_eco_functions.sql # Fonctions SECURITY DEFINER (consume/grant/reset credits)
+│   ├── functions/          # Edge Functions (Deno) — voir liste ci-dessous
+│   └── migrations/         # Schéma SQL + RLS
 │
-├── ti-lex-security-agent/      # Module securite standalone
-├── image-studio/               # Module generation d'images
-│
-└── docs/                       # Documentation Loi 25 du Quebec
-    ├── DPA_Anthropic.md
-    ├── Politique_conservation.md
-    ├── Registre_traitements.md
-    ├── Guide_formation_employes.md
-    ├── Formulaire_consentement_SOW.md
-    └── Formulaire_droits_personnes.md
+└── docs/                   # Conformité Loi 25 (Québec)
 ```
+
+### Edge Functions principales
+
+| Fonction | Rôle |
+|----------|------|
+| `ai-proxy` | Proxy IA (Anthropic + OpenAI) — auth + plan + crédits + rate limit |
+| `agent-al` | Agent AL (streaming SSE, owner-aware) |
+| `tilexcode-agent` | Moteur Codex (SCRIBE/ARCHI/SOCLE/LOUPE/FORGE) — clé Anthropic côté serveur |
+| `tilex-push` | Envoi des notifications push (clés VAPID lues dans `tilex_secrets`) |
+| `create-checkout` · `create-portal` · `stripe-webhook` | Paiements Stripe |
+| `validate-github` · `github-proxy` | Intégration GitHub |
+| `cyber-agent-al` · `scan-engine` · `tilex-gardien` | Cybersécurité / garde |
+| `midas-agent` · `tilex-image` · `vocal-proxy` | Finance / images / voix |
 
 ---
 
 ## Architecture
 
 ```
-Navigateur (pro.html)
+Navigateur (pro.html / web.html / tilexcode / comm)
     │
-    ├── Auth ──────────── Supabase Auth (email, OAuth)
+    ├── Auth ─────────── Supabase Auth (email, OAuth) — session partagée entre les pages
     │
-    ├── Garde IA ──────── Edge Function check-abonnement
-    │                     (bloque si non connecte ou sans forfait)
+    ├── Chat / Codex ─── Edge Functions ai-proxy / tilexcode-agent ─── API Anthropic (Claude)
+    │                    (auth + plan + crédits obligatoires; clés API côté serveur)
     │
-    ├── Credits ───────── consume_credits() / grant_credits()
-    │                     (SECURITY DEFINER, verifie le solde avant chaque action)
-    │                     402 Payment Required si credits insuffisants
+    ├── Crédits ──────── consume_credits() / grant_credits() (SECURITY DEFINER)
+    │                    402 Payment Required si solde insuffisant
     │
-    ├── Chat / Codex ──── Edge Function ai-proxy ──── API Anthropic (Claude)
-    │                     (auth + plan + credits obligatoires, rate limit)
+    ├── Realtime ─────── Communication (/comm) + synchro Codex (codex-<uid>)
     │
-    ├── Images ────────── Edge Function ai-proxy ──── API OpenAI (gpt-image-1)
+    ├── Push ─────────── Edge Function tilex-push ─── Web Push (VAPID, clés en DB verrouillée)
     │
-    ├── Studio ────────── GitHub API (PAT utilisateur)
+    ├── Studio / Codex ─ GitHub API (PAT utilisateur, jamais envoyé ailleurs)
     │
-    ├── Paiement ──────── Edge Function create-checkout ──── Stripe Checkout
-    │                     Edge Function stripe-webhook ────── Stripe Webhooks
-    │                     Payment Links directs (forfaits.html)
+    ├── Paiement ─────── Stripe Checkout + Webhooks
     │
-    ├── Connexions ────── Edge Functions validate-github / validate-supabase
-    │                     Table user_connections (RLS par utilisateur)
-    │
-    └── Donnees ───────── Supabase Postgres
-                          (profiles, conversations, messages, codex_queue,
-                           user_connections, user_credits, credits_ledger,
-                           usage_events, action_costs, user_roles)
+    └── Données ──────── Supabase Postgres (RLS partout)
+                         profiles, conversations, messages, projects,
+                         tilex_messages/devices/push_subs, tilex_secrets,
+                         truck_position, agenda_jour, voyage, rappel,
+                         user_credits, credits_ledger, usage_events, user_roles, …
 ```
 
 ---
 
-## Securite
+## Sécurité
 
-- Aucune cle API dans le frontend — tout passe par les Edge Functions
-- **Garde IA** : `ai-proxy` refuse 401 (non connecte) / 402 (credits insuffisants) / 403 (sans forfait)
-- Auth obligatoire pour toute requete IA (pas d'acces anonyme)
-- RLS sur toutes les tables (chaque utilisateur voit uniquement ses donnees)
-- **Aucune ecriture directe client** sur les tables d'argent (user_credits, credits_ledger, usage_events)
-- `is_admin()` en SECURITY DEFINER basee sur `user_roles` (pas un simple champ)
-- CORS sur toutes les Edge Functions
+- **Aucune clé API dans le frontend** — tout passe par les Edge Functions (clés via `Deno.env`)
+- **Clé anon** (la seule clé côté client) = **publique par design**, protégée par RLS (chaque usager ne voit que ses données)
+- **Clé `service_role`** : jamais côté client — uniquement dans les Edge Functions (env serveur)
+- **Clé VAPID privée** : stockée côté serveur dans la table verrouillée `tilex_secrets` (RLS sans policy = service_role only), **jamais dans le repo**
+- **RLS sur toutes les tables**; aucune écriture directe client sur les tables d'argent (`user_credits`, `credits_ledger`, `usage_events`)
+- **Système camion/forêt** : owner-only (garde UI `tilex-prive.js` + RLS `auth.uid() = user_id`)
+- Anti-XSS systématique (`textContent` / échappement), anti-injection de prompt côté Edge Functions
+- Garde IA : `ai-proxy` répond 401 (non connecté) / 402 (crédits) / 403 (sans forfait)
 - Headers Vercel : HSTS, CSP (Report-Only), X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
-- Plans cyber admin-only tant que l'avocat n'a pas signe
-- Conformite **Loi 25 du Quebec** — documentation dans `docs/`
+- `.env` / `.env.*` gitignorés (seuls les `.example` avec placeholders sont commités)
+- Conformité **Loi 25 du Québec** — documentation dans `docs/`
 
 ---
 
-## Couts par action (credits)
+## PWA & mises à jour automatiques
 
-| Action | Credits |
-|--------|---------|
-| Message chat (Sonnet / Haiku) | 1 |
-| Message chat (Opus) | 5 |
-| Session Codex | 10 |
-| Commit Codex | 5 |
-| Generation d'image | 3 |
-| Scan cyber complet | 20 |
-| Scan cyber rapide | 5 |
-| Thinking (1k tokens) | 2 |
-| Creation d'agent | 5 |
-| Analyse de fichier | 2 |
-| Recherche web | 1 |
+- **Service Worker** (`sw.js`) : cache offline + réseau-d'abord (HTML toujours frais en ligne).
+  `CACHE_VERSION` est bumpé à chaque changement.
+- **Auto-update au déploiement Vercel** : les pages vérifient une nouvelle version au chargement,
+  **chaque minute**, et au retour sur l'onglet → rechargement automatique quand la nouvelle version prend le contrôle.
+- Headers de cache : `sw.js`, `*.html`, `*.js`, `*.css` en **no-cache / must-revalidate**
+  → un déploiement s'applique tout de suite (pas de cache figé d'un an).
+- Notifications push : nécessite des clés VAPID (générer + stocker dans `tilex_secrets`).
+  Sur iPhone, installer la PWA sur l'écran d'accueil pour recevoir les push.
 
 ---
 
-## Demarrage rapide
+## Démarrage & déploiement
 
-Pas de build. HTML / CSS / JS statique.
+Pas de build — HTML / CSS / JS statique.
 
 ```bash
 # Serveur local
-npm start
+npm start                      # ou : npx serve .
 
-# Ecouter les instructions Codex
-npm run codex:listen
-
-# Scan pre-deploy + push
-npm run deploy
+# Déploiement = push Git (Vercel build & deploy auto sur la branche)
 ```
-
-### Deploiement Vercel
-
-Le `vercel.json` configure les rewrites :
-- `/` → `index.html`
-- `/app` → `pro.html`
-- `/forfaits` → `forfaits.html`
-- `/forfaits-cyber` → `forfaits-cyber.html`
-- `/centre-indar` → `centre-indar.html`
 
 ### Edge Functions
 
 ```bash
-supabase functions deploy ai-proxy --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy check-abonnement --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy create-checkout --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy stripe-webhook --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy validate-github --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy validate-supabase --project-ref rnuripmfozlxenryxhdc
-supabase functions deploy receive-codex-instruction --project-ref rnuripmfozlxenryxhdc
+supabase functions deploy <nom> --project-ref rnuripmfozlxenryxhdc
+# ex : ai-proxy, tilexcode-agent, tilex-push, create-checkout, stripe-webhook, …
 ```
 
-### Migrations
+### Migrations / SQL
 
 ```bash
 supabase db push --project-ref rnuripmfozlxenryxhdc
@@ -289,33 +278,25 @@ supabase db push --project-ref rnuripmfozlxenryxhdc
 
 ---
 
-## Connexions
-
-| Service | Configuration |
-|---------|---------------|
-| GitHub | Parametres → PAT (scopes `repo`, `workflow`) — stocke dans `user_connections` |
-| Supabase | Parametres → URL + cle anon (projet externe) — stocke dans `user_connections` |
-| Stripe | Edge Functions → `STRIPE_SECRET_KEY` (secret Supabase) |
-| Anthropic | Edge Functions → `ANTHROPIC_API_KEY` (secret Supabase) |
-| OpenAI | Edge Functions → `OPENAI_API_KEY` (secret Supabase) |
-
----
-
 ## Variables d'environnement (Supabase Secrets)
+
+À définir via `supabase secrets set` (jamais commitées) :
 
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-SUPABASE_URL=https://rnuripmfozlxenryxhdc.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...            # auto-injectée dans les Edge Functions
+TILEX_ALLOWED_ORIGINS=https://...           # CORS du Codex (en plus de *.vercel.app / ti-lex.app)
 ```
 
-Ne jamais commiter ces valeurs. Utiliser `supabase secrets set` pour les deployer.
+Les clés **VAPID** (push) sont stockées dans la table `tilex_secrets` (lecture service_role uniquement),
+pas en variable d'environnement.
+
+Côté client, seule la **clé anon** (publique) est exposée, dans `js/tilex-config.js` et `comm/config.js`.
 
 ---
 
-**Alex Marceau Prevost** — Quebec, Canada
-Donnees en region `ca-central-1`. Conforme a la Loi 25 du Quebec.
+🌌 **ti-lex-AL v10** — l'aurore boréale dans ton code. **Produit du Québec** 🍁
+*Alex Marceau Prevost — Saguenay–Lac-Saint-Jean*
