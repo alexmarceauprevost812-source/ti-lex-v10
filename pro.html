@@ -2057,6 +2057,22 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 .sb-logo-box{ flex-direction:column !important; align-items:center !important; padding:2px 16px 6px !important; gap:2px !important; }
 .sb-logo-img-wrap{ display:none !important; }
 .sb-logo-name{ text-align:center !important; }
+
+/* 🔥 Animation au clic sur CHAQUE bouton du menu (balayage feu + glow + icône qui pop) */
+.sb-item{ position:relative; overflow:hidden; }
+.sb-item.tlx-fire{ animation:tlxItemFire .42s ease; }
+.sb-item.tlx-fire::after{ content:''; position:absolute; inset:0; pointer-events:none; z-index:2;
+  background:linear-gradient(90deg,transparent 0%, rgba(255,180,60,.55) 45%, rgba(255,90,20,0) 80%);
+  transform:translateX(-110%); animation:tlxSweep .42s ease; }
+.sb-item.tlx-fire .sb-icon{ animation:tlxIcoPop .42s ease; }
+@keyframes tlxItemFire{
+  0%{ background:rgba(255,107,0,0); }
+  30%{ background:rgba(255,107,0,.22); box-shadow:inset 0 0 0 1px rgba(255,140,0,.5), 0 0 18px rgba(255,107,0,.45); }
+  100%{ background:rgba(255,107,0,0); box-shadow:none; }
+}
+@keyframes tlxSweep{ to{ transform:translateX(110%); } }
+@keyframes tlxIcoPop{ 0%{transform:scale(1)} 40%{transform:scale(1.32); filter:drop-shadow(0 0 8px rgba(255,150,40,.95))} 100%{transform:scale(1)} }
+@media (prefers-reduced-motion:reduce){ .sb-item.tlx-fire,.sb-item.tlx-fire::after,.sb-item.tlx-fire .sb-icon{ animation:none !important; } }
 .sidebar.sidebar-open{ border-right:1px solid rgba(255,255,255,.06); }
 
 /* En-tête : petit logo + gros titre serif aligné à gauche (comme « Claude ») */
@@ -3346,6 +3362,30 @@ document.querySelectorAll("[data-toggle]").forEach(function(btn){
     if(tabId==="si-chat")showTab("chat");
   });
 });
+
+/* ── 🔥 ANIMATION DE FEU AU CLIC SUR CHAQUE BOUTON DU MENU ──
+   Joue le balayage de feu puis exécute l'action (on diffère ~280ms pour la voir). */
+(function(){
+  var sb=document.getElementById("sidebar"); if(!sb) return;
+  var reduce=false; try{ reduce=matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){}
+  sb.addEventListener("click",function(e){
+    var it=e.target.closest(".sb-item"); if(!it || it._tlxAnim) return;
+    it._tlxAnim=true; it.classList.add("tlx-fire");
+    var orig=it.getAttribute("onclick");
+    var dur=reduce?0:280;
+    if(orig){
+      // intercepte l'action inline pour laisser jouer l'animation
+      e.preventDefault(); e.stopImmediatePropagation();
+      setTimeout(function(){
+        it.classList.remove("tlx-fire"); it._tlxAnim=false;
+        try{ (new Function(orig)).call(it); }catch(_e){}
+      }, dur);
+    } else {
+      // items sans onclick (ex: accordéon data-toggle) : juste l'animation
+      setTimeout(function(){ it.classList.remove("tlx-fire"); it._tlxAnim=false; }, reduce?0:420);
+    }
+  }, true); // capture : passe avant le onclick inline
+})();
 
 /* ── CHALEUR LOGO (heat glow DERRIÈRE le logo) ── */
 const HEAT={
