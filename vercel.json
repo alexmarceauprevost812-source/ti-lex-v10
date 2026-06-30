@@ -24,6 +24,7 @@
     { "source": "/comm", "destination": "/comm/index.html" },
     { "source": "/communications", "destination": "/communications.html" },
     { "source": "/projets", "destination": "/projets.html" },
+    { "source": "/schema", "destination": "/schema.html" },
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
     { "source": "/pro", "destination": "/pro.html" },
@@ -68,7 +69,7 @@
         },
         {
           "key": "Content-Security-Policy-Report-Only",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co wss://rnuripmfozlxenryxhdc.supabase.co https://api.github.com https://api.coingecko.com https://esm.sh https://api.open-meteo.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self' https://rnuripmfozlxenryxhdc.supabase.co wss://rnuripmfozlxenryxhdc.supabase.co https://api.github.com https://api.coingecko.com https://esm.sh https://api.open-meteo.com https://*.wikipedia.org https://commons.wikimedia.org https://www.googleapis.com https://api.unsplash.com https://api.pexels.com https://pixabay.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
         },
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },

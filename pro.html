@@ -2289,6 +2289,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
   </div>
 
+  <!-- Schéma Live (carte mentale branchée avec le chat) -->
+  <div class="sb-item" id="si-schema" onclick="window.location.href='/schema'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#4f9dff;">🗺️</span><span class="sb-label" data-txt="SCHÉMA"></span>
+  </div>
+
   <!-- Créer agent IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
@@ -3081,6 +3086,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="composeAction('image')"><span class="cmi-ico">🖼️</span> Image</div>
       <div class="composer-menu-item" onclick="composeAction('photo')"><span class="cmi-ico">📸</span> Prendre une photo</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
+      <div class="composer-menu-item" onclick="composeAction('schema')"><span class="cmi-ico">🗺️</span> Schéma du sujet</div>
       <div class="composer-menu-sep"></div>
       <div class="composer-menu-item" onclick="ouvrirConvCompact()"><span class="cmi-ico">📜</span> Conversations résumées</div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
@@ -6791,6 +6797,14 @@ function composeAction(action){
     document.getElementById("composer-input").value="";
     document.getElementById("composer-input").style.height="auto";
     sendChat();
+  }
+  else if(action==="schema"){
+    var sujet=document.getElementById("composer-input").value.trim();
+    if(!sujet){addMsg("a","Écris un sujet dans la barre, pis clique 🗺️ Schéma du sujet — je vais bâtir la carte mentale en direct.");return;}
+    document.getElementById("composer-input").value="";
+    document.getElementById("composer-input").style.height="auto";
+    try{ sessionStorage.setItem("tilex-schema-sujet", sujet); }catch(e){}
+    window.location.href="/schema?q="+encodeURIComponent(sujet);
   }
   else if(action==="gh-scan"){
     if(!_alGhConnected||!_alGhToken){addMsg("a","⚠️ GitHub non connecté. Clique ⚙️ Config dans le panel GitHub pour te connecter.");return;}
