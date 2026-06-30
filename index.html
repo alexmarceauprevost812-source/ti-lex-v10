@@ -914,12 +914,12 @@ function skipIntro() {
   setTimeout(() => el.style.display='none', 600);
 }
 function playLogin() {
-  const sp = document.getElementById('loginSplash');
-  const v  = document.getElementById('loginVideo');
-  sp.classList.remove('hidden');
-  v.currentTime = 0; v.play().catch(() => skipLogin());
-  v.onended = skipLogin; v.onerror = skipLogin;
-  setTimeout(skipLogin, 15000);
+  // Animation de connexion = ti-démon bleu↔feu + matrix (plus l'ancienne vidéo aux yeux rouges).
+  try { sessionStorage.setItem('tilex-intro-pro-session','1'); } catch(e) {} // évite de la rejouer sur pro.html
+  if (window.TilexIntro) {
+    try { TilexIntro.play({ onDone: function(){ window.location.href = 'pro.html'; } }); return; } catch(e) {}
+  }
+  window.location.href = 'pro.html';
 }
 function skipLogin() {
   const sp = document.getElementById('loginSplash');
