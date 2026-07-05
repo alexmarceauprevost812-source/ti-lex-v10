@@ -690,7 +690,8 @@ async function silexLaunchScan(){
   var _mandat=await(window.TilexMandat?window.TilexMandat.confirmer(target):Promise.resolve({ok:false,raison:'cible_invalide'}));
   if(!_mandat.ok){
     if(_mandat.raison==='cible_invalide')showToastMsg('Cible invalide — entre un domaine, une IP ou une URL valide.');
-    else showToastMsg('Scan annulé — aucun mandat confirmé. Rien n\'a été scanné.');
+    else if(_mandat.raison==='auth')showToastMsg('Connexion requise pour scanner une cible.');
+    else showToastMsg('Scan annulé — propriété de la cible non prouvée. Rien n\'a été scanné.');
     return;
   }
   if(_scanEnCours){showToastMsg('Un scan est déjà en cours…');return;}
