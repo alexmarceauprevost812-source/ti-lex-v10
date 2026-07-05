@@ -1674,6 +1674,16 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .cmsg-bbl hr{border:none;border-top:1px solid var(--border,rgba(255,255,255,0.08));margin:12px 0;}
 .cmsg-bbl strong{color:var(--txt,#e0ddd4);}
 .cmsg-bbl .tool-status{color:var(--muted,#6b6b78);font-size:12px;font-family:'Share Tech Mono',monospace;padding:4px 0;}
+/* ── Galerie média (recherche_media) ── */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:10px 0 4px;max-width:640px;}
+.media-grid figure{margin:0;min-width:0;}
+.media-grid img{width:100%;height:90px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border,rgba(255,255,255,.12));display:block;transition:transform .15s,border-color .15s;}
+.media-grid img:hover{transform:scale(1.03);border-color:var(--orange,#FF6B00);}
+.media-grid .media-video{width:100%;max-height:160px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,.12));background:#000;display:block;grid-column:1/-1;}
+.media-grid figure:has(.media-video){grid-column:1/-1;}
+.media-grid figcaption{font-size:10px;color:var(--muted,#8b97a7);margin-top:2px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+[data-theme="day"] .media-grid img{border-color:rgba(0,0,0,.12);}
+[data-theme="day"] .media-grid figcaption{color:#666;}
 [data-theme="day"] .cmsg-bbl h1{color:#cc6520;}
 [data-theme="day"] .cmsg-bbl h2,[data-theme="day"] .cmsg-bbl h3{color:#1a1a1a;}
 [data-theme="day"] .cmsg-bbl strong{color:#1a1a1a;}
@@ -3776,7 +3786,7 @@ async function readSSE(res){
   return full;
 }
 
-async function readSSEStream(res,onDelta,onStatus){
+async function readSSEStream(res,onDelta,onStatus,onMedia){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
   var full="";var buf="";var wsUsed=false;
@@ -3809,10 +3819,49 @@ async function readSSEStream(res,onDelta,onStatus){
         if(evt.type==="tool_status"){
           if(onStatus)onStatus("tool_exec",evt.tool_name);
         }
+        if(evt.type==="media"&&Array.isArray(evt.items)&&evt.items.length){
+          if(onMedia)onMedia(evt.items);
+        }
       }catch(e){}
     }
   }
   return full;
+}
+
+/* ── Galerie média (photos/vidéos trouvées par AL via recherche_media) ──
+   Rendu 100% DOM (textContent partout = anti-XSS), vignettes lazy,
+   vidéos preload=none, crédit source obligatoire (Pexels/Wikimedia). */
+function renderMediaGallery(items){
+  var grid=document.createElement("div");
+  grid.className="media-grid";
+  (items||[]).forEach(function(m){
+    if(!m||typeof m!=="object")return;
+    var thumb=typeof m.thumb==="string"&&/^https:\/\//.test(m.thumb)?m.thumb:"";
+    var full=typeof m.full==="string"&&/^https:\/\//.test(m.full)?m.full:"";
+    var link=typeof m.link==="string"&&/^https:\/\//.test(m.link)?m.link:full;
+    if(!thumb)return;
+    var fig=document.createElement("figure");
+    if(m.kind==="video"&&full){
+      var v=document.createElement("video");
+      v.controls=true;v.preload="none";v.poster=thumb;v.src=full;
+      v.className="media-video";v.setAttribute("playsinline","");
+      fig.appendChild(v);
+    }else{
+      var img=document.createElement("img");
+      img.loading="lazy";img.decoding="async";
+      img.src=thumb;img.alt=m.credit||"";
+      img.addEventListener("click",function(){window.open(link||full||thumb,"_blank","noopener");});
+      img.onerror=function(){fig.remove();};
+      fig.appendChild(img);
+    }
+    if(m.credit){
+      var cap=document.createElement("figcaption");
+      cap.textContent=m.credit;
+      fig.appendChild(cap);
+    }
+    grid.appendChild(fig);
+  });
+  return grid.children.length?grid:null;
 }
 
 var _streamQueue=[];var _streamBusy=false;var _streamAbort=false;
@@ -4219,7 +4268,19 @@ async function sendChat(){
         }
         if(status==="web_search_start")_toolStatusEl.textContent="🌐 Recherche web en cours…";
         else if(status==="web_search_done")_toolStatusEl.textContent="🌐 Résultats trouvés";
+        else if(status==="tool_exec"&&toolName==="recherche_media")_toolStatusEl.textContent="🖼️ Recherche de photos/vidéos…";
         else if(status==="tool_exec")_toolStatusEl.textContent="🔧 "+toolName+"…";
+      },function(mediaItems){
+        // Galerie média en temps réel — insérée sous le texte, hors du .cmsg-bbl
+        // pour survivre au innerHTML=renderMd() de fin de stream.
+        if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
+        var gal=renderMediaGallery(mediaItems);
+        if(gal){
+          var wrap=bblText.parentNode;
+          var acts2=wrap.querySelector(".cmsg-actions");
+          wrap.insertBefore(gal,acts2||null);
+          msgs.scrollTop=msgs.scrollHeight;
+        }
       });
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
