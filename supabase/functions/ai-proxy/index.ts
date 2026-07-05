@@ -85,13 +85,6 @@ const MEDIA_TOOL = {
   },
 };
 
-const MEDIA_SYSTEM = `
-
-## RECHERCHE MÉDIA
-Tu peux afficher de vraies photos et vidéos dans le chat avec l'outil recherche_media.
-- Les médias trouvés s'affichent AUTOMATIQUEMENT en galerie sous ta réponse : ne colle JAMAIS les URLs des médias dans ton texte.
-- Après l'appel, décris brièvement (1-2 phrases) ce que montre la galerie, avec le crédit de la source (Pexels ou Wikimedia Commons).`;
-
 // 🔰 Outils sécurité (SILEX) — AL lance de VRAIS scans et lit les résultats.
 //    Exécutés côté serveur en relayant le JWT de l'utilisateur : security-agent
 //    applique lui-même le verrou admin + autorisation légale (SOW). Aucune escalade.
@@ -126,13 +119,14 @@ const SECURITY_TOOLS = [
   },
 ];
 
-const SECURITY_SYSTEM = `
+// Bloc d'instructions COMPACT (média + youtube + sécurité) — remplace les 3 blocs
+// verbeux pour alléger le contexte envoyé à chaque message (moins de tokens = plus rapide).
+// Les descriptions détaillées vivent déjà dans les tools eux-mêmes.
+const TOOLS_SYSTEM = `
 
-## SÉCURITÉ (SILEX)
-Tu peux lancer de vrais scans de sécurité et lire leurs résultats :
-- lancer_scan_securite → déclenche un scan (choisis scan_type=full_audit si l'utilisateur veut « tout » / « au complet »).
-- lire_dernier_scan → va chercher le dernier scan et ses findings.
-Après un scan, explique les résultats en français québécois clair : dis franchement si tout est correct, sinon nomme le vrai problème et l'action prioritaire. Ne dramatise pas un « info » ou un « low ». Si le scan est refusé (cible non autorisée ou accès réservé à l'admin), explique-le poliment sans inventer de résultats.`;
+## OUTILS (affichage + sécurité)
+- recherche_media / recherche_youtube : quand l'utilisateur veut VOIR des photos ou des vidéos, appelle l'outil. Les résultats s'affichent AUTOMATIQUEMENT en galerie sous ta réponse — ne colle JAMAIS d'URLs dans ton texte, présente-les en 1 phrase.
+- lancer_scan_securite / lire_dernier_scan : pour scanner/auditer un site ou lire un scan. Explique en québécois clair, sans dramatiser un « info »/« low ». Si le scan est refusé ou la clé absente, dis-le sans inventer.`;
 
 // 🎬 Outil YouTube — clé côté serveur (tilex_secrets nom='youtube' ou env YOUTUBE_API_KEY).
 const YOUTUBE_TOOL = {
@@ -145,14 +139,6 @@ const YOUTUBE_TOOL = {
     required: ["query"],
   },
 };
-
-const YOUTUBE_SYSTEM = `
-
-## VIDÉOS YOUTUBE
-Tu peux afficher de vraies vidéos YouTube dans le chat avec l'outil recherche_youtube.
-- Les vidéos s'affichent AUTOMATIQUEMENT en galerie de lecteurs sous ta réponse : ne colle JAMAIS d'URLs ou de liens YouTube dans ton texte.
-- Après l'appel, présente brièvement (1 phrase) ce que tu as trouvé.
-- Si la clé YouTube n'est pas configurée ou le quota est atteint, dis-le poliment sans inventer de vidéos.`;
 
 let _youtubeKey: string | undefined = undefined;
 async function getYoutubeKey(): Promise<string> {
@@ -492,7 +478,15 @@ Deno.serve(async (req) => {
 
     let systemPrompt = typeof body.system === "string" ? body.system : undefined;
     if (FMP_KEY) systemPrompt = (systemPrompt || "") + FINANCE_SYSTEM;
-    systemPrompt = (systemPrompt || "") + MEDIA_SYSTEM + YOUTUBE_SYSTEM + SECURITY_SYSTEM;
+    systemPrompt = (systemPrompt || "") + TOOLS_SYSTEM;
+
+    // ⚡ Prompt caching : le system (persona + notes + outils) est marqué cacheable.
+    //    Deux messages de suite avec le même system → cache hit → réponse plus rapide
+    //    à démarrer (donc écriture plus fluide) + moins cher. Sous 1024 tokens, ignoré
+    //    sans erreur. Passé comme tableau de blocs à Anthropic.
+    const systemParam = systemPrompt
+      ? [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }]
+      : undefined;
 
     const anthropicHeaders = {
       "Content-Type": "application/json",
@@ -500,10 +494,10 @@ Deno.serve(async (req) => {
       "anthropic-version": "2023-06-01",
     };
 
-    // Outils custom (bourse, média, sécurité) → boucle d'outils en streaming temps réel.
+    // Outils custom (bourse, média, youtube, sécurité) → boucle d'outils en streaming temps réel.
     const hasCustomTools = tools.some((t: any) => t.type !== "web_search_20250305");
     if (hasCustomTools) {
-      return handleToolLoop(body.messages, tools, model, maxTokens, systemPrompt, anthropicHeaders, { authHeader, userId });
+      return handleToolLoop(body.messages, tools, model, maxTokens, systemParam, anthropicHeaders, { authHeader, userId });
     }
 
     // Sinon : streaming passthrough (avec web_search optionnel exécuté par Anthropic).
@@ -513,7 +507,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model,
         max_tokens: maxTokens,
-        system: systemPrompt,
+        ...(systemParam ? { system: systemParam } : {}),
         stream: true,
         messages: body.messages,
         ...(tools.length > 0 ? { tools } : {}),
@@ -553,7 +547,7 @@ function handleToolLoop(
   tools: any[],
   model: string,
   maxTokens: number,
-  system: string | undefined,
+  system: any, // tableau de blocs cacheables (ou undefined)
   headers: Record<string, string>,
   ctx: ToolCtx,
 ) {
