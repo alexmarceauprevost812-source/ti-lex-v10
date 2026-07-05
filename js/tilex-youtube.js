@@ -21,16 +21,17 @@ const TilexYouTube = {
     this._cssFait = true;
     const s = document.createElement('style');
     s.id = 'tlyt-css';
+    // Thème sombre (identique à css/tilex-youtube.css) — rouge #e63946.
     s.textContent =
-      '.tlyt-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}'
-      + '.tlyt-carte{background:#141414;border:1px solid #262626;border-radius:12px;overflow:hidden;}'
-      + '.tlyt-video{position:relative;width:100%;padding-bottom:56.25%;height:0;background:#000;}'
-      + '.tlyt-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}'
-      + '.tlyt-titre{font-family:inherit;font-size:.85rem;font-weight:600;color:#f5f5f5;padding:10px 12px 2px;line-height:1.3;'
-      + 'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}'
-      + '.tlyt-chaine{font-size:.75rem;color:#ff7a1a;padding:0 12px 12px;}'
-      + '.tlyt-loading,.tlyt-vide,.tlyt-erreur{color:#8a8a8a;font-family:inherit;padding:16px;text-align:center;}'
-      + '.tlyt-erreur{color:#ff4d4d;}';
+      '.tlyt-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:12px;}'
+      + '.tlyt-carte{background:#16181d;border:1px solid #2a2e37;border-radius:12px;overflow:hidden;transition:transform .15s ease,border-color .15s ease;}'
+      + '.tlyt-carte:hover{transform:translateY(-3px);border-color:#e63946;}'
+      + '.tlyt-video{position:relative;width:100%;padding-top:56.25%;}'
+      + '.tlyt-video iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}'
+      + ".tlyt-titre{font:600 14px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f1f1f1;margin:10px 12px 4px;}"
+      + ".tlyt-chaine{font:400 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#9aa0aa;margin:0 12px 12px;}"
+      + '.tlyt-loading,.tlyt-vide,.tlyt-erreur{color:#9aa0aa;font:400 14px -apple-system,sans-serif;padding:12px;}'
+      + '.tlyt-erreur{color:#e63946;}';
     (document.head || document.documentElement).appendChild(s);
   },
 
