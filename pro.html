@@ -2314,6 +2314,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
   </div>
 
+  <!-- Scanner — upload/hash/doublons/visionneuse (module scanner) -->
+  <div class="sb-item" id="si-scanner" onclick="showTab('scanner')">
+    <span class="sb-icon" style="color:#ff7a1a;">🖼️</span><span class="sb-label" data-txt="SCANNER"></span>
+  </div>
+
   <div style="flex:1"></div>
 
   <!-- COMPTE (bas du menu) -->
@@ -3008,6 +3013,59 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- AGENT MARCEAU — Dialogue multi-agents 4 phases -->
   <div id="view-marceau" class="view"></div>
 
+  <!-- ════════════ MODULE SCANNER ════════════
+       Upload multi-fichiers + hash SHA-256 + détection de doublons + visionneuse.
+       Réutilise la session Supabase existante de pro.html (aucun login séparé).
+       Styles scopés sous #view-scanner pour ne rien casser ailleurs. -->
+  <style>
+    #view-scanner{padding:16px;max-width:820px;margin:0 auto;}
+    #view-scanner .scn-drop{border:2px dashed rgba(255,122,26,.4);border-radius:14px;padding:26px 16px;text-align:center;color:var(--muted,#8a8a8a);cursor:pointer;transition:border-color .2s,color .2s;background:rgba(255,122,26,.03);}
+    #view-scanner .scn-drop.over{border-color:#ff7a1a;color:#ff7a1a;background:rgba(255,122,26,.08);}
+    #view-scanner .scn-drop small{display:block;margin-top:6px;font-size:.78rem;opacity:.8;}
+    #view-scanner .scn-filtres{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;}
+    #view-scanner .scn-filtres button{background:var(--bg3,#1e1e1e);color:var(--muted,#8a8a8a);border:1px solid var(--border,#333);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:.85rem;font-family:inherit;}
+    #view-scanner .scn-filtres button.actif{background:#ff7a1a;color:#000;border-color:#ff7a1a;font-weight:700;}
+    #view-scanner .scn-fichier{display:flex;align-items:center;gap:12px;background:var(--bg2,#141414);border:1px solid var(--border,#262626);border-radius:12px;padding:12px;margin-bottom:10px;cursor:pointer;}
+    #view-scanner .scn-ico{width:44px;height:44px;border-radius:8px;background:var(--bg3,#1e1e1e);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;overflow:hidden;}
+    #view-scanner .scn-ico img{width:100%;height:100%;object-fit:cover;}
+    #view-scanner .scn-infos{flex:1;min-width:0;}
+    #view-scanner .scn-nom{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt,#f5f5f5);}
+    #view-scanner .scn-meta{color:var(--muted,#8a8a8a);font-size:.78rem;}
+    #view-scanner .scn-badge{font-size:.7rem;font-weight:700;border-radius:6px;padding:3px 7px;flex-shrink:0;}
+    #view-scanner .scn-badge.doublon{background:#ff4d4d;color:#000;}
+    #view-scanner .scn-badge.type{background:var(--bg3,#1e1e1e);color:#ffa05c;}
+    #view-scanner .scn-suppr{background:none;border:none;color:var(--muted,#8a8a8a);font-size:1.1rem;cursor:pointer;padding:6px;flex-shrink:0;}
+    #view-scanner .scn-suppr:hover{color:#ff4d4d;}
+    #view-scanner .scn-vide{text-align:center;color:var(--muted,#8a8a8a);padding:30px 10px;}
+    #view-scanner .scn-statut{background:var(--bg3,#1e1e1e);border:1px solid #ff7a1a;border-radius:12px;padding:12px 16px;font-size:.85rem;margin-bottom:14px;color:var(--txt,#f5f5f5);}
+    /* visionneuse plein écran (scopée) */
+    #scn-viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:4000;display:flex;flex-direction:column;padding:16px;}
+    #scn-viewer .scn-vhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;}
+    #scn-viewer .scn-vnom{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt,#f5f5f5);}
+    #scn-viewer .scn-close{background:transparent;color:#ff7a1a;border:1px solid #ff7a1a;border-radius:10px;padding:8px 16px;font-weight:700;cursor:pointer;font-family:inherit;}
+    #scn-vcontenu{flex:1;overflow:auto;border-radius:12px;}
+    #scn-vcontenu img{max-width:100%;border-radius:12px;display:block;margin:0 auto;}
+    #scn-vcontenu pre{background:var(--bg2,#141414);border:1px solid var(--border,#262626);border-radius:12px;padding:14px;font-size:.82rem;line-height:1.5;overflow-x:auto;color:#ffa05c;white-space:pre-wrap;word-break:break-word;}
+    #scn-vcontenu ul{list-style:none;}
+    #scn-vcontenu li{background:var(--bg2,#141414);border:1px solid var(--border,#262626);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:.85rem;color:var(--txt,#f5f5f5);}
+  </style>
+  <div id="view-scanner" class="view">
+    <div class="scn-statut" id="scn-statut" style="display:none;"></div>
+    <div class="scn-drop" id="scn-drop">
+      📂 Touche ici ou dépose tes fichiers<br>
+      <small>photos, code, zips — n'importe quoi</small>
+      <input type="file" id="scn-input" multiple style="display:none;">
+    </div>
+    <div class="scn-filtres" id="scn-filtres">
+      <button data-f="tous" class="actif">Tous</button>
+      <button data-f="photo">Photos</button>
+      <button data-f="code">Code</button>
+      <button data-f="zip">Zips</button>
+      <button data-f="doublon">Doublons</button>
+    </div>
+    <div id="scn-liste"></div>
+  </div>
+
   <!-- SILEX & CENTRE INDAR déplacés vers la page dédiée /security (security.html) -->
 
 </main>
@@ -3332,13 +3390,14 @@ function ouvriConvSidebar(){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-fichiers"].forEach(id=>{
+  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-fichiers","si-scanner"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",fichiers:"si-fichiers"};
+  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",fichiers:"si-fichiers",scanner:"si-scanner"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
+  if(name==="scanner"&&typeof scannerInit==="function")scannerInit();
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
@@ -9410,6 +9469,347 @@ if ('serviceWorker' in navigator) {
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') reg.update(); });
   }).catch(function(){});
 }
+</script>
+
+<!-- ════════════ MODULE SCANNER — visionneuse + logique ════════════ -->
+<div id="scn-viewer" class="hidden" style="display:none;">
+  <div class="scn-vhead">
+    <div class="scn-vnom" id="scn-vnom"></div>
+    <button class="scn-close" onclick="scnFermerViewer()">Fermer</button>
+  </div>
+  <div id="scn-vcontenu"></div>
+</div>
+
+<script>
+/* ════════════ MODULE SCANNER ════════════
+   Réutilise la session Supabase déjà gérée par pro.html (supabase.auth.getSession()).
+   Aucun login séparé, aucun stockage de token maison. Tout est scopé sous scn* / #view-scanner. */
+(function(){
+  "use strict";
+
+  // ── Config (Supabase déjà branché dans pro.html : SB_URL / SB_ANON) ──
+  var SCN_PROJECT_ID = "53c3904e-e32a-4241-b998-c009f96ecd76"; // projet ti-lex-v10
+  var SCN_BUCKET     = "ti-lex-studio";                        // bucket Storage public
+  var EXT_TEXTE = ["html","htm","css","js","json","txt","md","py","sql","xml","csv","sh","ts","jsx","tsx","yml","yaml"];
+
+  var scnFichiers = [];     // cache des fichiers du user
+  var scnFiltre   = "tous"; // filtre actif
+  var scnInitFait = false;  // init une seule fois (listeners)
+
+  // ── Session : token + userId depuis la session existante ──
+  async function scnSession(){
+    try{
+      var r = await supabase.auth.getSession();
+      var s = r && r.data && r.data.session;
+      if(s && s.access_token && s.user) return { token: s.access_token, userId: s.user.id };
+    }catch(e){}
+    return null;
+  }
+
+  // ── En-têtes REST : toujours apikey + Authorization ──
+  function scnEntetes(token, json){
+    var h = { "apikey": SB_ANON, "Authorization": "Bearer " + token };
+    if(json !== false) h["Content-Type"] = "application/json";
+    return h;
+  }
+
+  // ── Petit bandeau de statut/erreur dans la vue (pas juste console) ──
+  function scnStatut(msg, duree){
+    var s = document.getElementById("scn-statut");
+    if(!s) return;
+    s.textContent = msg;
+    s.style.display = "block";
+    clearTimeout(s._t);
+    if(duree !== 0){ s._t = setTimeout(function(){ s.style.display = "none"; }, duree || 3500); }
+    // double-canal : toast global si dispo
+    if(typeof window.showToastMsg === "function"){ try{ window.showToastMsg(msg); }catch(e){} }
+  }
+
+  function scnTailleLisible(o){
+    if(o == null) return "?";
+    if(o < 1024) return o + " o";
+    if(o < 1048576) return (o/1024).toFixed(1) + " Ko";
+    return (o/1048576).toFixed(1) + " Mo";
+  }
+
+  // ── Hash SHA-256 dans le navigateur (crypto.subtle) ──
+  async function scnSha256(arrayBuffer){
+    var h = await crypto.subtle.digest("SHA-256", arrayBuffer);
+    return Array.from(new Uint8Array(h)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+  }
+
+  // ── Catégorie d'un fichier (photo / zip / code / autre) ──
+  function scnCategorie(f){
+    var m = f.mime_type || "";
+    var nom = (f.chemin || "").toLowerCase();
+    if(m.indexOf("image/") === 0) return "photo";
+    if(m.indexOf("zip") !== -1 || nom.slice(-4) === ".zip") return "zip";
+    if(f.contenu != null) return "code";
+    return "autre";
+  }
+
+  function scnUrlPublique(path){
+    return SB_URL + "/storage/v1/object/public/" + SCN_BUCKET + "/" + path;
+  }
+
+  // ── Charger la liste (RLS scope au user) ──
+  async function scnCharger(){
+    var sess = await scnSession();
+    if(!sess){ scnStatut("Connecte-toi à la plateforme pour utiliser le scanner.", 0); return; }
+    try{
+      var url = SB_URL + "/rest/v1/tilex_files?project_id=eq." + SCN_PROJECT_ID +
+        "&select=id,chemin,mime_type,taille,hash,storage_path,contenu,created_at&order=created_at.desc";
+      var r = await fetch(url, { headers: scnEntetes(sess.token) });
+      if(!r.ok){ var e = await r.json().catch(function(){return{};}); throw new Error(e.message || ("HTTP " + r.status)); }
+      scnFichiers = await r.json();
+      if(!Array.isArray(scnFichiers)) scnFichiers = [];
+      scnMarquerDoublons();
+      scnAfficher();
+    }catch(e){ scnStatut("Erreur chargement : " + e.message, 6000); }
+  }
+
+  // ── Doublons : 2e occurrence (et +) d'un même hash ──
+  function scnMarquerDoublons(){
+    var vus = {};
+    for(var i=0;i<scnFichiers.length;i++){
+      var f = scnFichiers[i];
+      if(!f.hash){ f._doublon = false; continue; }
+      if(vus[f.hash]) f._doublon = true;
+      else { vus[f.hash] = true; f._doublon = false; }
+    }
+  }
+
+  // ── Affichage de la liste (DOM pur, textContent = anti-XSS) ──
+  function scnAfficher(){
+    var zone = document.getElementById("scn-liste");
+    if(!zone) return;
+    var visibles = scnFichiers;
+    if(scnFiltre === "doublon") visibles = scnFichiers.filter(function(f){ return f._doublon; });
+    else if(scnFiltre !== "tous") visibles = scnFichiers.filter(function(f){ return scnCategorie(f) === scnFiltre; });
+
+    if(!visibles.length){
+      zone.textContent = "";
+      var vide = document.createElement("div");
+      vide.className = "scn-vide";
+      vide.textContent = "Rien icitte pour l'instant. Upload de quoi en haut ! 👆";
+      zone.appendChild(vide);
+      return;
+    }
+    zone.textContent = "";
+    visibles.forEach(function(f){
+      var cat = scnCategorie(f);
+      var row = document.createElement("div");
+      row.className = "scn-fichier";
+
+      var ico = document.createElement("div");
+      ico.className = "scn-ico";
+      if(cat === "photo" && f.storage_path){
+        var img = document.createElement("img");
+        img.loading = "lazy"; img.src = scnUrlPublique(f.storage_path);
+        ico.appendChild(img);
+      } else {
+        ico.textContent = cat === "zip" ? "🗜️" : cat === "code" ? "📄" : "📦";
+      }
+
+      var infos = document.createElement("div");
+      infos.className = "scn-infos";
+      var nom = document.createElement("div");
+      nom.className = "scn-nom"; nom.textContent = f.chemin || "(sans nom)";
+      var meta = document.createElement("div");
+      meta.className = "scn-meta";
+      meta.textContent = scnTailleLisible(f.taille) + " · " + (f.mime_type || "texte");
+      infos.appendChild(nom); infos.appendChild(meta);
+
+      var badge = document.createElement("span");
+      if(f._doublon){ badge.className = "scn-badge doublon"; badge.textContent = "DOUBLON"; }
+      else { badge.className = "scn-badge type"; badge.textContent = cat; }
+
+      var sup = document.createElement("button");
+      sup.className = "scn-suppr"; sup.title = "Supprimer"; sup.textContent = "✕";
+      sup.onclick = function(ev){ ev.stopPropagation(); scnSupprimer(f); };
+
+      row.appendChild(ico); row.appendChild(infos); row.appendChild(badge); row.appendChild(sup);
+      row.onclick = function(){ scnOuvrir(f); };
+      zone.appendChild(row);
+    });
+  }
+
+  // ── Upload : hash → texte en base OU binaire au bucket ──
+  async function scnTraiter(liste){
+    if(!liste || !liste.length) return;
+    var sess = await scnSession();
+    if(!sess){ scnStatut("Connecte-toi à la plateforme d'abord.", 0); return; }
+
+    var hashsExistants = {};
+    scnFichiers.forEach(function(f){ if(f.hash) hashsExistants[f.hash] = true; });
+    var ajoutes = 0, doublons = 0;
+
+    for(var i=0;i<liste.length;i++){
+      var fichier = liste[i];
+      scnStatut("Scan : " + fichier.name + "…", 0);
+      try{
+        var buffer = await fichier.arrayBuffer();
+        var hash = await scnSha256(buffer);
+        if(hashsExistants[hash]) doublons++;
+        hashsExistants[hash] = true;
+
+        var ext = (fichier.name.split(".").pop() || "").toLowerCase();
+        var estTexte = (fichier.type && fichier.type.indexOf("text/") === 0) || EXT_TEXTE.indexOf(ext) !== -1;
+
+        var ligne = {
+          user_id: sess.userId,
+          project_id: SCN_PROJECT_ID,
+          chemin: fichier.name,
+          langage: estTexte ? ext : null,
+          taille: fichier.size,
+          mime_type: fichier.type || (estTexte ? "text/plain" : "application/octet-stream"),
+          hash: hash,
+          version: 1
+        };
+
+        if(estTexte){
+          // fichier texte/code → contenu directement en base
+          ligne.contenu = new TextDecoder().decode(buffer);
+        } else {
+          // binaire (photo, zip…) → bucket Storage, dossier {user_id}/
+          var nomPropre = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          var path = sess.userId + "/" + hash.slice(0,12) + "_" + nomPropre;
+          var up = await fetch(SB_URL + "/storage/v1/object/" + SCN_BUCKET + "/" + path, {
+            method: "POST",
+            headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token, "Content-Type": ligne.mime_type, "x-upsert": "true" },
+            body: buffer
+          });
+          if(!up.ok){ var eu = await up.json().catch(function(){return{};}); throw new Error(eu.message || "upload storage raté"); }
+          ligne.storage_path = path;
+        }
+
+        var ins = await fetch(SB_URL + "/rest/v1/tilex_files", {
+          method: "POST",
+          headers: Object.assign({}, scnEntetes(sess.token), { "Prefer": "return=minimal" }),
+          body: JSON.stringify(ligne)
+        });
+        if(!ins.ok){ var ei = await ins.json().catch(function(){return{};}); throw new Error(ei.message || "insert raté"); }
+        ajoutes++;
+      }catch(e){
+        scnStatut("Erreur avec " + fichier.name + " : " + e.message, 7000);
+      }
+    }
+    scnStatut(ajoutes + " fichier(s) ajouté(s)" + (doublons ? " — ⚠️ " + doublons + " doublon(s) détecté(s) !" : " ✔"), 5000);
+    var inp = document.getElementById("scn-input"); if(inp) inp.value = "";
+    scnCharger();
+  }
+
+  // ── Visionneuse plein écran ──
+  async function scnOuvrir(f){
+    var v = document.getElementById("scn-viewer");
+    var zone = document.getElementById("scn-vcontenu");
+    document.getElementById("scn-vnom").textContent = f.chemin || "";
+    zone.textContent = "";
+    var chargement = document.createElement("p");
+    chargement.style.cssText = "color:var(--muted,#8a8a8a);padding:20px;";
+    chargement.textContent = "Chargement…";
+    zone.appendChild(chargement);
+    v.classList.remove("hidden"); v.style.display = "flex";
+
+    var cat = scnCategorie(f);
+    try{
+      if(cat === "photo" && f.storage_path){
+        zone.textContent = "";
+        var img = document.createElement("img"); img.src = scnUrlPublique(f.storage_path);
+        zone.appendChild(img);
+      }
+      else if(cat === "code" || f.contenu != null){
+        zone.textContent = "";
+        var pre = document.createElement("pre");
+        pre.textContent = f.contenu != null ? f.contenu : "(vide)"; // textContent = pas d'injection
+        zone.appendChild(pre);
+      }
+      else if(cat === "zip" && f.storage_path){
+        if(typeof JSZip === "undefined"){ zone.textContent = "Module zip (JSZip) non chargé."; return; }
+        var r = await fetch(scnUrlPublique(f.storage_path));
+        var zip = await JSZip.loadAsync(await r.arrayBuffer());
+        zone.textContent = "";
+        var titre = document.createElement("p");
+        titre.style.cssText = "color:var(--muted,#8a8a8a);margin-bottom:10px;";
+        titre.textContent = "Contenu du zip :";
+        var ul = document.createElement("ul");
+        Object.keys(zip.files).forEach(function(k){
+          var entree = zip.files[k];
+          var li = document.createElement("li");
+          li.textContent = (entree.dir ? "📁 " : "📄 ") + entree.name;
+          ul.appendChild(li);
+        });
+        zone.appendChild(titre); zone.appendChild(ul);
+      }
+      else if(f.storage_path){
+        zone.textContent = "";
+        var p = document.createElement("p"); p.style.padding = "20px";
+        p.textContent = "Fichier binaire. ";
+        var a = document.createElement("a");
+        a.style.color = "#ff7a1a"; a.href = scnUrlPublique(f.storage_path);
+        a.target = "_blank"; a.rel = "noopener"; a.textContent = "Télécharger";
+        p.appendChild(a); zone.appendChild(p);
+      } else {
+        zone.textContent = "Aperçu indisponible.";
+      }
+    }catch(e){
+      zone.textContent = "Erreur lecture : " + e.message;
+    }
+  }
+  window.scnFermerViewer = function(){
+    var v = document.getElementById("scn-viewer");
+    if(v){ v.classList.add("hidden"); v.style.display = "none"; }
+    var zone = document.getElementById("scn-vcontenu"); if(zone) zone.textContent = "";
+  };
+
+  // ── Suppression : row en base + objet au bucket, avec confirmation ──
+  async function scnSupprimer(f){
+    if(!confirm("Supprimer « " + (f.chemin || "ce fichier") + " » pour de vrai ?")) return;
+    var sess = await scnSession();
+    if(!sess){ scnStatut("Session expirée. Reconnecte-toi.", 0); return; }
+    try{
+      if(f.storage_path){
+        await fetch(SB_URL + "/storage/v1/object/" + SCN_BUCKET + "/" + f.storage_path, {
+          method: "DELETE", headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token }
+        });
+      }
+      var del = await fetch(SB_URL + "/rest/v1/tilex_files?id=eq." + f.id, {
+        method: "DELETE", headers: scnEntetes(sess.token)
+      });
+      if(!del.ok){ var ed = await del.json().catch(function(){return{};}); throw new Error(ed.message || "suppression ratée"); }
+      scnStatut("Supprimé ✔");
+      scnCharger();
+    }catch(e){ scnStatut("Erreur suppression : " + e.message, 6000); }
+  }
+
+  // ── Init (appelé par showTab('scanner')) : branche les listeners une fois, puis charge ──
+  window.scannerInit = function(){
+    if(!scnInitFait){
+      scnInitFait = true;
+      var dz = document.getElementById("scn-drop");
+      var input = document.getElementById("scn-input");
+      if(dz){
+        dz.addEventListener("click", function(){ if(input) input.click(); });
+        dz.addEventListener("dragover", function(e){ e.preventDefault(); dz.classList.add("over"); });
+        dz.addEventListener("dragleave", function(){ dz.classList.remove("over"); });
+        dz.addEventListener("drop", function(e){ e.preventDefault(); dz.classList.remove("over"); scnTraiter(e.dataTransfer.files); });
+      }
+      if(input){ input.addEventListener("change", function(e){ scnTraiter(e.target.files); }); }
+      var filtres = document.getElementById("scn-filtres");
+      if(filtres){
+        filtres.querySelectorAll("button").forEach(function(b){
+          b.onclick = function(){
+            filtres.querySelectorAll("button").forEach(function(x){ x.classList.remove("actif"); });
+            b.classList.add("actif");
+            scnFiltre = b.getAttribute("data-f");
+            scnAfficher();
+          };
+        });
+      }
+    }
+    scnCharger();
+  };
+})();
 </script>
 
 </body>
