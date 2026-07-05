@@ -3845,7 +3845,7 @@ async function readSSE(res){
   return full;
 }
 
-async function readSSEStream(res,onDelta,onStatus,onMedia){
+async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
   var full="";var buf="";var wsUsed=false;
@@ -3881,10 +3881,24 @@ async function readSSEStream(res,onDelta,onStatus,onMedia){
         if(evt.type==="media"&&Array.isArray(evt.items)&&evt.items.length){
           if(onMedia)onMedia(evt.items);
         }
+        if(evt.type==="youtube"&&Array.isArray(evt.items)&&evt.items.length){
+          if(onYoutube)onYoutube(evt.items);
+        }
       }catch(e){}
     }
   }
   return full;
+}
+
+/* ── Galerie YouTube (vidéos trouvées par AL via recherche_youtube) ──
+   Rendu délégué à TilexYouTube.afficher (embeds nocookie, IDs validés,
+   textContent anti-XSS). Retourne l'élément galerie ou null. */
+function renderYoutubeGallery(items){
+  if(!window.TilexYouTube||typeof TilexYouTube.afficher!=="function")return null;
+  var wrap=document.createElement("div");
+  wrap.className="cmsg-youtube";
+  try{ TilexYouTube.afficher(items,wrap); }catch(e){ return null; }
+  return wrap.querySelector(".tlyt-grille")?wrap:null;
 }
 
 /* ── Galerie média (photos/vidéos trouvées par AL via recherche_media) ──
@@ -4351,12 +4365,23 @@ async function sendChat(){
         if(status==="web_search_start")_toolStatusEl.textContent="🌐 Recherche web en cours…";
         else if(status==="web_search_done")_toolStatusEl.textContent="🌐 Résultats trouvés";
         else if(status==="tool_exec"&&toolName==="recherche_media")_toolStatusEl.textContent="🖼️ Recherche de photos/vidéos…";
+        else if(status==="tool_exec"&&toolName==="recherche_youtube")_toolStatusEl.textContent="🎬 Recherche de vidéos YouTube…";
         else if(status==="tool_exec")_toolStatusEl.textContent="🔧 "+toolName+"…";
       },function(mediaItems){
         // Galerie média en temps réel — insérée sous le texte, hors du .cmsg-bbl
         // pour survivre au innerHTML=renderMd() de fin de stream.
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
         var gal=renderMediaGallery(mediaItems);
+        if(gal){
+          var wrap=bblText.parentNode;
+          var acts2=wrap.querySelector(".cmsg-actions");
+          wrap.insertBefore(gal,acts2||null);
+          msgs.scrollTop=msgs.scrollHeight;
+        }
+      },function(ytItems){
+        // Galerie YouTube en temps réel — même logique (hors du .cmsg-bbl).
+        if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
+        var gal=renderYoutubeGallery(ytItems);
         if(gal){
           var wrap=bblText.parentNode;
           var acts2=wrap.querySelector(".cmsg-actions");
@@ -9189,6 +9214,7 @@ _checkDeployVersion();
 <script src="js/midas-manager.js"></script>
 <script src="js/midas-agent-definition.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="js/tilex-youtube.js"></script>
 <script src="js/tilex-zip.js"></script>
 <script src="js/tilex-zip-history.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

@@ -134,6 +134,67 @@ Tu peux lancer de vrais scans de sécurité et lire leurs résultats :
 - lire_dernier_scan → va chercher le dernier scan et ses findings.
 Après un scan, explique les résultats en français québécois clair : dis franchement si tout est correct, sinon nomme le vrai problème et l'action prioritaire. Ne dramatise pas un « info » ou un « low ». Si le scan est refusé (cible non autorisée ou accès réservé à l'admin), explique-le poliment sans inventer de résultats.`;
 
+// 🎬 Outil YouTube — clé côté serveur (tilex_secrets nom='youtube' ou env YOUTUBE_API_KEY).
+const YOUTUBE_TOOL = {
+  name: "recherche_youtube",
+  description:
+    "Cherche de vraies vidéos YouTube à afficher directement dans le chat. Utilise-le quand l'utilisateur veut VOIR ou REGARDER des vidéos YouTube d'un sujet (ex: « montre-moi des vidéos de recettes de poutine », « trouve des tutoriels sur X »). Les vidéos s'affichent automatiquement en galerie intégrée (lecteurs YouTube) dans la conversation.",
+  input_schema: {
+    type: "object",
+    properties: { query: { type: "string", description: "Mots-clés de recherche YouTube (1 à 200 caractères)" } },
+    required: ["query"],
+  },
+};
+
+const YOUTUBE_SYSTEM = `
+
+## VIDÉOS YOUTUBE
+Tu peux afficher de vraies vidéos YouTube dans le chat avec l'outil recherche_youtube.
+- Les vidéos s'affichent AUTOMATIQUEMENT en galerie de lecteurs sous ta réponse : ne colle JAMAIS d'URLs ou de liens YouTube dans ton texte.
+- Après l'appel, présente brièvement (1 phrase) ce que tu as trouvé.
+- Si la clé YouTube n'est pas configurée ou le quota est atteint, dis-le poliment sans inventer de vidéos.`;
+
+let _youtubeKey: string | undefined = undefined;
+async function getYoutubeKey(): Promise<string> {
+  if (_youtubeKey !== undefined) return _youtubeKey;
+  _youtubeKey = Deno.env.get("YOUTUBE_API_KEY") || "";
+  if (!_youtubeKey) {
+    try {
+      const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+      const { data } = await sb.from("tilex_secrets").select("private_key").eq("nom", "youtube").maybeSingle();
+      _youtubeKey = (data as any)?.private_key || "";
+    } catch (_) { _youtubeKey = ""; }
+  }
+  return _youtubeKey;
+}
+
+async function chercherYoutube(input: any): Promise<{ items: any[]; note?: string }> {
+  const query = typeof input?.query === "string" ? input.query.trim().slice(0, 200) : "";
+  if (query.length < 1) return { items: [], note: "Requête vide" };
+  const key = await getYoutubeKey();
+  if (!key) return { items: [], note: "Clé YouTube non configurée côté serveur (tilex_secrets nom='youtube')." };
+  try {
+    const url = "https://www.googleapis.com/youtube/v3/search"
+      + "?part=snippet&type=video&safeSearch=moderate&maxResults=6"
+      + "&q=" + encodeURIComponent(query)
+      + "&key=" + encodeURIComponent(key);
+    const r = await fetch(url);
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { items: [], note: "YouTube: " + (data?.error?.message || ("HTTP " + r.status)) };
+    const items = ((data.items || []) as any[])
+      .map((it: any) => ({
+        videoId: it?.id?.videoId || "",
+        title: it?.snippet?.title || "",
+        channel: it?.snippet?.channelTitle || "",
+        thumb: it?.snippet?.thumbnails?.medium?.url || "",
+      }))
+      .filter((v: any) => /^[A-Za-z0-9_-]{11}$/.test(v.videoId));
+    return { items };
+  } catch (e: any) {
+    return { items: [], note: "YouTube injoignable : " + (e?.message || String(e)) };
+  }
+}
+
 let _pexelsKey: string | undefined = undefined;
 async function getPexelsKey(): Promise<string> {
   if (_pexelsKey !== undefined) return _pexelsKey;
@@ -308,6 +369,7 @@ async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promis
     if (name === "get_stock_quote") return await fmpFetch("quote", input?.symbol);
     if (name === "get_company_profile") return await fmpFetch("profile", input?.symbol);
     if (name === "recherche_media") return JSON.stringify(await chercherMedia(input));
+    if (name === "recherche_youtube") return JSON.stringify(await chercherYoutube(input));
     if (name === "lancer_scan_securite") return await toolLancerScan(input, ctx);
     if (name === "lire_dernier_scan") return await toolLireDernierScan(input, ctx);
     return JSON.stringify({ erreur: `Outil inconnu: ${name}` });
@@ -422,6 +484,7 @@ Deno.serve(async (req) => {
       tools.push(...FINANCE_TOOLS);
     }
     tools.push(MEDIA_TOOL);          // [MEDIA] toujours actif (Pexels si clé, sinon Wikimedia gratuit)
+    tools.push(YOUTUBE_TOOL);        // [YOUTUBE] galerie de vidéos YouTube dans le chat
     tools.push(...SECURITY_TOOLS);   // [SILEX] AL peut lancer/lire un scan (gate admin+SOW côté security-agent)
     if (body.tools && Array.isArray(body.tools)) {
       tools.push(...body.tools);
@@ -429,7 +492,7 @@ Deno.serve(async (req) => {
 
     let systemPrompt = typeof body.system === "string" ? body.system : undefined;
     if (FMP_KEY) systemPrompt = (systemPrompt || "") + FINANCE_SYSTEM;
-    systemPrompt = (systemPrompt || "") + MEDIA_SYSTEM + SECURITY_SYSTEM;
+    systemPrompt = (systemPrompt || "") + MEDIA_SYSTEM + YOUTUBE_SYSTEM + SECURITY_SYSTEM;
 
     const anthropicHeaders = {
       "Content-Type": "application/json",
@@ -609,6 +672,22 @@ function handleToolLoop(
                   });
                 } else {
                   result = JSON.stringify({ affiche_dans_le_chat: false, nombre: 0, note: parsed?.note || "Aucun média trouvé" });
+                }
+              } catch (_) {}
+            }
+            // [YOUTUBE] pousse la galerie de vidéos au front en temps réel + résultat compact pour Claude.
+            if (toolBlock.name === "recherche_youtube") {
+              try {
+                const parsed = JSON.parse(result);
+                if (parsed?.items?.length) {
+                  send(JSON.stringify({ type: "youtube", items: parsed.items }));
+                  result = JSON.stringify({
+                    affiche_dans_le_chat: true,
+                    nombre: parsed.items.length,
+                    titres: parsed.items.slice(0, 6).map((i: any) => i.title),
+                  });
+                } else {
+                  result = JSON.stringify({ affiche_dans_le_chat: false, nombre: 0, note: parsed?.note || "Aucune vidéo trouvée" });
                 }
               } catch (_) {}
             }
