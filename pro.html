@@ -3982,6 +3982,28 @@ var _tilexMemCache="";
 async function rafraichirTilexMem(){
   if(window.TilexMemory){ try{ _tilexMemCache=await TilexMemory.toPromptContext(8); }catch(e){} }
 }
+
+/* ── CERVEAU branché au chat : les notes de l'utilisateur (2ème cerveau) sont
+   injectées dans le contexte d'AL pour qu'il puisse les retrouver et s'en servir. */
+var _cerveauCache="";
+function rafraichirCerveauContexte(){
+  try{
+    if(!window.cervNotes||!cervNotes.length){_cerveauCache="";return;}
+    var notes=cervNotes.slice().sort(function(a,b){return (b.updated||0)-(a.updated||0);}).slice(0,15);
+    var parts=[];var total=0;
+    for(var i=0;i<notes.length;i++){
+      var n=notes[i];
+      var titre=(n.title||"Sans titre");
+      var tags=(n.tags&&n.tags.length)?" ["+n.tags.join(", ")+"]":"";
+      var corps=(n.content||"").replace(/\s+/g," ").trim();
+      if(corps.length>300)corps=corps.slice(0,300)+"…";
+      var bloc="• "+titre+tags+" : "+corps;
+      if(total+bloc.length>3500)break;
+      parts.push(bloc);total+=bloc.length;
+    }
+    _cerveauCache=parts.join("\n");
+  }catch(e){_cerveauCache="";}
+}
 // détecte une intention « retiens ceci » pour sauvegarder un souvenir durable
 function _detecterSouvenir(txt){
   return /\b(souviens?[- ]toi|retiens|rappelle[- ]toi|garde (?:ça |cela |ceci )?en m[ée]moire|n['’]oublie pas|remember this|ma pr[ée]f[ée]rence|je pr[ée]f[èe]re|mon nom est|j['’]aime\b|note que)\b/i.test(txt||"");
@@ -4017,6 +4039,7 @@ function getSystemPrompt(){
   var base=(_webAgent&&_webAgent.system)?_webAgent.system:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD);
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_tilexMemCache)base+="\n"+_tilexMemCache;
+  if(_cerveauCache)base+="\n\n[NOTES DU CERVEAU de l'utilisateur — son 2ème cerveau, sauvegardées depuis le chat ou la page Cerveau. Quand il te demande de retrouver une note, une info qu'il a notée, ou fait référence à ce qu'il a sauvegardé, sers-toi de ces notes]:\n"+_cerveauCache;
   if(window.TilexMemoryCompact){var _cc=TilexMemoryCompact.getContexteActif();if(_cc)base+="\n\n[Contexte de conversation repris]:\n"+_cc;}
   if(_alSummaryCache)base+="\n\n[Résumé de la semaine passée]: "+_alSummaryCache;
   if(TilexConfig.githubToken&&TilexConfig.githubRepo){
@@ -5077,6 +5100,7 @@ async function cervSbLoad(){
     try{cervNotes=JSON.parse(localStorage.getItem("tilex-cerveau-notes")||"[]");}catch(ex){cervNotes=[];}
   }
   cervRenderList();
+  rafraichirCerveauContexte();
 }
 
 async function _cervSbSave(note){
@@ -5119,7 +5143,7 @@ function cervSaveNote(){
     var nn={id:crypto.randomUUID(),title:title,tags:tags,content:content,created:Date.now(),updated:Date.now()};
     cervNotes.push(nn);_cervSbSave(nn);
   }
-  cervLocalSave();cervCancelEdit();cervRenderList();
+  cervLocalSave();cervCancelEdit();cervRenderList();rafraichirCerveauContexte();
 }
 function cervCancelEdit(){
   cervCurrentId=null;
@@ -5139,7 +5163,7 @@ function cervDeleteNote(){
   if(!confirm("Supprimer cette note?"))return;
   _cervSbDelete(cervCurrentId);
   cervNotes=cervNotes.filter(function(n){return n.id!==cervCurrentId;});
-  cervLocalSave();cervCancelEdit();cervRenderList();
+  cervLocalSave();cervCancelEdit();cervRenderList();rafraichirCerveauContexte();
 }
 function cervRenderList(){
   var list=document.getElementById("cerv-notes-list");
@@ -5550,9 +5574,11 @@ function saveToCerveau(btn){
   var title="Note du "+new Date().toLocaleDateString("fr-CA")+" "+new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
   var nn={id:crypto.randomUUID(),title:title,tags:["agent-al","chat"],content:text,created:Date.now(),updated:Date.now()};
   cervNotes.push(nn);_cervSbSave(nn);cervLocalSave();
+  rafraichirCerveauContexte();
+  if(document.getElementById("sub-cerveau")&&document.getElementById("sub-cerveau").style.display!=="none")cervRenderList();
   btn.textContent="✓";btn.style.color="var(--green)";
   setTimeout(function(){btn.textContent="🧠";btn.style.color="";},2000);
-  if(typeof pushNotif==="function")pushNotif("🧠","Cerveau","Sauvegardé dans le Deuxième Cerveau!","ok");
+  if(typeof pushNotif==="function")pushNotif("🧠","Cerveau","Sauvegardé dans le Cerveau — AL peut maintenant le retrouver!","ok");
 }
 
 var _ttsUtterance=null;
@@ -8512,6 +8538,7 @@ supabase.auth.onAuthStateChange(function(event,session){
     chargerSessionAgentAL().catch(function(){});
     chargerMemoireContexte().catch(function(){});
     if(window.TilexMemory){TilexMemory.init(supabase);rafraichirTilexMem();}
+    if(typeof cervSbLoad==="function")cervSbLoad().catch(function(){}); // charge le Cerveau → contexte AL prêt dès le 1er message
     if(window.TilexContext){TilexContext.init(getSystemPrompt());TilexContext.syncMemoire();}
     chargerCredits().catch(function(){});
     chargerAgentsWeb().catch(function(){});
