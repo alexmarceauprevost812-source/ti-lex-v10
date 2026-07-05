@@ -1075,7 +1075,184 @@ function indarGridLock(state) {
   if (all) all.disabled = state;
 }
 
-async function ensureMandatForScan(scanTarget) {
+// ════════════════════════════════════════════════════════════════════════════
+// ⚖️  BARRIÈRE DE MANDAT — aucun scan sans autorisation légale explicite.
+//    Scanner une cible qu'on ne possède pas, sans mandat écrit, est illégal
+//    (Canada : art. 342.1 C.cr. / usage non autorisé d'ordinateur). L'attestation
+//    de l'utilisateur est OBLIGATOIRE avant TOUT scan actif — on ne fabrique
+//    plus de « mandat » automatiquement.
+// ════════════════════════════════════════════════════════════════════════════
+window.TilexMandat = (function () {
+  var _attestations = {}; // cache par cible pour la session en cours
+
+  // Injecte le style du modal une seule fois (self-contained).
+  function _injectCss() {
+    if (document.getElementById('tlx-mandat-css')) return;
+    var s = document.createElement('style');
+    s.id = 'tlx-mandat-css';
+    s.textContent =
+      '.tlx-mandat-ov{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);'
+      + 'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;'
+      + 'justify-content:center;padding:18px;}'
+      + '.tlx-mandat-box{background:#0f0f14;border:1px solid rgba(255,107,0,.4);border-radius:16px;'
+      + 'max-width:440px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6);'
+      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e2e2ea;}'
+      + '.tlx-mandat-title{margin:0 0 12px;font-size:17px;font-weight:800;color:#FF6B00;letter-spacing:.3px;}'
+      + '.tlx-mandat-target{background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:9px 12px;'
+      + 'font-family:monospace;font-size:12px;margin-bottom:12px;word-break:break-all;}'
+      + '.tlx-mandat-target-lbl{color:#6c6c78;}'
+      + '.tlx-mandat-warn{font-size:12.5px;line-height:1.55;color:#ffb37a;background:rgba(255,107,0,.08);'
+      + 'border-left:3px solid #FF6B00;border-radius:0 8px 8px 0;padding:9px 12px;margin:0 0 14px;}'
+      + '.tlx-mandat-refwrap{margin-bottom:12px;}'
+      + '.tlx-mandat-reflbl{display:block;font-size:11px;color:#6c6c78;margin-bottom:5px;}'
+      + '.tlx-mandat-ref{width:100%;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;'
+      + 'padding:9px 12px;color:#e2e2ea;font-size:12px;font-family:monospace;outline:none;box-sizing:border-box;}'
+      + '.tlx-mandat-ref:focus{border-color:#FF6B00;}'
+      + '.tlx-mandat-chkwrap{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.5;'
+      + 'color:#cfcfd8;cursor:pointer;margin-bottom:18px;}'
+      + '.tlx-mandat-chk{margin-top:2px;width:17px;height:17px;flex-shrink:0;accent-color:#FF6B00;cursor:pointer;}'
+      + '.tlx-mandat-btns{display:flex;gap:10px;justify-content:flex-end;}'
+      + '.tlx-mandat-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;'
+      + 'cursor:pointer;transition:opacity .15s,transform .1s;}'
+      + '.tlx-mandat-btn:active{transform:scale(.97);}'
+      + '.tlx-mandat-cancel{background:#1c1c24;color:#b8b8c2;}'
+      + '.tlx-mandat-cancel:hover{background:#26262f;}'
+      + '.tlx-mandat-ok{background:linear-gradient(135deg,#FF6B00,#cc5500);color:#fff;}'
+      + '.tlx-mandat-ok:disabled{opacity:.4;cursor:not-allowed;}'
+      + '.tlx-mandat-ok:not(:disabled):hover{opacity:.9;}';
+    document.head.appendChild(s);
+  }
+
+  // Cible valide = non vide, sans espace, ressemble à un domaine / IP / URL.
+  function cibleValide(t) {
+    if (!t) return false;
+    t = String(t).trim();
+    if (t.length < 3 || t.length > 255) return false;
+    if (/\s/.test(t)) return false;
+    // domaine (a.b), IPv4, IPv6, URL http(s), ou localhost
+    if (/^localhost(:\d+)?$/i.test(t)) return true;
+    if (/^https?:\/\/[^\s]+$/i.test(t)) return true;
+    if (/^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(t)) return true;      // IPv4
+    if (/^[0-9a-f:]+$/i.test(t) && t.indexOf(':') !== -1) return true; // IPv6
+    if (/^([a-z0-9](-*[a-z0-9])*\.)+[a-z]{2,}(:\d+)?(\/[^\s]*)?$/i.test(t)) return true; // domaine
+    return false;
+  }
+
+  function _cle(t) { return String(t).trim().toLowerCase(); }
+
+  // Retourne une Promise<{ok:bool, ref?:string, target:string}>.
+  function confirmer(scanTarget) {
+    return new Promise(function (resolve) {
+      var target = String(scanTarget || '').trim();
+
+      if (!cibleValide(target)) {
+        resolve({ ok: false, target: target, raison: 'cible_invalide' });
+        return;
+      }
+      // Déjà attesté cette session pour cette cible → on ne re-questionne pas.
+      if (_attestations[_cle(target)]) {
+        var prev = _attestations[_cle(target)];
+        resolve({ ok: true, target: target, ref: prev.ref, at: prev.at, rejoue: true });
+        return;
+      }
+
+      // ── Overlay + modal (DOM pur, anti-XSS : textContent partout) ──
+      _injectCss();
+      var ov = document.createElement('div');
+      ov.className = 'tlx-mandat-ov';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+
+      var box = document.createElement('div');
+      box.className = 'tlx-mandat-box';
+
+      var h = document.createElement('h3');
+      h.className = 'tlx-mandat-title';
+      h.textContent = '⚖️ Mandat requis avant le scan';
+      box.appendChild(h);
+
+      var tgt = document.createElement('div');
+      tgt.className = 'tlx-mandat-target';
+      var tgtLbl = document.createElement('span');
+      tgtLbl.textContent = 'Cible : ';
+      tgtLbl.className = 'tlx-mandat-target-lbl';
+      var tgtVal = document.createElement('span');
+      tgtVal.textContent = target;               // textContent = anti-injection
+      tgt.appendChild(tgtLbl); tgt.appendChild(tgtVal);
+      box.appendChild(tgt);
+
+      var warn = document.createElement('p');
+      warn.className = 'tlx-mandat-warn';
+      warn.textContent = 'Scanner une cible sans autorisation est illégal (Canada : art. 342.1 C.cr.). '
+        + 'Tu dois être le propriétaire de la cible OU détenir un mandat écrit (autorisation de test) valide.';
+      box.appendChild(warn);
+
+      var refWrap = document.createElement('div');
+      refWrap.className = 'tlx-mandat-refwrap';
+      var refLbl = document.createElement('label');
+      refLbl.textContent = 'N° de mandat / référence (optionnel)';
+      refLbl.className = 'tlx-mandat-reflbl';
+      var refInput = document.createElement('input');
+      refInput.type = 'text';
+      refInput.className = 'tlx-mandat-ref';
+      refInput.placeholder = 'ex : SOW-2026-014, contrat, autorisation écrite…';
+      refInput.maxLength = 120;
+      refWrap.appendChild(refLbl); refWrap.appendChild(refInput);
+      box.appendChild(refWrap);
+
+      var chkWrap = document.createElement('label');
+      chkWrap.className = 'tlx-mandat-chkwrap';
+      var chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.className = 'tlx-mandat-chk';
+      var chkTxt = document.createElement('span');
+      chkTxt.textContent = 'Je déclare avoir l’autorisation légale de tester cette cible, ou j’en suis le propriétaire. '
+        + 'J’assume l’entière responsabilité de ce scan.';
+      chkWrap.appendChild(chk); chkWrap.appendChild(chkTxt);
+      box.appendChild(chkWrap);
+
+      var btns = document.createElement('div');
+      btns.className = 'tlx-mandat-btns';
+      var cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'tlx-mandat-btn tlx-mandat-cancel';
+      cancel.textContent = 'Annuler';
+      var ok = document.createElement('button');
+      ok.type = 'button';
+      ok.className = 'tlx-mandat-btn tlx-mandat-ok';
+      ok.textContent = 'Confirmer le mandat';
+      ok.disabled = true;
+      btns.appendChild(cancel); btns.appendChild(ok);
+      box.appendChild(btns);
+
+      ov.appendChild(box);
+      document.body.appendChild(ov);
+
+      function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+      chk.addEventListener('change', function () { ok.disabled = !chk.checked; });
+      cancel.addEventListener('click', function () {
+        close();
+        resolve({ ok: false, target: target, raison: 'annule' });
+      });
+      ov.addEventListener('click', function (e) {
+        if (e.target === ov) { close(); resolve({ ok: false, target: target, raison: 'annule' }); }
+      });
+      ok.addEventListener('click', function () {
+        if (!chk.checked) return;
+        var ref = refInput.value.trim().slice(0, 120);
+        var att = { ref: ref, at: new Date().toISOString() };
+        _attestations[_cle(target)] = att;
+        close();
+        resolve({ ok: true, target: target, ref: ref, at: att.at });
+      });
+      setTimeout(function () { chk.focus(); }, 30);
+    });
+  }
+
+  return { confirmer: confirmer, cibleValide: cibleValide };
+})();
+
+async function ensureMandatForScan(scanTarget, attestation) {
   if (!scanTarget) return null;
   var token = typeof getToken === 'function' ? getToken() : SB_ANON;
   if (!token || !window.supabase) return null;
@@ -1092,17 +1269,20 @@ async function ensureMandatForScan(scanTarget) {
       return existing.data[0].id;
     }
     var num = 'INDAR-' + Date.now().toString(36).toUpperCase();
+    var att = attestation || {};
+    var noteAtt = 'Mandat attesté par l\'utilisateur via le Centre INDAR le ' + (att.at || now) + '.'
+      + (att.ref ? ' Référence : ' + att.ref + '.' : ' (aucune référence fournie)');
     var row = await window.supabase
       .from('cyber_mandates')
       .insert({
-        mandate_number: num,
+        mandate_number: att.ref ? att.ref : num,
         title: 'Scan INDAR — ' + scanTarget,
         status: 'active',
         starts_at: now,
         ends_at: endDate,
         scope_in: [scanTarget],
         allowed_scan_types: ['passive_recon', 'osint', 'vuln_scan'],
-        notes: 'Mandat créé automatiquement par le Centre INDAR.'
+        notes: noteAtt
       })
       .select('id')
       .single();
@@ -1138,12 +1318,21 @@ async function callAgentQuick(code, scanTarget) {
 }
 
 async function indarRunSequential(scanTarget) {
+  var mandat = await (window.TilexMandat ? window.TilexMandat.confirmer(scanTarget) : Promise.resolve({ ok: false, raison: 'cible_invalide' }));
+  if (!mandat.ok) {
+    indarConsoleClear();
+    if (mandat.raison === 'cible_invalide')
+      indarConsoleLog("SYSTÈME", "Cible invalide ou vide — entre un domaine, une IP ou une URL valide.", "#ff3b3b");
+    else
+      indarConsoleLog("SYSTÈME", "Scan annulé — aucun mandat confirmé. Rien n'a été scanné.", "#ff3b3b");
+    return;
+  }
   var my = ++_gridRunId;
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
-  var mandatId = await ensureMandatForScan(scanTarget);
-  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  var mandatId = await ensureMandatForScan(scanTarget, mandat);
+  indarConsoleLog("SYSTÈME", "Mandat confirmé pour : " + scanTarget + (mandat.ref ? " (réf. " + mandat.ref + ")" : ""), "#37e0a0");
   if (scanTarget && window.ScanManager) {
     indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
     window.ScanManager.runFullScan(scanTarget).catch(function(){});
@@ -1172,12 +1361,21 @@ async function indarRunSequential(scanTarget) {
 }
 
 async function indarRunAll(scanTarget) {
+  var mandat = await (window.TilexMandat ? window.TilexMandat.confirmer(scanTarget) : Promise.resolve({ ok: false, raison: 'cible_invalide' }));
+  if (!mandat.ok) {
+    indarConsoleClear();
+    if (mandat.raison === 'cible_invalide')
+      indarConsoleLog("SYSTÈME", "Cible invalide ou vide — entre un domaine, une IP ou une URL valide.", "#ff3b3b");
+    else
+      indarConsoleLog("SYSTÈME", "Scan annulé — aucun mandat confirmé. Rien n'a été scanné.", "#ff3b3b");
+    return;
+  }
   var my = ++_gridRunId;
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
-  var mandatId = await ensureMandatForScan(scanTarget);
-  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  var mandatId = await ensureMandatForScan(scanTarget, mandat);
+  indarConsoleLog("SYSTÈME", "Mandat confirmé pour : " + scanTarget + (mandat.ref ? " (réf. " + mandat.ref + ")" : ""), "#37e0a0");
   if (scanTarget && window.ScanManager) {
     indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
     window.ScanManager.runFullScan(scanTarget).catch(function(){});

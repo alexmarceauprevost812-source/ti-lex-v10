@@ -686,7 +686,13 @@ async function silexLaunchScan(){
   var scanTypeEl=document.querySelector('input[name="scan_type"]:checked');
   var scanType=scanTypeEl?scanTypeEl.value:'passive_recon';
   if(!target)return;
-  if(!estCibleAutorisee(target)){alert('Cible hors mandat. Seuls Supabase et Vercel sont autorisés.');return;}
+  // ⚖️ Barrière de mandat — aucun scan sans autorisation légale explicite.
+  var _mandat=await(window.TilexMandat?window.TilexMandat.confirmer(target):Promise.resolve({ok:false,raison:'cible_invalide'}));
+  if(!_mandat.ok){
+    if(_mandat.raison==='cible_invalide')showToastMsg('Cible invalide — entre un domaine, une IP ou une URL valide.');
+    else showToastMsg('Scan annulé — aucun mandat confirmé. Rien n\'a été scanné.');
+    return;
+  }
   if(_scanEnCours){showToastMsg('Un scan est déjà en cours…');return;}
   btn.disabled=true;btn.textContent='🔰 Scan en cours...';
   var resultsEl=document.getElementById('silex-results');
@@ -704,7 +710,7 @@ async function silexLaunchScan(){
     var res=await fetch(SB_URL+'/functions/v1/security-agent',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
-      body:JSON.stringify({target:target,scan_type:scanType,authorization_id:SILEX_SOW_ID})
+      body:JSON.stringify({target:target,scan_type:scanType,authorization_id:(_mandat.ref||SILEX_SOW_ID),mandate_ref:_mandat.ref||null,mandate_attested_at:_mandat.at||new Date().toISOString()})
     });
     var rawText=await res.text();
     var data;
