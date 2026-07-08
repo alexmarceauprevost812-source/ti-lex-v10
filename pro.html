@@ -9576,8 +9576,50 @@ if ('serviceWorker' in navigator) {
     return "autre";
   }
 
-  function scnUrlPublique(path){
-    return SB_URL + "/storage/v1/object/public/" + SCN_BUCKET + "/" + path;
+  // ── URL signée (bucket PRIVÉ) : valide 1h, générée à la demande, JAMAIS stockée en DB ──
+  async function scnUrlSignee(path){
+    var sess = await scnSession();
+    if(!sess) throw new Error("Session requise");
+    var r = await fetch(SB_URL + "/storage/v1/object/sign/" + SCN_BUCKET + "/" + path, {
+      method: "POST",
+      headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 3600 })
+    });
+    var d = await r.json().catch(function(){ return {}; });
+    var su = d.signedURL || d.signedUrl;
+    if(!r.ok || !su) throw new Error(d.message || d.error || "URL signée refusée");
+    return SB_URL + "/storage/v1" + su;
+  }
+
+  // ── Modal de confirmation (thème ti-lex, Space Grotesk) → Promise<bool> ──
+  function scnModal(opts){
+    return new Promise(function(resolve){
+      var ov = document.createElement("div");
+      ov.style.cssText = "position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px;";
+      var box = document.createElement("div");
+      box.style.cssText = "background:#0f0f14;border:1px solid #23232c;border-radius:16px;max-width:420px;width:100%;padding:22px;font-family:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;color:#f5f5f5;box-shadow:0 20px 60px rgba(0,0,0,.6);";
+      var h = document.createElement("h3");
+      h.style.cssText = "margin:0 0 10px;font-size:17px;font-weight:700;color:#ff7a1a;";
+      h.textContent = opts.titre || "Confirmer";
+      var p = document.createElement("p");
+      p.style.cssText = "font-size:13.5px;line-height:1.55;color:#cfcfd8;margin:0 0 18px;word-break:break-word;";
+      p.textContent = opts.message || "";
+      var btns = document.createElement("div");
+      btns.style.cssText = "display:flex;gap:10px;justify-content:flex-end;";
+      var cancel = document.createElement("button");
+      cancel.style.cssText = "border:1px solid #ff7a1a;background:transparent;color:#ff7a1a;border-radius:9px;padding:10px 16px;font:700 13px 'Space Grotesk',sans-serif;cursor:pointer;";
+      cancel.textContent = opts.annuler || "Annuler";
+      var ok = document.createElement("button");
+      ok.style.cssText = "border:none;background:" + (opts.okColor || "#ff4d4d") + ";color:#fff;border-radius:9px;padding:10px 16px;font:700 13px 'Space Grotesk',sans-serif;cursor:pointer;";
+      ok.textContent = opts.ok || "Supprimer";
+      btns.appendChild(cancel); btns.appendChild(ok);
+      box.appendChild(h); box.appendChild(p); box.appendChild(btns);
+      ov.appendChild(box); document.body.appendChild(ov);
+      function close(v){ if(ov.parentNode) ov.parentNode.removeChild(ov); resolve(v); }
+      cancel.onclick = function(){ close(false); };
+      ok.onclick = function(){ close(true); };
+      ov.addEventListener("click", function(e){ if(e.target === ov) close(false); });
+    });
   }
 
   // ── Charger la liste (RLS scope au user) ──
@@ -9633,7 +9675,9 @@ if ('serviceWorker' in navigator) {
       ico.className = "scn-ico";
       if(cat === "photo" && f.storage_path){
         var img = document.createElement("img");
-        img.loading = "lazy"; img.src = scnUrlPublique(f.storage_path);
+        img.loading = "lazy";
+        // bucket privé : on signe l'URL au moment de l'affichage
+        scnUrlSignee(f.storage_path).then(function(u){ img.src = u; }).catch(function(){ ico.textContent = "🖼️"; });
         ico.appendChild(img);
       } else {
         ico.textContent = cat === "zip" ? "🗜️" : cat === "code" ? "📄" : "📦";
@@ -9662,15 +9706,13 @@ if ('serviceWorker' in navigator) {
     });
   }
 
-  // ── Upload : hash → texte en base OU binaire au bucket ──
+  // ── Upload : hash → doublon AVANT upload → texte en base OU binaire au bucket ──
   async function scnTraiter(liste){
     if(!liste || !liste.length) return;
     var sess = await scnSession();
     if(!sess){ scnStatut("Connecte-toi à la plateforme d'abord.", 0); return; }
 
-    var hashsExistants = {};
-    scnFichiers.forEach(function(f){ if(f.hash) hashsExistants[f.hash] = true; });
-    var ajoutes = 0, doublons = 0;
+    var ajoutes = 0, ignores = 0;
 
     for(var i=0;i<liste.length;i++){
       var fichier = liste[i];
@@ -9678,8 +9720,6 @@ if ('serviceWorker' in navigator) {
       try{
         var buffer = await fichier.arrayBuffer();
         var hash = await scnSha256(buffer);
-        if(hashsExistants[hash]) doublons++;
-        hashsExistants[hash] = true;
 
         var ext = (fichier.name.split(".").pop() || "").toLowerCase();
         var estTexte = (fichier.type && fichier.type.indexOf("text/") === 0) || EXT_TEXTE.indexOf(ext) !== -1;
@@ -9695,19 +9735,39 @@ if ('serviceWorker' in navigator) {
           version: 1
         };
 
-        if(estTexte){
-          // fichier texte/code → contenu directement en base
+        // 1) Détection de doublon AVANT tout upload (par hash, scopé au user)
+        var existant = null;
+        try{
+          var qd = await fetch(SB_URL + "/rest/v1/tilex_files?user_id=eq." + sess.userId + "&hash=eq." + hash + "&select=id,chemin,storage_path,contenu&limit=1", { headers: scnEntetes(sess.token) });
+          if(qd.ok){ var arr = await qd.json(); if(Array.isArray(arr) && arr.length) existant = arr[0]; }
+        }catch(_){}
+
+        if(existant){
+          // Doublon : RIEN uploader. On demande si on garde quand même.
+          scnStatut("⚠️ doublon de « " + (existant.chemin || "?") + " »", 0);
+          var garder = await scnModal({
+            titre: "Doublon détecté",
+            message: "« " + fichier.name + " » est identique à « " + (existant.chemin || "?") + " » déjà présent. Garder quand même ? Aucun octet ne sera re-uploadé.",
+            ok: "Garder quand même", okColor: "#ff7a1a", annuler: "Ignorer"
+          });
+          if(!garder){ ignores++; continue; }
+          // Réutilise le storage_path (binaire) OU le contenu (texte) de l'existant → zéro octet re-uploadé
+          if(existant.storage_path){ ligne.storage_path = existant.storage_path; }
+          else if(existant.contenu != null){ ligne.contenu = existant.contenu; }
+          else if(estTexte){ ligne.contenu = new TextDecoder().decode(buffer); }
+        } else if(estTexte){
+          // 2a) fichier texte/code → contenu directement en base
           ligne.contenu = new TextDecoder().decode(buffer);
         } else {
-          // binaire (photo, zip…) → bucket Storage, dossier {user_id}/
+          // 2b) binaire (photo, zip…) → bucket Storage, dossier {user_id}/, 8 premiers chars du hash
           var nomPropre = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          var path = sess.userId + "/" + hash.slice(0,12) + "_" + nomPropre;
+          var path = sess.userId + "/" + hash.slice(0,8) + "_" + nomPropre;
           var up = await fetch(SB_URL + "/storage/v1/object/" + SCN_BUCKET + "/" + path, {
             method: "POST",
             headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token, "Content-Type": ligne.mime_type, "x-upsert": "true" },
             body: buffer
           });
-          if(!up.ok){ var eu = await up.json().catch(function(){return{};}); throw new Error(eu.message || "upload storage raté"); }
+          if(!up.ok){ var eu = await up.json().catch(function(){return{};}); throw new Error(eu.message || eu.error || "upload storage raté"); }
           ligne.storage_path = path;
         }
 
@@ -9716,13 +9776,13 @@ if ('serviceWorker' in navigator) {
           headers: Object.assign({}, scnEntetes(sess.token), { "Prefer": "return=minimal" }),
           body: JSON.stringify(ligne)
         });
-        if(!ins.ok){ var ei = await ins.json().catch(function(){return{};}); throw new Error(ei.message || "insert raté"); }
+        if(!ins.ok){ var ei = await ins.json().catch(function(){return{};}); throw new Error(ei.message || ei.error || "insert raté"); }
         ajoutes++;
       }catch(e){
         scnStatut("Erreur avec " + fichier.name + " : " + e.message, 7000);
       }
     }
-    scnStatut(ajoutes + " fichier(s) ajouté(s)" + (doublons ? " — ⚠️ " + doublons + " doublon(s) détecté(s) !" : " ✔"), 5000);
+    scnStatut(ajoutes + " fichier(s) ajouté(s)" + (ignores ? " — " + ignores + " doublon(s) ignoré(s)" : "") + " ✔", 5000);
     var inp = document.getElementById("scn-input"); if(inp) inp.value = "";
     scnCharger();
   }
@@ -9742,8 +9802,9 @@ if ('serviceWorker' in navigator) {
     var cat = scnCategorie(f);
     try{
       if(cat === "photo" && f.storage_path){
+        var uimg = await scnUrlSignee(f.storage_path);
         zone.textContent = "";
-        var img = document.createElement("img"); img.src = scnUrlPublique(f.storage_path);
+        var img = document.createElement("img"); img.src = uimg;
         zone.appendChild(img);
       }
       else if(cat === "code" || f.contenu != null){
@@ -9754,7 +9815,8 @@ if ('serviceWorker' in navigator) {
       }
       else if(cat === "zip" && f.storage_path){
         if(typeof JSZip === "undefined"){ zone.textContent = "Module zip (JSZip) non chargé."; return; }
-        var r = await fetch(scnUrlPublique(f.storage_path));
+        var uzip = await scnUrlSignee(f.storage_path);
+        var r = await fetch(uzip);
         var zip = await JSZip.loadAsync(await r.arrayBuffer());
         zone.textContent = "";
         var titre = document.createElement("p");
@@ -9774,7 +9836,7 @@ if ('serviceWorker' in navigator) {
         var p = document.createElement("p"); p.style.padding = "20px";
         p.textContent = "Fichier binaire. ";
         var a = document.createElement("a");
-        a.style.color = "#ff7a1a"; a.href = scnUrlPublique(f.storage_path);
+        a.style.color = "#ff7a1a"; a.href = await scnUrlSignee(f.storage_path);
         a.target = "_blank"; a.rel = "noopener"; a.textContent = "Télécharger";
         p.appendChild(a); zone.appendChild(p);
       } else {
@@ -9792,15 +9854,32 @@ if ('serviceWorker' in navigator) {
 
   // ── Suppression : row en base + objet au bucket, avec confirmation ──
   async function scnSupprimer(f){
-    if(!confirm("Supprimer « " + (f.chemin || "ce fichier") + " » pour de vrai ?")) return;
+    // Confirmation via modal ti-lex (pas de confirm() natif)
+    var okConf = await scnModal({
+      titre: "Supprimer le fichier",
+      message: "« " + (f.chemin || "ce fichier") + " » — cette action est permanente.",
+      ok: "Supprimer", okColor: "#ff4d4d", annuler: "Annuler"
+    });
+    if(!okConf) return;
     var sess = await scnSession();
     if(!sess){ scnStatut("Session expirée. Reconnecte-toi.", 0); return; }
     try{
       if(f.storage_path){
-        await fetch(SB_URL + "/storage/v1/object/" + SCN_BUCKET + "/" + f.storage_path, {
-          method: "DELETE", headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token }
-        });
+        // Anti-orphelin : un autre row réutilise-t-il le même objet ? (doublons « gardés »)
+        var partage = false;
+        try{
+          var chk = await fetch(SB_URL + "/rest/v1/tilex_files?storage_path=eq." + encodeURIComponent(f.storage_path) + "&id=neq." + f.id + "&select=id&limit=1", { headers: scnEntetes(sess.token) });
+          if(chk.ok){ var autres = await chk.json(); partage = Array.isArray(autres) && autres.length > 0; }
+        }catch(_){}
+        if(!partage){
+          // DELETE l'objet storage d'abord (on ignore un 404)
+          var delObj = await fetch(SB_URL + "/storage/v1/object/" + SCN_BUCKET + "/" + f.storage_path, {
+            method: "DELETE", headers: { "apikey": SB_ANON, "Authorization": "Bearer " + sess.token }
+          });
+          if(!delObj.ok && delObj.status !== 404){ var eo = await delObj.json().catch(function(){return{};}); throw new Error(eo.message || "suppression storage ratée"); }
+        }
       }
+      // Ensuite seulement : DELETE la row en DB
       var del = await fetch(SB_URL + "/rest/v1/tilex_files?id=eq." + f.id, {
         method: "DELETE", headers: scnEntetes(sess.token)
       });
