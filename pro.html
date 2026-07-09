@@ -51,16 +51,16 @@
   --tb:56px;--sb-w:252px;--sb-c:62px;
 }
 [data-theme="day"]{
-  /* Thème de JOUR : fond BLANC, cartes gris pâle, écriture NOIRE, orange OFFICIEL. */
-  --bg:#FFFFFF;--bg2:#F5F5F5;--bg3:#F5F5F5;--bg4:#EBEBEB;
-  --txt:#111111;--muted:#666666;
-  --border:#E0E0E0;--grid:rgba(0,0,0,.05);
-  --or:#FF6B00;--or2:#ff8534;--or3:#cc5600;
-  --orange:#FF6B00;--orange2:#ff8534;
-  --agent-text-color:#111111;
+  /* Thème de JOUR : fond BEIGE, écriture NOIRE, boutons orange foncé. */
+  --bg:#E8DCC8;--bg2:#EFE5D4;--bg3:#DED0B8;--bg4:#D3C3A6;
+  --txt:#1a1208;--muted:#5c5140;
+  --border:rgba(120,100,70,.30);--grid:rgba(120,100,70,.08);
+  --or:#C24E00;--or2:#E05A00;--or3:#A03F00;
+  --orange:#C24E00;--orange2:#E05A00;
+  --agent-text-color:#1a1208;
 }
-/* Boutons orange : texte blanc la nuit (défaut), texte NOIR le jour */
-[data-theme="day"] .btn-orange{color:#111111;}
+/* Boutons : orange FONCÉ le jour, texte crème pour le contraste sur beige */
+[data-theme="day"] .btn-orange{background:linear-gradient(135deg,#A03F00,#C24E00,#E05A00);color:#fff5e8;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-tilex)!important;}
 html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
 body{background:var(--bg);color:var(--txt);font-family:var(--font-tilex);min-height:100vh;
@@ -1564,7 +1564,7 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] #view-settings .card-body *{color:var(--txt);}
 [data-theme="day"] #view-settings .card-body .settings-label{color:#2a1f00;}
 [data-theme="day"] #view-settings .card-body .settings-hint{color:#444444;}
-[data-theme="day"] #view-settings .btn-orange{color:#111111;}
+[data-theme="day"] #view-settings .btn-orange{color:#fff5e8;}
 [data-theme="day"] #view-settings .btn-ghost{color:#3d2b00;border-color:#a0906a;}
 [data-theme="day"] #view-settings .gh-status.on{background:#2d8a5e;}
 [data-theme="day"] .memoire-fait{background:#f4efe4;border-color:#d8cfbb;border-left-color:#b8a070;}
@@ -3310,10 +3310,27 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
 /* THÈME */
 let night=(localStorage.getItem("tilex_theme")||localStorage.getItem("tilex-al-theme")||"night")!=="day";
-(function(){document.documentElement.setAttribute("data-theme",night?"night":"day");})();
+/* 🎨 Le jour/nuit est PRIORITAIRE sur le thème plateforme (web.html) :
+   ce dernier pose --bg/--txt en style inline sur <html> (ex: fond #080808),
+   ce qui écrasait le mode jour → écran noir. En mode JOUR on efface ces
+   overrides inline pour laisser la règle CSS [data-theme="day"] (beige) gagner.
+   En mode NUIT on laisse le thème plateforme reprendre ses couleurs. */
+function appliquerPaletteJourNuit(estNuit){
+  var r=document.documentElement.style;
+  var props=["--bg","--bg2","--bg3","--bg4","--txt","--muted","--border"];
+  if(estNuit){
+    // Rends la main au thème plateforme (fond perso) s'il existe
+    if(window.TilexPlatformTheme&&typeof TilexPlatformTheme.reload==="function"){try{TilexPlatformTheme.reload();}catch(e){}}
+  }else{
+    // Jour : efface tout override inline → la palette beige du CSS s'applique
+    props.forEach(function(p){r.removeProperty(p);});
+  }
+}
+(function(){document.documentElement.setAttribute("data-theme",night?"night":"day");appliquerPaletteJourNuit(night);})();
 function toggleTheme(){
   night=!night;
   document.documentElement.setAttribute("data-theme",night?"night":"day");
+  appliquerPaletteJourNuit(night);
   // Répare les anciens messages dont la couleur/ombre avait été figée en ligne
   // (sinon le texte reste sombre/invisible quand on revient en mode nuit).
   document.querySelectorAll(".cmsg-bbl.a").forEach(function(b){b.style.color="";b.style.textShadow="";});

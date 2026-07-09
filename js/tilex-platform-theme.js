@@ -22,11 +22,17 @@
       root.setProperty('--or',a); root.setProperty('--or2',a2); root.setProperty('--or3',shade(a,-0.25));
       root.setProperty('--accent',a); root.setProperty('--orange-rgb',g.r+','+g.g+','+g.b);
     }
-    if(cfg.bg){
-      root.setProperty('--bg',cfg.bg); root.setProperty('--bg2',shade(cfg.bg,0.06));
-      root.setProperty('--bg3',shade(cfg.bg,0.12)); root.setProperty('--bg4',shade(cfg.bg,0.18));
+    // ⚠️ Le fond/texte perso ne s'applique QU'EN mode nuit : en mode jour, la
+    // palette beige de pro.html ([data-theme="day"]) est prioritaire, sinon le
+    // fond perso (ex: #080808) rendait l'écran noir malgré le thème de jour.
+    var estJour=document.documentElement.getAttribute('data-theme')==='day';
+    if(!estJour){
+      if(cfg.bg){
+        root.setProperty('--bg',cfg.bg); root.setProperty('--bg2',shade(cfg.bg,0.06));
+        root.setProperty('--bg3',shade(cfg.bg,0.12)); root.setProperty('--bg4',shade(cfg.bg,0.18));
+      }
+      if(cfg.txt){ root.setProperty('--txt',cfg.txt); }
     }
-    if(cfg.txt){ root.setProperty('--txt',cfg.txt); }
   }
 
   function loadLocal(){ try{var c=JSON.parse(localStorage.getItem(LS)||'null'); if(c)apply(c);}catch(e){} }
