@@ -3813,6 +3813,9 @@ var EcritureFluide={
     var E=EcritureFluide;
     if(E._raf){cancelAnimationFrame(E._raf);E._raf=null;}
     if(E._scrollTimer){clearTimeout(E._scrollTimer);E._scrollTimer=null;}
+    // La boucle rAF est annulée : les prochains deltas doivent s'afficher direct,
+    // sinon la fin du stream s'accumule dans le buffer sans jamais apparaître.
+    E._skipMode=true;
     E._affiche+=E._buffer;E._buffer='';
     if(E._element){
       if(E._textNode)E._textNode.data=E._affiche;
@@ -4237,6 +4240,29 @@ function _isGithubRequest(txt){
   return false;
 }
 
+/* ── Filet de sécurité du streaming ──
+   Si une bulle streamée reste en texte brut avec des clôtures ``` visibles
+   (stream coupé par le réseau, réponse finale vide, exception en cours de route),
+   on la re-rend en Markdown à partir du texte réellement affiché — le moteur
+   EcritureFluide écrit dans UN seul nœud texte, donc les sauts de ligne sont intacts.
+   Idempotent : si le code est déjà rendu (.code-block-wrap), on ne touche à rien. */
+function finaliserBulleStream(bblText,replyPlain){
+  try{
+    if(!bblText||!bblText.isConnected)return;
+    bblText.classList.remove("stream-active","ecriture-active");
+    var cur=bblText.querySelector(".curseur-agent");if(cur)cur.remove();
+    if(bblText.querySelector(".code-block-wrap"))return;
+    var texte=(replyPlain&&replyPlain.indexOf("```")!==-1)?replyPlain:(bblText.textContent||"");
+    if(texte.indexOf("```")===-1)return;
+    // Stream coupé au milieu d'un bloc : clôture ``` manquante → on la ferme,
+    // sinon renderMd() laisse le code brut.
+    if(((texte.match(/```/g)||[]).length)%2===1)texte+="\n```";
+    bblText.innerHTML=renderMd(texte);
+    tiLexHighlightCode(bblText);
+    if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bblText);
+  }catch(e){}
+}
+
 async function sendChat(){
   if(chatBusy)return;
   const inp=document.getElementById("chat-in");
@@ -4410,6 +4436,8 @@ async function sendChat(){
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
       if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);}
       else{applySyntaxHL(bblText);}
+      // Filet : si le reply final est vide/incomplet mais que la bulle affiche des ```
+      finaliserBulleStream(bblText,_replyPlain);
       // 🪙 Badges crypto : branchement géré par js/tilex-crypto-connect.js (observer).
       var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
       sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
@@ -4427,7 +4455,19 @@ async function sendChat(){
         });
       }
     }
-  }catch(e){td.remove();console.error("[ti-lex] sendChat error:",e);addMsg("a","⚠️ "+e.message);}
+  }catch(e){
+    td.remove();console.error("[ti-lex] sendChat error:",e);
+    // Stream coupé en chemin (réseau mobile…) : vider le buffer à l'écran,
+    // arrêter le moteur d'écriture, pis re-rendre la bulle partielle
+    // (sinon les ``` restent bruts).
+    try{EcritureFluide.skip();EcritureFluide._terminer();}catch(_e){}
+    if(typeof bblText!=="undefined"&&bblText){
+      finaliserBulleStream(bblText,typeof reply==="string"?reply:"");
+      var _acts=bblText.parentNode&&bblText.parentNode.querySelector(".cmsg-actions");
+      if(_acts)_acts.style.display="flex";
+    }
+    addMsg("a","⚠️ "+e.message);
+  }
   chatBusy=false;
   syncChatToStorage();
 }
