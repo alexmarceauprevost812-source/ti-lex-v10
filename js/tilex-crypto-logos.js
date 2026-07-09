@@ -110,10 +110,22 @@
       '</span>';
     },
 
+    /** 🔍 Comme trouver(), mais strict pour le texte affiché :
+        les tickers courts (dot, sol, ada, algo, link…) sont des mots/identifiants
+        courants — on exige qu'ils soient écrits EN MAJUSCULES (DOT, SOL) pour
+        badger. Les noms complets (bitcoin, polkadot…) restent insensibles à la casse. */
+    trouverStrict(mot) {
+      const crypto = this.trouver(mot);
+      if (!crypto) return null;
+      if (mot.length <= 4 && mot !== mot.toUpperCase()) return null;
+      return crypto;
+    },
+
     // Remplacement synchrone (texte échappé + badges depuis le cache).
+    // Garde-fous : pas de badge au milieu d'un identifiant (legend-dot, ma_var_sol, a/dot…).
     _injecterSync(texte) {
-      return this._esc(texte).replace(/\b([a-zA-Zéè]+)\b/g, (match) => {
-        const crypto = this.trouver(match);
+      return this._esc(texte).replace(/(?<![\w$#\/\\-])([a-zA-Zéè]+)(?![\w$#\/\\-])/g, (match) => {
+        const crypto = this.trouverStrict(match);
         return crypto ? this.badge(crypto) : match;
       });
     },
@@ -126,12 +138,15 @@
 
     _contientCrypto(texte) {
       const mots = String(texte).match(/[a-zA-Zéè]+/g);
-      return mots ? mots.some((m) => this.trouver(m)) : false;
+      return mots ? mots.some((m) => this.trouverStrict(m)) : false;
     },
 
     /** 🌳 Rehausse un élément déjà rendu (Markdown/HTML) — texte seulement, saute pre/code/a. */
     async rehausser(root) {
       if (!root || !root.ownerDocument) return;
+      // Bulle avec des clôtures ``` visibles = code pas encore rendu en <pre><code> :
+      // on n'y touche PAS (sinon les badges corrompent le code affiché).
+      if (root.textContent && root.textContent.indexOf("```") !== -1) return;
       await this.chargerPrix();
       const SKIP = { PRE: 1, CODE: 1, A: 1, SCRIPT: 1, STYLE: 1, BUTTON: 1, IMG: 1, TEXTAREA: 1 };
       const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
