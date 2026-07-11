@@ -4,8 +4,16 @@
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7c6ff7">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<!-- PWA installable partout : Android/Chromium (beforeinstallprompt), Windows/Mac/Linux
+     (Edge/Chrome « Installer »), iPhone/iPad (Safari → Sur l'écran d'accueil) -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ti-lex-AL">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -2211,6 +2219,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
     </div>
+    <button class="notif-btn" id="tlx-install-btn" onclick="tlxInstaller()" title="Installer l'application" style="display:none;">⬇️</button>
     <button class="notif-btn" id="mc-theme-btn" onclick="toggleTheme()" title="Thème jour / nuit">🌙</button>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
   </div>
@@ -10683,6 +10692,109 @@ if ('serviceWorker' in navigator) {
     var b = document.getElementById("mc-theme-btn");
     if(b) b.textContent = document.documentElement.getAttribute("data-theme") === "day" ? "☀️" : "🌙";
   })();
+})();
+</script>
+
+<!-- ════════════ INSTALLATION PWA (Android · iPhone/iPad · Windows · Mac · Linux) ════════════ -->
+<script>
+/* ti-lex s'installe comme une vraie app sur tous les appareils :
+   - Android / Chrome-Edge desktop (Windows, Mac, Linux) : événement beforeinstallprompt
+     → installation en 1 clic sur le bouton ⬇️ de la barre du haut.
+   - iPhone / iPad (Safari) : pas d'API d'install → on montre les étapes
+     « Partager → Sur l'écran d'accueil ».
+   Le bouton se cache tout seul si l'app est déjà installée (mode standalone). */
+(function(){
+  "use strict";
+  var _promptDiffere = null;
+  var btn = document.getElementById("tlx-install-btn");
+
+  function estStandalone(){
+    return window.matchMedia("(display-mode:standalone)").matches ||
+           window.matchMedia("(display-mode:window-controls-overlay)").matches ||
+           window.navigator.standalone === true;
+  }
+  function estIOS(){
+    var ua = navigator.userAgent || "";
+    var iOS = /iPad|iPhone|iPod/.test(ua);
+    // iPadOS 13+ se déguise en Mac : détecte le tactile
+    var iPadOS = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+    return iOS || iPadOS;
+  }
+
+  // Chrome/Edge (Android + desktop) : on capte le prompt natif
+  window.addEventListener("beforeinstallprompt", function(e){
+    e.preventDefault();
+    _promptDiffere = e;
+    if(btn && !estStandalone()) btn.style.display = "";
+  });
+
+  // Sur iOS il n'y a pas d'événement : on montre quand même le bouton (→ instructions)
+  if(btn && estIOS() && !estStandalone()) btn.style.display = "";
+
+  window.addEventListener("appinstalled", function(){
+    if(btn) btn.style.display = "none";
+    _promptDiffere = null;
+    if(typeof window.showToastMsg === "function") showToastMsg("ti-lex est installé ✔");
+  });
+
+  // Modal d'instructions (iOS, ou navigateur sans prompt natif)
+  function tlxModalInstall(titre, etapes){
+    var ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:18px;";
+    var box = document.createElement("div");
+    box.style.cssText = "background:var(--bg2,#111);border:1px solid var(--border,#23232c);border-radius:16px;max-width:420px;width:100%;padding:22px;font-family:'Space Grotesk',sans-serif;color:var(--txt,#fff);box-shadow:0 20px 60px rgba(0,0,0,.6);";
+    var h = document.createElement("h3");
+    h.style.cssText = "margin:0 0 6px;font-size:17px;font-weight:700;color:var(--or,#FF6B00);";
+    h.textContent = titre;
+    var sub = document.createElement("p");
+    sub.style.cssText = "font-size:12.5px;color:var(--muted,#999);margin:0 0 16px;";
+    sub.textContent = "Installe ti-lex comme une vraie app — elle s'ouvre en plein écran, sans barre de navigateur.";
+    var ol = document.createElement("ol");
+    ol.style.cssText = "margin:0 0 18px;padding-left:20px;font-size:14px;line-height:1.7;color:var(--txt,#eee);";
+    etapes.forEach(function(t){ var li = document.createElement("li"); li.textContent = t; ol.appendChild(li); });
+    var ok = document.createElement("button");
+    ok.style.cssText = "border:none;background:var(--or,#FF6B00);color:#fff;border-radius:9px;padding:11px 18px;font:700 13px 'Space Grotesk',sans-serif;cursor:pointer;width:100%;";
+    ok.textContent = "Compris";
+    ok.onclick = function(){ if(ov.parentNode) ov.parentNode.removeChild(ov); };
+    box.appendChild(h); box.appendChild(sub); box.appendChild(ol); box.appendChild(ok);
+    ov.appendChild(box); document.body.appendChild(ov);
+    ov.addEventListener("click", function(e){ if(e.target === ov && ov.parentNode) ov.parentNode.removeChild(ov); });
+  }
+
+  window.tlxInstaller = async function(){
+    // 1) Prompt natif dispo (Android, Chrome/Edge sur Windows/Mac/Linux)
+    if(_promptDiffere){
+      _promptDiffere.prompt();
+      try{
+        var choix = await _promptDiffere.userChoice;
+        if(choix && choix.outcome === "accepted" && btn) btn.style.display = "none";
+      }catch(e){}
+      _promptDiffere = null;
+      return;
+    }
+    // 2) iPhone / iPad : instructions Safari
+    if(estIOS()){
+      tlxModalInstall("Installer sur iPhone / iPad", [
+        "Pèse sur le bouton Partager (le carré avec la flèche ↑) en bas de Safari.",
+        "Fais défiler pis choisis « Sur l'écran d'accueil ».",
+        "Pèse « Ajouter » en haut à droite. ti-lex apparaît sur ton écran d'accueil !"
+      ]);
+      return;
+    }
+    // 3) Autre navigateur (déjà installé, ou install via le menu du navigateur)
+    if(estStandalone()){
+      if(typeof window.showToastMsg === "function") showToastMsg("ti-lex est déjà installé ✔");
+      return;
+    }
+    tlxModalInstall("Installer ti-lex", [
+      "Ouvre le menu de ton navigateur (⋮ ou la barre d'adresse).",
+      "Choisis « Installer l'application » ou « Installer ti-lex ».",
+      "Confirme — l'app s'ajoute à ton bureau / écran d'accueil."
+    ]);
+  };
+
+  // Si déjà en mode app, on garde le bouton caché
+  if(estStandalone() && btn) btn.style.display = "none";
 })();
 </script>
 
