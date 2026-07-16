@@ -237,19 +237,41 @@ async function runTool(name: string, input: any): Promise<string> {
   if (name === "web_search") return await webSearch(input.query, input.count ?? 5); // [WEB]
   return "Outil inconnu.";
 }
-async function callAnthropic(messages: any[], system: string) {
+// ⚡ Prompt caching — breakpoint sur le dernier message (cache l'historique).
+//    Clone-based : ne mute jamais le tableau source (réutilisé dans la boucle d'outils).
+function marquerDernierMessageCache(messages: any[]): any[] {
+  if (!Array.isArray(messages) || messages.length === 0) return messages;
+  const copie = messages.slice();
+  const dernier = { ...copie[copie.length - 1] };
+  if (typeof dernier.content === "string") {
+    dernier.content = [{ type: "text", text: dernier.content, cache_control: { type: "ephemeral" } }];
+  } else if (Array.isArray(dernier.content) && dernier.content.length > 0) {
+    const blocs = dernier.content.slice();
+    blocs[blocs.length - 1] = { ...blocs[blocs.length - 1], cache_control: { type: "ephemeral" } };
+    dernier.content = blocs;
+  } else {
+    return messages;
+  }
+  copie[copie.length - 1] = dernier;
+  return copie;
+}
+
+async function callAnthropic(messages: any[], system: any) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: 4000, system, tools: TOOLS, messages }),
+    // system = tableau de blocs (stable caché + contexte variable) ; le breakpoint
+    // sur le bloc stable met AUSSI les outils (TOOLS) en cache (ordre tools → system).
+    body: JSON.stringify({ model: MODEL, max_tokens: 4000, system, tools: TOOLS, messages: marquerDernierMessageCache(messages) }),
   });
   return await r.json();
 }
-function buildSystem(ctx: any): string {
+function buildSystem(ctx: any): any[] {
   const files = (ctx?.github?.files || []).slice(0, 200).join("\n");
   const notes = (ctx?.supabase?.recent_notes || [])
     .map((n: any) => `- ${n.title} [${(n.tags || []).join(", ")}]`).join("\n");
-  return [
+  // Partie STABLE (persona + règles + tokens) → mise en cache Anthropic.
+  const stable = [
     "Tu es AL, l'agent autonome central de ti-lex v10 (cybersécurité, Québec ⚜️).",
     "Tu es déjà connecté au projet : repo GitHub ti-lex-v10 (branche supabase) et base Supabase.",
     "Réponds dans la langue de l'utilisateur ; par défaut français québécois, direct et concret.",
@@ -257,10 +279,16 @@ function buildSystem(ctx: any): string {
     "INJECT: chemin/du/fichier.ext", "```", "<code complet>", "```",
     "Pas de placeholder. Vanilla HTML/CSS/JS uniquement (jamais React/JSX).",
     "Tokens ti-lex : fond #0a0a0a, orange #ff7f27, vert #37e0a0, gold #E6A400, rouge #E60000, bleu #4a9eff, violet #C700E6, JetBrains Mono.",
-    "", "--- CONTEXTE PROJET ---",
+  ].join("\n");
+  // Partie VARIABLE (contexte projet : fichiers + notes) → PAS de cache (change souvent).
+  const variable = [
+    "--- CONTEXTE PROJET ---",
     `Fichiers (${(ctx?.github?.files || []).length}) :`, files || "(indisponible)",
     "", `Notes (${ctx?.supabase?.notes_count ?? 0}) :`, notes || "(aucune)",
   ].join("\n");
+  const blocs: any[] = [{ type: "text", text: stable, cache_control: { type: "ephemeral" } }];
+  if (variable.trim()) blocs.push({ type: "text", text: variable });
+  return blocs;
 }
 // 🔍 Niveau 6 — Enquête automatique (analyse la demande AVANT exécution)
 const THREAT_PATTERNS: { re: RegExp; tag: string; severity: "block" | "warn" }[] = [

@@ -458,7 +458,7 @@ Deno.serve(async (req: Request) => {
     const { data: limits, error: limitsError } = await admin.from("plan_limits").select("messages_per_day, messages_per_month").eq("plan", plan).single();
     if (limitsError || !limits) return jsonResponse({ error: "Plan introuvable", details: limitsError?.message }, 500);
     const today = new Date().toISOString().split("T")[0];
-    const { data: usageToday } = await admin.from("usage_daily").select("messages_sent, tokens_used").eq("user_id", userId).eq("usage_date", today).maybeSingle();
+    const { data: usageToday } = await admin.from("usage_daily").select("messages_sent, tokens_used, cache_creation_input_tokens, cache_read_input_tokens").eq("user_id", userId).eq("usage_date", today).maybeSingle();
     const messagesToday = usageToday?.messages_sent || 0;
     if (messagesToday >= limits.messages_per_day) {
       return jsonResponse({ error: "Quota quotidien atteint", quota: { used: messagesToday, limit: limits.messages_per_day, plan } }, 429);
@@ -523,26 +523,22 @@ Deno.serve(async (req: Request) => {
 
     const isMasterMode = agent.is_master && subAgents.length > 0;
 
-    let systemPrompt = `${agent.personality || ""}\n\nSpécialité: ${agent.specialty || ""}`.trim();
-    if (relevantMemories.length > 0) {
-      systemPrompt += `\n\n# Mémoires pertinentes\nVoici ce que tu sais déjà sur cet utilisateur :\n`;
-      for (const m of relevantMemories) systemPrompt += `- [${m.kind}, importance ${m.importance}] ${m.content}\n`;
-      systemPrompt += `\nUtilise ces souvenirs naturellement.`;
-    }
-
+    // ⚡ Prompt caching (ti-lex) : on sépare la partie STABLE du system (persona,
+    //    spécialité, consignes SILEX, liste des sub-agents) — mise en cache — de la
+    //    partie VARIABLE (mémoires récupérées + suggestion du classifier) qui change
+    //    à chaque message et ne doit PAS invalider le cache. L'ordre outils → system
+    //    fait que le breakpoint sur le bloc stable met AUSSI les outils en cache.
     const tools: any[] = [...builtTools.tools];
+
+    let systemStable = `${agent.personality || ""}\n\nSpécialité: ${agent.specialty || ""}`.trim();
     // 🔰 [SILEX] Consigne pour l'agent quand il a les outils de scan.
     if (tools.some((t: any) => t.name === "lancer_scan_securite" || t.name === "lire_dernier_scan")) {
-      systemPrompt += `\n\n## SÉCURITÉ (SILEX)\nTu peux lancer de vrais scans (lancer_scan_securite) et lire leurs résultats (lire_dernier_scan). Après un scan, explique en français québécois clair : dis franchement si tout est correct, sinon nomme le vrai problème et l'action prioritaire. Ne dramatise pas un « info » ou un « low ». Si un scan est refusé, explique-le sans inventer de résultats.`;
+      systemStable += `\n\n## SÉCURITÉ (SILEX)\nTu peux lancer de vrais scans (lancer_scan_securite) et lire leurs résultats (lire_dernier_scan). Après un scan, explique en français québécois clair : dis franchement si tout est correct, sinon nomme le vrai problème et l'action prioritaire. Ne dramatise pas un « info » ou un « low ». Si un scan est refusé, explique-le sans inventer de résultats.`;
     }
     if (isMasterMode) {
       const agentList = subAgents.map((a: any) => `- ${a.id}: **${a.name}** ${a.emoji || ""} — ${a.specialty || "généraliste"}`).join("\n");
-      systemPrompt += `\n\n---\nTu as accès à ces sub-agents via consult_agent:\n${agentList}`;
-      if (suggestion) {
-        const sugAgent = subAgents.find((a: any) => a.id === suggestion!.agent_id);
-        systemPrompt += `\n\nSuggestion du pré-classifier: consulter ${sugAgent?.name} (${suggestion.agent_id}) — ${suggestion.reason}`;
-      }
-      systemPrompt += `\n\nUtilise consult_agent(agent_id, question) quand une spécialité matche. Synthétise ensuite — l'utilisateur ne voit que ta réponse finale.`;
+      systemStable += `\n\n---\nTu as accès à ces sub-agents via consult_agent:\n${agentList}`;
+      systemStable += `\n\nUtilise consult_agent(agent_id, question) quand une spécialité matche. Synthétise ensuite — l'utilisateur ne voit que ta réponse finale.`;
       tools.push({
         name: "consult_agent",
         description: "Consulter un sub-agent spécialisé en coulisse.",
@@ -554,10 +550,27 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Partie variable (n'invalide pas le cache) : mémoires + suggestion du pré-classifier.
+    let systemVariable = "";
+    if (relevantMemories.length > 0) {
+      systemVariable += `# Mémoires pertinentes\nVoici ce que tu sais déjà sur cet utilisateur :\n`;
+      for (const m of relevantMemories) systemVariable += `- [${m.kind}, importance ${m.importance}] ${m.content}\n`;
+      systemVariable += `\nUtilise ces souvenirs naturellement.`;
+    }
+    if (isMasterMode && suggestion) {
+      const sugAgent = subAgents.find((a: any) => a.id === suggestion!.agent_id);
+      systemVariable += `\n\nSuggestion du pré-classifier: consulter ${sugAgent?.name} (${suggestion.agent_id}) — ${suggestion.reason}`;
+    }
+    systemVariable = systemVariable.trim();
+
+    // Blocs system : stable (caché) d'abord, variable (non caché) ensuite.
+    const systemBlocks: any[] = [{ type: "text", text: systemStable, cache_control: { type: "ephemeral" } }];
+    if (systemVariable) systemBlocks.push({ type: "text", text: systemVariable });
+
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    async function persistAssistant(assistantText: string, totalInputTokens: number, totalOutputTokens: number, searchQueries: string[], searchCitations: any[], searchResultsCount: number) {
+    async function persistAssistant(assistantText: string, totalInputTokens: number, totalOutputTokens: number, searchQueries: string[], searchCitations: any[], searchResultsCount: number, cacheCreation = 0, cacheRead = 0) {
       const totalTokens = totalInputTokens + totalOutputTokens + classifierTokens;
       let assistantMsgId: string | null = null;
       if (assistantText) {
@@ -572,12 +585,13 @@ Deno.serve(async (req: Request) => {
         }
         await supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
         const newDailyTokens = (usageToday?.tokens_used || 0) + totalTokens;
-        if (usageToday) await admin.from("usage_daily").update({ messages_sent: messagesToday + 1, tokens_used: newDailyTokens }).eq("user_id", userId).eq("usage_date", today);
-        else await admin.from("usage_daily").insert({ user_id: userId, usage_date: today, messages_sent: 1, tokens_used: totalTokens });
+        // ⚡ Suivi du prompt caching : tokens écrits (creation) et lus (read, -90%).
+        if (usageToday) await admin.from("usage_daily").update({ messages_sent: messagesToday + 1, tokens_used: newDailyTokens, cache_creation_input_tokens: ((usageToday as any).cache_creation_input_tokens || 0) + cacheCreation, cache_read_input_tokens: ((usageToday as any).cache_read_input_tokens || 0) + cacheRead }).eq("user_id", userId).eq("usage_date", today);
+        else await admin.from("usage_daily").insert({ user_id: userId, usage_date: today, messages_sent: 1, tokens_used: totalTokens, cache_creation_input_tokens: cacheCreation, cache_read_input_tokens: cacheRead });
         const currentMonth = new Date().toISOString().slice(0, 7);
-        const { data: usageMonth } = await admin.from("usage_monthly").select("messages_sent, tokens_used").eq("user_id", userId).eq("usage_month", currentMonth).maybeSingle();
-        if (usageMonth) await admin.from("usage_monthly").update({ messages_sent: (usageMonth.messages_sent || 0) + 1, tokens_used: (usageMonth.tokens_used || 0) + totalTokens }).eq("user_id", userId).eq("usage_month", currentMonth);
-        else await admin.from("usage_monthly").insert({ user_id: userId, usage_month: currentMonth, messages_sent: 1, tokens_used: totalTokens });
+        const { data: usageMonth } = await admin.from("usage_monthly").select("messages_sent, tokens_used, cache_creation_input_tokens, cache_read_input_tokens").eq("user_id", userId).eq("usage_month", currentMonth).maybeSingle();
+        if (usageMonth) await admin.from("usage_monthly").update({ messages_sent: (usageMonth.messages_sent || 0) + 1, tokens_used: (usageMonth.tokens_used || 0) + totalTokens, cache_creation_input_tokens: ((usageMonth as any).cache_creation_input_tokens || 0) + cacheCreation, cache_read_input_tokens: ((usageMonth as any).cache_read_input_tokens || 0) + cacheRead }).eq("user_id", userId).eq("usage_month", currentMonth);
+        else await admin.from("usage_monthly").insert({ user_id: userId, usage_month: currentMonth, messages_sent: 1, tokens_used: totalTokens, cache_creation_input_tokens: cacheCreation, cache_read_input_tokens: cacheRead });
       }
       if (assistantText && builtTools.memoryRecallEnabled) {
         // @ts-ignore EdgeRuntime global
@@ -599,6 +613,8 @@ Deno.serve(async (req: Request) => {
           const extraOutputTokens = { count: 0 };
           let totalInputTokens = 0;
           let totalOutputTokens = 0;
+          let totalCacheCreation = 0;
+          let totalCacheRead = 0;
           let assistantContent = "";
           let lastBlocks: any[] = [];
           let currentMessages: any[] = [...historyMessages, { role: "user", content: user_message }];
@@ -626,11 +642,13 @@ Deno.serve(async (req: Request) => {
 
           try {
             for (let round = 0; round < MAX_ROUNDS; round++) {
-              const payload: any = { model: model || DEFAULT_MODEL, max_tokens: Math.min(max_tokens || DEFAULT_MAX_TOKENS, 4096), system: systemPrompt, messages: currentMessages, tools };
+              const payload: any = { model: model || DEFAULT_MODEL, max_tokens: Math.min(max_tokens || DEFAULT_MAX_TOKENS, 4096), system: systemBlocks, messages: currentMessages, tools };
               const { ok, data } = await callAnthropic(anthropicKey, payload);
               if (!ok) { errorFlag = data?.error?.message || "Erreur API"; break; }
               totalInputTokens += data.usage?.input_tokens || 0;
               totalOutputTokens += data.usage?.output_tokens || 0;
+              totalCacheCreation += data.usage?.cache_creation_input_tokens || 0;
+              totalCacheRead += data.usage?.cache_read_input_tokens || 0;
               const blocks = data.content || [];
               lastBlocks = blocks;
 
@@ -671,7 +689,7 @@ Deno.serve(async (req: Request) => {
           let totalTokens = 0;
           if (assistantContent && !errorFlag) {
             totalOutputTokens += extraOutputTokens.count;
-            const r = await persistAssistant(assistantContent, totalInputTokens, totalOutputTokens, aggQueries, aggCitations, aggResults.count);
+            const r = await persistAssistant(assistantContent, totalInputTokens, totalOutputTokens, aggQueries, aggCitations, aggResults.count, totalCacheCreation, totalCacheRead);
             assistantMsgId = r.assistantMsgId; totalTokens = r.totalTokens;
           }
 
@@ -697,7 +715,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const anthropicMessages = [...historyMessages, { role: "user", content: user_message }];
-    const payload: any = { model: model || DEFAULT_MODEL, max_tokens: Math.min(max_tokens || DEFAULT_MAX_TOKENS, 4096), system: systemPrompt, messages: anthropicMessages, stream: true };
+    const payload: any = { model: model || DEFAULT_MODEL, max_tokens: Math.min(max_tokens || DEFAULT_MAX_TOKENS, 4096), system: systemBlocks, messages: anthropicMessages, stream: true };
     if (tools.length > 0) payload.tools = tools;
 
     const anthropicResp = await fetch(ANTHROPIC_URL, {
@@ -716,6 +734,8 @@ Deno.serve(async (req: Request) => {
         let assistantText = "";
         let inputTokens = 0;
         let outputTokens = 0;
+        let cacheCreation = 0;
+        let cacheRead = 0;
         let buffer = "";
         let streamError: string | null = null;
         const blockType: Record<number, string> = {};
@@ -744,7 +764,7 @@ Deno.serve(async (req: Request) => {
                 try {
                   const data = JSON.parse(raw);
                   const idx = data.index;
-                  if (data.type === "message_start") inputTokens = data.message?.usage?.input_tokens || 0;
+                  if (data.type === "message_start") { inputTokens = data.message?.usage?.input_tokens || 0; cacheCreation = data.message?.usage?.cache_creation_input_tokens || 0; cacheRead = data.message?.usage?.cache_read_input_tokens || 0; }
                   else if (data.type === "content_block_start") {
                     const cb = data.content_block || {};
                     blockType[idx] = cb.type;
@@ -775,7 +795,7 @@ Deno.serve(async (req: Request) => {
         let assistantMsgId: string | null = null;
         let totalTokens = 0;
         if (assistantText && !streamError) {
-          const r = await persistAssistant(assistantText, inputTokens, outputTokens, searchQueries, citations, totalSearchResults);
+          const r = await persistAssistant(assistantText, inputTokens, outputTokens, searchQueries, citations, totalSearchResults, cacheCreation, cacheRead);
           assistantMsgId = r.assistantMsgId; totalTokens = r.totalTokens;
         }
 

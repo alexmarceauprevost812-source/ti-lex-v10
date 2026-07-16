@@ -497,7 +497,7 @@ Deno.serve(async (req) => {
     // Outils custom (bourse, média, youtube, sécurité) → boucle d'outils en streaming temps réel.
     const hasCustomTools = tools.some((t: any) => t.type !== "web_search_20250305");
     if (hasCustomTools) {
-      return handleToolLoop(body.messages, tools, model, maxTokens, systemParam, anthropicHeaders, { authHeader, userId });
+      return handleToolLoop(marquerDernierMessageCache(body.messages), tools, model, maxTokens, systemParam, anthropicHeaders, { authHeader, userId });
     }
 
     // Sinon : streaming passthrough (avec web_search optionnel exécuté par Anthropic).
@@ -509,7 +509,7 @@ Deno.serve(async (req) => {
         max_tokens: maxTokens,
         ...(systemParam ? { system: systemParam } : {}),
         stream: true,
-        messages: body.messages,
+        messages: marquerDernierMessageCache(body.messages),
         ...(tools.length > 0 ? { tools } : {}),
       }),
     });
@@ -538,6 +538,28 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// ⚡ Prompt caching — change C : breakpoint sur le DERNIER message.
+//    Dans une conversation, tout l'historique est renvoyé à chaque tour. Ce
+//    breakpoint met en cache le préfixe (identique d'un tour à l'autre) : on ne
+//    paye l'écriture que sur les nouveaux tokens, et on lit le reste à -90%.
+//    Sous ~1024 tokens le breakpoint est ignoré sans erreur.
+function marquerDernierMessageCache(messages: any[]): any[] {
+  if (!Array.isArray(messages) || messages.length === 0) return messages;
+  const copie = messages.slice();
+  const dernier = { ...copie[copie.length - 1] };
+  if (typeof dernier.content === "string") {
+    dernier.content = [{ type: "text", text: dernier.content, cache_control: { type: "ephemeral" } }];
+  } else if (Array.isArray(dernier.content) && dernier.content.length > 0) {
+    const blocs = dernier.content.slice();
+    blocs[blocs.length - 1] = { ...blocs[blocs.length - 1], cache_control: { type: "ephemeral" } };
+    dernier.content = blocs;
+  } else {
+    return messages; // rien de cachable
+  }
+  copie[copie.length - 1] = dernier;
+  return copie;
+}
 
 // ── Boucle d'outils en streaming : relaie le texte en temps réel ET exécute
 //    les outils custom (bourse, média, sécurité) côté serveur, puis relance.

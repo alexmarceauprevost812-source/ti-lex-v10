@@ -70,7 +70,8 @@ async function appelerClaude(messages: unknown[], avecRecherche: boolean) {
   const corps: Record<string, unknown> = {
     model: MODELE,
     max_tokens: 2600,
-    system: SYSTEME_MIDAS,
+    // ⚡ Prompt caching : le system MIDAS (stable) est mis en cache (−90% sur les répétitions).
+    system: [{ type: "text", text: SYSTEME_MIDAS, cache_control: { type: "ephemeral" } }],
     messages,
   };
   if (avecRecherche) {

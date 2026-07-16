@@ -193,7 +193,8 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SECURITY_PREAMBLE + systemPrompt,
+        // ⚡ Prompt caching : préambule sécurité + prompt d'agent (stables) mis en cache.
+        system: [{ type: "text", text: SECURITY_PREAMBLE + systemPrompt, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: messageUtilisateur }],
       }),
     });
