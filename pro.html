@@ -6911,12 +6911,14 @@ document.getElementById("composer-input").addEventListener("input",function(){
 async function composerSend(){
   var inp=document.getElementById("composer-input");
   var txt=inp.value.trim();
-  if(!txt)return;
+  // 👁️ Vision : une image seule (sans texte) peut être analysée directement.
+  var imgSeule=!txt&&currentComposerMode==="chat"&&window.TilexVision&&TilexVision.hasImage();
+  if(!txt&&!imgSeule)return;
   if(currentComposerMode==="chat"){
     var autorise=await gardeIA();
     if(!autorise)return;
     if(activeChatConv<0){newConversation();}
-    document.getElementById("chat-in").value=txt;
+    document.getElementById("chat-in").value=txt||"Décris et analyse cette image en détail, en français québécois.";
     inp.value="";inp.style.height="auto";
     if(typeof trackFeatureUsage==="function")trackFeatureUsage("chat_send");
     sendChat();
