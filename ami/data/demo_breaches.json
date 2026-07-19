@@ -1,0 +1,32 @@
+{
+  "_note": "Jeu de donnees DEMO, fictif, pour tester le moteur hors-ligne. Aucune vraie fuite. En production, remplacer par une source legitime (ex: API Have I Been Pwned).",
+  "breaches": [
+    {
+      "nom": "ExempleShopping",
+      "domaine": "exempleshopping.example",
+      "date": "2023-04-12",
+      "comptes_touches": 8400000,
+      "donnees_exposees": ["courriels", "mots_de_passe", "noms", "telephones"],
+      "verifie": true,
+      "comptes": ["jean.tremblay@courriel.ca", "alex@example.com"]
+    },
+    {
+      "nom": "ForumDemo",
+      "domaine": "forumdemo.example",
+      "date": "2021-11-03",
+      "comptes_touches": 1200000,
+      "donnees_exposees": ["courriels", "pseudos", "adresses_ip"],
+      "verifie": true,
+      "comptes": ["jean.tremblay@courriel.ca"]
+    },
+    {
+      "nom": "AppSanteDemo",
+      "domaine": "appsantedemo.example",
+      "date": "2024-08-27",
+      "comptes_touches": 305000,
+      "donnees_exposees": ["courriels", "noms", "adresses", "numeros_assurance"],
+      "verifie": false,
+      "comptes": ["alex@example.com", "marie.gagnon@courriel.ca"]
+    }
+  ]
+}
