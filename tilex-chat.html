@@ -380,6 +380,35 @@ select.model-select option{background:var(--panel);color:#eee;font-weight:400}
 .agent-list::-webkit-scrollbar{width:7px}
 .agent-list::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:99px}
 .agent-list::-webkit-scrollbar-thumb:hover{background:#3e3e3e}
+/* 🔝 Barre d'agents horizontale (haut de l'écran) — visible sur TOUS les
+   écrans : sur mobile la sidebar est cachée derrière le menu, fait que les
+   agents étaient introuvables. Puces avec logo, défilement horizontal. */
+.agents-bar{
+  display:flex;gap:8px;align-items:center;
+  padding:8px 14px;border-bottom:1px solid var(--border-soft);
+  background:var(--panel);overflow-x:auto;flex:none;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+}
+.agents-bar::-webkit-scrollbar{height:5px}
+.agents-bar::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:99px}
+.ab-chip{
+  display:flex;align-items:center;gap:7px;flex:none;
+  background:var(--panel-2);border:1px solid var(--border);
+  color:var(--muted);border-radius:99px;padding:6px 13px 6px 7px;
+  font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.ab-chip:hover{border-color:var(--orange);color:var(--text)}
+.ab-chip.active{
+  background:var(--orange-soft);border-color:rgba(255,122,26,.55);color:#fff;
+  box-shadow:0 2px 10px rgba(255,122,26,.22);
+}
+.ab-chip .ai{
+  width:24px;height:24px;border-radius:50%;overflow:hidden;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  background:var(--panel-3);
+}
+.ab-chip .ai img{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .label-agents{display:flex;align-items:center;justify-content:space-between}
 .ag-arrows{display:flex;gap:4px}
 .ag-arrows button{
@@ -494,6 +523,11 @@ select.model-select option{background:var(--panel);color:#eee;font-weight:400}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
       </button>
     </div>
+
+    <!-- 🔝 Barre d'agents TOUJOURS VISIBLE en haut de l'écran (surtout mobile,
+         où la colonne de gauche est cachée derrière le menu ☰). Défilable
+         horizontalement ; l'agent actif est surligné. -->
+    <div class="agents-bar" id="agentsBar"></div>
 
     <div class="chat-zone" id="chatZone">
       <div class="chat-inner" id="chatInner"></div>
@@ -1522,6 +1556,26 @@ function majFlechesAgents(){
   window.addEventListener("resize", majFlechesAgents);
 })();
 
+/* 🔝 Puces d'agents en haut de l'écran — synchronisées avec la liste latérale.
+   L'agent actif est surligné pis ramené en vue automatiquement. */
+function renderAgentsBar(){
+  const bar=$("agentsBar");
+  if(!bar) return;
+  bar.innerHTML="";
+  Object.entries(AGENTS).forEach(([key,a])=>{
+    const c=document.createElement("button");
+    c.type="button";
+    c.className="ab-chip"+(state.agent===key?" active":"");
+    c.title=a.role;
+    const ico=a.img?'<img src="'+esc(a.img)+'" alt="" onerror="this.outerHTML=\''+a.icon+'\'">':a.icon;
+    c.innerHTML='<span class="ai">'+ico+'</span>'+esc(a.name);
+    c.onclick=()=>setAgent(key);
+    bar.appendChild(c);
+  });
+  const actif=bar.querySelector(".ab-chip.active");
+  if(actif) requestAnimationFrame(()=>{ actif.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); });
+}
+
 function renderAgentList(){
   const box=$("agentList");
   box.innerHTML="";
@@ -1555,6 +1609,7 @@ function setAgent(key){
   if(!AGENTS[key] || state.busy) return;
   state.agent=key;
   renderAgentList();
+  renderAgentsBar();
   renderQuickbar();
   updateAgentToggle();
   const c=currentChat();
@@ -1620,6 +1675,7 @@ window.addEventListener("beforeunload", saveAll);
 /* ================= INIT ================= */
 renderModelSelect();
 renderAgentList();
+renderAgentsBar();
 renderQuickbar();
 updateAgentToggle();
 if(!state.chats.length) newChat();
