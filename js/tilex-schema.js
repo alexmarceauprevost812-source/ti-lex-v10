@@ -136,10 +136,10 @@ window.TilexSchemaManager = {
       // Flèches d'abord (sous les boîtes)
       liens.forEach((l) => { svg += this.flecheEntre(pos, l); });
 
-      // Boîtes ensuite (par-dessus)
+      // Boîtes ensuite (par-dessus) — l'index i sert au décalage d'animation.
       noeuds.forEach((n, i) => {
         const p = pos[n.id != null ? n.id : i];
-        svg += this.boite(n, p, c);
+        svg += this.boite(n, p, c, i);
       });
 
       svg += '</svg>';
@@ -153,14 +153,16 @@ window.TilexSchemaManager = {
   // ============================================================
   // 3. UNE BOÎTE
   // ============================================================
-  boite(n, p, c) {
+  boite(n, p, c, i) {
     try {
       const classe = this.classeCouleur(n.couleur);
       const cx = p.x + c.boxW / 2;
       const aDeuxLignes = !!n.sous;
       const yTitre = aDeuxLignes ? p.y + 22 : p.y + c.boxH / 2;
 
-      let s = '<g class="tilex-noeud ' + classe + '">';
+      // ⚡ Décalage d'animation : chaque boîte apparaît un cran après la précédente.
+      const delai = ((i || 0) * 0.14).toFixed(2);
+      let s = '<g class="tilex-noeud ' + classe + '" style="animation-delay:' + delai + 's">';
       s += '<rect x="' + p.x + '" y="' + p.y + '" width="' + c.boxW +
         '" height="' + c.boxH + '" rx="10" class="tilex-noeud-rect"/>';
       s += '<text x="' + cx + '" y="' + yTitre +
@@ -192,12 +194,17 @@ window.TilexSchemaManager = {
       const cxA = a.x + c.boxW / 2;
       const cxB = b.x + c.boxW / 2;
 
+      // ⚡ La flèche se trace juste après l'apparition de sa boîte de départ.
+      //    pathLength="1" normalise la longueur → le tracé (stroke-dashoffset)
+      //    marche pareil pour une ligne courte ou un long coude.
+      const styleDelai = ' style="animation-delay:' + ((a.index * 0.14) + 0.08).toFixed(2) + 's"';
+
       // Adjacent vers le bas : flèche droite
       if (b.index === a.index + 1) {
         const y1 = a.y + c.boxH;
         const y2 = b.y - 2;
         return '<line x1="' + cxA + '" y1="' + y1 + '" x2="' + cxB +
-          '" y2="' + y2 + '" class="tilex-arr" marker-end="url(#tilex-arrow)"/>';
+          '" y2="' + y2 + '" pathLength="1" class="tilex-arr"' + styleDelai + ' marker-end="url(#tilex-arrow)"/>';
       }
 
       // Sinon : coude par la gouttière droite
@@ -208,8 +215,8 @@ window.TilexSchemaManager = {
         " L" + gx + " " + yA +
         " L" + gx + " " + yB +
         " L" + (b.x + c.boxW + 2) + " " + yB;
-      return '<path d="' + d + '" fill="none" class="tilex-arr" ' +
-        'marker-end="url(#tilex-arrow)"/>';
+      return '<path d="' + d + '" fill="none" pathLength="1" class="tilex-arr"' + styleDelai +
+        ' marker-end="url(#tilex-arrow)"/>';
     } catch (err) {
       console.error("TilexSchemaManager flecheEntre:", err.message);
       return "";
