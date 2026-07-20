@@ -4383,11 +4383,44 @@ async function envoyerViaMoteurGratuit(modele, td, msgs){
       if(typeof reply!=="string")reply=Array.isArray(reply)?reply.map(function(x){return (x&&x.text)||"";}).join(""):String(reply);
       EcritureFluide.ajouterTexte(reply);
     }
+    if(!reply||!reply.trim())throw new Error("réponse vide");
   }catch(e){
-    EcritureFluide.skip();EcritureFluide._terminer();
-    bblText.classList.remove("stream-active");
-    bblText.textContent="⚠️ "+((e&&e.message)||"Moteur gratuit indisponible — réessaie ou choisis un modèle Claude.");
-    return;
+    // 🛟 Repli AUTOMATIQUE sur le backend ti-lex (Haiku) : Puter peut exiger un
+    // compte/popup (souvent bloqué en PWA installée) — l'agent répond pareil.
+    console.warn("[ti-lex] moteur gratuit indisponible ("+((e&&e.message)||"?")+") — repli backend Haiku");
+    reply="";
+    try{
+      var tk2=getToken();
+      var h2={"Content-Type":"application/json"};
+      if(tk2)h2["Authorization"]="Bearer "+tk2;
+      var res2=await fetch(AI_PROXY,{method:"POST",headers:h2,body:JSON.stringify({
+        kind:"chat",model:"claude-haiku-4-5-20251001",max_tokens:4096,
+        system:getSystemPrompt(),messages:chatHistory.slice(-20)
+      })});
+      if(!res2.ok)throw new Error("Backend "+res2.status);
+      var rd=res2.body.getReader(),dc=new TextDecoder(),bf="";
+      while(true){
+        var ch2=await rd.read();
+        if(ch2.done)break;
+        bf+=dc.decode(ch2.value,{stream:true});
+        var ls=bf.split("\n");bf=ls.pop()||"";
+        for(var li=0;li<ls.length;li++){
+          var tl=ls[li].trim();
+          if(tl.indexOf("data:")!==0)continue;
+          var pl=tl.slice(5).trim();
+          if(!pl||pl==="[DONE]")continue;
+          var ev2;try{ev2=JSON.parse(pl);}catch(_p){continue;}
+          if(ev2.type==="content_block_delta"&&ev2.delta&&ev2.delta.text){
+            reply+=ev2.delta.text;EcritureFluide.ajouterTexte(ev2.delta.text);
+          }
+        }
+      }
+    }catch(e2){
+      EcritureFluide.skip();EcritureFluide._terminer();
+      bblText.classList.remove("stream-active");
+      bblText.textContent="⚠️ "+((e2&&e2.message)||"Aucun moteur disponible — réessaie dans un instant.");
+      return;
+    }
   }
   EcritureFluide.finStream();
   await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
