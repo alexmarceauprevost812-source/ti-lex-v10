@@ -513,21 +513,28 @@
     /* --- Connexion au salon --- */
     async function entrer(nom) {
       await pretSession; // s'assure que la session plateforme est rétablie avant de se connecter
-      const room = (window.TILEX_CONFIG && window.TILEX_CONFIG.ROOM) || 'ti-lex-al-global';
+
+      // Salon PRIVÉ par usager : le nom du canal est dérivé de l'auth.uid.
+      // JAMAIS de salon global partagé : le broadcast/présence Realtime ne passe
+      // pas par la RLS de la table — avec un topic fixe, n'importe quel visiteur
+      // muni de la clé anon publique pouvait écouter les messages, noms et
+      // appareils des autres en direct. Sans session, on ne se connecte pas.
+      if (!monUid) {
+        afficher({ texte: 'Connexion requise — ouvre une session sur la plateforme (/web) pour utiliser ton salon privé (synchro mobile ↔ ordinateur).', type: 'systeme' });
+        statutTxt.textContent = 'connexion requise';
+        return;
+      }
+      const room = 'ti-lex-al-' + monUid;
+      const salonNom = document.getElementById('salon-nom');
+      if (salonNom) salonNom.textContent = 'salon : privé (tes appareils)';
 
       comm = new TilexComm({
         supabase,
         room,
-        user: { id: nom.toLowerCase().replace(/\s+/g, '-'), nom },
+        user: { id: monUid, nom },
         persist: true,
         table: 'tilex_messages',
       });
-
-      // Si pas de session plateforme, le live marche mais l'historique ne se garde pas (RLS).
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess || !sess.session) {
-        afficher({ texte: 'Direct seulement — connecte-toi sur la plateforme (/web) pour garder l’historique.', type: 'systeme' });
-      }
 
       comm.on('connect', () => {
         statut.classList.add('live');

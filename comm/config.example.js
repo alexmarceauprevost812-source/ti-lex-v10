@@ -15,6 +15,7 @@ window.TILEX_CONFIG = {
   // Clé publique VAPID pour les push notifs (génépostre avec: npx web-push generate-vapid-keys)
   VAPID_PUBLIC_KEY: 'TA_VAPID_PUBLIC_KEY_ICI',
 
-  // Salon par défaut
-  ROOM: 'ti-lex-al-global',
+  // (Obsolète) ROOM n'est plus utilisé : le salon est maintenant PRIVÉ par
+  // usager, dérivé automatiquement de l'auth.uid (ti-lex-al-<uid>). Un salon
+  // global fixe laissait n'importe qui écouter le Realtime avec la clé anon.
 };

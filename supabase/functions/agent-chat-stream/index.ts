@@ -463,6 +463,18 @@ Deno.serve(async (req: Request) => {
     if (messagesToday >= limits.messages_per_day) {
       return jsonResponse({ error: "Quota quotidien atteint", quota: { used: messagesToday, limit: limits.messages_per_day, plan } }, 429);
     }
+    // Verrou MENSUEL : messages_per_month était chargé mais jamais comparé —
+    // seule la limite quotidienne bloquait. Sur un mois de 31 jours, un plan
+    // 40/jour + 1200/mois pouvait envoyer 1240 messages. On lit usage_monthly
+    // (le même compteur que l'incrément plus bas) et on refuse au plafond.
+    if (limits.messages_per_month) {
+      const moisCourant = new Date().toISOString().slice(0, 7);
+      const { data: usageMois } = await admin.from("usage_monthly").select("messages_sent").eq("user_id", userId).eq("usage_month", moisCourant).maybeSingle();
+      const messagesCeMois = usageMois?.messages_sent || 0;
+      if (messagesCeMois >= limits.messages_per_month) {
+        return jsonResponse({ error: "Quota mensuel atteint", quota: { used: messagesCeMois, limit: limits.messages_per_month, plan, period: "month" } }, 429);
+      }
+    }
     const warningThreshold = Math.ceil(limits.messages_per_day * QUOTA_WARNING_THRESHOLD);
     if (messagesToday + 1 === warningThreshold && messagesToday + 1 < limits.messages_per_day) {
       admin.from("notifications").insert({
