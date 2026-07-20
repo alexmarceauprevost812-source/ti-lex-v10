@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0f0f0f" />
+<title>Projets — ti-lex</title>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@600;700&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#0f0f0f; --bg2:#1a1a1a; --bg3:#222; --txt:#ffffff; --muted:#9a9a9a;
+    --accent:#FF6B00; --accent2:#FF8C00; --line:rgba(255,255,255,.06);
+    --glow:0 0 10px rgba(255,255,255,.18);
+    --font:'Patrick Hand','Segoe UI',sans-serif;
+  }
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--txt);font-family:var(--font);font-size:18px;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow-x:hidden;
+    text-shadow:0 0 1px rgba(255,255,255,.10);}
+  .wrap{max-width:680px;margin:0 auto;padding:14px 20px 120px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 4px;}
+  .ico-btn{width:42px;height:42px;border:none;background:none;color:var(--txt);font-size:22px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:10px;}
+  .ico-btn:active{background:var(--bg2);}
+  .topbar .right{display:flex;gap:6px;}
+
+  h1{font-size:40px;font-weight:400;margin:14px 4px 18px;letter-spacing:.5px;color:#fff;text-shadow:0 0 12px rgba(255,255,255,.25);}
+
+  .search{display:flex;align-items:center;gap:12px;background:var(--bg2);
+    border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-bottom:10px;}
+  .search svg{flex-shrink:0;opacity:.6;}
+  .search input{flex:1;background:none;border:none;outline:none;color:var(--txt);
+    font-family:var(--font);font-size:19px;}
+  .search input::placeholder{color:var(--muted);}
+
+  .list{display:flex;flex-direction:column;}
+  .item{padding:16px 6px;cursor:pointer;border-radius:12px;transition:background .12s;display:flex;align-items:center;gap:14px;}
+  .item:active{background:var(--bg2);}
+  .item .ico{font-size:22px;opacity:.85;flex-shrink:0;}
+  .item .t{font-size:21px;color:#fff;line-height:1.25;text-shadow:var(--glow);}
+  .item .s{font-size:16px;color:var(--muted);margin-top:3px;}
+
+  .vide{color:var(--muted);text-align:center;padding:60px 20px;font-size:19px;line-height:1.6;}
+  .vide a{color:var(--accent);}
+
+  .fab{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+    border:none;border-radius:999px;padding:16px 24px;font-family:var(--font);font-size:20px;
+    cursor:pointer;box-shadow:0 8px 28px rgba(255,107,0,.4);}
+  .fab:active{transform:scale(.97);}
+  .fab:hover{filter:brightness(1.08);}
+  .fab .plus{font-size:24px;line-height:1;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <button class="ico-btn" title="Menu" onclick="window.location.href='/pro'">☰</button>
+      <div class="right">
+        <button class="ico-btn" title="Filtrer" onclick="document.getElementById('q').focus()">⛃</button>
+      </div>
+    </div>
+
+    <h1>Projets</h1>
+
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="text" placeholder="Rechercher des projets" autocomplete="off" />
+    </div>
+
+    <div class="list" id="list">
+      <div class="vide">Chargement…</div>
+    </div>
+  </div>
+
+  <button class="fab" onclick="nouveauProjet()"><span class="plus">+</span> Nouveau projet</button>
+
+<script src="js/tilex-config.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_ANON = window.SB_ANON || '';
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const listEl = document.getElementById('list');
+  const q = document.getElementById('q');
+  let donnees = [];
+  let monUid = null;
+
+  async function pontSession(){
+    try{
+      const raw = localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');
+      if(raw){ const o=JSON.parse(raw); const s=o.currentSession||o;
+        if(s && s.access_token && s.refresh_token) await sb.auth.setSession({access_token:s.access_token,refresh_token:s.refresh_token}); }
+    }catch(e){}
+  }
+  function relTime(d){
+    const t=new Date(d); const diff=(Date.now()-t.getTime())/1000;
+    if(diff<60) return "À l'instant";
+    if(diff<3600){ const m=Math.floor(diff/60); return "Il y a "+m+" minute"+(m>1?"s":""); }
+    if(diff<7200) return "Il y a 1 heure";
+    if(diff<86400){ const h=Math.floor(diff/3600); return "Il y a "+h+" heures"; }
+    const j=Math.floor(diff/86400);
+    if(j===1) return "Hier"; if(j===2) return "Avant-hier";
+    if(j<7) return "Il y a "+j+" jours";
+    return t.toLocaleDateString('fr-CA');
+  }
+
+  function rendre(items){
+    listEl.innerHTML='';
+    if(!items.length){
+      const v=document.createElement('div'); v.className='vide';
+      v.textContent='Aucun projet encore. Touche « + Nouveau projet » pour commencer.';
+      listEl.appendChild(v); return;
+    }
+    items.forEach(it=>{
+      const d=document.createElement('div'); d.className='item';
+      d.onclick=()=>{ window.location.href='/pro'; };
+      const ic=document.createElement('span'); ic.className='ico'; ic.textContent='📂';
+      const box=document.createElement('div');
+      const t=document.createElement('div'); t.className='t'; t.textContent=it.name||'Projet sans nom';
+      const s=document.createElement('div'); s.className='s'; s.textContent=relTime(it.created_at);
+      box.appendChild(t); box.appendChild(s);
+      d.appendChild(ic); d.appendChild(box); listEl.appendChild(d);
+    });
+  }
+
+  async function charger(){
+    await pontSession();
+    const { data: sess } = await sb.auth.getSession();
+    if(!sess || !sess.session){
+      listEl.innerHTML='<div class="vide">🔒 Connecte-toi sur <a href="/web">la plateforme</a> pour voir tes projets.</div>';
+      return;
+    }
+    monUid = sess.session.user.id;
+    const { data, error } = await sb.from('projects')
+      .select('id, name, created_at').order('created_at',{ascending:false});
+    if(error){ listEl.innerHTML='<div class="vide">Erreur de chargement.</div>'; return; }
+    donnees = data||[];
+    rendre(donnees);
+  }
+
+  window.nouveauProjet = async function(){
+    if(!monUid){ alert('Connecte-toi sur la plateforme d’abord.'); return; }
+    const nom = (prompt('Nom du nouveau projet :')||'').trim();
+    if(!nom) return;
+    const { error } = await sb.from('projects').insert({ name: nom, user_id: monUid });
+    if(error){ alert('Erreur : '+error.message); return; }
+    charger();
+  };
+
+  q.addEventListener('input',()=>{
+    const v=q.value.trim().toLowerCase();
+    rendre(!v?donnees:donnees.filter(it=>String(it.name||'').toLowerCase().includes(v)));
+  });
+
+  charger();
+</script>
+</body>
+</html>

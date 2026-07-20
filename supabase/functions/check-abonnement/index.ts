@@ -19,7 +19,6 @@ const PLANS_VALIDES = new Set([
 ]);
 
 const PLAN_LIMITS: Record<string, { window: number; day: number }> = {
-  free:  { window: 10,  day: 20 },
   ti:    { window: 40,  day: 80 },
   flux:  { window: 40,  day: 80 },
   surge: { window: 100, day: 200 },
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
 
     const { data: profil } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, bonus_messages_remaining")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -76,6 +75,46 @@ Deno.serve(async (req) => {
 
     if (!plan || !PLANS_VALIDES.has(plan)) {
       return json({ allowed: false, reason: "no_subscription", plan: null });
+    }
+
+    // Plan gratuit : pas de fenêtre récurrente — 10 questions offertes une
+    // seule fois à l'inscription (profiles.bonus_messages_remaining),
+    // décomptées ici. Une fois épuisées, direction les forfaits.
+    if (plan === "free") {
+      const bonusRemaining = profil?.bonus_messages_remaining ?? 0;
+      if (bonusRemaining <= 0) {
+        return json({
+          allowed: false, reason: "bonus_exhausted", plan,
+          messages_used: 10, messages_remaining: 0, messages_window: 10,
+          message: "Tu as utilisé tes 10 questions gratuites. Choisis un forfait pour continuer.",
+        });
+      }
+      // Décrément ATOMIQUE (compare-and-swap) : le WHERE bonus_messages_remaining
+      // = valeur lue ne matche qu'UNE fois. Sous concurrence, seule la requête
+      // qui gagne le CAS voit une ligne revenir via .select() ; les autres
+      // matchent 0 ligne et sont refusées — impossible de dépasser le bonus
+      // one-shot en envoyant des requêtes parallèles.
+      const { data: maj, error: decErr } = await supabase
+        .from("profiles")
+        .update({ bonus_messages_remaining: bonusRemaining - 1 })
+        .eq("id", user.id)
+        .eq("bonus_messages_remaining", bonusRemaining)
+        .select("bonus_messages_remaining");
+      if (decErr || !maj || maj.length === 0) {
+        // CAS perdu (course concurrente) ou plus de bonus : on refuse plutôt
+        // que d'accorder à tort. Le client peut réessayer s'il reste du bonus.
+        return json({
+          allowed: false, reason: "bonus_exhausted", plan,
+          messages_used: 10, messages_remaining: 0, messages_window: 10,
+          message: "Tu as utilisé tes 10 questions gratuites. Choisis un forfait pour continuer.",
+        });
+      }
+      const restant = maj[0].bonus_messages_remaining;
+      return json({
+        allowed: true, reason: null, plan, bonus: true,
+        messages_used: 10 - restant, messages_remaining: restant,
+        messages_window: 10,
+      });
     }
 
     const limits = PLAN_LIMITS[plan] || { window: 200, day: 400 };

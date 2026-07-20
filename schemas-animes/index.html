@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>TI-LEX v10 — Moteur de schémas animés</title>
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, sans-serif;
+
+    /* ---- Palette sombre (défaut) ---- */
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --panel: #15161a;
+    --panel-2: #1c1e24;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.16);
+    --shadow: rgba(0,0,0,0.45);
+
+    /* ---- Palette catégorielle (référence validée dataviz — jeu sombre) ---- */
+    --c1: #3987e5; /* bleu */
+    --c2: #1fae1f; /* vert (éclairci pour rester lisible sur fond sombre) */
+    --c3: #d55181; /* magenta */
+    --c4: #c98500; /* jaune */
+    --c5: #199e70; /* aqua */
+    --c6: #d95926; /* orange */
+    --c7: #9085e9; /* violet */
+    --c8: #e66767; /* rouge */
+
+    --accent-a: #7c5cff;
+    --accent-b: #22d3ee;
+    --danger: #e66767;
+    --good: #0ca30c;
+  }
+
+  html[data-theme="light"] {
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --panel: #ffffff;
+    --panel-2: #f4f3f0;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --gridline: #e1e0d9;
+    --border: rgba(11,11,11,0.10);
+    --border-strong: rgba(11,11,11,0.16);
+    --shadow: rgba(11,11,11,0.14);
+
+    --c1: #2a78d6;
+    --c2: #008300;
+    --c3: #e87ba4;
+    --c4: #eda100;
+    --c5: #1baf7a;
+    --c6: #eb6834;
+    --c7: #4a3aa7;
+    --c8: #e34948;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    background: var(--page);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex: 0 0 auto;
+    z-index: 5;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+  .brand .mark {
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .brand .version {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .brand .tagline {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: none;
+  }
+  @media (min-width: 720px) {
+    .brand .tagline { display: inline; }
+  }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    appearance: none;
+    border: 1px solid var(--border-strong);
+    background: var(--panel-2);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform .12s ease, border-color .12s ease, background .12s ease, opacity .12s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  .btn-icon { font-size: 13px; line-height: 1; }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(124,92,255,0.35);
+  }
+  .btn-label { display: none; }
+  @media (min-width: 560px) {
+    .btn-label { display: inline; }
+  }
+
+  /* ---------- Workspace layout ---------- */
+  .workspace {
+    flex: 1 1 auto;
+    display: flex;
+    min-height: 0;
+  }
+  @media (max-width: 860px) {
+    .workspace { flex-direction: column; }
+  }
+
+  /* ---------- Chat panel ---------- */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    flex: 0 0 380px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    min-height: 0;
+  }
+  @media (max-width: 860px) {
+    .chat-panel {
+      width: auto;
+      flex: 1 1 40%;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      order: 2;
+    }
+  }
+
+  .chat-log {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+  .chat-log::-webkit-scrollbar { width: 8px; }
+  .chat-log::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+
+  .msg {
+    max-width: 88%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    animation: msgIn .28s ease both;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .msg-bot {
+    align-self: flex-start;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-bot .who {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    color: var(--accent-b);
+    margin-bottom: 3px;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-hint {
+    align-self: flex-start;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  .chat-input {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    flex: 0 0 auto;
+  }
+  .chat-input input {
+    flex: 1 1 auto;
+    min-width: 0;
+    background: var(--panel-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 14px;
+    padding: 11px 14px;
+    border-radius: 999px;
+    outline: none;
+    transition: border-color .12s ease;
+  }
+  .chat-input input:focus { border-color: var(--accent-b); }
+  .chat-input input::placeholder { color: var(--text-muted); }
+  .chat-input button {
+    flex: 0 0 auto;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .12s ease;
+  }
+  .chat-input button:hover { transform: scale(1.06); }
+  .chat-input button:active { transform: scale(.96); }
+
+  /* ---------- Canvas panel ---------- */
+  .canvas-panel {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+  @media (max-width: 860px) {
+    .canvas-panel { flex: 1 1 60%; order: 1; }
+  }
+
+  .canvas-toolbar {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    z-index: 4;
+    gap: 8px;
+  }
+  .mode-pill {
+    pointer-events: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+  .rec-indicator {
+    pointer-events: auto;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(230,70,70,0.92);
+    padding: 5px 11px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(230,70,70,0.4);
+  }
+  .rec-indicator.hidden { display: none; }
+  .rec-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #fff;
+    animation: recBlink 1s ease-in-out infinite;
+  }
+  @keyframes recBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+
+  #stageWrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  #stage {
+    display: block;
+    touch-action: pan-y;
+  }
+
+  .empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    pointer-events: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    max-width: 360px;
+    margin: 0 auto;
+    transition: opacity .3s ease;
+  }
+  .empty-state.hidden { opacity: 0; visibility: hidden; }
+  .empty-state b { color: var(--text-secondary); }
+
+  @media (max-width: 860px) {
+    .btn .btn-icon { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark">TI-LEX</span>
+      <span class="version">v10</span>
+      <span class="tagline">moteur de schémas animés</span>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="btnTheme" type="button" title="Changer de thème">
+        <span class="btn-icon" id="themeIcon">☾</span><span class="btn-label">Thème</span>
+      </button>
+      <button class="btn" id="btnReset" type="button" title="Réinitialiser le schéma">
+        <span class="btn-icon">⟳</span><span class="btn-label">Réinitialiser</span>
+      </button>
+      <button class="btn" id="btnPlay" type="button" title="Rejouer l'animation">
+        <span class="btn-icon">▶</span><span class="btn-label">Rejouer</span>
+      </button>
+      <button class="btn btn-primary" id="btnExport" type="button" title="Exporter en vidéo">
+        <span class="btn-icon">⬇</span><span class="btn-label">Exporter la vidéo</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace">
+
+    <section class="chat-panel">
+      <div class="chat-log" id="chatLog"></div>
+      <form class="chat-input" id="chatForm" autocomplete="off">
+        <input id="chatInput" type="text" placeholder="Ex. : Idée -> Design -> Code -> Lancement" maxlength="240" />
+        <button type="submit" title="Envoyer">➤</button>
+      </form>
+    </section>
+
+    <section class="canvas-panel" id="canvasPanel">
+      <div class="canvas-toolbar">
+        <span class="mode-pill" id="modePill">schéma vide</span>
+        <span class="rec-indicator hidden" id="recIndicator"><span class="rec-dot"></span>Enregistrement…</span>
+      </div>
+      <div id="stageWrap">
+        <canvas id="stage" width="1280" height="800"></canvas>
+      </div>
+      <div class="empty-state" id="emptyState">
+        Ton schéma animé va apparaître ici.<br>
+        Écris par exemple : <b>&laquo;&nbsp;Idée -&gt; Design -&gt; Code -&gt; Lancement&nbsp;&raquo;</b> dans le clavardage à gauche.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* =====================================================================
+   TI-LEX v10 — moteur de chat qui construit et anime des schémas vidéo
+   Aucune dépendance externe : tout tourne hors-ligne dans ce fichier.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. CONSTANTES & PALETTE (valeurs de référence validées — skill dataviz)
+   --------------------------------------------------------------------- */
+const PALETTE_DARK  = ['#3987e5', '#1fae1f', '#d55181', '#c98500', '#199e70', '#d95926', '#9085e9', '#e66767'];
+const PALETTE_LIGHT = ['#2a78d6', '#008300', '#e87ba4', '#eda100', '#1baf7a', '#eb6834', '#4a3aa7', '#e34948'];
+const COLOR_NAMES = {
+  bleu: 0, blue: 0,
+  vert: 1, green: 1,
+  magenta: 2, rose: 2, pink: 2,
+  jaune: 3, yellow: 3,
+  aqua: 4, turquoise: 4, sarcelle: 4,
+  orange: 5,
+  violet: 6, mauve: 6, purple: 6,
+  rouge: 7, red: 7
+};
+
+/* ---------------------------------------------------------------------
+   2. ÉTAT (STATE)
+   --------------------------------------------------------------------- */
+const state = {
+  theme: 'dark',
+  title: '',
+  nodes: [],   // { id, label, colorIdx, createdAt }
+  edges: [],   // { id, from, to, createdAt }
+  nextNum: 1,
+  layoutMode: 'timeline', // 'timeline' | 'graph'
+  usedExplicitConnect: false
+};
+
+/* ---------------------------------------------------------------------
+   3. UTILITAIRES
+   --------------------------------------------------------------------- */
+function normalize(str) {
+  return (str || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function uid(prefix) {
+  return prefix + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeInOutQuad(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2; }
+function easeOutBack(t) {
+  const c1 = 1.70158, c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+
+function findNodeByLabel(query) {
+  const q = normalize(query);
+  if (!q) return null;
+  let hit = state.nodes.find(n => normalize(n.label) === q);
+  if (hit) return hit;
+  hit = state.nodes.find(n => normalize(n.label).includes(q) || q.includes(normalize(n.label)));
+  return hit || null;
+}
+
+function currentPalette() {
+  return state.theme === 'dark' ? PALETTE_DARK : PALETTE_LIGHT;
+}
+
+/* ---------------------------------------------------------------------
+   4. MOTEUR DE COMPRÉHENSION (parseur de commandes en français)
+   Chaque message est interprété par un jeu de règles déterministes —
+   pas d'IA "boîte noire" : c'est prévisible et ça marche hors ligne.
+   --------------------------------------------------------------------- */
+function extractSteps(text) {
+  const t = (text || '').trim();
+  let parts;
+  if (/->|→|=>/.test(t)) {
+    parts = t.split(/\s*(?:->|→|=>)\s*/);
+  } else if (/(?:^|\n)\s*\d+\s*[\.\)]/.test(t)) {
+    parts = t.split(/(?:^|\n)\s*\d+\s*[\.\)]\s*/);
+  } else {
+    parts = t.split(/\n|,|;|\bpuis\b|\bensuite\b|\bapr[èe]s\b|\bfinalement\b/i);
+  }
+  return parts.map(s => s.trim()).filter(Boolean);
+}
+
+function looksLikeList(text) {
+  const segs = extractSteps(text);
+  if (segs.length < 2 || segs.length > 24) return false;
+  const avgWords = segs.reduce((s, x) => s + x.split(/\s+/).length, 0) / segs.length;
+  return avgWords <= 7;
+}
+
+function interpret(raw) {
+  const text = (raw || '').trim();
+  if (!text) return { type: 'empty' };
+
+  if (/^(recommence|efface\s+tout|r[ée]initialise\w*|reset|nouveau\s+sch[ée]ma|nouveau\s+projet)\b/i.test(text)) {
+    return { type: 'reset' };
+  }
+  if (/^(aide|help|\?|comment\s+[çc]a\s+marche|c'est\s+quoi\s+[çc]a|quoi\s+faire|comment\s+[çc]a\s+fonctionne)\s*[!.?]*$/i.test(text)) {
+    return { type: 'help' };
+  }
+  const themeM = text.match(/\bth[èe]me\s+(sombre|dark|clair|light)\b/i);
+  if (themeM) {
+    const v = themeM[1].toLowerCase();
+    return { type: 'theme', value: (v === 'sombre' || v === 'dark') ? 'dark' : 'light' };
+  }
+  const titleM = text.match(/^(?:titre|nomme\s+le\s+sch[ée]ma|appelle\s+le\s+sch[ée]ma)\s*[:\-]?\s*(.+)$/i);
+  if (titleM) return { type: 'title', value: titleM[1].trim() };
+
+  if (/(export|t[ée]l[ée]charge|g[ée]n[èe]re)[^.!?]*\bvid[ée]o\b/i.test(text) || /^exporte?r?\b/i.test(text)) {
+    return { type: 'export' };
+  }
+  if (/^(joue|anime|lance|d[ée]marre|rejoue|replay|play)\b/i.test(text) || /^montre[\s-]?moi\b/i.test(text)) {
+    return { type: 'play' };
+  }
+
+  const connectM = text.match(/^(?:relie|connecte|lie)\s+(.+?)\s+(?:[àa]|et|avec)\s+(.+)$/i);
+  if (connectM) return { type: 'connect', a: connectM[1].trim(), b: connectM[2].trim() };
+
+  const renameM = text.match(/^renomme\s+(.+?)\s+en\s+(.+)$/i);
+  if (renameM) return { type: 'rename', from: renameM[1].trim(), to: renameM[2].trim() };
+
+  const colorM = text.match(/^(?:couleur|colore|colorie)\s+(.+?)\s+(?:en|:)\s+(\S+)$/i);
+  if (colorM) return { type: 'color', label: colorM[1].trim(), color: normalize(colorM[2]) };
+
+  const removeM = text.match(/^(?:supprime|enl[èe]ve|retire|efface)\s+(.+)$/i);
+  if (removeM) return { type: 'remove', label: removeM[1].trim() };
+
+  const addAfterM = text.match(/^ajoute(?:\s+un[e]?)?\s*(?:[ée]tape|bloc|noeud|n[œo]ud)?\s*[:\-]?\s*(.+?)\s+apr[èe]s\s+(.+)$/i);
+  if (addAfterM) return { type: 'add', label: addAfterM[1].trim(), after: addAfterM[2].trim() };
+
+  const addM = text.match(/^ajoute(?:\s+un[e]?)?\s*(?:[ée]tape|bloc|noeud|n[œo]ud)?\s*[:\-]?\s*(.+)$/i);
+  if (addM && addM[1].trim()) return { type: 'add', label: addM[1].trim(), after: null };
+
+  const flowPrefixM = text.match(/^(?:[ée]tapes?|processus|sch[ée]ma|flux|plan)\s*[:\-]\s*(.+)$/i);
+  if (flowPrefixM) {
+    const steps = extractSteps(flowPrefixM[1]);
+    if (steps.length) return { type: 'flow', steps };
+  }
+  if (/->|→|=>/.test(text)) {
+    const steps = extractSteps(text);
+    if (steps.length >= 2) return { type: 'flow', steps };
+  }
+  if (/(?:^|\n)\s*\d+\s*[\.\)]/.test(text)) {
+    const steps = extractSteps(text);
+    if (steps.length >= 2) return { type: 'flow', steps };
+  }
+  if (looksLikeList(text)) {
+    return { type: 'flow', steps: extractSteps(text) };
+  }
+  return { type: 'unknown', raw: text };
+}
+
+/* ---------------------------------------------------------------------
+   5. ACTIONS SUR L'ÉTAT
+   --------------------------------------------------------------------- */
+function formatList(items) {
+  if (!items.length) return '';
+  if (items.length === 1) return `« ${items[0]} »`;
+  const last = items[items.length - 1];
+  const rest = items.slice(0, -1);
+  return rest.map(x => `« ${x} »`).join(', ') + ' et « ' + last + ' »';
+}
+
+function addStepsToChain(labels, afterLabel) {
+  let prevNode = null;
+  if (afterLabel) {
+    prevNode = findNodeByLabel(afterLabel);
+  } else if (state.nodes.length) {
+    prevNode = state.nodes[state.nodes.length - 1];
+  }
+  const added = [];
+  (labels || []).forEach(rawLabel => {
+    let label = (rawLabel || '').trim();
+    if (!label) return;
+    if (label.length > 60) label = label.slice(0, 57) + '…';
+    const idx = state.nodes.length;
+    const node = { id: uid('n'), label, colorIdx: idx % 8, createdAt: idx };
+    state.nodes.push(node);
+    added.push(node);
+    if (prevNode) {
+      state.edges.push({ id: uid('e'), from: prevNode.id, to: node.id, createdAt: state.edges.length });
+    }
+    prevNode = node;
+  });
+  return added;
+}
+
+function applyAction(action) {
+  switch (action.type) {
+    case 'empty':
+      return { reply: null, changed: false, animate: false };
+
+    case 'reset': {
+      state.nodes = [];
+      state.edges = [];
+      state.title = '';
+      return { reply: "Parti à zéro. Décris-moi un nouveau schéma quand tu veux.", changed: true, animate: false, clear: true };
+    }
+
+    case 'help': {
+      return {
+        reply:
+          "Voici comment jaser avec moi :\n" +
+          "• Décris un flux : « Idée -> Design -> Code -> Lancement »\n" +
+          "• Ou une liste : « étapes: Analyse, Conception, Développement, Tests »\n" +
+          "• Ajoute une étape : « ajoute une étape Révision » ou « ajoute Bêta après Tests »\n" +
+          "• Relie deux étapes : « relie Design à Code »\n" +
+          "• Renomme : « renomme Code en Développement »\n" +
+          "• Supprime : « supprime Tests »\n" +
+          "• Couleur : « couleur Design en violet »\n" +
+          "• Titre : « titre Mon super projet »\n" +
+          "• Commandes utiles : « rejoue », « exporte la vidéo », « thème clair », « recommence »",
+        changed: false, animate: false
+      };
+    }
+
+    case 'theme': {
+      setTheme(action.value);
+      return { reply: `Thème ${action.value === 'dark' ? 'sombre' : 'clair'} activé.`, changed: false, animate: false };
+    }
+
+    case 'title': {
+      state.title = action.value;
+      return { reply: `Le schéma s'appelle maintenant « ${action.value} ».`, changed: true, animate: true };
+    }
+
+    case 'export': {
+      if (!state.nodes.length) {
+        return { reply: "Y'a encore rien à exporter. Décris-moi un flux d'abord, mettons : « Idée -> Design -> Code -> Lancement ».", changed: false, animate: false };
+      }
+      exportVideo();
+      return { reply: "Je prépare ta vidéo, ça s'en vient dans quelques secondes…", changed: false, animate: false };
+    }
+
+    case 'play': {
+      if (!state.nodes.length) {
+        return { reply: "Y'a rien à animer pour l'instant. Décris-moi un flux d'abord !", changed: false, animate: false };
+      }
+      return { reply: "Je rejoue l'animation.", changed: false, animate: true };
+    }
+
+    case 'connect': {
+      const a = findNodeByLabel(action.a);
+      const b = findNodeByLabel(action.b);
+      if (!a || !b) {
+        return { reply: `Je trouve pas ${!a ? '« ' + action.a + ' »' : '« ' + action.b + ' »'} dans le schéma actuel.`, changed: false, animate: false };
+      }
+      if (a.id === b.id) {
+        return { reply: "Je peux pas relier une étape à elle-même !", changed: false, animate: false };
+      }
+      const exists = state.edges.some(e => e.from === a.id && e.to === b.id);
+      if (!exists) state.edges.push({ id: uid('e'), from: a.id, to: b.id, createdAt: state.edges.length });
+      return { reply: `C'est fait : « ${a.label} » est maintenant relié à « ${b.label} ».`, changed: true, animate: true };
+    }
+
+    case 'rename': {
+      const n = findNodeByLabel(action.from);
+      if (!n) return { reply: `Je trouve pas « ${action.from} » dans le schéma.`, changed: false, animate: false };
+      const old = n.label;
+      n.label = action.to.length > 60 ? action.to.slice(0, 57) + '…' : action.to;
+      return { reply: `« ${old} » s'appelle maintenant « ${n.label} ».`, changed: true, animate: true };
+    }
+
+    case 'color': {
+      const n = findNodeByLabel(action.label);
+      if (!n) return { reply: `Je trouve pas « ${action.label} » dans le schéma.`, changed: false, animate: false };
+      if (!(action.color in COLOR_NAMES)) {
+        return { reply: "Je connais pas cette couleur-là. Essaie : bleu, vert, magenta, jaune, aqua, orange, violet ou rouge.", changed: false, animate: false };
+      }
+      n.colorIdx = COLOR_NAMES[action.color];
+      return { reply: `« ${n.label} » est maintenant en couleur ${action.color}.`, changed: true, animate: true };
+    }
+
+    case 'remove': {
+      const n = findNodeByLabel(action.label);
+      if (!n) return { reply: `Je trouve pas « ${action.label} » dans le schéma.`, changed: false, animate: false };
+      state.nodes = state.nodes.filter(x => x.id !== n.id);
+      state.edges = state.edges.filter(e => e.from !== n.id && e.to !== n.id);
+      return { reply: `J'ai enlevé « ${n.label} » du schéma.`, changed: true, animate: true };
+    }
+
+    case 'add': {
+      const added = addStepsToChain([action.label], action.after);
+      if (!added.length) return { reply: "J'ai rien pu ajouter, essaie de reformuler.", changed: false, animate: false };
+      return { reply: `Ajouté : « ${added[0].label} ».`, changed: true, animate: true };
+    }
+
+    case 'flow': {
+      const added = addStepsToChain(action.steps, null);
+      if (!added.length) return { reply: "J'ai rien compris à ajouter, essaie de reformuler.", changed: false, animate: false };
+      const word = added.length > 1 ? `J'ai ajouté ${added.length} étapes` : "J'ai ajouté une étape";
+      return { reply: `${word} : ${formatList(added.map(n => n.label))}.`, changed: true, animate: true };
+    }
+
+    default: {
+      return {
+        reply: "J'ai pas trop saisi. Essaie par exemple : « Idée -> Design -> Code -> Lancement », ou écris « aide » pour voir toutes les commandes.",
+        changed: false, animate: false
+      };
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------
+   6. MISE EN PAGE / LAYOUT
+   Mode "timeline" (chaîne linéaire, alternée gauche/droite) quand la
+   structure est un simple chemin ; mode "graphe" (rangs) dès qu'il y a
+   une branche ou une fusion.
+   --------------------------------------------------------------------- */
+function computeLayout(canvasWidth) {
+  const nodes = state.nodes;
+  const edges = state.edges;
+  const CW = clamp(canvasWidth * 0.34, 190, 300);
+  const CH = 84;
+  const ROW_H = 130;
+  const TOP_PAD = 150;
+  const CENTER_X = canvasWidth / 2;
+  const SPINE_GAP = 30;
+
+  if (!nodes.length) {
+    return { mode: 'empty', width: canvasWidth, height: 400, nodes: [], edges: [] };
+  }
+
+  const indeg = {}, outdeg = {};
+  nodes.forEach(n => { indeg[n.id] = 0; outdeg[n.id] = 0; });
+  edges.forEach(e => {
+    if (outdeg[e.from] === undefined) return;
+    outdeg[e.from]++; indeg[e.to]++;
+  });
+  const isSimple = nodes.every(n => indeg[n.id] <= 1 && outdeg[n.id] <= 1);
+  const mode = isSimple ? 'timeline' : 'graph';
+  const placed = {};
+  let height;
+
+  if (mode === 'timeline') {
+    nodes.forEach((n, i) => {
+      const cy = TOP_PAD + i * ROW_H + CH / 2;
+      const left = (i % 2 === 0);
+      const x = left ? (CENTER_X - SPINE_GAP - CW) : (CENTER_X + SPINE_GAP);
+      placed[n.id] = { x, y: cy - CH / 2, w: CW, h: CH, cx: x + CW / 2, cy, dotX: CENTER_X, dotY: cy, side: left ? 'left' : 'right' };
+    });
+    height = TOP_PAD + nodes.length * ROW_H + 70;
+  } else {
+    const rankOf = {};
+    nodes.forEach(n => rankOf[n.id] = 0);
+    for (let pass = 0; pass < nodes.length; pass++) {
+      let changed = false;
+      edges.forEach(e => {
+        if (rankOf[e.from] === undefined || rankOf[e.to] === undefined) return;
+        if (rankOf[e.from] + 1 > rankOf[e.to]) { rankOf[e.to] = rankOf[e.from] + 1; changed = true; }
+      });
+      if (!changed) break;
+    }
+    const byRank = {};
+    nodes.forEach(n => { (byRank[rankOf[n.id]] = byRank[rankOf[n.id]] || []).push(n); });
+    const maxRank = Math.max(0, ...Object.keys(byRank).map(Number));
+    for (let r = 0; r <= maxRank; r++) {
+      const row = byRank[r] || [];
+      const rowW = row.length * CW + Math.max(0, row.length - 1) * 36;
+      let startX = CENTER_X - rowW / 2;
+      row.forEach(n => {
+        const x = startX, y = TOP_PAD + r * ROW_H;
+        placed[n.id] = { x, y, w: CW, h: CH, cx: x + CW / 2, cy: y + CH / 2, dotX: x + CW / 2, dotY: y + CH / 2, side: 'top' };
+        startX += CW + 36;
+      });
+    }
+    height = TOP_PAD + (maxRank + 1) * ROW_H + 70;
+  }
+
+  const orderOf = {};
+  nodes.forEach((n, i) => orderOf[n.id] = i);
+
+  const edgeScenes = edges.map((e, i) => {
+    const a = placed[e.from], b = placed[e.to];
+    if (!a || !b) return null;
+    let p0, p3;
+    if (mode === 'timeline') { p0 = [a.dotX, a.dotY]; p3 = [b.dotX, b.dotY]; }
+    else { p0 = [a.cx, a.y + a.h]; p3 = [b.cx, b.y]; }
+    const dx = p3[0] - p0[0], dy = p3[1] - p0[1];
+    const p1 = [p0[0] + dx * 0.15, p0[1] + dy * 0.5];
+    const p2 = [p0[0] + dx * 0.85, p0[1] + dy * 0.5];
+    return { id: e.id, from: e.from, to: e.to, toOrder: orderOf[e.to], p0, p1, p2, p3, order: i };
+  }).filter(Boolean);
+
+  return {
+    mode,
+    width: canvasWidth,
+    height: Math.max(height, 400),
+    title: state.title,
+    nodes: nodes.map((n, i) => ({ ...n, ...placed[n.id], order: i })),
+    edges: edgeScenes
+  };
+}
+
+function computeTiming(scene) {
+  const n = scene.nodes.length;
+  const introDur = 0.9;
+  const perNode = n > 10 ? 0.32 : 0.55;
+  const outroHold = 1.4;
+  const buildDur = n * perNode + 0.5;
+  const total = introDur + buildDur + outroHold;
+  return { introDur, perNode, buildDur, outroHold, total };
+}
+
+/* ---------------------------------------------------------------------
+   7. RENDU CANVAS
+   Une seule fonction de dessin (drawFrame) sert à la fois l'aperçu en
+   direct ET l'export vidéo — ce qu'on voit est exactement ce qu'on
+   exporte.
+   --------------------------------------------------------------------- */
+const FONT_STACK = "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, Roboto, sans-serif";
+
+function bgColors() {
+  return state.theme === 'light'
+    ? { surface: '#fcfcfb', grid: 'rgba(11,11,11,0.07)', text: '#0b0b0b', textMuted: '#898781', edge: 'rgba(11,11,11,0.30)', edgeGlow: '#7c5cff' }
+    : { surface: '#1a1a19', grid: 'rgba(255,255,255,0.055)', text: '#ffffff', textMuted: '#9a9890', edge: 'rgba(255,255,255,0.30)', edgeGlow: '#8f7bff' };
+}
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+function shade(hex, amt) {
+  const [r, g, b] = hexToRgb(hex);
+  const f = amt < 0 ? 0 : 255;
+  const p = Math.abs(amt);
+  const mix = c => Math.round(c + (f - c) * p);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
+
+function pathRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function wrapText(ctx, text, maxWidth, maxLines) {
+  const words = (text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (cur && ctx.measureText(test).width > maxWidth) {
+      lines.push(cur);
+      cur = w;
+      if (lines.length === maxLines - 1) break;
+    } else {
+      cur = test;
+    }
+  }
+  if (cur) lines.push(cur);
+  const consumed = lines.join(' ').split(/\s+/).length;
+  if (consumed < words.length || lines.length > maxLines) {
+    let last = lines[Math.min(lines.length, maxLines) - 1] || '';
+    while (last.length > 1 && ctx.measureText(last + '…').width > maxWidth) last = last.slice(0, -1);
+    lines[maxLines - 1] = last.replace(/[.,;:\s]+$/, '') + '…';
+  }
+  return lines.slice(0, maxLines).map(line => {
+    if (ctx.measureText(line).width <= maxWidth) return line;
+    let cut = line;
+    while (cut.length > 1 && ctx.measureText(cut + '…').width > maxWidth) cut = cut.slice(0, -1);
+    return cut + '…';
+  });
+}
+
+function bezierPoint(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  return [
+    mt * mt * mt * p0[0] + 3 * mt * mt * t * p1[0] + 3 * mt * t * t * p2[0] + t * t * t * p3[0],
+    mt * mt * mt * p0[1] + 3 * mt * mt * t * p1[1] + 3 * mt * t * t * p2[1] + t * t * t * p3[1]
+  ];
+}
+
+function drawBezierProgress(ctx, p0, p1, p2, p3, progress, color, glow, done) {
+  const STEPS = 40;
+  const upto = Math.max(1, Math.floor(STEPS * progress));
+  ctx.save();
+  ctx.lineWidth = 2.4;
+  ctx.strokeStyle = color;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let last = p0;
+  ctx.moveTo(p0[0], p0[1]);
+  for (let i = 1; i <= upto; i++) {
+    const pt = bezierPoint(p0, p1, p2, p3, i / STEPS);
+    ctx.lineTo(pt[0], pt[1]);
+    last = pt;
+  }
+  ctx.stroke();
+  if (!done) {
+    ctx.beginPath();
+    ctx.fillStyle = glow;
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 12;
+    ctx.arc(last[0], last[1], 3.6, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    const tip = p3;
+    const prevPt = bezierPoint(p0, p1, p2, p3, 0.94);
+    const ang = Math.atan2(tip[1] - prevPt[1], tip[0] - prevPt[0]);
+    const size = 7;
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.moveTo(tip[0], tip[1]);
+    ctx.lineTo(tip[0] - size * Math.cos(ang - Math.PI / 6), tip[1] - size * Math.sin(ang - Math.PI / 6));
+    ctx.lineTo(tip[0] - size * Math.cos(ang + Math.PI / 6), tip[1] - size * Math.sin(ang + Math.PI / 6));
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawNodeCard(ctx, n, p, C, mode) {
+  const scaleRaw = lerp(0.7, 1, easeOutBack(Math.min(p, 1)));
+  const alpha = clamp(p / 0.55, 0, 1);
+  const cx = n.cx, cy = n.cy;
+  const w = n.w * scaleRaw, h = n.h * scaleRaw;
+  const x = cx - w / 2, y = cy - h / 2;
+  const hex = currentPalette()[n.colorIdx % 8];
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  if (mode === 'timeline') {
+    ctx.beginPath();
+    ctx.fillStyle = hex;
+    ctx.arc(n.dotX, n.dotY, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = C.surface;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  ctx.shadowColor = 'rgba(0,0,0,0.35)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 8;
+  const grad = ctx.createLinearGradient(x, y, x, y + h);
+  grad.addColorStop(0, shade(hex, 0.16));
+  grad.addColorStop(1, shade(hex, -0.30));
+  ctx.fillStyle = grad;
+  pathRoundRect(ctx, x, y, w, h, 16);
+  ctx.fill();
+
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  pathRoundRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 15.5);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.font = '700 10.5px ' + FONT_STACK;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(n.order + 1).padStart(2, '0'), x + 14, y + 17);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '600 15px ' + FONT_STACK;
+  ctx.textBaseline = 'alphabetic';
+  const lines = wrapText(ctx, n.label, w - 28, 2);
+  const lh = 19;
+  const startY = cy - ((lines.length - 1) * lh) / 2 + 5;
+  lines.forEach((ln, i) => ctx.fillText(ln, x + 14, startY + i * lh));
+
+  ctx.restore();
+}
+
+function drawFrame(ctx, scene, tSec, dims) {
+  const { width, height } = dims;
+  const C = bgColors();
+  ctx.save();
+  ctx.clearRect(0, 0, width, height);
+
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+  bgGrad.addColorStop(0, C.surface);
+  bgGrad.addColorStop(1, shade(C.surface, state.theme === 'light' ? -0.03 : -0.22));
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = C.grid;
+  const gap = 26;
+  for (let gy = gap / 2; gy < height; gy += gap) {
+    for (let gx = gap / 2; gx < width; gx += gap) {
+      ctx.beginPath();
+      ctx.arc(gx, gy, 1.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  if (scene.mode === 'empty' || !scene.nodes.length) { ctx.restore(); return; }
+
+  const timing = computeTiming(scene);
+
+  const titleProg = clamp(tSec / (timing.introDur * 0.85), 0, 1);
+  const titleFade = tSec < timing.introDur ? 1 : clamp(1 - (tSec - timing.introDur) / 0.5, 0, 1);
+  if (titleFade > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = titleFade * easeOutCubic(titleProg);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = C.text;
+    ctx.font = '700 28px ' + FONT_STACK;
+    ctx.fillText(scene.title || 'Schéma TI-LEX', width / 2, 72 - (1 - easeOutCubic(titleProg)) * 14);
+    ctx.font = '500 12.5px ' + FONT_STACK;
+    ctx.fillStyle = C.textMuted;
+    ctx.fillText('généré par le moteur de schémas animés', width / 2, 95);
+    ctx.restore();
+  }
+
+  if (scene.mode === 'timeline') {
+    const firstY = scene.nodes[0].dotY, lastY = scene.nodes[scene.nodes.length - 1].dotY;
+    const spineProg = easeInOutQuad(clamp((tSec - timing.introDur) / timing.buildDur, 0, 1));
+    ctx.save();
+    ctx.strokeStyle = C.edge;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(width / 2, firstY);
+    ctx.lineTo(width / 2, lerp(firstY, lastY, spineProg));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  scene.edges.forEach(e => {
+    const start = timing.introDur + Math.max(0, e.toOrder - 1) * timing.perNode + timing.perNode * 0.35;
+    const dur = Math.max(0.32, timing.perNode * 0.85);
+    const p = clamp((tSec - start) / dur, 0, 1);
+    if (p <= 0) return;
+    drawBezierProgress(ctx, e.p0, e.p1, e.p2, e.p3, easeInOutQuad(p), C.edge, C.edgeGlow, p >= 1);
+  });
+
+  scene.nodes.forEach(n => {
+    const start = timing.introDur + n.order * timing.perNode;
+    const dur = Math.max(0.5, timing.perNode * 1.3);
+    const p = clamp((tSec - start) / dur, 0, 1);
+    if (p <= 0) return;
+    drawNodeCard(ctx, n, p, C, scene.mode);
+  });
+
+  ctx.restore();
+}
+
+/* ---------------------------------------------------------------------
+   8. CONTRÔLEUR D'ANIMATION (aperçu en direct)
+   --------------------------------------------------------------------- */
+let liveRaf = null;
+
+function stopLiveAnimation() {
+  if (liveRaf) cancelAnimationFrame(liveRaf);
+  liveRaf = null;
+}
+
+function resizeStageCanvas() {
+  const wrap = document.getElementById('stageWrap');
+  const canvas = document.getElementById('stage');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const cssWidth = Math.max(320, Math.floor(wrap.clientWidth));
+  const scene = computeLayout(cssWidth);
+  const cssHeight = scene.height;
+  canvas.style.width = cssWidth + 'px';
+  canvas.style.height = cssHeight + 'px';
+  canvas.width = Math.round(cssWidth * dpr);
+  canvas.height = Math.round(cssHeight * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, width: cssWidth, height: cssHeight, scene };
+}
+
+function updateModePill(scene) {
+  const pill = document.getElementById('modePill');
+  if (!scene || scene.mode === 'empty' || !scene.nodes.length) { pill.textContent = 'schéma vide'; return; }
+  const label = scene.mode === 'timeline' ? 'chronologie' : 'graphe';
+  pill.textContent = `${scene.nodes.length} étape${scene.nodes.length > 1 ? 's' : ''} · mode ${label}`;
+}
+
+function toggleEmptyState(scene) {
+  const el = document.getElementById('emptyState');
+  el.classList.toggle('hidden', !!(scene && scene.nodes.length));
+}
+
+function renderStatic() {
+  const { ctx, width, height, scene } = resizeStageCanvas();
+  const timing = computeTiming(scene.mode === 'empty' ? { nodes: [] } : scene);
+  drawFrame(ctx, scene, scene.mode === 'empty' ? 0 : timing.total, { width, height });
+  updateModePill(scene);
+  toggleEmptyState(scene);
+}
+
+function playAnimation() {
+  stopLiveAnimation();
+  const { ctx, width, height, scene } = resizeStageCanvas();
+  updateModePill(scene);
+  toggleEmptyState(scene);
+  if (scene.mode === 'empty' || !scene.nodes.length) return;
+  const timing = computeTiming(scene);
+  const t0 = performance.now();
+  function tick(now) {
+    const tSec = (now - t0) / 1000;
+    drawFrame(ctx, scene, Math.min(tSec, timing.total), { width, height });
+    if (tSec < timing.total) liveRaf = requestAnimationFrame(tick);
+    else liveRaf = null;
+  }
+  liveRaf = requestAnimationFrame(tick);
+}
+
+/* ---------------------------------------------------------------------
+   9. EXPORT VIDÉO
+   Le même drawFrame() qui sert à l'aperçu est rejoué image par image
+   sur un canevas hors-écran, capturé en flux via captureStream() et
+   enregistré avec MediaRecorder — ce qui est à l'écran est ce qui sort.
+   --------------------------------------------------------------------- */
+const EXPORT_W = 1280;
+
+function pickMimeType() {
+  const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  for (const c of candidates) {
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return null;
+}
+
+function showRecIndicator(on) {
+  document.getElementById('recIndicator').classList.toggle('hidden', !on);
+  document.getElementById('btnExport').disabled = on;
+}
+
+function exportVideo() {
+  const canvasProto = window.HTMLCanvasElement && HTMLCanvasElement.prototype;
+  if (!window.MediaRecorder || !canvasProto || !canvasProto.captureStream) {
+    addChatMessage('bot', "Ton navigateur supporte pas l'enregistrement vidéo direct (MediaRecorder). Essaie avec une version récente de Chrome, Edge ou Firefox sur ordinateur.");
+    return;
+  }
+  const mime = pickMimeType();
+  if (!mime) {
+    addChatMessage('bot', "Aucun format vidéo compatible trouvé sur ce navigateur. Essaie avec Chrome ou Edge à jour.");
+    return;
+  }
+
+  const scene = computeLayout(EXPORT_W);
+  if (scene.mode === 'empty' || !scene.nodes.length) return;
+
+  const off = document.createElement('canvas');
+  const dpr = 2;
+  off.width = EXPORT_W * dpr;
+  off.height = scene.height * dpr;
+  const ctx = off.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  let stream, recorder;
+  try {
+    stream = off.captureStream(30);
+    recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 5000000 });
+  } catch (err) {
+    addChatMessage('bot', "L'enregistrement vidéo a échoué au démarrage sur ce navigateur.");
+    return;
+  }
+
+  const chunks = [];
+  recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    showRecIndicator(false);
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    if (!blob.size) {
+      addChatMessage('bot', "La vidéo générée était vide, quelque chose a mal tourné. Réessaie.");
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ti-lex-schema-${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    addChatMessage('bot', `Ta vidéo est prête (${chunks.length ? Math.max(1, Math.round(blob.size/1024)) : 0} Ko) et le téléchargement a commencé — format .webm.`);
+  };
+  recorder.onerror = () => {
+    showRecIndicator(false);
+    addChatMessage('bot', "L'enregistrement vidéo a rencontré une erreur en cours de route.");
+  };
+
+  showRecIndicator(true);
+  recorder.start();
+
+  const timing = computeTiming(scene);
+  const t0 = performance.now();
+  function tick(now) {
+    const tSec = (now - t0) / 1000;
+    drawFrame(ctx, scene, Math.min(tSec, timing.total), { width: EXPORT_W, height: scene.height });
+    if (tSec < timing.total) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(() => { try { recorder.stop(); } catch (e) {} }, 300);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---------------------------------------------------------------------
+   10. INTERFACE DE CHAT / UI
+   --------------------------------------------------------------------- */
+function addChatMessage(who, text) {
+  if (!text) return;
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg ' + (who === 'user' ? 'msg-user' : 'msg-bot');
+  if (who !== 'user') {
+    const tag = document.createElement('span');
+    tag.className = 'who';
+    tag.textContent = 'LEX';
+    div.appendChild(tag);
+  }
+  const body = document.createElement('span');
+  body.textContent = text;
+  div.appendChild(body);
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function handleUserMessage(text) {
+  addChatMessage('user', text);
+  const action = interpret(text);
+  const result = applyAction(action);
+  if (result.reply) addChatMessage('bot', result.reply);
+  if (result.changed || result.animate) playAnimation();
+  else renderStatic();
+}
+
+function setTheme(mode) {
+  state.theme = mode === 'light' ? 'light' : 'dark';
+  if (state.theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  else document.documentElement.removeAttribute('data-theme');
+  document.getElementById('themeIcon').textContent = state.theme === 'light' ? '☀' : '☾';
+  renderStatic();
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* ---------------------------------------------------------------------
+   11. INITIALISATION
+   --------------------------------------------------------------------- */
+function seedDemo() {
+  state.title = 'Exemple : lancement de produit';
+  addStepsToChain(['Idée', 'Recherche', 'Design', 'Développement', 'Tests', 'Lancement'], null);
+}
+
+function init() {
+  seedDemo();
+
+  document.getElementById('chatForm').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const input = document.getElementById('chatInput');
+    const text = input.value;
+    input.value = '';
+    if (text.trim()) handleUserMessage(text);
+  });
+
+  document.getElementById('btnPlay').addEventListener('click', () => {
+    if (!state.nodes.length) { addChatMessage('bot', "Y'a rien à animer pour l'instant. Décris-moi un flux d'abord !"); return; }
+    playAnimation();
+  });
+  document.getElementById('btnExport').addEventListener('click', () => {
+    const result = applyAction({ type: 'export' });
+    if (result.reply) addChatMessage('bot', result.reply);
+  });
+  document.getElementById('btnReset').addEventListener('click', () => {
+    const result = applyAction({ type: 'reset' });
+    if (result.reply) addChatMessage('bot', result.reply);
+    renderStatic();
+  });
+  document.getElementById('btnTheme').addEventListener('click', () => {
+    setTheme(state.theme === 'dark' ? 'light' : 'dark');
+  });
+
+  window.addEventListener('resize', debounce(() => renderStatic(), 150));
+
+  addChatMessage('bot',
+    "Salut, moi c'est LEX. Décris-moi un processus pis je le transforme en schéma animé — genre : « Idée -> Design -> Code -> Lancement ».\n" +
+    "Je t'ai mis un exemple à droite pour commencer. Écris « aide » pour voir toutes mes commandes."
+  );
+
+  playAnimation();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+</script>
+</body>
+</html>

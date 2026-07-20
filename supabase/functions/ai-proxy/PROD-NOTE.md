@@ -1,35 +1,25 @@
 # ⚠️ ai-proxy — état du déploiement en production
 
-## v43 (correctif CORS) — 2026-06-27
-Le préflight CORS bloquait l'en-tête `apikey` envoyé par les clients
-(codex/web/pro) → POST refusé par le navigateur → « Failed to fetch ».
-Corrigé : `Access-Control-Allow-Headers` inclut maintenant
-`authorization, x-client-info, apikey, content-type, x-anthropic-key`
-(aligné sur github-proxy). Seule la ligne CORS a changé ; aucun verrou
-d'abonnement ajouté. Snapshot exact : `index.prod-deployed.ts.txt`.
+## v54 (outil analyser_journal_securite) — 2026-07-20
+`index.ts` et `index.prod-deployed.ts.txt` sont maintenant **identiques** —
+le repo était en retard sur la prod (il manquait la mémoire long terme
+[CERVEAU] déployée en v45+, jamais reportée dans le dépôt). Synchronisé au
+complet plutôt que de perpétuer l'écart repo/déployé, en plus d'ajouter
+l'outil `analyser_journal_securite` (relaie vers l'edge function
+`log-analyst`, émet `{type:"log_report", report:{...}}` en SSE pour que
+pro.html affiche le rapport via `TilexLogAnalyst.afficher()`).
 
-## Ce qui tourne EN LIGNE (Supabase, version 42+)
-Une version **chirurgicale** basée sur l'ancienne version en ligne, à laquelle on a
-ajouté **uniquement** :
-- les outils boursiers d'AL (`get_stock_quote`, `get_company_profile`) exécutés
-  côté serveur via `FMP_API_KEY` ;
-- la boucle d'outils en **streaming temps réel** ;
-- le flag `web_search` (recherche web Anthropic).
+Comportement conservé : accès anonyme permis, modèle défaut
+`claude-opus-4-8`, CORS `*`, rate-limit par usage quotidien (200 chat/jour,
+20 image/jour) — **PAS** de verrou d'abonnement.
 
-Comportement conservé tel quel : **accès anonyme permis**, modèle défaut
-`claude-opus-4-8`, CORS `*`, rate-limit par usage quotidien.
-👉 **PAS** de verrou d'abonnement.
-
-Le code source exact de cette version est récupérable via Supabase
-(`get_edge_function ai-proxy`) ou dans l'historique de cette branche
-(`/scratchpad/ai-proxy-surgical.ts` au moment du déploiement).
-
-## Ce qu'il y a dans le DÉPÔT (`index.ts`)
-Une version **plus complète** (refactor `_shared`, validation de plan, etc.) qui
-**EXIGE une connexion + un abonnement valide** (sinon 403 `sans_abonnement`),
-modèle de repli `claude-sonnet-4-6`.
-
-## ⚠️ Piège à éviter
-Faire `supabase functions deploy ai-proxy` depuis le dépôt déploierait la version
-COMPLÈTE → **activerait le verrou d'abonnement** et pourrait bloquer les comptes
-non-abonnés. Ne le faire que si c'est volontaire.
+## ⚠️ Piège historique (RÉSOLU au 2026-07-20)
+Avant ce patch, `index.ts` divergeait de la version déployée dans les DEUX
+sens à la fois : le dépôt avait déjà retiré le vieux verrou d'abonnement
+(bonne nouvelle) mais n'avait jamais reçu la mémoire longue durée [CERVEAU]
+ajoutée directement en prod (mauvaise nouvelle — un déploiement depuis le
+dépôt aurait fait RÉGRESSER la mémoire). Les deux fichiers sont maintenant
+la même source de vérité — donc `supabase functions deploy ai-proxy` depuis
+le dépôt est de nouveau sécuritaire. Si un futur patch est fait EN LIGNE
+directement (hors dépôt), reproduire immédiatement le même changement ici
+pour ne pas recréer cet écart.

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏠 ti-lex Maison - Tracking Camion</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#0a0a0f; color:#e8e8e8; min-height:100vh;
+  }
+  header {
+    padding:14px 18px; background:#14141c; border-bottom:1px solid #26263a;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+  h1 { font-size:1.2rem; color:#ff3b3b; }
+  .status { display:flex; align-items:center; gap:8px; font-size:0.85rem; color:#999; }
+  .dot { width:12px; height:12px; border-radius:50%; background:#555; }
+  .dot.on { background:#2ecc71; box-shadow:0 0 10px #2ecc71; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  #map { width:100%; height:55vh; background:#0d0d14; }
+  .panel { padding:16px; max-width:600px; margin:0 auto; }
+  .alert {
+    background:linear-gradient(135deg,#ff3b3b22,#ff8c0022); border:1px solid #ff3b3b;
+    border-radius:14px; padding:18px; margin-bottom:14px; text-align:center;
+    font-size:1.15rem; font-weight:700; color:#ffb38a; display:none;
+  }
+  .alert.show { display:block; animation:pop .4s; }
+  @keyframes pop { 0%{transform:scale(0.9);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+  .authbar {
+    background:rgba(255,59,59,.12); border:1px solid #ff3b3b55; color:#ffb3b3;
+    border-radius:12px; padding:10px 14px; margin-bottom:14px; font-size:.85rem; display:none; text-align:center;
+  }
+  .authbar.show { display:block; }
+  .authbar a { color:#ff7a00; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .card {
+    background:#14141c; border:1px solid #26263a; border-radius:14px; padding:16px;
+  }
+  .card .lbl { color:#888; font-size:0.8rem; margin-bottom:6px; }
+  .card .big { font-size:1.5rem; font-weight:700; color:#fff; }
+  .card .unit { font-size:0.85rem; color:#999; }
+  .full { grid-column:1 / -1; }
+  .leaflet-container{background:#0d0d14;}
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>🏠 ti-lex MAISON</h1>
+    <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Connexion...</span></div>
+  </header>
+
+  <div id="map"></div>
+
+  <div class="panel">
+    <div id="meteoBox" style="margin-bottom:14px;"></div>
+    <div class="authbar" id="authbar"></div>
+    <div class="alert" id="alert">🚛 Le camion d'Alex arrive!</div>
+
+    <div class="grid">
+      <div class="card"><div class="lbl">📏 Distance maison</div><div class="big" id="dist">--<span class="unit"> km</span></div></div>
+      <div class="card"><div class="lbl">⏰ Arrivée estimée (ETA)</div><div class="big" id="eta">--<span class="unit"> min</span></div></div>
+      <div class="card"><div class="lbl">🚀 Vitesse</div><div class="big" id="spd">--<span class="unit"> km/h</span></div></div>
+      <div class="card"><div class="lbl">📡 Dernier signal</div><div class="big" id="last" style="font-size:1rem;">--</div></div>
+      <div class="card full"><div class="lbl">📍 Position camion</div><div class="big" id="pos" style="font-size:0.95rem;">En attente...</div></div>
+    </div>
+  </div>
+
+<script src="js/tilex-config.js"></script>
+<script src="js/tilex-prive.js"></script>
+<script src="js/tilex-core.js"></script>
+<script src="js/tilex-meteo.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  // Mêmes clés que truck.html (anon JWT) → session partagée + RLS.
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_KEY = window.SB_ANON || '';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (window.tilexDemarrer) tilexDemarrer(); // gardien + sync offline
+
+  const TRUCK_ID = 'camion-alex';
+
+  // 🏠 POSITION DE LA MAISON (Normandin) — ajuste si besoin.
+  const MAISON = { lat: 48.8290, lon: -72.5320 };
+
+  // Seuils d'alerte (en minutes)
+  const ALERTE_ETA = 60; // alerte quand le camion est à ~1h
+  let dejaAlerte = false;
+  let pollTimer = null;
+
+  // --- CARTE ---
+  const map = L.map('map', { zoomControl:true }).setView([MAISON.lat, MAISON.lon], 10);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution:'© OpenStreetMap © CARTO', maxZoom:19
+  }).addTo(map);
+
+  const maisonIcon = L.divIcon({ html:'🏠', className:'', iconSize:[30,30] });
+  L.marker([MAISON.lat, MAISON.lon], { icon:maisonIcon }).addTo(map).bindPopup('🏠 Maison');
+
+  const truckIcon = L.divIcon({ html:'🚛', className:'', iconSize:[34,34] });
+  let truckMarker = L.marker([MAISON.lat, MAISON.lon], { icon:truckIcon }).addTo(map);
+  let ligne = null;
+
+  function distanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function afficher(p) {
+    if(!p || typeof p.lat!=='number' || typeof p.lon!=='number') return;
+    document.getElementById('dot').classList.add('on');
+    document.getElementById('statusTxt').textContent = 'Camion connecté 🛰️';
+
+    const dist = distanceKm(p.lat, p.lon, MAISON.lat, MAISON.lon);
+    const spd = p.vitesse > 1 ? p.vitesse : 0;
+    const eta = spd > 1 ? (dist / spd * 60) : null; // minutes
+
+    document.getElementById('dist').innerHTML = dist.toFixed(1) + '<span class="unit"> km</span>';
+    document.getElementById('spd').innerHTML = spd.toFixed(0) + '<span class="unit"> km/h</span>';
+    document.getElementById('eta').innerHTML = eta ? Math.round(eta) + '<span class="unit"> min</span>' : '--<span class="unit"> (arrêté)</span>';
+    document.getElementById('pos').textContent = p.lat.toFixed(5) + ', ' + p.lon.toFixed(5);
+    if(p.created_at){ try{ document.getElementById('last').textContent = new Date(p.created_at).toLocaleTimeString('fr-CA'); }catch(e){} }
+
+    truckMarker.setLatLng([p.lat, p.lon]);
+    if (ligne) map.removeLayer(ligne);
+    ligne = L.polyline([[p.lat,p.lon],[MAISON.lat,MAISON.lon]], { color:'#ff3b3b', weight:2, dashArray:'6,8' }).addTo(map);
+
+    if (eta !== null && eta <= ALERTE_ETA && eta > 5 && !dejaAlerte) {
+      lancerAlerte('🚛 Le camion d\'Alex va arriver dans environ ' + Math.round(eta) + ' min!');
+      dejaAlerte = true;
+    }
+    if (dist < 1) { lancerAlerte('✅ Le camion d\'Alex est ARRIVÉ! 🏠'); }
+    if (eta !== null && eta > ALERTE_ETA + 15) dejaAlerte = false;
+  }
+
+  function lancerAlerte(msg) {
+    const a = document.getElementById('alert');
+    a.textContent = msg;
+    a.classList.add('show');
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('ti-lex 🚛', { body: msg }); } catch(e) {}
+    }
+    try {
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(); o.frequency.value = 800;
+      o.connect(ctx.destination); o.start(); setTimeout(()=>o.stop(), 250);
+    } catch(e) {}
+  }
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    try { Notification.requestPermission(); } catch(e) {}
+  }
+
+  function authBanner(html){ const b=document.getElementById('authbar'); if(!html){b.className='authbar';b.innerHTML='';return;} b.className='authbar show'; b.innerHTML=html; }
+
+  async function charger() {
+    const { data, error } = await supabase
+      .from('truck_position')
+      .select('*')
+      .eq('truck_id', TRUCK_ID)
+      .order('created_at', { ascending:false })
+      .limit(1);
+    if (!error && data && data.length) afficher(data[0]);
+  }
+
+  async function boot() {
+    const { data } = await supabase.auth.getSession();
+    const session = data && data.session ? data.session : null;
+    if (!session || !session.user) {
+      authBanner('🔒 Connecte-toi d’abord — ouvre <a href="/pro">/pro</a>, connecte-toi, puis reviens.');
+      document.getElementById('statusTxt').textContent = 'Non connecté';
+      return;
+    }
+    authBanner('');
+    try { await supabase.realtime.setAuth(session.access_token); } catch(e){}
+
+    charger();
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(charger, 10000); // rafraîchit aux 10 sec
+
+    supabase.channel('maison-'+TRUCK_ID)
+      .on('postgres_changes',
+        { event:'INSERT', schema:'public', table:'truck_position', filter:'truck_id=eq.'+TRUCK_ID },
+        (payload) => afficher(payload.new)
+      ).subscribe();
+  }
+  supabase.auth.onAuthStateChange(() => { if (!pollTimer) boot(); });
+  boot();
+
+  // Météo Normandin (Open-Meteo, public — pas besoin de session)
+  function chargerMeteo(){
+    if(!window.TilexMeteo) return;
+    TilexMeteo.normandin()
+      .then(m => { var b=document.getElementById('meteoBox'); if(b) b.innerHTML = TilexMeteo.rendreHTML(m); })
+      .catch(()=>{ var b=document.getElementById('meteoBox'); if(b) b.innerHTML = TilexMeteo.rendreHTML(null); });
+  }
+  chargerMeteo();
+  setInterval(chargerMeteo, 600000); // rafraîchit aux 10 min
+</script>
+</body>
+</html>

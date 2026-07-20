@@ -173,7 +173,16 @@ document.addEventListener("DOMContentLoaded",function(){
       TilexVision.loadFromDrop(e.dataTransfer).then(function(img){
         var composer=document.querySelector(".composer-glass");
         if(composer)TilexVision.afficherPreview(composer,img);
-        if(typeof showToastMsg==="function")showToastMsg("🖼️ Image déposée");
+        // 👁️ Glisser-déposer = analyse immédiate quand aucun texte n'est en cours
+        //    (sinon on garde l'aperçu pour que l'utilisateur ajoute sa question puis ⚡).
+        //    Passe par composerSend → sendChat → ai-proxy : session, bon modèle, mémoire, anti-XSS.
+        var ci=document.getElementById("composer-input");
+        var enChat=(window.currentComposerMode||"chat")==="chat";
+        if(enChat&&ci&&!ci.value.trim()&&typeof window.composerSend==="function"){
+          window.composerSend();
+        }else if(typeof showToastMsg==="function"){
+          showToastMsg("🖼️ Image déposée — écris ta question puis ⚡");
+        }
       }).catch(function(){});
     });
   }

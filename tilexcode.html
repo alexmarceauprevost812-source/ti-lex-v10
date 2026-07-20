@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tilexcode — Codex ti-lex-v10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange:  #FF7A00; /* 1. Orange ti-lex — boutons pis accents */
+    --lime:    #9ACD32; /* 2. Vert lime dark — texte du code */
+    --diffadd: #22C55E; /* 3. Vert diff — lignes ajoutées */
+    --diffdel: #EF4444; /* 4. Rouge diff — lignes supprimées */
+    --func:    #FFD60A; /* 5. Jaune doré — noms de fonctions */
+    --keyword: #22D3EE; /* 6. Cyan — mots-clés */
+
+    --noir: #0A0A0A;
+    --noir2: #111111;
+    --noir3: #1A1A1A;
+    --bordure: #2A2A2A;
+    --texte: #FFFFFF;
+    --texte-doux: #8A8A8A;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+    --titre: 'Space Grotesk', sans-serif;
+    --transition-menu: 0.38s cubic-bezier(0.25, 0.8, 0.3, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--noir);
+    color: var(--texte);
+    font-family: var(--titre);
+    overflow: hidden;
+  }
+
+  body { display: flex; flex-direction: column; }
+
+  button { font-family: var(--titre); cursor: pointer; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 2px;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--bordure);
+    background: var(--noir2);
+    z-index: 50;
+    flex-shrink: 0;
+  }
+  .btn-icone {
+    background: transparent;
+    border: 1px solid var(--bordure);
+    color: var(--texte);
+    border-radius: 8px;
+    width: 38px; height: 38px;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .btn-icone:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-icone.actif { background: var(--orange); border-color: var(--orange); color: #000; }
+
+  .logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.5px; white-space: nowrap; }
+  .logo span { color: var(--orange); }
+  .badge {
+    font-size: 0.62rem; font-weight: 500;
+    color: var(--orange);
+    border: 1px solid var(--orange);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .header-droite { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+  .btn {
+    font-weight: 700;
+    font-size: 0.82rem;
+    background: var(--orange);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    transition: transform .1s ease, filter .15s ease;
+    white-space: nowrap;
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn:active { transform: scale(0.97); }
+  .btn.secondaire { background: transparent; color: var(--orange); border: 1px solid var(--orange); }
+  .btn.discret { background: transparent; color: var(--texte-doux); border: 1px solid var(--bordure); font-weight: 500; }
+  .btn.discret:hover { color: var(--texte); border-color: var(--orange); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ============ MENU DU HAUT (GitHub) — ouvre tranquillement ============ */
+  .menu-haut {
+    background: var(--noir2);
+    border-bottom: 1px solid var(--bordure);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-menu);
+    flex-shrink: 0;
+    z-index: 40;
+  }
+  .menu-haut.ouvert { max-height: 340px; overflow-y: auto; }
+  .menu-haut-contenu {
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .champ-groupe { display: flex; flex-direction: column; gap: 6px; }
+  .champ-groupe label { font-size: 0.72rem; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.5px; }
+  .champ {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    background: var(--noir);
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    color: var(--lime);
+    padding: 9px 12px;
+    width: 100%;
+  }
+  .champ::placeholder { color: var(--texte-doux); }
+  select.champ { color: var(--texte); cursor: pointer; }
+  .gh-statut { font-size: 0.78rem; color: var(--texte-doux); display: flex; align-items: center; gap: 6px; }
+  .gh-statut.ok { color: var(--diffadd); }
+  .gh-statut.erreur { color: var(--diffdel); }
+  .gh-actions { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+  .note-securite { grid-column: 1 / -1; font-size: 0.72rem; color: var(--texte-doux); }
+  .note-securite b { color: var(--orange); }
+
+  .palette-mini { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--bordure); padding-top: 14px; }
+  .palette-mini span { font-size: 0.72rem; color: var(--texte-doux); text-transform: uppercase; letter-spacing: .5px; }
+  .palette-mini input[type="color"] {
+    width: 34px; height: 28px;
+    border: 1px solid var(--bordure);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  /* ============ CORPS : SIDEBAR + 2 PANNEAUX ============ */
+  .corps { display: flex; flex: 1; min-height: 0; }
+
+  /* Sidebar gauche — ouvre tranquillement */
+  aside {
+    width: 0;
+    background: var(--noir2);
+    border-right: 1px solid transparent;
+    overflow: hidden;
+    transition: width var(--transition-menu), border-color var(--transition-menu);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+  aside.ouvert { width: 270px; border-right-color: var(--bordure); }
+  .sidebar-interne { width: 270px; display: flex; flex-direction: column; height: 100%; }
+  .sidebar-tete { padding: 14px; border-bottom: 1px solid var(--bordure); }
+  .sidebar-liste { flex: 1; overflow-y: auto; padding: 10px; }
+  .projet-titre {
+    font-size: 0.68rem;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 12px 8px 6px;
+    font-weight: 700;
+  }
+  .conv-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    color: var(--texte-doux);
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+  }
+  .conv-item:hover { background: var(--noir3); color: var(--texte); }
+  .conv-item.actif { border-color: var(--orange); color: var(--texte); background: var(--noir3); }
+  .conv-item .conv-nom { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conv-item .mini-btn {
+    background: transparent; border: none; color: var(--texte-doux);
+    font-size: 0.8rem; padding: 2px 4px; border-radius: 4px; opacity: 0;
+    transition: opacity .15s ease;
+  }
+  .conv-item:hover .mini-btn { opacity: 1; }
+  .conv-item .mini-btn:hover { color: var(--orange); }
+  .sidebar-vide { font-size: 0.78rem; color: var(--texte-doux); padding: 14px 10px; line-height: 1.5; }
+
+  /* Zone principale : 2 panneaux fixes */
+  .panneaux { flex: 1; display: flex; min-width: 0; }
+  .panneau {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  .panneau-chat { border-right: 1px solid var(--bordure); }
+  .panneau-tete {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--noir3);
+    border-bottom: 1px solid var(--bordure);
+    font-size: 0.78rem;
+    color: var(--texte-doux);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .pastille { width: 9px; height: 9px; border-radius: 50%; background: var(--orange); opacity: .85; flex-shrink: 0; }
+
+  /* ---- Chat ---- */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .message { max-width: 88%; display: flex; flex-direction: column; gap: 4px; }
+  .message .auteur { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--texte-doux); }
+  .message .bulle {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .message.moi { align-self: flex-end; align-items: flex-end; }
+  .message.moi .bulle { background: var(--orange); color: #000; border-bottom-right-radius: 4px; font-weight: 500; }
+  .message.al .bulle { background: var(--noir3); border: 1px solid var(--bordure); border-bottom-left-radius: 4px; }
+  .message.al .bulle code { font-family: var(--mono); color: var(--lime); font-size: 0.82rem; }
+  .message .fichiers-msg { font-size: 0.7rem; color: var(--texte-doux); font-family: var(--mono); }
+  .message img.image-msg { max-width: 220px; border-radius: 10px; border: 1px solid var(--bordure); }
+  .chat-vide {
+    margin: auto;
+    text-align: center;
+    color: var(--texte-doux);
+    font-size: 0.88rem;
+    line-height: 1.7;
+    max-width: 320px;
+  }
+  .chat-vide b { color: var(--orange); }
+  .en-reflexion { font-size: 0.78rem; color: var(--lime); font-family: var(--mono); animation: pulser 1.2s ease infinite; }
+  @keyframes pulser { 50% { opacity: 0.35; } }
+
+  /* Pièces jointes en attente */
+  .zone-jointes {
+    display: none;
+    gap: 8px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--bordure);
+    flex-wrap: wrap;
+    background: var(--noir2);
+    flex-shrink: 0;
+  }
+  .zone-jointes.visible { display: flex; }
+  .jointe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--noir3);
+    border: 1px solid var(--bordure);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--texte);
+  }
+  .jointe img { width: 30px; height: 30px; object-fit: cover; border-radius: 5px; }
+  .jointe .type-ico { color: var(--orange); font-weight: 700; }
+  .jointe button {
+    background: transparent; border: none; font-size: 0.72rem;
+    padding: 2px 5px; border-radius: 4px;
+  }
+  .jointe .vers-codex { color: var(--lime); }
+  .jointe .vers-gh { color: var(--keyword); }
+  .jointe .retirer { color: var(--diffdel); }
+  .jointe button:hover { background: var(--noir); }
+
+  /* Barre d'écriture EN BAS avec bouton (+) à gauche */
+  .barre-ecriture {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--bordure);
+    background: var(--noir2);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .btn-plus {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: #000;
+    border: none;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform var(--transition-menu), filter .15s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn-plus:hover { filter: brightness(1.12); }
+  .btn-plus.ouvert { transform: rotate(45deg); }
+
+  /* Petit menu du (+) — ouvre tranquillement */
+  .menu-plus {
+    position: absolute;
+    bottom: 66px;
+    left: 14px;
+    background: var(--noir3);
+    border: 1px solid var(--bordure);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity var(--transition-menu), transform var(--transition-menu);
+    z-index: 30;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  }
+  .menu-plus.ouvert { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .menu-plus button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--texte);
+    font-size: 0.85rem;
+    padding: 12px 18px;
+    text-align: left;
+  }
+  .menu-plus button:hover { background: var(--noir2); color: var(--orange); }
+  .menu-plus .ico { color: var(--orange); font-weight: 700; width: 18px; text-align: center; }
+
+  .champ-message {
+    flex: 1;
+    font-family: var(--titre);
+    font-size: 0.9rem;
+    background: var(--noir);
+    border: 1px solid var(--bordure);
+    border-radius: 12px;
+    color: var(--texte);
+    padding: 11px 14px;
+    resize: none;
+    max-height: 130px;
+    line-height: 1.5;
+  }
+  .champ-message::placeholder { color: var(--texte-doux); }
+  .champ-message:focus { border-color: var(--orange); }
+  .btn-envoyer { border-radius: 12px; padding: 11px 18px; flex-shrink: 0; }
+
+  /* ---- Codex (éditeur) ---- */
+  pre, code, textarea.editeur, .gouttiere {
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    line-height: 1.55;
+    tab-size: 2;
+  }
+  .nom-fichier {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    background: var(--noir);
+    border: 1px solid var(--bordure);
+    border-radius: 6px;
+    color: var(--lime);
+    padding: 6px 10px;
+    display: inline-block;
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .interrupteur { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--texte-doux); cursor: pointer; user-select: none; }
+  .interrupteur input { accent-color: var(--orange); width: 15px; height: 15px; cursor: pointer; }
+  .interrupteur .add { color: var(--diffadd); font-weight: 700; }
+  .interrupteur .del { color: var(--diffdel); font-weight: 700; }
+
+  .editeur-zone { position: relative; display: flex; flex: 1; min-height: 0; }
+  .gouttiere {
+    padding: 14px 0;
+    width: 48px;
+    text-align: right;
+    color: var(--texte-doux);
+    background: var(--noir2);
+    border-right: 1px solid var(--bordure);
+    overflow: hidden;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .gouttiere div { padding-right: 10px; }
+  .gouttiere .num-add { color: var(--diffadd); }
+  .gouttiere .num-del { color: var(--diffdel); }
+  .empile { position: relative; flex: 1; overflow: hidden; }
+  .surlignage, textarea.editeur {
+    position: absolute;
+    inset: 0;
+    padding: 14px;
+    white-space: pre;
+    overflow: auto;
+    border: none;
+  }
+  .surlignage { color: var(--lime); pointer-events: none; background: transparent; }
+  textarea.editeur { background: transparent; color: transparent; caret-color: var(--lime); resize: none; }
+  textarea.editeur::selection { background: color-mix(in srgb, var(--orange) 30%, transparent); }
+
+  .tok-kw   { color: var(--keyword); font-weight: 700; }
+  .tok-fn   { color: var(--func); }
+  .tok-str  { color: var(--orange); }
+  .tok-com  { color: var(--texte-doux); font-style: italic; }
+  .tok-num  { color: var(--texte); }
+  .ligne-add { color: var(--diffadd); background: color-mix(in srgb, var(--diffadd) 12%, transparent); display: inline-block; width: 100%; }
+  .ligne-del { color: var(--diffdel); background: color-mix(in srgb, var(--diffdel) 12%, transparent); display: inline-block; width: 100%; }
+
+  .barre-statut {
+    display: flex;
+    gap: 16px;
+    padding: 7px 14px;
+    border-top: 1px solid var(--bordure);
+    background: var(--noir2);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--texte-doux);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .barre-statut b { color: var(--orange); font-weight: 700; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: var(--orange);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 999px;
+    transition: transform .3s ease;
+    z-index: 999;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.visible { transform: translateX(-50%) translateY(0); }
+  .toast.erreur { background: var(--diffdel); color: #fff; }
+
+  /* Onglets mobiles */
+  .onglets-mobiles { display: none; }
+
+  @media (max-width: 900px) {
+    .panneaux { flex-direction: column; }
+    .panneau { display: none; }
+    .panneau.visible-mobile { display: flex; }
+    .panneau-chat { border-right: none; }
+    .onglets-mobiles {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--noir2);
+      border-bottom: 1px solid var(--bordure);
+      flex-shrink: 0;
+    }
+    .onglets-mobiles button {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--bordure);
+      color: var(--texte-doux);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    .onglets-mobiles button.actif { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 700; }
+    aside { position: absolute; top: 0; bottom: 0; left: 0; z-index: 45; height: 100%; }
+    .corps { position: relative; }
+    .badge { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="btn-icone" id="btnSidebar" onclick="basculerSidebar()" aria-label="Ouvrir le menu des conversations" title="Conversations">☰</button>
+  <div class="logo">ti-lex<span>code</span></div>
+  <div class="badge">Produit du Québec</div>
+  <div class="header-droite">
+    <a class="btn discret" href="/pro.html" title="Retourner sur la plateforme ti-lex">← Plateforme</a>
+    <button class="btn-icone" id="btnMenuHaut" onclick="basculerMenuHaut()" aria-label="Ouvrir le menu GitHub" title="GitHub pis réglages">⚙</button>
+  </div>
+</header>
+
+<!-- ============ MENU DU HAUT : GitHub + palette ============ -->
+<div class="menu-haut" id="menuHaut">
+  <div class="menu-haut-contenu">
+    <div class="champ-groupe">
+      <label for="ghToken">Token GitHub (personnel)</label>
+      <input class="champ" type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+    </div>
+    <div class="champ-groupe">
+      <label for="ghRepo">Repo (proprietaire/nom)</label>
+      <input class="champ" type="text" id="ghRepo" placeholder="alex/ti-lex-v10">
+    </div>
+    <div class="champ-groupe">
+      <label for="ghBranche">Branche</label>
+      <select class="champ" id="ghBranche">
+        <option value="">— connecte-toi d'abord —</option>
+      </select>
+    </div>
+    <div class="gh-actions">
+      <button class="btn" onclick="connecterGitHub()">Connecter</button>
+      <button class="btn secondaire" onclick="deconnecterGitHub()">Déconnecter</button>
+      <span class="gh-statut" id="ghStatut">Pas connecté</span>
+    </div>
+    <div class="note-securite">
+      <b>Sécurité :</b> ton token reste sauvegardé sur <b>ton appareil seulement</b> (stockage local du navigateur). Il est envoyé rien qu'à l'API GitHub, jamais ailleurs.
+    </div>
+    <div class="palette-mini" id="paletteMini">
+      <span>Palette (6 couleurs)</span>
+      <!-- pickers générés par JS -->
+    </div>
+  </div>
+</div>
+
+<div class="corps">
+
+  <!-- ============ SIDEBAR GAUCHE : conversations ============ -->
+  <aside id="sidebar">
+    <div class="sidebar-interne">
+      <div class="sidebar-tete">
+        <button class="btn" style="width:100%" onclick="nouvelleConversation()">+ Nouvelle conversation</button>
+      </div>
+      <div class="sidebar-liste" id="listeConversations"></div>
+    </div>
+  </aside>
+
+  <!-- ============ 2 PANNEAUX FIXES ============ -->
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+    <div class="onglets-mobiles">
+      <button id="ongletChat" class="actif" onclick="basculerPanneauMobile('chat')">Chat</button>
+      <button id="ongletCodex" onclick="basculerPanneauMobile('codex')">Codex</button>
+    </div>
+
+    <div class="panneaux">
+
+      <!-- PANNEAU 1 : CHAT -->
+      <section class="panneau panneau-chat visible-mobile" id="panneauChat">
+        <div class="panneau-tete">
+          <span class="pastille"></span>
+          <span id="titreConversation">Agent AL — Chat</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-vide" id="chatVide">
+            Salut! Icitte à gauche c'est <b>ton chat avec Agent AL</b>.<br>
+            Le code qu'il te donne s'en va <b>tout seul dans le codex à droite</b>, avec le nom de fichier déjà écrit. Ajoute des fichiers avec le <b>(+)</b>, pis pousse ton travail sur GitHub avec le menu <b>⚙</b>.
+          </div>
+        </div>
+
+        <div class="zone-jointes" id="zoneJointes"></div>
+
+        <!-- Barre d'écriture en bas avec le (+) à gauche -->
+        <div class="barre-ecriture">
+          <div class="menu-plus" id="menuPlus">
+            <button onclick="choisirFichiers('image/*')"><span class="ico">🖼</span> Ajouter des images</button>
+            <button onclick="choisirFichiers('.zip')"><span class="ico">🗜</span> Ajouter un zip</button>
+            <button onclick="choisirFichiers('*')"><span class="ico">📄</span> Ajouter des fichiers</button>
+          </div>
+          <button class="btn-plus" id="btnPlus" onclick="basculerMenuPlus()" aria-label="Ajouter des fichiers">+</button>
+          <textarea class="champ-message" id="champMessage" rows="1" placeholder="Écris ton message à Agent AL..."></textarea>
+          <button class="btn btn-envoyer" id="btnEnvoyer" onclick="envoyerMessage()">Envoyer</button>
+          <input type="file" id="entreeFichiers" multiple style="display:none">
+        </div>
+      </section>
+
+      <!-- PANNEAU 2 : CODEX -->
+      <section class="panneau" id="panneauCodex">
+        <div class="panneau-tete">
+          <span class="pastille"></span>
+          <span class="nom-fichier" id="nomFichier" title="Nom de fichier choisi automatiquement">mon-code.js</span>
+          <label class="interrupteur">
+            <input type="checkbox" id="modeDiff" onchange="rendreCode()">
+            Diff <span class="add">+</span><span class="del">−</span>
+          </label>
+          <div style="margin-left:auto; display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn discret" onclick="copierCode()">Copier</button>
+            <button class="btn discret" onclick="telechargerCode()">Télécharger</button>
+            <button class="btn secondaire" onclick="pousserCodeVersGitHub()">↑ GitHub</button>
+          </div>
+        </div>
+
+        <div class="editeur-zone">
+          <div class="gouttiere" id="gouttiere"></div>
+          <div class="empile">
+            <pre class="surlignage" id="surlignage"></pre>
+            <textarea class="editeur" id="editeur" spellcheck="false" aria-label="Éditeur de code"></textarea>
+          </div>
+        </div>
+
+        <div class="barre-statut">
+          <span><b id="statLignes">0</b> lignes</span>
+          <span><b id="statCars">0</b> caractères</span>
+          <span id="statDiff"></span>
+          <span id="statSauvegarde" style="margin-left:auto;"></span>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Config partagée avec la plateforme (window.SB_URL / window.SB_ANON) -->
+<script src="js/tilex-config.js"></script>
+<!-- Client Supabase (même session que pro/web) — expose window.sbClient.
+     Agent AL est appelé via l'Edge Function tilexcode-agent : la clé API reste
+     100 % côté serveur (secret ANTHROPIC_API_KEY), jamais dans ce HTML public. -->
+<script type="module">
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  const SUPABASE_URL  = window.SB_URL  || "https://rnuripmfozlxenryxhdc.supabase.co";
+  const SUPABASE_ANON = window.SB_ANON || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
+  window.sbClient           = createClient(SUPABASE_URL, SUPABASE_ANON);
+  window.TILEXCODE_FN_AGENT = SUPABASE_URL + "/functions/v1/tilexcode-agent";
+  window.TILEXCODE_ANON     = SUPABASE_ANON;
+</script>
+
+<script>
+/* ============================================================
+   tilexcode v2 — Codex ti-lex-v10
+   Chat Agent AL + Codex + GitHub + conversations sauvegardées
+   ============================================================ */
+
+/* ---------- Stockage local (sur l'appareil de l'utilisateur) ----------
+   Si le stockage local est pas disponible (ex: aperçu dans claude.ai),
+   on tombe en mémoire pour que l'app plante pas. Sur ta plateforme,
+   tout va rester sauvegardé même après déconnexion. */
+const memoireSecours = {};
+const stockage = {
+  get(cle) {
+    try { const v = localStorage.getItem(cle); return v ? JSON.parse(v) : null; }
+    catch (e) { return memoireSecours[cle] || null; }
+  },
+  set(cle, valeur) {
+    try { localStorage.setItem(cle, JSON.stringify(valeur)); return true; }
+    catch (e) { memoireSecours[cle] = valeur; return false; }
+  },
+  retirer(cle) {
+    try { localStorage.removeItem(cle); } catch (e) { delete memoireSecours[cle]; }
+  }
+};
+
+const CLE_CONVERSATIONS = 'tilexcode_conversations';
+const CLE_GITHUB = 'tilexcode_github';
+const CLE_PALETTE = 'tilexcode_palette';
+
+/* ---------- Palette ---------- */
+const PALETTE_DEFAUT = [
+  { id: 'orange',  nom: 'Orange ti-lex',  hex: '#FF7A00' },
+  { id: 'lime',    nom: 'Vert lime',      hex: '#9ACD32' },
+  { id: 'diffadd', nom: 'Vert diff',      hex: '#22C55E' },
+  { id: 'diffdel', nom: 'Rouge diff',     hex: '#EF4444' },
+  { id: 'func',    nom: 'Jaune fonctions',hex: '#FFD60A' },
+  { id: 'keyword', nom: 'Cyan mots-clés', hex: '#22D3EE' },
+];
+let palette = stockage.get(CLE_PALETTE) || PALETTE_DEFAUT.map(c => ({ ...c }));
+
+function construirePaletteMini() {
+  const conteneur = document.getElementById('paletteMini');
+  palette.forEach((c, i) => {
+    const inp = document.createElement('input');
+    inp.type = 'color';
+    inp.value = c.hex;
+    inp.title = c.nom;
+    inp.setAttribute('aria-label', c.nom);
+    inp.addEventListener('input', (e) => {
+      palette[i].hex = e.target.value.toUpperCase();
+      appliquerPalette();
+      stockage.set(CLE_PALETTE, palette);
+    });
+    conteneur.appendChild(inp);
+  });
+}
+function appliquerPalette() {
+  palette.forEach(c => document.documentElement.style.setProperty('--' + c.id, c.hex));
+}
+
+/* ---------- Menus qui ouvrent tranquillement ---------- */
+function basculerSidebar() {
+  const s = document.getElementById('sidebar');
+  s.classList.toggle('ouvert');
+  document.getElementById('btnSidebar').classList.toggle('actif', s.classList.contains('ouvert'));
+}
+function basculerMenuHaut() {
+  const m = document.getElementById('menuHaut');
+  m.classList.toggle('ouvert');
+  document.getElementById('btnMenuHaut').classList.toggle('actif', m.classList.contains('ouvert'));
+}
+function basculerMenuPlus() {
+  const m = document.getElementById('menuPlus');
+  m.classList.toggle('ouvert');
+  document.getElementById('btnPlus').classList.toggle('ouvert', m.classList.contains('ouvert'));
+}
+function basculerPanneauMobile(nom) {
+  document.getElementById('panneauChat').classList.toggle('visible-mobile', nom === 'chat');
+  document.getElementById('panneauCodex').classList.toggle('visible-mobile', nom === 'codex');
+  document.getElementById('ongletChat').classList.toggle('actif', nom === 'chat');
+  document.getElementById('ongletCodex').classList.toggle('actif', nom === 'codex');
+}
+
+/* ---------- Conversations (sauvegardées sur l'appareil) ---------- */
+let conversations = stockage.get(CLE_CONVERSATIONS) || [];
+let convActive = null;
+
+function sauvegarderConversations() {
+  const ok = stockage.set(CLE_CONVERSATIONS, conversations);
+  document.getElementById('statSauvegarde').textContent = ok ? 'sauvegardé ✓' : 'sauvegarde locale indisponible';
+}
+
+function nouvelleConversation() {
+  const conv = {
+    id: 'conv_' + Date.now(),
+    titre: 'Nouvelle conversation',
+    projet: 'ti-lex-v10',
+    messages: [],
+    code: { nom: 'mon-code.js', contenu: CODE_DEPART },
+    creeLe: new Date().toISOString()
+  };
+  conversations.unshift(conv);
+  sauvegarderConversations();
+  chargerConversation(conv.id);
+  rendreListeConversations();
+}
+
+function chargerConversation(id) {
+  convActive = conversations.find(c => c.id === id) || null;
+  if (!convActive) return;
+  document.getElementById('titreConversation').textContent = convActive.titre;
+  definirNomFichier(convActive.code.nom, convActive.code.auto !== false);
+  editeur.value = convActive.code.contenu;
+  rendreCode();
+  rendreMessages();
+  rendreListeConversations();
+}
+
+function renommerConversation(id, evenement) {
+  evenement.stopPropagation();
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+  const nouveau = prompt('Nouveau nom de la conversation :', conv.titre);
+  if (nouveau && nouveau.trim()) {
+    conv.titre = nouveau.trim();
+    sauvegarderConversations();
+    rendreListeConversations();
+    if (convActive && convActive.id === id) {
+      document.getElementById('titreConversation').textContent = conv.titre;
+    }
+  }
+}
+
+function supprimerConversation(id, evenement) {
+  evenement.stopPropagation();
+  if (!confirm('Supprimer cette conversation pour de bon?')) return;
+  conversations = conversations.filter(c => c.id !== id);
+  sauvegarderConversations();
+  if (convActive && convActive.id === id) {
+    convActive = null;
+    if (conversations.length) chargerConversation(conversations[0].id);
+    else nouvelleConversation();
+  }
+  rendreListeConversations();
+}
+
+function rendreListeConversations() {
+  const liste = document.getElementById('listeConversations');
+  liste.innerHTML = '';
+  if (!conversations.length) {
+    liste.innerHTML = '<div class="sidebar-vide">Pas encore de conversation. Pèse sur le bouton en haut pour en partir une!</div>';
+    return;
+  }
+  // regrouper par projet
+  const projets = {};
+  conversations.forEach(c => {
+    const p = c.projet || 'ti-lex-v10';
+    (projets[p] = projets[p] || []).push(c);
+  });
+  Object.keys(projets).forEach(projet => {
+    const titre = document.createElement('div');
+    titre.className = 'projet-titre';
+    titre.textContent = projet;
+    liste.appendChild(titre);
+    projets[projet].forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'conv-item' + (convActive && convActive.id === c.id ? ' actif' : '');
+      item.onclick = () => chargerConversation(c.id);
+      const nom = document.createElement('span');
+      nom.className = 'conv-nom';
+      nom.textContent = c.titre;
+      const btnRenommer = document.createElement('button');
+      btnRenommer.className = 'mini-btn';
+      btnRenommer.textContent = '✎';
+      btnRenommer.title = 'Renommer';
+      btnRenommer.onclick = (e) => renommerConversation(c.id, e);
+      const btnSupprimer = document.createElement('button');
+      btnSupprimer.className = 'mini-btn';
+      btnSupprimer.textContent = '✕';
+      btnSupprimer.title = 'Supprimer';
+      btnSupprimer.onclick = (e) => supprimerConversation(c.id, e);
+      item.appendChild(nom);
+      item.appendChild(btnRenommer);
+      item.appendChild(btnSupprimer);
+      liste.appendChild(item);
+    });
+  });
+}
+
+/* ---------- Chat : messages ---------- */
+function rendreMessages() {
+  const zone = document.getElementById('chatMessages');
+  zone.innerHTML = '';
+  if (!convActive || !convActive.messages.length) {
+    const vide = document.createElement('div');
+    vide.className = 'chat-vide';
+    vide.innerHTML = 'Salut! Icitte à gauche c\'est <b>ton chat avec Agent AL</b>.<br>Le code qu\'il te donne s\'en va <b>tout seul dans le codex à droite</b>, avec le nom de fichier déjà écrit. Ajoute des fichiers avec le <b>(+)</b>, pis pousse ton travail sur GitHub avec le menu <b>⚙</b>.';
+    zone.appendChild(vide);
+    return;
+  }
+  convActive.messages.forEach(m => zone.appendChild(construireBulle(m)));
+  zone.scrollTop = zone.scrollHeight;
+}
+
+function construireBulle(m) {
+  const div = document.createElement('div');
+  div.className = 'message ' + (m.role === 'user' ? 'moi' : 'al');
+  const auteur = document.createElement('div');
+  auteur.className = 'auteur';
+  auteur.textContent = m.role === 'user' ? 'Toi' : 'Agent AL';
+  div.appendChild(auteur);
+  if (m.images && m.images.length) {
+    m.images.forEach(img => {
+      const el = document.createElement('img');
+      el.className = 'image-msg';
+      el.src = 'data:' + img.mime + ';base64,' + img.base64;
+      el.alt = img.nom;
+      div.appendChild(el);
+    });
+  }
+  const bulle = document.createElement('div');
+  bulle.className = 'bulle';
+  bulle.textContent = m.content;
+  div.appendChild(bulle);
+  if (m.fichiers && m.fichiers.length) {
+    const f = document.createElement('div');
+    f.className = 'fichiers-msg';
+    f.textContent = '📎 ' + m.fichiers.join(', ');
+    div.appendChild(f);
+  }
+  return div;
+}
+
+/* ---------- Pièces jointes via le (+) ---------- */
+let piecesJointes = [];
+const entreeFichiers = document.getElementById('entreeFichiers');
+
+function choisirFichiers(accepte) {
+  basculerMenuPlus();
+  entreeFichiers.accept = accepte === '*' ? '' : accepte;
+  entreeFichiers.value = '';
+  entreeFichiers.click();
+}
+
+entreeFichiers.addEventListener('change', async () => {
+  for (const fichier of entreeFichiers.files) {
+    const estImage = fichier.type.startsWith('image/');
+    const estTexte = /\.(js|jsx|ts|tsx|html|css|json|md|txt|py|sql|sh|yml|yaml|xml|csv)$/i.test(fichier.nom || fichier.name) || fichier.type.startsWith('text/');
+    const jointe = {
+      nom: fichier.name,
+      mime: fichier.type || 'application/octet-stream',
+      taille: fichier.size,
+      estImage: estImage,
+      estTexte: estTexte,
+      base64: null,
+      texte: null
+    };
+    try {
+      jointe.base64 = await lireEnBase64(fichier);
+      if (estTexte) jointe.texte = await lireEnTexte(fichier);
+    } catch (e) {
+      montrerToast('Impossible de lire ' + fichier.name, true);
+      continue;
+    }
+    piecesJointes.push(jointe);
+  }
+  rendreJointes();
+});
+
+function lireEnBase64(fichier) {
+  return new Promise((resoudre, rejeter) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resoudre(lecteur.result.split(',')[1]);
+    lecteur.onerror = () => rejeter(new Error('lecture échouée'));
+    lecteur.readAsDataURL(fichier);
+  });
+}
+function lireEnTexte(fichier) {
+  return new Promise((resoudre, rejeter) => {
+    const lecteur = new FileReader();
+    lecteur.onload = () => resoudre(lecteur.result);
+    lecteur.onerror = () => rejeter(new Error('lecture échouée'));
+    lecteur.readAsText(fichier);
+  });
+}
+
+function rendreJointes() {
+  const zone = document.getElementById('zoneJointes');
+  zone.innerHTML = '';
+  zone.classList.toggle('visible', piecesJointes.length > 0);
+  piecesJointes.forEach((j, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'jointe';
+    if (j.estImage) {
+      const img = document.createElement('img');
+      img.src = 'data:' + j.mime + ';base64,' + j.base64;
+      img.alt = j.nom;
+      chip.appendChild(img);
+    } else {
+      const ico = document.createElement('span');
+      ico.className = 'type-ico';
+      ico.textContent = j.nom.toLowerCase().endsWith('.zip') ? 'ZIP' : 'DOC';
+      chip.appendChild(ico);
+    }
+    const nom = document.createElement('span');
+    nom.textContent = j.nom + ' (' + formaterTaille(j.taille) + ')';
+    chip.appendChild(nom);
+    if (j.estTexte) {
+      const versCodex = document.createElement('button');
+      versCodex.className = 'vers-codex';
+      versCodex.textContent = '→ Codex';
+      versCodex.title = 'Ouvrir dans le codex';
+      versCodex.onclick = () => ouvrirDansCodex(i);
+      chip.appendChild(versCodex);
+    }
+    const versGH = document.createElement('button');
+    versGH.className = 'vers-gh';
+    versGH.textContent = '↑ GitHub';
+    versGH.title = 'Pousser vers le repo';
+    versGH.onclick = () => pousserJointeVersGitHub(i);
+    chip.appendChild(versGH);
+    const retirer = document.createElement('button');
+    retirer.className = 'retirer';
+    retirer.textContent = '✕';
+    retirer.title = 'Retirer';
+    retirer.onclick = () => { piecesJointes.splice(i, 1); rendreJointes(); };
+    chip.appendChild(retirer);
+    zone.appendChild(chip);
+  });
+}
+
+function formaterTaille(octets) {
+  if (octets < 1024) return octets + ' o';
+  if (octets < 1048576) return (octets / 1024).toFixed(1) + ' Ko';
+  return (octets / 1048576).toFixed(1) + ' Mo';
+}
+
+function ouvrirDansCodex(index) {
+  const j = piecesJointes[index];
+  if (!j || !j.texte) return;
+  if (editeur.value.trim() && !confirm('Remplacer le code actuel par ' + j.nom + '?')) return;
+  definirNomFichier(j.nom, false);
+  editeur.value = j.texte;
+  rendreCode();
+  sauvegarderCodeDansConversation();
+  montrerToast(j.nom + ' ouvert dans le codex');
+}
+
+/* ---------- Envoyer un message à Agent AL ---------- */
+const champMessage = document.getElementById('champMessage');
+
+champMessage.addEventListener('input', () => {
+  champMessage.style.height = 'auto';
+  champMessage.style.height = Math.min(champMessage.scrollHeight, 130) + 'px';
+});
+champMessage.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    envoyerMessage();
+  }
+});
+
+let enAttente = false;
+
+async function envoyerMessage() {
+  if (enAttente) return;
+  const texte = champMessage.value.trim();
+  if (!texte && !piecesJointes.length) return;
+  if (!convActive) nouvelleConversation();
+
+  const images = piecesJointes.filter(j => j.estImage).map(j => ({ nom: j.nom, mime: j.mime, base64: j.base64 }));
+  const nomsFichiers = piecesJointes.filter(j => !j.estImage).map(j => j.nom);
+  const contexteTexte = piecesJointes
+    .filter(j => j.estTexte && j.texte)
+    .map(j => '--- Fichier joint : ' + j.nom + ' ---\n' + j.texte.slice(0, 8000))
+    .join('\n\n');
+
+  const messageUtilisateur = {
+    role: 'user',
+    content: texte || '(fichiers joints)',
+    images: images,
+    fichiers: nomsFichiers,
+    ts: Date.now()
+  };
+  convActive.messages.push(messageUtilisateur);
+
+  // premier message = titre de la conversation
+  if (convActive.messages.length === 1 && texte) {
+    convActive.titre = texte.slice(0, 40) + (texte.length > 40 ? '…' : '');
+    document.getElementById('titreConversation').textContent = convActive.titre;
+    rendreListeConversations();
+  }
+
+  champMessage.value = '';
+  champMessage.style.height = 'auto';
+  const jointesEnvoyees = piecesJointes.slice();
+  piecesJointes = [];
+  rendreJointes();
+  rendreMessages();
+  sauvegarderConversations();
+
+  // indicateur "en réflexion"
+  const zone = document.getElementById('chatMessages');
+  const attente = document.createElement('div');
+  attente.className = 'en-reflexion';
+  attente.textContent = 'Agent AL réfléchit...';
+  zone.appendChild(attente);
+  zone.scrollTop = zone.scrollHeight;
+  enAttente = true;
+  document.getElementById('btnEnvoyer').disabled = true;
+
+  try {
+    const reponse = await appellerAgentAL(texte, images, contexteTexte);
+    const traite = traiterReponseAL(reponse);
+    convActive.messages.push({ role: 'assistant', content: traite.texteChat, ts: Date.now() });
+  } catch (e) {
+    convActive.messages.push({
+      role: 'assistant',
+      content: "Oups, Agent AL est pas joignable pour l'instant (" + (e.message || 'erreur réseau') + "). Ton message est sauvegardé pareil — réessaye tantôt.",
+      ts: Date.now()
+    });
+  }
+  enAttente = false;
+  document.getElementById('btnEnvoyer').disabled = false;
+  sauvegarderConversations();
+  rendreMessages();
+}
+
+async function appellerAgentAL(texte, images, contexteTexte) {
+  /* Sur la plateforme, Agent AL passe par l'Edge Function « tilexcode-agent »
+     (agent SCRIBE), exactement comme le module Chat/Codex de ti-lex : la clé
+     Anthropic reste côté serveur (secret ANTHROPIC_API_KEY), le modèle est
+     claude-sonnet-4-6, pis l'appel est authentifié avec ta session Supabase.
+     Aucune clé API en dur dans ce fichier public. */
+  const sb = window.sbClient;
+  if (!sb) throw new Error('session pas encore prête — attends 2 secondes pis réessaye');
+
+  const { data } = await sb.auth.getSession();
+  const token = data && data.session ? data.session.access_token : null;
+  if (!token) throw new Error('connecte ton compte ti-lex sur la plateforme d\'abord');
+
+  // Le moteur Codex est sans état par appel : on lui passe l'historique récent,
+  // les fichiers texte joints pis le code actuel du codex dans le « contexte ».
+  const historique = convActive.messages.slice(-11, -1)
+    .map(m => (m.role === 'user' ? 'Utilisateur' : 'Agent AL') + ' : ' + (m.content || ''))
+    .filter(Boolean)
+    .join('\n');
+
+  const contexteCode = editeur.value.trim()
+    ? '--- Code actuel dans le codex (' + nomFichierActuel() + ') ---\n' + editeur.value.slice(0, 12000)
+    : '';
+
+  // Les images sont montrées dans le chat pis peuvent être poussées sur GitHub,
+  // mais le moteur Codex reçoit pas les pixels : on lui en signale juste la présence.
+  const notesImages = (images && images.length)
+    ? '(L\'utilisateur a joint ' + images.length + ' image(s) : '
+      + images.map(i => i.nom).join(', ')
+      + '. Le moteur Codex les voit pas — demande une description si c\'est nécessaire.)'
+    : '';
+
+  const contexte = [
+    historique && ('--- Conversation récente ---\n' + historique),
+    contexteTexte,
+    contexteCode,
+    notesImages
+  ].filter(Boolean).join('\n\n');
+
+  const reponse = await fetch(window.TILEXCODE_FN_AGENT, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'apikey': window.TILEXCODE_ANON,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      agent_id: 'SCRIBE',
+      input: (texte || 'Regarde les fichiers joints.').slice(0, 20000),
+      context: contexte.slice(-80000)
+    })
+  });
+
+  if (!reponse.ok) {
+    let msg = 'API ' + reponse.status;
+    try { const e = await reponse.json(); if (e && e.error) msg = e.error; } catch (_e) {}
+    throw new Error(msg);
+  }
+  const donnees = await reponse.json();
+  if (donnees.error) throw new Error(donnees.error);
+  return (donnees.output || '').trim() || '(réponse vide)';
+}
+
+/* ---------- Nom de fichier automatique ---------- */
+let nomFichierAuto = true;
+
+function definirNomFichier(nom, auto) {
+  document.getElementById('nomFichier').textContent = nom;
+  nomFichierAuto = !!auto;
+}
+function nomFichierActuel() {
+  return document.getElementById('nomFichier').textContent.trim() || 'mon-code.txt';
+}
+
+const EXT_PAR_LANG = {
+  javascript: 'js', js: 'js', jsx: 'jsx', typescript: 'ts', ts: 'ts', tsx: 'tsx',
+  python: 'py', py: 'py', html: 'html', css: 'css', json: 'json', sql: 'sql',
+  bash: 'sh', sh: 'sh', shell: 'sh', yaml: 'yml', yml: 'yml', markdown: 'md',
+  md: 'md', txt: 'txt', xml: 'xml', csv: 'csv'
+};
+
+function detecterExtension(code) {
+  const t = code.trim();
+  if (!t) return null;
+  if (/^<!DOCTYPE|^<html|<\/html>/i.test(t)) return 'html';
+  if (/^[{\[][\s\S]*[}\]]$/.test(t)) { try { JSON.parse(t); return 'json'; } catch (e) {} }
+  if (/^\s*(SELECT|INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|ALTER TABLE)\b/im.test(t)) return 'sql';
+  if (/\bdef\s+\w+\s*\(.*\)\s*:/.test(t) || /^\s*(import|from)\s+\w+(\s+import)?\s*$/m.test(t)) return 'py';
+  if (/[.#]?[\w-]+\s*\{[^{}]*:[^{}]*\}/.test(t) && !/\bfunction\b|=>|\bconst\b|\blet\b|\bvar\b/.test(t)) return 'css';
+  return 'js';
+}
+
+/* ---------- Réponse d'Agent AL : le code s'en va dans le codex ---------- */
+function traiterReponseAL(brut) {
+  const blocs = [];
+  const regexBloc = /```([\w.+-]*)[^\n]*\n([\s\S]*?)```/g;
+  let m;
+  while ((m = regexBloc.exec(brut)) !== null) {
+    blocs.push({ lang: (m[1] || '').toLowerCase(), code: m[2], brut: m[0], index: m.index });
+  }
+  if (!blocs.length) return { texteChat: brut.trim() };
+
+  // le plus gros bloc = le fichier principal pour le codex
+  let principal = blocs[0];
+  blocs.forEach(b => { if (b.code.length > principal.code.length) principal = b; });
+
+  const nom = trouverNomFichier(brut, principal);
+  definirNomFichier(nom, true);
+  editeur.value = principal.code.replace(/\s+$/, '') + '\n';
+  rendreCode();
+  sauvegarderCodeDansConversation();
+  montrerToast('Code reçu dans le codex : ' + nom);
+
+  // dans le chat, on remplace les blocs de code par des marqueurs
+  let texteChat = brut;
+  blocs.forEach(b => {
+    const marqueur = (b === principal)
+      ? '⤷ Code envoyé dans le codex : ' + nom
+      : '⤷ (autre bout de code — voir le codex)';
+    texteChat = texteChat.replace(b.brut, marqueur);
+  });
+  return { texteChat: texteChat.trim() };
+}
+
+function trouverNomFichier(brut, bloc) {
+  // 1. indice « fichier: nom.ext » écrit par Agent AL (dans le texte ou en commentaire)
+  const indice = brut.match(/fichier\s*:?\s*[`«"']?([\w][\w.\-]*\.[A-Za-z0-9]{1,5})/i)
+    || bloc.code.match(/^\s*(?:\/\/|#|<!--)\s*fichier\s*:?\s*([\w][\w.\-]*\.[A-Za-z0-9]{1,5})/im);
+  if (indice) return indice[1];
+  // 2. nom de fichier mentionné juste avant le bloc de code
+  const avant = brut.slice(Math.max(0, bloc.index - 160), bloc.index);
+  const mention = avant.match(/([\w][\w.\-]*\.(?:js|jsx|ts|tsx|html|css|json|py|sql|sh|md|yml|yaml|xml|csv|txt))[^\w.]*$/i);
+  if (mention) return mention[1];
+  // 3. sinon : extension d'après le langage du bloc
+  const ext = EXT_PAR_LANG[bloc.lang] || detecterExtension(bloc.code) || 'txt';
+  return 'code-al.' + ext;
+}
+
+/* ---------- GitHub ---------- */
+let gh = stockage.get(CLE_GITHUB) || { token: '', repo: '', branche: '', utilisateur: '' };
+
+function chargerChampsGitHub() {
+  document.getElementById('ghToken').value = gh.token || '';
+  document.getElementById('ghRepo').value = gh.repo || '';
+  if (gh.branche) {
+    const sel = document.getElementById('ghBranche');
+    sel.innerHTML = '<option value="' + gh.branche + '">' + gh.branche + '</option>';
+    sel.value = gh.branche;
+  }
+  if (gh.utilisateur) {
+    majStatutGH('Connecté : ' + gh.utilisateur + ' → ' + gh.repo + ' (' + gh.branche + ')', 'ok');
+  }
+}
+
+function majStatutGH(texte, classe) {
+  const el = document.getElementById('ghStatut');
+  el.textContent = texte;
+  el.className = 'gh-statut' + (classe ? ' ' + classe : '');
+}
+
+function entetesGH() {
+  return {
+    'Authorization': 'Bearer ' + gh.token,
+    'Accept': 'application/vnd.github+json'
+  };
+}
+
+async function connecterGitHub() {
+  const token = document.getElementById('ghToken').value.trim();
+  const repo = document.getElementById('ghRepo').value.trim();
+  if (!token || !repo || !repo.includes('/')) {
+    montrerToast('Rentre ton token pis le repo (format proprietaire/nom)', true);
+    return;
+  }
+  gh.token = token;
+  gh.repo = repo;
+  majStatutGH('Connexion...');
+  try {
+    // valider le token
+    const repUser = await fetch('https://api.github.com/user', { headers: entetesGH() });
+    if (!repUser.ok) throw new Error('token invalide (' + repUser.status + ')');
+    const utilisateur = await repUser.json();
+    gh.utilisateur = utilisateur.login;
+
+    // lister les branches
+    const repBranches = await fetch('https://api.github.com/repos/' + repo + '/branches?per_page=100', { headers: entetesGH() });
+    if (!repBranches.ok) throw new Error('repo introuvable (' + repBranches.status + ')');
+    const branches = await repBranches.json();
+    const sel = document.getElementById('ghBranche');
+    sel.innerHTML = '';
+    branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.name;
+      opt.textContent = b.name;
+      sel.appendChild(opt);
+    });
+    // choisir main/master par défaut si présent
+    const parDefaut = branches.find(b => b.name === gh.branche) || branches.find(b => b.name === 'main') || branches.find(b => b.name === 'master') || branches[0];
+    if (parDefaut) sel.value = parDefaut.name;
+    gh.branche = sel.value;
+
+    stockage.set(CLE_GITHUB, gh);
+    majStatutGH('Connecté : ' + gh.utilisateur + ' → ' + gh.repo + ' (' + gh.branche + ')', 'ok');
+    montrerToast('GitHub connecté — ' + branches.length + ' branches trouvées');
+  } catch (e) {
+    majStatutGH('Erreur : ' + e.message, 'erreur');
+    montrerToast('Connexion GitHub échouée : ' + e.message, true);
+  }
+}
+
+document.getElementById('ghBranche').addEventListener('change', (e) => {
+  gh.branche = e.target.value;
+  stockage.set(CLE_GITHUB, gh);
+  if (gh.utilisateur) majStatutGH('Connecté : ' + gh.utilisateur + ' → ' + gh.repo + ' (' + gh.branche + ')', 'ok');
+});
+
+function deconnecterGitHub() {
+  gh = { token: '', repo: '', branche: '', utilisateur: '' };
+  stockage.retirer(CLE_GITHUB);
+  document.getElementById('ghToken').value = '';
+  document.getElementById('ghRepo').value = '';
+  document.getElementById('ghBranche').innerHTML = '<option value="">— connecte-toi d\'abord —</option>';
+  majStatutGH('Pas connecté');
+  montrerToast('Token GitHub effacé de ton appareil');
+}
+
+function ghPret() {
+  if (!gh.token || !gh.repo || !gh.branche) {
+    montrerToast('Connecte GitHub d\'abord (menu ⚙ en haut)', true);
+    document.getElementById('menuHaut').classList.add('ouvert');
+    document.getElementById('btnMenuHaut').classList.add('actif');
+    return false;
+  }
+  return true;
+}
+
+/* Pousser un fichier (texte ou binaire en base64) vers le repo */
+async function pousserFichierGitHub(chemin, contenuBase64, messageCommit) {
+  const url = 'https://api.github.com/repos/' + gh.repo + '/contents/' + encodeURIComponent(chemin).replace(/%2F/g, '/');
+  // vérifier si le fichier existe déjà (faut son sha pour le mettre à jour)
+  let sha = null;
+  try {
+    const repExiste = await fetch(url + '?ref=' + encodeURIComponent(gh.branche), { headers: entetesGH() });
+    if (repExiste.ok) {
+      const existant = await repExiste.json();
+      sha = existant.sha || null;
+    }
+  } catch (e) { /* pas grave, on crée */ }
+
+  const corps = { message: messageCommit, content: contenuBase64, branch: gh.branche };
+  if (sha) corps.sha = sha;
+
+  const rep = await fetch(url, {
+    method: 'PUT',
+    headers: { ...entetesGH(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps)
+  });
+  if (!rep.ok) {
+    const err = await rep.json().catch(() => ({}));
+    throw new Error(err.message || ('erreur ' + rep.status));
+  }
+  return sha ? 'mis à jour' : 'créé';
+}
+
+function texteEnBase64(texte) {
+  // encodage UTF-8 correct (accents québécois inclus!)
+  const octets = new TextEncoder().encode(texte);
+  let binaire = '';
+  octets.forEach(o => binaire += String.fromCharCode(o));
+  return btoa(binaire);
+}
+
+async function pousserCodeVersGitHub() {
+  if (!ghPret()) return;
+  const nom = nomFichierActuel();
+  montrerToast('Envoi de ' + nom + ' vers ' + gh.repo + '...');
+  try {
+    const resultat = await pousserFichierGitHub(nom, texteEnBase64(editeur.value), 'tilexcode : ' + nom);
+    montrerToast(nom + ' ' + resultat + ' sur ' + gh.branche + ' ✓');
+  } catch (e) {
+    montrerToast('Échec du push : ' + e.message, true);
+  }
+}
+
+async function pousserJointeVersGitHub(index) {
+  if (!ghPret()) return;
+  const j = piecesJointes[index];
+  if (!j) return;
+  const dossier = j.estImage ? 'images/' : (j.nom.toLowerCase().endsWith('.zip') ? 'archives/' : 'fichiers/');
+  const chemin = dossier + j.nom;
+  montrerToast('Envoi de ' + j.nom + ' vers ' + gh.repo + '...');
+  try {
+    const resultat = await pousserFichierGitHub(chemin, j.base64, 'tilexcode : ajout ' + chemin);
+    montrerToast(chemin + ' ' + resultat + ' sur ' + gh.branche + ' ✓');
+  } catch (e) {
+    montrerToast('Échec du push : ' + e.message, true);
+  }
+}
+
+/* ---------- Codex : coloration syntaxique ---------- */
+function echapper(t) {
+  return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+const MOTS_CLES = 'function|return|if|else|for|while|const|let|var|class|new|import|export|from|async|await|try|catch|finally|throw|switch|case|break|continue|default|typeof|instanceof|in|of|do|this|null|true|false|undefined|def|print|elif|lambda|None|True|False|and|or|not';
+
+const REGEX_TOKENS = new RegExp(
+  '(\\/\\/.*$|#.*$|\\/\\*[\\s\\S]*?\\*\\/)' +
+  '|("(?:\\\\.|[^"\\\\])*"|\'(?:\\\\.|[^\'\\\\])*\'|`(?:\\\\.|[^`\\\\])*`)' +
+  '|\\b(' + MOTS_CLES + ')\\b' +
+  '|([A-Za-z_$][\\w$]*)(?=\\s*\\()' +
+  '|\\b(\\d+(?:\\.\\d+)?)\\b',
+  'gm'
+);
+
+function colorerLigne(ligne) {
+  return echapper(ligne).replace(REGEX_TOKENS, (m, com, str, kw, fn, num) => {
+    if (com !== undefined) return '<span class="tok-com">' + m + '</span>';
+    if (str !== undefined) return '<span class="tok-str">' + m + '</span>';
+    if (kw  !== undefined) return '<span class="tok-kw">'  + m + '</span>';
+    if (fn  !== undefined) return '<span class="tok-fn">'  + m + '</span>';
+    if (num !== undefined) return '<span class="tok-num">' + m + '</span>';
+    return m;
+  });
+}
+
+function colorerCode(texte, modeDiff) {
+  return texte.split('\n').map(ligne => {
+    if (modeDiff) {
+      if (/^\+/.test(ligne)) return '<span class="ligne-add">' + echapper(ligne) + '</span>';
+      if (/^-/.test(ligne))  return '<span class="ligne-del">' + echapper(ligne) + '</span>';
+    }
+    return colorerLigne(ligne);
+  }).join('\n');
+}
+
+const CODE_DEPART = `// Bienvenue dans tilexcode, mon ami!
+// Jase avec Agent AL à gauche, code icitte à droite.
+
+function saluerTiLex(nom) {
+  const message = "Salut " + nom + "!";
+  return message;
+}
+
+const resultat = saluerTiLex("Alex");
+`;
+
+const editeur = document.getElementById('editeur');
+const surlignage = document.getElementById('surlignage');
+const gouttiere = document.getElementById('gouttiere');
+
+function rendreCode() {
+  const texte = editeur.value;
+  const modeDiff = document.getElementById('modeDiff').checked;
+  surlignage.innerHTML = colorerCode(texte, modeDiff) + '\n';
+
+  const lignes = texte.split('\n');
+  let html = '', nbAdd = 0, nbDel = 0;
+  for (let i = 0; i < lignes.length; i++) {
+    let classe = '';
+    if (modeDiff && /^\+/.test(lignes[i])) { classe = 'num-add'; nbAdd++; }
+    else if (modeDiff && /^-/.test(lignes[i])) { classe = 'num-del'; nbDel++; }
+    html += '<div class="' + classe + '">' + (i + 1) + '</div>';
+  }
+  gouttiere.innerHTML = html;
+
+  document.getElementById('statLignes').textContent = lignes.length;
+  document.getElementById('statCars').textContent = texte.length;
+  document.getElementById('statDiff').innerHTML = modeDiff
+    ? '<b>+' + nbAdd + '</b> ajoutées | <b>−' + nbDel + '</b> supprimées'
+    : '';
+}
+
+function synchroniserScroll() {
+  surlignage.scrollTop = editeur.scrollTop;
+  surlignage.scrollLeft = editeur.scrollLeft;
+  gouttiere.scrollTop = editeur.scrollTop;
+}
+
+let minuterieSauvegarde = null;
+function sauvegarderCodeDansConversation() {
+  if (!convActive) return;
+  convActive.code = {
+    nom: nomFichierActuel(),
+    contenu: editeur.value,
+    auto: nomFichierAuto
+  };
+  clearTimeout(minuterieSauvegarde);
+  minuterieSauvegarde = setTimeout(sauvegarderConversations, 600);
+}
+
+editeur.addEventListener('input', () => {
+  rendreCode();
+  // si le nom est automatique, on ajuste l'extension selon le langage détecté
+  if (nomFichierAuto && /^(mon-code|code-al)\./.test(nomFichierActuel())) {
+    const ext = detecterExtension(editeur.value);
+    if (ext) {
+      const base = nomFichierActuel().split('.')[0];
+      const nouveau = base + '.' + ext;
+      if (nouveau !== nomFichierActuel()) definirNomFichier(nouveau, true);
+    }
+  }
+  sauvegarderCodeDansConversation();
+});
+editeur.addEventListener('scroll', synchroniserScroll);
+editeur.addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const d = editeur.selectionStart, f = editeur.selectionEnd;
+    editeur.value = editeur.value.slice(0, d) + '  ' + editeur.value.slice(f);
+    editeur.selectionStart = editeur.selectionEnd = d + 2;
+    rendreCode();
+    sauvegarderCodeDansConversation();
+  }
+});
+// (le nom de fichier est en lecture seule — il s'écrit automatiquement)
+
+function copierCode() {
+  copierTexte(editeur.value, 'Code copié');
+}
+function telechargerCode() {
+  const nom = nomFichierActuel();
+  const blob = new Blob([editeur.value], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const lien = document.createElement('a');
+  lien.href = url;
+  lien.download = nom;
+  document.body.appendChild(lien);
+  lien.click();
+  document.body.removeChild(lien);
+  URL.revokeObjectURL(url);
+  montrerToast(nom + ' téléchargé');
+}
+
+/* ---------- Utilitaires ---------- */
+function copierTexte(texte, messageOk) {
+  const secours = () => {
+    const zone = document.createElement('textarea');
+    zone.value = texte;
+    zone.style.position = 'fixed';
+    zone.style.opacity = '0';
+    document.body.appendChild(zone);
+    zone.select();
+    try { document.execCommand('copy'); montrerToast(messageOk); }
+    catch (e) { montrerToast('Copie impossible — fais-le à la main', true); }
+    document.body.removeChild(zone);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texte).then(() => montrerToast(messageOk)).catch(secours);
+  } else {
+    secours();
+  }
+}
+
+let minuterieToast = null;
+function montrerToast(message, erreur) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = 'toast visible' + (erreur ? ' erreur' : '');
+  clearTimeout(minuterieToast);
+  minuterieToast = setTimeout(() => toast.classList.remove('visible'), 2600);
+}
+
+/* Fermer le menu (+) si on clique ailleurs */
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('menuPlus');
+  const btn = document.getElementById('btnPlus');
+  if (menu.classList.contains('ouvert') && !menu.contains(e.target) && e.target !== btn) {
+    menu.classList.remove('ouvert');
+    btn.classList.remove('ouvert');
+  }
+});
+
+/* ---------- Démarrage ---------- */
+construirePaletteMini();
+appliquerPalette();
+chargerChampsGitHub();
+
+if (conversations.length) {
+  chargerConversation(conversations[0].id);
+} else {
+  nouvelleConversation();
+}
+rendreListeConversations();
+
+// sidebar ouverte par défaut sur grand écran
+if (window.innerWidth > 900) basculerSidebar();
+</script>
+</body>
+</html>

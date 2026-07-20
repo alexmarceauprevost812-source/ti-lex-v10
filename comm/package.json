@@ -1,0 +1,19 @@
+{
+  "name": "ti-lex-v10",
+  "version": "10.0.0",
+  "description": "Communication temps réel mobile et ordinateur — Produit du Québec",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve . -l 5173",
+    "vapid": "npx web-push generate-vapid-keys",
+    "deploy:push": "supabase functions deploy tilex-push --project-ref rnuripmfozlxenryxhdc"
+  },
+  "keywords": ["ti-lex", "supabase", "realtime", "pwa", "quebec"],
+  "author": "Alex Marceau Prevost",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "serve": "^14.2.0",
+    "web-push": "^3.6.7"
+  }
+}

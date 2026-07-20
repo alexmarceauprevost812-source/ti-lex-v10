@@ -272,7 +272,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: body.model || "claude-sonnet-4-6",
         max_tokens: Math.min(body.max_tokens || 4096, 8192),
-        system: systemPrompt,
+        // ⚡ Prompt caching : consigne du filtre de sécurité (stable) mise en cache.
+        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
         messages: body.messages,
       }),
     });

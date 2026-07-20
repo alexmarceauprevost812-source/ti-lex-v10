@@ -1075,7 +1075,246 @@ function indarGridLock(state) {
   if (all) all.disabled = state;
 }
 
-async function ensureMandatForScan(scanTarget) {
+// ════════════════════════════════════════════════════════════════════════════
+// ⚖️  BARRIÈRE DE MANDAT — aucun scan sans PREUVE de contrôle de la cible.
+//    Une case « je suis propriétaire » ne prouve rien : n'importe qui peut la
+//    cocher. Ici l'utilisateur doit PROUVER qu'il contrôle l'hôte (fichier
+//    .well-known en HTTPS OU enregistrement DNS TXT), vérifié côté serveur par
+//    la fonction verify-target. L'enforcement final est dans agent-dispatcher
+//    (serveur) — impossible à contourner en éditant ce fichier.
+// ════════════════════════════════════════════════════════════════════════════
+window.TilexMandat = (function () {
+
+  // Injecte le style du modal une seule fois (self-contained).
+  function _injectCss() {
+    if (document.getElementById('tlx-mandat-css')) return;
+    var s = document.createElement('style');
+    s.id = 'tlx-mandat-css';
+    s.textContent =
+      '.tlx-mandat-ov{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.78);'
+      + 'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;'
+      + 'justify-content:center;padding:18px;}'
+      + '.tlx-mandat-box{background:#0f0f14;border:1px solid rgba(255,107,0,.4);border-radius:16px;'
+      + 'max-width:480px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:90vh;'
+      + 'overflow:auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e2e2ea;}'
+      + '.tlx-mandat-title{margin:0 0 12px;font-size:17px;font-weight:800;color:#FF6B00;letter-spacing:.3px;}'
+      + '.tlx-mandat-target{background:#0a0a0a;border:1px solid #23232c;border-radius:8px;padding:9px 12px;'
+      + 'font-family:monospace;font-size:12px;margin-bottom:12px;word-break:break-all;}'
+      + '.tlx-mandat-target-lbl{color:#6c6c78;}'
+      + '.tlx-mandat-warn{font-size:12.5px;line-height:1.55;color:#ffb37a;background:rgba(255,107,0,.08);'
+      + 'border-left:3px solid #FF6B00;border-radius:0 8px 8px 0;padding:9px 12px;margin:0 0 14px;}'
+      + '.tlx-mandat-step{font-size:11px;color:#6c6c78;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px;}'
+      + '.tlx-mandat-code{display:flex;align-items:center;gap:8px;background:#0a0a0a;border:1px solid #23232c;'
+      + 'border-radius:8px;padding:8px 10px;margin-bottom:8px;}'
+      + '.tlx-mandat-code code{font-family:monospace;font-size:11.5px;color:#37e0a0;word-break:break-all;flex:1;}'
+      + '.tlx-mandat-copy{border:1px solid #23232c;background:#1c1c24;color:#b8b8c2;border-radius:6px;'
+      + 'padding:4px 9px;font-size:11px;cursor:pointer;flex-shrink:0;}'
+      + '.tlx-mandat-copy:hover{border-color:#FF6B00;color:#FF6B00;}'
+      + '.tlx-mandat-or{text-align:center;color:#6c6c78;font-size:11px;margin:10px 0;}'
+      + '.tlx-mandat-msg{font-size:12px;margin:10px 0 0;min-height:16px;}'
+      + '.tlx-mandat-msg.err{color:#ff6a6a;}.tlx-mandat-msg.ok{color:#37e0a0;}'
+      + '.tlx-mandat-btns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;}'
+      + '.tlx-mandat-btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;'
+      + 'cursor:pointer;transition:opacity .15s,transform .1s;}'
+      + '.tlx-mandat-btn:active{transform:scale(.97);}'
+      + '.tlx-mandat-cancel{background:#1c1c24;color:#b8b8c2;}'
+      + '.tlx-mandat-cancel:hover{background:#26262f;}'
+      + '.tlx-mandat-ok{background:linear-gradient(135deg,#FF6B00,#cc5500);color:#fff;}'
+      + '.tlx-mandat-ok:disabled{opacity:.5;cursor:progress;}';
+    document.head.appendChild(s);
+  }
+
+  // Cible valide = non vide, sans espace, ressemble à un domaine / IP / URL.
+  function cibleValide(t) {
+    if (!t) return false;
+    t = String(t).trim();
+    if (t.length < 3 || t.length > 255) return false;
+    if (/\s/.test(t)) return false;
+    if (/^localhost(:\d+)?$/i.test(t)) return true;
+    if (/^https?:\/\/[^\s]+$/i.test(t)) return true;
+    if (/^(\d{1,3}\.){3}\d{1,3}(:\d+)?$/.test(t)) return true;      // IPv4
+    if (/^[0-9a-f:]+$/i.test(t) && t.indexOf(':') !== -1) return true; // IPv6
+    if (/^([a-z0-9](-*[a-z0-9])*\.)+[a-z]{2,}(:\d+)?(\/[^\s]*)?$/i.test(t)) return true; // domaine
+    return false;
+  }
+
+  // Appel à la fonction verify-target (identité = JWT).
+  function _api(action, target) {
+    var tk = (typeof getToken === 'function') ? getToken() : null;
+    if (!tk) return Promise.resolve({ status: 401, body: { error: 'Connexion requise pour scanner une cible.' } });
+    return fetch(SB_URL + '/functions/v1/verify-target', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk, 'apikey': SB_ANON },
+      body: JSON.stringify({ action: action, target: target })
+    }).then(function (r) {
+      return r.json().then(function (j) { return { status: r.status, body: j || {} }; })
+        .catch(function () { return { status: r.status, body: {} }; });
+    }).catch(function () {
+      return { status: 0, body: { error: 'Réseau indisponible.' } };
+    });
+  }
+
+  function _codeRow(value) {
+    var row = document.createElement('div');
+    row.className = 'tlx-mandat-code';
+    var code = document.createElement('code');
+    code.textContent = value;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tlx-mandat-copy';
+    btn.textContent = 'Copier';
+    btn.addEventListener('click', function () {
+      try {
+        if (navigator.clipboard) navigator.clipboard.writeText(value);
+        btn.textContent = 'Copié ✓';
+        setTimeout(function () { btn.textContent = 'Copier'; }, 1400);
+      } catch (e) {}
+    });
+    row.appendChild(code); row.appendChild(btn);
+    return row;
+  }
+
+  // Retourne une Promise<{ok, host, method?, at?, raison?}>.
+  function confirmer(scanTarget) {
+    var target = String(scanTarget || '').trim();
+    if (!cibleValide(target)) {
+      return Promise.resolve({ ok: false, target: target, raison: 'cible_invalide' });
+    }
+    var tk = (typeof getToken === 'function') ? getToken() : null;
+    if (!tk) {
+      return Promise.resolve({ ok: false, target: target, raison: 'auth' });
+    }
+
+    // 1) Déjà vérifié côté serveur ? → on lance direct.
+    return _api('status', target).then(function (res) {
+      if (res.body && res.body.verified) {
+        return { ok: true, target: target, host: res.body.host, method: res.body.method, at: res.body.expires_at };
+      }
+      if (res.status === 401) return { ok: false, target: target, raison: 'auth' };
+      // 2) Sinon : ouvre le flux de preuve de propriété.
+      return _ouvrirVerification(target);
+    });
+  }
+
+  function _ouvrirVerification(target) {
+    return new Promise(function (resolve) {
+      _injectCss();
+      var ov = document.createElement('div');
+      ov.className = 'tlx-mandat-ov';
+      ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+      var box = document.createElement('div');
+      box.className = 'tlx-mandat-box';
+
+      var h = document.createElement('h3');
+      h.className = 'tlx-mandat-title';
+      h.textContent = '⚖️ Prouve que tu contrôles cette cible';
+      box.appendChild(h);
+
+      var tgt = document.createElement('div');
+      tgt.className = 'tlx-mandat-target';
+      var l = document.createElement('span'); l.className = 'tlx-mandat-target-lbl'; l.textContent = 'Cible : ';
+      var v = document.createElement('span'); v.textContent = target;
+      tgt.appendChild(l); tgt.appendChild(v);
+      box.appendChild(tgt);
+
+      var warn = document.createElement('p');
+      warn.className = 'tlx-mandat-warn';
+      warn.textContent = 'Scanner une cible sans autorisation est illégal (Canada : art. 342.1 C.cr.). '
+        + 'Cocher une case ne suffit pas : tu dois PROUVER que tu contrôles l’hôte. Choisis UNE méthode ci-dessous.';
+      box.appendChild(warn);
+
+      var body = document.createElement('div');
+      body.textContent = 'Génération du jeton de vérification…';
+      body.style.fontSize = '13px'; body.style.color = '#8b97a7';
+      box.appendChild(body);
+
+      var msg = document.createElement('div');
+      msg.className = 'tlx-mandat-msg';
+      box.appendChild(msg);
+
+      var btns = document.createElement('div');
+      btns.className = 'tlx-mandat-btns';
+      var cancel = document.createElement('button');
+      cancel.type = 'button'; cancel.className = 'tlx-mandat-btn tlx-mandat-cancel'; cancel.textContent = 'Annuler';
+      var check = document.createElement('button');
+      check.type = 'button'; check.className = 'tlx-mandat-btn tlx-mandat-ok'; check.textContent = 'Vérifier maintenant';
+      check.disabled = true;
+      btns.appendChild(cancel); btns.appendChild(check);
+      box.appendChild(btns);
+
+      ov.appendChild(box);
+      document.body.appendChild(ov);
+
+      function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+      function done(result) { close(); resolve(result); }
+      cancel.addEventListener('click', function () { done({ ok: false, target: target, raison: 'non_verifie' }); });
+      ov.addEventListener('click', function (e) { if (e.target === ov) done({ ok: false, target: target, raison: 'non_verifie' }); });
+
+      // Demande le jeton (challenge) puis affiche les 2 méthodes.
+      _api('challenge', target).then(function (res) {
+        var b = res.body || {};
+        if (b.verified) { done({ ok: true, target: target, host: b.host, method: 'déjà vérifié' }); return; }
+        if (!b.token) {
+          body.textContent = '';
+          msg.className = 'tlx-mandat-msg err';
+          msg.textContent = b.error || 'Impossible de générer le jeton de vérification.';
+          return;
+        }
+        body.textContent = '';
+
+        var s1 = document.createElement('div'); s1.className = 'tlx-mandat-step';
+        s1.textContent = 'Méthode A — fichier sur ton site';
+        body.appendChild(s1);
+        var a1 = document.createElement('div'); a1.style.fontSize = '12px'; a1.style.color = '#b8b8c2'; a1.style.marginBottom = '6px';
+        a1.textContent = 'Place ce fichier accessible en HTTPS :';
+        body.appendChild(a1);
+        body.appendChild(_codeRow(b.file_url || ('https://' + b.host + '/.well-known/tilex-verify.txt')));
+        var a2 = document.createElement('div'); a2.style.fontSize = '12px'; a2.style.color = '#b8b8c2'; a2.style.margin = '6px 0';
+        a2.textContent = 'Contenu du fichier :';
+        body.appendChild(a2);
+        body.appendChild(_codeRow(b.file_content || b.token));
+
+        var orEl = document.createElement('div'); orEl.className = 'tlx-mandat-or'; orEl.textContent = '— OU —';
+        body.appendChild(orEl);
+
+        var s2 = document.createElement('div'); s2.className = 'tlx-mandat-step';
+        s2.textContent = 'Méthode B — enregistrement DNS TXT';
+        body.appendChild(s2);
+        var d1 = document.createElement('div'); d1.style.fontSize = '12px'; d1.style.color = '#b8b8c2'; d1.style.marginBottom = '6px';
+        d1.textContent = 'Nom :';
+        body.appendChild(d1);
+        body.appendChild(_codeRow(b.dns_name || ('_tilex-verify.' + b.host)));
+        var d2 = document.createElement('div'); d2.style.fontSize = '12px'; d2.style.color = '#b8b8c2'; d2.style.margin = '6px 0';
+        d2.textContent = 'Valeur TXT :';
+        body.appendChild(d2);
+        body.appendChild(_codeRow(b.dns_value || b.token));
+
+        check.disabled = false;
+        check.addEventListener('click', function () {
+          check.disabled = true;
+          msg.className = 'tlx-mandat-msg';
+          msg.textContent = '🔎 Vérification en cours…';
+          _api('check', target).then(function (cr) {
+            var cb = cr.body || {};
+            if (cb.verified) {
+              msg.className = 'tlx-mandat-msg ok';
+              msg.textContent = '✅ Propriété confirmée (' + (cb.method || 'ok') + '). Lancement du scan…';
+              setTimeout(function () { done({ ok: true, target: target, host: cb.host, method: cb.method, at: cb.expires_at }); }, 700);
+            } else {
+              msg.className = 'tlx-mandat-msg err';
+              msg.textContent = cb.error || 'Jeton pas encore trouvé. Attends la propagation, puis réessaie.';
+              check.disabled = false;
+            }
+          });
+        });
+      });
+    });
+  }
+
+  return { confirmer: confirmer, cibleValide: cibleValide };
+})();
+
+async function ensureMandatForScan(scanTarget, attestation) {
   if (!scanTarget) return null;
   var token = typeof getToken === 'function' ? getToken() : SB_ANON;
   if (!token || !window.supabase) return null;
@@ -1092,6 +1331,10 @@ async function ensureMandatForScan(scanTarget) {
       return existing.data[0].id;
     }
     var num = 'INDAR-' + Date.now().toString(36).toUpperCase();
+    var att = attestation || {};
+    var noteAtt = 'Propriété de la cible VÉRIFIÉE côté serveur (verify-target)'
+      + (att.method ? ' — méthode : ' + att.method : '') + '.'
+      + (att.host ? ' Hôte : ' + att.host + '.' : '');
     var row = await window.supabase
       .from('cyber_mandates')
       .insert({
@@ -1102,7 +1345,7 @@ async function ensureMandatForScan(scanTarget) {
         ends_at: endDate,
         scope_in: [scanTarget],
         allowed_scan_types: ['passive_recon', 'osint', 'vuln_scan'],
-        notes: 'Mandat créé automatiquement par le Centre INDAR.'
+        notes: noteAtt
       })
       .select('id')
       .single();
@@ -1138,12 +1381,23 @@ async function callAgentQuick(code, scanTarget) {
 }
 
 async function indarRunSequential(scanTarget) {
+  var mandat = await (window.TilexMandat ? window.TilexMandat.confirmer(scanTarget) : Promise.resolve({ ok: false, raison: 'cible_invalide' }));
+  if (!mandat.ok) {
+    indarConsoleClear();
+    if (mandat.raison === 'cible_invalide')
+      indarConsoleLog("SYSTÈME", "Cible invalide ou vide — entre un domaine, une IP ou une URL valide.", "#ff3b3b");
+    else if (mandat.raison === 'auth')
+      indarConsoleLog("SYSTÈME", "Connexion requise pour scanner une cible. Connecte-toi d'abord.", "#ff3b3b");
+    else
+      indarConsoleLog("SYSTÈME", "Scan annulé — propriété de la cible non prouvée. Rien n'a été scanné.", "#ff3b3b");
+    return;
+  }
   var my = ++_gridRunId;
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
-  var mandatId = await ensureMandatForScan(scanTarget);
-  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  var mandatId = await ensureMandatForScan(scanTarget, mandat);
+  indarConsoleLog("SYSTÈME", "Propriété vérifiée pour : " + scanTarget + (mandat.method ? " (" + mandat.method + ")" : ""), "#37e0a0");
   if (scanTarget && window.ScanManager) {
     indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
     window.ScanManager.runFullScan(scanTarget).catch(function(){});
@@ -1172,12 +1426,23 @@ async function indarRunSequential(scanTarget) {
 }
 
 async function indarRunAll(scanTarget) {
+  var mandat = await (window.TilexMandat ? window.TilexMandat.confirmer(scanTarget) : Promise.resolve({ ok: false, raison: 'cible_invalide' }));
+  if (!mandat.ok) {
+    indarConsoleClear();
+    if (mandat.raison === 'cible_invalide')
+      indarConsoleLog("SYSTÈME", "Cible invalide ou vide — entre un domaine, une IP ou une URL valide.", "#ff3b3b");
+    else if (mandat.raison === 'auth')
+      indarConsoleLog("SYSTÈME", "Connexion requise pour scanner une cible. Connecte-toi d'abord.", "#ff3b3b");
+    else
+      indarConsoleLog("SYSTÈME", "Scan annulé — propriété de la cible non prouvée. Rien n'a été scanné.", "#ff3b3b");
+    return;
+  }
   var my = ++_gridRunId;
   indarGridReset();
   indarGridLock(true);
   indarConsoleClear();
-  var mandatId = await ensureMandatForScan(scanTarget);
-  if (mandatId) indarConsoleLog("SYSTÈME", "Mandat actif : " + (scanTarget || "cible"), "#37e0a0");
+  var mandatId = await ensureMandatForScan(scanTarget, mandat);
+  indarConsoleLog("SYSTÈME", "Propriété vérifiée pour : " + scanTarget + (mandat.method ? " (" + mandat.method + ")" : ""), "#37e0a0");
   if (scanTarget && window.ScanManager) {
     indarConsoleLog("SYSTÈME", "Scans passifs (CIPHER/SENTINEL/MARCEAU) en cours…", "#6b6b78");
     window.ScanManager.runFullScan(scanTarget).catch(function(){});

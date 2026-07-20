@@ -184,7 +184,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: SCAN_MODEL,
         max_tokens: 8192,
-        system: `Tu es PHANTOM-RED, le moteur de scan du Centre INDAR.
+        // ⚡ Prompt caching : consigne PHANTOM-RED (stable, ~1k tokens) mise en cache.
+        system: [{ type: "text", cache_control: { type: "ephemeral" }, text: `Tu es PHANTOM-RED, le moteur de scan du Centre INDAR.
 Tu génères des rapports de sécurité SIMULÉS et éducatifs.
 
 CALIBRATION DE SÉVÉRITÉ — RÈGLES OBLIGATOIRES :
@@ -218,7 +219,7 @@ Format :
     }
   ],
   "recommendations": ["rec1", "rec2", "rec3"]
-}`,
+}` }],
         messages: [
           { role: "user", content: buildScanPrompt(target, scan_type) },
         ],

@@ -1,0 +1,53 @@
+/* ============================================================
+   ti-lex-AL v10 — css/tilex-sentinelle.css
+   Style du scan Sentinelle 25 (données sensibles / Loi 25).
+   ============================================================ */
+.tsn-conteneur { width: 100%; font-family: 'Share Tech Mono', monospace; color: #e2e2ea; }
+
+.tsn-vide { padding: 24px; text-align: center; color: #37e0a0; font-size: 13px; }
+
+.tsn-score {
+  display: flex; align-items: baseline; gap: 14px;
+  background: #0d0d12; border: 1px solid #23232c; border-left: 4px solid #f59e0b;
+  border-radius: 12px; padding: 16px 18px; margin-bottom: 12px;
+}
+.tsn-score-val { font-size: 26px; font-weight: 800; }
+.tsn-score-txt { font-size: 12px; color: #b8b8c4; letter-spacing: .5px; }
+
+.tsn-note { font-size: 11px; color: #37e0a0; margin-bottom: 16px; line-height: 1.5; }
+
+.tsn-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.tsn-carte { background: #0d0d12; border: 1px solid #23232c; border-radius: 12px; padding: 12px 14px; }
+.tsn-carte-val { font-size: 22px; font-weight: 800; }
+.tsn-carte-label { font-size: 10px; color: #6c6c78; letter-spacing: .5px; margin-top: 2px; }
+
+.tsn-gravites { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.tsn-pastille { font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 12px; border-radius: 20px; border: 1px solid; }
+
+.tsn-trouvailles { display: flex; flex-direction: column; gap: 10px; }
+.tsn-trouvaille { background: #0d0d12; border: 1px solid #23232c; border-left: 3px solid; border-radius: 10px; padding: 12px 14px; }
+.tsn-tr-hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.tsn-badge { font-size: 9px; font-weight: 800; letter-spacing: 1px; padding: 3px 9px; border-radius: 20px; border: 1px solid; }
+.tsn-tr-nom { font-size: 13px; font-weight: 700; color: #e2e2ea; }
+.tsn-tr-cat { font-size: 10px; color: #6c6c78; }
+.tsn-tr-loc { font-size: 10px; color: #6c6c78; margin-bottom: 6px; }
+.tsn-tr-val, .tsn-tr-ctx { font-size: 12px; margin-top: 2px; }
+.tsn-tr-etiq { color: #6c6c78; }
+.tsn-mono { color: #ffb454; word-break: break-all; }
+
+.tsn-obligations { margin-top: 18px; background: rgba(230,164,0,.06); border: 1px solid rgba(230,164,0,.22); border-radius: 10px; padding: 12px 14px; }
+.tsn-obl-titre { font-size: 12px; font-weight: 700; color: #e6b84d; letter-spacing: .5px; margin-bottom: 6px; }
+.tsn-obligations ul { margin: 0 0 8px; padding-left: 18px; }
+.tsn-obligations li { font-size: 12px; color: #c8c8d2; line-height: 1.6; }
+.tsn-obl-avis { font-size: 10px; color: #6c6c78; font-style: italic; }
+
+/* Zone de dépôt de fichiers */
+.tsn-drop {
+  border: 2px dashed rgba(255,107,0,.35); border-radius: 14px; padding: 30px 20px;
+  text-align: center; cursor: pointer; transition: border-color .2s, background .2s; background: #0d0d12;
+}
+.tsn-drop:hover, .tsn-drop.tsn-drag { border-color: #FF6B00; background: rgba(255,107,0,.05); }
+.tsn-drop-ico { font-size: 30px; margin-bottom: 8px; }
+.tsn-drop-txt { font-size: 13px; color: #c8c8d2; }
+.tsn-drop-sub { font-size: 11px; color: #6c6c78; margin-top: 6px; }
+.tsn-drop input[type="file"] { display: none; }

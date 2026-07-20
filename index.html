@@ -25,6 +25,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <!-- Typewriter (phrases chevauchées à 70%) — doit être chargé avant l'usage -->
   <script src="js/tilex-typewriter.js"></script>
+  <script src="js/tilex-intro.js"></script>
 
   <style>
     /* ═══════════════════════════════════════════════
@@ -221,22 +222,6 @@
       box-shadow: 0 0 20px rgba(255,207,74,.3);
     }
     .btn-midas:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 0 28px rgba(255,207,74,.55); }
-
-    /* ═══════════════════════════════════════════════
-       OAUTH
-    ═══════════════════════════════════════════════ */
-    .oauth-row { width: 100%; display: flex; gap: 10px; animation: fadeUp .6s .4s both; }
-    .btn-oauth {
-      flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 13px; border-radius: var(--radius);
-      font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 1px;
-      cursor: pointer; border: 1px solid var(--border);
-      background: var(--bg3); color: var(--text);
-      transition: transform .18s, box-shadow .18s, border-color .18s;
-    }
-    .btn-oauth:hover { transform: translateY(-2px); }
-    .btn-oauth.google:hover  { border-color: rgba(66,133,244,.5);  box-shadow: 0 4px 20px rgba(66,133,244,.2); }
-    .btn-oauth.github:hover  { border-color: rgba(255,255,255,.3); box-shadow: 0 4px 20px rgba(255,255,255,.1); }
 
     /* ═══════════════════════════════════════════════
        FORM CARD
@@ -441,15 +426,6 @@
     /* ═══════════════════════════════════════════════
        DIVIDER / FOOTER
     ═══════════════════════════════════════════════ */
-    .divider {
-      width: 100%; display: flex; align-items: center; gap: 12px;
-      font-size: 10px; color: var(--muted); letter-spacing: 2px;
-      animation: fadeUp .6s .45s both;
-    }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
-    }
     .footer {
       text-align: center; font-size: 11px; color: var(--muted);
       line-height: 1.9; animation: fadeUp .6s .55s both;
@@ -608,8 +584,8 @@
 ═══════════════════════════════════════════════ -->
 <div class="wrap">
 
-  <!-- LOGO -->
-  <div class="logo-box">
+  <!-- LOGO — animation DevilScene en boucle infinie (img = poster de secours) -->
+  <div class="logo-box" id="logo-box">
     <img src="logo.png" alt="TI-LEX-AL V10"
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="logo-fallback">TI-LEX-AL V10</div>
@@ -693,28 +669,6 @@
       <button class="link" onclick="showHome()">&#8592; Retour</button><br>
       <button class="link" onclick="showLogin()">Déjà un compte? &#8594;</button>
     </div>
-  </div>
-
-  <!-- DIVIDER OAUTH -->
-  <div class="divider">OU SE CONNECTER AVEC</div>
-
-  <!-- OAUTH -->
-  <div class="oauth-row">
-    <button class="btn-oauth google" onclick="oauthLogin('google')">
-      <svg width="18" height="18" viewBox="0 0 48 48">
-        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.36 7.09-17.65z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-        <path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.78-3-.78-4.59s.28-3.14.78-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-      </svg>
-      GOOGLE
-    </button>
-    <button class="btn-oauth github" onclick="oauthLogin('github')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-      </svg>
-      GITHUB
-    </button>
   </div>
 
   <!-- STATUS -->
@@ -897,12 +851,6 @@ async function handleRegister(e) {
   btn.disabled=false; btn.innerHTML='CRÉER MON COMPTE';
 }
 
-async function oauthLogin(provider) {
-  if (!sb) return;
-  toast('Redirection vers ' + (provider==='google'?'Google':'GitHub') + '...');
-  await sb.auth.signInWithOAuth({ provider, options:{ redirectTo: window.location.origin + '/pro.html' } });
-}
-
 // ─────────────────────────────────────────────
 // SPLASHS
 // ─────────────────────────────────────────────
@@ -913,12 +861,12 @@ function skipIntro() {
   setTimeout(() => el.style.display='none', 600);
 }
 function playLogin() {
-  const sp = document.getElementById('loginSplash');
-  const v  = document.getElementById('loginVideo');
-  sp.classList.remove('hidden');
-  v.currentTime = 0; v.play().catch(() => skipLogin());
-  v.onended = skipLogin; v.onerror = skipLogin;
-  setTimeout(skipLogin, 15000);
+  // Animation de connexion = ti-démon bleu↔feu + matrix (plus l'ancienne vidéo aux yeux rouges).
+  try { sessionStorage.setItem('tilex-intro-pro-session','1'); } catch(e) {} // évite de la rejouer sur pro.html
+  if (window.TilexIntro) {
+    try { TilexIntro.play({ onDone: function(){ window.location.href = 'pro.html'; } }); return; } catch(e) {}
+  }
+  window.location.href = 'pro.html';
 }
 function skipLogin() {
   const sp = document.getElementById('loginSplash');
@@ -1411,6 +1359,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const iv = document.getElementById('introVideo');
   if (iv) { iv.addEventListener('ended', skipIntro); iv.addEventListener('error', skipIntro); }
 
+  // Animation DevilScene en boucle infinie dans le logo d'accueil
+  if (window.TilexIntro) { try { TilexIntro.mountLoop(document.getElementById('logo-box')); } catch(e){} }
+
   const consent = JSON.parse(localStorage.getItem('tilex-consent') || 'null');
   if (!consent) document.getElementById('consentBanner').classList.remove('hidden');
 
@@ -1423,21 +1374,26 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Service Worker — mise à jour automatique au refresh -->
 <script>
 if ('serviceWorker' in navigator) {
+  var _hadCtrl = !!navigator.serviceWorker.controller;
+  var _maj = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (_maj) return;
+    if (!_hadCtrl) { _hadCtrl = true; return; }
+    _maj = true; location.reload();
+  });
   navigator.serviceWorker.register('/sw.js').then(function(reg) {
+    if (reg.waiting && navigator.serviceWorker.controller) { try{ reg.waiting.postMessage('SKIP_WAITING'); }catch(e){} }
     reg.addEventListener('updatefound', function() {
       var nw = reg.installing;
       if (!nw) return;
       nw.addEventListener('statechange', function() {
-        if (nw.state === 'activated' && navigator.serviceWorker.controller) {
-          location.reload();
-        }
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) { try{ nw.postMessage('SKIP_WAITING'); }catch(e){} }
       });
     });
     reg.update();
-  });
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    location.reload();
-  });
+    setInterval(function(){ reg.update(); }, 60000);
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') reg.update(); });
+  }).catch(function(){});
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

@@ -21,8 +21,23 @@ const SECURITY_PREAMBLE =
 const ALLOWED_ORIGINS = (Deno.env.get("TILEX_ALLOWED_ORIGINS") || "")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
+// Origine autorisée : allowlist explicite (env) OU domaines ti-lex / déploiements Vercel
+// (l'URL de preview Vercel change à chaque build). La fonction reste protégée par
+// l'auth Supabase (getUser) — le CORS est une couche de défense en profondeur.
+function originAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  try {
+    const h = new URL(origin).hostname;
+    if (h.endsWith(".vercel.app")) return true;
+    if (h === "ti-lex.app" || h.endsWith(".ti-lex.app")) return true;
+    if (h === "localhost" || h === "127.0.0.1") return true;
+  } catch (_e) { /* origine non parsable */ }
+  return false;
+}
+
 function corsHeadersFor(origin: string | null): Record<string, string> {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : "";
+  const allow = originAllowed(origin) ? (origin as string) : "";
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -178,7 +193,8 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: MAX_TOKENS,
-        system: SECURITY_PREAMBLE + systemPrompt,
+        // ⚡ Prompt caching : préambule sécurité + prompt d'agent (stables) mis en cache.
+        system: [{ type: "text", text: SECURITY_PREAMBLE + systemPrompt, cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: messageUtilisateur }],
       }),
     });

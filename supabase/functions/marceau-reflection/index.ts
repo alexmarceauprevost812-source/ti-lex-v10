@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
         model: "claude-sonnet-4-6",
         max_tokens: 800,
         stream: true,
-        system: systemPrompt,
+        // ⚡ Prompt caching : consigne de réflexion (stable) mise en cache.
+        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
         messages,
       }),
     });

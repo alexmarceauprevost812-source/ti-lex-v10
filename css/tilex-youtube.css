@@ -1,0 +1,46 @@
+/* css/tilex-youtube.css — Style thème sombre (ton préféré) */
+.tlyt-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+.tlyt-carte {
+  background: #16181d;
+  border: 1px solid #2a2e37;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.tlyt-carte:hover {
+  transform: translateY(-3px);
+  border-color: #e63946;
+}
+.tlyt-video {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* ratio 16:9 */
+}
+.tlyt-video iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.tlyt-titre {
+  font: 600 14px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #f1f1f1;
+  margin: 10px 12px 4px;
+}
+.tlyt-chaine {
+  font: 400 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #9aa0aa;
+  margin: 0 12px 12px;
+}
+.tlyt-loading, .tlyt-vide, .tlyt-erreur {
+  color: #9aa0aa;
+  font: 400 14px -apple-system, sans-serif;
+  padding: 12px;
+}
+.tlyt-erreur { color: #e63946; }

@@ -112,12 +112,13 @@ Deno.serve(async (req) => {
       client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/pro.html?checkout=success&plan=${planId}`,
-      cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/pro.html`,
+      cancel_url: `${req.headers.get("origin") || "https://ti-lex.ca"}/pro.html?checkout=cancelled`,
       locale: "fr",
       metadata: { user_id: user.id, plan_id: planId },
       subscription_data: {
         metadata: { user_id: user.id, plan_id: planId },
       },
+      automatic_tax: { enabled: true },
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);

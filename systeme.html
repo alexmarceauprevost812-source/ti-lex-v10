@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex-AL v10 — Mon système</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#0a0a0f; color:#e8e8e8; min-height:100vh; padding-bottom:40px;
+  }
+  header {
+    padding:26px 16px 18px; text-align:center;
+    background:linear-gradient(180deg,#14141c,#0a0a0f);
+    border-bottom:1px solid #26263a;
+  }
+  h1 { font-size:1.6rem; color:#ff3b3b; letter-spacing:1px; }
+  .sub { color:#888; font-size:0.85rem; margin-top:4px; }
+  .salut { color:#ccc; font-size:0.95rem; margin-top:10px; }
+
+  .live {
+    max-width:600px; margin:14px auto; padding:0 16px;
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .livecard {
+    background:#14141c; border:1px solid #26263a; border-radius:12px;
+    padding:12px 14px; display:flex; align-items:center; gap:10px;
+  }
+  .livecard .ico { font-size:1.4rem; }
+  .livecard .info .lbl { color:#888; font-size:0.7rem; }
+  .livecard .info .val { color:#fff; font-weight:700; font-size:0.95rem; }
+
+  .grid {
+    max-width:600px; margin:8px auto; padding:8px 16px;
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  }
+  .tuile {
+    background:#14141c; border:1px solid #26263a; border-radius:16px;
+    padding:22px 16px; text-decoration:none; color:inherit;
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    transition:transform .12s, border-color .2s; cursor:pointer;
+  }
+  .tuile:active { transform:scale(0.96); }
+  .tuile:hover { border-color:#ff3b3b66; }
+  .tuile .emoji { font-size:2.4rem; margin-bottom:10px; }
+  .tuile .nom { font-weight:700; font-size:1rem; margin-bottom:3px; }
+  .tuile .desc { color:#888; font-size:0.75rem; }
+  .tuile.large { grid-column:1 / -1; flex-direction:row; gap:16px; text-align:left; padding:18px; }
+  .tuile.large .emoji { margin:0; }
+
+  footer { text-align:center; color:#555; font-size:0.75rem; margin-top:24px; }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>🤖 ti-lex-AL v10</h1>
+    <div class="sub">Mon système — Forêt 🌲 + ti-lex 💻</div>
+    <div class="salut" id="salut">Salut ti-lex! 👋</div>
+  </header>
+
+  <!-- STATUT LIVE -->
+  <div class="live">
+    <div class="livecard">
+      <span class="ico">🚛</span>
+      <div class="info"><div class="lbl">Camion</div><div class="val" id="statutCamion">--</div></div>
+    </div>
+    <div class="livecard">
+      <span class="ico" id="meteoIco">🌡️</span>
+      <div class="info"><div class="lbl">Météo Normandin</div><div class="val" id="statutMeteo">--</div></div>
+    </div>
+  </div>
+
+  <!-- MODULES -->
+  <div class="grid">
+
+    <a class="tuile large" href="maison.html">
+      <span class="emoji">🗺️</span>
+      <div>
+        <div class="nom">Tracking Camion</div>
+        <div class="desc">Voir où est le camion en direct + alertes d'arrivée</div>
+      </div>
+    </a>
+
+    <a class="tuile large" href="/comm">
+      <span class="emoji">💬</span>
+      <div>
+        <div class="nom">Communication directe</div>
+        <div class="desc">Jaser en direct entre ton ordinateur pis ton téléphone 📱🖥️</div>
+      </div>
+    </a>
+
+    <a class="tuile" href="agenda.html">
+      <span class="emoji">📅</span>
+      <div class="nom">Agenda Total</div>
+      <div class="desc">Forêt + ti-lex, jour par jour</div>
+    </a>
+
+    <a class="tuile" href="rapport.html">
+      <span class="emoji">📊</span>
+      <div class="nom">Rapport Saison</div>
+      <div class="desc">Bilan + chômage</div>
+    </a>
+
+    <a class="tuile" href="truck.html">
+      <span class="emoji">📡</span>
+      <div class="nom">App Camion</div>
+      <div class="desc">Émetteur GPS (dans le truck)</div>
+    </a>
+
+    <a class="tuile" href="#" onclick="voirRappels();return false;">
+      <span class="emoji">🔔</span>
+      <div class="nom">Rappels</div>
+      <div class="desc">Médication Mireille</div>
+    </a>
+
+  </div>
+
+  <footer>ti-lex-AL v10 • Alex Marceau-Prévost • Starlink 🛰️</footer>
+
+<script src="js/tilex-config.js"></script>
+<script src="js/tilex-prive.js"></script>
+<script src="js/tilex-core.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  // Mêmes clés que partout (anon JWT) → session partagée + RLS.
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_KEY = window.SB_ANON || '';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  if (window.tilexDemarrer) tilexDemarrer(); // gardien + sync offline
+
+  const MAISON = { lat: 48.8290, lon: -72.5320 };
+  const TRUCK_ID = 'camion-alex';
+
+  // --- Salutation selon l'heure ---
+  const h = new Date().getHours();
+  const moment = h < 12 ? 'Bon matin' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+  document.getElementById('salut').textContent = moment + ' ti-lex! 👋';
+
+  // --- STATUT CAMION (dernière position) ---
+  async function statutCamion() {
+    const { data } = await supabase
+      .from('truck_position').select('*')
+      .eq('truck_id', TRUCK_ID)
+      .order('created_at', { ascending: false }).limit(1);
+
+    const el = document.getElementById('statutCamion');
+    if (data && data.length) {
+      const p = data[0];
+      const minDepuis = (Date.now() - new Date(p.created_at)) / 60000;
+      const dist = distanceKm(p.lat, p.lon, MAISON.lat, MAISON.lon);
+      if (minDepuis < 5) {
+        el.textContent = dist.toFixed(0) + ' km — actif 🟢';
+      } else {
+        el.textContent = 'Hors ligne';
+      }
+    } else {
+      el.textContent = 'Aucun signal';
+    }
+  }
+
+  // --- MÉTÉO (Open-Meteo, sans clé) ---
+  async function statutMeteo() {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${MAISON.lat}&longitude=${MAISON.lon}&current=temperature_2m,weather_code&timezone=America%2FMontreal`;
+      const r = await fetch(url);
+      const d = await r.json();
+      const temp = Math.round(d.current.temperature_2m);
+      const emojis = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',61:'🌧️',63:'🌧️',71:'🌨️',73:'❄️',75:'❄️',95:'⛈️'};
+      const e = emojis[d.current.weather_code] || '🌡️';
+      document.getElementById('meteoIco').textContent = e;
+      document.getElementById('statutMeteo').textContent = temp + '°C';
+    } catch(err) {
+      document.getElementById('statutMeteo').textContent = '--';
+    }
+  }
+
+  // --- Rappels ---
+  window.voirRappels = async function() {
+    const { data } = await supabase
+      .from('rappel').select('*')
+      .eq('actif', true)
+      .order('prochaine_date', { ascending: true });
+    if (data && data.length) {
+      const r = data[0];
+      const date = r.prochaine_date ? new Date(r.prochaine_date).toLocaleDateString('fr-CA') : '—';
+      alert('🔔 ' + r.titre + '\n\n' + (r.description||'') + '\n\n📅 Prochaine: ' + date);
+    } else {
+      alert('🔔 Aucun rappel actif');
+    }
+  };
+
+  function distanceKm(la1, lo1, la2, lo2) {
+    const R=6371, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180;
+    const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+
+  statutCamion();
+  statutMeteo();
+  setInterval(statutCamion, 30000);
+</script>
+</body>
+</html>

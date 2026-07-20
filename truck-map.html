@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗺️ ti-lex Truck — Suivi en direct</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e8e8e8;display:flex;flex-direction:column;}
+  header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#0c0c12;border-bottom:1px solid #1e1e2a;flex:0 0 auto;}
+  header h1{font-size:1.05rem;color:#ff3b3b;}
+  header .sp{flex:1;}
+  .dot{width:12px;height:12px;border-radius:50%;background:#555;}
+  .dot.on{background:#2ecc71;box-shadow:0 0 10px #2ecc71;animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .pill{font-size:.72rem;color:#9aa;border:1px solid #26263a;border-radius:20px;padding:3px 9px;}
+  #map{flex:1 1 auto;min-height:0;background:#11141a;}
+  .stats{display:flex;gap:0;background:#0c0c12;border-top:1px solid #1e1e2a;flex:0 0 auto;}
+  .stat{flex:1;text-align:center;padding:9px 4px;border-right:1px solid #1e1e2a;}
+  .stat:last-child{border-right:none;}
+  .stat .k{font-size:.66rem;color:#888;text-transform:uppercase;letter-spacing:.5px;}
+  .stat .v{font-size:.95rem;font-weight:700;color:#fff;margin-top:2px;}
+  .banner{position:absolute;top:60px;left:50%;transform:translateX(-50%);z-index:1000;background:rgba(255,59,59,.14);border:1px solid #ff3b3b66;color:#ffb3b3;padding:9px 14px;border-radius:12px;font-size:.82rem;display:none;max-width:92%;text-align:center;}
+  .banner a{color:#ff7a00;}
+  .banner.show{display:block;}
+  .leaflet-container{background:#11141a;}
+</style>
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot"></span>
+    <h1>🚛 Suivi en direct</h1>
+    <span class="sp"></span>
+    <span class="pill" id="pill">…</span>
+  </header>
+  <div class="banner" id="banner"></div>
+  <div id="map"></div>
+  <div class="stats">
+    <div class="stat"><div class="k">Vitesse</div><div class="v" id="spd">-- km/h</div></div>
+    <div class="stat"><div class="k">Dernière position</div><div class="v" id="last">--</div></div>
+    <div class="stat"><div class="k">Points</div><div class="v" id="count">0</div></div>
+  </div>
+
+<script src="js/tilex-config.js"></script>
+<script src="js/tilex-prive.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = window.SB_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
+  const SUPABASE_KEY = window.SB_ANON || '';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const TRUCK_ID = 'camion-alex';
+
+  // Carte (centrée Québec par défaut)
+  const map = L.map('map', { zoomControl:true }).setView([46.81, -71.21], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19, attribution:'© OpenStreetMap'
+  }).addTo(map);
+
+  const truckIcon = L.divIcon({ html:'🚛', className:'truck-emoji', iconSize:[30,30], iconAnchor:[15,15] });
+  let marker = null;
+  const trail = L.polyline([], { color:'#ff3b3b', weight:4, opacity:.8 }).addTo(map);
+  let pts = [];
+  let firstFix = true;
+
+  function banner(html){ const b=document.getElementById('banner'); if(!html){b.className='banner';b.innerHTML='';return;} b.className='banner show'; b.innerHTML=html; }
+  function setOnline(on){ document.getElementById('dot').classList.toggle('on',!!on); document.getElementById('pill').textContent = on ? 'EN DIRECT 🛰️' : 'hors-ligne'; }
+
+  function addPoint(row, recenter){
+    if(!row || typeof row.lat!=='number' || typeof row.lon!=='number') return;
+    const ll = [row.lat, row.lon];
+    pts.push(ll); if(pts.length>500) pts.shift();
+    trail.setLatLngs(pts);
+    if(!marker){ marker = L.marker(ll, { icon:truckIcon }).addTo(map); }
+    else marker.setLatLng(ll);
+    document.getElementById('spd').textContent = Math.round(row.vitesse||0) + ' km/h';
+    if(row.created_at){ try{ document.getElementById('last').textContent = new Date(row.created_at).toLocaleTimeString('fr-CA'); }catch(e){} }
+    document.getElementById('count').textContent = pts.length;
+    if(recenter || firstFix){ map.setView(ll, Math.max(map.getZoom(),15)); firstFix=false; }
+  }
+
+  async function boot(){
+    const { data } = await supabase.auth.getSession();
+    const session = data && data.session ? data.session : null;
+    if(!session || !session.user){
+      banner('🔒 Connecte-toi d’abord — ouvre <a href="/pro">/pro</a>, connecte-toi, puis reviens.');
+      setOnline(false);
+      return;
+    }
+    banner('');
+    // Realtime respecte la RLS : on ne reçoit QUE ses propres positions.
+    try { await supabase.realtime.setAuth(session.access_token); } catch(e){}
+
+    // 1) Charge l'historique récent (trace) — RLS = mes lignes seulement.
+    try {
+      const res = await supabase.from('truck_position')
+        .select('*').eq('truck_id', TRUCK_ID)
+        .order('created_at', { ascending:false }).limit(200);
+      if(res.data && res.data.length){
+        res.data.reverse().forEach(r => addPoint(r, false));
+        if(marker) map.setView(marker.getLatLng(), 15);
+      }
+    } catch(e){}
+
+    // 2) Abonnement temps réel sur les nouveaux points.
+    supabase.channel('truck-'+TRUCK_ID)
+      .on('postgres_changes',
+        { event:'INSERT', schema:'public', table:'truck_position', filter:'truck_id=eq.'+TRUCK_ID },
+        payload => addPoint(payload.new, true))
+      .subscribe(status => { setOnline(status === 'SUBSCRIBED'); });
+  }
+  supabase.auth.onAuthStateChange(() => { /* si reconnexion, on relance */ if(!marker) boot(); });
+  boot();
+</script>
+</body>
+</html>

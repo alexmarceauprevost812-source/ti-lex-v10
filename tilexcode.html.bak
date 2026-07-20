@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TILEX CODE — Moteur Codex</title>
+<style>
+  :root{
+    --bg:#000000; --bg2:#0a0a0c; --bg3:#121216; --bord:#23232b;
+    --txt:#e8e8ec; --txt2:#9aa0aa;
+    --orange:#ff7a00; --orange2:#ff9a3d; --rouge:#ff4d5e; --vert-ok:#36e07a;
+    --c-kw:#ff4fd8; --c-str:#4af626; --c-num:#ffd23f; --c-com:#5bc0ff;
+    --c-fn:#00e5ff; --c-op:#ff8a3d; --c-const:#c792ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg); color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; display:flex; flex-direction:column; height:100vh; overflow:hidden}
+  button{font-family:inherit; cursor:pointer}
+  input,select,textarea{font-family:inherit}
+
+  header{display:flex; align-items:center; gap:12px; padding:10px 16px;
+    background:linear-gradient(180deg,#0c0c0f,#000); border-bottom:1px solid var(--bord); flex:0 0 auto}
+  .logo{font-weight:800; letter-spacing:1px; font-size:16px}
+  .logo .orange{color:var(--orange)}
+  .logo small{color:var(--txt2); font-weight:600; letter-spacing:0}
+  .chips{display:flex; gap:8px; margin-left:4px; flex-wrap:wrap}
+  .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; background:var(--bg3); border:1px solid var(--bord); padding:4px 10px; border-radius:999px; color:var(--txt2)}
+  .dot{width:8px;height:8px;border-radius:50%;background:#555}
+  .dot.on{background:var(--vert-ok); box-shadow:0 0 8px var(--vert-ok)}
+  .dot.off{background:var(--rouge)}
+  header .spacer{flex:1}
+  .btn{background:var(--bg3); color:var(--txt); border:1px solid var(--bord); padding:8px 14px; border-radius:10px; font-weight:600; font-size:13px}
+  .btn:hover{border-color:#3a3a44}
+  .btn.orange{background:var(--orange); color:#1a0d00; border-color:var(--orange); box-shadow:0 4px 16px #ff7a0033}
+  .btn.orange:hover{background:var(--orange2)}
+  .btn.ghost{background:transparent}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .btn.sm{padding:5px 10px; font-size:12px; border-radius:8px}
+  #toggleLeft{font-size:16px; line-height:1; padding:6px 11px}
+
+  main{flex:1; display:flex; min-height:0}
+  .col{display:flex; flex-direction:column; min-height:0}
+  .left{flex:0 0 250px; width:250px; border-right:1px solid var(--bord); background:var(--bg2);
+        transition:flex-basis .3s ease, width .3s ease, opacity .25s ease, transform .3s ease; overflow:hidden}
+  .left.collapsed{flex-basis:0; width:0; opacity:0; transform:translateX(-18px); border-right-color:transparent}
+  .center{flex:1 1 0; min-width:0; border-right:1px solid var(--bord)}
+  .right{flex:1.5 1 0; min-width:0; background:var(--bg)}
+  .pane-h{padding:9px 12px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--txt2); border-bottom:1px solid var(--bord); display:flex; align-items:center; gap:8px; flex:0 0 auto}
+  .pane-h .acc{color:var(--orange)}
+  .pane-b{padding:10px 12px; overflow:auto; flex:1 1 auto; min-height:0}
+
+  label.fld{display:block; font-size:11px; color:var(--txt2); margin:8px 0 4px; text-transform:uppercase; letter-spacing:.5px}
+  select,input[type=text],input[type=password],input[type=email]{width:100%; background:var(--bg3); color:var(--txt); border:1px solid var(--bord); border-radius:9px; padding:8px 10px; font-size:13px}
+  select:focus,input:focus,textarea:focus{outline:none; border-color:var(--orange)}
+  .arow{display:flex; gap:8px; margin-top:8px; align-items:center; flex-wrap:wrap}
+
+  .tree{font-size:12.5px; line-height:1.7}
+  .tree .f{padding:3px 6px; border-radius:6px; color:var(--txt2); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .tree .f:hover{background:var(--bg3); color:var(--txt)}
+  .tree .f.sel{background:#ff7a0022; color:var(--orange)}
+
+  /* Étapes (milieu) */
+  .stp{font-size:13px; line-height:1.5; padding:4px 2px; color:var(--txt); border-bottom:1px dashed #1c1c22}
+  .stp .n{color:var(--orange); font-weight:800; margin-right:6px}
+  .stp.run{color:var(--txt2)} .stp.run .n::after{content:" …"}
+  .stp.ok{color:var(--vert-ok)} .stp.err{color:var(--rouge)}
+  .steptitle{font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--c-fn); margin:10px 0 5px; font-weight:800}
+  .card{background:var(--bg3); border:1px solid var(--bord); border-radius:10px; padding:10px 12px; margin-top:10px; font-size:12.5px; line-height:1.5}
+  .card.bad{border-color:#ff4d5e66; background:#ff4d5e12}
+  .card.good{border-color:#36e07a55; background:#36e07a12}
+  .card .ttl{font-weight:700; margin-bottom:3px}
+  .mini{color:var(--txt2); font-size:11.5px}
+  .log{font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap; color:var(--txt2); margin-top:12px; border-top:1px dashed #1c1c22; padding-top:8px}
+  /* ===== Indicateur de recherche ti-lex — logos officiels des moteurs (Supabase, GitHub, Web/Google) ===== */
+  .tlx-logos{display:inline-flex;align-items:center;gap:6px;}
+  .tlx-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;background:var(--bg-elev,var(--bg3,#121216));border:1px solid var(--border,var(--bord,#23232b));font-size:12px;font-weight:600;color:var(--text-muted,var(--txt2,#9aa0aa));white-space:nowrap;opacity:0;transform:translateY(4px) scale(.96);animation:tlx-pop .34s cubic-bezier(.2,.8,.2,1) forwards;}
+  .tlx-chip svg{width:15px;height:15px;display:block;flex:0 0 auto;}
+  .tlx-state{font-size:13px;color:var(--text-muted,var(--txt2,#9aa0aa));display:inline-flex;align-items:center;gap:7px;}
+  .tlx-spin{width:13px;height:13px;border-radius:50%;border:2px solid var(--border,var(--bord,#23232b));border-top-color:var(--accent,var(--orange,#ff7a00));animation:tlx-spin .7s linear infinite;flex:0 0 auto;}
+  .tlx-dots::after{content:'';animation:tlx-dots 1.3s steps(4,end) infinite;}
+  .tlx-codexbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 11px;margin:0 0 9px;border:1px solid var(--bord,#23232b);border-radius:10px;background:var(--bg3,#121216);}
+  @keyframes tlx-pop{to{opacity:1;transform:none;}}
+  @keyframes tlx-spin{to{transform:rotate(360deg);}}
+  @keyframes tlx-dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}}
+  @media (prefers-reduced-motion:reduce){.tlx-chip,.tlx-spin{animation:none!important;opacity:1!important;transform:none!important;}}
+  .log .u{color:var(--orange)} .log .a{color:var(--c-fn)} .log .e{color:var(--rouge)} .log .ok{color:var(--vert-ok)}
+
+  /* Droite : le code */
+  .editor-top{display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--bord); background:var(--bg2); flex:0 0 auto}
+  .editor-top input.path{flex:1; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px}
+  .code-area{position:relative; flex:1 1 auto; min-height:0; overflow:hidden}
+  .code-area pre, .code-area textarea{margin:0; position:absolute; inset:0; padding:12px 14px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Courier New",monospace;
+    font-size:13.5px; line-height:1.55; tab-size:2; white-space:pre; overflow:auto; border:0}
+  .code-area pre{color:var(--txt); pointer-events:none; z-index:1; background:var(--bg)}
+  .code-area textarea{z-index:2; background:transparent; color:transparent; caret-color:var(--orange); resize:none; -webkit-text-fill-color:transparent}
+  .code-area textarea::selection{background:#ff7a0044}
+  .tk-kw{color:var(--c-kw)} .tk-str{color:var(--c-str)} .tk-num{color:var(--c-num)}
+  .tk-com{color:var(--c-com); font-style:italic} .tk-fn{color:var(--c-fn)}
+  .tk-op{color:var(--c-op)} .tk-const{color:var(--c-const)}
+
+  /* Barre d'écriture du bas */
+  .bottombar{flex:0 0 auto; border-top:1px solid var(--bord); background:var(--bg2); padding:8px 12px; display:flex; flex-direction:column; gap:8px}
+  .agents{display:flex; gap:6px; flex-wrap:wrap}
+  .agentbtn{background:var(--bg3); border:1px solid var(--bord); color:var(--txt); border-radius:8px; padding:6px 10px; font-size:12px; font-weight:600}
+  .agentbtn b{color:var(--orange)}
+  .agentbtn .role{color:var(--txt2); font-weight:500}
+  .agentbtn:hover{border-color:var(--orange)}
+  .agentbtn.active{border-color:var(--orange); background:#ff7a0022; color:var(--orange)}
+  .agentbtn.active b{color:var(--orange)}
+  .inputrow{display:flex; gap:8px; align-items:flex-end}
+  .inputrow textarea{flex:1; min-height:46px; max-height:160px; resize:vertical; background:var(--bg3); color:var(--txt); border:1px solid var(--bord); border-radius:10px; padding:11px 12px; font-size:14px}
+  #sendBtn{font-size:17px; padding:11px 18px; align-self:stretch}
+
+  /* Ange gardien : parle au milieu, style fantôme */
+  .angecard{background:rgba(124,146,255,.08); border:1px dashed #8a8fff66; border-radius:12px; padding:10px 12px; margin:6px 0 10px; color:#cdd2ff; font-style:italic; font-size:12.5px; line-height:1.55; animation:apparition .35s ease}
+  .angecard.good{background:rgba(54,224,122,.10); border-color:#36e07a66; color:#bff5d2}
+  .angecard .ah{font-style:normal; font-weight:800; display:flex; align-items:center; gap:7px; margin-bottom:5px}
+  .angecard .ah .halo{filter:drop-shadow(0 0 7px #ffd23f); animation:floaty 2.4s ease-in-out infinite}
+  .angecard .af{display:flex; gap:8px; margin-top:10px}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+  @keyframes apparition{from{opacity:0; transform:translateY(-6px)}to{opacity:1; transform:translateY(0)}}
+  /* Diff : ajouts en vert, retraits en rouge */
+  #diffOut{margin-top:10px}
+  .diffttl{font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--txt2); margin:10px 0 5px; font-weight:800}
+  .dl{font-family:ui-monospace,monospace; font-size:11.5px; white-space:pre-wrap; word-break:break-word; padding:1px 8px; border-radius:4px; line-height:1.5}
+  .dl.add{color:#9affb0; background:rgba(54,224,122,.13)}
+  .dl.del{color:#ff9aa6; background:rgba(255,77,94,.13)}
+  .dl.more{color:var(--txt2); font-style:italic; background:none}
+
+  .overlay{position:fixed; inset:0; background:#000a; display:none; align-items:center; justify-content:center; z-index:80}
+  .overlay.show{display:flex}
+  .modal{width:min(460px,92vw); background:var(--bg2); border:1px solid var(--bord); border-radius:16px; padding:18px 20px; max-height:92vh; overflow:auto}
+  .modal h3{margin:0 0 4px} .modal p.sub{margin:0 0 14px; color:var(--txt2); font-size:12.5px}
+  .modal .row{display:flex; gap:8px; margin-top:10px}
+  .help{font-size:11.5px; color:var(--txt2); margin-top:4px; line-height:1.5}
+  a{color:var(--orange)}
+  .toast{position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--bg3); border:1px solid var(--bord); padding:10px 16px; border-radius:12px; font-size:13px; z-index:90; display:none; box-shadow:0 8px 30px #000a}
+  .toast.show{display:block}
+  .toast.err{border-color:#ff4d5e88}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#222; border-radius:8px}
+  ::-webkit-scrollbar-thumb:hover{background:#333}
+
+  /* ===== Téléphone : 1 écran à la fois, compact ===== */
+  .mobtabs{display:none}
+  @media (max-width:760px){
+    .mobtabs{display:flex; gap:6px; padding:8px 10px; border-bottom:1px solid var(--bord); background:var(--bg2); flex:0 0 auto}
+    .mobtabs button{flex:1; background:var(--bg3); border:1px solid var(--bord); color:var(--txt2); border-radius:8px; padding:8px 6px; font-size:12px; font-weight:700}
+    .mobtabs button.on{color:var(--orange); border-color:var(--orange); background:#ff7a0018}
+    .col{flex:1 1 100% !important; width:100% !important; border-right:0; transform:none !important; opacity:1 !important}
+    .left,.center,.right{display:none}
+    body.v-left .left{display:flex}
+    body.v-center .center{display:flex}
+    body.v-right .right{display:flex}
+    .chips{display:none}
+    .logo small{display:none}
+    .agentbtn .role{display:none}
+    .agentbtn{padding:6px 9px}
+    .inputrow textarea{font-size:16px}
+    header{gap:8px; padding:9px 12px}
+    .editor-top{flex-wrap:wrap}
+  }
+
+  /* ════════ CODEX SUR UN SEUL ÉCRAN ════════
+     Une seule colonne (explication + diff). Le code complet est caché ;
+     la connexion au projet (repo/fichiers) devient un tiroir via le ☰. */
+  header{position:relative; z-index:500;}
+  /* !important partout : bat les règles mobiles (@media ≤760px) qui forçaient
+     .left{display:none} et .col{transform:none !important}. */
+  .col.right{display:none !important;}
+  .col.center{display:flex !important; flex:1 1 100% !important; width:100% !important; border-right:0 !important; transform:none !important; opacity:1 !important;}
+  .col.left{
+    display:flex !important; position:fixed !important; top:52px; left:0; bottom:0;
+    width:min(86vw,300px) !important; max-width:300px; z-index:600;
+    background:var(--bg2); border-right:1px solid var(--bord); opacity:1 !important;
+    transform:translateX(-102%) !important; transition:transform .26s ease; box-shadow:2px 0 24px rgba(0,0,0,.55);
+  }
+  .col.left.open{transform:translateX(0) !important;}
+  .mobtabs{display:none !important;}
+  /* Bas du tiroir : conversations repliables + retour plateforme */
+  .leftfoot{flex:0 0 auto; border-top:1px solid var(--bord); padding:8px 10px; background:var(--bg2);}
+  .convhead{width:100%; text-align:left; background:var(--bg3); color:var(--txt); border:1px solid var(--bord);
+    border-radius:9px; padding:9px 11px; font-size:13px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between;}
+  .convhead .chev{transition:transform .25s ease; color:var(--txt2);}
+  .convhead.open .chev{transform:rotate(90deg); color:var(--orange);}
+  .convlist{max-height:0; overflow:hidden; transition:max-height .28s ease; display:flex; flex-direction:column; gap:4px;}
+  .convlist.open{max-height:42vh; overflow-y:auto; margin-bottom:6px;}
+  .convitem{text-align:left; background:transparent; color:var(--txt); border:1px solid var(--bord);
+    border-radius:8px; padding:8px 10px; font-size:12.5px; cursor:pointer; line-height:1.3;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .convitem:hover{background:var(--bg3); border-color:var(--orange);}
+  .convitem .when{display:block; font-size:10px; color:var(--txt2); margin-top:2px;}
+  .convempty{color:var(--txt2); font-size:12px; padding:8px 4px;}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="btn sm ghost" id="toggleLeft" title="Ouvrir / fermer le menu de gauche">☰</button>
+  <div class="logo">TILEX <span class="orange">CODE</span> <small>· Codex</small></div>
+  <div class="chips">
+    <span class="chip"><span class="dot" id="dotSb"></span> Compte</span>
+    <span class="chip"><span class="dot" id="dotGh"></span> GitHub</span>
+    <span class="chip"><span class="dot" id="dotAg"></span> Moteur</span>
+    <span class="chip" id="syncChip" title="Synchro entre ton téléphone et ton ordinateur"><span class="dot" id="dotSync"></span> <span id="syncTxt">Solo</span></span>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn sm ghost" id="reconnectBtn" title="Forcer la reconnexion">↻ Reconnecter</button>
+  <button class="btn sm" id="settingsBtn">⚙︎ Réglages</button>
+</header>
+
+<div class="mobtabs">
+  <button data-v="left">🔌 Projet</button>
+  <button data-v="center" class="on">📝 Étapes</button>
+  <button data-v="right">💻 Code</button>
+</div>
+
+<main>
+  <!-- GAUCHE (tiroir) : connexion projet/branche + conversations + retour plateforme -->
+  <section class="col left" id="leftPanel">
+    <div class="pane-h">🔌 Connexion au projet</div>
+    <div class="pane-b" style="flex:1 1 auto;overflow-y:auto;">
+      <label class="fld">Dépôt (repo)</label>
+      <select id="repoSel"><option value="">— choisir un repo —</option></select>
+      <label class="fld">Branche</label>
+      <select id="branchSel"><option value="">main</option></select>
+      <div class="arow" style="margin-top:10px">
+        <button class="btn sm" id="refreshTreeBtn">⟳ Fichiers</button>
+        <button class="btn sm" id="newFileBtn">＋ Nouveau</button>
+      </div>
+      <label class="fld" style="margin-top:12px">Fichiers</label>
+      <div class="tree" id="tree"><span class="mini">Branche un repo pour voir les fichiers.</span></div>
+    </div>
+    <!-- Bas du tiroir : Conversations (repliable) + retour plateforme -->
+    <div class="leftfoot">
+      <div class="convlist" id="convList"></div>
+      <button class="convhead" id="convToggle">💬 Conversations <span class="chev" id="convChev">▸</span></button>
+      <button class="btn sm" id="backPlatBtn" style="width:100%;margin-top:6px;">← Retour à la plateforme</button>
+    </div>
+  </section>
+
+  <!-- ÉCRAN UNIQUE : ce que le Codex fait (explication + diff) + injection -->
+  <section class="col center">
+    <div class="editor-top">
+      <input class="path" id="filePath" type="text" placeholder="chemin/du/fichier.js" />
+      <button class="btn orange sm" id="pushBtn" title="Injecter le code dans ton repo">injection 💉</button>
+    </div>
+    <div class="pane-b">
+      <div id="angeZone" style="display:none"></div>
+      <div id="stepsBox"><span class="mini">Écris ta demande en bas. Le Codex t'explique quoi il modifie, pis te montre juste les lignes changées (diff vert/rouge).</span></div>
+      <div id="diffOut"></div>
+      <div id="studioOut"></div>
+      <div class="log" id="consoleOut"></div>
+    </div>
+  </section>
+
+  <!-- Code complet : caché (sert juste à garder le contenu pour l'injection) -->
+  <section class="col right">
+    <div class="code-area">
+      <pre id="hl" aria-hidden="true"><code></code></pre>
+      <textarea id="code" spellcheck="false" placeholder=""></textarea>
+    </div>
+  </section>
+</main>
+
+<!-- BAS : espace d'écriture -->
+<footer class="bottombar">
+  <div class="agents">
+    <button class="agentbtn" data-agent="SCRIBE"><b>SCRIBE</b> <span class="role">codeur</span></button>
+    <button class="agentbtn" data-agent="ARCHI"><b>ARCHI</b> <span class="role">structure</span></button>
+    <button class="agentbtn" data-agent="SOCLE"><b>SOCLE</b> <span class="role">infra/SQL</span></button>
+    <button class="agentbtn" data-agent="LOUPE"><b>LOUPE</b> <span class="role">analyse</span></button>
+    <button class="agentbtn" data-agent="FORGE"><b>FORGE</b> <span class="role">studio erreur</span></button>
+  </div>
+  <div class="inputrow">
+    <textarea id="prompt" placeholder="Décris ta tâche… Codex écrit, analyse, corrige. (Entrée = lancer · Maj+Entrée = nouvelle ligne)"></textarea>
+    <button class="btn orange" id="sendBtn" title="Pipeline complet : SCRIBE → LOUPE → FORGE">⚡ Codex</button>
+  </div>
+  <div class="mini">⚡ <b style="color:var(--orange)">Codex</b> = tout automatique. Ou clique un agent en haut pour le faire à la main.</div>
+</footer>
+
+<!-- Modale réglages -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Réglages & connexions</h3>
+    <p class="sub">Tout est branché direct au projet. Une fois connecté, ça reste connecté (reconnexion automatique).</p>
+    <div id="loginBox">
+      <div class="card"><span class="ttl">Compte ti-lex</span></div>
+      <p class="sub">Le Codex utilise <b>automatiquement le même compte que la plateforme</b> (ton Gmail). Pas besoin de retaper ton courriel ni ton mot de passe ici — connecte-toi une fois sur la plateforme.</p>
+      <div class="row">
+        <a class="btn orange" href="/web" style="flex:1;text-align:center;text-decoration:none;line-height:1.4">Ouvrir la plateforme pour me connecter</a>
+      </div>
+      <div class="help">Une fois connecté sur la plateforme, reviens ici : ta session se reprend toute seule.</div>
+    </div>
+    <div id="accountBox" style="display:none">
+      <div class="card good"><span class="ttl">✓ Connecté via la plateforme</span> <span class="mini" id="whoami"></span></div>
+      <div class="help">Ton compte ti-lex est partagé avec la plateforme. La déconnexion se fait sur la plateforme — ici, t'as juste à brancher GitHub.</div>
+    </div>
+    <hr style="border-color:var(--bord); margin:16px 0" />
+    <label class="fld">Jeton GitHub (PAT) — branche direct au projet</label>
+    <input id="pat" type="password" placeholder="github_pat_… ou ghp_…" autocomplete="off" />
+    <div class="row">
+      <button class="btn orange" id="savePatBtn" style="flex:1">Brancher GitHub</button>
+      <button class="btn" id="clearPatBtn">Oublier</button>
+    </div>
+    <div class="help">Le jeton reste dans <b>ton navigateur</b>, jamais envoyé ailleurs que chez GitHub.
+      Crée-en un <a href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noopener">ici</a>
+      (fine-grained, accès <i>Contents: Read &amp; Write</i> sur tes repos).</div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="closeBtn" style="flex:1">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/tilex-config.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+/* ====================== CONFIG ====================== */
+// Mêmes clés que la plateforme (pro/web) → session partagée + login qui marche.
+const SUPABASE_URL  = window.SB_URL  || "https://rnuripmfozlxenryxhdc.supabase.co";
+const SUPABASE_ANON = window.SB_ANON || "sb_publishable_c7TOExmCXvTMtXGCYJV44A_FFa5YjAm";
+const FN_AGENT      = `${SUPABASE_URL}/functions/v1/tilexcode-agent`;
+const FN_GARDIEN    = `${SUPABASE_URL}/functions/v1/tilex-gardien`;
+const LS = { pat:"tilexcode_pat", repo:"tilexcode_repo", branch:"tilexcode_branch", path:"tilexcode_path", code:"tilexcode_code", hist:"tilexcode_hist" };
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+const $ = (id)=>document.getElementById(id);
+
+let pat   = localStorage.getItem(LS.pat) || "";
+let repo  = localStorage.getItem(LS.repo) || "";
+let branch= localStorage.getItem(LS.branch) || "";
+let curFileSha = null;
+let activeAgent = "SCRIBE";
+
+/* ====================== UI utils ====================== */
+function toast(msg, err){ const t=$("toast"); t.textContent=msg; t.className="toast show"+(err?" err":""); setTimeout(()=>t.className="toast",3200); }
+function setDot(id,on){ $(id).className="dot "+(on?"on":"off"); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+/* Garde seulement l'explication (enlève les blocs de code ```…```) — on montre PAS
+   tout le fichier réécrit, juste ce que le Codex dit à l'utilisateur. */
+function explicationSeule(s){
+  let t=String(s||"").replace(/```[\s\S]*?```/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  return t;
+}
+
+/* ====================== CONVERSATIONS (historique des demandes Codex) ====================== */
+function histLire(){ try{ return JSON.parse(localStorage.getItem(LS.hist)||"[]"); }catch(e){ return []; } }
+function histAjouter(t){
+  t=String(t||"").trim(); if(!t) return;
+  let arr=histLire().filter(x=>x.t!==t);
+  arr.unshift({ t:t.slice(0,200), at:Date.now() });
+  arr=arr.slice(0,30);
+  try{ localStorage.setItem(LS.hist, JSON.stringify(arr)); }catch(e){}
+  histRendre();
+}
+function histQuand(at){ const d=(Date.now()-at)/1000; if(d<60)return "à l'instant"; if(d<3600)return "il y a "+Math.floor(d/60)+" min"; if(d<86400)return "il y a "+Math.floor(d/3600)+" h"; return new Date(at).toLocaleDateString("fr-CA"); }
+function histRendre(){
+  const box=$("convList"); if(!box) return;
+  const arr=histLire();
+  if(!arr.length){ box.innerHTML='<div class="convempty">Aucune conversation encore.</div>'; return; }
+  box.innerHTML="";
+  arr.forEach(x=>{
+    const d=document.createElement("button"); d.className="convitem"; d.title=x.t;
+    const txt=document.createElement("span"); txt.textContent=x.t;
+    const w=document.createElement("span"); w.className="when"; w.textContent=histQuand(x.at);
+    d.appendChild(txt); d.appendChild(w);
+    d.onclick=()=>{ $("prompt").value=x.t; $("leftPanel").classList.remove("open"); $("prompt").focus(); };
+    box.appendChild(d);
+  });
+}
+function logLine(kind,txt){
+  const c=$("consoleOut"); if(!c) return; const span=document.createElement("div");
+  const cls={u:"u",a:"a",e:"e",ok:"ok"}[kind]||"";
+  span.innerHTML=`<span class="${cls}">[${new Date().toLocaleTimeString()}] ${kind.toUpperCase()}</span> `+esc(txt);
+  c.appendChild(span); c.scrollTop=c.scrollHeight;
+}
+
+/* ====================== ÉTAPES (milieu) ====================== */
+const stepsBox=$("stepsBox"); let stepN=0;
+function stepTitle(t){ stepN=0; stepsBox.innerHTML=""; const d=document.createElement("div"); d.className="steptitle"; d.textContent=t; stepsBox.appendChild(d); }
+function step(txt){ stepN++; const d=document.createElement("div"); d.className="stp run"; d.innerHTML=`<span class="n">${stepN}-</span>`+esc(txt); stepsBox.appendChild(d); stepsBox.scrollTop=stepsBox.scrollHeight; return d; }
+function stepOk(d){ if(d){ d.classList.remove("run"); d.classList.add("ok"); } }
+function stepErr(d){ if(d){ d.classList.remove("run"); d.classList.add("err"); } }
+function studioCard(cls,ttl,body){ $("studioOut").innerHTML=`<div class="card ${cls}"><div class="ttl">${esc(ttl)}</div><div class="mini">${esc(body).replace(/\n/g,"<br>")}</div></div>`; }
+function studioAppend(cls,ttl,body){ $("studioOut").innerHTML+=`<div class="card ${cls}"><div class="ttl">${esc(ttl)}</div><div class="mini">${esc(body).replace(/\n/g,"<br>")}</div></div>`; }
+
+/* ===== Indicateur de recherche ti-lex — logos OFFICIELS des moteurs =====
+   Pendant qu'un agent travaille, on affiche en haut des étapes les logos officiels
+   des moteurs branchés (Supabase = le moteur Codex, GitHub = ton repo) + l'état
+   « Réflexion + recherche », puis ça disparaît quand l'agent a fini. */
+const TLX_LOGOS={
+  google:`<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>`,
+  web:`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18"/></svg>`,
+  supabase:`<svg viewBox="0 0 109 113" aria-hidden="true"><path d="M63.708 110.284c-2.86 3.601-8.658 1.629-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874l-43.151 54.347Z" fill="url(#tlxSbA)"/><path d="M63.708 110.284c-2.86 3.601-8.658 1.629-8.727-2.97l-1.007-67.251h45.22c8.19 0 12.758 9.46 7.665 15.874l-43.151 54.347Z" fill="url(#tlxSbB)" fill-opacity=".2"/><path d="M45.317 2.071c2.86-3.601 8.657-1.628 8.726 2.97l.442 67.251H9.831C1.64 72.292-2.928 62.832 2.165 56.418L45.317 2.071Z" fill="#3ECF8E"/><defs><linearGradient id="tlxSbA" x1="53.974" y1="54.974" x2="94.163" y2="71.829" gradientUnits="userSpaceOnUse"><stop stop-color="#249361"/><stop offset="1" stop-color="#3ECF8E"/></linearGradient><linearGradient id="tlxSbB" x1="36.156" y1="30.578" x2="54.484" y2="65.081" gradientUnits="userSpaceOnUse"><stop/><stop offset="1" stop-opacity="0"/></linearGradient></defs></svg>`,
+  github:`<svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>`,
+};
+const TLX_LABELS={google:"Google",web:"Web",supabase:"Supabase",github:"GitHub"};
+function tlxChips(sources){ return (sources||[]).map(k=>`<span class="tlx-chip" title="Connecté à ${TLX_LABELS[k]||k}">${TLX_LOGOS[k]||""}<span>${TLX_LABELS[k]||k}</span></span>`).join(""); }
+// Affiche la barre d'indicateur en haut des étapes ; renvoie un objet avec .remove() (à appeler quand l'agent a fini).
+function tlxCodexStart(sources,label){
+  const el=document.createElement("div"); el.className="tlx-codexbar";
+  el.innerHTML=`<span class="tlx-logos">${tlxChips(sources)}</span><span class="tlx-state"><span class="tlx-spin"></span><span class="tlx-dots">${label||"Connexion + recherche"}</span></span>`;
+  stepsBox.prepend(el);
+  return { el, remove(){ try{ el.remove(); }catch(_e){} } };
+}
+
+/* ====================== COLORATION (7 couleurs) ====================== */
+const RULES = [
+  {cls:"tk-com",   re:String.raw`\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*|--[^\n]*`},
+  {cls:"tk-str",   re:String.raw`"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\`(?:\\.|[^\`\\])*\``},
+  {cls:"tk-num",   re:String.raw`\b0x[0-9a-fA-F]+\b|\b\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?\b`},
+  {cls:"tk-kw",    re:String.raw`\b(?:const|let|var|function|return|if|else|elif|for|while|do|switch|case|break|continue|new|class|extends|super|this|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|delete|void|yield|static|interface|type|enum|implements|def|lambda|pass|with|raise|select|insert|into|update|create|table|alter|drop|where|join|values|primary|foreign|references|begin|end)\b`},
+  {cls:"tk-const", re:String.raw`\b(?:true|false|null|undefined|None|True|False|NaN|Infinity|and|or|not|in|of|as|is)\b`},
+  {cls:"tk-fn",    re:String.raw`[A-Za-z_$][\w$]*(?=\s*\()`},
+  {cls:"tk-op",    re:String.raw`[{}()\[\];,.<>+\-*/%=&|!?:~^@]`},
+];
+const GRAMMAR = new RegExp(RULES.map(r=>"("+r.re+")").join("|"), "g");
+function highlight(code){
+  let out="", last=0, m; GRAMMAR.lastIndex=0;
+  while((m=GRAMMAR.exec(code))){
+    if(m[0]===""){ GRAMMAR.lastIndex++; continue; }
+    if(m.index>last) out+=esc(code.slice(last,m.index));
+    let cls=""; for(let i=0;i<RULES.length;i++){ if(m[i+1]!==undefined){ cls=RULES[i].cls; break; } }
+    out+=`<span class="${cls}">${esc(m[0])}</span>`;
+    last=GRAMMAR.lastIndex;
+  }
+  out+=esc(code.slice(last)); return out;
+}
+const codeEl=$("code"), hlEl=$("hl").firstElementChild;
+function renderCode(){
+  hlEl.innerHTML=highlight(codeEl.value)+"\n";
+  $("hl").scrollTop=codeEl.scrollTop; $("hl").scrollLeft=codeEl.scrollLeft;
+  localStorage.setItem(LS.code, codeEl.value);
+}
+codeEl.addEventListener("input", ()=>{ renderCode(); });
+codeEl.addEventListener("scroll", ()=>{ $("hl").scrollTop=codeEl.scrollTop; $("hl").scrollLeft=codeEl.scrollLeft; });
+codeEl.addEventListener("keydown",(e)=>{ if(e.key==="Tab"){ e.preventDefault(); const s=codeEl.selectionStart,en=codeEl.selectionEnd; codeEl.value=codeEl.value.slice(0,s)+"  "+codeEl.value.slice(en); codeEl.selectionStart=codeEl.selectionEnd=s+2; renderCode(); } });
+function setCode(txt){ codeEl.value=txt; renderCode(); }
+
+/* ====================== GARDIEN : règles secrets ====================== */
+const SECRET_RULES = [
+  {label:"Clé privée (PEM/SSH/PGP)",      re:/-----BEGIN (?:RSA |EC |OPENSSH |PGP |DSA )?PRIVATE KEY-----/g},
+  {label:"Clé Anthropic (sk-ant)",         re:/sk-ant-[A-Za-z0-9_\-]{20,}/g},
+  {label:"Clé OpenAI (sk-)",               re:/\bsk-(?:proj-)?[A-Za-z0-9]{32,}\b/g},
+  {label:"Jeton GitHub",                   re:/\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{30,}\b|\bgithub_pat_[A-Za-z0-9_]{30,}\b/g},
+  {label:"Clé AWS Access Key",             re:/\bAKIA[0-9A-Z]{16}\b/g},
+  {label:"Clé Google API (AIza)",          re:/\bAIza[0-9A-Za-z_\-]{35}\b/g},
+  {label:"Jeton Slack (xox)",              re:/\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g},
+  {label:"Clé Stripe secrète",             re:/\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{20,}\b/g},
+  {label:"Clé SendGrid (SG.)",             re:/\bSG\.[A-Za-z0-9_\-]{16,}\.[A-Za-z0-9_\-]{16,}\b/g},
+  {label:"JWT (possible service_role)",    re:/\beyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\b/g},
+  {label:"URL Postgres avec mot de passe", re:/\bpostgres(?:ql)?:\/\/[^\s:'"]+:[^\s@'"]+@/g},
+  {label:"Secret/clé/mot de passe en dur", re:/(?:api[_-]?key|secret|token|password|passwd|pwd|client[_-]?secret|private[_-]?key)\s*[:=]\s*['"][^'"\s]{8,}['"]/gi},
+];
+function isAllowed(match){
+  return /sb_publishable_/.test(match) || match.includes(SUPABASE_ANON)
+      || /role"?\s*:\s*"?anon/.test(match) || /placeholder|exemple|example|your[_-]?key|xxxx|<.*>|REMPLACE_PAR/i.test(match);
+}
+function scanSecrets(code){
+  const found=[];
+  for(const rule of SECRET_RULES){
+    let m; rule.re.lastIndex=0;
+    while((m=rule.re.exec(code))){
+      const raw=m[0]; if(isAllowed(raw)){ if(m.index===rule.re.lastIndex) rule.re.lastIndex++; continue; }
+      const ln=code.slice(0,m.index).split("\n").length;
+      found.push({label:rule.label, line:ln});
+      if(m.index===rule.re.lastIndex) rule.re.lastIndex++;
+    }
+  }
+  return found;
+}
+
+/* ====================== AFFICHAGE TÉLÉPHONE (1 écran à la fois) ====================== */
+const isMobile=()=>window.matchMedia("(max-width:760px)").matches;
+function setView(v){ document.body.classList.remove("v-left","v-center","v-right"); document.body.classList.add("v-"+v); document.querySelectorAll(".mobtabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v)); }
+document.querySelectorAll(".mobtabs button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+document.body.classList.add("v-center");
+
+/* ====================== DIFF : ajouts en vert, retraits en rouge ====================== */
+function diffLines(aStr,bStr){
+  const a=aStr.split("\n"), b=bStr.split("\n"), n=a.length, m=b.length;
+  if(n*m>1500000){ const out=[]; a.forEach(l=>out.push({t:"-",text:l})); b.forEach(l=>out.push({t:"+",text:l})); return out; }
+  const dp=Array.from({length:n+1},()=>new Uint32Array(m+1));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) dp[i][j]= a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const out=[]; let i=0,j=0;
+  while(i<n && j<m){ if(a[i]===b[j]){ out.push({t:" ",text:a[i]}); i++; j++; } else if(dp[i+1][j]>=dp[i][j+1]){ out.push({t:"-",text:a[i]}); i++; } else { out.push({t:"+",text:b[j]}); j++; } }
+  while(i<n) out.push({t:"-",text:a[i++]});
+  while(j<m) out.push({t:"+",text:b[j++]});
+  return out;
+}
+function showDiff(oldStr,newStr,title){
+  const d=diffLines(oldStr,newStr); let adds=0,dels=0; d.forEach(x=>{ if(x.t==="+")adds++; else if(x.t==="-")dels++; });
+  if(adds===0 && dels===0){ $("diffOut").innerHTML=`<div class="diffttl">${esc(title)}</div><div class="dl more">Aucun changement de ligne.</div>`; return; }
+  let html=`<div class="diffttl">${esc(title)} — <span style="color:var(--vert-ok)">+${adds} ajout(s)</span> · <span style="color:var(--rouge)">−${dels} retrait(s)</span></div>`;
+  let shown=0; const max=400;
+  for(const x of d){ if(x.t===" ") continue; if(shown++>=max){ html+=`<div class="dl more">… (diff tronqué)</div>`; break; }
+    html+=`<div class="dl ${x.t==="+"?"add":"del"}">${x.t} ${esc(x.text)}</div>`; }
+  $("diffOut").innerHTML=html;
+}
+function applyAgentCode(newCode, title, noSwitch){ const oldCode=codeEl.value; setCode(newCode); showDiff(oldCode,newCode,title||"Changements du code"); if(isMobile()) setView("center"); }
+
+/* ====================== ANGE GARDIEN (parle au milieu, style fantôme 👻) ====================== */
+const angeZone=$("angeZone"); let angeSig="";
+function bindAnge(){ const f=angeZone.querySelector("#angeFix"), c=angeZone.querySelector("#angeClose"); if(f) f.onclick=angeFix; if(c) c.onclick=angeHide; }
+function angeShow(found, mode){
+  angeSig = mode+":"+found.map(f=>f.label+f.line).join("|");
+  angeZone.innerHTML=`<div class="angecard"><div class="ah"><span class="halo">👻</span> Ange gardien</div>`+
+    `J'ai vu <b>${found.length}</b> ${found.length>1?"affaires":"affaire"} à régler avant l'injection :<br>`+
+    found.map(f=>"• "+esc(f.label)+" — ligne "+f.line).join("<br>")+
+    `<div class="af"><button class="btn orange sm" id="angeFix">Corriger</button><button class="btn sm ghost" id="angeClose">Ignorer</button></div></div>`;
+  bindAnge(); toast("😇 Ange gardien — regarde le centre");
+}
+function angeHide(){ angeZone.innerHTML=""; angeSig=""; }
+function angeFlashOk(msg){ angeZone.innerHTML=`<div class="angecard good"><div class="ah"><span class="halo">😇</span> Ange gardien</div>✓ ${esc(msg)}</div>`; setTimeout(angeHide,2600); }
+function angeFix(){
+  let code=codeEl.value, n=0;
+  for(const rule of SECRET_RULES){ rule.re.lastIndex=0; code=code.replace(rule.re,(m)=> isAllowed(m)? m : (n++,"REMPLACE_PAR_VARIABLE_ENV")); }
+  applyAgentCode(code, "Ange gardien — secrets retirés");
+  stepTitle("Ange gardien"); step("L'ange gardien a retiré "+n+" secret(s) du code");
+  const rest=scanSecrets(code);
+  if(rest.length){ step("Il en reste "+rest.length+" à vérifier à la main"); angeShow(rest,"fix"); }
+  else { step("Code propre — l'ange gardien s'efface ✓"); angeFlashOk("Secrets retirés. Branche-les en variable d'environnement."); }
+}
+let watchTimer=null;
+function angeWatch(){
+  clearTimeout(watchTimer);
+  watchTimer=setTimeout(()=>{
+    const found=scanSecrets(codeEl.value);
+    if(found.length){ const sig="watch:"+found.map(f=>f.label+f.line).join("|"); if(sig!==angeSig) angeShow(found,"watch"); }
+    else if(angeSig.startsWith("watch")) angeHide();
+  }, 700);
+}
+
+/* ====================== SUPABASE AUTH ====================== */
+async function refreshAuthUI(){
+  const { data } = await sb.auth.getSession(); const s=data?.session;
+  setDot("dotSb", !!s);
+  if(s){ $("loginBox").style.display="none"; $("accountBox").style.display="block"; $("whoami").textContent=s.user?.email||""; }
+  else { $("loginBox").style.display="block"; $("accountBox").style.display="none"; setDot("dotAg",false); }
+  return s;
+}
+sb.auth.onAuthStateChange(()=>{ refreshAuthUI(); checkMoteur(); initCodexSync(); });
+
+/* Vérifie pour de vrai que le moteur Codex répond (auth + CORS + clé secret côté serveur).
+   Ping volontairement avec input vide → le serveur répond 400 « Champ input vide » SANS
+   appeler l'IA : ça prouve que le compte est connecté, le CORS passe, et le moteur est vivant. */
+async function checkMoteur(){
+  try{
+    const { data } = await sb.auth.getSession(); const token=data?.session?.access_token;
+    if(!token){ setDot("dotAg",false); return false; }
+    const r=await fetch(FN_AGENT,{ method:"POST",
+      headers:{ "Authorization":"Bearer "+token, "apikey":SUPABASE_ANON, "Content-Type":"application/json" },
+      body:JSON.stringify({ agent_id:"SCRIBE", input:"" })
+    }).catch(()=>null);
+    if(!r){ setDot("dotAg",false); logLine("e","Moteur injoignable (origine bloquée / réseau)"); return false; }
+    if(r.status===400 || r.ok){ setDot("dotAg",true); logLine("ok","Moteur Codex prêt ✓ (clé secret active côté serveur)"); return true; }
+    if(r.status===401){ setDot("dotAg",false); logLine("e","Moteur: ton compte n'est pas connecté"); return false; }
+    if(r.status===500){ setDot("dotAg",false); logLine("e","Moteur: clé secrète manquante côté serveur"); return false; }
+    setDot("dotAg",false); logLine("e","Moteur: HTTP "+r.status); return false;
+  }catch(e){ setDot("dotAg",false); return false; }
+}
+
+/* ====================== GITHUB (direct, PAT navigateur) ====================== */
+async function gh(path, opts={}){
+  if(!pat) throw new Error("Pas de jeton GitHub. Va dans Réglages.");
+  const r=await fetch("https://api.github.com"+path,{ ...opts,
+    headers:{ Authorization:"Bearer "+pat, Accept:"application/vnd.github+json", "X-GitHub-Api-Version":"2022-11-28", ...(opts.headers||{}) } });
+  if(!r.ok){ const t=await r.text(); throw new Error("GitHub "+r.status+": "+t.slice(0,160)); }
+  if(r.status===204) return null;
+  return r.json();
+}
+async function testGitHub(){
+  if(!pat){ setDot("dotGh",false); return false; }
+  try{ const me=await gh("/user"); setDot("dotGh",true); logLine("ok","GitHub branché: @"+me.login); return true; }
+  catch(e){ setDot("dotGh",false); logLine("e",e.message); return false; }
+}
+async function loadRepos(){
+  if(!pat) return;
+  try{
+    const list=await gh("/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator");
+    const sel=$("repoSel"); sel.innerHTML='<option value="">— choisir un repo —</option>';
+    list.forEach(rp=>{ const o=document.createElement("option"); o.value=rp.full_name; o.textContent=rp.full_name; sel.appendChild(o); });
+    if(repo) sel.value=repo;
+    logLine("a",`${list.length} repos chargés.`);
+  }catch(e){ logLine("e",e.message); toast(e.message,1); }
+}
+async function loadBranches(){
+  if(!repo) return;
+  try{
+    const list=await gh(`/repos/${repo}/branches?per_page=100`);
+    const sel=$("branchSel"); sel.innerHTML="";
+    list.forEach(b=>{ const o=document.createElement("option"); o.value=b.name; o.textContent=b.name; sel.appendChild(o); });
+    if(branch && list.some(b=>b.name===branch)) sel.value=branch; else { branch=sel.value; localStorage.setItem(LS.branch,branch); }
+  }catch(e){ logLine("e",e.message); }
+}
+async function loadTree(){
+  const t=$("tree");
+  if(!repo){ t.innerHTML='<span class="mini">Choisis un repo.</span>'; return; }
+  t.innerHTML='<span class="mini">Chargement…</span>';
+  try{
+    const data=await gh(`/repos/${repo}/git/trees/${encodeURIComponent(branch||"main")}?recursive=1`);
+    const blobs=(data.tree||[]).filter(f=>f.type==="blob").slice(0,400);
+    t.innerHTML="";
+    blobs.forEach(f=>{ const d=document.createElement("div"); d.className="f"; d.textContent=f.path; d.title=f.path; d.onclick=()=>openFile(f.path,d); t.appendChild(d); });
+    if(!blobs.length) t.innerHTML='<span class="mini">Repo vide.</span>';
+    logLine("a",`${blobs.length} fichiers dans ${repo}@${branch||"main"}.`);
+  }catch(e){ t.innerHTML='<span class="mini" style="color:var(--rouge)">'+esc(e.message)+'</span>'; }
+}
+async function openFile(path, el){
+  try{
+    const data=await gh(`/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch||"main")}`);
+    const txt=decodeURIComponent(escape(atob((data.content||"").replace(/\n/g,""))));
+    curFileSha=data.sha; $("filePath").value=path; setCode(txt);
+    document.querySelectorAll(".tree .f").forEach(x=>x.classList.remove("sel")); if(el) el.classList.add("sel");
+    localStorage.setItem(LS.path,path); logLine("a","Ouvert: "+path);
+  }catch(e){ toast(e.message,1); logLine("e",e.message); }
+}
+function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
+
+/* ====================== INJECTION 💉 (push) ====================== */
+async function injecter(){
+  if(!repo){ toast("Choisis un repo d'abord",1); return; }
+  const path=$("filePath").value.trim();
+  if(!path){ toast("Donne un chemin de fichier",1); return; }
+  stepTitle("Injection 💉 au repo");
+  const tlxI=tlxCodexStart(["github"],"Connexion + injection");
+  step("Cible : "+repo+" @ "+(branch||"main")+" → "+path);
+  // 2) SHA
+  const s2=step("Je regarde si "+path+" existe déjà sur GitHub (pour le bon SHA)");
+  let sha=curFileSha;
+  try{ const ex=await gh(`/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch||"main")}`); sha=ex.sha; }catch(_e){ sha=undefined; }
+  stepOk(s2); step(sha?"Le fichier existe → mise à jour":"Nouveau fichier → création");
+  // 3) commit
+  try{
+    $("pushBtn").disabled=true;
+    const s3=step("J'encode en base64 et j'injecte le commit dans "+repo+" sur "+(branch||"main"));
+    const payload={ message:`[TILEX CODE] maj ${path}`, content:b64(codeEl.value), branch:branch||"main" };
+    if(sha) payload.sha=sha;
+    const res=await gh(`/repos/${repo}/contents/${encodeURIComponent(path)}`,{ method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload) });
+    curFileSha=res.content?.sha||null;
+    const sha7=res.commit?.sha?.slice(0,7)||"";
+    stepOk(s3); step("Injecté ✓ ("+sha7+") — ton fichier est en ligne sur GitHub");
+    toast("Injecté au repo ✓ "+sha7); logLine("ok",`Injection OK → ${path} (${sha7})`); loadTree();
+  }catch(e){ stepErr(step("Erreur injection : "+e.message)); toast(e.message,1); logLine("e","Injection: "+e.message); }
+  finally{ $("pushBtn").disabled=false; tlxI.remove(); }
+}
+
+/* ====================== MOTEUR CODEX (tilexcode-agent) ====================== */
+const CODE_AGENTS=["SCRIBE","FORGE","SOCLE"];
+const AGENT_ROLES={
+  SCRIBE:"le codeur — écrit du code complet, sans placeholder",
+  ARCHI:"l'architecte — découpe en structure de fichiers propre",
+  SOCLE:"l'infra — génère le SQL + config Supabase",
+  LOUPE:"l'analyste — trouve bogues, failles, mauvaises pratiques",
+  FORGE:"le studio d'erreur — corrige tout avant le déploiement",
+  COFFRE:"le gardien — sauvegarde et propose des protections"
+};
+async function callAgent(agentId, input, context){
+  const { data } = await sb.auth.getSession(); const token=data?.session?.access_token;
+  if(!token){ toast("Connecte ton compte (Réglages)",1); openSettings(); throw new Error("non authentifié"); }
+  const r=await fetch(FN_AGENT,{ method:"POST",
+    headers:{ "Authorization":"Bearer "+token, "apikey":SUPABASE_ANON, "Content-Type":"application/json" },
+    body:JSON.stringify({ agent_id:agentId, input:input.slice(0,20000), context:(context||"").slice(-80000) })
+  }).catch(err=>{ throw new Error("CORS_OR_NET:"+err.message); });
+  if(!r.ok){ const t=await r.text().catch(()=>""); throw new Error("Agent "+r.status+": "+t.slice(0,160)); }
+  const j=await r.json(); if(j.error) throw new Error(j.error); return j.output||"";
+}
+function firstCodeBlock(txt){ const m=txt.match(/```[a-zA-Z0-9_+-]*\n([\s\S]*?)```/); return m? m[1].replace(/\n$/,"") : null; }
+function corsCard(){ studioCard("bad","Moteur bloqué (CORS)","Le moteur Codex n'accepte que les origines autorisées. Ton origine : "+(location.origin||"null (fichier local)")+". Ouvre tilexcode.html depuis ton domaine, ou ajoute cette origine au secret TILEX_ALLOWED_ORIGINS."); }
+async function runAgent(agentId){
+  const prompt=$("prompt").value.trim();
+  if(!prompt && !codeEl.value.trim()){ toast("Écris une demande en bas d'abord",1); $("prompt").focus(); return; }
+  const input = prompt || "Analyse / traite le code fourni en contexte.";
+  if(prompt) histAjouter(prompt);
+  diffuserCodex({ kind:"task", demande:input });   // 📲 suit sur tes autres appareils
+  logLine("u",`${agentId} ← ${input.slice(0,80)}`);
+  stepTitle("Agent "+agentId);
+  const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
+  step("Agent choisi : "+agentId+" — "+(AGENT_ROLES[agentId]||""));
+  step("Ta demande : « "+input.slice(0,120)+(input.length>120?"…":"")+" »");
+  const s1=step("Je vérifie que ton compte ti-lex est connecté (le cerveau roule côté serveur, ta clé reste cachée)"); toast(`▶ ${agentId}…`);
+  try{
+    stepOk(s1); const s2=step("J'envoie au moteur : "+input.length+" car. de demande + le code actuel en contexte ("+codeEl.value.length+" car.)");
+    const out=await callAgent(agentId, input, codeEl.value);
+    diffuserCodex({ kind:"result", ttl:agentId, body:String(out).slice(0,16000) });
+    stepOk(s2); const s3=step("Le moteur a répondu — je te montre ce qui change…");
+    logLine("a",`${agentId} a répondu (${out.length} car.)`);
+    const block=firstCodeBlock(out);
+    if(CODE_AGENTS.includes(agentId) && block){
+      const fichier = $("filePath").value ? "📄 "+$("filePath").value+"\n\n" : "";
+      studioCard("", "💬 "+agentId, fichier + (explicationSeule(out) || "Voici les changements proposés."));
+      applyAgentCode(block, "Changements proposés ("+agentId+")", true);
+      stepOk(s3); step("Changements affichés en diff (vert = ajout, rouge = retrait) ✓"); toast(`${agentId} ✓`);
+    } else {
+      studioCard("", "💬 "+agentId, explicationSeule(out) || out);
+      stepOk(s3); step("Réponse affichée ✓"); toast(`${agentId} ✓`);
+    }
+  }catch(e){
+    const cors=String(e.message).startsWith("CORS_OR_NET");
+    stepErr(step("Erreur : "+(cors?"moteur bloqué (CORS)":e.message)));
+    if(cors){ corsCard(); logLine("e","Moteur bloqué (CORS) origine "+(location.origin||"null")); }
+    else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
+    toast("Moteur: "+e.message,1);
+  }
+  finally{ if(tlxI) tlxI.remove(); }
+}
+async function scanErreurs(){
+  if(!codeEl.value.trim()){ toast("Rien à analyser",1); return; }
+  logLine("u","Studio erreur: LOUPE → FORGE");
+  stepTitle("Studio erreur (LOUPE → FORGE)");
+  const tlxI=tlxCodexStart(["supabase"],"Réflexion + recherche");
+  step("But : trouver les erreurs PUIS les corriger avant d'injecter");
+  const s1=step("LOUPE lit le code ("+codeEl.value.split("\n").length+" lignes) et cherche bogues, failles et mauvaises pratiques"); toast("🔍 LOUPE analyse…");
+  try{
+    const diag=await callAgent("LOUPE","Analyse ce code et liste les erreurs/bogues/failles.", codeEl.value);
+    stepOk(s1); step("Diagnostic reçu ("+diag.length+" car.) — affiché en détail au milieu"); studioCard("","LOUPE — diagnostic",diag); logLine("a","LOUPE ok.");
+    const s2=step("FORGE applique les corrections et réécrit le fichier au complet"); toast("🛠 FORGE corrige…");
+    const fix=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
+    stepOk(s2); studioAppend("good","FORGE — corrigé",fix);
+    const block=firstCodeBlock(fix);
+    if(block){ applyAgentCode(block, "FORGE — corrections"); step("Code corrigé ("+block.split("\n").length+" lignes) mis à droite, changements en vert/rouge, prêt à injecter ✓"); toast("FORGE : code corrigé ✓"); }
+    else { step("Détails de la correction affichés au milieu ✓"); toast("FORGE ✓"); }
+  }catch(e){
+    const cors=String(e.message).startsWith("CORS_OR_NET");
+    stepErr(step("Erreur : "+(cors?"moteur bloqué (CORS)":e.message)));
+    if(cors) corsCard(); else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
+    toast(e.message,1);
+  }
+  finally{ if(tlxI) tlxI.remove(); }
+}
+
+/* ====================== CODEX ⚡ : pipeline automatique complet ====================== */
+/* ====================== SYNCHRO CODEX — téléphone ⇆ ordinateur (temps réel) ======================
+   Les appareils du même compte rejoignent un canal Supabase Realtime « codex-<uid> ».
+   Ce que tu lances/reçois sur le téléphone SUIT sur l'ordinateur (et vice-versa). */
+const _devId = "d" + Math.floor(Math.random()*1e9).toString(36) + Date.now().toString(36);
+function _devKind(){ return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "téléphone" : "ordinateur"; }
+let codexChan=null, _syncUid=null;
+
+function majSyncBadge(autres){
+  const t=$("syncTxt"), d=$("dotSync");
+  if(autres>0){ if(t)t.textContent="Lié ("+(autres+1)+")"; if(d)d.className="dot on"; }
+  else { if(t)t.textContent="Solo"; if(d)d.className="dot off"; }
+}
+
+async function initCodexSync(){
+  try{
+    const { data } = await sb.auth.getSession(); const s=data?.session;
+    if(!s){ majSyncBadge(0); return; }
+    if(codexChan){ try{ sb.removeChannel(codexChan); }catch(e){} codexChan=null; }
+    _syncUid = s.user.id;
+    const chan = sb.channel("codex-"+_syncUid, { config:{ broadcast:{ self:false }, presence:{ key:_devId } } });
+    chan.on("broadcast", { event:"codex" }, ({ payload }) => recevoirCodex(payload));
+    chan.on("presence", { event:"sync" }, () => {
+      const st = chan.presenceState(); majSyncBadge(Math.max(0, Object.keys(st).length - 1));
+    });
+    chan.subscribe(async (status) => {
+      if(status==="SUBSCRIBED"){ try{ await chan.track({ dev:_devKind(), t:Date.now() }); }catch(e){}
+        logLine("ok","🔗 Synchro Codex active — tes appareils se suivent ("+_devKind()+")"); }
+    });
+    codexChan = chan;
+  }catch(e){ majSyncBadge(0); }
+}
+
+function diffuserCodex(payload){
+  if(!codexChan) return;
+  try{ codexChan.send({ type:"broadcast", event:"codex", payload: Object.assign({ from:_devId, dev:_devKind() }, payload) }); }catch(e){}
+}
+
+function recevoirCodex(p){
+  if(!p || p.from===_devId) return;
+  if(p.kind==="task"){
+    stepTitle("📲 Reçu de ton "+(p.dev||"autre appareil"));
+    step("Demande lancée sur ton "+(p.dev||"autre appareil")+" : « "+String(p.demande||"").slice(0,120)+" »");
+    logLine("u","📲 "+(p.dev||"autre")+" → "+String(p.demande||"").slice(0,80));
+    if(p.demande){ $("prompt").value=p.demande; }
+  } else if(p.kind==="result"){
+    studioAppend(p.cls||"", "📲 "+(p.ttl||"Résultat")+" — de ton "+(p.dev||"autre appareil"), p.body||"");
+    logLine("a","📲 résultat reçu ("+String(p.body||"").length+" car.)");
+  } else if(p.kind==="step"){
+    step("📲 "+String(p.txt||""));
+  }
+}
+
+async function runCodex(){
+  const prompt=$("prompt").value.trim();
+  if(!prompt && !codeEl.value.trim()){ toast("Écris ta demande en bas",1); $("prompt").focus(); return; }
+  const demande = prompt || "Améliore et complète le code fourni en contexte.";
+  logLine("u","Codex ← "+demande.slice(0,80));
+  histAjouter(demande);
+  diffuserCodex({ kind:"task", demande });   // 📲 suit sur tes autres appareils
+  stepTitle("Codex ⚡ — pipeline complet");
+  const tlxI=tlxCodexStart(repo?["supabase","github"]:["supabase"],"Réflexion + recherche");
+  step("Demande : « "+demande.slice(0,120)+(demande.length>120?"…":"")+" »");
+  $("studioOut").innerHTML=""; setSendBusy(true);
+  try{
+    // 1/4 SCRIBE écrit
+    let s=step("1/3 · SCRIBE écrit le code"); toast("⚡ 1/3 SCRIBE…");
+    const r1=await callAgent("SCRIBE", demande, codeEl.value);
+    const b1=firstCodeBlock(r1);
+    const fichier = $("filePath").value ? "📄 "+$("filePath").value+"\n\n" : "";
+    studioAppend("", "💬 Ce que je vais faire", fichier + (explicationSeule(r1) || "J'écris le code demandé."));
+    diffuserCodex({ kind:"result", cls:"", ttl:"💬 SCRIBE", body:(explicationSeule(r1)||"").slice(0,8000) });
+    if(b1){ applyAgentCode(b1,"Changements proposés (SCRIBE)",true); stepOk(s); step("SCRIBE a proposé des changements — voir le diff au-dessus (vert = ajout, rouge = retrait)"); }
+    else { stepOk(s); step("SCRIBE a répondu (explication ci-dessus)"); }
+    // 2/4 LOUPE analyse
+    s=step("2/3 · LOUPE cherche les erreurs"); toast("⚡ 2/3 LOUPE…");
+    const diag=await callAgent("LOUPE","Analyse ce code et liste les erreurs/bogues/failles à corriger.", codeEl.value);
+    studioAppend("","🔍 Ce que LOUPE a trouvé",explicationSeule(diag)||diag); stepOk(s); step("Diagnostic reçu");
+    // 3/4 FORGE corrige
+    s=step("3/3 · FORGE corrige les erreurs"); toast("⚡ 3/3 FORGE…");
+    const r3=await callAgent("FORGE","Corrige tout ce que LOUPE a trouvé. Retourne le fichier complet corrigé.\n\nDIAGNOSTIC LOUPE:\n"+diag, codeEl.value);
+    const b3=firstCodeBlock(r3);
+    studioAppend("good", "🔧 Corrections appliquées", explicationSeule(r3) || "J'ai corrigé ce que LOUPE a trouvé.");
+    diffuserCodex({ kind:"result", cls:"good", ttl:"🔧 FORGE", body:(explicationSeule(r3)||"").slice(0,8000) });
+    if(b3){ applyAgentCode(b3,"Changements corrigés (FORGE)",true); stepOk(s); step("FORGE a corrigé — voir le diff au-dessus (vert/rouge = changements)"); }
+    else { stepOk(s); step("FORGE a répondu (explication ci-dessus)"); }
+    step("✅ Codex a fini. Lis le résumé + le diff ici, pis clique « injection 💉 » quand t'es prêt.");
+    if(isMobile()) setView("center");
+    toast("Codex ⚡ fini ✓");
+  }catch(e){
+    const cors=String(e.message).startsWith("CORS_OR_NET");
+    stepErr(step("Erreur : "+(cors?"moteur bloqué (CORS)":e.message)));
+    if(cors) corsCard(); else { studioCard("bad","Erreur",e.message); logLine("e",e.message); }
+    toast("Codex: "+e.message,1);
+  } finally{ setSendBusy(false); if(tlxI) tlxI.remove(); }
+}
+
+/* ====================== RÉGLAGES ====================== */
+function openSettings(){ $("pat").value=pat; $("overlay").classList.add("show"); }
+function closeSettings(){ $("overlay").classList.remove("show"); }
+$("settingsBtn").onclick=openSettings;
+$("closeBtn").onclick=closeSettings;
+$("savePatBtn").onclick=async()=>{
+  pat=$("pat").value.trim(); localStorage.setItem(LS.pat,pat);
+  if(await testGitHub()){ toast("GitHub branché ✓"); await loadRepos(); closeSettings(); } else toast("Jeton refusé par GitHub",1);
+};
+$("clearPatBtn").onclick=()=>{ pat=""; localStorage.removeItem(LS.pat); $("pat").value=""; setDot("dotGh",false); toast("Jeton oublié"); };
+
+/* ====================== BARRE DU BAS : Codex (auto) + agents (manuel) ====================== */
+function setSendBusy(b){ const s=$("sendBtn"); s.disabled=b; s.textContent=b?"⚡ …":"⚡ Codex"; }
+document.querySelectorAll(".agentbtn").forEach(b=>b.onclick=()=>runAgent(b.dataset.agent));
+$("sendBtn").onclick=runCodex;
+$("prompt").addEventListener("keydown",(e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); runCodex(); } });
+
+/* ====================== ÉVÉNEMENTS ====================== */
+$("toggleLeft").onclick=()=>$("leftPanel").classList.toggle("open");
+$("convToggle").onclick=()=>{ $("convList").classList.toggle("open"); $("convToggle").classList.toggle("open"); };
+$("backPlatBtn").onclick=()=>{ window.location.href="/pro"; };
+histRendre();
+$("repoSel").onchange=async(e)=>{ repo=e.target.value; localStorage.setItem(LS.repo,repo); curFileSha=null;
+  stepTitle("Connexion au projet");
+  const a=step("Repo branché : "+(repo||"—")+" (gardé en mémoire)"); stepOk(a);
+  const b=step("Je récupère la liste des branches"); await loadBranches(); stepOk(b); step("Branche active : "+(branch||"main"));
+  const c=step("Je charge l'arbre des fichiers"); await loadTree(); stepOk(c); };
+$("branchSel").onchange=async(e)=>{ branch=e.target.value; localStorage.setItem(LS.branch,branch);
+  stepTitle("Changement de branche"); const a=step("Branche : "+branch); stepOk(a); const b=step("Je recharge les fichiers"); await loadTree(); stepOk(b); };
+$("refreshTreeBtn").onclick=loadTree;
+$("newFileBtn").onclick=()=>{ $("filePath").value=""; curFileSha=null; setCode(""); document.querySelectorAll(".tree .f").forEach(x=>x.classList.remove("sel")); $("filePath").focus(); };
+$("pushBtn").onclick=injecter;
+
+/* ====================== RECONNEXION AUTOMATIQUE ====================== */
+async function reconnect(silent){
+  if(!silent) stepTitle("Reconnexion");
+  const s0=silent?null:step("Vérifie ton compte ti-lex"); await refreshAuthUI(); stepOk(s0);
+  if(pat){ const s1=silent?null:step("Branche GitHub"); const ok=await testGitHub();
+    if(ok){ stepOk(s1); const s2=silent?null:step("Charge repos + fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(s2); }
+    else stepErr(s1);
+  } else if(!silent) step("Pas de jeton GitHub — ouvre Réglages");
+}
+$("reconnectBtn").onclick=()=>{ toast("Reconnexion…"); reconnect(false); };
+window.addEventListener("online", ()=>{ logLine("a","Réseau revenu — reconnexion…"); reconnect(true); });
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") reconnect(true); });
+
+/* ====================== DÉMARRAGE ====================== */
+(async function boot(){
+  const savedCode=localStorage.getItem(LS.code); if(savedCode) codeEl.value=savedCode;
+  const savedPath=localStorage.getItem(LS.path); if(savedPath) $("filePath").value=savedPath;
+  renderCode();
+  stepTitle("Démarrage");
+  // ── PONT SESSION : reprend la session déjà ouverte sur la plateforme (pro/web) ──
+  try {
+    const raw = localStorage.getItem("sb-rnuripmfozlxenryxhdc-auth-token");
+    if (raw) {
+      const o = JSON.parse(raw); const sPF = o.currentSession || o;
+      if (sPF && sPF.access_token && sPF.refresh_token) {
+        await sb.auth.setSession({ access_token: sPF.access_token, refresh_token: sPF.refresh_token });
+      }
+    }
+  } catch (e) { /* pas de session plateforme → login manuel */ }
+  const a=step("Je restaure ta session ti-lex (compte + moteur Codex)"); await refreshAuthUI(); await checkMoteur(); await initCodexSync(); stepOk(a);
+  if(pat){ const b=step("Je rebranche GitHub avec ton jeton déjà sauvegardé"); const ok=await testGitHub();
+    if(ok){ stepOk(b); const c=step("Je recharge ton dernier repo"+(repo?" ("+repo+")":"")+" + sa branche + ses fichiers"); await loadRepos(); if(repo){ await loadBranches(); await loadTree(); } stepOk(c); step("Tout est branché — t'as rien eu à faire ✓"); }
+    else { stepErr(b); step("Jeton refusé par GitHub — reconnecte-toi dans Réglages"); }
+  } else { setDot("dotGh",false); step("Pas encore de jeton GitHub — ouvre Réglages pour coller ton PAT"); }
+  // ── Tâche reçue du chat (bouton 💻 Codex dans pro.html) → remplit le prompt ──
+  try {
+    const tache = localStorage.getItem("tilex-codex-task");
+    if (tache && tache.trim()) {
+      localStorage.removeItem("tilex-codex-task");
+      const p = $("prompt"); if (p) { p.value = tache; p.focus(); }
+      step("Reçu du chat — j'ai rempli le prompt, t'as juste à lancer ⚡");
+      toast("💻 Tâche reçue du chat");
+    }
+  } catch (e) {}
+  const { data } = await sb.auth.getSession();
+  if(!data?.session || !pat) openSettings();
+})();
+</script>
+</body>
+</html>

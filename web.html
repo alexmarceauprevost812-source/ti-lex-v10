@@ -21,12 +21,42 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--w
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--orange);border-radius:4px}
 .hidden{display:none!important}
 
+/* ════════════════════════════════════════════════
+   ☀️ THÈME JOUR — beige Anthropic / Claude
+   (palette chaude crème + accent argile, fond d'écran doux)
+   ════════════════════════════════════════════════ */
+html[data-theme="jour"]{
+  --bg:#f4f0e6;--bg2:#faf8f2;--bg3:#efe9db;--bg4:#e6dfcd;
+  --orange:#FF6B00;--orange2:#FF8C00;--orange-dim:rgba(255,107,0,.14);
+  --red:#cc2200;--white:#1a1a1a;--grey:#5a5246;--grey2:#8a8072;
+  --border:rgba(40,30,15,.16);--glow:0 0 40px rgba(255,107,0,.25);
+  --accent:#FF6B00;--accent2:#FF8C00;--accent-dim:rgba(255,107,0,.14);
+  --accent-glow:0 0 40px rgba(255,107,0,.25);
+  color-scheme:light;
+}
+/* Fond d'écran doux (papier crème + halos orange) — fixe, ne scrolle pas */
+html[data-theme="jour"] body{
+  background:
+    radial-gradient(1100px 620px at 12% -12%, rgba(255,107,0,.10), transparent 60%),
+    radial-gradient(820px 520px at 112% 8%, rgba(255,140,0,.07), transparent 55%),
+    radial-gradient(700px 700px at 90% 115%, rgba(190,150,100,.08), transparent 60%),
+    linear-gradient(180deg,#faf7ef 0%,#f4f0e6 48%,#ede6d6 100%);
+  background-attachment:fixed;
+}
+html[data-theme="jour"] .grid-bg{opacity:.5;background-image:linear-gradient(rgba(120,90,55,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(120,90,55,.10) 1px,transparent 1px)}
+html[data-theme="jour"] ::-webkit-scrollbar-track{background:var(--bg3)}
+html[data-theme="jour"] .btn-orange{color:#fff}
+html[data-theme="jour"] .card,html[data-theme="jour"] .stat-card,html[data-theme="jour"] .agent-card,
+html[data-theme="jour"] .auth-card,html[data-theme="jour"] .msg-bubble,html[data-theme="jour"] .preview-panel{
+  box-shadow:0 1px 3px rgba(60,45,30,.06),0 6px 18px rgba(60,45,30,.05);
+}
+
 /* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:var(--font);font-weight:600;font-size:14px;border-radius:var(--r2);padding:10px 20px;transition:all .2s;white-space:nowrap}
 .btn-orange{background:var(--orange);color:#fff}
 .btn-orange:hover{background:var(--orange2);box-shadow:var(--glow);transform:translateY(-1px)}
-.btn-ghost{background:transparent;color:var(--grey);border:1px solid var(--border)}
-.btn-ghost:hover{border-color:var(--orange);color:var(--white)}
+.btn-ghost{background:transparent;color:var(--orange);border:1px solid var(--orange)}
+.btn-ghost:hover{background:var(--orange-dim);border-color:var(--orange);color:var(--orange)}
 .btn-red{background:rgba(204,34,0,.15);color:#ff4444;border:1px solid rgba(204,34,0,.3)}
 .btn-red:hover{background:rgba(204,34,0,.3)}
 .btn-sm{padding:7px 14px;font-size:13px}
@@ -343,7 +373,8 @@ tbody td{padding:11px 12px;color:var(--white)}
 .project-header-card{background:linear-gradient(135deg,var(--accent-dim),rgba(255,107,0,.02))!important;border-color:var(--accent-dim)!important}
 .auth-glow{background:radial-gradient(ellipse,rgba(var(--accent-rgb,255,107,0),.13) 0%,transparent 65%)!important}
 ::-webkit-scrollbar-thumb{background:var(--accent)!important}
-.btn-ghost:hover{border-color:var(--accent)!important;color:var(--white)!important}
+.btn-ghost{color:var(--accent)!important;border-color:var(--accent)!important}
+.btn-ghost:hover{background:var(--accent-dim)!important;border-color:var(--accent)!important;color:var(--accent)!important}
 .settings-nav-item.active{background:var(--accent-dim)!important;color:var(--accent)!important}
 .prev-av,.msg-av.agent-av{background:linear-gradient(135deg,var(--accent),#ff4400)!important}
 
@@ -431,6 +462,10 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/tilex-config.js"></script>
+<script src="js/tilex-intro.js"></script>
+<script src="js/tilex-memory.js"></script>
+<script src="js/tilex-context.js"></script>
+<script src="js/tilex-memory-compact.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -581,12 +616,17 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
       <div class="nav-item" id="nav-project" onclick="navigateTo('project')"><span class="nav-icon">📁</span><span>tilex.</span></div>
       <div class="nav-item" onclick="openGitHub()"><span class="nav-icon">⑂</span><span>GitHub</span></div>
       <div class="nav-item" onclick="showToast('Déploiement lancé! 🚀','success')"><span class="nav-icon">🚀</span><span>Déployer</span></div>
+      <div class="nav-item" id="nav-security" onclick="window.location.href='/security'"><span class="nav-icon">🛡</span><span>Sécurité</span></div>
+      <div class="nav-item" id="nav-codex" onclick="window.location.href='/tilexcode'"><span class="nav-icon">💻</span><span>Mode Codex</span></div>
+      <div class="nav-item" id="nav-suivi" onclick="window.location.href='/systeme'"><span class="nav-icon">🚛</span><span>Mon système</span></div>
+      <div class="nav-item" id="nav-comm" onclick="window.location.href='/comm'"><span class="nav-icon">💬</span><span>Communication</span></div>
       <div class="divider"></div>
       <div class="sb-label">Compte</div>
       <div class="nav-item" id="nav-profile" onclick="navigateTo('profile')"><span class="nav-icon">👤</span><span>Mon profil</span></div>
       <div class="nav-item" id="nav-theme" onclick="goToTheme()"><span class="nav-icon">🎨</span><span>Thème</span></div>
+      <div class="nav-item" id="nav-controle" onclick="navigateTo('controle')"><span class="nav-icon">🎛️</span><span>Contrôle</span></div>
       <div class="nav-item" id="nav-settings" onclick="navigateTo('settings')"><span class="nav-icon">⚙</span><span>Paramètres</span></div>
-      <a class="nav-item" href="/app" style="color:var(--grey);text-decoration:none"><span class="nav-icon">⮐</span><span>Retour à l'app</span></a>
+      <a class="nav-item" href="/pro" style="color:var(--grey);text-decoration:none"><span class="nav-icon">⮐</span><span>Retour à l'app</span></a>
       <div class="nav-item" onclick="doLogout()" style="color:var(--grey)"><span class="nav-icon">→</span><span>Déconnexion</span></div>
       <div class="sb-footer">
         <div class="sb-user-card">
@@ -614,6 +654,8 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">Mes agents</div><div class="stat-value orange" id="stat-agents">0</div><div class="stat-delta" id="stat-agents-delta">Aucun agent</div></div>
           <div class="stat-card"><div class="stat-label">Conversations</div><div class="stat-value" id="stat-convs">0</div><div class="stat-delta">Privées</div></div>
+          <div class="stat-card"><div class="stat-label">Messages envoyés</div><div class="stat-value orange" id="stat-messages">0</div><div class="stat-delta" id="stat-messages-delta">role utilisateur</div></div>
+          <div class="stat-card"><div class="stat-label">Données échangées</div><div class="stat-value" id="stat-data" style="font-size:26px">—</div><div class="stat-delta" id="stat-data-delta">approx.</div></div>
           <div class="stat-card"><div class="stat-label">Projets</div><div class="stat-value">1</div><div class="stat-delta">tilex.</div></div>
           <div class="stat-card"><div class="stat-label">Statut</div><div class="stat-value" style="font-size:22px">🟢</div><div class="stat-delta">En ligne</div></div>
         </div>
@@ -782,6 +824,21 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             <div class="project-meta-item"><span class="badge badge-green"><span class="dot dot-green"></span>Déployé</span></div>
           </div>
         </div>
+
+        <!-- ── GITHUB BROWSER (vrai, via github-proxy) ── -->
+        <div class="card" style="padding:0">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <span>⑂ GitHub — voir le code</span>
+            <div id="gh-breadcrumb" style="font-size:12px;color:var(--grey);font-weight:500;font-family:var(--mono);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+            <button class="btn btn-ghost btn-sm" onclick="openGitHub()">↻ Recharger</button>
+          </div>
+          <div id="gh-panel" style="padding:16px;min-height:120px">
+            <div style="color:var(--grey);font-size:13px;display:flex;align-items:center;gap:10px">
+              <span>Cliquez sur « GitHub » dans le menu ou sur Recharger pour voir vos dépôts.</span>
+            </div>
+          </div>
+        </div>
+
         <div class="project-grid">
           <div class="card" style="padding:0">
             <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
@@ -1003,6 +1060,83 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
         </div>
       </div>
 
+      <!-- ===== CONTRÔLE — Studio plateforme ===== -->
+      <div class="view-section" id="section-controle">
+        <style>
+          .ctl-grid{display:grid;gap:14px;grid-template-columns:1fr;}
+          @media(min-width:760px){.ctl-grid{grid-template-columns:1fr 1fr;}}
+          .ctl-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+          .ctl-card h3{font-size:15px;margin-bottom:12px;}
+          .ctl-color{display:flex;gap:10px;align-items:center;margin:8px 0;}
+          .ctl-color input[type=color]{width:46px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:var(--bg3);cursor:pointer;}
+          .ctl-color span{font-size:13px;color:var(--white);}
+          .ctl-label{display:block;font-size:12px;color:var(--grey);margin:12px 0 5px;}
+          .ctl-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--white);border-radius:9px;padding:10px;font-size:14px;}
+          .ctl-preview{margin-top:12px;padding:14px;border-radius:10px;background:var(--bg3);text-align:center;}
+          .ctl-switch{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
+          .ctl-switch:last-child{border:none;}
+          .ctl-switch small{color:var(--grey);font-size:11px;}
+          input[type=range].ctl-range{width:100%;accent-color:var(--orange);margin:4px 0 2px;}
+        </style>
+        <h2 style="font-size:18px;margin-bottom:4px;">🎛️ Contrôle de la plateforme</h2>
+        <p style="color:var(--grey);font-size:13px;margin-bottom:18px;">Thème, couleurs et modules — appliqué en direct, sauvegardé dans Supabase (par utilisateur).</p>
+        <div class="ctl-grid">
+          <div class="ctl-card">
+            <h3>🎨 Thème &amp; Couleurs</h3>
+            <div class="ctl-color"><input type="color" id="ctl-accent" value="#FF6B00"><span>Couleur des boutons (accent)</span></div>
+            <div class="ctl-color"><input type="color" id="ctl-bg" value="#080808"><span>Fond de la plateforme</span></div>
+            <div class="ctl-color"><input type="color" id="ctl-txt" value="#ffffff"><span>Couleur du texte</span></div>
+            <label class="ctl-label">Thème rapide</label>
+            <select id="ctl-preset" class="ctl-select" onchange="ctlPresetChange()">
+              <option value="nuit">🌙 Nuit (défaut)</option>
+              <option value="jour">☀️ Jour</option>
+              <option value="matrix">🟥 Matrix rouge</option>
+              <option value="ocean">🌊 Océan</option>
+            </select>
+            <div class="ctl-preview"><button class="btn btn-orange">Aperçu bouton</button></div>
+            <div style="display:flex;gap:10px;margin-top:12px;">
+              <button class="btn btn-orange" onclick="ctlApply()">✅ Appliquer</button>
+              <button class="btn btn-ghost" onclick="ctlReset()">↺ Reset</button>
+            </div>
+          </div>
+          <div class="ctl-card">
+            <h3>🧩 Modules ON/OFF</h3>
+            <div class="ctl-switch"><div><b>TilexVision</b><br><small>Analyse d'images (Claude Vision)</small></div><div class="toggle on" data-mod="vision" onclick="ctlToggle(this)"></div></div>
+            <div class="ctl-switch"><div><b>Mode Vocal QC</b><br><small>Micro + transcription</small></div><div class="toggle on" data-mod="vocal" onclick="ctlToggle(this)"></div></div>
+            <div class="ctl-switch"><div><b>Streaming Typewriter</b><br><small>Écriture fluide adaptive</small></div><div class="toggle on" data-mod="stream" onclick="ctlToggle(this)"></div></div>
+            <div class="ctl-switch"><div><b>Mode Offline</b><br><small>Service Worker + cache</small></div><div class="toggle on" data-mod="offline" onclick="ctlToggle(this)"></div></div>
+            <div class="ctl-switch"><div><b>Mémoire Supabase</b><br><small>Cross-session</small></div><div class="toggle on" data-mod="memory" onclick="ctlToggle(this)"></div></div>
+          </div>
+          <div class="ctl-card" id="ctl-matrix-card">
+            <h3>🟥 Matrix Live</h3>
+            <div class="ctl-color"><input type="color" id="mxColor" value="#e63946"><span>Couleur de la pluie matrix</span></div>
+            <label class="ctl-label">Caractères affichés</label>
+            <select id="mxChars" class="ctl-select">
+              <option value="01">Binaire (0 1)</option>
+              <option value="ｱｲｳｴｵｶｷｸｹｺ01">Katakana + binaire</option>
+              <option value="TILEXAL0123">ti-lex (lettres)</option>
+              <option value="$€¥£₿01">Symboles $ ₿</option>
+            </select>
+            <label class="ctl-label">Vitesse de chute : <b id="mxSpeedVal">50</b></label>
+            <input type="range" id="mxSpeed" class="ctl-range" min="10" max="120" value="50" oninput="document.getElementById('mxSpeedVal').textContent=this.value;updateMatrix()">
+            <label class="ctl-label">Densité (colonnes) : <b id="mxDensVal">14</b></label>
+            <input type="range" id="mxDens" class="ctl-range" min="8" max="26" value="14" oninput="document.getElementById('mxDensVal').textContent=this.value;updateMatrix()">
+            <label class="ctl-label">Traînée (fondu) : <b id="mxFadeVal">8</b></label>
+            <input type="range" id="mxFade" class="ctl-range" min="2" max="20" value="8" oninput="document.getElementById('mxFadeVal').textContent=this.value;updateMatrix()">
+            <div class="ctl-preview" style="padding:0;overflow:hidden;"><canvas id="mxCanvas" style="width:100%;height:160px;display:block;background:#000;border-radius:10px;"></canvas></div>
+            <div class="ctl-switch" style="margin-top:10px;"><div><b>Afficher en fond</b><br><small>Sur toute la plateforme (pro.html)</small></div><div class="toggle" id="mxEnabled" onclick="this.classList.toggle('on')"></div></div>
+            <div style="display:flex;gap:10px;margin-top:12px;">
+              <button class="btn btn-orange" onclick="appliquerMatrix()">✅ Appliquer</button>
+              <button class="btn btn-ghost" onclick="resetMatrix()">↺ Reset</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-orange" onclick="ctlSave()">💾 Sauvegarder dans Supabase</button>
+          <span id="ctl-status" style="color:var(--grey);font-size:12px;"></span>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /platform-body -->
 </div><!-- /view-platform -->
@@ -1117,7 +1251,7 @@ async function doRegister(){
     const {data,error}=await cl.auth.signUp({email,password:pass,options:{data:{first_name:first,last_name:last}}});
     if(error){showErr('reg-email-err',error.message);return}
     if(apikey&&data.user) DB.setData(data.user.id,'settings',{apiKey:apikey,ghToken:''});
-    if(data.session&&data.user){ loginUser(userFromSession(data.user)); showToast(`Bienvenue, ${first}! 🎉`,'success'); }
+    if(data.session&&data.user){ loginUser(userFromSession(data.user), true); showToast(`Bienvenue, ${first}! 🎉`,'success'); }
     else { showToast('Compte créé! Confirme ton courriel puis connecte-toi.','info'); switchTab('login'); }
   }catch(e){ showErr('reg-global-err',e.message||'Erreur'); }
 }
@@ -1132,7 +1266,7 @@ async function doLogin(){
   try{
     const {data,error}=await cl.auth.signInWithPassword({email,password:pass});
     if(error){showErr('login-global-err',error.message||'Connexion échouée');return}
-    loginUser(userFromSession(data.user));
+    loginUser(userFromSession(data.user), true);
     showToast(`Content de te revoir! 🍁`,'success');
   }catch(e){ showErr('login-global-err',e.message||'Erreur'); }
 }
@@ -1155,11 +1289,11 @@ function demoLogin(){
       {icon:'🚀',text:'Déploiement <strong>v10.2.1</strong> réussi',time:'Il y a 1h'},
     ]);
   }
-  loginUser(accounts[demoEmail]);
+  loginUser(accounts[demoEmail], true);
   showToast('Connexion démo! Explorez la plateforme 🎮','info');
 }
 
-function loginUser(user){
+function loginUser(user, animate){
   currentUser=user;
   DB.setSession(user);
   document.getElementById('view-auth').classList.add('hidden');
@@ -1168,6 +1302,17 @@ function loginUser(user){
   refreshUserUI();
   navigateTo('dashboard');
   loadAgents();
+  // Mémoire long-terme + contexte de session (par utilisateur, RLS)
+  if(window.TilexMemory){TilexMemory.init(sbClient());}
+  if(window.TilexContext){TilexContext.init('');TilexContext.syncMemoire();}
+  // Config plateforme (thème/couleurs/modules) — applique les réglages sauvés
+  if(typeof ctlLoad==='function')ctlLoad();
+  // Connexion réussie → animation ti-démon bleu↔feu + matrix, PUIS on arrive sur pro.html.
+  if(animate){
+    try{ sessionStorage.setItem('tilex-intro-pro-session','1'); }catch(e){} // pas de rejouer sur pro.html
+    if(window.TilexIntro){ try{ TilexIntro.play({ onDone:function(){ window.location.href='/pro'; } }); return; }catch(e){} }
+    window.location.href='/pro';
+  }
 }
 
 async function doLogout(){
@@ -1225,9 +1370,209 @@ function navigateTo(section){
     target.classList.add('active-section');
     if(section==='chat'){target.style.padding='0';target.style.gap='0'}
     if(section==='profile') refreshProfile();
+    if(section==='controle'&&typeof ctlPopuler==='function') ctlPopuler();
   }
   const bar=document.getElementById('tb-progress');
   bar.style.width='70%';setTimeout(()=>{bar.style.width='100%'},200);setTimeout(()=>{bar.style.width='0%'},600);
+}
+
+// ═══════════════════════════════════════
+//   CONTRÔLE PLATEFORME (thème live + modules + Supabase)
+// ═══════════════════════════════════════
+const CTL_DEFAULTS={accent:'#FF6B00',bg:'#080808',txt:'#ffffff',preset:'nuit',modules:{vision:true,vocal:true,stream:true,offline:true,memory:true}};
+const CTL_PRESETS={
+  nuit:{accent:'#FF6B00',bg:'#080808',txt:'#ffffff'},
+  jour:{accent:'#FF6B00',bg:'#f4f0e6',txt:'#1a1a1a'},
+  matrix:{accent:'#e63946',bg:'#0a0a0f',txt:'#e8e8f0'},
+  ocean:{accent:'#457b9d',bg:'#0b1d2a',txt:'#dff3ff'}
+};
+let ctlConfig=JSON.parse(JSON.stringify(CTL_DEFAULTS));
+function _ctlHx(h){h=String(h||'').replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');return{r:parseInt(h.slice(0,2),16)||0,g:parseInt(h.slice(2,4),16)||0,b:parseInt(h.slice(4,6),16)||0};}
+function _ctlHex(r,g,b){const c=v=>('0'+Math.max(0,Math.min(255,Math.round(v))).toString(16)).slice(-2);return '#'+c(r)+c(g)+c(b);}
+function _ctlShade(hex,p){const {r,g,b}=_ctlHx(hex);const f=p<0?0:255;const t=Math.abs(p);return _ctlHex(r+(f-r)*t,g+(f-g)*t,b+(f-b)*t);}
+function ctlAppliquerCSS(cfg){
+  const root=document.documentElement.style;
+  const a=cfg.accent,a2=_ctlShade(a,0.18),argb=_ctlHx(a);
+  root.setProperty('--orange',a);root.setProperty('--orange2',a2);
+  root.setProperty('--accent',a);root.setProperty('--accent2',a2);
+  root.setProperty('--orange-dim','rgba('+argb.r+','+argb.g+','+argb.b+',.15)');
+  root.setProperty('--accent-dim','rgba('+argb.r+','+argb.g+','+argb.b+',.15)');
+  root.setProperty('--glow','0 0 40px rgba('+argb.r+','+argb.g+','+argb.b+',.3)');
+  root.setProperty('--accent-glow','0 0 40px rgba('+argb.r+','+argb.g+','+argb.b+',.3)');
+  root.setProperty('--bg',cfg.bg);root.setProperty('--bg2',_ctlShade(cfg.bg,0.06));root.setProperty('--bg3',_ctlShade(cfg.bg,0.12));root.setProperty('--bg4',_ctlShade(cfg.bg,0.18));
+  root.setProperty('--white',cfg.txt);
+  // — Adapter bordures/gris selon la clarté du fond + activer le fond d'écran jour —
+  const bgr=_ctlHx(cfg.bg);const lum=0.299*bgr.r+0.587*bgr.g+0.114*bgr.b;const clair=lum>140;
+  if(cfg.preset==='jour'){
+    // Thème Claude complet (palette + fond d'écran beige géré par le CSS [data-theme="jour"])
+    document.documentElement.setAttribute('data-theme','jour');
+    root.removeProperty('--border');root.removeProperty('--grey');root.removeProperty('--grey2');
+  }else{
+    document.documentElement.setAttribute('data-theme','nuit');
+    if(clair){ // fond clair personnalisé : garder des bordures/gris lisibles
+      root.setProperty('--border','rgba(60,45,30,.16)');
+      root.setProperty('--grey','#6b6258');root.setProperty('--grey2','#9a8f7e');
+    }else{
+      root.setProperty('--border','rgba(255,255,255,.07)');
+      root.setProperty('--grey','#888');root.setProperty('--grey2','#555');
+    }
+  }
+}
+function ctlPopuler(){
+  const a=document.getElementById('ctl-accent');if(a)a.value=ctlConfig.accent;
+  const b=document.getElementById('ctl-bg');if(b)b.value=ctlConfig.bg;
+  const t=document.getElementById('ctl-txt');if(t)t.value=ctlConfig.txt;
+  const p=document.getElementById('ctl-preset');if(p)p.value=ctlConfig.preset||'nuit';
+  document.querySelectorAll('#section-controle .toggle[data-mod]').forEach(el=>{
+    const m=el.getAttribute('data-mod');el.classList.toggle('on',!!(ctlConfig.modules&&ctlConfig.modules[m]));
+  });
+  if(window.MatrixEngine){ MatrixEngine.init(); if(typeof ctlMatrixPopuler==='function')ctlMatrixPopuler(); }
+}
+function ctlPresetChange(){
+  const pr=CTL_PRESETS[document.getElementById('ctl-preset').value]||CTL_PRESETS.nuit;
+  document.getElementById('ctl-accent').value=pr.accent;
+  document.getElementById('ctl-bg').value=pr.bg;
+  document.getElementById('ctl-txt').value=pr.txt;
+}
+function ctlApply(){
+  ctlConfig.accent=document.getElementById('ctl-accent').value;
+  ctlConfig.bg=document.getElementById('ctl-bg').value;
+  ctlConfig.txt=document.getElementById('ctl-txt').value;
+  ctlConfig.preset=document.getElementById('ctl-preset').value;
+  ctlAppliquerCSS(ctlConfig);
+  try{localStorage.setItem('tilex-platform-config',JSON.stringify(ctlConfig));}catch(e){}
+  if(typeof showToast==='function')showToast('🎨 Thème appliqué','success');
+}
+function ctlReset(){
+  ctlConfig=JSON.parse(JSON.stringify(CTL_DEFAULTS));
+  ctlAppliquerCSS(ctlConfig);ctlPopuler();
+  try{localStorage.setItem('tilex-platform-config',JSON.stringify(ctlConfig));localStorage.setItem('tilex-modules',JSON.stringify(ctlConfig.modules));}catch(e){}
+  if(typeof showToast==='function')showToast('↺ Thème réinitialisé','info');
+}
+function ctlToggle(el){
+  el.classList.toggle('on');
+  if(!ctlConfig.modules)ctlConfig.modules={};
+  ctlConfig.modules[el.getAttribute('data-mod')]=el.classList.contains('on');
+  try{localStorage.setItem('tilex-modules',JSON.stringify(ctlConfig.modules));}catch(e){}
+}
+async function ctlSave(){
+  ctlApply();
+  const st=document.getElementById('ctl-status');if(st)st.textContent='Sauvegarde…';
+  try{
+    const cl=sbClient();const {data}=await cl.auth.getSession();const session=data&&data.session;
+    if(session&&session.user){
+      const {error}=await cl.from('tilex_platform_config').upsert({user_id:session.user.id,config:ctlConfig,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      if(error)throw error;
+      if(st)st.textContent='✅ Sauvegardé dans Supabase';
+      if(typeof showToast==='function')showToast('💾 Config sauvegardée','success');
+    }else{ if(st)st.textContent='Sauvé localement (connecte-toi pour Supabase).'; }
+  }catch(e){ if(st)st.textContent='⚠️ '+(e.message||'erreur'); }
+}
+async function ctlLoad(){
+  try{const l=JSON.parse(localStorage.getItem('tilex-platform-config')||'null');if(l){ctlConfig=Object.assign({},CTL_DEFAULTS,l);ctlConfig.modules=Object.assign({},CTL_DEFAULTS.modules,l.modules||{});}}catch(e){}
+  ctlAppliquerCSS(ctlConfig);
+  try{
+    const cl=sbClient();const {data}=await cl.auth.getSession();const session=data&&data.session;
+    if(session&&session.user){
+      const res=await cl.from('tilex_platform_config').select('config').eq('user_id',session.user.id).maybeSingle();
+      if(res.data&&res.data.config){
+        ctlConfig=Object.assign({},CTL_DEFAULTS,res.data.config);
+        ctlConfig.modules=Object.assign({},CTL_DEFAULTS.modules,res.data.config.modules||{});
+        ctlAppliquerCSS(ctlConfig);
+        try{localStorage.setItem('tilex-platform-config',JSON.stringify(ctlConfig));localStorage.setItem('tilex-modules',JSON.stringify(ctlConfig.modules));}catch(e){}
+      }
+    }
+  }catch(e){}
+  ctlPopuler();
+}
+window.TilexControl={get config(){return ctlConfig;},get modules(){return ctlConfig.modules;},apply(){ctlAppliquerCSS(ctlConfig);}};
+// Applique le thème sauvé dès le chargement (même sur l'écran de connexion).
+try{const _l=JSON.parse(localStorage.getItem('tilex-platform-config')||'null');if(_l){ctlConfig=Object.assign({},CTL_DEFAULTS,_l);ctlAppliquerCSS(ctlConfig);}}catch(e){}
+
+// ═══════════════════════════════════════
+//   MATRIX LIVE (canvas pluie configurable)
+// ═══════════════════════════════════════
+const MatrixEngine={
+  cv:null,ctx:null,drops:[],cols:0,fontSize:0,last:0,raf:null,started:false,
+  cfg:{color:'#e63946',chars:'01',speed:50,dens:14,fade:8},
+  init(){
+    this.cv=document.getElementById('mxCanvas'); if(!this.cv)return;
+    this.ctx=this.cv.getContext('2d');
+    this.resize();
+    if(!this._bound){window.addEventListener('resize',()=>this.resize());this._bound=true;}
+    if(!this.started){this.started=true;this.loop();}
+  },
+  resize(){
+    if(!this.cv)return;
+    const r=this.cv.getBoundingClientRect();
+    const dpr=window.devicePixelRatio||1;
+    this.cv.width=Math.max(1,r.width*dpr); this.cv.height=Math.max(1,r.height*dpr);
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+    this.fontSize=Math.max(10,Math.floor(r.width/this.cfg.dens));
+    this.cols=Math.max(1,Math.floor(r.width/this.fontSize));
+    this.drops=new Array(this.cols).fill(0).map(()=>Math.random()*((r.height||160)/this.fontSize));
+  },
+  draw(){
+    if(!this.cv)return;
+    const r=this.cv.getBoundingClientRect();
+    if(r.width<2||r.height<2)return; // panneau caché → on ne dessine pas
+    this.ctx.fillStyle='rgba(0,0,0,'+(this.cfg.fade/100)+')';
+    this.ctx.fillRect(0,0,r.width,r.height);
+    this.ctx.fillStyle=this.cfg.color;
+    this.ctx.font=this.fontSize+'px monospace';
+    const set=this.cfg.chars||'01';
+    for(let i=0;i<this.drops.length;i++){
+      const ch=set.charAt(Math.floor(Math.random()*set.length));
+      const x=i*this.fontSize, y=this.drops[i]*this.fontSize;
+      this.ctx.fillText(ch,x,y);
+      if(y>r.height&&Math.random()>0.975)this.drops[i]=0;
+      this.drops[i]+=this.cfg.speed/50;
+    }
+  },
+  loop(){
+    const tick=(ts)=>{ if(ts-this.last>33){this.draw();this.last=ts;} this.raf=requestAnimationFrame(tick); };
+    this.raf=requestAnimationFrame(tick);
+  }
+};
+function updateMatrix(){
+  const g=id=>document.getElementById(id);
+  if(!g('mxColor'))return;
+  MatrixEngine.cfg.color=g('mxColor').value;
+  MatrixEngine.cfg.chars=g('mxChars').value;
+  MatrixEngine.cfg.speed=+g('mxSpeed').value;
+  MatrixEngine.cfg.dens=+g('mxDens').value;
+  MatrixEngine.cfg.fade=+g('mxFade').value;
+  MatrixEngine.resize();
+}
+function appliquerMatrix(){
+  updateMatrix();
+  const cfg=Object.assign({},MatrixEngine.cfg);
+  const en=document.getElementById('mxEnabled'); cfg.enabled=!!(en&&en.classList.contains('on'));
+  ctlConfig.matrix=cfg;
+  try{localStorage.setItem('tilex_matrix',JSON.stringify(cfg));}catch(e){}
+  window.dispatchEvent(new CustomEvent('tilex:matrix',{detail:cfg}));
+  if(window.TilexMatrixBG)TilexMatrixBG.apply(cfg); // si jamais un fond existe sur cette page
+  ctlSave(); // persiste toute la config plateforme (incluant matrix) dans Supabase
+  if(typeof showToast==='function')showToast(cfg.enabled?'🟥 Matrix activée en fond + sauvegardée':'🟥 Matrix sauvegardée (fond désactivé)','success');
+}
+function resetMatrix(){
+  const g=id=>document.getElementById(id);
+  g('mxColor').value='#e63946'; g('mxChars').value='01';
+  g('mxSpeed').value=50; g('mxSpeedVal').textContent='50';
+  g('mxDens').value=14;  g('mxDensVal').textContent='14';
+  g('mxFade').value=8;   g('mxFadeVal').textContent='8';
+  updateMatrix();
+  if(typeof showToast==='function')showToast('↺ Matrix réinitialisée','info');
+}
+function ctlMatrixPopuler(){
+  const m=ctlConfig.matrix; if(!m)return;
+  const g=id=>document.getElementById(id); if(!g('mxColor'))return;
+  g('mxColor').value=m.color||'#e63946'; g('mxChars').value=m.chars||'01';
+  g('mxSpeed').value=m.speed||50; g('mxSpeedVal').textContent=String(m.speed||50);
+  g('mxDens').value=m.dens||14; g('mxDensVal').textContent=String(m.dens||14);
+  g('mxFade').value=m.fade||8; g('mxFadeVal').textContent=String(m.fade||8);
+  const en=g('mxEnabled'); if(en)en.classList.toggle('on',!!m.enabled);
+  updateMatrix();
 }
 
 // ═══════════════════════════════════════
@@ -1449,6 +1794,41 @@ let chatHistory=[];
 function handleChatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px'}
 
+// ── Indicateur de SOURCES (vrais logos) — web.html ──
+// Seul moteur pertinent ici : la recherche web Anthropic ("web").
+var TLX_SRC={
+  web:{l:"Web",c:"#4a9eff",p:null},
+  supabase:{l:"Supabase",c:"#3ECF8E",p:"M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C-.33 13.427.65 15.455 2.409 15.455h9.579l.113 7.51c.014.985 1.259 1.408 1.873.636l9.262-11.653c1.093-1.377.113-3.405-1.645-3.405h-9.642z"},
+  github:{l:"GitHub",c:"#e8e8ec",p:"M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"},
+  google:{l:"Google",c:"#4285F4",p:"M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"}
+};
+function tlxSourceChip(src){
+  var d=TLX_SRC[src]; if(!d) return "";
+  var icon=d.p
+    ? '<svg viewBox="0 0 24 24" width="13" height="13" fill="'+d.c+'"><path d="'+d.p+'"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="'+d.c+'" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
+  return '<span class="tlx-src-chip" title="'+d.l+'">'+icon+'<span>'+d.l+'</span></span>';
+}
+function tlxRenderSources(row, sources, confirmed){
+  if(!row) return;
+  var known=(sources||[]).filter(function(s){return TLX_SRC[s];});
+  if(!known.length){ row.innerHTML=""; return; }
+  row.innerHTML='<span class="tlx-src-lead">'+(confirmed?"🔎 Sources :":"… recherche :")+'</span>'+known.map(tlxSourceChip).join("");
+  row.setAttribute("data-confirmed", confirmed?"1":"0");
+}
+function tlxWebIntent(t){
+  t=" "+String(t||"").toLowerCase()+" ";
+  return /cherche|recherch|sur le web|internet|en ligne|actualit|nouvelle|m[ée]t[ée]o|aujourd|derni[èe]r|r[ée]cent|http|www\.|\.com|\.ca|prix de|cours de|qui est|c'est quoi|what is|latest|news/.test(t);
+}
+(function(){var st=document.createElement("style");st.textContent=
+  ".tlx-sources{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 5px}"+
+  ".tlx-sources:empty{display:none}"+
+  ".tlx-src-lead{font-size:10px;color:var(--grey);font-family:var(--mono,monospace);letter-spacing:.3px}"+
+  ".tlx-src-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--white);background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:3px 9px;line-height:1}"+
+  ".tlx-src-chip svg{display:block;flex-shrink:0}"+
+  ".tlx-sources[data-confirmed=\"1\"] .tlx-src-chip{border-color:var(--orange,#FF6B00);box-shadow:0 0 6px rgba(255,107,0,.25)}";
+  document.head.appendChild(st);})();
+
 async function sendMessage(){
   if(!currentAgentId){showToast("Sélectionnez d'abord un agent",'error');return}
   const ta=document.getElementById('chat-textarea');
@@ -1463,28 +1843,40 @@ async function sendMessage(){
   msgs.appendChild(uDiv);
   ta.value='';ta.style.height='auto';
   chatHistory.push({role:'user',content:text});
+  // ── Branche TilexMemory + TilexContext ──
+  if(window.TilexContext)TilexContext.ajouterMessage('user',text);
+  if(window.TilexMemory&&/\b(souviens?[- ]toi|retiens|rappelle[- ]toi|garde (?:ça |cela |ceci )?en m[ée]moire|n['’]oublie pas|remember this|ma pr[ée]f[ée]rence|je pr[ée]f[èe]re|mon nom est|j['’]aime\b|note que)\b/i.test(text)){ TilexMemory.save('preference',text,3); }
+  let memCtx='';if(window.TilexMemory){try{memCtx=await TilexMemory.toPromptContext(8);}catch(e){}}
   const agent=getAgents().find(a=>a.id===currentAgentId);
   const typ=document.createElement('div');typ.className='msg-wrap';typ.id='typing';
   typ.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div class="msg-bubble" style="color:var(--grey)"><span class="spinner"></span></div>`;
   msgs.appendChild(typ);msgs.scrollTop=msgs.scrollHeight;
+  const wantWeb=tlxWebIntent(text);
   try{
     const res=await fetch(AIP_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+aipToken(),'apikey':AIP_KEY},
-      body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,
-        system:(agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."),
+      body:JSON.stringify({kind:'chat',model:(agent&&agent.model)||'claude-sonnet-4-6',max_tokens:2048,web_search:wantWeb,
+        system:((agent&&agent.system)||('Tu es '+((agent&&agent.name)||'un assistant')+", un agent IA de la plateforme TI-LEX. Réponds en français québécois, utile et clair."))+(memCtx||''),
         messages:chatHistory.slice(-16)})});
     const t0=document.getElementById('typing');if(t0)t0.remove();
     if(!res.ok||!res.body){let tx='';try{tx=await res.text();}catch(e){}throw new Error('HTTP '+res.status+' '+tx);}
     const aDiv=document.createElement('div');aDiv.className='msg-wrap';
-    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="msg-bubble"><span class="ai-corps"></span></div><div class="msg-time">Maintenant</div></div>`;
+    aDiv.innerHTML=`<div class="msg-av agent-av">${agentIcon(agent)}</div><div><div class="tlx-sources"></div><div class="msg-bubble"><span class="ai-corps"></span></div><div class="msg-time">Maintenant</div></div>`;
     msgs.appendChild(aDiv);
     const corps=aDiv.querySelector('.ai-corps');
+    const srcRow=aDiv.querySelector('.tlx-sources');
+    if(wantWeb)tlxRenderSources(srcRow,['web'],false);
     const reader=res.body.getReader();const dec=new TextDecoder();let buf='',plein='';
     while(true){const ch=await reader.read();if(ch.done)break;buf+=dec.decode(ch.value,{stream:true});
       const parts=buf.split('\n\n');buf=parts.pop()||'';
       for(const p of parts){const ln=p.split('\n').find(l=>l.indexOf('data:')===0);if(!ln)continue;
         const d=ln.slice(5).trim();if(d==='[DONE]')continue;
-        try{const o=JSON.parse(d);if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}}catch(e){}}}
+        try{const o=JSON.parse(d);
+          if(o.type==='content_block_delta'&&o.delta&&o.delta.text){plein+=o.delta.text;corps.textContent=plein;msgs.scrollTop=msgs.scrollHeight;}
+          else if(o.type==='sources'){tlxRenderSources(srcRow,o.sources,o.confirmed);}
+          else if(o.type==='tool_status'&&o.tool_name==='web_search'){tlxRenderSources(srcRow,['web'],true);}
+        }catch(e){}}}
     chatHistory.push({role:'assistant',content:plein||'(réponse vide)'});
+    if(window.TilexContext)TilexContext.enregistrerReponse(plein||'');
     if(agent){agent.convs=(agent.convs||0)+1;}
   }catch(e){
     const t1=document.getElementById('typing');if(t1)t1.remove();
@@ -1517,6 +1909,7 @@ function newConversation(){
 // ═══════════════════════════════════════
 function refreshDash(){
   if(!currentUser) return;
+  refreshMessageStats();
   const agents=getAgents();
   const count=agents.length;
   document.getElementById('stat-agents').textContent=count;
@@ -1541,6 +1934,32 @@ function refreshDash(){
     pal.innerHTML='<div style="color:var(--grey);font-size:13px">Aucun agent lié pour l\'instant.</div>';
   } else {
     pal.innerHTML=agents.slice(0,4).map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px"><div style="display:flex;align-items:center;gap:8px">${agentIconInline(a,20)} ${esc(a.name)}</div><span class="badge ${a.status==='active'?'badge-green':'badge-orange'}">${a.status==='active'?'Actif':'En pause'}</span></div>`).join('');
+  }
+}
+
+// Stats de messages depuis Supabase (table `messages`, RLS filtre par utilisateur connecté)
+async function refreshMessageStats(){
+  const elCount=document.getElementById('stat-messages');
+  const elData=document.getElementById('stat-data');
+  try{
+    const cl=sbClient();
+    // Requiert une vraie session Supabase (les comptes démo locaux n'en ont pas)
+    let hasSession=false;
+    if(cl){ const {data}=await cl.auth.getSession(); hasSession=!!(data&&data.session); }
+    if(!cl||!hasSession){ if(elCount)elCount.textContent='0'; if(elData)elData.textContent='—'; return; }
+    // 1) Nombre de messages de l'utilisateur (role='user')
+    const {count}=await cl.from('messages').select('id',{count:'exact',head:true}).eq('role','user');
+    if(elCount) elCount.textContent=(count||0).toLocaleString('fr-CA');
+    // 2) Volume approximatif des données échangées (somme des longueurs de `contenu`)
+    const {data:rows,error}=await cl.from('messages').select('contenu');
+    if(error) throw error;
+    let totalChars=0;
+    if(Array.isArray(rows)){ for(const r of rows){ if(r&&typeof r.contenu==='string') totalChars+=r.contenu.length; } }
+    if(elData) elData.textContent=(totalChars/1024).toFixed(1)+' Ko';
+  }catch(e){
+    console.warn('[stats] messages',e);
+    if(elCount&&elCount.textContent==='0') elCount.textContent='0';
+    if(elData) elData.textContent='—';
   }
 }
 
@@ -1827,7 +2246,207 @@ function lightenHex(hex,amount){
 //   MISC
 // ═══════════════════════════════════════
 function closeModal(id){document.getElementById(id).classList.add('hidden')}
-function openGitHub(){showToast('Ouverture du repo GitHub tilex.…','info')}
+// ═══════════════════════════════════════
+//   GITHUB — navigateur réel via github-proxy
+//   (le PAT reste côté serveur ; jamais exposé au client)
+// ═══════════════════════════════════════
+const GH = { repo:null, branch:null, tree:[] };
+
+// Récupère le jeton d'accès Supabase de l'utilisateur connecté
+async function ghGetToken(){
+  try{
+    const cl=sbClient();
+    if(cl){ const {data}=await cl.auth.getSession(); if(data&&data.session&&data.session.access_token) return data.session.access_token; }
+  }catch(e){}
+  return null;
+}
+
+// Appel au proxy GitHub. Retourne le JSON, lève une erreur en cas d'échec.
+async function gh(body){
+  const token=await ghGetToken();
+  if(!token) throw new Error('Connecte-toi à ton compte pour accéder à GitHub.');
+  const r=await fetch(`${window.SB_URL}/functions/v1/github-proxy`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'apikey':window.SB_ANON},
+    body:JSON.stringify(body)
+  });
+  if(!r.ok){ let e; try{e=await r.json();}catch(x){e={};} throw new Error(e.error||('GitHub '+r.status)); }
+  return r.json();
+}
+
+// Décodage base64 (contenu de fichier GitHub) en UTF-8
+function ghB64decode(b64){
+  try{ return decodeURIComponent(escape(atob(String(b64||'').replace(/\n/g,'')))); }
+  catch(e){ try{ return atob(String(b64||'').replace(/\n/g,'')); }catch(_){ return ''; } }
+}
+
+function ghPanel(){ return document.getElementById('gh-panel'); }
+function ghSetBreadcrumb(text){ const b=document.getElementById('gh-breadcrumb'); if(b) b.textContent=text||''; }
+function ghLoading(msg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const d=document.createElement('div');
+  d.style.cssText='color:var(--grey);font-size:13px;display:flex;align-items:center;gap:10px';
+  const sp=document.createElement('span'); sp.className='spinner';
+  const tx=document.createElement('span'); tx.textContent=msg||'Chargement…';
+  d.appendChild(sp); d.appendChild(tx); p.appendChild(d);
+}
+function ghError(msg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const d=document.createElement('div');
+  d.style.cssText='color:#ff6b6b;font-size:13px;line-height:1.6';
+  d.textContent='⚠️ '+(msg||'Erreur GitHub.');
+  p.appendChild(d);
+}
+
+// Point d'entrée : ouvre/charge le navigateur GitHub dans la section Projet
+async function openGitHub(){
+  navigateTo('project');
+  ghSetBreadcrumb('');
+  GH.repo=null; GH.branch=null; GH.tree=[];
+  ghLoading('Vérification de la connexion GitHub…');
+  let status;
+  try{ status=await gh({action:'status'}); }
+  catch(e){ ghShowConnect(e.message); return; }
+  if(!status||!status.connected){ ghShowConnect(); return; }
+  ghLoadRepos();
+}
+
+// Écran « pas connecté » → renvoie vers pro.html (réglages) pour brancher GitHub
+function ghShowConnect(extraMsg){
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:12px;align-items:flex-start';
+  const t=document.createElement('div');
+  t.style.cssText='font-size:14px;font-weight:700';
+  t.textContent='GitHub n’est pas encore connecté';
+  const d=document.createElement('div');
+  d.style.cssText='font-size:13px;color:var(--grey);line-height:1.6';
+  d.textContent='Connecte ton compte GitHub depuis les réglages de l’application pour voir tes dépôts et ton code ici.';
+  const a=document.createElement('a');
+  a.href='/pro'; a.className='btn btn-orange btn-sm';
+  a.textContent='Connecter GitHub →';
+  wrap.appendChild(t); wrap.appendChild(d);
+  if(extraMsg){ const e=document.createElement('div'); e.style.cssText='font-size:12px;color:#ff6b6b'; e.textContent=extraMsg; wrap.appendChild(e); }
+  wrap.appendChild(a);
+  p.appendChild(wrap);
+}
+
+// Liste des dépôts
+async function ghLoadRepos(){
+  ghSetBreadcrumb('');
+  ghLoading('Chargement de tes dépôts…');
+  let res;
+  try{ res=await gh({action:'listRepos'}); }
+  catch(e){ ghError(e.message); return; }
+  const repos=(res&&res.repos)||[];
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+  if(repos.length===0){
+    const d=document.createElement('div'); d.style.cssText='color:var(--grey);font-size:13px';
+    d.textContent='Aucun dépôt accessible.'; p.appendChild(d); return;
+  }
+  const list=document.createElement('div'); list.className='file-list';
+  repos.forEach(repo=>{
+    const full=repo.full_name||((repo.owner&&repo.owner.login?repo.owner.login+'/':'')+(repo.name||''));
+    const item=document.createElement('div'); item.className='file-item';
+    const ic=document.createElement('span'); ic.textContent='📦';
+    const nm=document.createElement('span'); nm.textContent=full; nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    item.appendChild(ic); item.appendChild(nm);
+    item.addEventListener('click',()=>ghOpenRepo(full));
+    list.appendChild(item);
+  });
+  p.appendChild(list);
+}
+
+// Ouvre un dépôt : choisit la branche puis charge l'arbre
+async function ghOpenRepo(full){
+  GH.repo=full; GH.branch=null; GH.tree=[];
+  ghSetBreadcrumb(full);
+  ghLoading('Chargement des branches…');
+  let branch='main';
+  try{
+    const br=await gh({action:'listBranches',repo:full});
+    const branches=(br&&br.branches)||[];
+    branch = branches.includes('main') ? 'main' : (branches[0]||'main');
+  }catch(e){ /* on tente 'main' par défaut */ }
+  GH.branch=branch;
+  ghLoadTree();
+}
+
+// Arbre des fichiers du dépôt/branche courants
+async function ghLoadTree(){
+  if(!GH.repo){ ghLoadRepos(); return; }
+  ghSetBreadcrumb(GH.repo+' @ '+(GH.branch||'?'));
+  ghLoading('Chargement des fichiers…');
+  let res;
+  try{ res=await gh({action:'listFiles',repo:GH.repo,branch:GH.branch}); }
+  catch(e){ ghError(e.message); return; }
+  GH.tree=(res&&res.tree)||[];
+  const truncated=res&&res.truncated;
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+
+  // Barre d'actions : retour aux dépôts
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
+  const back=document.createElement('button'); back.className='btn btn-ghost btn-sm';
+  back.textContent='← Dépôts'; back.addEventListener('click',ghLoadRepos);
+  const tag=document.createElement('span'); tag.className='branch-tag'; tag.textContent='⑂ '+(GH.branch||'?');
+  bar.appendChild(back); bar.appendChild(tag);
+  p.appendChild(bar);
+
+  const files=GH.tree.filter(n=>n&&n.type==='blob');
+  if(files.length===0){
+    const d=document.createElement('div'); d.style.cssText='color:var(--grey);font-size:13px';
+    d.textContent='Aucun fichier dans cette branche.'; p.appendChild(d); return;
+  }
+  const list=document.createElement('div'); list.className='file-list'; list.style.maxHeight='360px'; list.style.overflowY='auto';
+  files.forEach(node=>{
+    const item=document.createElement('div'); item.className='file-item';
+    const ic=document.createElement('span'); ic.textContent='📄';
+    const nm=document.createElement('span'); nm.textContent=node.path; nm.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    item.appendChild(ic); item.appendChild(nm);
+    item.addEventListener('click',()=>ghOpenFile(node.path));
+    list.appendChild(item);
+  });
+  p.appendChild(list);
+  if(truncated){
+    const w=document.createElement('div'); w.style.cssText='color:var(--grey2);font-size:11px;margin-top:8px';
+    w.textContent='Liste tronquée par GitHub (dépôt volumineux).'; p.appendChild(w);
+  }
+}
+
+// Lit et affiche le contenu d'un fichier
+async function ghOpenFile(path){
+  if(!GH.repo) return;
+  ghSetBreadcrumb(GH.repo+' @ '+(GH.branch||'?')+' / '+path);
+  ghLoading('Lecture de '+path+'…');
+  let res;
+  try{ res=await gh({action:'readFile',repo:GH.repo,path:path,branch:GH.branch}); }
+  catch(e){ ghError(e.message); return; }
+  const content=ghB64decode(res&&res.content);
+  const p=ghPanel(); if(!p) return;
+  p.innerHTML='';
+
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap';
+  const back=document.createElement('button'); back.className='btn btn-ghost btn-sm';
+  back.textContent='← Fichiers'; back.addEventListener('click',ghLoadTree);
+  const name=document.createElement('span'); name.style.cssText='font-family:var(--mono);font-size:12px;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+  name.textContent=path;
+  bar.appendChild(back); bar.appendChild(name);
+  p.appendChild(bar);
+
+  const pre=document.createElement('pre');
+  pre.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;overflow:auto;max-height:480px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre';
+  const code=document.createElement('code');
+  code.textContent=content;            // contenu distant échappé via textContent (anti-XSS)
+  pre.appendChild(code);
+  p.appendChild(pre);
+}
 
 function showToast(msg,type='info'){
   const c=document.getElementById('toast-container');
