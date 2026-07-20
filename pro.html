@@ -1853,7 +1853,9 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .uc-input{background:#fff;border-color:var(--border);color:var(--txt);}
 
 /* GARDE IA — Blocage abonnement */
-.message-blocage{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin:10px 0;flex-wrap:wrap;}
+.message-blocage{display:flex;align-items:center;gap:14px;padding:16px 20px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;margin:10px 0;flex-wrap:wrap;position:relative;}
+.blocage-fermer{position:absolute;top:8px;right:10px;background:transparent;border:none;color:var(--muted);font-size:15px;line-height:1;cursor:pointer;padding:4px;transition:color .2s;}
+.blocage-fermer:hover{color:var(--txt);}
 .blocage-icone{font-size:26px;flex-shrink:0;}
 .blocage-texte{flex:1;font-size:14px;color:var(--muted);line-height:1.5;font-family:'Rajdhani',sans-serif;}
 .blocage-texte strong{color:var(--txt);display:block;margin-bottom:3px;}
@@ -8635,6 +8637,9 @@ async function verifierAccesIA(){
 function afficherMessageBlocage(raison){
   var msgs=document.getElementById("chat-msgs");
   if(!msgs)return;
+  // Un seul message de blocage à la fois : on remplace au lieu d'empiler.
+  var ancien=msgs.querySelector(".message-blocage");
+  if(ancien)ancien.remove();
   var el=document.createElement("div");
   el.className="message-blocage";
   if(raison==="non_connecte"||raison==="not_connected"){
@@ -8648,6 +8653,12 @@ function afficherMessageBlocage(raison){
   }else{
     el.innerHTML='<div class="blocage-icone">⚠️</div><div class="blocage-texte"><strong>Erreur</strong>Réessaie dans un moment.</div>';
   }
+  // ✕ ajouté APRÈS le innerHTML (sinon il serait effacé) : chaque message de
+  // blocage (10 questions gratuites, abonnement, connexion…) est fermable.
+  var fermer=document.createElement("button");
+  fermer.className="blocage-fermer";fermer.title="Fermer";fermer.textContent="✕";
+  fermer.onclick=function(){el.remove();};
+  el.appendChild(fermer);
   msgs.appendChild(el);
   msgs.scrollTop=msgs.scrollHeight;
 }

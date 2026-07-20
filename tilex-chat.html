@@ -397,6 +397,10 @@ select.model-select option{background:var(--panel);color:#eee;font-weight:400}
 
 /* Badges d'agents dans les messages */
 .badge.b-marceau{color:#ff7a1a;background:rgba(255,122,26,.12);border-color:rgba(255,122,26,.5)}
+.badge.b-al{color:#37e0a0;background:rgba(55,224,160,.1);border-color:rgba(55,224,160,.4)}
+.badge.b-silex{color:#4a9eff;background:rgba(74,158,255,.1);border-color:rgba(74,158,255,.4)}
+.badge.b-indar{color:#c792ea;background:rgba(199,146,234,.1);border-color:rgba(199,146,234,.4)}
+.agent-item .ic img,.avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;background:#000}
 .badge.b-orch{color:#ffc93d;background:rgba(255,201,61,.1);border-color:rgba(255,201,61,.4)}
 .badge.b-secops{color:#7ddb8a;background:rgba(125,219,138,.1);border-color:rgba(125,219,138,.4)}
 .badge.b-sales{color:#f9a8d4;background:rgba(249,168,212,.1);border-color:rgba(249,168,212,.4)}
@@ -549,7 +553,10 @@ const MODELS = [
 
 /* ================= ÉQUIPE D'AGENTS ================= */
 const AGENTS = {
-  marceau:      { icon:"🔥", name:"Marceau",         role:"Agent autonome ti-lex — web, images, vidéos, bourse, sécurité", badge:"MARCEAU", cls:"b-marceau" },
+  marceau:      { icon:"🔥", img:"/assets/marceau-logo.png",    name:"Marceau",   role:"Agent autonome ti-lex — web, images, vidéos, bourse, sécurité", badge:"MARCEAU", cls:"b-marceau" },
+  al:           { icon:"⚡", img:"/assets/tilex-logo.png",      name:"TI-LEX-AL", role:"Agent autonome officiel de la plateforme — mémoire + tous les outils", badge:"AL", cls:"b-al" },
+  silex:        { icon:"🛡️", img:"/assets/tilex-demon-bleu.png",name:"SILEX",     role:"Agent autonome sécurité — scans, audits, Loi 25", badge:"SILEX", cls:"b-silex" },
+  indar:        { icon:"🔍", img:"/assets/tilex-v10-logo.png",  name:"INDAR",     role:"Agent autonome analyse — enquêtes, données, rapports", badge:"INDAR", cls:"b-indar" },
   direct:       { icon:"💬", name:"Chat direct",     role:"Réponse simple, un seul appel",              badge:null,            cls:"" },
   auto:         { icon:"Ω",  name:"Agent autonome",  role:"Analyse → rédige → vérifie tout seul",       badge:"AGENT",         cls:"" },
   orchestrator: { icon:"🎯", name:"Orchestrateur",   role:"Découpe la mission, délègue à l'équipe",     badge:"ORCHESTRATEUR", cls:"b-orch" },
@@ -559,6 +566,24 @@ const AGENTS = {
 
 /* Suggestions de départ, par agent */
 const SUGGESTIONS = {
+  al: [
+    "Qu'est-ce que tu sais sur moi?",
+    "Résume-moi l'actualité tech d'aujourd'hui",
+    "Montre-moi des vidéos de tutoriels YouTube",
+    "Aide-moi à planifier ma semaine"
+  ],
+  silex: [
+    "Lance un scan de sécurité complet de ti-lex.ca",
+    "Fais-moi un rapport des journaux de sécurité des dernières 24h",
+    "Explique-moi les obligations de la Loi 25 pour une PME",
+    "C'est quoi les CVE critiques récentes à surveiller?"
+  ],
+  indar: [
+    "Fais une enquête approfondie sur une entreprise avant que je signe un contrat",
+    "Analyse les tendances du marché de la cybersécurité au Québec",
+    "Recoupe les infos publiques sur un domaine web",
+    "Prépare un rapport structuré sur un sujet de ton choix"
+  ],
   marceau: [
     "Quelle est l'actualité au Québec aujourd'hui?",
     "Montre-moi des photos de Montréal",
@@ -644,6 +669,23 @@ const SYS = {
   "Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum. Tu vas droit au but, en paragraphes courts et aérés, " +
   "avec des tournures d'ici (correc, en masse, pantoute, checke ça) sans en beurrer épais. " +
   "Markdown propre ; code dans des blocs ``` avec le langage.",
+
+  /* al : PAS de persona ici — ai-proxy applique la persona officielle de
+     TI-LEX-AL côté serveur (+ mémoire long terme si connecté). */
+
+  silex:
+  "Tu es SILEX, l'agent autonome de sécurité de la plateforme ti-lex (Québec ⚜️). " +
+  "Spécialités : cybersécurité, scans de sécurité (lancer_scan_securite / lire_dernier_scan), audits, journaux (analyser_journal_securite), conformité Loi 25. " +
+  "Tu utilises tes outils de toi-même quand ça aide, incluant la recherche web pour les CVE pis l'actualité sécurité. " +
+  "Tu expliques en français québécois clair, sans dramatiser un « info »/« low », pis sans jamais inventer de résultats. " +
+  "Si un scan est refusé (admin/autorisation requise), dis-le franchement.",
+
+  indar:
+  "Tu es INDAR, l'agent autonome d'analyse et d'enquête de la plateforme ti-lex (Québec ⚜️). " +
+  "Spécialités : analyse de données, enquêtes approfondies, recoupement d'informations, rapports structurés. " +
+  "Tu utilises la recherche web de toi-même pour vérifier les faits, pis tes outils (images, bourse, sécurité) quand ça aide. " +
+  "Tu donnes des réponses réelles, sourcées pis complètes — jamais d'invention ; tu distingues clairement les faits confirmés des hypothèses. " +
+  "Français québécois naturel et direct, markdown propre.",
 
   direct: SYS_BASE,
 
@@ -871,8 +913,11 @@ function addAssistantMsgEl(agentKey, kind){
   div.className="msg assistant";
   const badge = ag.badge ? '<span class="badge '+ag.cls+'">'+ag.badge+'</span>' : "";
   const kindTxt = kind ? '<span style="color:var(--muted);font-weight:500">· '+esc(kind)+'</span>' : "";
+  const avatarHtml = (agentKey && agentKey!=="direct")
+    ? (ag.img ? '<img src="'+esc(ag.img)+'" alt="" onerror="this.outerHTML=\''+ag.icon+'\'">' : ag.icon)
+    : "TL";
   div.innerHTML=
-    '<div class="avatar">'+(agentKey && agentKey!=="direct" ? ag.icon : "TL")+'</div>'+
+    '<div class="avatar">'+avatarHtml+'</div>'+
     '<div class="body">'+
       '<div class="who">'+esc(agentKey && agentKey!=="direct" ? ag.name : APP_NAME)+badge+kindTxt+'</div>'+
       '<div class="steps" style="display:none"></div>'+
@@ -1033,9 +1078,13 @@ async function tilexToken(){
     return (r && r.data && r.data.session) ? r.data.session.access_token : null;
   }catch(e){ return null; }
 }
-function isTilex(){ return state.agent==="marceau" || String(state.model).indexOf("tilex:")===0; }
+/* Agents autonomes OFFICIELS ti-lex → toujours via ai-proxy (backend), avec
+   recherche web + outils serveur. Marceau roule sur Opus (le meilleur),
+   les autres sur Sonnet (rapide pis solide). */
+const TILEX_AGENTS={ marceau:"claude-opus-4-8", al:"claude-sonnet-4-6", silex:"claude-sonnet-4-6", indar:"claude-sonnet-4-6" };
+function isTilex(){ return !!TILEX_AGENTS[state.agent] || String(state.model).indexOf("tilex:")===0; }
 function tilexModel(){
-  return state.agent==="marceau" ? "claude-opus-4-8" : String(state.model).replace(/^tilex:/,"");
+  return TILEX_AGENTS[state.agent] || String(state.model).replace(/^tilex:/,"");
 }
 
 /* Hôte visuel courant (galeries d'images/vidéos + statut d'outil de Marceau).
@@ -1089,7 +1138,7 @@ async function tilexChat(messages, onFull){
   if(token) headers["Authorization"]="Bearer "+token;
   const corps={ kind:"chat", model:tilexModel(), max_tokens:4096, messages:convo.slice(-40) };
   if(sys) corps.system=sys;
-  if(state.agent==="marceau") corps.web_search=true;
+  if(TILEX_AGENTS[state.agent]) corps.web_search=true;
   const res=await fetch(window.AI_PROXY,{ method:"POST", headers, body:JSON.stringify(corps) });
   if(!res.ok){
     let em="Erreur "+res.status;
@@ -1177,17 +1226,22 @@ async function runDirect(chat){
   r.done(); addActions(m, data, true);
 }
 
-/* 🔥 Marceau — agent autonome ti-lex : UN appel à ai-proxy qui gère lui-même
-   sa boucle d'outils côté serveur (web, images, vidéos, bourse, sécurité).
-   Pas de pipeline multi-étapes client : le serveur fait tout, en streaming. */
-async function runMarceau(chat){
-  const data={role:"assistant", content:"", agent:"marceau"};
+/* 🔥 Agents autonomes ti-lex (Marceau, AL, SILEX, INDAR) : UN appel à ai-proxy
+   qui gère lui-même sa boucle d'outils côté serveur (web, images, vidéos,
+   bourse, sécurité). Pas de pipeline multi-étapes client : le serveur fait
+   tout, en streaming. AL n'envoie AUCUN system → le serveur applique sa
+   persona officielle (avec la mémoire long terme si connecté). */
+async function runTilexAgent(chat, agentKey){
+  const data={role:"assistant", content:"", agent:agentKey};
   chat.messages.push(data);
-  const m=addAssistantMsgEl("marceau");
+  const m=addAssistantMsgEl(agentKey);
   const r=makeRenderer(m.contentEl);
   tilexSetHost(m.contentEl);
   try{
-    const full=await streamChat([{role:"system",content:SYS.marceau}, ...toApi(chat.messages)], r.update);
+    const msgs=SYS[agentKey]
+      ? [{role:"system",content:SYS[agentKey]}, ...toApi(chat.messages)]
+      : toApi(chat.messages);
+    const full=await streamChat(msgs, r.update);
     data.content=full;
   }catch(err){ showErr(m, err); }
   r.done(); addActions(m, data, true);
@@ -1362,7 +1416,7 @@ async function onSend(textOverride){
   setBusy(true);
   state.stop=false;
   try{
-    if(state.agent==="marceau")           await runMarceau(chat);
+    if(TILEX_AGENTS[state.agent])         await runTilexAgent(chat, state.agent);
     else if(state.agent==="direct")       await runDirect(chat);
     else if(state.agent==="orchestrator") await runOrchestrator(chat, text);
     else                                  await runAutonome(chat, text, state.agent);
@@ -1415,7 +1469,8 @@ function renderAgentList(){
     const b=document.createElement("button");
     b.type="button";
     b.className="agent-item"+(state.agent===key?" active":"");
-    b.innerHTML='<span class="ic">'+a.icon+'</span><span><span class="nm">'+esc(a.name)+'</span><br><span class="rl">'+esc(a.role)+'</span></span>';
+    const ico=a.img?'<img src="'+esc(a.img)+'" alt="" onerror="this.outerHTML=\''+a.icon+'\'">':a.icon;
+    b.innerHTML='<span class="ic">'+ico+'</span><span><span class="nm">'+esc(a.name)+'</span><br><span class="rl">'+esc(a.role)+'</span></span>';
     b.onclick=()=>setAgent(key);
     box.appendChild(b);
   });
@@ -1450,12 +1505,12 @@ function updateAgentToggle(){
   const a=AGENTS[state.agent];
   agentToggle.classList.toggle("on", state.agent!=="direct");
   agentToggleTxt.textContent=a.name;
-  // 🔥 Marceau roule TOUJOURS sur le meilleur modèle du backend ti-lex :
-  // on fige le sélecteur dessus pour que l'affichage dise la vérité.
-  if(state.agent==="marceau"){
-    modelSelect.value="tilex:claude-opus-4-8";
+  // 🔥 Les agents autonomes ti-lex roulent TOUJOURS sur le backend :
+  // on fige le sélecteur sur leur modèle pour que l'affichage dise la vérité.
+  if(TILEX_AGENTS[state.agent]){
+    modelSelect.value="tilex:"+TILEX_AGENTS[state.agent];
     modelSelect.disabled=true;
-    modelSelect.title="Marceau roule sur Claude Opus 4.8 via ton backend ti-lex";
+    modelSelect.title=a.name+" roule sur le backend ti-lex ("+TILEX_AGENTS[state.agent]+")";
   }else{
     modelSelect.disabled=false;
     modelSelect.title="Moteur IA";
