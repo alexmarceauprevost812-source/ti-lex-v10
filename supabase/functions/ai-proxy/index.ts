@@ -15,6 +15,7 @@
 //           sans dépendre du front. 100% additif — si ça échoue, on continue.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, getIdentifier, tooManyRequests } from "../_shared/rate-limit.ts";
 
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") || "";
@@ -32,6 +33,35 @@ const CORS = {
 };
 
 const LIMITS = { chat: 200, image: 20 };
+
+// 🛡️ Anti-abus réseau — fenêtre glissante (Upstash Redis) AVANT l'appel au
+//    fournisseur. Protège la clé Anthropic/OpenAI de la plateforme : un visiteur
+//    anonyme est limité par ADRESSE IP (le chat public reste utilisable), un
+//    connecté par user_id (en plus de son quota quotidien). Fail-open si Redis
+//    est indisponible (rate-limit.ts) — on ne bloque jamais un usage légitime.
+async function appliquerLimitesReseau(
+  req: Request,
+  userId: string,
+  kind: "chat" | "image",
+): Promise<Response | null> {
+  const anon = userId === "anonymous";
+  const ident = getIdentifier(req, anon ? null : userId);
+  const configs = kind === "image"
+    ? (anon
+        ? [{ prefix: "aip-img-anon-h", max: 4, windowSec: 3600 }]
+        : [{ prefix: "aip-img-min", max: 6, windowSec: 60 }])
+    : (anon
+        ? [
+            { prefix: "aip-chat-anon-min", max: 12, windowSec: 60 },
+            { prefix: "aip-chat-anon-h", max: 80, windowSec: 3600 },
+          ]
+        : [{ prefix: "aip-chat-min", max: 30, windowSec: 60 }]);
+  for (const cfg of configs) {
+    const rl = await checkRateLimit(ident, cfg);
+    if (!rl.allowed) return tooManyRequests(rl, CORS);
+  }
+  return null;
+}
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
 const MAX_MESSAGES = 60;
@@ -492,31 +522,26 @@ Deno.serve(async (req) => {
 
     const kind = body.kind === "image" ? "image" : "chat";
 
-    // ---- 3. Rate limit ----
+    // ---- 3a. Anti-abus par IP (surtout accès anonyme) — fenêtre glissante ----
+    const limitResp = await appliquerLimitesReseau(req, userId, kind);
+    if (limitResp) return limitResp;
+
+    // ---- 3b. Quota quotidien par utilisateur — incrément ATOMIQUE (RPC) ----
+    //     L'ancien read-then-upsert était une course concurrente et pointait sur
+    //     une table inexistante. increment_ai_usage() vérifie ET incrémente en une
+    //     seule requête : impossible de dépasser le quota en parallèle. Fail-open
+    //     si la RPC échoue (on ne bloque pas un utilisateur légitime).
     if (userId !== "anonymous") {
       try {
         const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-        const col = kind === "image" ? "image_count" : "chat_count";
-        const { data: usage } = await sb
-          .from("ai_usage")
-          .select(col)
-          .eq("user_id", userId)
-          .eq("day", new Date().toISOString().slice(0, 10))
-          .maybeSingle();
-
-        const current = (usage as any)?.[col] ?? 0;
-        if (current >= LIMITS[kind]) {
+        const { data: quota, error: quotaErr } = await sb.rpc("increment_ai_usage", {
+          p_user_id: userId,
+          p_kind: kind,
+          p_limit: LIMITS[kind],
+        });
+        if (!quotaErr && quota && (quota as any).allowed === false) {
           return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
         }
-
-        await sb.from("ai_usage").upsert(
-          {
-            user_id: userId,
-            day: new Date().toISOString().slice(0, 10),
-            [col]: current + 1,
-          },
-          { onConflict: "user_id,day" },
-        );
       } catch (_) {}
     }
 
