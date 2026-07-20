@@ -2318,6 +2318,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:#4f9dff;">🗺️</span><span class="sb-label" data-txt="SCHÉMA"></span>
   </div>
 
+  <!-- Schémas animés — moteur chat → schéma → vidéo (.webm), isolé en iframe -->
+  <div class="sb-item" id="si-schemas-video" onclick="showTab('schemas')">
+    <span class="sb-icon" style="color:#7c5cff;">🎬</span><span class="sb-label" data-txt="SCHÉMAS ANIMÉS"></span>
+  </div>
+
   <!-- Créer agent IA -->
   <div class="sb-item" onclick="openModal()">
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
@@ -3080,6 +3085,15 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <div id="scn-liste"></div>
   </div>
 
+  <!-- Schémas animés — moteur autonome (schemas-animes/index.html) chargé en
+       iframe pour une isolation TOTALE (aucune collision CSS/ID/JS avec pro.html).
+       Le src est chargé à la demande (lazy) au premier affichage de l'onglet. -->
+  <div id="view-schemas" class="view" style="padding:0;">
+    <iframe id="schemas-frame" title="Moteur de schémas animés"
+      style="width:100%;height:calc(100dvh - var(--tb));border:0;display:block;background:var(--bg);"
+      sandbox="allow-scripts allow-same-origin allow-downloads allow-popups"></iframe>
+  </div>
+
   <!-- SILEX & CENTRE INDAR déplacés vers la page dédiée /security (security.html) -->
 
 </main>
@@ -3424,14 +3438,16 @@ function ouvriConvSidebar(){
 /* ── NAVIGATION ── */
 function showTab(name){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-fichiers","si-scanner"].forEach(id=>{
+  ["si-dash","si-chat","si-studio","si-settings","si-marceau","si-fichiers","si-scanner","si-schemas-video"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.classList.remove("active");
   });
   const el=document.getElementById("view-"+name);
   if(el)el.classList.add("active");
-  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",fichiers:"si-fichiers",scanner:"si-scanner"};
+  const siMap={dash:"si-dash",chat:"si-chat",studio:"si-studio",settings:"si-settings",conversations:"si-chat",marceau:"si-marceau",fichiers:"si-fichiers",scanner:"si-scanner",schemas:"si-schemas-video"};
   if(siMap[name]){const s=document.getElementById(siMap[name]);if(s)s.classList.add("active");}
   if(name==="scanner"&&typeof scannerInit==="function")scannerInit();
+  // 🎬 Schémas animés : charge l'app autonome dans l'iframe seulement au 1er affichage.
+  if(name==="schemas"){var _sf=document.getElementById("schemas-frame");if(_sf&&!_sf.getAttribute("src"))_sf.setAttribute("src","/schemas-animes/index.html");}
   if(name==="conversations")cvpLoad();
   if(name==="settings"){initGithubSettings();afficherMemoireUtilisateur();}
   if(name==="marceau"&&typeof window.loadMarceauAgent==="function"){window.loadMarceauAgent();}
