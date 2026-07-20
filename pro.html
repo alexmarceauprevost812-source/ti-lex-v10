@@ -3198,8 +3198,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
           <div class="csd-section">AGENTS</div>
           <div class="csd-item selected" data-agent="ti-lex-al" onclick="selectComposerAgent('ti-lex-al','TI-LEX-AL')">
             <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL</div>
-          <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Agent Marceau')">
-            <span class="csd-ico">🧑‍💻</span> Agent Marceau</div>
+          <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Marceau')">
+            <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau 🔥 autonome</div>
           <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
             <span class="csd-ico">🛡️</span> SILEX</div>
           <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
@@ -4157,8 +4157,21 @@ function nouvelleConvCompact(){
   if(typeof closeComposerMenu==="function")closeComposerMenu();
   if(window.TilexConvPanel)TilexConvPanel.nouvelleConvo();
 }
+/* 🔥 Persona de l'agent autonome Marceau (sélecteur du composer). Même identité
+   que dans tilex-chat.html : capable de tout, meilleures réponses réelles. */
+var MARCEAU_PERSONA="Tu es Marceau, l'agent IA autonome de la plateforme ti-lex (Québec ⚜️). "
+  +"Tu es capable de TOUT : tu réponds à n'importe quelle question avec la MEILLEURE réponse possible, "
+  +"factuelle et à jour. Tu utilises tes outils de toi-même quand ça aide — recherche web pour l'actualité "
+  +"et les faits récents, images/vidéos quand la personne veut VOIR quelque chose, cotations boursières en "
+  +"direct, scans de sécurité. Tu ne dis jamais « je ne peux pas chercher » : tu cherches. "
+  +"Tu donnes des réponses réelles, complètes et vérifiées — jamais d'invention ; si une info n'est pas "
+  +"confirmée, tu le dis franchement.\n"
+  +"Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum qui connait la personne. "
+  +"Tu vas droit au but, en paragraphes courts et aérés, avec des tournures d'ici (correc, en masse, pantoute, "
+  +"checke ça) sans en beurrer épais. Tu utilises des listes seulement quand ça aide vraiment.";
+
 function getSystemPrompt(){
-  var base=(_webAgent&&_webAgent.system)?_webAgent.system:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD);
+  var base=(_webAgent&&_webAgent.system)?_webAgent.system:(composerAgent==="marceau"?MARCEAU_PERSONA:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD));
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_tilexMemCache)base+="\n"+_tilexMemCache;
   if(_cerveauCache)base+="\n\n[NOTES DU CERVEAU de l'utilisateur — son 2ème cerveau, sauvegardées depuis le chat ou la page Cerveau. Quand il te demande de retrouver une note, une info qu'il a notée, ou fait référence à ce qu'il a sauvegardé, sers-toi de ces notes]:\n"+_cerveauCache;
@@ -4409,7 +4422,7 @@ async function sendChat(){
       model:chatModel,max_tokens:4096,
       system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
       messages:chatHistory.slice(-20),
-      ...(webSearchMode?{web_search:true}:{})
+      ...((webSearchMode||composerAgent==="marceau")?{web_search:true}:{})
     })});
     if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
     else td.remove();
@@ -4807,6 +4820,11 @@ function addMsg(role,txt){
 
 /* Avatar vidéo de TI-LEX-AL (réponses de l'agent) — clip muet en boucle */
 function alAvaVid(){
+  // 🔥 Quand l'agent autonome Marceau est sélectionné dans le composer, ses
+  // réponses (et l'indicateur de frappe) portent son logo au lieu de l'avatar AL.
+  if(typeof composerAgent!=="undefined"&&composerAgent==="marceau"){
+    return '<img class="cmsg-ava-vid" src="assets/marceau-logo.png" alt="Marceau" style="object-fit:cover;background:#000;" onerror="this.src=\'assets/agents/marceau-logo.png\'">';
+  }
   return '<video class="cmsg-ava-vid" autoplay loop muted playsinline preload="metadata" poster="assets/tilex-logo.png"><source src="assets/tilex-al-avatar.mp4" type="video/mp4"></video>';
 }
 /* ── Indicateur de SOURCES : vrais logos officiels des moteurs utilisés ──
@@ -8255,7 +8273,7 @@ function copyCodeBlock(cid){
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
 var composerAgent=localStorage.getItem("tilex-composer-agent")||"ti-lex-al";
-var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Agent Marceau","silex":"SILEX","indar":"INDAR"};
+var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau 🔥","silex":"SILEX","indar":"INDAR"};
 
 function updateModelChip(){
   var label=document.getElementById("composer-model-label");
