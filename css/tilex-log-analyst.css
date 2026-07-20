@@ -1,0 +1,45 @@
+/* ============================================================
+   ti-lex-AL v10 — css/tilex-log-analyst.css
+   Style du rapport d'analyse de journaux de sécurité.
+   ============================================================ */
+.tla-conteneur{width:100%;font-family:'Share Tech Mono',monospace;color:#e2e2ea;}
+
+.tla-chargement,.tla-erreur,.tla-vide{padding:24px;text-align:center;color:#6c6c78;font-size:13px;}
+.tla-erreur{color:#ff6b6b;}
+
+.tla-entete{margin-bottom:16px;}
+.tla-entete-titre{font-size:15px;font-weight:800;letter-spacing:1px;color:#FF6B00;}
+.tla-entete-note{font-size:11px;color:#6c6c78;margin-top:4px;line-height:1.5;}
+.tla-entete-ts{font-size:10px;color:#4a4a54;margin-top:4px;}
+
+.tla-stats-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.tla-carte{background:#0d0d12;border:1px solid #23232c;border-radius:12px;padding:14px;}
+.tla-carte-val{font-size:24px;font-weight:800;color:#e2e2ea;}
+.tla-carte-label{font-size:10px;color:#6c6c78;letter-spacing:.5px;margin-top:2px;}
+.tla-carte-liste{grid-column:span 2;}
+.tla-mini-liste{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.tla-mini-liste li{display:flex;justify-content:space-between;font-size:12px;color:#c8c8d2;}
+.tla-mini-count{color:#FF6B00;font-weight:700;}
+
+.tla-incidents{display:flex;flex-direction:column;gap:12px;}
+.tla-incident{background:#0d0d12;border:1px solid #23232c;border-left:3px solid;border-radius:10px;padding:14px 16px;}
+.tla-incident-hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.tla-badge{font-size:10px;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:20px;border:1px solid;}
+.tla-incident-id{font-size:10px;color:#6c6c78;}
+.tla-incident-resume{font-size:13px;color:#e2e2ea;line-height:1.5;margin-bottom:10px;}
+
+.tla-timeline{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;padding-left:10px;border-left:2px solid #23232c;}
+.tla-timeline-ligne{display:flex;gap:10px;font-size:11px;}
+.tla-timeline-ts{color:#6c6c78;white-space:nowrap;}
+
+.tla-risque{font-size:12px;color:#c8c8d2;margin-bottom:10px;background:#131318;border-radius:8px;padding:8px 10px;}
+
+.tla-containment-titre{font-size:11px;color:#6c6c78;letter-spacing:.5px;margin-bottom:4px;}
+.tla-containment ul{margin:0;padding-left:18px;}
+.tla-containment li{font-size:12px;color:#c8c8d2;line-height:1.6;}
+
+.tla-loi25{margin-top:10px;font-size:11px;color:#e6b84d;background:rgba(230,164,0,.08);border:1px solid rgba(230,164,0,.25);border-radius:8px;padding:8px 10px;}
+
+@media (max-width:600px){
+  .tla-carte-liste{grid-column:span 2;}
+}

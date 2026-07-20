@@ -44,6 +44,7 @@
 <link rel="stylesheet" href="css/tilex-image.css">
 <link rel="stylesheet" href="css/tilex-vision.css">
 <link rel="stylesheet" href="css/tilex-schema.css">
+<link rel="stylesheet" href="css/tilex-log-analyst.css">
 <link rel="stylesheet" href="css/tilex.css">
 <style>
 :root{
@@ -3898,7 +3899,7 @@ async function readSSE(res){
   return full;
 }
 
-async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube){
+async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube,onLogReport){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
   var full="";var buf="";var wsUsed=false;
@@ -3936,6 +3937,9 @@ async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube){
         }
         if(evt.type==="youtube"&&Array.isArray(evt.items)&&evt.items.length){
           if(onYoutube)onYoutube(evt.items);
+        }
+        if(evt.type==="log_report"&&evt.report){
+          if(onLogReport)onLogReport(evt.report);
         }
       }catch(e){}
     }
@@ -4491,6 +4495,17 @@ async function sendChat(){
           wrap.insertBefore(gal,acts2||null);
           msgs.scrollTop=msgs.scrollHeight;
         }
+      },function(rapport){
+        // Rapport du journal de sécurité (log-analyst) — même logique, hors du .cmsg-bbl.
+        if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
+        if(!window.TilexLogAnalyst)return;
+        var conteneur=document.createElement("div");
+        conteneur.className="tla-chat-embed";
+        var wrap=bblText.parentNode;
+        var acts2=wrap.querySelector(".cmsg-actions");
+        wrap.insertBefore(conteneur,acts2||null);
+        TilexLogAnalyst.afficher(conteneur,rapport);
+        msgs.scrollTop=msgs.scrollHeight;
       });
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
@@ -9354,6 +9369,7 @@ _checkDeployVersion();
 <script src="js/yilo-memory.js"></script>
 <script src="js/tilex-image.js"></script>
 <script src="js/tilex-schema.js"></script>
+<script src="js/tilex-log-analyst.js"></script>
 <script src="js/tilex-offline.js"></script>
 <script src="js/tilex-connections.js"></script>
 <script src="js/tilex-copy.js"></script>

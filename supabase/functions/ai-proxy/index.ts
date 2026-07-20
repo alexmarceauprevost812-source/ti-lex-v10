@@ -9,6 +9,10 @@
 //           vrai scan SILEX (security-agent, admin+SOW) et lit les résultats.
 //           Le JWT de l'utilisateur est relayé — aucune escalade de privilège.
 //           Accès anonyme conservé, PAS de verrou d'abonnement.
+// [CERVEAU] AJOUT : ai-proxy charge AUTOMATIQUEMENT la mémoire long terme de
+//           l'utilisateur (table memoire_ia) et l'injecte en tête du system,
+//           dans un bloc caché. L'IA se souvient donc toujours de qui tu es,
+//           sans dépendre du front. 100% additif — si ça échoue, on continue.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -117,6 +121,15 @@ const SECURITY_TOOLS = [
       },
     },
   },
+  {
+    name: "analyser_journal_securite",
+    description:
+      "Analyse les journaux de sécurité RÉELS (tentatives bloquées par Agent AL + résultats des scans SILEX) des dernières heures et génère un rapport d'incidents avec évaluation de risque et pertinence Loi 25. Utilise-le quand l'utilisateur demande un rapport/journal de sécurité, un résumé des incidents, ou veut savoir si des activités suspectes ont été détectées. Le rapport s'affiche automatiquement dans le chat. Réservé à l'administrateur.",
+    input_schema: {
+      type: "object",
+      properties: { hours: { type: "number", description: "Nombre d'heures à analyser (défaut 24, max 168)" } },
+    },
+  },
 ];
 
 // Bloc d'instructions COMPACT (média + youtube + sécurité) — remplace les 3 blocs
@@ -126,7 +139,8 @@ const TOOLS_SYSTEM = `
 
 ## OUTILS (affichage + sécurité)
 - recherche_media / recherche_youtube : quand l'utilisateur veut VOIR des photos ou des vidéos, appelle l'outil. Les résultats s'affichent AUTOMATIQUEMENT en galerie sous ta réponse — ne colle JAMAIS d'URLs dans ton texte, présente-les en 1 phrase.
-- lancer_scan_securite / lire_dernier_scan : pour scanner/auditer un site ou lire un scan. Explique en québécois clair, sans dramatiser un « info »/« low ». Si le scan est refusé ou la clé absente, dis-le sans inventer.`;
+- lancer_scan_securite / lire_dernier_scan : pour scanner/auditer un site ou lire un scan. Explique en québécois clair, sans dramatiser un « info »/« low ». Si le scan est refusé ou la clé absente, dis-le sans inventer.
+- analyser_journal_securite : pour un rapport/journal de sécurité. Le rapport s'affiche déjà en entier dans le chat — commente-le brièvement en 1-2 phrases, ne le récite jamais au complet.`;
 
 // 🎬 Outil YouTube — clé côté serveur (tilex_secrets nom='youtube' ou env YOUTUBE_API_KEY).
 const YOUTUBE_TOOL = {
@@ -350,6 +364,25 @@ async function toolLireDernierScan(input: any, ctx: ToolCtx): Promise<string> {
   }
 }
 
+// 📊 Relaie le JWT de l'utilisateur vers log-analyst (qui applique lui-même
+//    le verrou admin — aucune escalade de privilège ici).
+async function toolAnalyserJournal(input: any, ctx: ToolCtx): Promise<string> {
+  if (!ctx.authHeader) return JSON.stringify({ erreur: "Connexion requise." });
+  try {
+    const heures = typeof input?.hours === "number" ? input.hours : 24;
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/log-analyst`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": ctx.authHeader, "apikey": ANON_KEY },
+      body: JSON.stringify({ hours: heures }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return JSON.stringify({ erreur: data.error || `Analyse échouée (HTTP ${r.status})` });
+    return JSON.stringify({ rapport: data });
+  } catch (e: any) {
+    return JSON.stringify({ erreur: "Analyste de journal injoignable : " + (e?.message || String(e)) });
+  }
+}
+
 async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promise<string> {
   try {
     if (name === "get_stock_quote") return await fmpFetch("quote", input?.symbol);
@@ -358,11 +391,81 @@ async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promis
     if (name === "recherche_youtube") return JSON.stringify(await chercherYoutube(input));
     if (name === "lancer_scan_securite") return await toolLancerScan(input, ctx);
     if (name === "lire_dernier_scan") return await toolLireDernierScan(input, ctx);
+    if (name === "analyser_journal_securite") return await toolAnalyserJournal(input, ctx);
     return JSON.stringify({ erreur: `Outil inconnu: ${name}` });
   } catch (e: any) {
     return JSON.stringify({ erreur: e?.message || "Erreur d'exécution de l'outil" });
   }
 }
+
+// [CERVEAU] ─────────────────────────────────────────────────────────────────
+// Persona ti-lex par défaut (utilisée SEULEMENT si le front n'envoie aucun
+// system prompt — on ne réécrit jamais l'identité d'un agent custom).
+const PERSONA_TILEX = `Tu es AL, l'assistant IA de la plateforme ti-lex (Québec ⚜️).
+Tu parles un français québécois naturel, chaleureux et DIRECT — comme un vrai chum qui connait la personne, jamais robotique ni corporatif.
+Tu dis toujours la vérité, sans bullshit ni flatterie inutile ; si tu sais pas, tu le dis franchement.
+Tu vas droit au but, tu expliques clairement, pis tu gardes des tournures d'ici (correc, en masse, pantoute, c'est ben correct, checke ça) sans en beurrer épais.
+Tu écris en paragraphes courts et aérés ; tu utilises des listes seulement quand ça aide vraiment.`;
+
+const CAT_ORDRE = ["identite", "preference", "contexte", "fait", "habitude", "projet", "succes", "erreur_recente"];
+const CAT_TITRE: Record<string, string> = {
+  identite: "QUI EST LA PERSONNE",
+  preference: "SES PRÉFÉRENCES",
+  contexte: "SON CONTEXTE",
+  fait: "FAITS IMPORTANTS",
+  habitude: "SES HABITUDES",
+  projet: "SES PROJETS",
+  succes: "SES SUCCÈS",
+  erreur_recente: "PROBLÈMES RÉCENTS À NE PAS RÉPÉTER",
+};
+
+// Charge la mémoire long terme de l'utilisateur (table memoire_ia) et la formate
+// en un bloc de contexte. Scopé strictement par user_id (le service role bypasse
+// la RLS, donc le filtre .eq est OBLIGATOIRE pour éviter toute fuite inter-user).
+// Retourne "" pour un visiteur anonyme, sans mémoire, ou en cas d'erreur.
+async function chargerCerveau(userId: string): Promise<string> {
+  if (!userId || userId === "anonymous") return "";
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data } = await sb
+      .from("memoire_ia")
+      .select("categorie,cle,valeur")
+      .eq("user_id", userId)
+      .order("confiance", { ascending: false })
+      .order("nb_utilisations", { ascending: false })
+      .order("mis_a_jour_le", { ascending: false })
+      .limit(90);
+    const rows = (data as any[]) || [];
+    if (!rows.length) return "";
+
+    const parCat: Record<string, string[]> = {};
+    for (const r of rows) {
+      const cat = String(r.categorie || "fait");
+      const cle = String(r.cle || "").trim();
+      const val = String(r.valeur || "").trim();
+      if (!val) continue;
+      (parCat[cat] ||= []).push(cle ? `- ${cle} : ${val}` : `- ${val}`);
+    }
+    const cats = [
+      ...CAT_ORDRE.filter((c) => parCat[c]),
+      ...Object.keys(parCat).filter((c) => !CAT_ORDRE.includes(c)),
+    ];
+
+    let bloc = "=== CE QUE TU SAIS DÉJÀ SUR LA PERSONNE (mémoire long terme ti-lex) ===\n"
+      + "Sers-toi-en naturellement dans la conversation, comme quelqu'un qui connait déjà la personne. Ne récite JAMAIS cette liste telle quelle et ne dis pas « d'après ma mémoire ».\n";
+    let taille = bloc.length;
+    for (const cat of cats) {
+      const section = `\n[${CAT_TITRE[cat] || cat.toUpperCase()}]\n${parCat[cat].join("\n")}\n`;
+      if (taille + section.length > 6000) break; // garde le bloc raisonnable
+      bloc += section;
+      taille += section.length;
+    }
+    return bloc;
+  } catch (_) {
+    return "";
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -476,17 +579,28 @@ Deno.serve(async (req) => {
       tools.push(...body.tools);
     }
 
-    let systemPrompt = typeof body.system === "string" ? body.system : undefined;
-    if (FMP_KEY) systemPrompt = (systemPrompt || "") + FINANCE_SYSTEM;
-    systemPrompt = (systemPrompt || "") + TOOLS_SYSTEM;
+    // [CERVEAU] Si le front n'envoie aucun system prompt, on met la persona ti-lex
+    //           par défaut (au lieu d'une identité vide). Si un agent custom envoie
+    //           son propre system, on le respecte tel quel — on ne l'écrase jamais.
+    const clientSystem = (typeof body.system === "string" && body.system.trim()) ? body.system : "";
+    let systemPrompt = clientSystem || PERSONA_TILEX;
+    if (FMP_KEY) systemPrompt += FINANCE_SYSTEM;
+    systemPrompt += TOOLS_SYSTEM;
 
-    // ⚡ Prompt caching : le system (persona + notes + outils) est marqué cacheable.
-    //    Deux messages de suite avec le même system → cache hit → réponse plus rapide
-    //    à démarrer (donc écriture plus fluide) + moins cher. Sous 1024 tokens, ignoré
-    //    sans erreur. Passé comme tableau de blocs à Anthropic.
-    const systemParam = systemPrompt
-      ? [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }]
-      : undefined;
+    // [CERVEAU] Mémoire long terme de l'utilisateur, chargée AUTOMATIQUEMENT côté
+    //           serveur (indépendant du front). L'IA se souvient donc toujours de toi.
+    const cerveau = await chargerCerveau(userId);
+
+    // ⚡ Prompt caching : le system (persona + outils) + le cerveau (mémoire) sont
+    //    marqués cacheables. Deux messages de suite avec le même system → cache hit
+    //    → réponse plus rapide à démarrer + moins cher. Passé comme tableau de blocs.
+    const systemBlocks: any[] = [
+      { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
+    ];
+    if (cerveau) {
+      systemBlocks.push({ type: "text", text: cerveau, cache_control: { type: "ephemeral" } });
+    }
+    const systemParam = systemBlocks;
 
     const anthropicHeaders = {
       "Content-Type": "application/json",
@@ -704,6 +818,20 @@ function handleToolLoop(
                   });
                 } else {
                   result = JSON.stringify({ affiche_dans_le_chat: false, nombre: 0, note: parsed?.note || "Aucune vidéo trouvée" });
+                }
+              } catch (_) {}
+            }
+            // [JOURNAL] pousse le rapport complet au front en temps réel + résumé compact pour Claude.
+            if (toolBlock.name === "analyser_journal_securite") {
+              try {
+                const parsed = JSON.parse(result);
+                if (parsed?.rapport) {
+                  send(JSON.stringify({ type: "log_report", report: parsed.rapport }));
+                  result = JSON.stringify({
+                    affiche_dans_le_chat: true,
+                    stats: parsed.rapport.stats,
+                    nombre_incidents: (parsed.rapport.incidents || []).length,
+                  });
                 }
               } catch (_) {}
             }

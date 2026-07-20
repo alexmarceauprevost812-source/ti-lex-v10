@@ -16,6 +16,9 @@
 <script src="js/tilex-config.js"></script>
 <!-- SDK Supabase (même version exacte que pro.html) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+<!-- Journal de sécurité (analyse réelle injection_audit + security_findings) -->
+<link rel="stylesheet" href="css/tilex-log-analyst.css">
+<script src="js/tilex-log-analyst.js"></script>
 
 <style>
 /* ══ Palette sombre — variables custom reprises de pro.html (~30–56) ══ */
@@ -326,6 +329,7 @@ a{color:inherit;}
       <button class="silex-tab active" onclick="silexTab('scan')" id="silex-tab-scan" style="padding:12px 16px;font-size:12px;font-weight:600;color:#FF6B00;border-bottom:2px solid #FF6B00;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">⚡ LANCER UN SCAN</button>
       <button class="silex-tab" onclick="silexTab('chat')" id="silex-tab-chat" style="padding:12px 16px;font-size:12px;font-weight:600;color:#6c6c78;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">💬 CHAT SILEX</button>
       <button class="silex-tab" onclick="silexTab('history')" id="silex-tab-history" style="padding:12px 16px;font-size:12px;font-weight:600;color:#6c6c78;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">📋 HISTORIQUE</button>
+      <button class="silex-tab" onclick="silexTab('journal')" id="silex-tab-journal" style="padding:12px 16px;font-size:12px;font-weight:600;color:#6c6c78;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer;letter-spacing:1px;">📊 JOURNAL</button>
     </div>
     <div style="padding:20px 24px;overflow-y:auto;flex:1;">
       <div id="silex-panel-scan">
@@ -375,6 +379,12 @@ a{color:inherit;}
         <div id="silex-history-list">
           <p style="color:#6c6c78;text-align:center;padding:40px 0;font-family:'Share Tech Mono',monospace;">Chargement de l'historique...</p>
         </div>
+      </div>
+      <div id="silex-panel-journal" style="display:none;">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+          <button onclick="TilexLogAnalyst.appelerEtAfficher('#silex-journal-contenu',{hours:24})" style="background:none;border:1px solid rgba(255,107,0,.3);color:#FF6B00;border-radius:8px;padding:8px 14px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:'Share Tech Mono',monospace;">🔄 RAFRAÎCHIR</button>
+        </div>
+        <div id="silex-journal-contenu"></div>
       </div>
     </div>
   </div>
@@ -619,8 +629,9 @@ function silexCheckAccess(){
   });
 }
 
+var _journalCharge=false;
 function silexTab(tab){
-  ['scan','chat','history'].forEach(function(t){
+  ['scan','chat','history','journal'].forEach(function(t){
     var panel=document.getElementById('silex-panel-'+t);
     var btn=document.getElementById('silex-tab-'+t);
     if(panel)panel.style.display=t===tab?'block':'none';
@@ -630,6 +641,10 @@ function silexTab(tab){
     }
   });
   if(tab==='history')silexLoadHistory();
+  if(tab==='journal'&&!_journalCharge){
+    _journalCharge=true;
+    TilexLogAnalyst.appelerEtAfficher('#silex-journal-contenu',{hours:24});
+  }
 }
 
 var DOMAINES_EXCLUS=["ti-lex.ca","tilex.ca"];
