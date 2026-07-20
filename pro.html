@@ -1192,7 +1192,14 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .composer-selector-dropdown{display:none;position:absolute;bottom:44px;left:0;min-width:200px;
   background:rgba(25,25,30,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:6px;
-  box-shadow:0 -8px 30px rgba(0,0,0,.6);}
+  box-shadow:0 -8px 30px rgba(0,0,0,.6);
+  /* Le menu s'ouvre vers le HAUT : avec les 9 moteurs gratuits ajoutés, il
+     dépassait l'écran pis la section AGENTS (en premier) devenait invisible.
+     Hauteur bornée + défilement interne : AGENTS toujours visibles en tête. */
+  max-height:min(62vh,calc(100vh - 150px));overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.composer-selector-dropdown::-webkit-scrollbar{width:6px;}
+.composer-selector-dropdown::-webkit-scrollbar-thumb{background:#3a3a44;border-radius:99px;}
 .composer-selector-dropdown.open{display:block;}
 .csd-section{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);
   padding:8px 12px 4px;letter-spacing:1.5px;}
@@ -8424,7 +8431,10 @@ function updateModelChip(){
 
 function toggleComposerSelector(){
   var dd=document.getElementById("composer-selector-dropdown");
-  if(dd)dd.classList.toggle("open");
+  if(dd){
+    dd.classList.toggle("open");
+    if(dd.classList.contains("open"))dd.scrollTop=0; // AGENTS toujours en tête à l'ouverture
+  }
 }
 function closeComposerSelector(){
   var dd=document.getElementById("composer-selector-dropdown");
