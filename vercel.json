@@ -28,6 +28,7 @@
     { "source": "/web", "destination": "/web.html" },
     { "source": "/security", "destination": "/security.html" },
     { "source": "/pro", "destination": "/pro.html" },
+    { "source": "/chat", "destination": "/tilex-chat.html" },
     { "source": "/", "destination": "/index.html" },
     { "source": "/app", "destination": "/pro.html" }
   ],
