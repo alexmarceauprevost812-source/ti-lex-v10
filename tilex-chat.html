@@ -1,451 +1,1515 @@
 <!DOCTYPE html>
-<html lang="fr-CA">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ti-lex — Chat</title>
-<link rel="icon" href="/assets/tilex-logo.png">
-<!--
-  ti-lex-AL v10 — tilex-chat.html
-  Interface DÉDIÉE au chat (juste du chat, rien d'autre). Deux familles :
-    • Agent autonome AL — recherche web + images + vidéos + bourse : répond
-      à TOUTES les questions (connaissances + actualité + données en direct).
-    • Modèles directs Anthropic (Haiku / Sonnet / Opus) pour jaser avec le
-      modèle brut, sans recherche web.
-
-  Tout passe par l'edge function ai-proxy (clé Anthropic gérée côté serveur).
-  Pas de Puter.ai, pas de ChatGPT (clé API séparée payante non configurée).
-  Vanilla JS, zéro build, anti-XSS (on échappe avant tout rendu).
--->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+<title>Ti-Lex · Chat IA</title>
+<!-- ============================================================
+     TI-LEX CHAT — Interface de chat IA (style ChatGPT)
+     Thème: noir · boutons orange · texte blanc · fluide
+     Moteurs: API gratuite Puter.js (aucune clé requise)
+     Modes: Chat direct  |  Agent autonome (multi-étapes)
+     ============================================================ -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script src="https://js.puter.com/v2/"></script>
+<!-- Backend ti-lex (ai-proxy) : Marceau + modèles Claude — clés côté serveur, rien à configurer ici -->
 <script src="/js/tilex-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
-  :root{
-    --bg:#0a0a0a; --bg2:#0f0f13; --bg3:#17171c; --bg4:#1d1d24;
-    --border:#23232c; --txt:#e7e7ee; --muted:#9a9aa5;
-    --orange:#ff7f27; --vert:#37e0a0; --bleu:#4a9eff; --violet:#c700e6;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;height:100%;}
-  body{background:var(--bg);color:var(--txt);
-    font-family:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
-    height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased;}
-  .shell{display:flex;height:100dvh;}
+:root{
+  --bg:#050505;
+  --panel:#0d0d0d;
+  --panel-2:#141414;
+  --panel-3:#1b1b1b;
+  --border:#242424;
+  --border-soft:#1c1c1c;
+  --text:#f4f4f4;
+  --muted:#9c9c9c;
+  --orange:#ff7a1a;
+  --orange-2:#ff9d45;
+  --orange-soft:rgba(255,122,26,.14);
+  --danger:#ff5252;
+  --radius:14px;
+  --sidebar-w:268px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15.5px;
+  line-height:1.65;
+  overflow:hidden;
+}
+::selection{background:var(--orange-soft)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:99px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#3a3a3a}
 
-  /* ── Sidebar : agents ── */
-  .sidebar{width:270px;flex:0 0 270px;background:var(--bg2);border-right:1px solid var(--border);
-    display:flex;flex-direction:column;overflow-y:auto;transition:transform .22s ease;}
-  .sb-hd{padding:16px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
-  .sb-hd img{width:28px;height:28px;border-radius:7px;}
-  .sb-hd .t{font-weight:800;font-size:14px;letter-spacing:.02em;}
-  .sb-hd .t small{display:block;font-size:9px;color:var(--muted);font-weight:500;letter-spacing:.06em;}
-  .sb-new{margin:12px;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);
-    color:var(--txt);font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;justify-content:center;}
-  .sb-new:hover{border-color:var(--orange);color:var(--orange);}
-  .grp-label{padding:12px 16px 5px;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
-  .agent{margin:2px 10px;padding:11px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .12s;}
-  .agent:hover{background:var(--bg3);}
-  .agent.actif{background:rgba(255,127,39,.09);border-color:rgba(255,127,39,.32);}
-  .agent .nom{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px;}
-  .agent .desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;}
-  .agent .puce{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
-  .agent-ava{width:22px;height:22px;border-radius:6px;object-fit:cover;flex:0 0 22px;
-    background:#000;box-shadow:0 0 0 1px rgba(255,90,31,.35);}
-  .hd-ava{width:34px;height:34px;border-radius:9px;object-fit:cover;flex:0 0 34px;background:#000;
-    box-shadow:0 0 0 1px rgba(255,90,31,.4);}
-  .ava.img{background:#000!important;padding:0;overflow:hidden;}
-  .ava.img img{width:100%;height:100%;object-fit:cover;display:block;}
+/* ---------- LAYOUT ---------- */
+.app{display:flex;height:100dvh;width:100%}
 
-  /* ── Zone chat ── */
-  .zone{flex:1;display:flex;flex-direction:column;min-width:0;}
-  .chat-hd{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
-  .burger{display:none;background:none;border:0;color:var(--txt);font-size:20px;cursor:pointer;padding:0;}
-  .chat-hd .titre{font-weight:800;font-size:14px;}
-  .chat-hd .sous{font-size:11px;color:var(--muted);}
-  .messages{flex:1;overflow-y:auto;padding:22px 18px;display:flex;flex-direction:column;gap:16px;}
-  .rang{display:flex;gap:11px;max-width:820px;width:100%;margin:0 auto;}
-  .rang.u{flex-direction:row-reverse;}
-  .ava{width:30px;height:30px;border-radius:8px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;}
-  .ava.a{background:linear-gradient(135deg,#ff7f27,#c700e6);}
-  .ava.u{background:var(--bg4);}
-  .bulle{padding:11px 15px;border-radius:13px;font-size:14px;line-height:1.6;word-break:break-word;min-width:0;}
-  .rang.u .bulle{background:var(--orange);color:#100800;}
-  .rang.a .bulle{background:var(--bg3);border:1px solid var(--border);}
-  .rang.a .bulle.err{border-color:#ff3a5c66;color:#ff8fa3;}
-  .bulle p{margin:0 0 8px;} .bulle p:last-child{margin-bottom:0;}
-  .bulle pre{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;overflow-x:auto;margin:8px 0;font-size:12.5px;}
-  .bulle code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12.5px;}
-  .bulle pre code{background:none;border:0;padding:0;}
-  .bulle a{color:var(--bleu);}
-  .bulle ul,.bulle ol{margin:6px 0;padding-left:20px;} .bulle li{margin:2px 0;}
-  .bulle strong{color:#fff;}
-  .statut{font-size:11px;color:var(--muted);font-style:italic;margin:2px 0 0 41px;}
-  .chip-web{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--bleu);
-    border:1px solid rgba(74,158,255,.3);border-radius:20px;padding:2px 9px;margin:6px 0 0 41px;}
-  .gal{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 41px;max-width:780px;}
-  .gal a{display:block;width:120px;height:82px;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
-  .gal img{width:100%;height:100%;object-fit:cover;display:block;}
-  .curseur{display:inline-block;width:7px;height:15px;background:var(--orange);border-radius:1px;
-    vertical-align:text-bottom;animation:cli .9s steps(2) infinite;margin-left:2px;}
-  @keyframes cli{50%{opacity:0;}}
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  width:var(--sidebar-w);
+  min-width:var(--sidebar-w);
+  background:var(--panel);
+  border-right:1px solid var(--border-soft);
+  display:flex;flex-direction:column;
+  padding:14px 12px;
+  gap:12px;
+  transition:margin-left .28s cubic-bezier(.4,0,.2,1);
+  z-index:40;
+}
+.sidebar.hidden{margin-left:calc(var(--sidebar-w) * -1)}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px}
+.brand .logo{
+  width:34px;height:34px;border-radius:10px;
+  background:linear-gradient(135deg,var(--orange),var(--orange-2));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:#fff;font-size:15px;
+  box-shadow:0 4px 18px rgba(255,122,26,.35);
+}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.2px}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:-2px}
+.btn-new{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,var(--orange),var(--orange-2));
+  color:#fff;border:none;border-radius:12px;
+  padding:11px 14px;font-size:14.5px;font-weight:600;cursor:pointer;
+  transition:transform .15s ease, box-shadow .2s ease, filter .2s ease;
+  box-shadow:0 4px 16px rgba(255,122,26,.28);
+}
+.btn-new:hover{filter:brightness(1.07);box-shadow:0 6px 22px rgba(255,122,26,.42)}
+.btn-new:active{transform:scale(.97)}
+.chat-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding-right:2px}
+.chat-list .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:8px 8px 4px}
+.chat-item{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 10px;border-radius:10px;cursor:pointer;
+  color:#d6d6d6;font-size:13.5px;
+  border:1px solid transparent;
+  transition:background .15s ease,border-color .15s ease;
+  position:relative;
+}
+.chat-item:hover{background:var(--panel-2)}
+.chat-item.active{background:var(--panel-3);border-color:var(--border);color:#fff}
+.chat-item.active::before{
+  content:"";position:absolute;left:-2px;top:20%;bottom:20%;width:3px;
+  background:var(--orange);border-radius:99px;
+}
+.chat-item .title{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-item .del{
+  opacity:0;border:none;background:transparent;color:var(--muted);
+  cursor:pointer;padding:3px;border-radius:6px;display:flex;
+  transition:opacity .15s ease,color .15s ease;
+}
+.chat-item:hover .del{opacity:1}
+.chat-item .del:hover{color:var(--danger)}
+.sidebar .foot{
+  border-top:1px solid var(--border-soft);padding-top:10px;
+  color:var(--muted);font-size:11.5px;text-align:center;
+}
+.sidebar .foot b{color:var(--orange)}
 
-  /* ── Saisie ── */
-  .saisie{padding:14px 18px;border-top:1px solid var(--border);}
-  .saisie-inner{max-width:820px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;}
-  .saisie textarea{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:12px;
-    padding:12px 14px;color:var(--txt);font:inherit;font-size:14px;resize:none;max-height:160px;line-height:1.5;}
-  .saisie textarea:focus{outline:none;border-color:var(--orange);}
-  .saisie button{background:var(--orange);color:#100800;border:0;border-radius:12px;width:46px;height:46px;
-    flex:0 0 46px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  .saisie button:disabled{opacity:.45;cursor:not-allowed;}
-  .saisie .avis{max-width:820px;margin:8px auto 0;font-size:10px;color:var(--muted);text-align:center;}
+/* ---------- MAIN ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
 
-  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5;}
-  @media(max-width:760px){
-    .sidebar{position:fixed;z-index:10;height:100dvh;transform:translateX(-100%);}
-    .sidebar.ouverte{transform:translateX(0);}
-    .burger{display:block;}
-    .overlay.on{display:block;}
-    .rang{max-width:100%;}
-  }
+/* Top bar */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border-soft);
+  background:rgba(5,5,5,.82);
+  backdrop-filter:blur(12px);
+  z-index:30;
+}
+.icon-btn{
+  background:transparent;border:1px solid var(--border);color:#cfcfcf;
+  width:36px;height:36px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s ease,color .15s ease,border-color .15s ease;
+  flex:none;
+}
+.icon-btn:hover{background:var(--panel-2);color:#fff;border-color:#333}
+.model-wrap{display:flex;align-items:center;gap:8px;min-width:0}
+.model-wrap .dot{width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 10px var(--orange);flex:none}
+select.model-select{
+  appearance:none;-webkit-appearance:none;
+  background:var(--panel-2) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ff7a1a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") no-repeat right 10px center;
+  color:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:8px 30px 8px 12px;font-size:13.5px;font-weight:600;
+  cursor:pointer;max-width:280px;text-overflow:ellipsis;
+  transition:border-color .15s ease;
+}
+select.model-select:hover,select.model-select:focus{border-color:var(--orange);outline:none}
+select.model-select optgroup{background:var(--panel);color:var(--orange);font-style:normal}
+select.model-select option{background:var(--panel);color:#eee;font-weight:400}
+.agent-toggle{
+  margin-left:auto;
+  display:flex;align-items:center;gap:7px;
+  background:var(--panel-2);border:1px solid var(--border);
+  color:#cfcfcf;border-radius:99px;padding:7px 14px;
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .2s ease;user-select:none;flex:none;
+}
+.agent-toggle svg{transition:transform .3s ease}
+.agent-toggle.on{
+  background:var(--orange-soft);border-color:var(--orange);color:var(--orange-2);
+  box-shadow:0 0 14px rgba(255,122,26,.25) inset;
+}
+.agent-toggle.on svg{transform:rotate(180deg)}
+.agent-toggle .st{width:7px;height:7px;border-radius:50%;background:#555;transition:background .2s}
+.agent-toggle.on .st{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+
+/* Chat zone */
+.chat-zone{flex:1;overflow-y:auto;scroll-behavior:smooth}
+.chat-inner{max-width:820px;margin:0 auto;padding:26px 18px 30px;display:flex;flex-direction:column;gap:22px}
+
+/* Welcome */
+.welcome{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:40px 20px;text-align:center;
+  animation:fadeUp .5s ease both;
+}
+.welcome .big-logo{
+  width:74px;height:74px;border-radius:22px;
+  background:linear-gradient(135deg,var(--orange),var(--orange-2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:800;color:#fff;
+  box-shadow:0 10px 40px rgba(255,122,26,.4);
+  animation:float 3.5s ease-in-out infinite;
+}
+.welcome h2{font-size:26px;font-weight:700}
+.welcome h2 span{color:var(--orange)}
+.welcome p{color:var(--muted);max-width:480px;font-size:14.5px}
+.sugg{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:640px;margin-top:6px}
+.sugg button{
+  background:var(--panel-2);border:1px solid var(--border);color:#ddd;
+  border-radius:12px;padding:10px 14px;font-size:13px;cursor:pointer;
+  transition:all .18s ease;
+}
+.sugg button:hover{border-color:var(--orange);color:#fff;background:var(--orange-soft);transform:translateY(-2px)}
+
+/* Messages */
+.msg{display:flex;gap:12px;animation:fadeUp .35s ease both}
+.msg .avatar{
+  width:32px;height:32px;border-radius:9px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:700;margin-top:2px;
+}
+.msg.assistant .avatar{
+  background:linear-gradient(135deg,var(--orange),var(--orange-2));color:#fff;
+  box-shadow:0 3px 12px rgba(255,122,26,.3);
+}
+.msg .body{min-width:0;flex:1}
+.msg .who{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.msg.assistant .who{color:var(--orange-2)}
+.msg .who .badge{
+  font-size:10px;font-weight:600;color:var(--orange-2);
+  background:var(--orange-soft);border:1px solid rgba(255,122,26,.35);
+  padding:1px 7px;border-radius:99px;letter-spacing:.3px;
+}
+.msg.user{flex-direction:row-reverse}
+.msg.user .body{flex:none;max-width:82%}
+.msg.user .content{
+  background:var(--panel-3);
+  border:1px solid var(--border);
+  border-radius:16px 16px 4px 16px;
+  padding:11px 15px;
+  white-space:pre-wrap;word-wrap:break-word;
+}
+.msg.assistant .content{padding-top:1px}
+
+/* Agent steps */
+.steps{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 10px}
+.step{
+  display:flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:600;color:var(--muted);
+  background:var(--panel-2);border:1px solid var(--border);
+  border-radius:99px;padding:4px 11px;
+  animation:fadeUp .3s ease both;
+}
+.step.run{color:var(--orange-2);border-color:rgba(255,122,26,.45);background:var(--orange-soft)}
+.step.done{color:#7ddb8a;border-color:rgba(125,219,138,.3)}
+.step .spin{
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid rgba(255,122,26,.25);border-top-color:var(--orange);
+  animation:spin .7s linear infinite;
+}
+
+/* Typing cursor */
+.cursor{
+  display:inline-block;width:9px;height:17px;margin-left:2px;
+  background:var(--orange);border-radius:2px;vertical-align:text-bottom;
+  animation:blink .8s steps(1) infinite;
+}
+
+/* Markdown */
+.content h1,.content h2,.content h3{margin:18px 0 8px;line-height:1.35}
+.content h1{font-size:21px}.content h2{font-size:18px}.content h3{font-size:16px}
+.content p{margin:8px 0}
+.content ul,.content ol{margin:8px 0 8px 22px}
+.content li{margin:4px 0}
+.content a{color:var(--orange-2);text-decoration:none;border-bottom:1px dotted rgba(255,157,69,.5)}
+.content a:hover{border-bottom-style:solid}
+.content blockquote{
+  border-left:3px solid var(--orange);background:var(--panel-2);
+  padding:8px 14px;border-radius:0 10px 10px 0;margin:10px 0;color:#d9d9d9;
+}
+.content code:not(pre code){
+  background:#1e1e1e;border:1px solid #2b2b2b;color:var(--orange-2);
+  padding:1.5px 6px;border-radius:6px;font-size:13.5px;
+  font-family:"SF Mono",SFMono-Regular,ui-monospace,Menlo,Consolas,monospace;
+}
+.content table{border-collapse:collapse;margin:12px 0;width:100%;font-size:14px}
+.content th,.content td{border:1px solid var(--border);padding:7px 11px;text-align:left}
+.content th{background:var(--panel-2);color:var(--orange-2)}
+.content tr:nth-child(even) td{background:#0f0f0f}
+.content hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+.content img{max-width:100%;border-radius:10px}
+
+/* Code blocks (style ChatGPT) */
+.codewrap{
+  margin:12px 0;border:1px solid #262626;border-radius:12px;
+  overflow:hidden;background:#0b0f14;
+}
+.codewrap .codehead{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#151515;padding:6px 13px;
+  font-size:11.5px;color:var(--muted);
+  border-bottom:1px solid #232323;
+  font-family:ui-monospace,Menlo,Consolas,monospace;
+}
+.codewrap .codehead .lang{color:var(--orange-2);font-weight:700;letter-spacing:.5px;text-transform:lowercase}
+.codewrap .codehead button{
+  background:transparent;border:none;color:var(--muted);cursor:pointer;
+  font-size:11.5px;display:flex;align-items:center;gap:5px;
+  padding:3px 8px;border-radius:6px;transition:all .15s ease;
+  font-family:inherit;
+}
+.codewrap .codehead button:hover{color:#fff;background:#222}
+.codewrap pre{margin:0;padding:14px 16px;overflow-x:auto;background:transparent !important}
+.codewrap pre code{
+  background:transparent !important;padding:0;font-size:13.5px;line-height:1.6;
+  font-family:"SF Mono",SFMono-Regular,ui-monospace,Menlo,Consolas,monospace;
+}
+
+/* Message actions */
+.actions{display:flex;gap:6px;margin-top:8px;opacity:0;transition:opacity .2s ease}
+.msg:hover .actions{opacity:1}
+.actions button{
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-size:11.5px;padding:4px 10px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .15s ease;
+}
+.actions button:hover{color:var(--orange-2);border-color:var(--orange)}
+
+/* Error bubble */
+.errbox{
+  background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.35);
+  color:#ffb0b0;border-radius:12px;padding:10px 14px;font-size:13.5px;margin-top:6px;
+}
+
+/* ---------- COMPOSER ---------- */
+.composer-zone{
+  padding:10px 18px calc(16px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,var(--bg) 35%);
+}
+.quickbar{
+  max-width:820px;margin:0 auto 8px;
+  display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;
+  scrollbar-width:none;
+}
+.quickbar::-webkit-scrollbar{display:none}
+.quickbar button{
+  flex:none;background:var(--panel-2);border:1px solid var(--border);
+  color:#d0d0d0;border-radius:99px;padding:6px 13px;font-size:12px;
+  cursor:pointer;transition:all .18s ease;display:flex;align-items:center;gap:6px;
+}
+.quickbar button:hover{border-color:var(--orange);color:#fff;background:var(--orange-soft)}
+.quickbar button .qi{font-size:12px}
+.composer{
+  max-width:820px;margin:0 auto;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:22px;
+  display:flex;align-items:flex-end;gap:8px;
+  padding:9px 9px 9px 18px;
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.composer:focus-within{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,122,26,.15)}
+.composer textarea{
+  flex:1;background:transparent;border:none;outline:none;resize:none;
+  color:var(--text);font-size:15px;font-family:inherit;line-height:1.55;
+  max-height:180px;padding:7px 0;
+}
+.composer textarea::placeholder{color:#6d6d6d}
+.btn-send{
+  width:40px;height:40px;border-radius:14px;border:none;cursor:pointer;flex:none;
+  background:linear-gradient(135deg,var(--orange),var(--orange-2));color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s ease,filter .15s ease,opacity .2s ease;
+  box-shadow:0 4px 14px rgba(255,122,26,.35);
+}
+.btn-send:hover{filter:brightness(1.08)}
+.btn-send:active{transform:scale(.92)}
+.btn-send:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.btn-send.stop{background:var(--panel-3);border:1px solid var(--danger);color:var(--danger);box-shadow:none}
+.hint{max-width:820px;margin:8px auto 0;text-align:center;color:#5f5f5f;font-size:11.5px}
+.hint b{color:#8a8a8a}
+
+/* Overlay mobile */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:35;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.overlay.show{opacity:1;pointer-events:auto}
+
+/* ---------- AGENTS (sidebar) ---------- */
+.agents-block{display:flex;flex-direction:column;gap:2px}
+.agents-block .label,.chat-list .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:6px 8px 4px}
+.agent-list{display:flex;flex-direction:column;gap:4px}
+.agent-item{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:7px 9px;border-radius:10px;cursor:pointer;
+  border:1px solid transparent;background:transparent;color:#d6d6d6;
+  font-family:inherit;font-size:13px;
+  transition:background .15s ease,border-color .15s ease;
+}
+.agent-item:hover{background:var(--panel-2)}
+.agent-item.active{background:var(--orange-soft);border-color:rgba(255,122,26,.5);color:#fff}
+.agent-item .ic{
+  width:27px;height:27px;border-radius:8px;flex:none;
+  background:var(--panel-3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  transition:all .15s ease;
+}
+.agent-item.active .ic{background:linear-gradient(135deg,var(--orange),var(--orange-2));border-color:transparent;box-shadow:0 2px 10px rgba(255,122,26,.35)}
+.agent-item .nm{font-weight:600;font-size:12.5px;line-height:1.25}
+.agent-item .rl{font-size:10.5px;color:var(--muted);line-height:1.3}
+.agent-item.active .rl{color:#c9c9c9}
+
+/* Badges d'agents dans les messages */
+.badge.b-marceau{color:#ff7a1a;background:rgba(255,122,26,.12);border-color:rgba(255,122,26,.5)}
+.badge.b-orch{color:#ffc93d;background:rgba(255,201,61,.1);border-color:rgba(255,201,61,.4)}
+.badge.b-secops{color:#7ddb8a;background:rgba(125,219,138,.1);border-color:rgba(125,219,138,.4)}
+.badge.b-sales{color:#f9a8d4;background:rgba(249,168,212,.1);border-color:rgba(249,168,212,.4)}
+
+/* ---------- ANIMATIONS ---------- */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{50%{opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width:840px){
+  .sidebar{position:fixed;top:0;left:0;bottom:0;box-shadow:20px 0 60px rgba(0,0,0,.6)}
+  .sidebar.hidden{margin-left:0;transform:translateX(-105%)}
+  .sidebar{transform:translateX(0);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+  select.model-select{max-width:150px}
+  .agent-toggle span.txt{display:none}
+  .msg.user .body{max-width:92%}
+}
 </style>
 </head>
 <body>
-<div class="shell">
-  <div class="overlay" id="overlay" onclick="fermerSidebar()"></div>
-  <nav class="sidebar" id="sidebar">
-    <div class="sb-hd">
-      <img src="/assets/tilex-logo.png" alt="ti-lex" onerror="this.style.display='none'">
-      <div class="t">ti-lex Chat<small>Produit du Québec ⚜️</small></div>
-    </div>
-    <button class="sb-new" onclick="nouvelleConvo()">✚ Nouvelle conversation</button>
-    <div id="liste-agents"></div>
-  </nav>
-  <main class="zone">
-    <div class="chat-hd">
-      <button class="burger" onclick="ouvrirSidebar()">☰</button>
-      <img id="hd-ava" class="hd-ava" alt="" style="display:none" onerror="this.style.display='none'">
+<div class="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">TL</div>
       <div>
-        <div class="titre" id="hd-titre">Marceau</div>
-        <div class="sous" id="hd-sous"></div>
+        <h1>Ti-Lex</h1>
+        <small>Chat IA · moteurs gratuits</small>
       </div>
     </div>
-    <div class="messages" id="messages"></div>
-    <div class="saisie">
-      <form class="saisie-inner" id="form" autocomplete="off">
-        <textarea id="entree" rows="1" placeholder="Écris ton message…  (Entrée pour envoyer, Maj+Entrée = nouvelle ligne)" maxlength="6000"></textarea>
-        <button type="submit" id="btn" title="Envoyer">➤</button>
-      </form>
-      <div class="avis" id="avis"></div>
+
+    <button class="btn-new" id="btnNew">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nouvelle conversation
+    </button>
+
+    <div class="agents-block">
+      <div class="label">Agents</div>
+      <div class="agent-list" id="agentList"></div>
+    </div>
+
+    <div class="chat-list">
+      <div class="label">Conversations</div>
+      <div id="chatItems" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+
+    <div class="foot">
+      Moteurs gratuits via <b>Puter.js</b><br>
+      Actions sensibles = validation humaine
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn" id="btnSidebar" title="Menu">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="model-wrap">
+        <span class="dot"></span>
+        <select class="model-select" id="modelSelect" title="Moteur IA"></select>
+      </div>
+      <button class="agent-toggle" id="agentToggle" title="Basculer Chat direct / Agent autonome">
+        <span class="st"></span>
+        <span class="txt" id="agentToggleTxt">Chat direct</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+      </button>
+    </div>
+
+    <div class="chat-zone" id="chatZone">
+      <div class="chat-inner" id="chatInner"></div>
+    </div>
+
+    <div class="composer-zone">
+      <div class="quickbar" id="quickbar"></div>
+      <div class="composer">
+        <textarea id="input" rows="1" placeholder="Écris ton message…"></textarea>
+        <button class="btn-send" id="btnSend" title="Envoyer">
+          <svg id="iconSend" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          <svg id="iconStop" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>
+        </button>
+      </div>
+      <div class="hint"><b>Enter</b> envoyer · <b>Shift+Enter</b> nouvelle ligne · 1er message: Puter peut demander une connexion gratuite (popup)</div>
     </div>
   </main>
 </div>
 
 <script>
-/* =====================================================================
-   1. AGENTS DISPONIBLES
-   - Agent autonome : recherche web ON + toute la panoplie d'outils
-     (images, vidéos, bourse) fournie automatiquement par ai-proxy →
-     capable de répondre à TOUTES les questions, y compris l'actualité.
-   - Modèles directs : le modèle brut d'Anthropic, sans recherche web.
-   Modèles tirés de pro.html (#set-model / .csd-item / #se-model-agent).
-   ===================================================================== */
-var AGENTS = [
-  { groupe:"Agent autonome", items:[
-    { id:"marceau", nom:"Marceau", icone:"🔥", couleur:"#ff5a1f",
-      avatar:"/assets/marceau-logo.png",
-      desc:"Agent autonome capable de TOUT — recherche web, images, vidéos, bourse, sécurité. Les meilleures réponses, en direct.",
-      autonome:true, model:"claude-opus-4-8",
-      systeme:"Tu es Marceau, l'agent IA autonome de la plateforme ti-lex (Québec ⚜️). "
-        +"Tu es capable de TOUT : tu réponds à n'importe quelle question avec la MEILLEURE réponse possible, "
-        +"factuelle et à jour. Tu utilises tes outils de toi-même quand ça aide — recherche web pour l'actualité "
-        +"et les faits récents, images/vidéos quand la personne veut VOIR quelque chose, cotations boursières en "
-        +"direct, scans de sécurité. Tu ne dis jamais « je ne peux pas chercher » : tu cherches. "
-        +"Tu donnes des réponses réelles, complètes et vérifiées — jamais d'invention ; si une info n'est pas "
-        +"confirmée, tu le dis franchement.\n"
-        +"Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum qui connait la personne. "
-        +"Tu vas droit au but, en paragraphes courts et aérés, avec des tournures d'ici (correc, en masse, pantoute, "
-        +"checke ça) sans en beurrer épais. Tu utilises des listes seulement quand ça aide vraiment." },
-    { id:"al-auto", nom:"Agent AL", icone:"⚡", couleur:"#37e0a0",
-      desc:"L'agent AL classique — recherche web, images, vidéos, bourse, en direct.",
-      autonome:true, model:"claude-sonnet-4-6" }
+/* ================================================================
+   TI-LEX CHAT — CONFIG
+   👇 AJOUTE / MODIFIE TES MOTEURS ICI (colle ta liste de pro.html)
+   Format: ["id-du-modele-puter", "Nom affiché"]
+   ================================================================ */
+const APP_NAME = "Ti-Lex";
+const DEFAULT_MODEL = "gpt-4o-mini";
+const MODELS = [
+  { group:"Ti-Lex · ton backend (Claude)", items:[
+    ["tilex:claude-opus-4-8","Claude Opus 4.8 · ti-lex"],
+    ["tilex:claude-sonnet-4-6","Claude Sonnet 4.6 · ti-lex"],
+    ["tilex:claude-haiku-4-5-20251001","Claude Haiku 4.5 · ti-lex"]
   ]},
-  { groupe:"Modèles directs (sans web)", items:[
-    { id:"claude-haiku-4-5-20251001", nom:"Claude Haiku 4.5", icone:"⚡", couleur:"#4a9eff",
-      desc:"Le plus rapide. Idéal pour des réponses courtes." },
-    { id:"claude-sonnet-4-6", nom:"Claude Sonnet 4.6", icone:"◆", couleur:"#ff7f27",
-      desc:"Équilibré — le bon défaut pour la plupart des tâches." },
-    { id:"claude-opus-4-8", nom:"Claude Opus 4.8", icone:"★", couleur:"#c700e6",
-      desc:"Le plus puissant. Raisonnement et tâches complexes." }
+  { group:"OpenAI", items:[
+    ["gpt-5","GPT-5"],
+    ["gpt-5-mini","GPT-5 Mini"],
+    ["gpt-5-nano","GPT-5 Nano (rapide)"],
+    ["gpt-4.1","GPT-4.1"],
+    ["gpt-4.1-mini","GPT-4.1 Mini"],
+    ["gpt-4o","GPT-4o"],
+    ["gpt-4o-mini","GPT-4o Mini (défaut)"],
+    ["o3","o3 (raisonnement)"],
+    ["o3-mini","o3-mini"],
+    ["o4-mini","o4-mini"]
+  ]},
+  { group:"Anthropic (Claude)", items:[
+    ["claude-opus-4","Claude Opus 4"],
+    ["claude-sonnet-4","Claude Sonnet 4"],
+    ["claude-3-7-sonnet","Claude 3.7 Sonnet"],
+    ["claude-3-5-sonnet","Claude 3.5 Sonnet"]
+  ]},
+  { group:"Google (Gemini)", items:[
+    ["gemini-2.5-flash","Gemini 2.5 Flash"],
+    ["gemini-2.0-flash","Gemini 2.0 Flash"],
+    ["gemini-1.5-flash","Gemini 1.5 Flash"]
+  ]},
+  { group:"DeepSeek", items:[
+    ["deepseek-chat","DeepSeek V3"],
+    ["deepseek-reasoner","DeepSeek R1 (raisonnement)"]
+  ]},
+  { group:"xAI (Grok)", items:[
+    ["x-ai/grok-3-beta","Grok 3"],
+    ["grok-beta","Grok Beta"]
+  ]},
+  { group:"Meta (Llama)", items:[
+    ["meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo","Llama 3.1 405B"],
+    ["meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo","Llama 3.1 70B"],
+    ["meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo","Llama 3.1 8B (rapide)"]
+  ]},
+  { group:"Mistral", items:[
+    ["mistral-large-latest","Mistral Large"],
+    ["codestral-latest","Codestral (code)"]
   ]}
+  // Tu peux aussi ajouter des modèles OpenRouter, ex.:
+  // { group:"Autres", items:[ ["openrouter:qwen/qwen3-32b","Qwen 3 32B"] ] }
 ];
-var AGENT_DEFAUT = "marceau";
 
-/* =====================================================================
-   2. ÉTAT
-   ===================================================================== */
-var agentActif = null;
-var historique = [];
-var enCours = false;
+/* ================= ÉQUIPE D'AGENTS ================= */
+const AGENTS = {
+  marceau:      { icon:"🔥", name:"Marceau",         role:"Agent autonome ti-lex — web, images, vidéos, bourse, sécurité", badge:"MARCEAU", cls:"b-marceau" },
+  direct:       { icon:"💬", name:"Chat direct",     role:"Réponse simple, un seul appel",              badge:null,            cls:"" },
+  auto:         { icon:"Ω",  name:"Agent autonome",  role:"Analyse → rédige → vérifie tout seul",       badge:"AGENT",         cls:"" },
+  orchestrator: { icon:"🎯", name:"Orchestrateur",   role:"Découpe la mission, délègue à l'équipe",     badge:"ORCHESTRATEUR", cls:"b-orch" },
+  secops:       { icon:"🛡️", name:"SecOps",          role:"Audits, logs, risques, Loi 25, rapports",    badge:"SECOPS",        cls:"b-secops" },
+  sales:        { icon:"💼", name:"Sales",           role:"Prospection, courriels clients (ton QC)",    badge:"SALES",         cls:"b-sales" }
+};
 
-function trouverAgent(id){
-  for (var g=0;g<AGENTS.length;g++)
-    for (var i=0;i<AGENTS[g].items.length;i++)
-      if (AGENTS[g].items[i].id===id) return AGENTS[g].items[i];
-  return AGENTS[0].items[0];
+/* Suggestions de départ, par agent */
+const SUGGESTIONS = {
+  marceau: [
+    "Quelle est l'actualité au Québec aujourd'hui?",
+    "Montre-moi des photos de Montréal",
+    "C'est quoi le cours de l'action de Shopify là?",
+    "Trouve-moi des vidéos de tutoriels sur la cybersécurité"
+  ],
+  direct: [
+    "Explique-moi un concept compliqué simplement",
+    "Écris une fonction JavaScript avec explications",
+    "Traduis un texte en anglais professionnel",
+    "Donne-moi des idées de noms pour mon app"
+  ],
+  auto: [
+    "Code-moi une page web complète avec formulaire validé",
+    "Analyse les avantages pis les risques d'un choix techno",
+    "Rédige un plan d'affaires résumé pour une PME",
+    "Débogue ce code pis explique le problème"
+  ],
+  orchestrator: [
+    "Fais un audit Loi 25 pour un client pis prépare le courriel de remise du rapport",
+    "Prépare une offre de service cybersécurité: analyse + texte de vente",
+    "Monte un plan de réponse à incident pis le message à envoyer aux clients",
+    "Analyse un risque de phishing pis rédige l'avertissement aux employés"
+  ],
+  secops: [
+    "Fais un audit Loi 25 de haut niveau: risques types, contrôles recommandés, plan en 5 actions",
+    "Explique ton triage de 100 alertes de logs (auth, API, firewall) avec exemple de sortie",
+    "Comment scanner des domaines similaires au nôtre pour détecter du phishing?",
+    "Vérifie une liste de composants {nom, version} par rapport aux CVE publiques"
+  ],
+  sales: [
+    "Rédige un courriel de remise de rapport d'audit, ton pro québécois",
+    "Écris une relance polie si aucune réponse en 3 jours",
+    "Prépare un script d'appel de prospection pour une PME",
+    "Rédige un message LinkedIn de première approche"
+  ]
+};
+
+/* Actions rapides au-dessus du composer, par agent */
+const QUICK_ACTIONS = {
+  marceau: [
+    { icon:"🌐", label:"Actualité en direct", prompt:"Donne-moi un résumé de l'actualité importante d'aujourd'hui (Québec pis monde), avec tes sources web." },
+    { icon:"📈", label:"Bourse en direct", prompt:"Sors-moi les cours en direct de AAPL, SHOP.TO pis BTC, avec ton analyse rapide." },
+    { icon:"🖼️", label:"Montre-moi des images", prompt:"Montre-moi des belles photos du Vieux-Québec." }
+  ],
+  direct: [],
+  auto: [
+    { icon:"⚡", label:"Meilleure réponse possible", prompt:"Prends ma prochaine question au sérieux au maximum: analyse, plan, réponse complète pis vérifiée. Pour commencer: présente-toi pis explique ce que tu peux faire en mode agent autonome." }
+  ],
+  orchestrator: [
+    { icon:"🎯", label:"Mission audit + courriel", prompt:"Fais un audit Loi 25 de haut niveau pour un client PME pis prépare le courriel de remise du rapport." },
+    { icon:"🚨", label:"Réponse à incident", prompt:"Monte un plan de réponse à incident (fuite de données potentielle) pis rédige le message d'avis aux clients concernés." }
+  ],
+  secops: [
+    { icon:"📋", label:"Audit Loi 25", prompt:"Planifie un mini audit Loi 25: collecte des infos, risques types pour PME, et plan d'actions en 5 points. Indique aussi quelles données tu aurais besoin de récupérer via scan_domain, analyze_logs ou check_vulnerabilities." },
+    { icon:"🔎", label:"Triage alertes", prompt:"Décris comment tu utiliserais analyze_logs pour trier 100 alertes (auth, API, firewall), avec un exemple de classification (benin / suspect / critique)." },
+    { icon:"🎣", label:"Surveillance phishing", prompt:"Explique comment tu utiliserais scan_domain et des sources externes pour détecter du phishing sur des domaines proches du nôtre, puis comment tu générerais des courriels de takedown." },
+    { icon:"🧬", label:"Vulnérabilités / CVE", prompt:"Explique comment tu utiliserais check_vulnerabilities pour une liste de composants (name, version) et comment tu présenterais les CVE critiques dans un rapport court au DG." },
+    { icon:"📥", label:"Analyser un rapport JSON", prompt:"Je vais te coller un rapport JSON ti-lex (scan ou logs). Analyse-le: hiérarchise par sévérité et CVSS, explique l'impact business, propose un plan d'action priorisé et rédige la section Loi 25. Confirme que t'es prêt et rappelle-moi les 2 formats que tu comprends." }
+  ],
+  sales: [
+    { icon:"✉️", label:"Courriel de remise", prompt:"Rédige un courriel de remise de rapport d'audit à un client, ton professionnel québécois." },
+    { icon:"⏰", label:"Relance 3 jours", prompt:"Écris une relance polie et efficace si le client n'a pas répondu après 3 jours." },
+    { icon:"📞", label:"Script d'appel", prompt:"Prépare un script d'appel de prospection pour offrir un audit de cybersécurité à une PME." }
+  ]
+};
+
+/* ================= PROMPTS SYSTÈME ================= */
+const SYS_BASE =
+"Tu es " + APP_NAME + ", un assistant IA de haut niveau créé pour donner les meilleures réponses possibles. " +
+"Réponds dans la langue de l'utilisateur (français québécois par défaut, naturel pis direct). " +
+"Utilise du markdown propre: titres, listes, tableaux quand c'est utile. " +
+"Mets TOUT le code dans des blocs ``` avec le nom du langage (ex.: ```js). " +
+"Sois précis, honnête pis concret. Si tu n'es pas sûr, dis-le clairement.";
+
+const SYS = {
+  marceau:
+  "Tu es Marceau, l'agent IA autonome de la plateforme ti-lex (Québec ⚜️). " +
+  "Tu es capable de TOUT : tu réponds à n'importe quelle question avec la MEILLEURE réponse possible, factuelle et à jour. " +
+  "Tu utilises tes outils de toi-même quand ça aide — recherche web pour l'actualité et les faits récents, images/vidéos quand la personne veut VOIR quelque chose, " +
+  "cotations boursières en direct, scans de sécurité. Tu ne dis jamais « je ne peux pas chercher » : tu cherches. " +
+  "Tu donnes des réponses réelles, complètes et vérifiées — jamais d'invention ; si une info n'est pas confirmée, tu le dis franchement. " +
+  "Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum. Tu vas droit au but, en paragraphes courts et aérés, " +
+  "avec des tournures d'ici (correc, en masse, pantoute, checke ça) sans en beurrer épais. " +
+  "Markdown propre ; code dans des blocs ``` avec le langage.",
+
+  direct: SYS_BASE,
+
+  auto: SYS_BASE +
+  " Tu es en mode AGENT AUTONOME: tu analyses la demande, tu planifies, tu rédiges pis tu vérifies ta réponse toi-même " +
+  "pour livrer la meilleure réponse possible, complète pis actionnable, sans poser de questions inutiles.",
+
+  secops: SYS_BASE +
+  " Tu es l'agent SecOps / conformité de " + APP_NAME + " pour une PME québécoise. " +
+  "TÂCHES PRINCIPALES: analyser des journaux (authentification, API, réseau) pour détecter anomalies, comportements suspects pis tentatives d'intrusion; " +
+  "corréler ces événements avec des indicateurs de compromission (IP, domaines, patterns connus); " +
+  "évaluer la sévérité (faible / moyen / élevé / critique) et l'impact business; " +
+  "proposer des actions concrètes: blocage, sandbox, reset de mots de passe, durcissement des règles; " +
+  "générer des résumés en français clair et des sections de rapport Loi 25 (contexte, risques, mesures recommandées). " +
+  "OUTILS DISPONIBLES (catalogue ti-lex — tu ne les exécutes JAMAIS toi-même, tu PROPOSES des appels que l'humain ou le backend validera): " +
+  "scan_domain{domain, profile: light|standard|deep} = scanner un domaine/sous-domaine pour découvrir services exposés pis vulnérabilités potentielles; " +
+  "analyze_logs{source: auth|api|firewall, timeframe: ex 24h, 7d} = analyser des journaux pour repérer anomalies pis comportements suspects; " +
+  "check_vulnerabilities{components: [{name, version}]} = vérifier des versions logicielles par rapport aux CVE publiques; " +
+  "generate_law25_report{risks, measures, recommendations} = produire le texte structuré d'un rapport Loi 25; " +
+  "draft_containment_actions{threats, assets} = proposer un plan détaillé d'actions de confinement (blocage IP, comptes, etc.). " +
+  "Quand c'est pertinent, propose tes appels d'outils dans un bloc ```json au format {\"tool\":\"nom\",\"input\":{...}} avec une courte justification. " +
+  "TU SAIS AUSSI LIRE LES RAPPORTS JSON ti-lex: (1) un rapport de scan 'ti-lex-scan' avec meta, summary{risk_score, risk_level, critical/high/medium/low} pis issues[]{id, title, cvss_score, severity, asset{host,ip,port,url}, description, cve[], cwe[], recommendation, law25_relevance{personal_data_at_risk, obligation}}; " +
+  "(2) un rapport de logs 'ti-lex-log-analyst' avec stats{total_events, suspicious_events, top_ips_suspicious[], top_accounts_targeted[]} pis incidents[]{id, severity, type, summary, timeline[], entities{accounts,ips,geo}, risk_assessment, suggested_containment[], law25_relevance}. " +
+  "Si l'utilisateur colle un tel JSON, analyse-le: hiérarchise par sévérité pis CVSS, explique l'impact business, propose un plan d'action priorisé, pis rédige la section Loi 25 (contexte, risques, mesures, obligations art. 10/10.1) quand personal_data_at_risk=true. " +
+  "GOUVERNANCE: validation humaine OBLIGATOIRE pour email_send, payment, prod_changes pis active_block; maximum 8 étapes automatiques par mission. " +
+  "CONTRAINTES: ne jamais exécuter réellement de blocage ou de modification système — tu proposes les commandes / appels API, mais c'est l'humain qui valide; " +
+  "être très explicite sur les risques et l'incertitude (ne cache pas tes doutes); " +
+  "si la demande sort du cadre cybersécurité/conformité, renvoie poliment vers l'Orchestrateur.",
+
+  sales: SYS_BASE +
+  " Tu es l'agent Sales de " + APP_NAME + ": expert en prospection, communications clients pis rédaction commerciale, " +
+  "avec un ton professionnel québécois (chaleureux, direct, pas de bullshit). " +
+  "Tu rédiges courriels, relances, scripts d'appel, messages LinkedIn pis propositions de service. " +
+  "Tu proposes aussi des stratégies de suivi (ex.: relance si aucune réponse en 3 jours). " +
+  "CONTRAINTE: l'envoi réel d'un courriel ou message doit toujours être validé par un humain.",
+
+  orchSynth: SYS_BASE +
+  " Tu es l'Orchestrateur de " + APP_NAME + ": tu synthétises le travail de ton équipe d'agents (SecOps, Sales, experts) " +
+  "en une réponse finale claire, complète pis actionnable, avec les prochaines étapes. " +
+  "Tu ne prends aucune décision légale finale, et tu rappelles au besoin que les actions sensibles " +
+  "(envoi de courriels, paiements, changements en prod) demandent une validation humaine.",
+
+  orchRouter:
+  "Tu es l'Orchestrateur de " + APP_NAME + ", chef d'une équipe d'agents IA. " +
+  "Analyse la mission de l'utilisateur pis réponds UNIQUEMENT avec un JSON compact, sans texte autour, au format exact: " +
+  '{"plan":["étape 1","étape 2"],"delegates":[{"agent":"secops","brief":"mandat précis"},{"agent":"sales","brief":"mandat précis"}]} ' +
+  "Agents disponibles: \"secops\" (cybersécurité, logs, risques, conformité, Loi 25, audits, technique), " +
+  "\"sales\" (communications clients, courriels, prospection, textes de vente), " +
+  "\"auto\" (expert généraliste: code, recherche, rédaction, calculs). " +
+  "Choisis SEULEMENT les agents utiles à la mission (1 à 3 délégués). Les briefs sont en français, précis pis complémentaires (pas de doublons). " +
+  "Tu ne prends aucune décision légale finale.",
+
+  verifier:
+  "Tu es un vérificateur exigeant mais juste. On te donne une demande et une réponse. " +
+  "Si la réponse est correcte, complète pis bien formatée, réponds exactement: OK. " +
+  "Sinon, liste brièvement (max 5 puces) les problèmes critiques seulement (erreurs factuelles, bugs de code, oublis majeurs)."
+};
+
+function PROMPT_PLAN(){
+  return "Avant de répondre à la dernière demande, produis un PLAN INTERNE bref (max 6 puces): " +
+  "intention réelle de l'utilisateur, points essentiels à couvrir, pièges à éviter, meilleur format de réponse. " +
+  "Réponds SEULEMENT le plan, rien d'autre.";
+}
+function PROMPT_VERIF(q, a){
+  return "Demande de l'utilisateur:\n" + q.slice(0,3000) +
+  "\n\nRéponse à vérifier:\n" + a.slice(0,7000) +
+  "\n\nSi tout est bon, réponds exactement: OK. Sinon, liste les problèmes critiques.";
+}
+function PROMPT_FIX(q, a, v){
+  return "Demande de l'utilisateur:\n" + q.slice(0,3000) +
+  "\n\nTa première réponse:\n" + a.slice(0,7000) +
+  "\n\nProblèmes détectés par le vérificateur:\n" + v.slice(0,1500) +
+  "\n\nRéécris la réponse finale complète, corrigée pis améliorée. Donne SEULEMENT la réponse finale.";
 }
 
-/* =====================================================================
-   3. SIDEBAR
-   ===================================================================== */
-function construireSidebar(){
-  var box = document.getElementById('liste-agents');
-  box.innerHTML='';
-  AGENTS.forEach(function(grp){
-    var lbl=document.createElement('div');lbl.className='grp-label';lbl.textContent=grp.groupe;box.appendChild(lbl);
-    grp.items.forEach(function(a){
-      var el=document.createElement('div');
-      el.className='agent'+(a.id===agentActif?' actif':'');
-      el.dataset.id=a.id;
-      var nom=document.createElement('div');nom.className='nom';
-      if(a.avatar){
-        var av=document.createElement('img');av.className='agent-ava';av.src=a.avatar;av.alt='';
-        av.onerror=function(){this.style.display='none';};
-        nom.appendChild(av);nom.appendChild(document.createTextNode(a.nom));
-      } else {
-        var puce=document.createElement('span');puce.className='puce';puce.style.background=a.couleur;
-        nom.appendChild(puce);nom.appendChild(document.createTextNode(a.icone+' '+a.nom));
-      }
-      var desc=document.createElement('div');desc.className='desc';desc.textContent=a.desc;
-      el.appendChild(nom);el.appendChild(desc);
-      el.addEventListener('click',function(){choisirAgent(a.id);fermerSidebar();});
-      box.appendChild(el);
-    });
-  });
-}
-function choisirAgent(id){
-  agentActif=id;
-  try{ localStorage.setItem('tilex-chat-agent',id); }catch(e){}
-  document.querySelectorAll('.agent').forEach(function(el){el.classList.toggle('actif',el.dataset.id===id);});
-  var a=trouverAgent(id);
-  var hdAva=document.getElementById('hd-ava');
-  if(a.avatar){ hdAva.src=a.avatar; hdAva.style.display='block'; } else { hdAva.style.display='none'; }
-  document.getElementById('hd-titre').textContent=(a.avatar?'':a.icone+' ')+a.nom;
-  document.getElementById('hd-sous').textContent=a.autonome?'Recherche web active — pose n\'importe quelle question':'Modèle direct — connaissances du modèle';
-  document.getElementById('avis').textContent=a.autonome
-    ? 'Agent autonome : recherche web + images + vidéos + bourse. Peut se tromper — vérifie l\'important.'
-    : 'Modèle '+a.id+' — sans recherche web. Peut se tromper.';
-}
-
-/* =====================================================================
-   4. RENDU MARKDOWN SÉCURITAIRE (on échappe AVANT toute mise en forme)
-   ===================================================================== */
-function echapper(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-function rendreMd(txt){
-  var blocs=[];
-  var s=echapper(txt);
-  // blocs de code ```…```
-  s=s.replace(/```(\w*)\n?([\s\S]*?)```/g,function(m,lang,code){
-    blocs.push('<pre><code>'+code.replace(/\n$/,'')+'</code></pre>');
-    return ' B'+(blocs.length-1)+' ';
-  });
-  // code en ligne `…`
-  s=s.replace(/`([^`\n]+)`/g,'<code>$1</code>');
-  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-  s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
-  // liens [txt](url) — seulement http/https
-  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  // listes + paragraphes
-  var lignes=s.split('\n'), out=[], enListe=false, typeListe='';
-  for (var i=0;i<lignes.length;i++){
-    var l=lignes[i];
-    if (/^ B\d+ $/.test(l.trim())){ if(enListe){out.push(typeListe==='ul'?'</ul>':'</ol>');enListe=false;} out.push(l.trim()); continue; }
-    var mu=l.match(/^[-*]\s+(.+)$/), mo=l.match(/^\d+\.\s+(.+)$/);
-    if (mu){ if(enListe&&typeListe!=='ul'){out.push('</ol>');enListe=false;} if(!enListe){out.push('<ul>');enListe=true;typeListe='ul';} out.push('<li>'+mu[1]+'</li>'); continue; }
-    if (mo){ if(enListe&&typeListe!=='ol'){out.push('</ul>');enListe=false;} if(!enListe){out.push('<ol>');enListe=true;typeListe='ol';} out.push('<li>'+mo[1]+'</li>'); continue; }
-    if (enListe){out.push(typeListe==='ul'?'</ul>':'</ol>');enListe=false;}
-    if (l.trim()==='') out.push(''); else out.push('<p>'+l+'</p>');
+/* ================= STOCKAGE (avec garde-fou) ================= */
+const store = (function(){
+  try{
+    const t="__tilex_test__";
+    localStorage.setItem(t,"1"); localStorage.removeItem(t);
+    return localStorage;
+  }catch(e){
+    const mem={};
+    return { getItem:k=>(k in mem?mem[k]:null), setItem:(k,v)=>{mem[k]=String(v);}, removeItem:k=>{delete mem[k];} };
   }
-  if (enListe) out.push(typeListe==='ul'?'</ul>':'</ol>');
-  var html=out.join('\n');
-  html=html.replace(/ B(\d+) /g,function(m,n){return blocs[+n];});
-  return html;
+})();
+
+/* ================= ÉTAT ================= */
+const state = {
+  chats: [],
+  cur: null,
+  model: store.getItem("tilex_model") || DEFAULT_MODEL,
+  agent: store.getItem("tilex_agent") || "marceau",
+  busy: false,
+  stop: false
+};
+if(!AGENTS[state.agent]) state.agent = "marceau";
+
+try{
+  const saved = JSON.parse(store.getItem("tilex_chats_v2") || "[]");
+  if(Array.isArray(saved)) state.chats = saved;
+}catch(e){ state.chats = []; }
+
+function saveAll(){
+  try{
+    store.setItem("tilex_chats_v2", JSON.stringify(state.chats.slice(0,50)));
+    store.setItem("tilex_model", state.model);
+    store.setItem("tilex_agent", state.agent);
+  }catch(e){ /* stockage plein: on continue en mémoire */ }
 }
 
-/* =====================================================================
-   5. AFFICHAGE
-   ===================================================================== */
-function ajouterRang(role){
-  var wrap=document.getElementById('messages');
-  var rang=document.createElement('div');rang.className='rang '+role;
-  var ava=document.createElement('div');ava.className='ava '+role;
-  var actif=trouverAgent(agentActif);
-  if(role==='a'&&actif.avatar){
-    ava.classList.add('img');
-    var im=document.createElement('img');im.src=actif.avatar;im.alt='';
-    im.onerror=function(){this.parentNode.textContent=actif.icone||'⚡';};
-    ava.appendChild(im);
-  } else { ava.textContent=role==='u'?'🧑':(actif.icone||'⚡'); }
-  var col=document.createElement('div');col.style.minWidth='0';col.style.flex='1';
-  var bulle=document.createElement('div');bulle.className='bulle';
-  col.appendChild(bulle);
-  rang.appendChild(ava);rang.appendChild(col);
-  wrap.appendChild(rang);
-  wrap.scrollTop=wrap.scrollHeight;
-  return { rang:rang, col:col, bulle:bulle };
-}
-function scrollBas(){ var m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }
+/* ================= DOM ================= */
+const $ = id => document.getElementById(id);
+const sidebar=$("sidebar"), overlay=$("overlay"), chatZone=$("chatZone"), chatInner=$("chatInner");
+const inputEl=$("input"), btnSend=$("btnSend"), iconSend=$("iconSend"), iconStop=$("iconStop");
+const modelSelect=$("modelSelect"), agentToggle=$("agentToggle"), agentToggleTxt=$("agentToggleTxt");
 
-/* =====================================================================
-   6. ENVOI — ai-proxy (streaming SSE)
-   ===================================================================== */
-var _sb=null;
-function clientSupabase(){
+/* Détection robuste des libs (si un CDN flanche, l'app fonctionne pareil en texte) */
+const HAS_MARKED = (typeof marked!=="undefined");
+const HAS_PURIFY = (typeof DOMPurify!=="undefined");
+const HAS_HLJS   = (typeof hljs!=="undefined");
+if(HAS_MARKED){ try{ marked.use({ gfm:true, breaks:true }); }catch(e){} }
+
+/* ================= HELPERS UI ================= */
+function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+/* Rendu de secours si marked n'est pas dispo: paragraphes + blocs ``` */
+function fallbackFormat(raw){
+  const parts=String(raw||"").split(/```/);
+  let out="";
+  parts.forEach((p,i)=>{
+    if(i%2===1){
+      const nl=p.indexOf("\n");
+      const lang=nl>=0?p.slice(0,nl).trim():"";
+      const body=nl>=0?p.slice(nl+1):p;
+      out+='<div class="codewrap"><div class="codehead"><span class="lang">'+esc(lang||"code")+
+           '</span><button class="copy-code" type="button">⧉ Copier</button></div><pre><code>'+esc(body)+'</code></pre></div>';
+    }else if(p.trim()){
+      out+="<p>"+esc(p).replace(/\n/g,"<br>")+"</p>";
+    }
+  });
+  return out;
+}
+
+function nearBottom(){ return chatZone.scrollHeight - chatZone.scrollTop - chatZone.clientHeight < 140; }
+function autoscroll(force){ if(force || nearBottom()) chatZone.scrollTop = chatZone.scrollHeight; }
+
+function upgradeCodeBlocks(scope){
+  scope.querySelectorAll("pre").forEach(pre=>{
+    if(pre.closest(".codewrap")) return;
+    const code = pre.querySelector("code");
+    let lang = "code";
+    if(code){
+      const m = (code.className||"").match(/language-([\w+-]+)/);
+      if(m) lang = m[1];
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "codewrap";
+    wrap.innerHTML = '<div class="codehead"><span class="lang">'+esc(lang)+'</span>'+
+      '<button class="copy-code" type="button">⧉ Copier</button></div>';
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    if(code && HAS_HLJS){ try{ hljs.highlightElement(code); }catch(e){} }
+  });
+  scope.querySelectorAll("a").forEach(a=>{ a.target="_blank"; a.rel="noopener"; });
+}
+
+function renderMarkdown(el, raw, streaming){
+  let html = "";
+  try{
+    if(HAS_MARKED){
+      const parsed = marked.parse(raw||"");
+      html = HAS_PURIFY ? DOMPurify.sanitize(parsed) : parsed;
+    }else{
+      html = fallbackFormat(raw);
+    }
+  }catch(e){ html = fallbackFormat(raw); }
+  el.innerHTML = html;
+  upgradeCodeBlocks(el);
+  if(streaming) el.insertAdjacentHTML("beforeend",'<span class="cursor"></span>');
+}
+
+function makeRenderer(contentEl){
+  let raw="", last=0, timer=null, streaming=true;
+  function paint(){ renderMarkdown(contentEl, raw, streaming); autoscroll(); }
+  return {
+    update(t){
+      raw=t;
+      const now=performance.now();
+      if(now-last>90){ last=now; paint(); }
+      else{ clearTimeout(timer); timer=setTimeout(()=>{ last=performance.now(); paint(); },90); }
+    },
+    setRaw(t){ raw=t; },
+    done(){ streaming=false; clearTimeout(timer); paint(); }
+  };
+}
+
+/* ================= MESSAGES (DOM) ================= */
+function welcomeHtml(){
+  const ag = AGENTS[state.agent];
+  const suggs = SUGGESTIONS[state.agent] || SUGGESTIONS.direct;
+  return '<div class="welcome" id="welcome">'+
+    '<div class="big-logo">TL</div>'+
+    '<h2>'+APP_NAME+' <span>· '+esc(ag.name)+'</span></h2>'+
+    '<p>'+esc(ag.role)+'. Choisis ton moteur en haut, pis pose ta question — c\'est gratuit pis ça stream en direct.</p>'+
+    '<div class="sugg">'+ suggs.map(s=>'<button type="button" data-sugg="'+esc(s)+'">'+esc(s)+'</button>').join("") +'</div>'+
+  '</div>';
+}
+function showWelcome(){ chatInner.innerHTML = welcomeHtml(); }
+function hideWelcome(){ const w=$("welcome"); if(w) w.remove(); }
+
+function addUserMsgEl(text){
+  const div=document.createElement("div");
+  div.className="msg user";
+  div.innerHTML='<div class="body"><div class="content"></div></div>';
+  div.querySelector(".content").textContent=text;
+  chatInner.appendChild(div);
+  autoscroll(true);
+  return div;
+}
+
+function addAssistantMsgEl(agentKey, kind){
+  const ag = AGENTS[agentKey||"direct"] || AGENTS.direct;
+  const div=document.createElement("div");
+  div.className="msg assistant";
+  const badge = ag.badge ? '<span class="badge '+ag.cls+'">'+ag.badge+'</span>' : "";
+  const kindTxt = kind ? '<span style="color:var(--muted);font-weight:500">· '+esc(kind)+'</span>' : "";
+  div.innerHTML=
+    '<div class="avatar">'+(agentKey && agentKey!=="direct" ? ag.icon : "TL")+'</div>'+
+    '<div class="body">'+
+      '<div class="who">'+esc(agentKey && agentKey!=="direct" ? ag.name : APP_NAME)+badge+kindTxt+'</div>'+
+      '<div class="steps" style="display:none"></div>'+
+      '<div class="content"></div>'+
+      '<div class="actions"></div>'+
+    '</div>';
+  chatInner.appendChild(div);
+  autoscroll(true);
+  return {
+    el:div,
+    contentEl:div.querySelector(".content"),
+    stepsEl:div.querySelector(".steps"),
+    actionsEl:div.querySelector(".actions")
+  };
+}
+
+function addStep(m, label){
+  m.stepsEl.style.display="flex";
+  const s=document.createElement("span");
+  s.className="step run";
+  s.innerHTML='<span class="spin"></span><span>'+esc(label)+'</span>';
+  m.stepsEl.appendChild(s);
+  autoscroll();
+  return s;
+}
+function stepDone(s, newLabel){
+  if(!s) return;
+  s.classList.remove("run"); s.classList.add("done");
+  const spin=s.querySelector(".spin"); if(spin) spin.remove();
+  s.innerHTML='✓ '+ (newLabel? esc(newLabel) : s.textContent.trim());
+}
+function stepFail(s){
+  if(!s) return;
+  s.classList.remove("run");
+  s.innerHTML='✗ '+ s.textContent.trim();
+  s.style.color="var(--danger)";
+}
+
+function showErr(m, err){
+  const msg = (err && (err.message || err.error || err.toString())) || "Erreur inconnue";
+  const box=document.createElement("div");
+  box.className="errbox";
+  box.textContent="⚠️ Oups: " + msg + " — Réessaie, ou change de moteur en haut.";
+  m.el.querySelector(".body").insertBefore(box, m.actionsEl);
+  autoscroll();
+}
+
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).catch(()=>{}); }
+  else{
+    const ta=document.createElement("textarea");
+    ta.value=t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    ta.remove();
+  }
+}
+
+function addActions(m, data, isLast){
+  m.actionsEl.innerHTML="";
+  const b=document.createElement("button");
+  b.type="button"; b.textContent="⧉ Copier";
+  b.onclick=()=>{ copyText(data.content||""); b.textContent="✓ Copié"; setTimeout(()=>b.textContent="⧉ Copier",1400); };
+  m.actionsEl.appendChild(b);
+  if(isLast){
+    const r=document.createElement("button");
+    r.type="button"; r.textContent="↻ Régénérer";
+    r.onclick=regenerate;
+    m.actionsEl.appendChild(r);
+  }
+}
+
+/* ================= CONVERSATIONS ================= */
+function currentChat(){ return state.chats.find(c=>c.id===state.cur) || null; }
+
+function newChat(){
+  const c={ id:"c"+Math.random().toString(36).slice(2)+Date.now().toString(36), title:"Nouvelle conversation", messages:[] };
+  state.chats.unshift(c);
+  state.cur=c.id;
+  renderChatList(); showWelcome(); saveAll();
+  return c;
+}
+
+function selectChat(id){
+  if(state.busy) return;
+  state.cur=id;
+  renderChatList();
+  renderAllMessages();
+  if(window.innerWidth<=840) closeSidebar();
+}
+
+function deleteChat(id, ev){
+  ev.stopPropagation();
+  if(state.busy) return;
+  if(!confirm("Supprimer cette conversation?")) return;
+  state.chats = state.chats.filter(c=>c.id!==id);
+  if(state.cur===id){ state.cur = state.chats.length? state.chats[0].id : null; }
+  if(!state.cur) newChat(); else { renderChatList(); renderAllMessages(); }
+  saveAll();
+}
+
+function renderChatList(){
+  const box=$("chatItems");
+  box.innerHTML="";
+  state.chats.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="chat-item"+(c.id===state.cur?" active":"");
+    d.innerHTML='<span class="title">'+esc(c.title)+'</span>'+
+      '<button class="del" title="Supprimer" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
+    d.onclick=()=>selectChat(c.id);
+    d.querySelector(".del").onclick=(ev)=>deleteChat(c.id, ev);
+    box.appendChild(d);
+  });
+}
+
+function renderAllMessages(){
+  const c=currentChat();
+  chatInner.innerHTML="";
+  if(!c || !c.messages.length){ showWelcome(); return; }
+  let lastAssistant=null;
+  c.messages.forEach(msg=>{
+    if(msg.role==="user"){ addUserMsgEl(msg.content); }
+    else{
+      const m=addAssistantMsgEl(msg.agent, msg.kind);
+      renderMarkdown(m.contentEl, msg.content, false);
+      lastAssistant={m, msg};
+      addActions(m, msg, false);
+    }
+  });
+  if(lastAssistant) addActions(lastAssistant.m, lastAssistant.msg, true);
+  autoscroll(true);
+}
+
+/* ================= API (Puter.js) ================= */
+function extractText(r){
+  if(r==null) return "";
+  if(typeof r==="string") return r;
+  if(typeof r.text==="string") return r.text;
+  const c = r.message && r.message.content;
+  if(typeof c==="string") return c;
+  if(Array.isArray(c)) return c.map(x=>(x && x.text)||"").join("");
+  try{ return JSON.stringify(r); }catch(e){ return String(r); }
+}
+
+/* ---- Backend ti-lex (ai-proxy) : Marceau + modèles Claude.
+   Les clés vivent côté serveur (Supabase) — RIEN à configurer côté client.
+   Marceau force la recherche web + les outils (images, vidéos, bourse, sécurité)
+   et le meilleur modèle. Connecté = mémoire long terme chargée par le serveur. ---- */
+let _sb=null;
+function sbClient(){
   if(_sb) return _sb;
-  if(!window.supabase||typeof window.supabase.createClient!=='function') return null;
-  _sb=window.supabase.createClient(window.SB_URL,window.SB_ANON);return _sb;
+  if(!window.supabase || typeof window.supabase.createClient!=="function" || !window.SB_URL) return null;
+  _sb=window.supabase.createClient(window.SB_URL, window.SB_ANON);
+  return _sb;
 }
-async function recupererToken(){
-  try{ var sb=clientSupabase(); if(!sb) return null;
-    var r=await sb.auth.getSession(); return r&&r.data&&r.data.session?r.data.session.access_token:null;
+async function tilexToken(){
+  try{ const sb=sbClient(); if(!sb) return null;
+    const r=await sb.auth.getSession();
+    return (r && r.data && r.data.session) ? r.data.session.access_token : null;
+  }catch(e){ return null; }
+}
+function isTilex(){ return state.agent==="marceau" || String(state.model).indexOf("tilex:")===0; }
+function tilexModel(){
+  return state.agent==="marceau" ? "claude-opus-4-8" : String(state.model).replace(/^tilex:/,"");
+}
+
+/* Hôte visuel courant (galeries d'images/vidéos + statut d'outil de Marceau).
+   Fixé par les pipelines juste avant streamChat ; DOM pur, https seulement.
+   IMPORTANT : le renderer markdown réécrit innerHTML du .content à chaque delta —
+   on accroche donc les extras dans un div FRÈRE (.tilex-extras), jamais dedans. */
+let _tilexHost=null;
+function tilexSetHost(contentEl){
+  const body=contentEl.parentNode;
+  let ex=body.querySelector(".tilex-extras");
+  if(!ex){
+    ex=document.createElement("div");
+    ex.className="tilex-extras";
+    body.insertBefore(ex, contentEl.nextSibling);
+  }
+  _tilexHost=ex;
+}
+function tilexStatus(txt){
+  if(!_tilexHost) return;
+  let s=_tilexHost.querySelector(".tilex-tool-status");
+  if(!txt){ if(s) s.remove(); return; }
+  if(!s){ s=document.createElement("div"); s.className="tilex-tool-status";
+    s.style.cssText="color:var(--muted);font-size:12.5px;padding:4px 0;"; _tilexHost.appendChild(s); }
+  s.textContent=txt;
+}
+function tilexGallery(items, youtube){
+  if(!_tilexHost || !items || !items.length) return;
+  const gal=document.createElement("div");
+  gal.style.cssText="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0;";
+  items.slice(0,8).forEach(it=>{
+    const thumb=it.thumb, lien=youtube?("https://www.youtube.com/watch?v="+(it.videoId||"")):(it.link||it.full);
+    if(typeof thumb!=="string" || thumb.indexOf("https://")!==0) return;
+    if(typeof lien!=="string" || lien.indexOf("https://")!==0) return;
+    const a=document.createElement("a"); a.href=lien; a.target="_blank"; a.rel="noopener";
+    const img=document.createElement("img"); img.src=thumb; img.loading="lazy"; img.alt="";
+    img.style.cssText="width:120px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--border);";
+    a.appendChild(img); gal.appendChild(a);
+  });
+  if(gal.children.length) _tilexHost.appendChild(gal);
+}
+const TILEX_TOOL_LABELS={ web_search:"🌐 Recherche web…", recherche_media:"🖼️ Recherche d'images…",
+  recherche_youtube:"🎬 Recherche de vidéos…", get_stock_quote:"📈 Cotation boursière…",
+  get_company_profile:"📈 Profil d'entreprise…", lancer_scan_securite:"🔰 Scan de sécurité…",
+  analyser_journal_securite:"📊 Analyse des journaux…" };
+
+async function tilexChat(messages, onFull){
+  const sys=messages.filter(m=>m.role==="system").map(m=>m.content).join("\n\n");
+  const convo=messages.filter(m=>m.role!=="system");
+  const token=await tilexToken();
+  const headers={ "Content-Type":"application/json" };
+  if(token) headers["Authorization"]="Bearer "+token;
+  const corps={ kind:"chat", model:tilexModel(), max_tokens:4096, messages:convo.slice(-40) };
+  if(sys) corps.system=sys;
+  if(state.agent==="marceau") corps.web_search=true;
+  const res=await fetch(window.AI_PROXY,{ method:"POST", headers, body:JSON.stringify(corps) });
+  if(!res.ok){
+    let em="Erreur "+res.status;
+    try{ const j=await res.json(); em=j.error||em; }catch(e){}
+    throw new Error(em);
+  }
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let buf="", full="";
+  while(true){
+    const ch=await reader.read();
+    if(ch.done || state.stop) break;
+    buf+=dec.decode(ch.value,{stream:true});
+    const lines=buf.split("\n"); buf=lines.pop()||"";
+    for(const line of lines){
+      const t=line.trim();
+      if(t.indexOf("data:")!==0) continue;
+      const p=t.slice(5).trim();
+      if(!p || p==="[DONE]") continue;
+      let evt; try{ evt=JSON.parse(p); }catch(e){ continue; }
+      if(evt.type==="content_block_delta" && evt.delta && evt.delta.text){
+        tilexStatus(null);
+        full+=evt.delta.text;
+        if(onFull) onFull(full);
+      }else if(evt.type==="tool_status"){
+        tilexStatus(TILEX_TOOL_LABELS[evt.tool_name]||("🔧 "+evt.tool_name+"…"));
+      }else if(evt.type==="media" && evt.items){
+        tilexGallery(evt.items,false);
+      }else if(evt.type==="youtube" && evt.items){
+        tilexGallery(evt.items,true);
+      }
+    }
+  }
+  tilexStatus(null);
+  return full;
+}
+
+async function askOnce(messages){
+  if(isTilex()) return await tilexChat(messages, null);
+  const r = await puter.ai.chat(messages, { model: state.model });
+  return extractText(r);
+}
+
+async function streamChat(messages, onFull){
+  if(isTilex()) return await tilexChat(messages, onFull);
+  const resp = await puter.ai.chat(messages, { model: state.model, stream:true });
+  let full="";
+  if(resp && typeof resp[Symbol.asyncIterator]==="function"){
+    for await (const part of resp){
+      if(state.stop) break;
+      let t = "";
+      if(part){
+        if(typeof part.text==="string") t=part.text;
+        else if(typeof part==="string") t=part;
+      }
+      if(t){ full+=t; onFull(full); }
+    }
+  }else{
+    full = extractText(resp);
+    onFull(full);
+  }
+  return full;
+}
+
+function toApi(msgs){
+  return msgs
+    .filter(m=>m.content && String(m.content).trim())
+    .slice(-20)
+    .map(m=>({
+      role: m.role,
+      content: (m.role==="assistant" && m.agent && AGENTS[m.agent] ? "["+AGENTS[m.agent].name+"] " : "") + String(m.content).slice(0,8000)
+    }));
+}
+
+/* ================= PIPELINES ================= */
+async function runDirect(chat){
+  const data={role:"assistant", content:"", agent:null};
+  chat.messages.push(data);
+  const m=addAssistantMsgEl(null);
+  const r=makeRenderer(m.contentEl);
+  tilexSetHost(m.contentEl);
+  try{
+    const full=await streamChat([{role:"system",content:SYS.direct}, ...toApi(chat.messages)], r.update);
+    data.content=full;
+  }catch(err){ showErr(m, err); }
+  r.done(); addActions(m, data, true);
+}
+
+/* 🔥 Marceau — agent autonome ti-lex : UN appel à ai-proxy qui gère lui-même
+   sa boucle d'outils côté serveur (web, images, vidéos, bourse, sécurité).
+   Pas de pipeline multi-étapes client : le serveur fait tout, en streaming. */
+async function runMarceau(chat){
+  const data={role:"assistant", content:"", agent:"marceau"};
+  chat.messages.push(data);
+  const m=addAssistantMsgEl("marceau");
+  const r=makeRenderer(m.contentEl);
+  tilexSetHost(m.contentEl);
+  try{
+    const full=await streamChat([{role:"system",content:SYS.marceau}, ...toApi(chat.messages)], r.update);
+    data.content=full;
+  }catch(err){ showErr(m, err); }
+  r.done(); addActions(m, data, true);
+}
+
+async function runAutonome(chat, userText, agentKey){
+  const persona = SYS[agentKey] || SYS.auto;
+  const data={role:"assistant", content:"", agent:agentKey};
+  chat.messages.push(data);
+  const m=addAssistantMsgEl(agentKey);
+  const r=makeRenderer(m.contentEl);
+  tilexSetHost(m.contentEl);
+  let full="";
+  try{
+    /* Étape 1 — analyse interne */
+    const s1=addStep(m,"🧠 Analyse");
+    let plan="";
+    try{
+      plan=await askOnce([{role:"system",content:persona}, ...toApi(chat.messages), {role:"user",content:PROMPT_PLAN()}]);
+      stepDone(s1);
+    }catch(e){ stepFail(s1); }
+
+    if(state.stop){ r.done(); addActions(m,data,true); return; }
+
+    /* Étape 2 — rédaction streamée */
+    const s2=addStep(m,"✍️ Rédaction");
+    full=await streamChat([
+      {role:"system",content:persona+(plan?"\n\nPLAN INTERNE (invisible pour l'utilisateur — suis-le sans jamais le mentionner):\n"+plan.slice(0,2500):"")},
+      ...toApi(chat.messages)
+    ], r.update);
+    stepDone(s2);
+
+    /* Étape 3 — auto-vérification */
+    if(!state.stop && full.trim()){
+      const s3=addStep(m,"🔍 Vérification");
+      let verdict="OK";
+      try{
+        verdict=await askOnce([{role:"system",content:SYS.verifier},{role:"user",content:PROMPT_VERIF(userText, full)}]);
+      }catch(e){ verdict="OK"; }
+      if(!verdict.trim() || /^\s*ok\b/i.test(verdict.trim())){
+        stepDone(s3,"🔍 Vérifiée ✓");
+      }else{
+        stepDone(s3);
+        /* Étape 4 — correction automatique */
+        const s4=addStep(m,"🛠️ Correction");
+        try{
+          const improved=await streamChat([
+            {role:"system",content:persona},
+            {role:"user",content:PROMPT_FIX(userText, full, verdict)}
+          ], r.update);
+          if(improved.trim()) full=improved;
+          stepDone(s4);
+        }catch(e){ stepFail(s4); }
+      }
+    }
+    data.content=full;
+  }catch(err){
+    data.content=full;
+    showErr(m, err);
+  }
+  r.done(); addActions(m, data, true); autoscroll();
+}
+
+function parseRoute(raw){
+  try{
+    const mj=(raw||"").match(/\{[\s\S]*\}/);
+    if(!mj) return null;
+    const o=JSON.parse(mj[0]);
+    if(!o || !Array.isArray(o.delegates)) return null;
+    o.plan = (Array.isArray(o.plan) && o.plan.length ? o.plan : ["Analyser la mission","Déléguer aux agents","Synthétiser"]).map(String);
+    o.delegates = o.delegates
+      .map(d=>({agent:String((d&&d.agent)||"auto").toLowerCase().trim(), brief:String((d&&d.brief)||"")}))
+      .filter(d=>["secops","sales","auto"].includes(d.agent))
+      .slice(0,3);
+    return o;
   }catch(e){ return null; }
 }
 
-async function envoyer(texte){
-  var a=trouverAgent(agentActif);
-  historique.push({ role:'user', content:texte });
-  var m=ajouterRang('a');
-  var bulle=m.bulle, col=m.col;
-  bulle.innerHTML='<span class="curseur"></span>';
-  var accumule='', statutEl=null;
-
-  function poserStatut(txt){
-    if(!statutEl){ statutEl=document.createElement('div');statutEl.className='statut';col.appendChild(statutEl); }
-    statutEl.textContent=txt;
-  }
-  function enleverStatut(){ if(statutEl){statutEl.remove();statutEl=null;} }
-
+async function runOrchestrator(chat, userText){
+  /* --- 1. Analyse & plan de mission --- */
+  const d1={role:"assistant", content:"", agent:"orchestrator", kind:"Plan"};
+  chat.messages.push(d1);
+  const m1=addAssistantMsgEl("orchestrator","Plan");
+  const s1=addStep(m1,"🧠 Analyse de la mission");
+  let route=null;
   try{
-    var token=await recupererToken();
-    var headers={ 'Content-Type':'application/json' };
-    if(token) headers['Authorization']='Bearer '+token;
-    var corps={ kind:'chat', model:a.model||a.id, max_tokens:4096, messages:historique.slice(-40) };
-    if(a.autonome) corps.web_search=true;
-    if(a.systeme) corps.system=a.systeme;
+    const raw=await askOnce([{role:"system",content:SYS.orchRouter}, ...toApi(chat.messages)]);
+    route=parseRoute(raw);
+    stepDone(s1);
+  }catch(e){ stepFail(s1); }
+  if(!route) route={plan:["Analyser la mission","Déléguer aux agents pertinents","Synthétiser les résultats"], delegates:[]};
+  if(!route.delegates.length) route.delegates=[{agent:"auto", brief:userText}];
 
-    var res=await fetch(window.AI_PROXY,{ method:'POST', headers:headers, body:JSON.stringify(corps) });
-    if(!res.ok){
-      var em='Erreur '+res.status;
-      try{ var j=await res.json(); em=j.error||em; }catch(e){}
-      bulle.classList.add('err');bulle.textContent='⚠️ '+em;historique.pop();return;
-    }
+  const planMd="### 📋 Plan de mission\n"+
+    route.plan.map((p,i)=>(i+1)+". "+p).join("\n")+
+    "\n\n**Agents mobilisés:** "+route.delegates.map(d=>AGENTS[d.agent].icon+" "+AGENTS[d.agent].name).join(" · ");
+  d1.content=planMd;
+  renderMarkdown(m1.contentEl, planMd, false);
+  addActions(m1, d1, false);
+  autoscroll();
 
-    var reader=res.body.getReader(), dec=new TextDecoder(), buf='';
-    while(true){
-      var ch=await reader.read();
-      if(ch.done) break;
-      buf+=dec.decode(ch.value,{stream:true});
-      var lignes=buf.split('\n'); buf=lignes.pop()||'';
-      for(var i=0;i<lignes.length;i++){
-        var t=lignes[i].trim();
-        if(!t.startsWith('data:')) continue;
-        var p=t.slice(5).trim();
-        if(!p||p==='[DONE]') continue;
-        var evt; try{ evt=JSON.parse(p); }catch(e){ continue; }
+  /* --- 2. Chaque agent fait sa partie (streamé) --- */
+  const outputs=[];
+  for(const d of route.delegates){
+    if(state.stop) break;
+    const dd={role:"assistant", content:"", agent:d.agent};
+    chat.messages.push(dd);
+    const mm=addAssistantMsgEl(d.agent);
+    const rr=makeRenderer(mm.contentEl);
+    tilexSetHost(mm.contentEl);
+    const st=addStep(mm,"⚙️ Travail en cours");
+    let out="";
+    try{
+      out=await streamChat([
+        {role:"system",content:(SYS[d.agent]||SYS.auto)+" Tu travailles pour l'Orchestrateur "+APP_NAME+" sur une mission d'équipe. Fais TA partie seulement, de façon complète pis concrète."},
+        {role:"user",content:"Mission de l'utilisateur:\n"+userText+"\n\nTon mandat précis:\n"+(d.brief||userText)}
+      ], rr.update);
+      stepDone(st);
+    }catch(err){ stepFail(st); showErr(mm, err); }
+    dd.content=out;
+    rr.done(); addActions(mm, dd, false);
+    outputs.push({agent:d.agent, out});
+  }
 
-        if(evt.type==='content_block_delta'&&evt.delta&&evt.delta.text){
-          enleverStatut();
-          accumule+=evt.delta.text;
-          bulle.innerHTML=rendreMd(accumule)+'<span class="curseur"></span>';
-          scrollBas();
-        } else if(evt.type==='tool_status'){
-          var noms={ web_search:'🌐 Recherche web…', recherche_media:'🖼️ Recherche d\'images…',
-            recherche_youtube:'🎬 Recherche de vidéos…', get_stock_quote:'📈 Cotation boursière…',
-            get_company_profile:'📈 Profil d\'entreprise…', lancer_scan_securite:'🔰 Scan de sécurité…' };
-          poserStatut(noms[evt.tool_name]||('🔧 '+evt.tool_name+'…'));
-        } else if(evt.type==='sources'&&evt.sources&&evt.sources.indexOf('web')!==-1){
-          if(!col.querySelector('.chip-web')){ var c=document.createElement('div');c.className='chip-web';c.textContent='🌐 Sources web';col.appendChild(c); }
-        } else if(evt.type==='media'&&evt.items&&evt.items.length){
-          afficherGalerie(col,evt.items,false);
-        } else if(evt.type==='youtube'&&evt.items&&evt.items.length){
-          afficherGalerie(col,evt.items,true);
-        }
-      }
-    }
-    enleverStatut();
-    if(!accumule.trim()){ bulle.textContent='(réponse vide)'; }
-    else{ bulle.innerHTML=rendreMd(accumule); historique.push({ role:'assistant', content:accumule }); }
-    scrollBas();
-  }catch(e){
-    enleverStatut();
-    bulle.classList.add('err');bulle.textContent='⚠️ Erreur de connexion : '+e.message;historique.pop();
+  /* --- 3. Synthèse finale --- */
+  if(!state.stop && outputs.some(o=>o.out && o.out.trim())){
+    const d3={role:"assistant", content:"", agent:"orchestrator", kind:"Synthèse"};
+    chat.messages.push(d3);
+    const m3=addAssistantMsgEl("orchestrator","Synthèse");
+    const r3=makeRenderer(m3.contentEl);
+    tilexSetHost(m3.contentEl);
+    const s3=addStep(m3,"🧩 Synthèse finale");
+    let syn="";
+    try{
+      syn=await streamChat([
+        {role:"system",content:SYS.orchSynth},
+        {role:"user",content:"Mission: "+userText+"\n\n"+
+          outputs.map(o=>"--- Résultat de "+AGENTS[o.agent].name+" ---\n"+String(o.out||"").slice(0,5000)).join("\n\n")+
+          "\n\nFais la synthèse finale pour l'utilisateur: réponse claire, complète pis actionnable, avec les prochaines étapes."}
+      ], r3.update);
+      stepDone(s3);
+    }catch(err){ stepFail(s3); showErr(m3, err); }
+    d3.content=syn;
+    r3.done(); addActions(m3, d3, true);
   }
 }
 
-/* Galerie d'images / vidéos (miniatures) — anti-XSS : URLs https only, DOM pur */
-function afficherGalerie(col, items, estYoutube){
-  var gal=document.createElement('div');gal.className='gal';
-  items.slice(0,8).forEach(function(it){
-    var thumb=estYoutube?it.thumb:it.thumb;
-    var lien=estYoutube?('https://www.youtube.com/watch?v='+(it.videoId||'')):(it.link||it.full);
-    if(typeof thumb!=='string'||!/^https:\/\//.test(thumb)) return;
-    if(typeof lien!=='string'||!/^https:\/\//.test(lien)) return;
-    var a=document.createElement('a');a.href=lien;a.target='_blank';a.rel='noopener';
-    var img=document.createElement('img');img.src=thumb;img.loading='lazy';img.alt='';
-    a.appendChild(img);gal.appendChild(a);
+/* ================= ENVOI ================= */
+async function onSend(textOverride){
+  if(state.busy) return;
+  const text=(textOverride!=null ? textOverride : inputEl.value).trim();
+  if(!text) return;
+
+  // Marceau + modèles « tilex: » passent par le backend ti-lex (ai-proxy) —
+  // Puter.js est seulement requis pour les moteurs gratuits externes.
+  if(!isTilex() && (typeof puter==="undefined" || !puter.ai)){
+    alert("Puter.js n'a pas chargé — vérifie ta connexion internet pis recharge la page, ou choisis Marceau 🔥 (backend ti-lex).");
+    return;
+  }
+
+  let chat=currentChat(); if(!chat) chat=newChat();
+  hideWelcome();
+  if(textOverride==null){ inputEl.value=""; autosize(); }
+
+  chat.messages.push({role:"user", content:text});
+  addUserMsgEl(text);
+  if(chat.title==="Nouvelle conversation"){
+    chat.title=text.slice(0,42)+(text.length>42?"…":"");
+    renderChatList();
+  }
+
+  setBusy(true);
+  state.stop=false;
+  try{
+    if(state.agent==="marceau")           await runMarceau(chat);
+    else if(state.agent==="direct")       await runDirect(chat);
+    else if(state.agent==="orchestrator") await runOrchestrator(chat, text);
+    else                                  await runAutonome(chat, text, state.agent);
+  }catch(err){ console.error(err); }
+  finally{ setBusy(false); saveAll(); }
+}
+
+function regenerate(){
+  const chat=currentChat();
+  if(!chat || state.busy) return;
+  let i=chat.messages.length-1;
+  while(i>=0 && chat.messages[i].role!=="user") i--;
+  if(i<0) return;
+  const text=chat.messages[i].content;
+  chat.messages=chat.messages.slice(0,i);
+  renderAllMessages();
+  onSend(text);
+}
+
+function setBusy(b){
+  state.busy=b;
+  btnSend.classList.toggle("stop", b);
+  iconSend.style.display=b?"none":"block";
+  iconStop.style.display=b?"block":"none";
+  btnSend.title=b?"Arrêter":"Envoyer";
+}
+
+/* ================= RENDUS INITIAUX ================= */
+function renderModelSelect(){
+  modelSelect.innerHTML="";
+  MODELS.forEach(g=>{
+    const og=document.createElement("optgroup");
+    og.label=g.group;
+    g.items.forEach(([id,label])=>{
+      const o=document.createElement("option");
+      o.value=id; o.textContent=label;
+      og.appendChild(o);
+    });
+    modelSelect.appendChild(og);
   });
-  if(gal.children.length) col.appendChild(gal);
-  scrollBas();
+  const all=MODELS.flatMap(g=>g.items.map(i=>i[0]));
+  if(!all.includes(state.model)) state.model=all.includes(DEFAULT_MODEL)?DEFAULT_MODEL:all[0];
+  modelSelect.value=state.model;
 }
 
-/* =====================================================================
-   7. UI
-   ===================================================================== */
-function nouvelleConvo(){
-  historique=[];
-  document.getElementById('messages').innerHTML='';
-  var a=trouverAgent(agentActif);
-  var m=ajouterRang('a');
-  var accueil;
-  if(a.id==='marceau')
-    accueil="Salut ! Moi c'est **Marceau** 🔥 — ton agent autonome capable de **tout**. "
-      +"Pose-moi n'importe quelle question : je cherche sur le web pour l'actualité, je trouve des images pis des vidéos, "
-      +"je sors des cours de bourse en direct, je scanne la sécurité. Je te donne toujours la **meilleure réponse réelle**. Vas-y, envoye !";
-  else if(a.autonome)
-    accueil="Salut ! Moi c'est **AL**, ton agent autonome. Pose-moi n'importe quelle question — je peux chercher sur le web, trouver des images et des vidéos, sortir des cours de bourse en direct. Vas-y !";
-  else
-    accueil="Salut ! Tu jases avec **"+a.nom+"** en direct (sans recherche web). Qu'est-ce que je peux faire pour toi ?";
-  m.bulle.innerHTML=rendreMd(accueil);
+function renderAgentList(){
+  const box=$("agentList");
+  box.innerHTML="";
+  Object.entries(AGENTS).forEach(([key,a])=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="agent-item"+(state.agent===key?" active":"");
+    b.innerHTML='<span class="ic">'+a.icon+'</span><span><span class="nm">'+esc(a.name)+'</span><br><span class="rl">'+esc(a.role)+'</span></span>';
+    b.onclick=()=>setAgent(key);
+    box.appendChild(b);
+  });
 }
-function ouvrirSidebar(){ document.getElementById('sidebar').classList.add('ouverte'); document.getElementById('overlay').classList.add('on'); }
-function fermerSidebar(){ document.getElementById('sidebar').classList.remove('ouverte'); document.getElementById('overlay').classList.remove('on'); }
 
-var entree=document.getElementById('entree');
-entree.addEventListener('input',function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,160)+'px'; });
-entree.addEventListener('keydown',function(e){
-  if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); document.getElementById('form').dispatchEvent(new Event('submit',{cancelable:true})); }
+function renderQuickbar(){
+  const box=$("quickbar");
+  const acts=QUICK_ACTIONS[state.agent]||[];
+  box.innerHTML="";
+  box.style.display=acts.length?"flex":"none";
+  acts.forEach(a=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.innerHTML='<span class="qi">'+a.icon+'</span> '+esc(a.label);
+    b.onclick=()=>{ if(!state.busy) onSend(a.prompt); };
+    box.appendChild(b);
+  });
+}
+
+function setAgent(key){
+  if(!AGENTS[key] || state.busy) return;
+  state.agent=key;
+  renderAgentList();
+  renderQuickbar();
+  updateAgentToggle();
+  const c=currentChat();
+  if(!c || !c.messages.length) showWelcome();
+  saveAll();
+}
+
+function updateAgentToggle(){
+  const a=AGENTS[state.agent];
+  agentToggle.classList.toggle("on", state.agent!=="direct");
+  agentToggleTxt.textContent=a.name;
+  // 🔥 Marceau roule TOUJOURS sur le meilleur modèle du backend ti-lex :
+  // on fige le sélecteur dessus pour que l'affichage dise la vérité.
+  if(state.agent==="marceau"){
+    modelSelect.value="tilex:claude-opus-4-8";
+    modelSelect.disabled=true;
+    modelSelect.title="Marceau roule sur Claude Opus 4.8 via ton backend ti-lex";
+  }else{
+    modelSelect.disabled=false;
+    modelSelect.title="Moteur IA";
+    modelSelect.value=state.model;
+  }
+}
+
+/* ================= SIDEBAR MOBILE ================= */
+function openSidebar(){ sidebar.classList.remove("hidden"); overlay.classList.add("show"); }
+function closeSidebar(){ sidebar.classList.add("hidden"); overlay.classList.remove("show"); }
+function toggleSidebar(){ sidebar.classList.contains("hidden")?openSidebar():closeSidebar(); }
+
+/* ================= ÉVÈNEMENTS ================= */
+$("btnNew").onclick=()=>{ if(!state.busy){ newChat(); if(window.innerWidth<=840) closeSidebar(); } };
+$("btnSidebar").onclick=toggleSidebar;
+overlay.onclick=closeSidebar;
+
+agentToggle.onclick=()=>setAgent(state.agent==="direct"?"auto":"direct");
+
+modelSelect.onchange=()=>{ state.model=modelSelect.value; saveAll(); };
+
+btnSend.onclick=()=>{ if(state.busy){ state.stop=true; } else onSend(); };
+
+inputEl.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && !e.shiftKey){
+    e.preventDefault();
+    if(!state.busy) onSend();
+  }
 });
-document.getElementById('form').addEventListener('submit',async function(e){
-  e.preventDefault();
-  if(enCours) return;
-  var txt=entree.value.trim(); if(!txt) return;
-  entree.value='';entree.style.height='auto';
-  var u=ajouterRang('u'); u.bulle.textContent=txt;
-  enCours=true; document.getElementById('btn').disabled=true;
-  try{ await envoyer(txt); }
-  finally{ enCours=false; document.getElementById('btn').disabled=false; entree.focus(); }
+function autosize(){ inputEl.style.height="auto"; inputEl.style.height=Math.min(inputEl.scrollHeight,180)+"px"; }
+inputEl.addEventListener("input", autosize);
+
+/* Suggestions + copier code (délégation) */
+chatInner.addEventListener("click", e=>{
+  const sg=e.target.closest("[data-sugg]");
+  if(sg && !state.busy){ onSend(sg.getAttribute("data-sugg")); return; }
+  const cp=e.target.closest(".copy-code");
+  if(cp){
+    const pre=cp.closest(".codewrap").querySelector("pre");
+    if(pre){ copyText(pre.innerText); cp.textContent="✓ Copié"; setTimeout(()=>cp.textContent="⧉ Copier",1400); }
+  }
 });
 
-/* Init */
-(function(){
-  var sauve=null; try{ sauve=localStorage.getItem('tilex-chat-agent'); }catch(e){}
-  agentActif = (sauve && trouverAgent(sauve).id===sauve) ? sauve : AGENT_DEFAUT;
-  construireSidebar();
-  choisirAgent(agentActif);
-  nouvelleConvo();
-})();
+window.addEventListener("beforeunload", saveAll);
+
+/* ================= INIT ================= */
+renderModelSelect();
+renderAgentList();
+renderQuickbar();
+updateAgentToggle();
+if(!state.chats.length) newChat();
+else{ state.cur=state.chats[0].id; renderChatList(); renderAllMessages(); }
+if(window.innerWidth<=840) sidebar.classList.add("hidden");
+autosize();
 </script>
 </body>
 </html>
