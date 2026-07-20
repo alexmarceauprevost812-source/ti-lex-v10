@@ -1150,15 +1150,15 @@ const TILEX_TOOL_LABELS={ web_search:"🌐 Recherche web…", recherche_media:"�
   get_company_profile:"📈 Profil d'entreprise…", lancer_scan_securite:"🔰 Scan de sécurité…",
   analyser_journal_securite:"📊 Analyse des journaux…" };
 
-async function tilexChat(messages, onFull){
+async function tilexChat(messages, onFull, modelOverride){
   const sys=messages.filter(m=>m.role==="system").map(m=>m.content).join("\n\n");
   const convo=messages.filter(m=>m.role!=="system");
   const token=await tilexToken();
   const headers={ "Content-Type":"application/json" };
   if(token) headers["Authorization"]="Bearer "+token;
-  const corps={ kind:"chat", model:tilexModel(), max_tokens:4096, messages:convo.slice(-40) };
+  const corps={ kind:"chat", model:modelOverride||tilexModel(), max_tokens:4096, messages:convo.slice(-40) };
   if(sys) corps.system=sys;
-  if(TILEX_AGENTS[state.agent]) corps.web_search=true;
+  if(!modelOverride && TILEX_AGENTS[state.agent]) corps.web_search=true;
   const res=await fetch(window.AI_PROXY,{ method:"POST", headers, body:JSON.stringify(corps) });
   if(!res.ok){
     let em="Erreur "+res.status;
@@ -1195,31 +1195,56 @@ async function tilexChat(messages, onFull){
   return full;
 }
 
+/* 🛟 REPLI AUTOMATIQUE : si un moteur gratuit (Puter) répond pas — script pas
+   chargé, popup de compte Puter bloqué (fréquent en PWA installée), modèle
+   indisponible — on bascule SANS BRUIT sur le backend ti-lex (Haiku, rapide).
+   Résultat : TOUS les agents répondent toujours. */
+const TILEX_MODELE_REPLI="claude-haiku-4-5-20251001";
+
 async function askOnce(messages){
   if(isTilex()) return await tilexChat(messages, null);
-  const r = await puter.ai.chat(messages, { model: state.model });
-  return extractText(r);
+  try{
+    if(typeof puter==="undefined"||!puter.ai) throw new Error("puter absent");
+    const r = await puter.ai.chat(messages, { model: state.model });
+    const t = extractText(r);
+    if(!t || !t.trim()) throw new Error("réponse vide");
+    return t;
+  }catch(e){
+    console.warn("[ti-lex] moteur gratuit indisponible ("+(e&&e.message)+") — repli backend Haiku");
+    return await tilexChat(messages, null, TILEX_MODELE_REPLI);
+  }
 }
 
 async function streamChat(messages, onFull){
   if(isTilex()) return await tilexChat(messages, onFull);
-  const resp = await puter.ai.chat(messages, { model: state.model, stream:true });
-  let full="";
-  if(resp && typeof resp[Symbol.asyncIterator]==="function"){
-    for await (const part of resp){
-      if(state.stop) break;
-      let t = "";
-      if(part){
-        if(typeof part.text==="string") t=part.text;
-        else if(typeof part==="string") t=part;
+  try{
+    if(typeof puter==="undefined"||!puter.ai) throw new Error("puter absent");
+    const resp = await puter.ai.chat(messages, { model: state.model, stream:true });
+    let full="";
+    if(resp && typeof resp[Symbol.asyncIterator]==="function"){
+      for await (const part of resp){
+        if(state.stop) break;
+        let t = "";
+        if(part){
+          if(typeof part.text==="string") t=part.text;
+          else if(typeof part==="string") t=part;
+        }
+        if(t){ full+=t; onFull(full); }
       }
-      if(t){ full+=t; onFull(full); }
+    }else{
+      full = extractText(resp);
+      onFull(full);
     }
-  }else{
-    full = extractText(resp);
-    onFull(full);
+    if(!full || !full.trim()){
+      if(state.stop) return full;
+      throw new Error("réponse vide");
+    }
+    return full;
+  }catch(e){
+    if(state.stop) return "";
+    console.warn("[ti-lex] moteur gratuit indisponible ("+(e&&e.message)+") — repli backend Haiku");
+    return await tilexChat(messages, onFull, TILEX_MODELE_REPLI);
   }
-  return full;
 }
 
 function toApi(msgs){
@@ -1415,12 +1440,8 @@ async function onSend(textOverride){
   const text=(textOverride!=null ? textOverride : inputEl.value).trim();
   if(!text) return;
 
-  // Marceau + modèles « tilex: » passent par le backend ti-lex (ai-proxy) —
-  // Puter.js est seulement requis pour les moteurs gratuits externes.
-  if(!isTilex() && (typeof puter==="undefined" || !puter.ai)){
-    alert("Puter.js n'a pas chargé — vérifie ta connexion internet pis recharge la page, ou choisis Marceau 🔥 (backend ti-lex).");
-    return;
-  }
+  // Plus de blocage si Puter.js a pas chargé : streamChat/askOnce basculent
+  // automatiquement sur le backend ti-lex (repli Haiku) — on envoie toujours.
 
   let chat=currentChat(); if(!chat) chat=newChat();
   hideWelcome();
