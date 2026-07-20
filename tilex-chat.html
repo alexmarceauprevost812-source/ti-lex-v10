@@ -49,6 +49,12 @@
   .agent .nom{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px;}
   .agent .desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;}
   .agent .puce{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+  .agent-ava{width:22px;height:22px;border-radius:6px;object-fit:cover;flex:0 0 22px;
+    background:#000;box-shadow:0 0 0 1px rgba(255,90,31,.35);}
+  .hd-ava{width:34px;height:34px;border-radius:9px;object-fit:cover;flex:0 0 34px;background:#000;
+    box-shadow:0 0 0 1px rgba(255,90,31,.4);}
+  .ava.img{background:#000!important;padding:0;overflow:hidden;}
+  .ava.img img{width:100%;height:100%;object-fit:cover;display:block;}
 
   /* ── Zone chat ── */
   .zone{flex:1;display:flex;flex-direction:column;min-width:0;}
@@ -118,8 +124,9 @@
   <main class="zone">
     <div class="chat-hd">
       <button class="burger" onclick="ouvrirSidebar()">☰</button>
+      <img id="hd-ava" class="hd-ava" alt="" style="display:none" onerror="this.style.display='none'">
       <div>
-        <div class="titre" id="hd-titre">Agent AL</div>
+        <div class="titre" id="hd-titre">Marceau</div>
         <div class="sous" id="hd-sous"></div>
       </div>
     </div>
@@ -145,8 +152,22 @@
    ===================================================================== */
 var AGENTS = [
   { groupe:"Agent autonome", items:[
+    { id:"marceau", nom:"Marceau", icone:"🔥", couleur:"#ff5a1f",
+      avatar:"/assets/marceau-logo.png",
+      desc:"Agent autonome capable de TOUT — recherche web, images, vidéos, bourse, sécurité. Les meilleures réponses, en direct.",
+      autonome:true, model:"claude-opus-4-8",
+      systeme:"Tu es Marceau, l'agent IA autonome de la plateforme ti-lex (Québec ⚜️). "
+        +"Tu es capable de TOUT : tu réponds à n'importe quelle question avec la MEILLEURE réponse possible, "
+        +"factuelle et à jour. Tu utilises tes outils de toi-même quand ça aide — recherche web pour l'actualité "
+        +"et les faits récents, images/vidéos quand la personne veut VOIR quelque chose, cotations boursières en "
+        +"direct, scans de sécurité. Tu ne dis jamais « je ne peux pas chercher » : tu cherches. "
+        +"Tu donnes des réponses réelles, complètes et vérifiées — jamais d'invention ; si une info n'est pas "
+        +"confirmée, tu le dis franchement.\n"
+        +"Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum qui connait la personne. "
+        +"Tu vas droit au but, en paragraphes courts et aérés, avec des tournures d'ici (correc, en masse, pantoute, "
+        +"checke ça) sans en beurrer épais. Tu utilises des listes seulement quand ça aide vraiment." },
     { id:"al-auto", nom:"Agent AL", icone:"⚡", couleur:"#37e0a0",
-      desc:"Répond à tout — recherche web, images, vidéos, bourse, en direct.",
+      desc:"L'agent AL classique — recherche web, images, vidéos, bourse, en direct.",
       autonome:true, model:"claude-sonnet-4-6" }
   ]},
   { groupe:"Modèles directs (sans web)", items:[
@@ -158,7 +179,7 @@ var AGENTS = [
       desc:"Le plus puissant. Raisonnement et tâches complexes." }
   ]}
 ];
-var AGENT_DEFAUT = "al-auto";
+var AGENT_DEFAUT = "marceau";
 
 /* =====================================================================
    2. ÉTAT
@@ -187,8 +208,14 @@ function construireSidebar(){
       el.className='agent'+(a.id===agentActif?' actif':'');
       el.dataset.id=a.id;
       var nom=document.createElement('div');nom.className='nom';
-      var puce=document.createElement('span');puce.className='puce';puce.style.background=a.couleur;
-      nom.appendChild(puce);nom.appendChild(document.createTextNode(a.icone+' '+a.nom));
+      if(a.avatar){
+        var av=document.createElement('img');av.className='agent-ava';av.src=a.avatar;av.alt='';
+        av.onerror=function(){this.style.display='none';};
+        nom.appendChild(av);nom.appendChild(document.createTextNode(a.nom));
+      } else {
+        var puce=document.createElement('span');puce.className='puce';puce.style.background=a.couleur;
+        nom.appendChild(puce);nom.appendChild(document.createTextNode(a.icone+' '+a.nom));
+      }
       var desc=document.createElement('div');desc.className='desc';desc.textContent=a.desc;
       el.appendChild(nom);el.appendChild(desc);
       el.addEventListener('click',function(){choisirAgent(a.id);fermerSidebar();});
@@ -201,7 +228,9 @@ function choisirAgent(id){
   try{ localStorage.setItem('tilex-chat-agent',id); }catch(e){}
   document.querySelectorAll('.agent').forEach(function(el){el.classList.toggle('actif',el.dataset.id===id);});
   var a=trouverAgent(id);
-  document.getElementById('hd-titre').textContent=a.icone+' '+a.nom;
+  var hdAva=document.getElementById('hd-ava');
+  if(a.avatar){ hdAva.src=a.avatar; hdAva.style.display='block'; } else { hdAva.style.display='none'; }
+  document.getElementById('hd-titre').textContent=(a.avatar?'':a.icone+' ')+a.nom;
   document.getElementById('hd-sous').textContent=a.autonome?'Recherche web active — pose n\'importe quelle question':'Modèle direct — connaissances du modèle';
   document.getElementById('avis').textContent=a.autonome
     ? 'Agent autonome : recherche web + images + vidéos + bourse. Peut se tromper — vérifie l\'important.'
@@ -251,7 +280,14 @@ function rendreMd(txt){
 function ajouterRang(role){
   var wrap=document.getElementById('messages');
   var rang=document.createElement('div');rang.className='rang '+role;
-  var ava=document.createElement('div');ava.className='ava '+role;ava.textContent=role==='u'?'🧑':'⚡';
+  var ava=document.createElement('div');ava.className='ava '+role;
+  var actif=trouverAgent(agentActif);
+  if(role==='a'&&actif.avatar){
+    ava.classList.add('img');
+    var im=document.createElement('img');im.src=actif.avatar;im.alt='';
+    im.onerror=function(){this.parentNode.textContent=actif.icone||'⚡';};
+    ava.appendChild(im);
+  } else { ava.textContent=role==='u'?'🧑':(actif.icone||'⚡'); }
   var col=document.createElement('div');col.style.minWidth='0';col.style.flex='1';
   var bulle=document.createElement('div');bulle.className='bulle';
   col.appendChild(bulle);
@@ -297,6 +333,7 @@ async function envoyer(texte){
     if(token) headers['Authorization']='Bearer '+token;
     var corps={ kind:'chat', model:a.model||a.id, max_tokens:4096, messages:historique.slice(-40) };
     if(a.autonome) corps.web_search=true;
+    if(a.systeme) corps.system=a.systeme;
 
     var res=await fetch(window.AI_PROXY,{ method:'POST', headers:headers, body:JSON.stringify(corps) });
     if(!res.ok){
@@ -371,9 +408,16 @@ function nouvelleConvo(){
   document.getElementById('messages').innerHTML='';
   var a=trouverAgent(agentActif);
   var m=ajouterRang('a');
-  m.bulle.innerHTML=rendreMd(a.autonome
-    ? "Salut ! Moi c'est **AL**, ton agent autonome. Pose-moi n'importe quelle question — je peux chercher sur le web, trouver des images et des vidéos, sortir des cours de bourse en direct. Vas-y !"
-    : "Salut ! Tu jases avec **"+a.nom+"** en direct (sans recherche web). Qu'est-ce que je peux faire pour toi ?");
+  var accueil;
+  if(a.id==='marceau')
+    accueil="Salut ! Moi c'est **Marceau** 🔥 — ton agent autonome capable de **tout**. "
+      +"Pose-moi n'importe quelle question : je cherche sur le web pour l'actualité, je trouve des images pis des vidéos, "
+      +"je sors des cours de bourse en direct, je scanne la sécurité. Je te donne toujours la **meilleure réponse réelle**. Vas-y, envoye !";
+  else if(a.autonome)
+    accueil="Salut ! Moi c'est **AL**, ton agent autonome. Pose-moi n'importe quelle question — je peux chercher sur le web, trouver des images et des vidéos, sortir des cours de bourse en direct. Vas-y !";
+  else
+    accueil="Salut ! Tu jases avec **"+a.nom+"** en direct (sans recherche web). Qu'est-ce que je peux faire pour toi ?";
+  m.bulle.innerHTML=rendreMd(accueil);
 }
 function ouvrirSidebar(){ document.getElementById('sidebar').classList.add('ouverte'); document.getElementById('overlay').classList.add('on'); }
 function fermerSidebar(){ document.getElementById('sidebar').classList.remove('ouverte'); document.getElementById('overlay').classList.remove('on'); }
