@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ti-lex — Chat multi-agents</title>
+<!--
+  ti-lex-AL v10 — tilex-chat.html
+  Interface de chat autonome pour jaser avec plusieurs "agents" (chacun =
+  un modèle Claude différent, choisi selon la tâche). Vanilla JS, zéro build,
+  même style que le reste de la plateforme.
+
+  IMPORTANT — pas de Puter.ai ici : ce projet gère déjà sa clé Anthropic
+  côté serveur (secret Supabase ANTHROPIC_API_KEY, utilisé par l'edge
+  function ai-proxy). Appeler Puter.ai demanderait un tout nouveau compte/
+  service séparé, pour rien — ai-proxy fait déjà exactement ce travail avec
+  la clé déjà configurée. Les modèles OpenAI/ChatGPT ne sont pas listés
+  (ils demanderaient une clé API séparée, payante, non configurée ici).
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+<script src="/js/tilex-config.js"></script>
+<style>
+  :root{
+    --bg:#0a0a0a; --bg2:#111114; --bg3:#17171c; --border:#23232c;
+    --txt:#e7e7ee; --muted:#9a9aa5; --orange:#ff7f27; --vert:#37e0a0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'JetBrains Mono',ui-monospace,Consolas,monospace;height:100vh;overflow:hidden;}
+  .shell{display:flex;height:100vh;}
+
+  /* ── Sidebar : liste des agents (= modèles), groupés par fournisseur ── */
+  .sidebar{width:260px;flex:0 0 260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+  .sidebar-hd{padding:16px 14px 10px;font-weight:800;font-size:13px;letter-spacing:.04em;color:var(--orange);border-bottom:1px solid var(--border);}
+  .agent-group-label{padding:12px 14px 4px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .agent-item{margin:2px 8px;padding:10px 10px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;border:1px solid transparent;}
+  .agent-item:hover{background:var(--bg3);}
+  .agent-item.actif{background:rgba(255,127,39,0.10);border-color:rgba(255,127,39,0.35);}
+  .agent-item .nom{font-weight:700;}
+  .agent-item .id{font-size:10px;color:var(--muted);}
+
+  /* ── Zone de chat ── */
+  .zone-chat{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .chat-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .chat-hd .titre{font-weight:800;font-size:14px;}
+  .chat-hd .agent-actuel{font-size:11px;color:var(--muted);}
+  .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+  .msg{max-width:74%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+  .msg.u{align-self:flex-end;background:var(--orange);color:#100800;}
+  .msg.a{align-self:flex-start;background:var(--bg3);border:1px solid var(--border);}
+  .msg.a.err{border-color:#ff3a5c66;color:#ff8fa3;}
+  .zone-saisie{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;}
+  .zone-saisie input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--txt);font-family:inherit;font-size:14px;}
+  .zone-saisie input:focus{outline:none;border-color:var(--orange);}
+  .zone-saisie button{background:var(--orange);color:#100800;border:0;border-radius:10px;padding:0 20px;font-weight:800;cursor:pointer;font-size:14px;}
+  .zone-saisie button:disabled{opacity:.5;cursor:not-allowed;}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-hd">🤖 AGENTS</div>
+  </nav>
+  <main class="zone-chat">
+    <div class="chat-hd">
+      <div class="titre">ti-lex — Chat multi-agents</div>
+      <div class="agent-actuel" id="agent-actuel-label"></div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <form class="zone-saisie" id="form-saisie" autocomplete="off">
+      <input id="input-msg" type="text" placeholder="Écris ton message…" maxlength="4000" />
+      <button type="submit" id="btn-envoyer">Envoyer</button>
+    </form>
+  </main>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------
+   1. LES AGENTS DISPONIBLES
+   Chaque groupe = un fournisseur. Chaque agent = [id, nom affiché].
+   L'id est envoyé tel quel à ai-proxy (champ "model").
+   Extraits des modèles réellement utilisés dans pro.html (dropdowns
+   #set-model, .csd-item, #se-model-agent) : uniquement Anthropic, comme
+   demandé — pas de ChatGPT/OpenAI (clé API séparée, payante, non gérée ici).
+   --------------------------------------------------------------------- */
+const MODELS = [
+  { group:"Anthropic", items:[
+    ["claude-haiku-4-5-20251001","Claude Haiku 4.5 — Rapide"],
+    ["claude-sonnet-4-6","Claude Sonnet 4.6 — Recommandé"],
+    ["claude-opus-4-8","Claude Opus 4.8 — Haute performance"]
+  ]}
+];
+const DEFAULT_MODEL = "claude-sonnet-4-6";
+
+/* ---------------------------------------------------------------------
+   2. ÉTAT
+   --------------------------------------------------------------------- */
+let modeleActif = DEFAULT_MODEL;
+let historique = [];
+let enTrainDEnvoyer = false;
+
+function trouverLabel(id){
+  for (const g of MODELS) for (const [mid, label] of g.items) if (mid === id) return label;
+  return id;
+}
+
+/* ---------------------------------------------------------------------
+   3. SIDEBAR — construction de la liste d'agents
+   --------------------------------------------------------------------- */
+function construireSidebar(){
+  const sb = document.getElementById('sidebar');
+  MODELS.forEach(groupe => {
+    const lbl = document.createElement('div');
+    lbl.className = 'agent-group-label';
+    lbl.textContent = groupe.group;
+    sb.appendChild(lbl);
+    groupe.items.forEach(([id, nom]) => {
+      const item = document.createElement('div');
+      item.className = 'agent-item' + (id === modeleActif ? ' actif' : '');
+      item.dataset.id = id;
+      item.innerHTML = `<span class="nom"></span><span class="id"></span>`;
+      item.querySelector('.nom').textContent = nom;
+      item.querySelector('.id').textContent = id;
+      item.addEventListener('click', () => choisirAgent(id));
+      sb.appendChild(item);
+    });
+  });
+}
+function choisirAgent(id){
+  modeleActif = id;
+  document.querySelectorAll('.agent-item').forEach(el => {
+    el.classList.toggle('actif', el.dataset.id === id);
+  });
+  majEnteteAgent();
+}
+function majEnteteAgent(){
+  document.getElementById('agent-actuel-label').textContent = 'Agent actuel : ' + trouverLabel(modeleActif);
+}
+
+/* ---------------------------------------------------------------------
+   4. AFFICHAGE DES MESSAGES (anti-XSS : textContent partout)
+   --------------------------------------------------------------------- */
+function ajouterMessage(role, texte, estErreur){
+  const wrap = document.getElementById('messages');
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role === 'u' ? 'u' : ('a' + (estErreur ? ' err' : '')));
+  el.textContent = texte;
+  wrap.appendChild(el);
+  wrap.scrollTop = wrap.scrollHeight;
+  return el;
+}
+
+/* ---------------------------------------------------------------------
+   5. ENVOI — appelle ai-proxy (streaming SSE), pas puter.ai.
+   Auth optionnelle : si une session Supabase existe on l'attache (pour le
+   suivi d'usage côté serveur), sinon ai-proxy accepte l'accès anonyme.
+   --------------------------------------------------------------------- */
+let _sb = null;
+function clientSupabase(){
+  if (_sb) return _sb;
+  if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
+  _sb = window.supabase.createClient(window.SB_URL, window.SB_ANON);
+  return _sb;
+}
+async function recupererToken(){
+  try{
+    const sb = clientSupabase();
+    if (!sb) return null;
+    const { data } = await sb.auth.getSession();
+    return data && data.session ? data.session.access_token : null;
+  }catch(e){ return null; }
+}
+
+async function envoyerMessage(texte){
+  historique.push({ role:'user', content: texte });
+  const bulle = ajouterMessage('a', '');
+  let accumule = '';
+
+  try{
+    const token = await recupererToken();
+    const headers = { 'Content-Type':'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const res = await fetch(window.AI_PROXY, {
+      method:'POST', headers,
+      body: JSON.stringify({
+        kind:'chat', model: modeleActif, max_tokens: 4096,
+        messages: historique.slice(-40)
+      })
+    });
+
+    if (!res.ok){
+      let msg = 'Erreur ' + res.status;
+      try{ const j = await res.json(); msg = j.error || msg; }catch(e){}
+      bulle.textContent = '⚠️ ' + msg;
+      bulle.classList.add('err');
+      historique.pop();
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true){
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream:true });
+      const lignes = buf.split('\n');
+      buf = lignes.pop() || '';
+      for (const ligne of lignes){
+        const t = ligne.trim();
+        if (!t.startsWith('data: ')) continue;
+        const payload = t.slice(6);
+        if (payload === '[DONE]') continue;
+        try{
+          const evt = JSON.parse(payload);
+          if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text){
+            accumule += evt.delta.text;
+            bulle.textContent = accumule;
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+          }
+        }catch(e){ /* ligne SSE partielle ou non-JSON, on ignore */ }
+      }
+    }
+    if (!accumule.trim()){
+      bulle.textContent = '(réponse vide)';
+    } else {
+      historique.push({ role:'assistant', content: accumule });
+    }
+  }catch(e){
+    bulle.textContent = '⚠️ Erreur de connexion : ' + e.message;
+    bulle.classList.add('err');
+    historique.pop();
+  }
+}
+
+/* ---------------------------------------------------------------------
+   6. INIT
+   --------------------------------------------------------------------- */
+document.getElementById('form-saisie').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  if (enTrainDEnvoyer) return;
+  const input = document.getElementById('input-msg');
+  const texte = input.value.trim();
+  if (!texte) return;
+  input.value = '';
+  ajouterMessage('u', texte);
+  enTrainDEnvoyer = true;
+  document.getElementById('btn-envoyer').disabled = true;
+  try{ await envoyerMessage(texte); }
+  finally{
+    enTrainDEnvoyer = false;
+    document.getElementById('btn-envoyer').disabled = false;
+    input.focus();
+  }
+});
+
+construireSidebar();
+majEnteteAgent();
+ajouterMessage('a', "Salut ! Choisis un agent dans le menu de gauche pis jase avec moi.");
+</script>
+</body>
+</html>

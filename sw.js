@@ -156,6 +156,7 @@ const ASSETS = [
   "/js/tilex-youtube.js",
   "/css/tilex-youtube.css",
   "/schemas-animes/index.html",
+  "/tilex-chat.html",
   "/assets/intro/plate.jpg",
 ];
 
