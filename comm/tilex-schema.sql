@@ -78,14 +78,19 @@ alter table public.tilex_push_subs enable row level security;
 -- POLITIQUES — tilex_messages
 -- ----------------------------------------------------------------------------
 
--- Lecture : un usager authentifié peut lire les messages des salons.
--- (Si tu veux un salon privé par usager, remplace par : auth.uid() = auth_uid)
+-- Lecture : salon PRIVÉ par usager — chaque personne ne lit QUE ses propres
+-- messages (synchro entre ses appareils mobile ↔ ordinateur). Ferme la fuite :
+-- avec un salon global partagé (using(true)), n'importe quel usager connecté
+-- pouvait lire les messages ET les auth_uid des autres via l'endpoint REST.
+-- On DROP aussi l'ancien nom au cas où il traînerait (les policies s'additionnent
+-- en OR : une seule policy using(true) rouvrirait tout).
 drop policy if exists "lecture_messages_authentifies" on public.tilex_messages;
-create policy "lecture_messages_authentifies"
+drop policy if exists "lecture_messages_proprietaire" on public.tilex_messages;
+create policy "lecture_messages_proprietaire"
   on public.tilex_messages
   for select
   to authenticated
-  using (true);
+  using (auth.uid() = auth_uid);
 
 -- Écriture : un usager ne peut insérer QUE des messages signés de son propre uid.
 -- C'est ça qui ferme le trou : impossible d'écrire au nom d'un autre.

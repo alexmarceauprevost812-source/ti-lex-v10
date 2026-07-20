@@ -42,6 +42,15 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // --- Authentification de l'appelant : OBLIGATOIRE. On ne pousse QUE vers
+    //     les appareils de l'appelant lui-même (modèle privé par usager). Sans ça,
+    //     n'importe quel usager pourrait spammer les appareils d'un autre en
+    //     fournissant son auth_uid (exposé par le Realtime). ---
+    const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    if (!token) return json({ erreur: 'authentification requise' }, 401);
+    const { data: { user: appelant }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !appelant) return json({ erreur: 'jeton invalide' }, 401);
+
     // --- Config VAPID : lues depuis le coffre tilex_secrets (RLS verrouillée,
     //     service_role seulement), avec repli sur les variables d'environnement. ---
     const { data: vapid } = await supabase
@@ -60,15 +69,22 @@ Deno.serve(async (req: Request) => {
     webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
 
     const charge: Charge = await req.json();
-    if (!charge.destinataire_uid || !charge.corps) {
-      return json({ erreur: 'destinataire_uid et corps sont requis' }, 400);
+    if (!charge.corps) {
+      return json({ erreur: 'corps est requis' }, 400);
     }
+    // La cible est TOUJOURS l'appelant lui-même : on ignore tout destinataire_uid
+    // fourni (ou on refuse s'il vise quelqu'un d'autre). Impossible de pousser
+    // vers les appareils d'un autre usager.
+    if (charge.destinataire_uid && charge.destinataire_uid !== appelant.id) {
+      return json({ erreur: 'interdit : on ne peut notifier que ses propres appareils' }, 403);
+    }
+    const cibleUid = appelant.id;
 
-    // --- Va chercher tous les abonnements push du destinataire ---
+    // --- Va chercher tous les abonnements push de l'appelant ---
     const { data: subs, error } = await supabase
       .from('tilex_push_subs')
       .select('endpoint, p256dh, auth_key')
-      .eq('auth_uid', charge.destinataire_uid);
+      .eq('auth_uid', cibleUid);
 
     if (error) return json({ erreur: error.message }, 500);
     if (!subs || subs.length === 0) {
