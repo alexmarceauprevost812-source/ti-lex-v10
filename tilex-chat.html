@@ -374,7 +374,22 @@ select.model-select option{background:var(--panel);color:#eee;font-weight:400}
 /* ---------- AGENTS (sidebar) ---------- */
 .agents-block{display:flex;flex-direction:column;gap:2px}
 .agents-block .label,.chat-list .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;padding:6px 8px 4px}
-.agent-list{display:flex;flex-direction:column;gap:4px}
+/* Liste des agents DÉFILABLE : avec 9 agents, elle débordait de l'écran sans
+   aucun moyen de descendre. Hauteur bornée + molette/doigt + flèches ▲▼. */
+.agent-list{display:flex;flex-direction:column;gap:4px;max-height:42vh;overflow-y:auto;padding-right:2px;scroll-behavior:smooth}
+.agent-list::-webkit-scrollbar{width:7px}
+.agent-list::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:99px}
+.agent-list::-webkit-scrollbar-thumb:hover{background:#3e3e3e}
+.label-agents{display:flex;align-items:center;justify-content:space-between}
+.ag-arrows{display:flex;gap:4px}
+.ag-arrows button{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--muted);
+  width:24px;height:20px;border-radius:6px;font-size:9px;line-height:1;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s;
+}
+.ag-arrows button:hover{color:var(--orange);border-color:var(--orange)}
+.ag-arrows button:disabled{opacity:.3;cursor:default}
+.ag-arrows.masque{display:none}
 .agent-item{
   display:flex;align-items:center;gap:9px;width:100%;text-align:left;
   padding:7px 9px;border-radius:10px;cursor:pointer;
@@ -441,7 +456,12 @@ select.model-select option{background:var(--panel);color:#eee;font-weight:400}
     </button>
 
     <div class="agents-block">
-      <div class="label">Agents</div>
+      <div class="label label-agents">Agents
+        <span class="ag-arrows">
+          <button type="button" id="agUp" title="Monter dans la liste des agents">▲</button>
+          <button type="button" id="agDown" title="Descendre dans la liste des agents">▼</button>
+        </span>
+      </div>
       <div class="agent-list" id="agentList"></div>
     </div>
 
@@ -1462,6 +1482,25 @@ function renderModelSelect(){
   modelSelect.value=state.model;
 }
 
+/* Flèches ▲▼ de la colonne des agents : défilement doux + visibilité auto
+   (masquées si toute la liste rentre déjà à l'écran). */
+function majFlechesAgents(){
+  const box=$("agentList"), wrap=document.querySelector(".ag-arrows");
+  if(!box||!wrap) return;
+  const deborde=box.scrollHeight>box.clientHeight+4;
+  wrap.classList.toggle("masque", !deborde);
+  const up=$("agUp"), down=$("agDown");
+  if(up) up.disabled=box.scrollTop<=2;
+  if(down) down.disabled=box.scrollTop+box.clientHeight>=box.scrollHeight-2;
+}
+(function(){
+  const up=$("agUp"), down=$("agDown"), box=$("agentList");
+  if(up) up.onclick=()=>{ box.scrollBy({top:-140,behavior:"smooth"}); };
+  if(down) down.onclick=()=>{ box.scrollBy({top:140,behavior:"smooth"}); };
+  if(box) box.addEventListener("scroll", majFlechesAgents);
+  window.addEventListener("resize", majFlechesAgents);
+})();
+
 function renderAgentList(){
   const box=$("agentList");
   box.innerHTML="";
@@ -1474,6 +1513,7 @@ function renderAgentList(){
     b.onclick=()=>setAgent(key);
     box.appendChild(b);
   });
+  requestAnimationFrame(majFlechesAgents);
 }
 
 function renderQuickbar(){
