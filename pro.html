@@ -4282,6 +4282,17 @@ function _isGithubRequest(txt){
   return false;
 }
 
+/* ── Détection « la personne veut un schéma » — force AL à répondre avec un
+   bloc ```tilex-schema (SCHEMA_HINT est une suggestion douce, pas toujours
+   suivie) au lieu de compter juste sur le jugement du modèle. ── */
+function _isSchemaRequest(txt){
+  var lc=(txt||"").toLowerCase();
+  var kw=["schéma","schema","diagramme","organigramme","carte mentale","flowchart","flow chart","mindmap","carte heuristique"];
+  for(var i=0;i<kw.length;i++){if(lc.includes(kw[i]))return true;}
+  return false;
+}
+var SCHEMA_FORCE_HINT="\n\nIMPORTANT : la personne demande explicitement un schéma/diagramme dans ce message. Réponds avec un bloc ```tilex-schema (format JSON déjà décrit plus haut) en plus d'une courte explication — ne saute pas cette étape.";
+
 /* ── Filet de sécurité du streaming ──
    Si une bulle streamée reste en texte brut avec des clôtures ``` visibles
    (stream coupé par le réseau, réponse finale vide, exception en cours de route),
@@ -4400,7 +4411,7 @@ async function sendChat(){
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
-      system:getSystemPrompt(),
+      system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
       messages:chatHistory.slice(-20),
       ...(webSearchMode?{web_search:true}:{})
     })});
@@ -7084,10 +7095,14 @@ function composeAction(action){
   else if(action==="schema"){
     var sujet=document.getElementById("composer-input").value.trim();
     if(!sujet){addMsg("a","Écris un sujet dans la barre, pis clique 🗺️ Schéma du sujet — je vais bâtir la carte mentale en direct.");return;}
-    document.getElementById("composer-input").value="";
-    document.getElementById("composer-input").style.height="auto";
-    try{ sessionStorage.setItem("tilex-schema-sujet", sujet); }catch(e){}
-    window.location.href="/schema?q="+encodeURIComponent(sujet);
+    (async function(){
+      var autorise=await gardeIA();
+      if(!autorise)return;
+      document.getElementById("chat-in").value="Fais-moi un schéma animé sur : "+sujet;
+      document.getElementById("composer-input").value="";
+      document.getElementById("composer-input").style.height="auto";
+      sendChat();
+    })();
   }
   else if(action==="gh-scan"){
     if(!_alGhConnected||!_alGhToken){addMsg("a","⚠️ GitHub non connecté. Clique ⚙️ Config dans le panel GitHub pour te connecter.");return;}
