@@ -4429,9 +4429,25 @@ async function sendChat(){
       var _agentColor=getComputedStyle(document.documentElement).getPropertyValue('--agent-text-color').trim()||(_isDay?"#000000":"#ffffff");
       EcritureFluide.demarrer(bblText,msgs);
       var _toolStatusEl=null;
+      // 📊 Pendant l'écriture, on CACHE le JSON brut des blocs de schéma (```tilex-schema / ```schema)
+      //    et on affiche « 📊 Construction du schéma… » à la place — jusqu'à ce que le schéma animé
+      //    prenne sa place à la fin (renderSchemasInBubble utilise le vrai texte `reply`, intact).
+      //    Technique : texte affiché = accumulé, avec les fences schéma remplacés par le placeholder,
+      //    moins un début de fence incomplet retenu en fin (évite de montrer « ```sch… »). Append-only.
+      var _rawAcc="";
+      var _shownLen=0;
+      var _SCHEMA_FENCE=/```(?:tilex-schema|schema)\b[\s\S]*?(?:```|$)/g;
+      var _SCHEMA_PH="📊 Construction du schéma…";
       var reply=await readSSEStream(res,function(delta){
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
-        EcritureFluide.ajouterTexte(delta);
+        _rawAcc+=delta;
+        var sani=_rawAcc.replace(_SCHEMA_FENCE,_SCHEMA_PH);
+        var held=sani.match(/`{1,3}[\w-]*$/);           // retient un ouvreur de fence incomplet en toute fin
+        var visible=held?sani.slice(0,sani.length-held[0].length):sani;
+        if(visible.length>_shownLen){
+          EcritureFluide.ajouterTexte(visible.slice(_shownLen));
+          _shownLen=visible.length;
+        }
       },function(status,toolName){
         if(!_toolStatusEl){
           _toolStatusEl=document.createElement("div");
