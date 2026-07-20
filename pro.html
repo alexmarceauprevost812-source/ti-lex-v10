@@ -4683,7 +4683,10 @@ function applyPhaseReveal(container){
     setTimeout(function(){el.style.opacity='1';el.style.transform='none';},delay);
   });
 }
-/* ── SCHÉMAS DANS LE CHAT — rend les blocs ```tilex-schema en SVG (TilexSchemaManager) ── */
+/* ── SCHÉMAS DANS LE CHAT — rend les blocs ```tilex-schema en SVG (TilexSchemaManager) ──
+   Si le JSON est illisible ou le rendu échoue, on ne laisse JAMAIS le code brut
+   (avec ses boutons Copier/Créer un fichier/Studio) affiché à l'utilisateur —
+   on remplace par un petit message clair à la place. */
 function renderSchemasInBubble(el){
   if(!el||!window.TilexSchemaManager)return;
   var blocs=el.querySelectorAll('code.language-tilex-schema, code.language-schema');
@@ -4691,19 +4694,40 @@ function renderSchemasInBubble(el){
     var code=blocs[i];
     var raw=(code.textContent||code.innerText||"").trim();
     if(!raw)continue;
-    var spec=null;
-    try{spec=JSON.parse(raw);}
-    catch(e){ try{spec=JSON.parse(raw.replace(/,\s*([}\]])/g,"$1"));}catch(e2){spec=null;} }
-    if(!spec||!Array.isArray(spec.noeuds)||spec.noeuds.length===0)continue;
     var wrap=code.closest(".code-block-wrap")||code.parentElement;
+    var spec=_parseTilexSchemaJSON(raw);
     var holder=document.createElement("div");
-    holder.className="tilex-schema-chat";
-    holder.style.cssText="margin:10px 0;";
-    try{
-      TilexSchemaManager.generer(holder,spec);
-      if(wrap&&wrap.parentNode)wrap.parentNode.replaceChild(holder,wrap);
-    }catch(e){}
+    if(spec&&Array.isArray(spec.noeuds)&&spec.noeuds.length>0){
+      holder.className="tilex-schema-chat";
+      holder.style.cssText="margin:10px 0;";
+      try{
+        TilexSchemaManager.generer(holder,spec);
+      }catch(e){
+        holder.className="tilex-schema-erreur";
+        holder.style.cssText="margin:10px 0;padding:10px 14px;border-radius:10px;background:rgba(255,127,39,0.08);border:1px solid rgba(255,127,39,0.25);color:var(--muted,#9a9aa5);font-size:13px;";
+        holder.textContent="⚠️ Le schéma n'a pas pu s'afficher. Redemande-le si tu veux réessayer.";
+      }
+    }else{
+      holder.className="tilex-schema-erreur";
+      holder.style.cssText="margin:10px 0;padding:10px 14px;border-radius:10px;background:rgba(255,127,39,0.08);border:1px solid rgba(255,127,39,0.25);color:var(--muted,#9a9aa5);font-size:13px;";
+      holder.textContent="⚠️ Le schéma n'a pas pu s'afficher. Redemande-le si tu veux réessayer.";
+    }
+    if(wrap&&wrap.parentNode)wrap.parentNode.replaceChild(holder,wrap);
   }
+}
+/* ── Parseur JSON tolérant pour les blocs tilex-schema — les LLM font parfois
+   de petites erreurs (virgule finale, guillemets simples, saut de ligne brut
+   dans une chaîne) : on tente plusieurs réparations avant d'abandonner. ── */
+function _parseTilexSchemaJSON(raw){
+  var tentatives=[
+    raw,
+    raw.replace(/,\s*([}\]])/g,"$1"),                                   // virgule finale
+    raw.replace(/,\s*([}\]])/g,"$1").replace(/'([^'\\]*)'/g,'"$1"'),    // + guillemets simples → doubles
+  ];
+  for(var i=0;i<tentatives.length;i++){
+    try{ return JSON.parse(tentatives[i]); }catch(e){ /* essai suivant */ }
+  }
+  return null;
 }
 function ouvrirDansStudio(codeId,lang){
   var codeEl=document.getElementById(codeId);
