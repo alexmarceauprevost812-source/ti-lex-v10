@@ -62,6 +62,28 @@ async function appliquerLimitesReseau(
   }
   return null;
 }
+
+// Réserve un jeton du quota quotidien de l'utilisateur, de façon ATOMIQUE (RPC
+// increment_ai_usage : vérifie ET incrémente en une requête, WHERE conditionnel
+// sur ON CONFLICT). Appelée UNIQUEMENT après la validation locale et juste avant
+// l'appel au fournisseur — ainsi une requête malformée (400) ou une clé manquante
+// ne consomme pas un jeton. Fail-open si la RPC échoue (on ne bloque pas un
+// utilisateur légitime). Retourne une Response 429 si le quota est atteint, sinon null.
+async function reserverQuota(userId: string, kind: "chat" | "image"): Promise<Response | null> {
+  if (userId === "anonymous") return null;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data: quota, error: quotaErr } = await sb.rpc("increment_ai_usage", {
+      p_user_id: userId,
+      p_kind: kind,
+      p_limit: LIMITS[kind],
+    });
+    if (!quotaErr && quota && (quota as any).allowed === false) {
+      return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
+    }
+  } catch (_) {}
+  return null;
+}
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
 const MAX_MESSAGES = 60;
@@ -522,28 +544,12 @@ Deno.serve(async (req) => {
 
     const kind = body.kind === "image" ? "image" : "chat";
 
-    // ---- 3a. Anti-abus par IP (surtout accès anonyme) — fenêtre glissante ----
+    // ---- 3. Anti-abus par IP (surtout accès anonyme) — fenêtre glissante ----
+    //     Le quota quotidien par utilisateur (reserverQuota) est réservé PLUS BAS,
+    //     seulement après la validation locale + juste avant l'appel au fournisseur,
+    //     pour qu'une requête malformée ou une clé absente ne brûle pas un jeton.
     const limitResp = await appliquerLimitesReseau(req, userId, kind);
     if (limitResp) return limitResp;
-
-    // ---- 3b. Quota quotidien par utilisateur — incrément ATOMIQUE (RPC) ----
-    //     L'ancien read-then-upsert était une course concurrente et pointait sur
-    //     une table inexistante. increment_ai_usage() vérifie ET incrémente en une
-    //     seule requête : impossible de dépasser le quota en parallèle. Fail-open
-    //     si la RPC échoue (on ne bloque pas un utilisateur légitime).
-    if (userId !== "anonymous") {
-      try {
-        const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-        const { data: quota, error: quotaErr } = await sb.rpc("increment_ai_usage", {
-          p_user_id: userId,
-          p_kind: kind,
-          p_limit: LIMITS[kind],
-        });
-        if (!quotaErr && quota && (quota as any).allowed === false) {
-          return json({ error: `Limite quotidienne atteinte (${LIMITS[kind]} ${kind})` }, 429);
-        }
-      } catch (_) {}
-    }
 
     // ===================== IMAGE =====================
     if (kind === "image") {
@@ -555,6 +561,10 @@ Deno.serve(async (req) => {
         return json({ error: `Prompt trop long (max ${MAX_PROMPT_LEN})` }, 400);
 
       const size = ALLOWED_SIZES.has(body.size) ? body.size : "1024x1024";
+
+      // Quota réservé ici : requête image validée, clé OpenAI présente.
+      const quotaResp = await reserverQuota(userId, "image");
+      if (quotaResp) return quotaResp;
 
       const r = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
@@ -588,6 +598,11 @@ Deno.serve(async (req) => {
     const userKey = req.headers.get("x-anthropic-key");
     const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
     if (!apiKey) return json({ error: "Aucune cle API configuree. Ajoute ta cle Anthropic dans les Parametres ou en secret Supabase." }, 500);
+
+    // Quota réservé ici : requête chat validée (messages OK, clé présente), juste
+    // avant l'appel au fournisseur — une requête malformée n'a pas brûlé de jeton.
+    const quotaResp = await reserverQuota(userId, "chat");
+    if (quotaResp) return quotaResp;
 
     // ---- Build tools (recherche web optionnelle + bourse si clé FMP + média + sécurité) ----
     const tools: any[] = [];
