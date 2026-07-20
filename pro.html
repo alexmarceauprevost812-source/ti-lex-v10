@@ -7072,10 +7072,14 @@ function composeAction(action){
   else if(action==="web"){
     var query=document.getElementById("composer-input").value.trim();
     if(!query){addMsg("a","Écris ta recherche dans la barre, puis clique 🌐 Recherche Web.");return;}
-    document.getElementById("chat-in").value="Recherche web : "+query;
-    document.getElementById("composer-input").value="";
-    document.getElementById("composer-input").style.height="auto";
-    sendChat();
+    (async function(){
+      var autorise=await gardeIA();
+      if(!autorise)return;
+      document.getElementById("chat-in").value="Recherche web : "+query;
+      document.getElementById("composer-input").value="";
+      document.getElementById("composer-input").style.height="auto";
+      sendChat();
+    })();
   }
   else if(action==="schema"){
     var sujet=document.getElementById("composer-input").value.trim();
@@ -8573,6 +8577,8 @@ function afficherMessageBlocage(raison){
     el.innerHTML='<div class="blocage-icone">🔒</div><div class="blocage-texte"><strong>Connexion requise</strong>Connecte-toi pour utiliser ti-lex-al.</div><button class="blocage-btn" onclick="showTab(\'settings\')">Se connecter</button>';
   }else if(raison==="sans_abonnement"||raison==="no_subscription"){
     el.innerHTML='<div class="blocage-icone">⭐</div><div class="blocage-texte"><strong>Abonnement requis</strong>Choisis un forfait pour accéder à l\'IA.</div><a href="/forfaits" class="blocage-btn blocage-btn-or">Voir les forfaits</a>';
+  }else if(raison==="bonus_exhausted"){
+    el.innerHTML='<div class="blocage-icone">🎁</div><div class="blocage-texte"><strong>Tes 10 questions gratuites sont utilisées</strong>Choisis un forfait pour continuer à jaser avec AL.</div><a href="/forfaits" class="blocage-btn blocage-btn-or">Voir les forfaits</a>';
   }else if(raison==="rate_limited"||raison==="limite_atteinte"){
     el.innerHTML='<div class="blocage-icone">⏳</div><div class="blocage-texte"><strong>Limite atteinte</strong>Tu as utilisé tous tes messages. Recharge bientôt.</div>';
   }else{

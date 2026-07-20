@@ -19,7 +19,6 @@ const PLANS_VALIDES = new Set([
 ]);
 
 const PLAN_LIMITS: Record<string, { window: number; day: number }> = {
-  free:  { window: 10,  day: 20 },
   ti:    { window: 40,  day: 80 },
   flux:  { window: 40,  day: 80 },
   surge: { window: 100, day: 200 },
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
 
     const { data: profil } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, bonus_messages_remaining")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -76,6 +75,31 @@ Deno.serve(async (req) => {
 
     if (!plan || !PLANS_VALIDES.has(plan)) {
       return json({ allowed: false, reason: "no_subscription", plan: null });
+    }
+
+    // Plan gratuit : pas de fenêtre récurrente — 10 questions offertes une
+    // seule fois à l'inscription (profiles.bonus_messages_remaining),
+    // décomptées ici. Une fois épuisées, direction les forfaits.
+    if (plan === "free") {
+      const bonusRemaining = profil?.bonus_messages_remaining ?? 0;
+      if (bonusRemaining <= 0) {
+        return json({
+          allowed: false, reason: "bonus_exhausted", plan,
+          messages_used: 10, messages_remaining: 0, messages_window: 10,
+          message: "Tu as utilisé tes 10 questions gratuites. Choisis un forfait pour continuer.",
+        });
+      }
+      const { error: decErr } = await supabase
+        .from("profiles")
+        .update({ bonus_messages_remaining: bonusRemaining - 1 })
+        .eq("id", user.id)
+        .eq("bonus_messages_remaining", bonusRemaining);
+      if (decErr) console.error("[check-abonnement] échec décompte bonus:", decErr);
+      return json({
+        allowed: true, reason: null, plan, bonus: true,
+        messages_used: 10 - (bonusRemaining - 1), messages_remaining: bonusRemaining - 1,
+        messages_window: 10,
+      });
     }
 
     const limits = PLAN_LIMITS[plan] || { window: 200, day: 400 };
