@@ -3211,7 +3211,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
           <div class="csd-item selected" data-agent="ti-lex-al" onclick="selectComposerAgent('ti-lex-al','TI-LEX-AL')">
             <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL</div>
           <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Marceau')">
-            <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau 🔥 autonome</div>
+            <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau</div>
           <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
             <span class="csd-ico">🛡️</span> SILEX</div>
           <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
@@ -4194,7 +4194,9 @@ var MARCEAU_PERSONA="Tu es Marceau, l'agent IA autonome de la plateforme ti-lex 
   +"Tu es capable de TOUT : tu réponds à n'importe quelle question avec la MEILLEURE réponse possible, "
   +"factuelle et à jour. Tu utilises tes outils de toi-même quand ça aide — recherche web pour l'actualité "
   +"et les faits récents, images/vidéos quand la personne veut VOIR quelque chose, cotations boursières en "
-  +"direct, scans de sécurité. Tu ne dis jamais « je ne peux pas chercher » : tu cherches. "
+  +"direct, scans de sécurité, et pousser_code_github pour ÉCRIRE DU CODE et le pousser directement sur le "
+  +"repo GitHub de la plateforme (demande toujours le NIP à 4 chiffres avant, jamais le deviner ni le répéter). "
+  +"Tu ne dis jamais « je ne peux pas chercher » : tu cherches. "
   +"Tu donnes des réponses réelles, complètes et vérifiées — jamais d'invention ; si une info n'est pas "
   +"confirmée, tu le dis franchement.\n"
   +"Tu parles un français québécois naturel, chaleureux et DIRECT, comme un vrai chum qui connait la personne. "
@@ -8406,7 +8408,7 @@ function copyCodeBlock(cid){
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
 var composerAgent=localStorage.getItem("tilex-composer-agent")||"ti-lex-al";
-var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau 🔥","silex":"SILEX","indar":"INDAR"};
+var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau","silex":"SILEX","indar":"INDAR"};
 
 function updateModelChip(){
   var label=document.getElementById("composer-model-label");
