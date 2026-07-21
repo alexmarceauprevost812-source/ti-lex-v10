@@ -83,6 +83,12 @@ const TilexBureau = (() => {
     return (n || 0).toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 2 });
   }
 
+  // Argent : le nombre en OR, le signe $ en VERT. Signe optionnel devant (ex. « - »).
+  function _argentHTML(n, signe) {
+    const nombre = (n || 0).toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `${signe || ''}<span class="bur-or">${nombre}</span> <span class="bur-vert">$</span>`;
+  }
+
   function _progressif(revenu, paliers) {
     let impot = 0;
     for (let i = 0; i < paliers.length; i++) {
@@ -212,64 +218,71 @@ const TilexBureau = (() => {
     s.textContent = `
       #tilex-bureau-handle {
         position: fixed; top: 50%; right: 0; transform: translateY(-50%);
-        z-index: 99990; width: 26px; height: 92px; cursor: pointer;
-        background: linear-gradient(135deg,#ff3c3c,#b30000); color:#fff;
+        z-index: 99990; width: 24px; height: 96px; cursor: pointer;
+        background: linear-gradient(135deg,#ff7a00,#c25400); color:#000;
         border-radius: 12px 0 0 12px; display:flex; align-items:center; justify-content:center;
-        box-shadow:-3px 0 14px rgba(0,0,0,.4); font-size:15px; writing-mode:vertical-rl;
+        box-shadow:-3px 0 14px rgba(0,0,0,.5); font-size:13px; font-weight:800; writing-mode:vertical-rl;
         letter-spacing:1px; user-select:none;
       }
       #tilex-bureau-overlay {
-        position: fixed; inset: 0; z-index: 99991; background: rgba(0,0,0,.55);
+        position: fixed; inset: 0; z-index: 99991; background: rgba(0,0,0,.65);
         opacity: 0; pointer-events: none; transition: opacity .25s ease;
       }
       #tilex-bureau-overlay.on { opacity: 1; pointer-events: auto; }
       #tilex-bureau {
         position: fixed; top: 0; right: 0; height: 100vh; width: 360px; max-width: 94vw;
-        z-index: 99992; background:#0d1117; border-left:1px solid #21262d;
-        box-shadow:-10px 0 40px rgba(0,0,0,.6); transform: translateX(100%);
+        z-index: 99992; background:#000; border-left:1px solid #1a1a1a;
+        box-shadow:-10px 0 40px rgba(0,0,0,.8); transform: translateX(100%);
         transition: transform .28s cubic-bezier(.4,0,.2,1); overflow-y:auto;
         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-        color:#e6edf3; -webkit-overflow-scrolling: touch;
+        color:#fff; -webkit-overflow-scrolling: touch;
       }
       #tilex-bureau.on { transform: translateX(0); }
-      .bur-head { position:sticky; top:0; background:#0d1117; padding:16px; border-bottom:1px solid #21262d;
+      #tilex-bureau .bur-or   { color:#ffd23f; font-weight:800; }   /* argent gagné = or */
+      #tilex-bureau .bur-vert { color:#3fd07f; font-weight:800; }   /* signe $ = vert */
+      .bur-head { position:sticky; top:0; background:#000; padding:16px; border-bottom:1px solid #1a1a1a;
         display:flex; justify-content:space-between; align-items:center; z-index:2; }
-      .bur-title { font-weight:800; font-size:16px; color:#ff3c3c; }
-      .bur-x { background:none; border:none; color:#8b949e; font-size:22px; cursor:pointer; line-height:1; }
+      .bur-title { font-weight:800; font-size:16px; color:#fff; }
+      .bur-x { background:none; border:none; color:#888; font-size:22px; cursor:pointer; line-height:1; }
       .bur-sec { padding:14px 16px; }
       .bur-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-      .bur-card { background:#161b22; border:1px solid #21262d; border-radius:12px; padding:12px; }
-      .bur-lab { font-size:10px; color:#8b949e; text-transform:uppercase; letter-spacing:.6px; font-weight:700; margin-bottom:4px; }
-      .bur-val { font-size:18px; font-weight:800; }
-      .bur-sub { font-size:11px; color:#8b949e; margin-top:2px; }
-      .bur-blue { color:#58a6ff; } .bur-red { color:#ff3c3c; } .bur-green { color:#3fb950; }
+      .bur-card { background:#0b0b0b; border:1px solid #1e1e1e; border-radius:12px; padding:12px; }
+      .bur-lab { font-size:10px; color:#8a8a8a; text-transform:uppercase; letter-spacing:.6px; font-weight:700; margin-bottom:4px; }
+      .bur-val { font-size:18px; font-weight:800; color:#fff; }
+      .bur-sub { font-size:11px; color:#8a8a8a; margin-top:2px; }
       .bur-start { width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:800;
-        cursor:pointer; background:#3fb950; color:#04260f; margin-top:4px; }
-      .bur-start.on { background:#ff3c3c; color:#fff; }
+        cursor:pointer; background:#ff7a00; color:#000; margin-top:4px; }
+      .bur-start.on { background:#ff4500; color:#fff; }
       .bur-weeknav { display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px; }
-      .bur-weeknav button { background:#21262d; border:1px solid #30363d; color:#e6edf3; border-radius:8px;
-        padding:6px 12px; cursor:pointer; font-size:13px; }
+      .bur-weeknav button { background:#111; border:1px solid #ff7a00; color:#ff7a00; border-radius:8px;
+        padding:6px 12px; cursor:pointer; font-size:13px; font-weight:700; }
       .bur-week { display:flex; flex-direction:column; gap:6px; }
-      .bur-day { display:flex; align-items:center; gap:8px; background:#161b22; border:1px solid #21262d;
+      .bur-day { display:flex; align-items:center; gap:8px; background:#0b0b0b; border:1px solid #1e1e1e;
         border-radius:10px; padding:8px 10px; }
-      .bur-day.today { border-color:#ff3c3c; }
-      .bur-day .d-nom { flex:1; font-size:13px; }
-      .bur-day .d-date { font-size:10px; color:#8b949e; }
-      .bur-day input { width:52px; background:#0d1117; border:1px solid #30363d; color:#e6edf3;
+      .bur-day.today { border-color:#ff7a00; }
+      .bur-day .d-nom { flex:1; font-size:13px; color:#fff; }
+      .bur-day .d-date { font-size:10px; color:#8a8a8a; }
+      .bur-day input { width:52px; background:#000; border:1px solid #333; color:#fff;
         border-radius:6px; padding:5px; font-size:13px; text-align:center; }
-      .bur-day .d-mini { font-size:9px; color:#8b949e; text-align:center; }
+      .bur-day .d-mini { font-size:9px; color:#8a8a8a; text-align:center; }
       .bur-taux { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-      .bur-taux input { width:70px; background:#0d1117; border:1px solid #30363d; color:#e6edf3;
-        border-radius:8px; padding:8px; font-size:14px; text-align:center; }
-      .bur-fisc { background:#161b22; border:1px solid #21262d; border-radius:12px; padding:12px; }
-      .bur-fisc .l { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; color:#c9d1d9; }
-      .bur-fisc .l.net { border-top:1px solid #30363d; margin-top:6px; padding-top:8px; font-size:15px; font-weight:800; color:#3fb950; }
-      .bur-fisc .l.brut { font-weight:700; color:#e6edf3; }
+      .bur-taux input { width:70px; background:#000; border:1px solid #ff7a00; color:#ffd23f;
+        border-radius:8px; padding:8px; font-size:14px; text-align:center; font-weight:800; }
+      .bur-fisc { background:#0b0b0b; border:1px solid #1e1e1e; border-radius:12px; padding:12px; }
+      .bur-fisc .l { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; color:#cfcfcf; }
+      .bur-fisc .l.net { border-top:1px solid #333; margin-top:6px; padding-top:8px; font-size:16px; font-weight:800; }
+      .bur-fisc .l.brut { font-weight:700; color:#fff; }
+      .bur-ia { margin-top:12px; }
+      .bur-ia-lab { font-size:11px; color:#8a8a8a; margin-bottom:6px; }
+      .bur-ia-btns { display:flex; gap:8px; }
+      .bur-ia-btns button { flex:1; padding:11px; border-radius:10px; border:1px solid #ff7a00; background:#ff7a00;
+        color:#000; font-size:12px; font-weight:800; cursor:pointer; }
       .bur-btns { display:flex; gap:8px; margin-top:12px; }
-      .bur-btns button { flex:1; padding:11px; border-radius:10px; border:1px solid #30363d; background:#21262d;
-        color:#e6edf3; font-size:12px; font-weight:700; cursor:pointer; }
-      .bur-btns .pdf { background:#ff3c3c; border-color:#ff3c3c; color:#fff; }
-      .bur-note { font-size:10px; color:#6e7681; padding:10px 16px 30px; line-height:1.5; }
+      .bur-btns button { flex:1; padding:11px; border-radius:10px; border:1px solid #ff7a00; background:#111;
+        color:#ff7a00; font-size:12px; font-weight:800; cursor:pointer; }
+      .bur-btns .pdf { background:#ff7a00; color:#000; }
+      .bur-note { font-size:11px; color:#7a7a7a; padding:12px 16px 34px; line-height:1.6; }
+      .bur-note b { color:#9a9a9a; }
     `;
     document.head.appendChild(s);
   }
@@ -340,6 +353,14 @@ const TilexBureau = (() => {
         </div>
 
         <div class="bur-fisc" id="bur-fisc"></div>
+
+        <div class="bur-ia">
+          <div class="bur-ia-lab">🤖 Demander à une IA de calculer (au lieu d'une calculatrice) :</div>
+          <div class="bur-ia-btns">
+            <button onclick="TilexBureau.demanderIA('marceau')">Marceau</button>
+            <button onclick="TilexBureau.demanderIA('ti-lex-al')">TI-LEX-AL</button>
+          </div>
+        </div>
       </div>
 
       <div class="bur-sec">
@@ -350,9 +371,12 @@ const TilexBureau = (() => {
       </div>
 
       <div class="bur-note">
-        🔒 Privé : personne d'autre ne voit tes heures ni ton salaire.
-        Les impôts/taxes sont une <b>estimation</b> (Québec), pas un calcul officiel.
-        Sauvegardé sur ton compte. Idéal pour préparer tes impôts / ton chômage.
+        🔒 Privé : personne d'autre ne voit tes heures ni ton salaire.<br><br>
+        <b>⚠️ Ce ne sont PAS des vrais chiffres officiels.</b> C'est juste une
+        <b>estimation</b> faite par l'outil pour te donner une <i>idée</i> de ta paye.
+        Les vrais montants d'impôts et de taxes varient et sont décidés par le
+        gouvernement — pas par cet outil. Sers-toi-z-en pour avoir une idée avant
+        ta paye, préparer tes impôts ou ton chômage. Rien d'officiel.
       </div>
     `;
     document.body.appendChild(panel);
@@ -400,13 +424,13 @@ const TilexBureau = (() => {
     const f = t.fisc;
     const box = document.getElementById('bur-fisc');
     if (box) box.innerHTML = `
-      <div class="l brut"><span>Salaire brut</span><span>${_cad(f.brut)}</span></div>
-      <div class="l"><span>Impôt fédéral</span><span>- ${_cad(f.fed)}</span></div>
-      <div class="l"><span>Impôt Québec</span><span>- ${_cad(f.qc)}</span></div>
-      <div class="l"><span>RRQ</span><span>- ${_cad(f.rrq)}</span></div>
-      <div class="l"><span>Assurance-emploi</span><span>- ${_cad(f.ae)}</span></div>
-      <div class="l"><span>RQAP</span><span>- ${_cad(f.rqap)}</span></div>
-      <div class="l net"><span>Net estimé (${f.tauxEffectif.toFixed(0)}% retenu)</span><span>${_cad(f.net)}</span></div>
+      <div class="l brut"><span>Salaire brut</span><span>${_argentHTML(f.brut)}</span></div>
+      <div class="l"><span>Impôt fédéral</span><span>${_argentHTML(f.fed, '- ')}</span></div>
+      <div class="l"><span>Impôt Québec</span><span>${_argentHTML(f.qc, '- ')}</span></div>
+      <div class="l"><span>RRQ</span><span>${_argentHTML(f.rrq, '- ')}</span></div>
+      <div class="l"><span>Assurance-emploi</span><span>${_argentHTML(f.ae, '- ')}</span></div>
+      <div class="l"><span>RQAP</span><span>${_argentHTML(f.rqap, '- ')}</span></div>
+      <div class="l net"><span>Net estimé (${f.tauxEffectif.toFixed(0)}% retenu)</span><span>${_argentHTML(f.net)}</span></div>
     `;
   }
 
@@ -591,6 +615,39 @@ const TilexBureau = (() => {
     }
   }
 
+  // ─── DEMANDER À L'IA DE CALCULER (Marceau ou TI-LEX-AL) ────
+  // Construit une question en français avec les chiffres de la semaine et
+  // l'envoie à l'agent choisi. La page fournit le pont via
+  // window.tilexBureauEnvoyerIA(texte, agent). L'utilisateur decide : rien
+  // n'est envoye tant qu'il ne clique pas.
+  function demanderIA(agent) {
+    const r = rapport();
+    const lignes = r.jours
+      .filter((j) => j.payees || j.banque)
+      .map((j) => `- ${j.jour} : ${j.payees}h payées${j.banque ? ', ' + j.banque + 'h en banque' : ''}`)
+      .join('\n') || '- (aucune heure entrée pour l\'instant)';
+
+    const texte =
+`Aide-moi à calculer ma paye — c'est une estimation, pas des chiffres officiels.
+
+Mon taux : ${r.taux}$/h
+Mes heures cette semaine (semaine du ${r.semaine_du}) :
+${lignes}
+
+Total payées : ${r.total_heures_payees}h → brut ${r.salaire_brut}$.
+Peux-tu me donner une idée de mon salaire NET après impôts et taxes du Québec (fédéral, Québec, RRQ, assurance-emploi, RQAP), et m'expliquer simplement? Rappelle que c'est une estimation.`;
+
+    fermer();
+    if (typeof window.tilexBureauEnvoyerIA === 'function') {
+      window.tilexBureauEnvoyerIA(texte, agent);
+      return;
+    }
+    // Repli générique : remplit un champ de saisie connu.
+    const inp = document.getElementById('composer-input') || document.getElementById('input') || document.getElementById('chat-in');
+    if (inp) { inp.value = texte; inp.focus(); }
+    else if (window.TilexToast && TilexToast.show) TilexToast.show('Ouvre le chat pour poser la question à l\'IA', 'info');
+  }
+
   // Données pour l'IA (si l'utilisateur choisit de les partager dans le chat).
   function rapport() {
     const t = _totaux();
@@ -694,7 +751,7 @@ const TilexBureau = (() => {
   return {
     init, ouvrir, fermer, basculer,
     toggleShift, majJour, majTaux, semainePrec, semaineSuiv, sauverTout, exporterPDF,
-    rapport,
+    demanderIA, rapport,
     getEtat: () => Object.assign({}, etat, { intervalles: undefined }),
   };
 
