@@ -8481,6 +8481,18 @@ function selectComposerAgent(agent,name){
   if(inp)inp.placeholder="Discuter avec "+name+"…";
   closeComposerSelector();
 }
+// Pont « Bureau de travail » -> chat : choisit l'agent (Marceau ou TI-LEX-AL)
+// et envoie la question avec les heures/salaire. Appele par TilexBureau.
+window.tilexBureauEnvoyerIA=function(texte,agent){
+  try{
+    var a=(agent==="marceau")?"marceau":"ti-lex-al";
+    selectComposerAgent(a,a==="marceau"?"Marceau":"TI-LEX-AL");
+    currentComposerMode="chat";
+    var inp=document.getElementById("composer-input");
+    if(inp){inp.value=texte;inp.style.height="auto";}
+    composerSend();
+  }catch(e){console.error("[bureau->IA]",e);}
+};
 function selectComposerModel(model){
   localStorage.setItem("tilex-al-model",model);
   var sel=document.getElementById("model-select");if(sel)sel.value=model;

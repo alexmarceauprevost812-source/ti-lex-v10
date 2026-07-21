@@ -17,6 +17,7 @@
 <script src="https://js.puter.com/v2/"></script>
 <!-- Backend ti-lex (ai-proxy) : Marceau + modèles Claude — clés côté serveur, rien à configurer ici -->
 <script src="/js/tilex-config.js"></script>
+<script src="/js/tilex-bureau.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1616,6 +1617,15 @@ function setAgent(key){
   if(!c || !c.messages.length) showWelcome();
   saveAll();
 }
+
+// Pont « Bureau de travail » -> chat : choisit l'agent (Marceau ou TI-LEX-AL)
+// et envoie la question avec les heures/salaire. Appele par TilexBureau.
+window.tilexBureauEnvoyerIA=function(texte,agent){
+  try{
+    setAgent(agent==="marceau"?"marceau":"al");
+    onSend(texte);
+  }catch(e){console.error("[bureau->IA]",e);}
+};
 
 function updateAgentToggle(){
   const a=AGENTS[state.agent];
