@@ -27,6 +27,7 @@
 <script src="js/tilex-bureau.js" defer></script>
 <script src="js/tilex-midas.js" defer></script>
 <script src="js/tilex-meteo-panel.js" defer></script>
+<script src="js/tilex-schema-panel.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -7176,6 +7177,15 @@ async function composerSend(){
     var _me=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["meteo","weather","temps","temperature"].indexOf(_me)>=0){
       TilexMeteoPanel.basculer();
+      inp.value="";inp.style.height="auto";
+      return;
+    }
+  }
+  // 🗺️ Commande schéma : ouvre le moteur de schémas animés par-dessus le chat.
+  if(txt&&window.TilexSchemaPanel){
+    var _sc=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["schema","schemas","diagramme","diagram","schema anime","schemas animes"].indexOf(_sc)>=0){
+      TilexSchemaPanel.basculer();
       inp.value="";inp.style.height="auto";
       return;
     }
