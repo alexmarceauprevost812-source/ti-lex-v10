@@ -26,6 +26,12 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
 
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") || "*";
 
+// 👁️ « Les Yeux » — lecture des déploiements/logs Vercel (token SECRET côté serveur).
+const VERCEL_TOKEN = Deno.env.get("VERCEL_TOKEN") || "";
+const VERCEL_PROJECT_ID = Deno.env.get("VERCEL_PROJECT_ID") || "prj_SFxxvqKj7OiiGflaX9odUwxwHUXm";
+const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID") || "team_hGtz54T1dwArVaZE8Jdj4DLd";
+const TILEX_ADMIN_EMAIL = (Deno.env.get("TILEX_ADMIN_EMAIL") || "alexmarceauprevost812@gmail.com").toLowerCase();
+
 const CORS = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-anthropic-key",
@@ -204,6 +210,16 @@ const GITHUB_TOOL = {
   },
 };
 
+// 👁️ Outil « Les Yeux » — l'agent lit les déploiements Vercel et diagnostique
+//    les builds qui plantent. Token Vercel gardé en secret côté serveur.
+//    Réservé à l'administrateur (verrou par email dans toolDiagnosticDeploiement).
+const EYES_TOOL = {
+  name: "diagnostic_deploiement",
+  description:
+    "« Les Yeux » : lit les derniers déploiements Vercel de la plateforme et, si le dernier build a planté, récupère les logs d'erreur pour expliquer POURQUOI. Utilise-le quand l'utilisateur demande si le site est déployé, si le dernier deploy a marché, pourquoi ça a planté, ou l'état du build. Réservé à l'administrateur.",
+  input_schema: { type: "object", properties: {} },
+};
+
 // Bloc d'instructions COMPACT (média + youtube + sécurité) — remplace les 3 blocs
 // verbeux pour alléger le contexte envoyé à chaque message (moins de tokens = plus rapide).
 // Les descriptions détaillées vivent déjà dans les tools eux-mêmes.
@@ -213,7 +229,8 @@ const TOOLS_SYSTEM = `
 - recherche_media / recherche_youtube : quand l'utilisateur veut VOIR des photos ou des vidéos, appelle l'outil. Les résultats s'affichent AUTOMATIQUEMENT en galerie sous ta réponse — ne colle JAMAIS d'URLs dans ton texte, présente-les en 1 phrase.
 - lancer_scan_securite / lire_dernier_scan : pour scanner/auditer un site ou lire un scan. Explique en québécois clair, sans dramatiser un « info »/« low ». Si le scan est refusé ou la clé absente, dis-le sans inventer.
 - analyser_journal_securite : pour un rapport/journal de sécurité. Le rapport s'affiche déjà en entier dans le chat — commente-le brièvement en 1-2 phrases, ne le récite jamais au complet.
-- pousser_code_github : pour écrire du code PIS le pousser direct sur le repo GitHub de la plateforme. Demande TOUJOURS le NIP (4 chiffres) à l'utilisateur AVANT d'appeler l'outil — ne le devine jamais, ne l'invente jamais, pis ne le répète pas dans tes réponses. Écris le fichier au COMPLET. Si le serveur refuse (NIP invalide, fichier protégé), dis-le franchement.`;
+- pousser_code_github : pour écrire du code PIS le pousser direct sur le repo GitHub de la plateforme. Demande TOUJOURS le NIP (4 chiffres) à l'utilisateur AVANT d'appeler l'outil — ne le devine jamais, ne l'invente jamais, pis ne le répète pas dans tes réponses. Écris le fichier au COMPLET. Si le serveur refuse (NIP invalide, fichier protégé), dis-le franchement.
+- diagnostic_deploiement : « les yeux » — vérifie si le site est bien déployé sur Vercel et, si le dernier build a planté, explique pourquoi (logs d'erreur). Utilise-le pour « le site est-il en ligne / déployé », « pourquoi le deploy a planté », « checke le build ». Réservé à l'admin.`;
 
 // 🎬 Outil YouTube — clé côté serveur (tilex_secrets nom='youtube' ou env YOUTUBE_API_KEY).
 const YOUTUBE_TOOL = {
@@ -484,6 +501,50 @@ async function toolPousserCode(input: any, ctx: ToolCtx): Promise<string> {
   }
 }
 
+// 👁️ « Les Yeux » — lit les déploiements Vercel (token secret côté serveur) et,
+//    si le dernier build a planté, extrait les lignes d'erreur des logs.
+//    Verrou admin par email : seul l'administrateur ti-lex voit les logs de build.
+async function toolDiagnosticDeploiement(_input: any, ctx: ToolCtx): Promise<string> {
+  if (!ctx.userId || ctx.userId === "anonymous") return JSON.stringify({ erreur: "Connexion requise." });
+  if (!VERCEL_TOKEN) return JSON.stringify({ erreur: "VERCEL_TOKEN non configuré côté serveur (secret Supabase)." });
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data: u } = await sb.auth.admin.getUserById(ctx.userId);
+    const email = (u?.user?.email || "").toLowerCase();
+    if (email !== TILEX_ADMIN_EMAIL) return JSON.stringify({ erreur: "Réservé à l'administrateur ti-lex." });
+  } catch (_) { return JSON.stringify({ erreur: "Vérification admin impossible." }); }
+
+  const team = VERCEL_TEAM_ID ? `&teamId=${encodeURIComponent(VERCEL_TEAM_ID)}` : "";
+  const H = { Authorization: `Bearer ${VERCEL_TOKEN}` };
+  try {
+    const rd = await fetch(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(VERCEL_PROJECT_ID)}${team}&limit=5`, { headers: H });
+    const dd = await rd.json();
+    if (!rd.ok) return JSON.stringify({ erreur: dd?.error?.message || `Vercel HTTP ${rd.status}` });
+    const deps = ((dd.deployments || []) as any[]).map((d: any) => ({
+      etat: d.state || d.readyState,
+      branche: d.meta?.githubCommitRef || "-",
+      message: d.meta?.githubCommitMessage || "-",
+      url: d.url, id: d.uid, cree: d.created,
+    }));
+    const dernier = deps[0];
+    if (!dernier) return JSON.stringify({ ok: true, note: "Aucun déploiement trouvé." });
+    if (dernier.etat !== "ERROR") {
+      return JSON.stringify({ ok: true, etat: dernier.etat, dernier, historique: deps });
+    }
+    // Dernier deploy planté → on va chercher les lignes d'erreur des logs de build.
+    const rl = await fetch(`https://api.vercel.com/v3/deployments/${dernier.id}/events?builds=1&limit=1000${team}`, { headers: H });
+    const el = await rl.json().catch(() => ([]));
+    const events = Array.isArray(el) ? el : ((el as any).events || []);
+    const erreurs = (events as any[])
+      .map((e: any) => (e?.payload?.text ?? e?.text ?? "").toString())
+      .filter((t: string) => t && /error|failed|cannot|not found|unexpected|syntaxerror/i.test(t))
+      .slice(-15);
+    return JSON.stringify({ ok: true, etat: "ERROR", dernier, erreurs, historique: deps });
+  } catch (e: any) {
+    return JSON.stringify({ erreur: "Vercel injoignable : " + (e?.message || String(e)) });
+  }
+}
+
 async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promise<string> {
   try {
     if (name === "get_stock_quote") return await fmpFetch("quote", input?.symbol);
@@ -494,6 +555,7 @@ async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promis
     if (name === "lire_dernier_scan") return await toolLireDernierScan(input, ctx);
     if (name === "analyser_journal_securite") return await toolAnalyserJournal(input, ctx);
     if (name === "pousser_code_github") return await toolPousserCode(input, ctx);
+    if (name === "diagnostic_deploiement") return await toolDiagnosticDeploiement(input, ctx);
     return JSON.stringify({ erreur: `Outil inconnu: ${name}` });
   } catch (e: any) {
     return JSON.stringify({ erreur: e?.message || "Erreur d'exécution de l'outil" });
@@ -666,6 +728,7 @@ Deno.serve(async (req) => {
     tools.push(YOUTUBE_TOOL);        // [YOUTUBE] galerie de vidéos YouTube dans le chat
     tools.push(...SECURITY_TOOLS);   // [SILEX] AL peut lancer/lire un scan (gate admin+SOW côté security-agent)
     tools.push(GITHUB_TOOL);         // [GITHUB] écrire du code + le pousser sur le repo (NIP géré par agent-al)
+    tools.push(EYES_TOOL);           // [YEUX] lire les déploiements/logs Vercel (admin only, token secret)
     if (body.tools && Array.isArray(body.tools)) {
       tools.push(...body.tools);
     }
