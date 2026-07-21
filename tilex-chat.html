@@ -21,6 +21,7 @@
 <script src="/js/tilex-midas.js" defer></script>
 <script src="/js/tilex-meteo-panel.js" defer></script>
 <script src="/js/tilex-schema-panel.js" defer></script>
+<script src="/js/tilex-truck-panel.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1499,6 +1500,14 @@ async function onSend(textOverride){
     const _sc=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["schema","schemas","diagramme","diagram"].indexOf(_sc)>=0){
       TilexSchemaPanel.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
+  // 🚛 Commande camion : ouvre le suivi GPS du camion en direct.
+  if(textOverride==null && window.TilexTruckPanel){
+    const _tk=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["camion","truck","suivi","carte","gps","map"].indexOf(_tk)>=0){
+      TilexTruckPanel.basculer(); inputEl.value=""; autosize();
       return;
     }
   }
