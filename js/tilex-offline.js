@@ -97,18 +97,43 @@ var TilexOffline = {
   },
 
   afficherNotifMiseAJour: function(registration) {
-    var notif = document.createElement('div');
-    notif.className = 'tilex-notif-maj';
-    notif.innerHTML = '<span>Nouvelle version de Ti-lex disponible!</span> <button onclick="TilexOffline.appliquerMiseAJour()">Mettre a jour</button>';
-    document.body.appendChild(notif);
     this._registration = registration;
+    var nouveau = registration.installing || registration.waiting;
+    if (!nouveau) return;
+
+    function montrer() {
+      // Jamais au premier install (aucun SW ne controle encore la page).
+      if (!navigator.serviceWorker.controller) return;
+      // UNE SEULE banniere a la fois — plus jamais d'empilement (le bug qui
+      // faisait apparaitre une dizaine de « Mettre a jour » en bas de l'ecran).
+      if (document.getElementById('tilex-notif-maj')) return;
+      var notif = document.createElement('div');
+      notif.id = 'tilex-notif-maj';
+      notif.className = 'tilex-notif-maj';
+      notif.innerHTML =
+        '<span>Nouvelle version de Ti-lex disponible!</span>' +
+        ' <button onclick="TilexOffline.appliquerMiseAJour()">Mettre a jour</button>' +
+        ' <button class="tilex-notif-x" aria-label="Fermer" title="Fermer" ' +
+        'onclick="this.parentNode.remove()" style="background:transparent;border:none;color:inherit;cursor:pointer;font-size:14px;padding:0 4px;">✕</button>';
+      document.body.appendChild(notif);
+      // Disparait toute seule apres 10 s (l'app se met a jour au refresh de toute facon).
+      setTimeout(function () { var n = document.getElementById('tilex-notif-maj'); if (n) n.remove(); }, 10000);
+    }
+
+    if (registration.waiting) { montrer(); return; }
+    if (registration.installing) {
+      registration.installing.addEventListener('statechange', function () {
+        if (this.state === 'installed') montrer();
+      });
+    }
   },
 
   appliquerMiseAJour: function() {
-    if (this._registration && this._registration.waiting) {
-      this._registration.waiting.postMessage('SKIP_WAITING');
-      window.location.reload();
-    }
+    var n = document.getElementById('tilex-notif-maj');
+    if (n) n.remove();
+    var reg = this._registration;
+    if (reg && reg.waiting) { reg.waiting.postMessage('SKIP_WAITING'); }
+    window.location.reload();
   },
 
   afficherToast: function(message, type) {
