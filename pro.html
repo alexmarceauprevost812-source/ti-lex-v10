@@ -9083,11 +9083,12 @@ function toggleWebSearch(){
 var _micRecognition=null;
 var _micActive=false;
 var _micLock=false;
+var _micPending=false; // vrai pendant le démarrage du micro (évite les doubles clics / flash)
 var _micEngine=null; // 'speech' (Web Speech API) | 'vocal' (enregistrement + STT serveur)
 
 // UN click active, UN click désactive — toggle robuste sur tous les appareils.
 function toggleMicro(){
-  if(_micLock)return;
+  if(_micLock||_micPending)return;              // ignore le clic « fantôme » et les démarrages en cours
   _micLock=true;setTimeout(function(){_micLock=false;},500);
   if(_micActive){ stopMicro(); return; }
   startMicro();
@@ -9144,15 +9145,31 @@ function startSpeechMic(SpeechRec){
 }
 
 // Mobile / fallback — enregistre puis transcrit côté serveur (vocal-proxy). Reste actif jusqu'au 2e click.
-function startVocalMic(){
-  _micActive=true;_micEngine="vocal";
+// IMPORTANT : on n'allume le bouton (rouge) QU'APRÈS que le micro a vraiment démarré.
+// Sinon, si getUserMedia échoue, le bouton s'allumait puis s'éteignait aussitôt = le « flash ».
+async function startVocalMic(){
+  _micEngine="vocal";
   window.onTilexVocalInput=function(txt){
     var inp=document.getElementById("composer-input");
     if(inp&&txt){inp.value+=(inp.value?" ":"")+txt;inp.style.height="auto";inp.style.height=inp.scrollHeight+"px";}
   };
   window.onTilexVocalError=function(){ _micActive=false;_micEngine=null;majMicBtn(); };
-  try{ TilexVocal.demarrerEcoute(); }catch(e){ _micActive=false;_micEngine=null;majMicBtn();showToastMsg("⚠️ Micro indisponible");return; }
-  majMicBtn();showToastMsg("🎙️ Micro activé — parle, puis touche encore pour arrêter.");closeComposerMenu();
+
+  _micPending=true;
+  var btn=document.getElementById("composer-mic-btn");
+  if(btn){btn.classList.add("rec");btn.title="Ouverture du micro…";}   // état « en cours »
+  closeComposerMenu();
+
+  var ok=false;
+  try{ ok=await TilexVocal.demarrerEcoute(); }catch(e){ ok=false; }
+  _micPending=false;
+
+  if(ok){
+    _micActive=true;majMicBtn();
+    showToastMsg("🎙️ Micro activé — parle, puis touche encore pour arrêter.");
+  }else{
+    _micActive=false;_micEngine=null;majMicBtn();   // TilexVocal a déjà affiché le pourquoi (permission, etc.)
+  }
 }
 
 function stopMicro(){
