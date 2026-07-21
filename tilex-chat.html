@@ -18,6 +18,7 @@
 <!-- Backend ti-lex (ai-proxy) : Marceau + modèles Claude — clés côté serveur, rien à configurer ici -->
 <script src="/js/tilex-config.js"></script>
 <script src="/js/tilex-bureau.js" defer></script>
+<script src="/js/tilex-midas.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1474,6 +1475,15 @@ async function onSend(textOverride){
   if(state.busy) return;
   const text=(textOverride!=null ? textOverride : inputEl.value).trim();
   if(!text) return;
+
+  // 📈 Commande crypto : ouvre/ferme le ticker MIDAS (prix live). Rien envoyé à l'IA.
+  if(textOverride==null && window.TilexMIDAS){
+    const _cm=text.toLowerCase().replace(/^\//,"").trim();
+    if(["midas","crypto","bourse","btc","bitcoin","coin"].indexOf(_cm)>=0){
+      TilexMIDAS.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
 
   // Plus de blocage si Puter.js a pas chargé : streamChat/askOnce basculent
   // automatiquement sur le backend ti-lex (repli Haiku) — on envoie toujours.
