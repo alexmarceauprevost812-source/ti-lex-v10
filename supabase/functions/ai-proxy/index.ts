@@ -184,6 +184,26 @@ const SECURITY_TOOLS = [
   },
 ];
 
+// 💻 Outil GitHub — l'agent écrit du code et le pousse DIRECT sur le repo, à
+//    partir du chat. Relayé vers agent-al (action commit) qui applique lui-même
+//    TOUTES les protections : NIP obligatoire, fichiers protégés, rate limit
+//    anti-brute-force (10 essais / 5 min), journal d'audit. Aucune escalade.
+const GITHUB_TOOL = {
+  name: "pousser_code_github",
+  description:
+    "Écrit ou met à jour un fichier de code et le POUSSE directement sur le repo GitHub de la plateforme (vrai commit). Utilise-le quand l'utilisateur demande d'écrire du code PIS de l'envoyer/pousser/déployer sur le repo. IMPORTANT : demande TOUJOURS le NIP (4 chiffres) à l'utilisateur AVANT d'appeler cet outil — ne le devine jamais. Les fichiers sensibles sont refusés automatiquement par le serveur.",
+  input_schema: {
+    type: "object",
+    properties: {
+      path: { type: "string", description: "Chemin du fichier dans le repo, ex: js/mon-script.js" },
+      code: { type: "string", description: "Contenu COMPLET du fichier (pas un extrait)" },
+      message: { type: "string", description: "Message de commit court en français" },
+      pin: { type: "string", description: "NIP à 4 chiffres fourni par l'utilisateur dans la conversation" },
+    },
+    required: ["path", "code", "pin"],
+  },
+};
+
 // Bloc d'instructions COMPACT (média + youtube + sécurité) — remplace les 3 blocs
 // verbeux pour alléger le contexte envoyé à chaque message (moins de tokens = plus rapide).
 // Les descriptions détaillées vivent déjà dans les tools eux-mêmes.
@@ -192,7 +212,8 @@ const TOOLS_SYSTEM = `
 ## OUTILS (affichage + sécurité)
 - recherche_media / recherche_youtube : quand l'utilisateur veut VOIR des photos ou des vidéos, appelle l'outil. Les résultats s'affichent AUTOMATIQUEMENT en galerie sous ta réponse — ne colle JAMAIS d'URLs dans ton texte, présente-les en 1 phrase.
 - lancer_scan_securite / lire_dernier_scan : pour scanner/auditer un site ou lire un scan. Explique en québécois clair, sans dramatiser un « info »/« low ». Si le scan est refusé ou la clé absente, dis-le sans inventer.
-- analyser_journal_securite : pour un rapport/journal de sécurité. Le rapport s'affiche déjà en entier dans le chat — commente-le brièvement en 1-2 phrases, ne le récite jamais au complet.`;
+- analyser_journal_securite : pour un rapport/journal de sécurité. Le rapport s'affiche déjà en entier dans le chat — commente-le brièvement en 1-2 phrases, ne le récite jamais au complet.
+- pousser_code_github : pour écrire du code PIS le pousser direct sur le repo GitHub de la plateforme. Demande TOUJOURS le NIP (4 chiffres) à l'utilisateur AVANT d'appeler l'outil — ne le devine jamais, ne l'invente jamais, pis ne le répète pas dans tes réponses. Écris le fichier au COMPLET. Si le serveur refuse (NIP invalide, fichier protégé), dis-le franchement.`;
 
 // 🎬 Outil YouTube — clé côté serveur (tilex_secrets nom='youtube' ou env YOUTUBE_API_KEY).
 const YOUTUBE_TOOL = {
@@ -435,6 +456,34 @@ async function toolAnalyserJournal(input: any, ctx: ToolCtx): Promise<string> {
   }
 }
 
+// 💻 Pousse un fichier sur le repo GitHub en relayant vers agent-al (action
+//    commit). agent-al applique lui-même : NIP obligatoire (INJECT_PIN), liste
+//    de fichiers protégés, rate limit anti-brute-force, journal injection_audit.
+//    Le JWT de l'utilisateur est relayé — aucune escalade de privilège ici.
+async function toolPousserCode(input: any, ctx: ToolCtx): Promise<string> {
+  if (!ctx.authHeader) return JSON.stringify({ erreur: "Connexion requise pour pousser du code sur le repo." });
+  const path = typeof input?.path === "string" ? input.path.trim().slice(0, 300) : "";
+  const code = typeof input?.code === "string" ? input.code : "";
+  const pin = typeof input?.pin === "string" ? input.pin.trim() : "";
+  if (!path || !code) return JSON.stringify({ erreur: "path et code requis." });
+  if (!pin) return JSON.stringify({ erreur: "NIP manquant — demande le NIP (4 chiffres) à l'utilisateur avant de pousser." });
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/agent-al`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": ctx.authHeader, "apikey": ANON_KEY },
+      body: JSON.stringify({
+        action: "commit", path, code, pin,
+        message: ((typeof input?.message === "string" ? input.message : "").trim().slice(0, 200)) || ("Marceau: maj " + path),
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return JSON.stringify({ ok: false, erreur: data.error || `Commit refusé (HTTP ${r.status})` });
+    return JSON.stringify({ ok: true, resultat: data.result || "Fichier poussé." });
+  } catch (e: any) {
+    return JSON.stringify({ ok: false, erreur: "GitHub injoignable : " + (e?.message || String(e)) });
+  }
+}
+
 async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promise<string> {
   try {
     if (name === "get_stock_quote") return await fmpFetch("quote", input?.symbol);
@@ -444,6 +493,7 @@ async function executeCustomTool(name: string, input: any, ctx: ToolCtx): Promis
     if (name === "lancer_scan_securite") return await toolLancerScan(input, ctx);
     if (name === "lire_dernier_scan") return await toolLireDernierScan(input, ctx);
     if (name === "analyser_journal_securite") return await toolAnalyserJournal(input, ctx);
+    if (name === "pousser_code_github") return await toolPousserCode(input, ctx);
     return JSON.stringify({ erreur: `Outil inconnu: ${name}` });
   } catch (e: any) {
     return JSON.stringify({ erreur: e?.message || "Erreur d'exécution de l'outil" });
@@ -615,6 +665,7 @@ Deno.serve(async (req) => {
     tools.push(MEDIA_TOOL);          // [MEDIA] toujours actif (Pexels si clé, sinon Wikimedia gratuit)
     tools.push(YOUTUBE_TOOL);        // [YOUTUBE] galerie de vidéos YouTube dans le chat
     tools.push(...SECURITY_TOOLS);   // [SILEX] AL peut lancer/lire un scan (gate admin+SOW côté security-agent)
+    tools.push(GITHUB_TOOL);         // [GITHUB] écrire du code + le pousser sur le repo (NIP géré par agent-al)
     if (body.tools && Array.isArray(body.tools)) {
       tools.push(...body.tools);
     }
