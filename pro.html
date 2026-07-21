@@ -4203,8 +4203,18 @@ var MARCEAU_PERSONA="Tu es Marceau, l'agent IA autonome de la plateforme ti-lex 
   +"Tu vas droit au but, en paragraphes courts et aérés, avec des tournures d'ici (correc, en masse, pantoute, "
   +"checke ça) sans en beurrer épais. Tu utilises des listes seulement quand ça aide vraiment.";
 
+/* ⚡ Capacités AUTONOMES de TI-LEX-AL — ajoutées à sa persona pour qu'il agisse
+   de lui-même : cherche le web au besoin, écrit du code COMPLET (n'importe quel
+   langage, Python inclus), pis le pousse sur le repo GitHub avec le NIP. */
+var AL_AUTONOME_CAPS="\n\nTU ES UN AGENT AUTONOME : tu agis de toi-même sans attendre qu'on te tienne la main. "
+  +"Tu cherches sur le web quand ça aide (actualité, docs, faits récents). "
+  +"Tu écris du code COMPLET et fonctionnel dans n'importe quel langage — JavaScript, Python, SQL, HTML/CSS, etc. — "
+  +"des fichiers entiers, pas juste des bouts. Quand l'utilisateur veut envoyer/pousser/déployer du code sur le repo, "
+  +"utilise l'outil pousser_code_github : demande TOUJOURS son NIP (4 chiffres) avant, jamais le deviner ni le répéter. "
+  +"Tu peux aussi montrer des images/vidéos, sortir des cours de bourse, lancer des scans de sécurité. Vas-y, sois proactif.";
+
 function getSystemPrompt(){
-  var base=(_webAgent&&_webAgent.system)?_webAgent.system:(composerAgent==="marceau"?MARCEAU_PERSONA:(isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD));
+  var base=(_webAgent&&_webAgent.system)?_webAgent.system:(composerAgent==="marceau"?MARCEAU_PERSONA:((isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD)+(composerAgent==="ti-lex-al"?AL_AUTONOME_CAPS:"")));
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_tilexMemCache)base+="\n"+_tilexMemCache;
   if(_cerveauCache)base+="\n\n[NOTES DU CERVEAU de l'utilisateur — son 2ème cerveau, sauvegardées depuis le chat ou la page Cerveau. Quand il te demande de retrouver une note, une info qu'il a notée, ou fait référence à ce qu'il a sauvegardé, sers-toi de ces notes]:\n"+_cerveauCache;
@@ -4552,7 +4562,10 @@ async function sendChat(){
       model:chatModel,max_tokens:4096,
       system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
       messages:chatHistory.slice(-20),
-      ...((webSearchMode||composerAgent==="marceau")?{web_search:true}:{})
+      // Marceau ET TI-LEX-AL sont autonomes : la recherche web leur est TOUJOURS
+      // disponible (l'outil est fourni ; le modèle décide de chercher au besoin —
+      // pas de recherche forcée sur un simple « bonjour »).
+      ...((webSearchMode||composerAgent==="marceau"||composerAgent==="ti-lex-al")?{web_search:true}:{})
     })});
     if(reflexionMode&&typeof tdRef!=="undefined")tdRef.remove();
     else td.remove();
