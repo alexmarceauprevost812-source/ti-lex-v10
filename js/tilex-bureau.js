@@ -19,10 +19,12 @@ const TilexBureau = (() => {
   // ─── CONFIG ────────────────────────────────────────────────
   const CONFIG = {
     tauxDefaut:   40,
-    cleTaux:      'tilex_bureau_taux',
+    cleTaux:      'tilex_bureau_taux',       // taux régulier
+    cleTaux15:    'tilex_bureau_taux15',     // temps et demi (1.5x)
+    cleTaux2x:    'tilex_bureau_taux2x',     // temps double (2x)
+    cleType:      'tilex_bureau_type',       // type du prochain shift : reg | t15 | t2x
     cleShift:     'tilex_bureau_shift',
-    cleCacheSem:  'tilex_bureau_cache',    // repli hors-ligne
-    cleSupp:      'tilex_bureau_supp',     // heures supp optionnelles
+    cleCacheSem:  'tilex_bureau_cache',      // repli hors-ligne
     refreshMeteo: 600000,
   };
 
@@ -51,14 +53,21 @@ const TilexBureau = (() => {
     ouvert:      false,
     offsetSem:   0,               // 0 = semaine courante, -1 = précédente…
     moisOffset:  0,               // 0 = mois courant, -1 = mois précédent…
-    semaine:     [],              // 7 objets {jour, date, payees, banque}
-    taux:        CONFIG.tauxDefaut,
-    supp:        { seuil: 0, taux: 0 },   // heures supp : après {seuil} h/sem au taux {taux} (0 = désactivé)
+    semaine:     [],              // 7 objets {jour, date, payees, banque, h15, h2x}
+    taux:        CONFIG.tauxDefaut,   // taux régulier
+    taux15:      0,               // temps et demi ($/h) — 0 = auto (1.5x le régulier)
+    taux2x:      0,               // temps double ($/h)  — 0 = auto (2x le régulier)
+    typeShift:   'reg',           // type du prochain play/stop : 'reg' | 't15' | 't2x'
     debutShift:  null,            // Date début shift en cours
     meteo:       { temp: null, lieu: null, icone: '🌡️' },
     intervalles: [],
     uid:         null,
   };
+
+  // Taux effectifs (si laissés à 0, on calcule automatiquement 1.5x / 2x).
+  function _tauxReg() { return +etat.taux || CONFIG.tauxDefaut; }
+  function _taux15()  { return +etat.taux15 > 0 ? +etat.taux15 : _tauxReg() * 1.5; }
+  function _taux2x()  { return +etat.taux2x > 0 ? +etat.taux2x : _tauxReg() * 2; }
 
   // ─── OUTILS DATE ───────────────────────────────────────────
   function _iso(d) { return d.toISOString().slice(0, 10); }
@@ -78,7 +87,7 @@ const TilexBureau = (() => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
-      out.push({ jour: JOURS[i], date: _iso(d), payees: 0, banque: 0 });
+      out.push({ jour: JOURS[i], date: _iso(d), payees: 0, banque: 0, h15: 0, h2x: 0 });
     }
     return out;
   }
@@ -131,26 +140,28 @@ const TilexBureau = (() => {
     };
   }
 
-  // Brut d'une semaine, avec heures supp OPTIONNELLES (après un seuil hebdo).
-  function _brutSemaine(heuresPayees) {
-    const s = etat.supp;
-    if (s && s.seuil > 0 && s.taux > 0 && heuresPayees > s.seuil) {
-      return s.seuil * etat.taux + (heuresPayees - s.seuil) * s.taux;
-    }
-    return heuresPayees * etat.taux;
-  }
-
   // ─── TOTAUX DE LA SEMAINE ──────────────────────────────────
+  // Revenu = régulier×tauxReg + temps½×taux1.5 + double×taux2x.
   function _totaux() {
-    let payees = 0, banque = 0;
-    etat.semaine.forEach((d) => { payees += (+d.payees || 0); banque += (+d.banque || 0); });
-    // Ajoute le shift en cours (aujourd'hui) au calcul en direct.
+    let reg = 0, h15 = 0, h2x = 0, banque = 0;
+    etat.semaine.forEach((d) => {
+      reg    += (+d.payees || 0);
+      h15    += (+d.h15    || 0);
+      h2x    += (+d.h2x    || 0);
+      banque += (+d.banque || 0);
+    });
+    // Ajoute le shift en cours (aujourd'hui) dans le bon panier, en direct.
     let liveToday = 0;
-    if (etat.debutShift) liveToday = (Date.now() - etat.debutShift.getTime()) / 3600000;
-    const payeesTotal = payees + liveToday;
-    const brut = _brutSemaine(payeesTotal);
+    if (etat.debutShift) {
+      liveToday = (Date.now() - etat.debutShift.getTime()) / 3600000;
+      if (etat.typeShift === 't15')      h15 += liveToday;
+      else if (etat.typeShift === 't2x') h2x += liveToday;
+      else                               reg += liveToday;
+    }
+    const brut = reg * _tauxReg() + h15 * _taux15() + h2x * _taux2x();
+    const totalHeures = reg + h15 + h2x;
     const fisc = estimerNet(brut);
-    return { payees: payeesTotal, banque, brut, fisc, liveToday };
+    return { payees: reg, h15, h2x, totalHeures, banque, brut, fisc, liveToday };
   }
 
   // ─── SUPABASE ──────────────────────────────────────────────
@@ -164,17 +175,17 @@ const TilexBureau = (() => {
     return null;
   }
 
-  function _chargerSupp() {
-    try {
-      const s = JSON.parse(localStorage.getItem(CONFIG.cleSupp) || 'null');
-      if (s && typeof s.seuil !== 'undefined') etat.supp = { seuil: +s.seuil || 0, taux: +s.taux || 0 };
-    } catch (e) {}
+  function _chargerTaux() {
+    etat.taux   = parseFloat(localStorage.getItem(CONFIG.cleTaux))   || CONFIG.tauxDefaut;
+    etat.taux15 = parseFloat(localStorage.getItem(CONFIG.cleTaux15)) || 0;   // 0 = auto 1.5x
+    etat.taux2x = parseFloat(localStorage.getItem(CONFIG.cleTaux2x)) || 0;   // 0 = auto 2x
+    const t = localStorage.getItem(CONFIG.cleType);
+    if (t === 'reg' || t === 't15' || t === 't2x') etat.typeShift = t;
   }
 
   async function _chargerSemaine() {
     etat.semaine = _semaineDates(etat.offsetSem);
-    etat.taux = parseFloat(localStorage.getItem(CONFIG.cleTaux)) || CONFIG.tauxDefaut;
-    _chargerSupp();
+    _chargerTaux();
 
     const debut = etat.semaine[0].date;
     const fin   = etat.semaine[6].date;
@@ -183,7 +194,10 @@ const TilexBureau = (() => {
     try {
       const cache = JSON.parse(localStorage.getItem(CONFIG.cleCacheSem) || '{}');
       etat.semaine.forEach((d) => {
-        if (cache[d.date]) { d.payees = cache[d.date].payees || 0; d.banque = cache[d.date].banque || 0; }
+        if (cache[d.date]) {
+          d.payees = cache[d.date].payees || 0; d.banque = cache[d.date].banque || 0;
+          d.h15 = cache[d.date].h15 || 0; d.h2x = cache[d.date].h2x || 0;
+        }
       });
     } catch (e) {}
 
@@ -193,13 +207,18 @@ const TilexBureau = (() => {
       try {
         const { data, error } = await window.supabase
           .from('bureau_heures')
-          .select('jour,heures_payees,heures_banque,taux')
+          .select('jour,heures_payees,heures_banque,heures_15,heures_2x,taux,taux_15,taux_2x')
           .gte('jour', debut).lte('jour', fin);
         if (!error && data) {
           data.forEach((row) => {
             const cell = etat.semaine.find((d) => d.date === row.jour);
-            if (cell) { cell.payees = +row.heures_payees || 0; cell.banque = +row.heures_banque || 0; }
-            if (row.taux) etat.taux = +row.taux;
+            if (cell) {
+              cell.payees = +row.heures_payees || 0; cell.banque = +row.heures_banque || 0;
+              cell.h15 = +row.heures_15 || 0; cell.h2x = +row.heures_2x || 0;
+            }
+            if (row.taux)    etat.taux   = +row.taux;
+            if (row.taux_15) etat.taux15 = +row.taux_15;
+            if (row.taux_2x) etat.taux2x = +row.taux_2x;
           });
         }
       } catch (e) {}
@@ -210,7 +229,9 @@ const TilexBureau = (() => {
   function _sauverCacheLocal() {
     try {
       const cache = {};
-      etat.semaine.forEach((d) => { cache[d.date] = { payees: +d.payees || 0, banque: +d.banque || 0 }; });
+      etat.semaine.forEach((d) => {
+        cache[d.date] = { payees: +d.payees || 0, banque: +d.banque || 0, h15: +d.h15 || 0, h2x: +d.h2x || 0 };
+      });
       localStorage.setItem(CONFIG.cleCacheSem, JSON.stringify(cache));
     } catch (e) {}
   }
@@ -225,7 +246,11 @@ const TilexBureau = (() => {
         jour: cell.date,
         heures_payees: +cell.payees || 0,
         heures_banque: +cell.banque || 0,
+        heures_15: +cell.h15 || 0,
+        heures_2x: +cell.h2x || 0,
         taux: etat.taux,
+        taux_15: _taux15(),
+        taux_2x: _taux2x(),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id,jour' });
       return !error;
@@ -247,7 +272,10 @@ const TilexBureau = (() => {
     try {
       const cache = JSON.parse(localStorage.getItem(CONFIG.cleCacheSem) || '{}');
       Object.keys(cache).forEach((dte) => {
-        if (dte >= premier && dte <= dernier) map[dte] = { payees: +cache[dte].payees || 0, banque: +cache[dte].banque || 0 };
+        if (dte >= premier && dte <= dernier) map[dte] = {
+          payees: +cache[dte].payees || 0, banque: +cache[dte].banque || 0,
+          h15: +cache[dte].h15 || 0, h2x: +cache[dte].h2x || 0,
+        };
       });
     } catch (e) {}
     // Supabase.
@@ -256,28 +284,32 @@ const TilexBureau = (() => {
       try {
         const { data, error } = await window.supabase
           .from('bureau_heures')
-          .select('jour,heures_payees,heures_banque')
+          .select('jour,heures_payees,heures_banque,heures_15,heures_2x')
           .gte('jour', premier).lte('jour', dernier);
-        if (!error && data) data.forEach((r) => { map[r.jour] = { payees: +r.heures_payees || 0, banque: +r.heures_banque || 0 }; });
+        if (!error && data) data.forEach((r) => { map[r.jour] = {
+          payees: +r.heures_payees || 0, banque: +r.heures_banque || 0,
+          h15: +r.heures_15 || 0, h2x: +r.heures_2x || 0,
+        }; });
       } catch (e) {}
     }
     return { annee, mois, premier, dernier, map };
   }
 
-  // Total du mois avec heures supp appliquées SEMAINE par semaine.
+  // Total du mois : additionne chaque panier au bon taux.
   function _totalMois(map) {
-    let heures = 0, brut = 0;
-    // Regroupe par lundi (semaine) pour appliquer le seuil hebdo.
-    const parSemaine = {};
+    let reg = 0, h15 = 0, h2x = 0;
     Object.keys(map).forEach((dte) => {
-      const p = +map[dte].payees || 0;
-      heures += p;
-      const lundi = _iso(_lundiDe(new Date(dte + 'T00:00:00')));
-      parSemaine[lundi] = (parSemaine[lundi] || 0) + p;
+      reg += +map[dte].payees || 0;
+      h15 += +map[dte].h15 || 0;
+      h2x += +map[dte].h2x || 0;
     });
-    Object.keys(parSemaine).forEach((lun) => { brut += _brutSemaine(parSemaine[lun]); });
+    const heures = reg + h15 + h2x;
+    const brut = reg * _tauxReg() + h15 * _taux15() + h2x * _taux2x();
     return { heures, brut };
   }
+
+  // Nombre d'heures d'un jour (tous paniers) — pour l'affichage du calendrier.
+  function _heuresJour(c) { return (+c.payees || 0) + (+c.h15 || 0) + (+c.h2x || 0); }
 
   async function ouvrirMois() {
     const m = await _chargerMois(etat.moisOffset);
@@ -302,7 +334,7 @@ const TilexBureau = (() => {
     for (let i = 0; i < decalage; i++) cases += `<div class="bm-cell vide"></div>`;
     for (let j = 1; j <= nbJours; j++) {
       const dte = _iso(new Date(m.annee, m.mois, j));
-      const h = m.map[dte] ? (+m.map[dte].payees || 0) : 0;
+      const h = m.map[dte] ? _heuresJour(m.map[dte]) : 0;
       const today = dte === auj ? ' today' : '';
       cases += `<div class="bm-cell${today}${h > 0 ? ' rempli' : ''}">
         <div class="bm-num">${j}</div>
@@ -350,9 +382,11 @@ const TilexBureau = (() => {
     for (let j = 1; j <= nbJours; j++) {
       const dte = _iso(new Date(m.annee, m.mois, j));
       const c = m.map[dte];
-      if (c && (c.payees || c.banque)) {
-        rows += `<tr><td>${dte}</td><td style="text-align:right">${(+c.payees||0).toFixed(2)} h</td>
-          <td style="text-align:right">${(+c.banque||0).toFixed(2)} h</td></tr>`;
+      if (c && (c.payees || c.banque || c.h15 || c.h2x)) {
+        rows += `<tr><td>${dte}</td>
+          <td style="text-align:right">${(+c.payees||0).toFixed(2)} h</td>
+          <td style="text-align:right">${(+c.h15||0).toFixed(2)} h</td>
+          <td style="text-align:right">${(+c.h2x||0).toFixed(2)} h</td></tr>`;
       }
     }
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
@@ -364,9 +398,9 @@ const TilexBureau = (() => {
       footer{margin-top:28px;font-size:10px;color:#999}</style></head><body>
       <h1>⚡ Relevé du mois — Ti-lex</h1>
       <div class="meta">${MOIS_NOMS[m.mois]} ${m.annee} · Taux ${etat.taux}$/h · Généré le ${new Date().toLocaleString('fr-CA')}</div>
-      <table><tr><th>Jour</th><th style="text-align:right">Payées</th><th style="text-align:right">Banque</th></tr>
-      ${rows || '<tr><td colspan="3" style="color:#999">Aucune heure ce mois</td></tr>'}
-      <tr class="tot"><td>Total — ${tot.heures.toFixed(2)} h</td><td colspan="2" style="text-align:right">Brut estimé ${tot.brut.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</td></tr>
+      <table><tr><th>Jour</th><th style="text-align:right">Régulier</th><th style="text-align:right">Temps ½</th><th style="text-align:right">Double</th></tr>
+      ${rows || '<tr><td colspan="4" style="color:#999">Aucune heure ce mois</td></tr>'}
+      <tr class="tot"><td>Total — ${tot.heures.toFixed(2)} h</td><td colspan="3" style="text-align:right">Brut estimé ${tot.brut.toLocaleString('fr-CA',{style:'currency',currency:'CAD'})}</td></tr>
       </table>
       <footer>⚠️ Estimation (barèmes du Québec) — ne remplace pas un calcul officiel. Ti-lex-AL — Bureau de travail.</footer>
       </body></html>`;
@@ -451,6 +485,37 @@ const TilexBureau = (() => {
       .bur-note b { color:#9a9a9a; }
       .bur-mois-btn { width:100%; padding:11px; border-radius:10px; border:1px solid #ff7a00; background:#111;
         color:#ff7a00; font-size:13px; font-weight:800; cursor:pointer; margin-top:8px; }
+      .bur-type { display:flex; gap:6px; margin-bottom:10px; }
+      .bur-type button { flex:1; padding:8px 4px; border-radius:9px; border:1px solid #333; background:#0b0b0b;
+        color:#cfcfcf; font-size:12px; font-weight:700; cursor:pointer; }
+      .bur-type button.on { background:#ff7a00; border-color:#ff7a00; color:#000; }
+      .bur-taux-btn { width:100%; padding:11px; border-radius:10px; border:1px solid #ffd23f; background:#150f00;
+        color:#ffd23f; font-size:13px; font-weight:800; cursor:pointer; margin-bottom:10px; }
+      .d-otwrap { display:flex; gap:6px; margin-top:2px; }
+      .d-ot { font-size:9px; color:#ffd23f; font-weight:700; }
+      .bur-heures3 .h3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px; }
+      .bur-heures3 .h3c { background:#0b0b0b; border:1px solid #1e1e1e; border-radius:10px; padding:10px 6px; text-align:center; }
+      .bur-heures3 .h3l { font-size:9px; color:#8a8a8a; text-transform:uppercase; font-weight:700; }
+      .bur-heures3 .h3v { font-size:16px; font-weight:800; color:#fff; margin-top:3px; }
+      .bur-heures3 .h3tot { text-align:center; font-size:12px; color:#cfcfcf; margin-bottom:10px; }
+      .bur-heures3 .h3tot b { color:#fff; }
+      /* Modal des taux */
+      #bur-taux-modal { position:fixed; inset:0; z-index:99996; opacity:0; pointer-events:none; transition:opacity .2s; }
+      #bur-taux-modal.on { opacity:1; pointer-events:auto; }
+      #bur-taux-modal .btm-back { position:absolute; inset:0; background:rgba(0,0,0,.7); }
+      #bur-taux-modal .btm-panel { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+        width:330px; max-width:92vw; background:#000; border:1px solid #1e1e1e; border-radius:16px; padding:18px;
+        box-shadow:0 20px 60px rgba(0,0,0,.8); color:#fff; font-family:-apple-system,'Segoe UI',sans-serif; }
+      #bur-taux-modal .btm-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+      #bur-taux-modal .btm-titre { font-weight:800; font-size:15px; color:#ffd23f; }
+      #bur-taux-modal .btm-x { background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
+      #bur-taux-modal .btm-row { display:flex; justify-content:space-between; align-items:center; margin:10px 0; font-size:13px; }
+      #bur-taux-modal .btm-row small { color:#8a8a8a; }
+      #bur-taux-modal .btm-row input { width:80px; background:#000; border:1px solid #ff7a00; color:#ffd23f;
+        border-radius:8px; padding:8px; text-align:center; font-weight:800; }
+      #bur-taux-modal .btm-row b { color:#3fd07f; }
+      #bur-taux-modal .btm-note { font-size:10px; color:#7a7a7a; margin:8px 0 14px; line-height:1.5; }
+      #bur-taux-modal .btm-save { width:100%; padding:12px; border-radius:10px; border:none; background:#ff7a00; color:#000; font-weight:800; cursor:pointer; }
       .bur-supp { margin-top:10px; }
       .bur-supp summary { font-size:11px; color:#8a8a8a; cursor:pointer; padding:4px 0; }
       .bur-supp .row2 { display:flex; gap:8px; align-items:center; margin-top:6px; }
@@ -522,28 +587,18 @@ const TilexBureau = (() => {
       </div>
 
       <div class="bur-sec">
+        <!-- Type du prochain shift : régulier / temps½ / double -->
+        <div class="bur-type" id="bur-type">
+          <button data-t="reg" class="on" onclick="TilexBureau.choisirType('reg')">Régulier</button>
+          <button data-t="t15" onclick="TilexBureau.choisirType('t15')">Temps ½</button>
+          <button data-t="t2x" onclick="TilexBureau.choisirType('t2x')">Double</button>
+        </div>
         <button class="bur-start" id="bur-start" onclick="TilexBureau.toggleShift()">▶ Démarrer</button>
         <div class="bur-sub" id="bur-shift-info" style="text-align:center;margin-top:6px;"></div>
       </div>
 
       <div class="bur-sec">
-        <div class="bur-taux">
-          <span class="bur-lab" style="margin:0">💵 Taux horaire</span>
-          <input id="bur-taux" type="number" min="0" step="0.5" value="40"/>
-          <span class="bur-sub">$/h</span>
-        </div>
-
-        <details class="bur-supp">
-          <summary>⚙️ Heures supplémentaires (optionnel)</summary>
-          <div class="row2">
-            <span class="mini">Après</span>
-            <input id="bur-supp-seuil" type="number" min="0" step="1" placeholder="0"/>
-            <span class="mini">h/sem, payées</span>
-            <input id="bur-supp-taux" type="number" min="0" step="0.5" placeholder="0"/>
-            <span class="mini">$/h</span>
-          </div>
-          <div class="mini" style="margin-top:5px">Laisse à 0 si tu n'as pas de temps supp — c'est débranché par défaut.</div>
-        </details>
+        <button class="bur-taux-btn" onclick="TilexBureau.ouvrirTaux()">💵 Mes taux horaires ⚙️</button>
 
         <div class="bur-weeknav">
           <button onclick="TilexBureau.semainePrec()">← Sem.</button>
@@ -557,16 +612,7 @@ const TilexBureau = (() => {
       </div>
 
       <div class="bur-sec">
-        <div class="bur-row" style="margin-bottom:10px">
-          <div class="bur-card">
-            <div class="bur-lab">⏱️ Payées</div>
-            <div class="bur-val bur-red" id="bur-tot-payees">0.0h</div>
-          </div>
-          <div class="bur-card">
-            <div class="bur-lab">🏦 En banque</div>
-            <div class="bur-val" id="bur-tot-banque">0.0h</div>
-          </div>
-        </div>
+        <div class="bur-heures3" id="bur-heures3"></div>
 
         <div class="bur-fisc" id="bur-fisc"></div>
 
@@ -596,6 +642,27 @@ const TilexBureau = (() => {
       </div>
     `;
     document.body.appendChild(panel);
+
+    // Modal « Mes taux horaires » (régulier / temps½ / double)
+    const modal = document.createElement('div');
+    modal.id = 'bur-taux-modal';
+    modal.innerHTML = `
+      <div class="btm-back" onclick="TilexBureau.fermerTaux()"></div>
+      <div class="btm-panel">
+        <div class="btm-head">
+          <span class="btm-titre">💵 Mes taux horaires</span>
+          <button class="btm-x" onclick="TilexBureau.fermerTaux()">✕</button>
+        </div>
+        <label class="btm-row"><span>Taux régulier</span>
+          <span><input id="btm-reg" type="number" min="0" step="0.5"/> <b>$/h</b></span></label>
+        <label class="btm-row"><span>Temps et demi <small>(1.5×)</small></span>
+          <span><input id="btm-15" type="number" min="0" step="0.5" placeholder="auto"/> <b>$/h</b></span></label>
+        <label class="btm-row"><span>Temps double <small>(2×)</small></span>
+          <span><input id="btm-2x" type="number" min="0" step="0.5" placeholder="auto"/> <b>$/h</b></span></label>
+        <div class="btm-note">Laisse « temps ½ » et « double » vides → calculés automatiquement (1.5× et 2× ton taux régulier).</div>
+        <button class="btm-save" onclick="TilexBureau.enregistrerTaux()">Enregistrer et fermer</button>
+      </div>`;
+    document.body.appendChild(modal);
   }
 
   // ─── UI : rendu ────────────────────────────────────────────
@@ -607,16 +674,19 @@ const TilexBureau = (() => {
     box.innerHTML = etat.semaine.map((d, i) => {
       const today = d.date === auj ? ' today' : '';
       const dd = d.date.slice(8) + '/' + d.date.slice(5, 7);
+      const ot = ((+d.h15||0) ? `<span class="d-ot">½ ${(+d.h15).toFixed(1)}h</span>` : '')
+               + ((+d.h2x||0) ? `<span class="d-ot">2× ${(+d.h2x).toFixed(1)}h</span>` : '');
       return `
         <div class="bur-day${today}">
           <div style="flex:1">
             <div class="d-nom">${d.jour}</div>
             <div class="d-date">${dd}</div>
+            ${ot ? `<div class="d-otwrap">${ot}</div>` : ''}
           </div>
           <div>
             <input type="number" min="0" step="0.25" value="${(+d.payees||0)}"
               onchange="TilexBureau.majJour(${i},'payees',this.value)"/>
-            <div class="d-mini">payées</div>
+            <div class="d-mini">régulier</div>
           </div>
           <div>
             <input type="number" min="0" step="0.25" value="${(+d.banque||0)}"
@@ -626,20 +696,28 @@ const TilexBureau = (() => {
         </div>`;
     }).join('');
     if (lbl) lbl.textContent = 'Semaine du ' + etat.semaine[0].date.slice(8) + '/' + etat.semaine[0].date.slice(5,7);
-    const ti = document.getElementById('bur-taux');
-    if (ti) ti.value = etat.taux;
-    const ss = document.getElementById('bur-supp-seuil');
-    const st = document.getElementById('bur-supp-taux');
-    if (ss && etat.supp.seuil) ss.value = etat.supp.seuil;
-    if (st && etat.supp.taux)  st.value = etat.supp.taux;
+    _rendreType();
+  }
+
+  function _rendreType() {
+    const box = document.getElementById('bur-type');
+    if (!box) return;
+    box.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('on', b.getAttribute('data-t') === etat.typeShift);
+    });
   }
 
   function _rendreTotaux() {
     const t = _totaux();
-    const p = document.getElementById('bur-tot-payees');
-    const b = document.getElementById('bur-tot-banque');
-    if (p) p.textContent = t.payees.toFixed(1) + 'h';
-    if (b) b.textContent = t.banque.toFixed(1) + 'h';
+    const box3 = document.getElementById('bur-heures3');
+    if (box3) box3.innerHTML = `
+      <div class="h3">
+        <div class="h3c"><div class="h3l">Régulier</div><div class="h3v">${t.payees.toFixed(1)}h</div></div>
+        <div class="h3c"><div class="h3l">Temps ½</div><div class="h3v">${t.h15.toFixed(1)}h</div></div>
+        <div class="h3c"><div class="h3l">Double</div><div class="h3v">${t.h2x.toFixed(1)}h</div></div>
+      </div>
+      <div class="h3tot">Total <b>${t.totalHeures.toFixed(1)}h</b> · Revenu ${_argentHTML(t.brut)}${t.banque ? ` · 🏦 ${t.banque.toFixed(1)}h en banque` : ''}</div>
+    `;
 
     const f = t.fisc;
     const box = document.getElementById('bur-fisc');
@@ -728,23 +806,34 @@ const TilexBureau = (() => {
     _sauverJour(etat.semaine[i]);
   }
 
+  const _CHAMP_TYPE = { reg: 'payees', t15: 'h15', t2x: 'h2x' };
+
+  function choisirType(t) {
+    if (!_CHAMP_TYPE[t]) return;
+    etat.typeShift = t;
+    try { localStorage.setItem(CONFIG.cleType, t); } catch (e) {}
+    _rendreType();
+  }
+
   function toggleShift() {
     const btn = document.getElementById('bur-start');
     if (!etat.debutShift) {
       etat.debutShift = new Date();
-      try { localStorage.setItem(CONFIG.cleShift, JSON.stringify({ debut: etat.debutShift.toISOString(), jour: _iso(new Date()) })); } catch (e) {}
+      try { localStorage.setItem(CONFIG.cleShift, JSON.stringify({ debut: etat.debutShift.toISOString(), jour: _iso(new Date()), type: etat.typeShift })); } catch (e) {}
       if (btn) { btn.textContent = '⏹ Arrêter'; btn.classList.add('on'); }
     } else {
       const h = (Date.now() - etat.debutShift.getTime()) / 3600000;
       const auj = _iso(new Date());
       const cell = etat.semaine.find((d) => d.date === auj);
-      if (cell) { cell.payees = (+cell.payees || 0) + h; _sauverJour(cell); }
+      const champ = _CHAMP_TYPE[etat.typeShift] || 'payees';
+      if (cell) { cell[champ] = (+cell[champ] || 0) + h; _sauverJour(cell); }
       etat.debutShift = null;
       try { localStorage.removeItem(CONFIG.cleShift); } catch (e) {}
       if (btn) { btn.textContent = '▶ Démarrer'; btn.classList.remove('on'); }
       const info = document.getElementById('bur-shift-info');
       if (info) info.textContent = '';
-      if (window.TilexToast && TilexToast.show) TilexToast.show(`Shift ajouté : ${h.toFixed(2)}h`, 'success');
+      const nomType = etat.typeShift === 't15' ? 'temps ½' : etat.typeShift === 't2x' ? 'double' : 'régulier';
+      if (window.TilexToast && TilexToast.show) TilexToast.show(`Shift ${nomType} ajouté : ${h.toFixed(2)}h`, 'success');
       _rendreSemaine(); _rendreTotaux();
     }
   }
@@ -754,28 +843,47 @@ const TilexBureau = (() => {
       const b = JSON.parse(localStorage.getItem(CONFIG.cleShift) || 'null');
       if (b && b.debut) {
         etat.debutShift = new Date(b.debut);
+        if (b.type && _CHAMP_TYPE[b.type]) etat.typeShift = b.type;
         const btn = document.getElementById('bur-start');
         if (btn) { btn.textContent = '⏹ Arrêter'; btn.classList.add('on'); }
+        _rendreType();
       }
     } catch (e) {}
   }
 
-  function majTaux() {
-    const ti = document.getElementById('bur-taux');
-    if (!ti) return;
-    etat.taux = parseFloat(ti.value) || CONFIG.tauxDefaut;
-    try { localStorage.setItem(CONFIG.cleTaux, etat.taux); } catch (e) {}
-    _rendreTotaux();
-    // Persiste le taux sur les jours déjà remplis.
-    etat.semaine.forEach((d) => { if ((+d.payees || 0) || (+d.banque || 0)) _sauverJour(d); });
+  // ─── FORMULAIRE DES TAUX (régulier / temps½ / double) ──────
+  function ouvrirTaux() {
+    const modal = document.getElementById('bur-taux-modal');
+    if (!modal) return;
+    const reg = document.getElementById('btm-reg');
+    const q15 = document.getElementById('btm-15');
+    const q2x = document.getElementById('btm-2x');
+    if (reg) reg.value = etat.taux || CONFIG.tauxDefaut;
+    if (q15) q15.value = etat.taux15 > 0 ? etat.taux15 : '';
+    if (q2x) q2x.value = etat.taux2x > 0 ? etat.taux2x : '';
+    modal.classList.add('on');
   }
-
-  function majSupp() {
-    const seuil = document.getElementById('bur-supp-seuil');
-    const taux  = document.getElementById('bur-supp-taux');
-    etat.supp = { seuil: parseFloat(seuil && seuil.value) || 0, taux: parseFloat(taux && taux.value) || 0 };
-    try { localStorage.setItem(CONFIG.cleSupp, JSON.stringify(etat.supp)); } catch (e) {}
+  function fermerTaux() {
+    const modal = document.getElementById('bur-taux-modal');
+    if (modal) modal.classList.remove('on');
+  }
+  function enregistrerTaux() {
+    const reg = document.getElementById('btm-reg');
+    const q15 = document.getElementById('btm-15');
+    const q2x = document.getElementById('btm-2x');
+    etat.taux   = parseFloat(reg && reg.value) || CONFIG.tauxDefaut;
+    etat.taux15 = parseFloat(q15 && q15.value) || 0;   // vide → auto 1.5x
+    etat.taux2x = parseFloat(q2x && q2x.value) || 0;   // vide → auto 2x
+    try {
+      localStorage.setItem(CONFIG.cleTaux, etat.taux);
+      localStorage.setItem(CONFIG.cleTaux15, etat.taux15);
+      localStorage.setItem(CONFIG.cleTaux2x, etat.taux2x);
+    } catch (e) {}
+    // Persiste les taux sur les jours déjà remplis.
+    etat.semaine.forEach((d) => { if (_heuresJour(d) || (+d.banque || 0)) _sauverJour(d); });
     _rendreTotaux();
+    fermerTaux();
+    if (window.TilexToast && TilexToast.show) TilexToast.show('💵 Taux enregistrés', 'success');
   }
 
   async function semainePrec() { etat.offsetSem--; await _chargerSemaine(); _rendreSemaine(); _rendreTotaux(); }
@@ -794,11 +902,14 @@ const TilexBureau = (() => {
     const t = _totaux();
     const f = t.fisc;
     const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const rows = etat.semaine.map((d) =>
-      `<tr><td>${esc(d.jour)} <span style="color:#888">${d.date}</span></td>
+    const rows = etat.semaine.map((d) => {
+      const brutJour = (+d.payees||0)*_tauxReg() + (+d.h15||0)*_taux15() + (+d.h2x||0)*_taux2x();
+      return `<tr><td>${esc(d.jour)} <span style="color:#888">${d.date}</span></td>
        <td style="text-align:right">${(+d.payees||0).toFixed(2)} h</td>
-       <td style="text-align:right">${(+d.banque||0).toFixed(2)} h</td>
-       <td style="text-align:right">${_cad((+d.payees||0)*etat.taux)}</td></tr>`).join('');
+       <td style="text-align:right">${(+d.h15||0).toFixed(2)} h</td>
+       <td style="text-align:right">${(+d.h2x||0).toFixed(2)} h</td>
+       <td style="text-align:right">${_cad(brutJour)}</td></tr>`;
+    }).join('');
 
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"/>
       <title>Relevé de travail — semaine du ${etat.semaine[0].date}</title>
@@ -815,12 +926,12 @@ const TilexBureau = (() => {
         footer{margin-top:32px;font-size:10px;color:#999}
       </style></head><body>
       <h1>⚡ Relevé de travail — Ti-lex</h1>
-      <div class="meta">Semaine du ${etat.semaine[0].date} au ${etat.semaine[6].date} · Taux : ${etat.taux}$/h · Généré le ${new Date().toLocaleString('fr-CA')}</div>
+      <div class="meta">Semaine du ${etat.semaine[0].date} au ${etat.semaine[6].date} · Régulier ${_tauxReg()}$/h · Temps½ ${_taux15().toFixed(2)}$/h · Double ${_taux2x().toFixed(2)}$/h · Généré le ${new Date().toLocaleString('fr-CA')}</div>
       <table>
-        <tr><th>Jour</th><th style="text-align:right">Payées</th><th style="text-align:right">Banque</th><th style="text-align:right">Brut</th></tr>
+        <tr><th>Jour</th><th style="text-align:right">Régulier</th><th style="text-align:right">Temps ½</th><th style="text-align:right">Double</th><th style="text-align:right">Brut</th></tr>
         ${rows}
-        <tr class="tot"><td><b>Total</b></td><td style="text-align:right"><b>${t.payees.toFixed(2)} h</b></td>
-          <td style="text-align:right"><b>${t.banque.toFixed(2)} h</b></td><td style="text-align:right"><b>${_cad(t.brut)}</b></td></tr>
+        <tr class="tot"><td><b>Total ${t.totalHeures.toFixed(2)} h</b></td><td style="text-align:right"><b>${t.payees.toFixed(2)} h</b></td>
+          <td style="text-align:right"><b>${t.h15.toFixed(2)} h</b></td><td style="text-align:right"><b>${t.h2x.toFixed(2)} h</b></td><td style="text-align:right"><b>${_cad(t.brut)}</b></td></tr>
       </table>
       <table class="fisc">
         <tr><td>Salaire brut</td><td style="text-align:right">${_cad(f.brut)}</td></tr>
@@ -851,18 +962,25 @@ const TilexBureau = (() => {
   function demanderIA(agent) {
     const r = rapport();
     const lignes = r.jours
-      .filter((j) => j.payees || j.banque)
-      .map((j) => `- ${j.jour} : ${j.payees}h payées${j.banque ? ', ' + j.banque + 'h en banque' : ''}`)
+      .filter((j) => j.regulier || j.temps_et_demi || j.double || j.banque)
+      .map((j) => {
+        const bouts = [];
+        if (j.regulier)      bouts.push(`${j.regulier}h régulier`);
+        if (j.temps_et_demi) bouts.push(`${j.temps_et_demi}h temps½`);
+        if (j.double)        bouts.push(`${j.double}h double`);
+        if (j.banque)        bouts.push(`${j.banque}h en banque`);
+        return `- ${j.jour} : ${bouts.join(', ')}`;
+      })
       .join('\n') || '- (aucune heure entrée pour l\'instant)';
 
     const texte =
 `Aide-moi à calculer ma paye — c'est une estimation, pas des chiffres officiels.
 
-Mon taux : ${r.taux}$/h
+Mes taux : régulier ${r.taux_regulier}$/h, temps et demi ${r.taux_temps_et_demi}$/h, temps double ${r.taux_double}$/h.
 Mes heures cette semaine (semaine du ${r.semaine_du}) :
 ${lignes}
 
-Total payées : ${r.total_heures_payees}h → brut ${r.salaire_brut}$.
+Total ${r.total_heures}h → brut ${r.salaire_brut}$.
 Peux-tu me donner une idée de mon salaire NET après impôts et taxes du Québec (fédéral, Québec, RRQ, assurance-emploi, RQAP), et m'expliquer simplement? Rappelle que c'est une estimation.`;
 
     fermer();
@@ -881,9 +999,12 @@ Peux-tu me donner une idée de mon salaire NET après impôts et taxes du Québe
     const t = _totaux();
     return {
       semaine_du: etat.semaine[0].date,
-      taux: etat.taux,
-      jours: etat.semaine.map((d) => ({ jour: d.jour, date: d.date, payees: +d.payees||0, banque: +d.banque||0 })),
-      total_heures_payees: +t.payees.toFixed(2),
+      taux_regulier: _tauxReg(), taux_temps_et_demi: +_taux15().toFixed(2), taux_double: +_taux2x().toFixed(2),
+      jours: etat.semaine.map((d) => ({ jour: d.jour, date: d.date, regulier: +d.payees||0, temps_et_demi: +d.h15||0, double: +d.h2x||0, banque: +d.banque||0 })),
+      total_heures_regulier: +t.payees.toFixed(2),
+      total_temps_et_demi: +t.h15.toFixed(2),
+      total_double: +t.h2x.toFixed(2),
+      total_heures: +t.totalHeures.toFixed(2),
       total_heures_banque: +t.banque.toFixed(2),
       salaire_brut: +t.brut.toFixed(2),
       estimation: {
@@ -900,12 +1021,6 @@ Peux-tu me donner une idée de mon salaire NET après impôts et taxes du Québe
     _construire();
     if (!etat._init) {
       _demarrerHorloge();
-      const ti = document.getElementById('bur-taux');
-      if (ti) ti.addEventListener('change', majTaux);
-      const ss = document.getElementById('bur-supp-seuil');
-      const st = document.getElementById('bur-supp-taux');
-      if (ss) ss.addEventListener('change', majSupp);
-      if (st) st.addEventListener('change', majSupp);
       etat._init = true;
     }
     await _chargerSemaine();
@@ -982,7 +1097,8 @@ Peux-tu me donner une idée de mon salaire NET après impôts et taxes du Québe
 
   return {
     init, ouvrir, fermer, basculer,
-    toggleShift, majJour, majTaux, majSupp, semainePrec, semaineSuiv, sauverTout, exporterPDF,
+    toggleShift, choisirType, majJour, semainePrec, semaineSuiv, sauverTout, exporterPDF,
+    ouvrirTaux, fermerTaux, enregistrerTaux,
     ouvrirMois, fermerMois, moisPrec, moisSuiv, exporterMoisPDF,
     demanderIA, rapport,
     getEtat: () => Object.assign({}, etat, { intervalles: undefined }),
