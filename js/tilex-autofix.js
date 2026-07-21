@@ -10,7 +10,8 @@ const TilexAutoFix = (() => {
   const CONFIG = {
     maxErreurs:    50,       // max erreurs gardées en mémoire
     delaiDebounce: 300,      // ms avant d'analyser après une erreur
-    afficherToast: true,     // affiche un toast à chaque erreur
+    afficherToast: false,    // ❌ AUCUN popup rouge par défaut (l'utilisateur ne veut pas ce spam).
+                             //    Les erreurs sont quand même journalisées; TilexAutoFix.parler() les réactive.
     sauvegarderLog: true,    // sauvegarde dans localStorage
     cleStorage:    'tilex_autofix_log'
   };
@@ -28,7 +29,10 @@ const TilexAutoFix = (() => {
     /Non-Error promise rejection captured/i,
     /Load failed$/i,
     /extension context/i,
-    /chrome-extension:|moz-extension:/i
+    /chrome-extension:|moz-extension:/i,
+    /ServiceWorker/i,                    // maj SW bénigne (« Failed to update a ServiceWorker… »)
+    /Failed to (update|register).*ServiceWorker/i,
+    /The operation is insecure|SecurityError/i
   ];
 
   function estBruit(msg) {
