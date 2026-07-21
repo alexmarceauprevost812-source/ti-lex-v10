@@ -26,6 +26,7 @@
 <script src="js/tilex-autofix.js"></script>
 <script src="js/tilex-dashboard.js" defer></script>
 <script src="js/tilex-bureau.js" defer></script>
+<script src="js/tilex-midas.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -7157,6 +7158,16 @@ async function composerSend(){
       var _ouvert=TilexDashboard.basculer();
       inp.value="";inp.style.height="auto";
       if(typeof showToastMsg==="function")showToastMsg(_ouvert?"💰 Heures + salaire affichés (privé)":"Panneau privé fermé");
+      return;
+    }
+  }
+  // 📈 Commande crypto : ouvre/ferme le ticker MIDAS (prix live BTC/ETH/…).
+  if(txt&&window.TilexMIDAS){
+    var _cm=txt.toLowerCase().replace(/^\//,"").trim();
+    if(["midas","crypto","bourse","btc","bitcoin","coin"].indexOf(_cm)>=0){
+      var _mo=TilexMIDAS.basculer();
+      inp.value="";inp.style.height="auto";
+      if(typeof showToastMsg==="function")showToastMsg(_mo?"📈 Prix crypto en direct":"Ticker crypto fermé");
       return;
     }
   }
