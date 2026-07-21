@@ -7148,6 +7148,17 @@ document.getElementById("composer-input").addEventListener("input",function(){
 async function composerSend(){
   var inp=document.getElementById("composer-input");
   var txt=inp.value.trim();
+  // 🔒 Commande privée (admin) : ouvrir/fermer les heures + salaire du tableau
+  //    de bord. Rien n'est envoyé à l'IA. Invisible pour les autres.
+  if(txt&&window.TilexDashboard&&typeof TilexDashboard.estAdmin==="function"&&TilexDashboard.estAdmin()){
+    var _cmd=txt.toLowerCase().replace(/^\//,"").trim();
+    if(["heures","heure","salaire","salaires","paye","paie","shift","dashboard","board"].indexOf(_cmd)>=0){
+      var _ouvert=TilexDashboard.basculer();
+      inp.value="";inp.style.height="auto";
+      if(typeof showToastMsg==="function")showToastMsg(_ouvert?"💰 Heures + salaire affichés (privé)":"Panneau privé fermé");
+      return;
+    }
+  }
   // 👁️ Vision : une image seule (sans texte) peut être analysée directement.
   var imgSeule=!txt&&currentComposerMode==="chat"&&window.TilexVision&&TilexVision.hasImage();
   if(!txt&&!imgSeule)return;
