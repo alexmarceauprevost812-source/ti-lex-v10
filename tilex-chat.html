@@ -19,6 +19,7 @@
 <script src="/js/tilex-config.js"></script>
 <script src="/js/tilex-bureau.js" defer></script>
 <script src="/js/tilex-midas.js" defer></script>
+<script src="/js/tilex-meteo-panel.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1481,6 +1482,14 @@ async function onSend(textOverride){
     const _cm=text.toLowerCase().replace(/^\//,"").trim();
     if(["midas","crypto","bourse","btc","bitcoin","coin"].indexOf(_cm)>=0){
       TilexMIDAS.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
+  // 🌤️ Commande météo : ouvre le panneau météo (Québec + position + 7 jours).
+  if(textOverride==null && window.TilexMeteoPanel){
+    const _me=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["meteo","weather","temps","temperature"].indexOf(_me)>=0){
+      TilexMeteoPanel.basculer(); inputEl.value=""; autosize();
       return;
     }
   }

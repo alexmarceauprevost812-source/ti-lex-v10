@@ -27,6 +27,7 @@
 <script src="js/tilex-dashboard.js" defer></script>
 <script src="js/tilex-bureau.js" defer></script>
 <script src="js/tilex-midas.js" defer></script>
+<script src="js/tilex-meteo-panel.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -7168,6 +7169,15 @@ async function composerSend(){
       var _mo=TilexMIDAS.basculer();
       inp.value="";inp.style.height="auto";
       if(typeof showToastMsg==="function")showToastMsg(_mo?"📈 Prix crypto en direct":"Ticker crypto fermé");
+      return;
+    }
+  }
+  // 🌤️ Commande météo : ouvre le panneau météo (Québec + position + 7 jours).
+  if(txt&&window.TilexMeteoPanel){
+    var _me=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["meteo","weather","temps","temperature"].indexOf(_me)>=0){
+      TilexMeteoPanel.basculer();
+      inp.value="";inp.style.height="auto";
       return;
     }
   }
