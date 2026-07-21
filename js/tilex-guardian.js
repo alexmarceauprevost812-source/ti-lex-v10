@@ -29,14 +29,27 @@ const TilexGuardian = {
     return this;
   },
 
+  // Erreurs BÉNIGNES connues : bruit normal du navigateur qui ne casse rien
+  // (image/script qui charge pas, fetch annulé en changeant de page, script
+  // tiers comme Puter, ResizeObserver…). On les ignore SILENCIEUSEMENT — pas de
+  // toast alarmant, pas de fausse « auto-réparation ».
+  estBenigne(message) {
+    if (!message) return true; // erreur de chargement de ressource (img/script) : pas un crash
+    const m = String(message);
+    return /resizeobserver|script error|load failed|failed to fetch|networkerror|the user aborted|aborterror|non-error promise rejection|the operation was aborted|load cancelled|the play\(\) request|play\(\) request was interrupted/i.test(m);
+  },
+
   // ---------- 1. ATTRAPE TOUTES LES ERREURS ----------
   attraperErreursGlobales() {
     // Erreurs JS classiques
     window.addEventListener('error', (e) => {
+      // Erreur de CHARGEMENT d'une ressource (img/script/vidéo) : e.target est
+      // l'élément, pas window. Ça ne casse pas l'app — on ignore complètement.
+      if (e.target && e.target !== window) return;
       this.gererErreur('JS', e.message, e.filename, e.lineno);
       e.preventDefault();
       return true; // empêche le crash
-    });
+    }, true);
 
     // Promesses rejetées (async/await, fetch...)
     window.addEventListener('unhandledrejection', (e) => {
@@ -47,6 +60,9 @@ const TilexGuardian = {
 
   // ---------- 2. GESTION D'ERREUR + AUTO-RÉPARATION ----------
   gererErreur(type, message, fichier = '', ligne = '') {
+    // Bruit inoffensif → on ignore complètement (pas de toast, pas de repair).
+    if (this.estBenigne(message)) return;
+
     const erreur = {
       type,
       message,
@@ -57,9 +73,12 @@ const TilexGuardian = {
     this.state.erreurs.push(erreur);
     this.log(`⚠️ Erreur ${type} attrapée: ${message}`, 'warn');
 
-    // Notification visuelle (utilise tilex-toast.js si présent)
-    if (window.TilexToast) {
-      TilexToast.show(`⚠️ Erreur attrapée — système protégé`, 'warning');
+    // Plus de toast alarmant pour l'utilisateur : le gardien protège en
+    // arrière-plan (log console + auto-réparation), sans crier « erreur » à
+    // chaque petit hoquet. On ne notifie QUE si ça se répète vraiment beaucoup
+    // (≥ 12 erreurs réelles rapprochées = quelque chose ne va pas pour de vrai).
+    if (window.TilexToast && this.state.erreurs.length > 0 && this.state.erreurs.length % 12 === 0) {
+      TilexToast.show(`🛡️ ti-lex a corrigé quelques accrocs — tout roule`, 'info');
     }
 
     // Tentative d'auto-réparation
