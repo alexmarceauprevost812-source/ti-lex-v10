@@ -245,16 +245,24 @@
   }
 
   function svgClaudeAvatar(size, gid) {
+    // Vrai logo de Claude (Anthropic) : le « sunburst » argile sur fond crème.
+    var burst =
+      '<svg width="' + Math.round(size * 0.66) + '" height="' + Math.round(size * 0.66) +
+      '" viewBox="0 0 100 100" fill="none">' +
+      '<g stroke="#D97757" stroke-width="8.5" stroke-linecap="round">' +
+      '<line x1="50" y1="8"  x2="50" y2="92"/>' +
+      '<line x1="8"  y1="50" x2="92" y2="50"/>' +
+      '<line x1="20.5" y1="20.5" x2="79.5" y2="79.5"/>' +
+      '<line x1="79.5" y1="20.5" x2="20.5" y2="79.5"/>' +
+      '<line x1="35.5" y1="10" x2="64.5" y2="90" stroke-width="7"/>' +
+      '<line x1="64.5" y1="10" x2="35.5" y2="90" stroke-width="7"/>' +
+      '<line x1="10" y1="35.5" x2="90" y2="64.5" stroke-width="7"/>' +
+      '<line x1="90" y1="35.5" x2="10" y2="64.5" stroke-width="7"/>' +
+      '</g></svg>';
     return (
       '<div style="width:' + size + "px;height:" + size +
-      'px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#060c1a,#0a1228);border:1.5px solid #1a2640;display:flex;align-items:center;justify-content:center;overflow:hidden;" id="avatar-claude-' +
-      gid + '"><svg width="' + Math.round(size * 0.65) + '" height="' + Math.round(size * 0.55) +
-      '" viewBox="0 0 32 22" fill="none"><defs><linearGradient id="gc-' + gid +
-      '" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ffa876"/><stop offset="50%" stop-color="#ff7f27"/><stop offset="100%" stop-color="#d45000"/></linearGradient></defs><path d="M1 20 A15 15 0 0 1 31 20" stroke="url(#gc-' +
-      gid + ')" stroke-width="2.8" stroke-linecap="round"/><path d="M4.5 20 A11.5 11.5 0 0 1 27.5 20" stroke="url(#gc-' +
-      gid + ')" stroke-width="2.2" stroke-linecap="round" opacity=".7"/><path d="M8.5 20 A7.5 7.5 0 0 1 23.5 20" stroke="url(#gc-' +
-      gid + ')" stroke-width="1.7" stroke-linecap="round" opacity=".46"/><path d="M12.5 20 A3.5 3.5 0 0 1 19.5 20" stroke="url(#gc-' +
-      gid + ')" stroke-width="1.3" stroke-linecap="round" opacity=".26"/></svg></div>'
+      'px;border-radius:50%;flex-shrink:0;background:#F0EEE6;border:1.5px solid #E3DFD3;display:flex;align-items:center;justify-content:center;overflow:hidden;" ' +
+      'title="Claude (Anthropic)" id="avatar-claude-' + gid + '">' + burst + '</div>'
     );
   }
 
