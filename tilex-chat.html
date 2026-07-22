@@ -24,6 +24,8 @@
 <script src="/js/tilex-truck-panel.js" defer></script>
 <script src="/js/tilex-translate.js" defer></script>
 <script src="/js/tilex-translate-panel.js" defer></script>
+<script src="/js/tilex-engine.js" defer></script>
+<script src="/js/tilex-engine-ui.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1518,6 +1520,14 @@ async function onSend(textOverride){
     const _tr=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["traduire","traduction","translate","trad"].indexOf(_tr)>=0){
       TilexTranslatePanel.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
+  // ⚙️ Commande moteur multi-agents : ouvre le tableau de bord.
+  if(textOverride==null && window.TilexEngineUI){
+    const _mo2=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["moteur","engine","cowork","equipe","team","agents"].indexOf(_mo2)>=0){
+      TilexEngineUI.basculer(); inputEl.value=""; autosize();
       return;
     }
   }
