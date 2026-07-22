@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-626";
+const CACHE_VERSION = "tilex-v10-628";
 const ASSETS = [
   "/",
   "/index.html",
@@ -109,6 +109,8 @@ const ASSETS = [
   "/js/tilex-translate-panel.js",
   "/js/tilex-engine.js",
   "/js/tilex-engine-ui.js",
+  "/moteur.html",
+  "/moteur",
   "/js/tilex-safe-fetch.js",
   "/js/tilex-copy.js",
   "/js/tilex-theme.js",

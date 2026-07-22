@@ -6,6 +6,8 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/abonnement", "destination": "/abonnement.html" },
+    { "source": "/moteur", "destination": "/moteur.html" },
+    { "source": "/engine", "destination": "/moteur.html" },
     { "source": "/midas", "destination": "/midas.html" },
     { "source": "/midas-finance", "destination": "/midas-finance.html" },
     { "source": "/forfaits", "destination": "/forfaits.html" },
