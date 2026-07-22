@@ -4775,6 +4775,11 @@ function parseScanJSON(raw){
 }
 function isValidScanResult(obj){return obj&&typeof obj==="object"&&("findings" in obj||"risk_score" in obj||"errors" in obj||"agents" in obj);}
 function escHtml(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML;}
+// Vrai si le contenu d'une puce est vide une fois les balises/espaces retires
+// (evite les • tout seuls a l'ecran).
+function _estVide(s){
+  return !String(s).replace(/<[^>]*>/g,"").replace(/&nbsp;/g," ").replace(/[\s ]+/g," ").trim();
+}
 function renderMd(txt){
   var safe=escHtml(txt);
   var codeBlocks=[];
@@ -4787,7 +4792,9 @@ function renderMd(txt){
     codeBlocks.push('<div class="code-block-wrap"><div class="code-block-header"><span class="code-lang">'+language+'</span><button class="code-copy-btn" onclick="copyCodeBlock(\''+cid+'\')">📋 Copier</button></div><pre class="code-block"><code id="'+cid+'" class="language-'+language+'">'+code.trim()+'</code></pre><div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="btn-create-file" onclick="ouvrirDansStudio(\''+cid+'\',\''+language+'\')">Créer un fichier 📂</button>'+applyBtn+'</div></div>');
     return ph;
   });
-  safe=safe.replace(/`([^`]+)`/g,'<code class="inline-code">$1</code>');
+  // Code en ligne : on IGNORE le code vide ou fait juste d'espaces (evite les
+  // petites boites orange vides a l'ecran).
+  safe=safe.replace(/`([^`]+)`/g,function(m,c){return c.trim()?'<code class="inline-code">'+c+'</code>':c;});
   safe=safe.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   safe=safe.replace(/_([^_\n]+)_/g,'<em>$1</em>');
   var lines=safe.split("\n");
@@ -4818,12 +4825,14 @@ function renderMd(txt){
     }else if(inBlockquote){out.push("</blockquote>");inBlockquote=false;}
     var ulm=line.match(/^[-*]\s+(.+)$/);
     if(ulm){
+      if(_estVide(ulm[1])){continue;}          // saute les puces vides (pas de • tout seul)
       if(inList&&listType!=="ul"){out.push("</ol>");inList=false;}
       if(!inList){out.push("<ul>");inList=true;listType="ul";}
       out.push("<li>"+ulm[1]+"</li>");continue;
     }
     var olm=line.match(/^\d+\.\s+(.+)$/);
     if(olm){
+      if(_estVide(olm[1])){continue;}
       if(inList&&listType!=="ol"){out.push("</ul>");inList=false;}
       if(!inList){out.push("<ol>");inList=true;listType="ol";}
       out.push("<li>"+olm[1]+"</li>");continue;
