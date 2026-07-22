@@ -33,6 +33,7 @@
 <script src="js/tilex-translate-panel.js" defer></script>
 <script src="js/tilex-engine.js" defer></script>
 <script src="js/tilex-engine-ui.js" defer></script>
+<script src="js/tilex-scan.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -7246,6 +7247,15 @@ async function composerSend(){
     var _mo2=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["moteur","engine","cowork","equipe","team","agents"].indexOf(_mo2)>=0){
       TilexEngineUI.basculer();
+      inp.value="";inp.style.height="auto";
+      return;
+    }
+  }
+  // 🔍 Commande scan : ouvre le scanner du projet GitHub.
+  if(txt&&window.TilexScan){
+    var _scn=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["scan","scanner","audit","scan-repo","scanrepo"].indexOf(_scn)>=0){
+      TilexScan.basculer();
       inp.value="";inp.style.height="auto";
       return;
     }

@@ -26,6 +26,7 @@
 <script src="/js/tilex-translate-panel.js" defer></script>
 <script src="/js/tilex-engine.js" defer></script>
 <script src="/js/tilex-engine-ui.js" defer></script>
+<script src="/js/tilex-scan.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1528,6 +1529,14 @@ async function onSend(textOverride){
     const _mo2=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["moteur","engine","cowork","equipe","team","agents"].indexOf(_mo2)>=0){
       TilexEngineUI.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
+  // 🔍 Commande scan : ouvre le scanner du projet GitHub.
+  if(textOverride==null && window.TilexScan){
+    const _scn=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["scan","scanner","audit","scan-repo","scanrepo"].indexOf(_scn)>=0){
+      TilexScan.basculer(); inputEl.value=""; autosize();
       return;
     }
   }
