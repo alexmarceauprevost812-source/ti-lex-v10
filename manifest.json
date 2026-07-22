@@ -3,7 +3,7 @@
   "name": "Ti-lex-AL v10",
   "short_name": "Ti-lex",
   "description": "Plateforme IA québécoise par Alex Marceau-Prévost",
-  "start_url": "/",
+  "start_url": "/pro.html",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
