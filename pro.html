@@ -34,6 +34,7 @@
 <script src="js/tilex-engine.js" defer></script>
 <script src="js/tilex-engine-ui.js" defer></script>
 <script src="js/tilex-scan.js" defer></script>
+<script src="js/tilex-connexions.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -2287,6 +2288,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- Coword — moteur multi-agents (page dediee), sous TILEXCODE -->
   <div class="sb-item" id="si-coword" onclick="window.location.href='/moteur'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ff7a00;">⚙️</span><span class="sb-label">COWORD</span>
+  </div>
+
+  <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…) sous COWORD -->
+  <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
   </div>
 
   <!-- ⑤ CERVEAU (mémoire — branché avec les chats pour sauvegarder/retrouver tes notes) -->
@@ -7256,6 +7262,15 @@ async function composerSend(){
     var _scn=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["scan","scanner","audit","scan-repo","scanrepo"].indexOf(_scn)>=0){
       TilexScan.basculer();
+      inp.value="";inp.style.height="auto";
+      return;
+    }
+  }
+  // 🔌 Commande connexions : centre de connexions (GitHub, Supabase, Google/Gmail…).
+  if(txt&&window.TilexConnexions){
+    var _cx=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["connexion","connexions","connect","connecter","connections","branchements"].indexOf(_cx)>=0){
+      TilexConnexions.basculer();
       inp.value="";inp.style.height="auto";
       return;
     }
