@@ -22,6 +22,8 @@
 <script src="/js/tilex-meteo-panel.js" defer></script>
 <script src="/js/tilex-schema-panel.js" defer></script>
 <script src="/js/tilex-truck-panel.js" defer></script>
+<script src="/js/tilex-translate.js" defer></script>
+<script src="/js/tilex-translate-panel.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
 <style>
 :root{
@@ -1508,6 +1510,14 @@ async function onSend(textOverride){
     const _tk=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["camion","truck","suivi","carte","gps","map"].indexOf(_tk)>=0){
       TilexTruckPanel.basculer(); inputEl.value=""; autosize();
+      return;
+    }
+  }
+  // 🌐 Commande traduction : ouvre le traducteur terrain.
+  if(textOverride==null && window.TilexTranslatePanel){
+    const _tr=text.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["traduire","traduction","translate","trad"].indexOf(_tr)>=0){
+      TilexTranslatePanel.basculer(); inputEl.value=""; autosize();
       return;
     }
   }
