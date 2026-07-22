@@ -3215,9 +3215,9 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
         <div class="composer-selector-dropdown" id="composer-selector-dropdown">
           <div class="csd-section">AGENTS</div>
           <div class="csd-item selected" data-agent="ti-lex-al" onclick="selectComposerAgent('ti-lex-al','TI-LEX-AL')">
-            <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL</div>
+            <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
           <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Marceau')">
-            <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau</div>
+            <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
           <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
             <span class="csd-ico">🛡️</span> SILEX</div>
           <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
@@ -4219,8 +4219,22 @@ var AL_AUTONOME_CAPS="\n\nTU ES UN AGENT AUTONOME : tu agis de toi-même sans at
   +"utilise l'outil pousser_code_github : demande TOUJOURS son NIP (4 chiffres) avant, jamais le deviner ni le répéter. "
   +"Tu peux aussi montrer des images/vidéos, sortir des cours de bourse, lancer des scans de sécurité. Vas-y, sois proactif.";
 
+/* 🤖 AUTONOMIE NIVEAU 3 — doctrine commune à TI-LEX-AL et Marceau.
+   100% autonome : planifie, exécute et livre du DÉBUT à la FIN, sans se
+   faire tenir la main — tout en gardant les garde-fous de sécurité. */
+var AUTONOMIE_NIVEAU_3="\n\n=== AUTONOMIE NIVEAU 3 (100% AUTONOME) ===\n"
+  +"Tu opères au NIVEAU 3 d'autonomie. Ça veut dire :\n"
+  +"1) PLANIFIE puis AGIS tout seul : décompose la demande en étapes et exécute-les d'affilée, sans demander la permission à chaque étape.\n"
+  +"2) UTILISE TES OUTILS de toi-même quand ça sert (recherche web, code, images/vidéos, bourse, sécurité, GitHub) — jamais « je ne peux pas », tu le fais.\n"
+  +"3) VA JUSQU'AU BOUT : livre le RÉSULTAT fini (code complet, réponse vérifiée, fichiers entiers), pas juste un plan de ce que tu ferais.\n"
+  +"4) AUTO-CORRECTION : si un outil échoue ou qu'une réponse est incomplète, réessaie et ajuste tout seul avant de rendre.\n"
+  +"5) SOIS PROACTIF : anticipe la prochaine étape logique et propose-la ou fais-la.\n"
+  +"GARDE-FOUS (obligatoires, même à niveau 3) : demande TOUJOURS confirmation AVANT une action IRRÉVERSIBLE ou risquée — supprimer/écraser des données, DROP/DELETE/TRUNCATE SQL, dépenser de l'argent, opérations en masse, ou pousser du code destructeur. Pour pousser du code sur GitHub, exige TOUJOURS le NIP (4 chiffres) et ne le devine jamais. Tu ne inventes JAMAIS de faits : si ce n'est pas confirmé, dis-le franchement.";
+
 function getSystemPrompt(){
   var base=(_webAgent&&_webAgent.system)?_webAgent.system:(composerAgent==="marceau"?MARCEAU_PERSONA:((isModeMaitre()?SYSTEM_PROMPT_MAITRE:SYSTEM_PROMPT_STANDARD)+(composerAgent==="ti-lex-al"?AL_AUTONOME_CAPS:"")));
+  // Niveau 3 d'autonomie appliqué à TI-LEX-AL et Marceau.
+  if(composerAgent==="marceau"||composerAgent==="ti-lex-al")base+=AUTONOMIE_NIVEAU_3;
   if(_memoireContexteCache)base+="\n"+_memoireContexteCache;
   if(_tilexMemCache)base+="\n"+_tilexMemCache;
   if(_cerveauCache)base+="\n\n[NOTES DU CERVEAU de l'utilisateur — son 2ème cerveau, sauvegardées depuis le chat ou la page Cerveau. Quand il te demande de retrouver une note, une info qu'il a notée, ou fait référence à ce qu'il a sauvegardé, sers-toi de ces notes]:\n"+_cerveauCache;
