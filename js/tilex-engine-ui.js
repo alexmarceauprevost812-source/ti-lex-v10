@@ -112,8 +112,9 @@ const TilexEngineUI = (() => {
       let tasksHtml = '';
       if (ouvert) {
         const tasks = await TilexEngine.listerTaches(j.id);
+        const ava = window.TilexCowordAnim ? TilexCowordAnim.avatarHTML(tasks) : '';
         const pipe = window.TilexCowordAnim ? TilexCowordAnim.pipelineHTML(tasks) : '';
-        tasksHtml = '<div class="em-tasks">' + pipe + tasks.map((t) => {
+        tasksHtml = '<div class="em-tasks">' + ava + pipe + tasks.map((t) => {
           const ts = STATUTS[t.statut] || STATUTS.pending;
           const corps = t.resultat ? (window.TilexCowordAnim ? TilexCowordAnim.rendreResultat(t.resultat) : _esc(t.resultat)) : '';
           const res = corps ? `<div class="em-task-r">${corps}</div>` : '';

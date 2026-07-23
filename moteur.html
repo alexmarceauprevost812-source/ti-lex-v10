@@ -85,8 +85,9 @@
         var j=jobs[i];var st=STATUTS[j.statut]||STATUTS.pending;var tHtml='';
         if(ouverts[j.id]){
           var tasks=await TilexEngine.listerTaches(j.id);
+          var ava=(window.TilexCowordAnim)?TilexCowordAnim.avatarHTML(tasks):'';
           var pipe=(window.TilexCowordAnim)?TilexCowordAnim.pipelineHTML(tasks):'';
-          tHtml='<div class="tasks">'+pipe+tasks.map(function(t){
+          tHtml='<div class="tasks">'+ava+pipe+tasks.map(function(t){
             var ts=STATUTS[t.statut]||STATUTS.pending;
             var corps=t.resultat?((window.TilexCowordAnim)?TilexCowordAnim.rendreResultat(t.resultat):esc(t.resultat)):'';
             var res=corps?'<div class="task-r">'+corps+'</div>':'';
