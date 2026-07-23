@@ -38,6 +38,7 @@
 <script src="js/tilex-studio-code.js" defer></script>
 <script src="js/tilex-engine-ui.js" defer></script>
 <script src="js/tilex-scan.js" defer></script>
+<script src="js/tilex-mandat.js" defer></script>
 <script src="js/tilex-connexions.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
@@ -2372,6 +2373,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…), au-dessus des Paramètres -->
   <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
     <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
+  </div>
+
+  <!-- Mandat de scan — preuve de propriété + autorisation avant tout scan -->
+  <div class="sb-item" id="si-mandat" onclick="if(window.TilexMandat)TilexMandat.ouvrir();" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#f0b429;">🔒</span><span class="sb-label">MANDAT SCAN</span>
   </div>
 
   <!-- Paramètres -->
@@ -7372,6 +7378,15 @@ async function composerSend(){
     var _cx=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
     if(["connexion","connexions","connect","connecter","connections","branchements"].indexOf(_cx)>=0){
       TilexConnexions.basculer();
+      inp.value="";inp.style.height="auto";
+      return;
+    }
+  }
+  // 🔒 Commande mandat : autorisation/preuve de propriété avant un scan.
+  if(txt&&window.TilexMandat){
+    var _mdt=txt.toLowerCase().replace(/^\//,"").normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+    if(["mandat","mandats","autorisation","autoriser","scan-autorise","proprietaire"].indexOf(_mdt)>=0){
+      TilexMandat.basculer();
       inp.value="";inp.style.height="auto";
       return;
     }
