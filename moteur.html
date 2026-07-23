@@ -47,9 +47,12 @@
 
   <div class="wrap">
     <div class="new">
+      <button class="cwf-btn" id="job-file-btn" title="Ajouter image / fichier / zip">📎</button>
+      <input id="job-file" type="file" multiple accept="image/*,.zip,.js,.mjs,.ts,.tsx,.jsx,.html,.css,.scss,.json,.md,.txt,.csv,.xml,.yml,.yaml,.py,.sql,.vue,.svelte,.env" style="display:none">
       <input id="job-input" type="text" placeholder="Décris une job (ex: bouton bleu qui affiche l'heure)…"/>
       <button id="job-go">🚀 Lancer</button>
     </div>
+    <div class="cwf-apercu" id="job-apercu"></div>
     <div class="hint">Chaque job passe par l'équipe : <b>💻 Codeur → 🔍 Réviseur → 🧪 Testeur → 🛡️ Gardien</b>. Suivi en temps réel, sauvegardé sur ton compte.</div>
 
     <div id="liste"><div class="vide">Aucune job pour l'instant. Lance-en une! 🚀</div></div>
@@ -63,6 +66,7 @@
   <script src="/js/tilex-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <script src="/js/tilex-push-notif.js"></script>
+  <script src="/js/tilex-coword-files.js"></script>
   <script src="/js/tilex-engine.js"></script>
   <script src="/js/tilex-coword-anim.js"></script>
   <script src="/js/tilex-studio-code.js"></script>
@@ -110,11 +114,20 @@
       var titre=(inp.value||'').trim();
       if(!titre)return;
       inp.value='';
-      var r=await TilexEngine.lancerJob(titre);
+      var pieces=(window.TilexCowordFiles)?TilexCowordFiles.obtenir():[];
+      var r=await TilexEngine.lancerJob(titre,pieces);
       if(!r.ok)alert(r.erreur);
+      else if(window.TilexCowordFiles)TilexCowordFiles.vider();
       rendre();
     }
 
+    // Pièces jointes (image / fichier / zip)
+    if(window.TilexCowordFiles){
+      var fbtn=document.getElementById('job-file-btn');
+      var finput=document.getElementById('job-file');
+      TilexCowordFiles.brancherInput(finput,document.getElementById('job-apercu'));
+      if(fbtn)fbtn.addEventListener('click',function(){finput.click();});
+    }
     document.getElementById('job-go').addEventListener('click',lancer);
     document.getElementById('job-input').addEventListener('keydown',function(e){if(e.key==='Enter')lancer();});
     document.getElementById('liste').addEventListener('click',function(e){

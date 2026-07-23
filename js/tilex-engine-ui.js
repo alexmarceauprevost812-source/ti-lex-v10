@@ -76,15 +76,23 @@ const TilexEngineUI = (() => {
           <button class="em-x" onclick="TilexEngineUI.fermer()">✕</button>
         </div>
         <div class="em-new">
+          <button class="cwf-btn" id="em-file-btn" title="Ajouter image / fichier / zip">📎</button>
+          <input id="em-file" type="file" multiple accept="image/*,.zip,.js,.mjs,.ts,.tsx,.jsx,.html,.css,.scss,.json,.md,.txt,.csv,.xml,.yml,.yaml,.py,.sql,.vue,.svelte,.env" style="display:none"/>
           <input id="em-input" type="text" placeholder="Décris une job (ex: bouton bleu qui affiche l'heure)…"/>
           <button onclick="TilexEngineUI.lancer()">🚀 Lancer</button>
         </div>
+        <div class="cwf-apercu" id="em-apercu"></div>
         <div id="em-liste"><div class="em-vide">Aucune job pour l'instant. Lance-en une! 🚀</div></div>
         <div class="em-note">Codeur → Réviseur → Testeur → Gardien · sauvegardé sur ton compte · temps réel</div>
       </div>`;
     document.body.appendChild(el);
     const inp = el.querySelector('#em-input');
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') lancer(); });
+    if (window.TilexCowordFiles) {
+      const fb = el.querySelector('#em-file-btn'), fi = el.querySelector('#em-file');
+      TilexCowordFiles.brancherInput(fi, el.querySelector('#em-apercu'));
+      if (fb) fb.addEventListener('click', () => fi.click());
+    }
   }
 
   async function lancer() {
@@ -93,7 +101,9 @@ const TilexEngineUI = (() => {
     const titre = inp.value.trim();
     if (!titre) return;
     inp.value = '';
-    const r = await TilexEngine.lancerJob(titre);
+    const pieces = window.TilexCowordFiles ? TilexCowordFiles.obtenir() : [];
+    const r = await TilexEngine.lancerJob(titre, pieces);
+    if (r.ok && window.TilexCowordFiles) TilexCowordFiles.vider();
     if (!r.ok && window.showToastMsg) showToastMsg(r.erreur);
     else if (!r.ok && window.TilexToast && TilexToast.show) TilexToast.show(r.erreur, 'error');
     rafraichir();
