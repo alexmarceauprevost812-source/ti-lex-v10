@@ -21,10 +21,13 @@ export default async function handler(req, res) {
   const GITHUB_REPO = process.env.GITHUB_REPO;
   const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 
-  if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+  // SEUL le token est OBLIGATOIRE. Le repo/branche peuvent venir du sélecteur du
+  // Codex (?repo=&branch=) — donc pas besoin de GITHUB_OWNER/GITHUB_REPO en env
+  // pour juste LISTER les repos accessibles avec le token.
+  if (!GITHUB_TOKEN) {
     return res.status(500).json({
-      error: 'Configuration manquante',
-      details: 'Il faut GITHUB_TOKEN, GITHUB_OWNER et GITHUB_REPO dans les variables d\'environnement Vercel.'
+      error: 'GITHUB_TOKEN manquant',
+      details: 'Ajoute GITHUB_TOKEN (un token GitHub avec le scope "repo") dans les variables d\'environnement Vercel, puis redéploie.'
     });
   }
 
@@ -52,6 +55,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Nom de branche invalide' });
     }
     BRANCH = branch;
+  }
+
+  // Les modes qui ciblent un repo précis ont besoin d'un repo : soit choisi dans
+  // le sélecteur (?repo=), soit configuré en env. Sinon, message clair.
+  const besoinRepo = (mode === 'branches' || mode === 'tree' || file || path);
+  if (besoinRepo && (!OWNER || !REPO)) {
+    return res.status(400).json({
+      error: 'Aucun repo choisi',
+      details: 'Choisis un repo dans le sélecteur 🐙 du Codex (ou configure GITHUB_OWNER + GITHUB_REPO en env).'
+    });
   }
 
   try {
