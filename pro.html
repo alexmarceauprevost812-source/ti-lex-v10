@@ -1278,21 +1278,30 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:6px;}
 .composer-send:hover{filter:brightness(1.1);transform:scale(1.05);}
-/* 👿 Mascotte démon TI-LEX-AL perchée sur le REBORD DU HAUT de la barre d'écriture
-   (pas sur le bouton Envoyer) : elle agrippe le dessus de la zone d'écriture, plus
-   haut, du côté droit. pointer-events:none → le clic passe aux champs dessous. */
+/* 👿 Le démon TI-LEX-AL EST le bouton Envoyer : l'image du démon + le mot
+   « Envoyer » collé juste en dessous (le démon a l'air d'agripper le mot).
+   Clin d'œil animé au clic. Remplace l'ancien rond orange ⚡. */
 .composer-input-row{position:relative;}
-.tilex-mascot{position:absolute;right:52px;bottom:calc(100% - 16px);width:88px;height:auto;
-  transform-origin:50% 100%;pointer-events:none;z-index:8;
-  filter:drop-shadow(0 6px 9px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(255,90,20,.25));
-  transition:transform .12s ease;-webkit-user-select:none;user-select:none;}
+.composer-send.composer-send-demon{width:auto;height:auto;background:none;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;
+  padding:0;margin-left:8px;flex-shrink:0;overflow:visible;transition:transform .1s ease;}
+.composer-send.composer-send-demon:hover{transform:none;filter:none;}
+.composer-send.composer-send-demon:active{transform:none;}
+.composer-send-demon .tilex-mascot{width:64px;height:auto;display:block;pointer-events:none;
+  transform-origin:50% 100%;-webkit-user-select:none;user-select:none;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,90,20,.32));
+  transition:transform .12s ease;}
+.composer-send-demon .send-label{font-size:10px;font-weight:800;color:#ff7a00;letter-spacing:.6px;
+  line-height:1;margin-top:-5px;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.7);}
+.composer-send-demon:hover .tilex-mascot{transform:scale(1.06);}
+.composer-send-demon:active .tilex-mascot{transform:scale(.93);}
 .tilex-mascot.nudge{animation:mascotNudge .5s ease;}
 @keyframes mascotNudge{
   0%{transform:translateY(0) rotate(0);}
-  28%{transform:translateY(-7px) rotate(-3deg) scale(1.06);}
+  28%{transform:translateY(-6px) rotate(-3deg) scale(1.06);}
   60%{transform:translateY(0) rotate(2deg) scale(1.01);}
   100%{transform:translateY(0) rotate(0);}}
-@media (max-width:380px){.tilex-mascot{width:74px;right:46px;}}
+@media (max-width:380px){.composer-send-demon .tilex-mascot{width:56px;}}
 @media (prefers-reduced-motion:reduce){.tilex-mascot.nudge{animation:none;}}
 /* Bouton micro — un click active, un click désactive (état rouge pulsant quand actif) */
 .composer-mic-btn{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;margin-left:auto;
@@ -3279,12 +3288,14 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="showTab('settings');closeComposerMenu()"><span class="cmi-ico">⚙️</span> Paramètres</div>
     </div>
     <div class="composer-input-row">
-      <!-- 👿 La mascotte est perchée sur le REBORD DU HAUT de la barre d'écriture
-           (pas sur le bouton) : elle agrippe le dessus de la zone d'écriture. -->
-      <img class="tilex-mascot" id="tilex-mascot" src="/assets/tilex-mascot-open.png" alt="" aria-hidden="true" draggable="false">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
       <button class="composer-mic-btn" id="composer-mic-btn" title="Parler au micro" onclick="toggleMicro()">🎙️</button>
-      <button class="composer-send" id="composer-send-btn" title="Envoyer" onclick="composerSend()" style="font-size:17px;line-height:1;">⚡</button>
+      <!-- 👿 Le démon TI-LEX-AL EST le bouton Envoyer : clique-le pour envoyer
+           (clin d'œil animé). Le mot « Envoyer » est collé juste en dessous. -->
+      <button class="composer-send composer-send-demon" id="composer-send-btn" title="Envoyer" onclick="composerSend()">
+        <img class="tilex-mascot" id="tilex-mascot" src="/assets/tilex-mascot-open.png" alt="Envoyer" draggable="false">
+        <span class="send-label">Envoyer</span>
+      </button>
     </div>
     <div class="composer-actions-row">
       <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
