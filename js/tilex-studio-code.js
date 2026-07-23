@@ -155,7 +155,8 @@ const TilexStudioCode = (() => {
     const nb = _fichiers.length;
     const topActs = nb
       ? `<button class="sd-act" onclick="TilexStudioCode.copierTout()">📋 Copier tout</button>
-         <button class="sd-act p" onclick="TilexStudioCode.telechargerTout()">⬇️ Tout télécharger</button>`
+         <button class="sd-act" onclick="TilexStudioCode.telechargerTout()">⬇️ Fichiers</button>
+         <button class="sd-act p" onclick="TilexStudioCode.telechargerZip()">📦 ZIP</button>`
       : '';
 
     let corps;
@@ -230,7 +231,57 @@ const TilexStudioCode = (() => {
     _toast('⬇️ ' + _fichiers.length + ' fichier(s)');
   }
 
-  return { ouvrir, fermer, extraire, copier, copierTout, telecharger, telechargerTout };
+  /* ─── Générateur ZIP autonome (méthode « store », aucune dépendance) ─── */
+  let _crcTable = null;
+  function _crc32(bytes) {
+    if (!_crcTable) {
+      _crcTable = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); _crcTable[n] = c >>> 0; }
+    }
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) crc = _crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function _u16(n) { return new Uint8Array([n & 0xFF, (n >>> 8) & 0xFF]); }
+  function _u32(n) { return new Uint8Array([n & 0xFF, (n >>> 8) & 0xFF, (n >>> 16) & 0xFF, (n >>> 24) & 0xFF]); }
+  function _cat(arrs) { let len = 0; for (const a of arrs) len += a.length; const out = new Uint8Array(len); let o = 0; for (const a of arrs) { out.set(a, o); o += a.length; } return out; }
+  function _zipBlob(files) {
+    const enc = new TextEncoder();
+    const locales = [], centraux = [];
+    let offset = 0;
+    for (const f of files) {
+      const nom = enc.encode(f.fichier);
+      const data = enc.encode(f.code);
+      const crc = _crc32(data);
+      const lh = _cat([_u32(0x04034b50), _u16(20), _u16(0), _u16(0), _u16(0), _u16(0), _u32(crc), _u32(data.length), _u32(data.length), _u16(nom.length), _u16(0), nom]);
+      locales.push(lh, data);
+      centraux.push(_cat([_u32(0x02014b50), _u16(20), _u16(20), _u16(0), _u16(0), _u16(0), _u16(0), _u32(crc), _u32(data.length), _u32(data.length), _u16(nom.length), _u16(0), _u16(0), _u16(0), _u16(0), _u32(0), _u32(offset), nom]));
+      offset += lh.length + data.length;
+    }
+    const central = _cat(centraux);
+    const fin = _cat([_u32(0x06054b50), _u16(0), _u16(0), _u16(files.length), _u16(files.length), _u32(central.length), _u32(offset), _u16(0)]);
+    return new Blob([...locales, central, fin], { type: 'application/zip' });
+  }
+  function telechargerZip() {
+    if (!_fichiers.length) return;
+    try {
+      const blob = _zipBlob(_fichiers.map((f) => ({ fichier: f.fichier, code: f.code })));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'coword-' + _horodatage() + '.zip';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      _toast('📦 ZIP téléchargé (' + _fichiers.length + ' fichiers)');
+    } catch (e) { _toast('Erreur ZIP : ' + (e.message || e)); }
+  }
+  function _horodatage() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+  }
+
+  return { ouvrir, fermer, extraire, copier, copierTout, telecharger, telechargerTout, telechargerZip };
 
 })();
 
