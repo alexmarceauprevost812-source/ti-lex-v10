@@ -37,6 +37,7 @@
 <script src="js/tilex-scan.js" defer></script>
 <script src="js/tilex-mandat.js" defer></script>
 <script src="js/tilex-connexions.js" defer></script>
+<script src="js/tilex-prevost.js" defer></script>
 <script src="js/tilex-config.js"></script>
 <script src="js/tilex-intro.js"></script>
 <script>
@@ -7331,6 +7332,13 @@ async function composerSend(){
       return;
     }
   }
+  // 🤖 PREVOST — agent autonome : « /prevost <tâche> » (ou « prevost: <tâche> »)
+  if(txt&&window.PREVOST&&/^\/?prevost[:\s]/i.test(txt+" ")){
+    var _tachePv=txt.replace(/^\/?prevost[:\s]*/i,"").trim();
+    inp.value="";inp.style.height="auto";
+    lancerPrevost(_tachePv||"Présente-toi en 2 phrases pis liste tes outils.");
+    return;
+  }
   // 👁️ Vision : une image seule (sans texte) peut être analysée directement.
   var imgSeule=!txt&&currentComposerMode==="chat"&&window.TilexVision&&TilexVision.hasImage();
   if(!txt&&!imgSeule)return;
@@ -8675,6 +8683,33 @@ function toggleReflexionMode(){
   localStorage.setItem("tilex-reflexion",reflexionMode);
   updateModelChip();
   showToastMsg(reflexionMode?"🧠 Mode réflexion activé":"Mode réflexion désactivé");
+}
+
+/* 🤖 PREVOST — agent autonome branché dans le chat (commande /prevost).
+   Pensées, étapes d'outils, code pis questions s'affichent en bulles.
+   Si l'agent pose une question (demander_a_alex), réponds avec
+   « /prevost ta réponse » pour continuer la même job. */
+var _prevostHist=null;
+function lancerPrevost(tache){
+  showTab('chat');
+  addMsg("u","/prevost "+tache);
+  if(!window.PREVOST){addMsg("a","⚠️ PREVOST pas chargé.");return;}
+  PREVOST.brancher({
+    onPensee:function(t){addMsg("a","💭 "+t);},
+    onEtape:function(e){
+      var ok=!(e.resultat&&e.resultat.erreur);
+      addMsg("a","🔧 Étape "+e.n+" — "+e.outil+" → "+(ok?"✅":"❌ "+(e.resultat.erreur||"erreur")));
+    },
+    onCode:function(c){
+      addMsg("a","📄 **"+c.nom_fichier+"**\n```"+(c.langage||"")+"\n"+c.contenu+"\n```");
+    },
+    onQuestion:function(q){addMsg("a","❓ "+q+"\n\n_(réponds avec « /prevost ta réponse » pour continuer)_");},
+    onFini:function(r){addMsg("a","🤖 "+r);_prevostHist=null;}
+  });
+  PREVOST.lancer(tache,_prevostHist||[]).then(function(res){
+    if(res&&res.en_attente){_prevostHist=res.messages;}
+    else if(res&&!res.fini&&res.reponse){_prevostHist=null;}
+  }).catch(function(e){addMsg("a","⚠️ PREVOST : "+(e&&e.message||"erreur"));});
 }
 
 function appendReflexionBlock(){
