@@ -175,9 +175,26 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
 // deno-lint-ignore no-explicit-any
 async function envoyerPush(supa: any, ok: boolean, titre: string): Promise<void> {
   try {
-    const vapidJson = Deno.env.get("VAPID_KEYS");
+    // Clés VAPID : d'abord les variables d'env, sinon le coffre app_secrets
+    // (lu via le service_role → jamais accessible aux clients, RLS bloque tout).
+    let vapidJson = Deno.env.get("VAPID_KEYS") || "";
+    let subject = Deno.env.get("VAPID_SUBJECT") || "";
+    if (!vapidJson) {
+      try {
+        const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+        const url2 = Deno.env.get("SUPABASE_URL");
+        if (svc && url2) {
+          const admin = createClient(url2, svc);
+          const { data: secrets } = await admin.from("app_secrets").select("cle,valeur").in("cle", ["VAPID_KEYS", "VAPID_SUBJECT"]);
+          for (const row of (secrets ?? [])) {
+            if (row.cle === "VAPID_KEYS") vapidJson = String(row.valeur || "").trim();
+            if (row.cle === "VAPID_SUBJECT" && !subject) subject = String(row.valeur || "").trim();
+          }
+        }
+      } catch (_e) { /* pas de coffre → pas de push */ }
+    }
     if (!vapidJson) return; // pas de clés → pas de push (l'app notifie quand même si ouverte)
-    const subject = Deno.env.get("VAPID_SUBJECT") || "mailto:alexmarceauprevost812@gmail.com";
+    if (!subject) subject = "mailto:alexmarceauprevost812@gmail.com";
 
     // RLS : ne renvoie que les abonnements de CET utilisateur (token courant).
     const { data: subs } = await supa.from("push_subscriptions").select("*");
