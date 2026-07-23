@@ -2290,11 +2290,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:#ff7a00;">⚙️</span><span class="sb-label">COWORD</span>
   </div>
 
-  <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…) sous COWORD -->
-  <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
-  </div>
-
   <!-- ⑤ CERVEAU (mémoire — branché avec les chats pour sauvegarder/retrouver tes notes) -->
   <div class="sb-item" id="si-cerveau" onclick="showSub('cerveau')">
     <span class="sb-icon" style="color:#c084fc;">🧠</span><span class="sb-label" data-txt="CERVEAU"></span>
@@ -2375,6 +2370,11 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-item" onclick="window.location.href='forfaits.html'" style="cursor:pointer;">
     <span class="sb-icon" style="color:#ffcf4a;">🏆</span><span class="sb-label" data-txt="FORFAIT"></span>
     <span class="sb-label" style="font-size:8px;background:linear-gradient(135deg,#FF6B00,#ffcf4a);color:#0a0a0a;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px;margin-left:auto;">UPGRADE</span>
+  </div>
+
+  <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…), au-dessus des Paramètres -->
+  <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
   </div>
 
   <!-- Paramètres -->
