@@ -5,6 +5,10 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
+    { "source": "/api/generer-code-verif", "destination": "/api/mandat?action=generer" },
+    { "source": "/api/verifier-propriete", "destination": "/api/mandat?action=verifier" },
+    { "source": "/api/signer-mandat", "destination": "/api/mandat?action=signer" },
+    { "source": "/api/verifier-autorisation-scan", "destination": "/api/mandat?action=autoriser" },
     { "source": "/abonnement", "destination": "/abonnement.html" },
     { "source": "/moteur", "destination": "/moteur.html" },
     { "source": "/engine", "destination": "/moteur.html" },
