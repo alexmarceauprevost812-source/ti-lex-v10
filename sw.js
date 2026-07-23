@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-638";
+const CACHE_VERSION = "tilex-v10-639";
 const ASSETS = [
   "/",
   "/index.html",
@@ -111,6 +111,7 @@ const ASSETS = [
   "/js/tilex-engine.js",
   "/js/tilex-engine-ui.js",
   "/js/tilex-coword-anim.js",
+  "/js/tilex-push-notif.js",
   "/js/tilex-studio-code.js",
   "/js/tilex-scan.js",
   "/js/tilex-connexions.js",
@@ -182,7 +183,7 @@ const ASSETS = [
   "/js/tilex-sentinelle.js",
   "/css/tilex-sentinelle.css",
   "/assets/marceau-logo.png",
-  "/assets/coword-marceau.jpg",
+  "/assets/coword-tilex.png",
   "/assets/intro/plate.jpg",
 ];
 
@@ -232,6 +233,22 @@ self.addEventListener("fetch", (e) => {
       })
       .catch(() => caches.match(e.request))
   );
+});
+
+// Réception d'un push serveur (app en arrière-plan OU fermée) → notification.
+self.addEventListener("push", (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; }
+  catch (err) { data = { body: e.data && e.data.text ? e.data.text() : "" }; }
+  const title = data.title || "Coword";
+  const opts = {
+    body: data.body || "",
+    icon: data.icon || "/assets/coword-tilex.png",
+    badge: "/icon-192.png",
+    tag: data.tag || "coword",
+    data: { url: data.url || "/moteur" },
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
 });
 
 // Clic sur une notification Coword → ouvre/focus la page /moteur.

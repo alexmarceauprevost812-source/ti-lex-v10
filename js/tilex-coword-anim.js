@@ -18,7 +18,7 @@ const TilexCowordAnim = (() => {
   const ICONES = { codeur: '💻', reviseur: '🔍', testeur: '🧪', gardien: '🛡️' };
   const NOMS   = { codeur: 'Codeur', reviseur: 'Réviseur', testeur: 'Testeur', gardien: 'Gardien' };
   const CLS    = { pending: 'st-pending', en_cours: 'st-run', fini: 'st-done', erreur: 'st-err' };
-  const AVATAR = '/assets/coword-marceau.jpg';
+  const AVATAR = '/assets/coword-tilex.png';
 
   // Ce que chaque agent FAIT (verbe d'action affiché à côté de l'image)
   const ACTIONS = {
@@ -227,7 +227,7 @@ const TilexCowordAnim = (() => {
       .cw-work{display:flex;gap:14px;align-items:flex-start;padding:12px;margin-bottom:10px;
         background:#0d0d13;border:1px solid #23232e;border-radius:14px;}
       .cw-ava-wrap{flex:0 0 auto;width:96px;text-align:center;}
-      .cw-ava{width:88px;height:88px;object-fit:cover;border-radius:16px;border:2px solid #30363d;
+      .cw-ava{width:88px;height:88px;object-fit:contain;border-radius:16px;border:2px solid #30363d;
         background:#101017;display:block;transition:border-color .3s;}
       .cw-ava.respire{border-color:#ff7a00;animation:cwRespire 2.4s ease-in-out infinite;}
       .cw-ava.fini{border-color:#3fb950;}
