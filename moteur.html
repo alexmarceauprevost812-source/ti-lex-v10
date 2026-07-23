@@ -89,7 +89,12 @@
           var pipe=(window.TilexCowordAnim)?TilexCowordAnim.pipelineHTML(tasks):'';
           tHtml='<div class="tasks">'+ava+pipe+tasks.map(function(t){
             var ts=STATUTS[t.statut]||STATUTS.pending;
-            var corps=t.resultat?((window.TilexCowordAnim)?TilexCowordAnim.rendreResultat(t.resultat):esc(t.resultat)):'';
+            var corps='';
+            if(t.resultat){
+              corps=(window.TilexCowordAnim)?TilexCowordAnim.rendreResultat(t.resultat,{taskId:t.id,statut:t.statut}):esc(t.resultat);
+            }else if(t.statut==='en_cours'&&window.TilexCowordAnim){
+              corps=TilexCowordAnim.ecritureHTML(t.agent);
+            }
             var res=corps?'<div class="task-r">'+corps+'</div>':'';
             return '<div class="task"><div class="task-h"><span>'+ts.ico+'</span><span class="task-t">'+esc(t.titre)+'</span><span class="badge '+ts.cls+'">'+ts.txt+'</span></div>'+res+'</div>';
           }).join('')+'</div>';
