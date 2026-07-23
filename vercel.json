@@ -16,7 +16,6 @@
     { "source": "/bourse", "destination": "/bourse.html" },
     { "source": "/codex", "destination": "/codex.html" },
     { "source": "/tilexcode", "destination": "/codex.html" },
-    { "source": "/tilexcode-classique", "destination": "/tilexcode.html" },
     { "source": "/truck", "destination": "/truck.html" },
     { "source": "/truck-map", "destination": "/truck-map.html" },
     { "source": "/suivi", "destination": "/truck-map.html" },
