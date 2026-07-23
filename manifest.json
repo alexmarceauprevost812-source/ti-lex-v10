@@ -22,6 +22,6 @@
   ],
   "shortcuts": [
     { "name": "Chat Agent AL", "short_name": "Chat", "url": "/pro" },
-    { "name": "Codex", "short_name": "Codex", "url": "/tilexcode" }
+    { "name": "Codex", "short_name": "Codex", "url": "/codex" }
   ]
 }

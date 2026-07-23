@@ -2284,9 +2284,9 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- CONVERSATION + PROJET retirés du menu à la demande (on garde CHAT) -->
 
-  <!-- ④ TILEXCODE (Codex) -->
-  <div class="sb-item" id="si-tilexcode" onclick="window.location.href='/tilexcode'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label" data-txt="TILEXCODE"></span>
+  <!-- ④ CODEX — même moteur que Claude Code (ex-tilexcode) -->
+  <div class="sb-item" id="si-codex" onclick="window.location.href='/codex'" style="cursor:pointer;">
+    <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label">CODEX</span>
   </div>
 
   <!-- Coword — moteur multi-agents (page dediee), sous TILEXCODE -->
@@ -2453,7 +2453,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
             <div class="ag-stat"><div class="sdot g"></div> MÉMOIRE ACTIVE</div>
             <div class="ag-tags"><span class="atag og">CHAT</span><span class="atag">MÉMOIRE</span></div>
           </div>
-          <div class="ag-card" onclick="window.location.href='/tilexcode'">
+          <div class="ag-card" onclick="window.location.href='/codex'">
             <div class="ag-top"><div class="ag-ico dark">⌨️</div>
               <div style="display:flex;align-items:center;gap:5px;"><div class="sdot g"></div>
                 <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);">EN LIGNE</span></div>
@@ -6075,7 +6075,7 @@ function sendMsgToCodex(btn){
   if(!text){ if(window.showToastMsg)showToastMsg("Rien à envoyer au Codex");return; }
   try{ localStorage.setItem("tilex-codex-task", text); }catch(e){}
   if(window.showToastMsg)showToastMsg("💻 Envoyé au Codex — ouverture…");
-  setTimeout(function(){ window.location.href="/tilexcode"; },350);
+  setTimeout(function(){ window.location.href="/codex"; },350);
 }
 
 function speakMsg(btn){
@@ -7383,7 +7383,7 @@ document.addEventListener("click",function(e){
 
 function composeAction(action){
   closeComposerMenu();
-  if(action==="codex")window.location.href="/tilexcode";
+  if(action==="codex")window.location.href="/codex";
   else if(action==="agent")openModal();
   else if(action==="clear"){
     document.getElementById("chat-msgs").innerHTML="";
@@ -7503,7 +7503,7 @@ function composeAction(action){
   }
   else if(action==="sb-read"){sbChatRead();}
   else if(action==="sb-send"){sbChatSend();}
-  else if(action==="to-codex"){ window.location.href="/tilexcode"; }
+  else if(action==="to-codex"){ window.location.href="/codex"; }
 }
 
 var POLICES_MAP={
@@ -9823,7 +9823,7 @@ _checkDeployVersion();
 <!-- MOBILE QUICK BAR -->
 <div class="mobile-quick-bar" id="mobile-quick-bar">
   <button class="mqb-btn" onclick="showTab('chat')"><span class="mqb-ico">💬</span>CHAT</button>
-  <button class="mqb-btn" onclick="window.location.href='/tilexcode'"><span class="mqb-ico">⌨️</span>CODEX</button>
+  <button class="mqb-btn" onclick="window.location.href='/codex'"><span class="mqb-ico">⌨️</span>CODEX</button>
   <button class="mqb-btn" onclick="showTab('studio')"><span class="mqb-ico">🚀</span>STUDIO</button>
   <button class="mqb-btn" onclick="showTab('settings')"><span class="mqb-ico">⚙️</span>CONFIG</button>
 </div>

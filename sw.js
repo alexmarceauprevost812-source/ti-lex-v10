@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-653";
+const CACHE_VERSION = "tilex-v10-654";
 const ASSETS = [
   "/",
   "/index.html",
@@ -24,7 +24,6 @@ const ASSETS = [
   "/bourse.html",
   "/codex",
   "/codex.html",
-  "/tilexcode.html",
   "/tilexcode",
   "/truck.html",
   "/truck",
@@ -148,17 +147,8 @@ const ASSETS = [
   "/tilex-zip-generator/js/tilex-share.js",
   "/tilex-zip-generator/js/tilex-history.js",
   "/tilex-zip-generator/js/tilex-theme.js",
-  "/tilexcode/index.html",
-  "/tilexcode/public/tilexcode-agents.js",
-  "/tilexcode/public/tilexcode-demo.js",
-  "/tilexcode/public/tilex-leurre.js",
-  "/tilexcode/public/tableau-intrusions.html",
-  "/tilexcode/public/tableau-intrusions.js",
   "/al-connexion-auto.js",
   "/langage-tilex.js",
-  "/tilexcode/public/auth.html",
-  "/tilexcode/public/tilex-auth.js",
-  "/tilexcode/public/tilex-auth-ui.js",
   "/conversation-manager.js",
   "/conversation-sidebar.js",
   "/demo-scan.html",
