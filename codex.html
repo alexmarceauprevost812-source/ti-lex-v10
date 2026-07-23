@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Codex Ti-lex-v10</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+  /* ════ Codex ti-lex — même moteur que Claude Code ════
+     UI inspirée de l'app Claude Code : étapes repliables, timeline des
+     fichiers, ✳ Thinking…, bouton « Accepter les modifications ». */
+  :root{
+    --bg:#161614; --bg2:#1f1f1d; --bg3:#262624; --bordure:#33322f;
+    --texte:#e8e6e1; --doux:#9b988f; --tresdoux:#6f6d66;
+    --orange:#ff7a00; --vert:#22c55e; --rouge:#ef4444;
+    --mono:'Share Tech Mono',ui-monospace,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--texte);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
+
+  /* ── Header ── */
+  header{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px;
+    background:var(--bg);border-bottom:1px solid var(--bordure);z-index:10;}
+  header .hbtn{background:none;border:none;color:var(--doux);font-size:20px;cursor:pointer;
+    padding:4px 8px;border-radius:8px;line-height:1;}
+  header .hbtn:active{background:var(--bg3);}
+  header h1{flex:1;text-align:center;font-size:15px;font-weight:800;letter-spacing:.2px;}
+  header h1 b{color:var(--orange);}
+
+  /* ── Zone messages ── */
+  #flux{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px 8px;
+    max-width:760px;width:100%;margin:0 auto;}
+  .msg-u{background:var(--bg3);border-radius:18px;padding:13px 16px;margin:10px 0 16px auto;
+    max-width:88%;width:fit-content;white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.5;}
+  .msg-a{margin:6px 0 14px;font-size:15px;line-height:1.62;white-space:pre-wrap;word-break:break-word;}
+  .msg-a code{font-family:var(--mono);font-size:13px;background:var(--bg2);border:1px solid var(--bordure);
+    border-radius:5px;padding:1px 5px;}
+  .msg-a pre{background:#0d0d0b;border:1px solid var(--bordure);border-radius:10px;padding:12px;
+    overflow-x:auto;margin:10px 0;white-space:pre;font-family:var(--mono);font-size:12.5px;line-height:1.55;}
+  .msg-a pre code{background:none;border:none;padding:0;}
+  .msg-a b,.msg-a strong{font-weight:700;}
+
+  /* ── ✳ Thinking… ── */
+  .thinking{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--doux);font-size:14px;}
+  .think-star{color:var(--orange);font-size:20px;display:inline-block;animation:thinkSpin 1.6s linear infinite;}
+  @keyframes thinkSpin{0%{transform:rotate(0) scale(1);}50%{transform:rotate(180deg) scale(1.18);}100%{transform:rotate(360deg) scale(1);}}
+
+  /* ── Lignes d'étape (repliables, style Claude Code) ── */
+  .etape{display:flex;align-items:center;gap:8px;margin:12px 0;color:var(--doux);
+    font-size:13.5px;cursor:pointer;-webkit-user-select:none;user-select:none;min-height:22px;}
+  .etape:active{opacity:.7;}
+  .etape .et-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .etape .et-diff{flex:0 0 auto;font-family:var(--mono);font-size:12.5px;}
+  .etape .et-chev{flex:0 0 auto;color:var(--tresdoux);font-size:17px;transition:transform .2s;}
+  .etape.live .et-spin{flex:0 0 auto;width:14px;height:14px;border-radius:50%;
+    border:2px dotted var(--orange);animation:cxSpin 1.1s linear infinite;}
+  @keyframes cxSpin{to{transform:rotate(360deg)}}
+  .plus{color:var(--vert);} .moins{color:var(--rouge);}
+
+  /* ── Barre « Accepter les modifications » ── */
+  #accept-bar{flex:0 0 auto;display:none;padding:8px 14px 0;max-width:760px;width:100%;margin:0 auto;}
+  #accept-bar.on{display:flex;gap:8px;}
+  #accept-bar button{flex:1;border:none;border-radius:22px;padding:13px 16px;font-size:14.5px;
+    font-weight:800;cursor:pointer;}
+  #btn-accepter{background:var(--texte);color:#111;}
+  #btn-refuser{flex:0 0 auto !important;background:var(--bg3);color:var(--doux);}
+
+  /* ── Actions après acceptation ── */
+  .actions-fichiers{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px;}
+  .actions-fichiers button{background:var(--bg3);border:1px solid var(--bordure);color:var(--texte);
+    border-radius:18px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+  .actions-fichiers button:active{border-color:var(--orange);color:var(--orange);}
+
+  /* ── Composer ── */
+  #composer{flex:0 0 auto;padding:8px 14px calc(12px + env(safe-area-inset-bottom,0px));
+    max-width:760px;width:100%;margin:0 auto;}
+  .comp-box{background:var(--bg2);border:1px solid var(--bordure);border-radius:24px;padding:12px 14px 10px;}
+  .comp-box textarea{width:100%;background:none;border:none;outline:none;resize:none;color:var(--texte);
+    font-size:15px;line-height:1.45;font-family:inherit;max-height:130px;}
+  .comp-box textarea::placeholder{color:var(--tresdoux);}
+  .comp-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  .chip{background:var(--bg3);border:1px solid transparent;color:var(--texte);border-radius:20px;
+    padding:9px 14px;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .chip:active{border-color:var(--orange);}
+  #chip-plus{width:40px;height:40px;justify-content:center;padding:0;border-radius:50%;font-size:19px;}
+  .comp-spacer{flex:1;}
+  #btn-envoyer{width:44px;height:44px;border-radius:50%;border:none;background:var(--texte);color:#111;
+    font-size:17px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  #btn-envoyer.stop{background:#fff;color:#111;}
+
+  /* ── Menu modèle / menu ⋮ ── */
+  .pop{position:fixed;background:var(--bg2);border:1px solid var(--bordure);border-radius:14px;
+    padding:6px;z-index:60;display:none;min-width:190px;box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .pop.on{display:block;}
+  .pop .pi{padding:11px 14px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:9px;}
+  .pop .pi:active,.pop .pi.sel{background:var(--bg3);}
+  .pop .pi.sel::after{content:'✓';margin-left:auto;color:var(--orange);font-weight:800;}
+
+  /* ── Feuille du bas : timeline des fichiers ── */
+  #voile{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;display:none;}
+  #voile.on{display:block;}
+  #feuille{position:fixed;left:0;right:0;bottom:0;max-height:78vh;background:var(--bg2);
+    border-radius:22px 22px 0 0;z-index:71;display:none;flex-direction:column;
+    padding-bottom:env(safe-area-inset-bottom,0px);}
+  #feuille.on{display:flex;animation:feuilleIn .25s ease-out;}
+  @keyframes feuilleIn{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .f-poignee{width:44px;height:5px;border-radius:3px;background:var(--bordure);margin:10px auto 4px;}
+  .f-tete{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;}
+  .f-tete .f-x{background:none;border:none;color:var(--doux);font-size:20px;cursor:pointer;padding:4px;}
+  .f-tete .f-titre{flex:1;text-align:center;font-size:15px;font-weight:800;line-height:1.35;}
+  #f-liste{overflow-y:auto;padding:4px 18px 20px;}
+  .f-item{display:flex;align-items:center;gap:13px;padding:13px 0;position:relative;cursor:pointer;}
+  .f-item:not(:last-child)::before{content:'';position:absolute;left:13px;top:38px;bottom:-8px;
+    width:2px;background:var(--bordure);}
+  .f-ico{flex:0 0 auto;width:28px;height:28px;border-radius:8px;background:var(--bg3);
+    display:flex;align-items:center;justify-content:center;font-size:14px;z-index:1;}
+  .f-verbe{flex:0 0 auto;font-weight:800;font-size:14px;}
+  .f-nom{flex:1;min-width:0;font-family:var(--mono);font-size:13px;color:var(--doux);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .f-diff{flex:0 0 auto;font-family:var(--mono);font-size:12.5px;}
+
+  /* ── Visionneuse de fichier ── */
+  #visionneuse{position:fixed;inset:0;background:var(--bg);z-index:80;display:none;flex-direction:column;}
+  #visionneuse.on{display:flex;}
+  .v-tete{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--bordure);}
+  .v-tete .v-nom{flex:1;font-family:var(--mono);font-size:13px;color:var(--orange);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .v-tete button{background:var(--bg3);border:1px solid var(--bordure);color:var(--texte);border-radius:9px;
+    padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+  #v-code{flex:1;overflow:auto;padding:14px;font-family:var(--mono);font-size:12.5px;line-height:1.6;
+    white-space:pre;color:#c9d1d9;}
+  .tk-kw{color:#ff7b72;}.tk-str{color:#a5d6ff;}.tk-com{color:#8b949e;font-style:italic;}.tk-num{color:#79c0ff;}
+
+  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--bg3);
+    border:1px solid var(--orange);color:var(--texte);border-radius:20px;padding:10px 18px;font-size:13.5px;
+    font-weight:700;z-index:90;animation:toastIn .2s ease-out;white-space:nowrap;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+  .vide-note{color:var(--tresdoux);text-align:center;padding:44px 20px;font-size:14px;line-height:1.7;}
+</style>
+</head>
+<body>
+  <header>
+    <button class="hbtn" onclick="location.href='/pro'" title="Retour">←</button>
+    <h1>Codex <b>Ti-lex-v10</b></h1>
+    <button class="hbtn" id="btn-menu" title="Menu">⋮</button>
+  </header>
+
+  <div id="flux">
+    <div class="vide-note" id="accueil">💻 <b>Codex ti-lex</b> — même moteur que Claude Code.<br>
+      Décris ta job (« fais-moi une page X », « corrige le bug Y ») pis je crée/modifie les
+      fichiers avec les étapes en direct. Accepte les modifications à la fin, télécharge le ZIP
+      ou copie les fichiers.</div>
+  </div>
+
+  <div id="accept-bar">
+    <button id="btn-accepter">&lt;/&gt; Accepter les modifications</button>
+    <button id="btn-refuser" title="Refuser">✕</button>
+  </div>
+
+  <div id="composer">
+    <div class="comp-box">
+      <textarea id="entree" rows="1" placeholder="Écrivez un message…"></textarea>
+      <div class="comp-row">
+        <button class="chip" id="chip-plus" title="Joindre un fichier au workspace">＋</button>
+        <input type="file" id="fichier-joint" multiple style="display:none">
+        <button class="chip" id="chip-modele">Sonnet 5</button>
+        <button class="chip" id="chip-mode">🖐 Demander</button>
+        <div class="comp-spacer"></div>
+        <button id="btn-envoyer" title="Envoyer">⬆</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pop" id="pop-modele">
+    <div class="pi" data-m="claude-sonnet-5">✨ Sonnet 5</div>
+    <div class="pi" data-m="claude-opus-4-8">🧠 Opus 4.8</div>
+    <div class="pi" data-m="claude-sonnet-4-6">⚡ Sonnet 4.6</div>
+    <div class="pi" data-m="claude-haiku-4-5-20251001">💨 Haiku 4.5</div>
+  </div>
+  <div class="pop" id="pop-menu">
+    <div class="pi" id="mi-session">🔄 Nouvelle session</div>
+    <div class="pi" id="mi-fichiers">📁 Fichiers du workspace</div>
+    <div class="pi" id="mi-zip">📦 Télécharger le ZIP</div>
+    <div class="pi" id="mi-vider">🗑️ Vider le workspace</div>
+  </div>
+
+  <div id="voile"></div>
+  <div id="feuille">
+    <div class="f-poignee"></div>
+    <div class="f-tete">
+      <button class="f-x" id="f-fermer">✕</button>
+      <div class="f-titre" id="f-titre">Fichiers</div>
+      <span style="width:28px;"></span>
+    </div>
+    <div id="f-liste"></div>
+  </div>
+
+  <div id="visionneuse">
+    <div class="v-tete">
+      <button onclick="document.getElementById('visionneuse').classList.remove('on')">←</button>
+      <span class="v-nom" id="v-nom"></span>
+      <button id="v-copier">📋 Copier</button>
+      <button id="v-telecharger">⬇️</button>
+    </div>
+    <div id="v-code"></div>
+  </div>
+
+<script src="/js/tilex-config.js"></script>
+<script>
+(function(){
+'use strict';
+/* ════════════════════════════════════════════════════════════
+   CODEX TI-LEX — même moteur que Claude Code
+   Moteur : ai-proxy (Claude côté serveur, clé jamais exposée).
+   Protocole fichier : l'agent écrit
+       @@FICHIER chemin/nom.ext
+       ```lang
+       contenu COMPLET
+       ```
+   Le front parse le stream, montre les étapes en direct, calcule
+   les +ajouts/−retraits, pis propose « Accepter les modifications ».
+   Workspace persistant (localStorage) + ZIP natif (store, CRC32).
+   ════════════════════════════════════════════════════════════ */
+
+var LS_WS='tilex-codex-ws-v1', LS_CONV='tilex-codex-conv-v1', LS_MODELE='tilex-codex-modele', LS_MODE='tilex-codex-mode';
+var MODELES={'claude-sonnet-5':'Sonnet 5','claude-opus-4-8':'Opus 4.8','claude-sonnet-4-6':'Sonnet 4.6','claude-haiku-4-5-20251001':'Haiku 4.5'};
+
+var ws={};            // workspace {chemin:{contenu:string, maj:iso}}
+var conv=[];          // historique [{role, content}]
+var enAttente=[];     // modifs pas encore acceptées [{verbe, chemin, contenu, plus, moins}]
+var occupe=false;
+var abortCtl=null;
+
+try{ws=JSON.parse(localStorage.getItem(LS_WS)||'{}')||{};}catch(e){ws={};}
+try{conv=JSON.parse(localStorage.getItem(LS_CONV)||'[]')||[];}catch(e){conv=[];}
+var modele=localStorage.getItem(LS_MODELE)||'claude-sonnet-5';
+if(!MODELES[modele])modele='claude-sonnet-5';
+var modeDemander=(localStorage.getItem(LS_MODE)||'demander')==='demander';
+
+var $=function(id){return document.getElementById(id);};
+var flux=$('flux');
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function sauverWs(){try{localStorage.setItem(LS_WS,JSON.stringify(ws));}catch(e){}}
+function sauverConv(){try{localStorage.setItem(LS_CONV,JSON.stringify(conv.slice(-24)));}catch(e){}}
+function bas(){flux.scrollTop=flux.scrollHeight;}
+function toast(t){var el=document.createElement('div');el.className='toast';el.textContent=t;
+  document.body.appendChild(el);setTimeout(function(){el.remove();},2400);}
+
+function getToken(){
+  try{
+    var raw=localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');
+    if(!raw)return null;
+    var j=JSON.parse(raw);
+    return j&&(j.access_token||(j.currentSession&&j.currentSession.access_token))||null;
+  }catch(e){return null;}
+}
+
+/* ── Coloration syntaxique (mini) ── */
+var KW=['const','let','var','function','return','if','else','for','while','switch','case','break','continue','new','class','extends','this','async','await','try','catch','finally','throw','typeof','import','export','default','from','of','in','null','true','false','undefined','def','elif','lambda','pass','and','or','not','None','True','False','select','insert','update','delete','create','table','where','join'];
+var KW_RE=new RegExp('\\b('+KW.join('|')+')\\b','g');
+function colorer(code){
+  var re=/(\/\*[\s\S]*?\*\/|\/\/[^\n]*|<!--[\s\S]*?-->|#[^\n]*)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b\d[\d._]*\b)/g;
+  function seg(t){return esc(t).replace(KW_RE,'<span class="tk-kw">$1</span>');}
+  var out='',last=0,m;
+  while((m=re.exec(code))!==null){
+    out+=seg(code.slice(last,m.index));
+    if(m[1])out+='<span class="tk-com">'+esc(m[1])+'</span>';
+    else if(m[2])out+='<span class="tk-str">'+esc(m[2])+'</span>';
+    else out+='<span class="tk-num">'+esc(m[3])+'</span>';
+    last=re.lastIndex;
+    if(m.index===re.lastIndex)re.lastIndex++;
+  }
+  return out+seg(code.slice(last));
+}
+
+/* ── Markdown léger pour la prose de l'agent ── */
+function md(t){
+  var h=esc(t);
+  h=h.replace(/```([^\n`]*)\n([\s\S]*?)```/g,function(_,l,c){return '<pre><code>'+colorer(c.replace(/\s+$/,''))+'</code></pre>';});
+  h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  h=h.replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+  return h;
+}
+
+/* ── Diff naïf (stats) : lignes ajoutées / retirées ── */
+function statsDiff(ancien,nouveau){
+  var a=(ancien||'').split('\n'),n=(nouveau||'').split('\n');
+  var compte={};
+  a.forEach(function(l){compte[l]=(compte[l]||0)+1;});
+  var plus=0;
+  n.forEach(function(l){if(compte[l]>0)compte[l]--;else plus++;});
+  var moins=0;
+  Object.keys(compte).forEach(function(k){moins+=compte[k];});
+  return {plus:plus,moins:moins};
+}
+
+/* ── ZIP natif (store, CRC32) ── */
+var CRC_T=(function(){var t=[],c,n,k;for(n=0;n<256;n++){c=n;for(k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}return t;})();
+function crc32(u8){var c=0xFFFFFFFF;for(var i=0;i<u8.length;i++)c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function zipper(fichiers){ // [{nom, contenu}]
+  var enc=new TextEncoder(),parts=[],centraux=[],offset=0;
+  fichiers.forEach(function(f){
+    var nom=enc.encode(f.nom),data=enc.encode(f.contenu),crc=crc32(data);
+    var loc=new DataView(new ArrayBuffer(30));
+    loc.setUint32(0,0x04034b50,true);loc.setUint16(4,20,true);loc.setUint16(6,0x0800,true);
+    loc.setUint16(8,0,true);loc.setUint32(14,crc,true);
+    loc.setUint32(18,data.length,true);loc.setUint32(22,data.length,true);
+    loc.setUint16(26,nom.length,true);
+    parts.push(new Uint8Array(loc.buffer),nom,data);
+    var cen=new DataView(new ArrayBuffer(46));
+    cen.setUint32(0,0x02014b50,true);cen.setUint16(4,20,true);cen.setUint16(6,20,true);cen.setUint16(8,0x0800,true);
+    cen.setUint32(16,crc,true);cen.setUint32(20,data.length,true);cen.setUint32(24,data.length,true);
+    cen.setUint16(28,nom.length,true);cen.setUint32(42,offset,true);
+    centraux.push(new Uint8Array(cen.buffer),nom);
+    offset+=30+nom.length+data.length;
+  });
+  var tailleCen=0;centraux.forEach(function(p){tailleCen+=p.length;});
+  var fin=new DataView(new ArrayBuffer(22));
+  fin.setUint32(0,0x06054b50,true);fin.setUint16(8,fichiers.length,true);fin.setUint16(10,fichiers.length,true);
+  fin.setUint32(12,tailleCen,true);fin.setUint32(16,offset,true);
+  return new Blob(parts.concat(centraux,[new Uint8Array(fin.buffer)]),{type:'application/zip'});
+}
+function telechargerZip(){
+  var chemins=Object.keys(ws);
+  if(!chemins.length){toast('Workspace vide');return;}
+  var blob=zipper(chemins.map(function(c){return {nom:c,contenu:ws[c].contenu};}));
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='codex-tilex.zip';a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+  toast('📦 ZIP téléchargé ('+chemins.length+' fichiers)');
+}
+
+/* ── UI : messages / étapes / thinking ── */
+function bulleU(t){
+  var d=document.createElement('div');d.className='msg-u';d.textContent=t;flux.appendChild(d);bas();
+}
+function bulleA(){
+  var d=document.createElement('div');d.className='msg-a';flux.appendChild(d);return d;
+}
+function thinkOn(){
+  thinkOff();
+  var d=document.createElement('div');d.className='thinking';d.id='thinking';
+  d.innerHTML='<span class="think-star">✳</span> Thinking…';
+  flux.appendChild(d);bas();
+}
+function thinkOff(){var t=$('thinking');if(t)t.remove();}
+
+function ligneEtape(html,cls){
+  var d=document.createElement('div');d.className='etape'+(cls?' '+cls:'');d.innerHTML=html;
+  flux.appendChild(d);bas();return d;
+}
+
+/* ── Feuille timeline ── */
+var actionsSession=[]; // toutes les actions du dernier tour, pour la feuille
+function ouvrirFeuille(actions,titre){
+  $('f-titre').textContent=titre||'Fichiers';
+  var l=$('f-liste');l.innerHTML='';
+  if(!actions.length){l.innerHTML='<div class="vide-note">Aucun fichier.</div>';}
+  actions.forEach(function(a,i){
+    var it=document.createElement('div');it.className='f-item';
+    var ico=a.verbe==='Créé'?'📄':(a.verbe==='Modifié'?'✏️':'🔍');
+    it.innerHTML='<span class="f-ico">'+ico+'</span><span class="f-verbe">'+a.verbe+'</span>'
+      +'<span class="f-nom">'+esc(a.chemin)+'</span>'
+      +'<span class="f-diff"><span class="plus">+'+a.plus+'</span> <span class="moins">−'+a.moins+'</span></span>';
+    it.addEventListener('click',function(){voirFichier(a.chemin,a.contenu);});
+    l.appendChild(it);
+  });
+  $('voile').classList.add('on');$('feuille').classList.add('on');
+}
+function fermerFeuille(){$('voile').classList.remove('on');$('feuille').classList.remove('on');}
+$('voile').addEventListener('click',fermerFeuille);
+$('f-fermer').addEventListener('click',fermerFeuille);
+
+/* ── Visionneuse ── */
+var _vContenu='',_vNom='';
+function voirFichier(chemin,contenu){
+  _vNom=chemin;_vContenu=(contenu!=null)?contenu:(ws[chemin]?ws[chemin].contenu:'');
+  $('v-nom').textContent=chemin;
+  $('v-code').innerHTML=colorer(_vContenu);
+  $('visionneuse').classList.add('on');
+}
+$('v-copier').addEventListener('click',function(){
+  navigator.clipboard.writeText(_vContenu).then(function(){toast('📋 Copié');});
+});
+$('v-telecharger').addEventListener('click',function(){
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([_vContenu],{type:'text/plain'}));
+  a.download=_vNom.split('/').pop();a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+});
+
+/* ── Contexte workspace envoyé au modèle ── */
+function contexteWs(){
+  var chemins=Object.keys(ws);
+  if(!chemins.length)return 'WORKSPACE : vide pour l\'instant.';
+  var out='WORKSPACE ACTUEL ('+chemins.length+' fichiers) :\n';
+  var budget=60000;
+  chemins.sort().forEach(function(c){
+    var contenu=ws[c].contenu||'';
+    if(budget<=0){out+='- '+c+' ('+contenu.split('\n').length+' lignes — contenu non inclus)\n';return;}
+    var extrait=contenu.length>6000?contenu.slice(0,2000)+'\n… [tronqué — '+contenu.split('\n').length+' lignes au total]':contenu;
+    budget-=extrait.length;
+    out+='\n=== '+c+' ===\n'+extrait+'\n';
+  });
+  return out;
+}
+
+var SYSTEME='Tu es CODEX TI-LEX, l\'agent de code de la plateforme ti-lex (même moteur que Claude Code). Tu parles en québécois clair et direct.\n\n'
++'RÈGLES DE TRAVAIL :\n'
++'1. Pour CRÉER ou MODIFIER un fichier, écris EXACTEMENT :\n@@FICHIER chemin/nom.ext\n```lang\ncontenu COMPLET du fichier (jamais un extrait)\n```\n'
++'2. TOUJOURS le contenu complet du fichier — zéro placeholder, zéro « ... ».\n'
++'3. Avant les fichiers : 1-2 phrases courtes qui expliquent ce que tu vas faire. Après : 1 phrase de conclusion.\n'
++'4. Code vanilla JS/HTML/CSS (pas de React/build) sauf si demandé autrement.\n'
++'5. Si l\'utilisateur pose juste une question, réponds normalement sans bloc @@FICHIER.\n'
++'6. Réutilise les fichiers du WORKSPACE fournis en contexte quand tu modifies.';
+
+/* ── Parseur de stream : prose vs blocs @@FICHIER ── */
+function creerParseur(bulle){
+  var tampon='';           // texte pas encore classé
+  var prose='';            // prose affichée
+  var actions=[];          // [{verbe, chemin, contenu, plus, moins}]
+  var enFichier=null;      // {chemin, code:'', etape:el}
+  var attenteFence=false;  // @@FICHIER lu, on attend ```
+
+  function majProse(){bulle.innerHTML=md(prose);bas();}
+
+  function pousser(delta){
+    tampon+=delta;
+    var continuer=true;
+    while(continuer){
+      continuer=false;
+      if(enFichier){
+        // On cherche la fin du fence ```
+        var fin=tampon.indexOf('\n```');
+        if(fin>=0){
+          enFichier.code+=tampon.slice(0,fin);
+          tampon=tampon.slice(fin+4);
+          // saute la fin de ligne après ```
+          tampon=tampon.replace(/^[^\n]*\n?/,'');
+          finaliserFichier();
+          continuer=true;
+        }else{
+          // garde un bout au cas où '\n``' est coupé en deux deltas
+          var garde=Math.max(0,tampon.length-4);
+          enFichier.code+=tampon.slice(0,garde);
+          tampon=tampon.slice(garde);
+          majEtapeLive();
+        }
+      }else if(attenteFence){
+        var m=tampon.match(/^\s*```[^\n]*\n/);
+        if(m){tampon=tampon.slice(m[0].length);attenteFence=false;enFichier.code='';continuer=true;}
+        else if(tampon.length>80){attenteFence=false;enFichier=null;} // protocole pas suivi → prose
+      }else{
+        var idx=tampon.indexOf('@@FICHIER ');
+        if(idx>=0){
+          var avant=tampon.slice(0,idx);
+          prose+=avant;majProse();
+          tampon=tampon.slice(idx);
+          var nl=tampon.indexOf('\n');
+          if(nl>=0){
+            var chemin=tampon.slice(10,nl).trim();
+            tampon=tampon.slice(nl+1);
+            enFichier={chemin:chemin,code:'',etape:null};
+            attenteFence=true;
+            enFichier.etape=ligneEtape('<span class="et-spin"></span><span class="et-txt">Écrit <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b>…</span>','live');
+            continuer=true;
+          } // sinon on attend la fin de ligne au prochain delta
+        }else{
+          // garde 12 chars (au cas où '@@FICHIER' arrive coupé)
+          var garde2=Math.max(0,tampon.length-12);
+          if(garde2>0){prose+=tampon.slice(0,garde2);tampon=tampon.slice(garde2);majProse();}
+        }
+      }
+    }
+  }
+
+  function majEtapeLive(){
+    if(enFichier&&enFichier.etape){
+      var n=enFichier.code.split('\n').length;
+      enFichier.etape.querySelector('.et-txt').innerHTML='Écrit <b style="color:var(--texte);font-style:normal;">'+esc(enFichier.chemin)+'</b>… <span style="font-family:var(--mono);font-size:12px;">'+n+' lignes</span>';
+      bas();
+    }
+  }
+
+  function finaliserFichier(){
+    var chemin=enFichier.chemin,code=enFichier.code.replace(/\s+$/,'');
+    var existe=!!ws[chemin];
+    var st=existe?statsDiff(ws[chemin].contenu,code):{plus:code.split('\n').length,moins:0};
+    var action={verbe:existe?'Modifié':'Créé',chemin:chemin,contenu:code,plus:st.plus,moins:st.moins};
+    actions.push(action);
+    // La ligne d'étape devient définitive
+    var el=enFichier.etape;
+    if(el){
+      el.classList.remove('live');
+      el.innerHTML='<span class="et-txt">'+(existe?'Modifié':'Créé')+' <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b></span>'
+        +'<span class="et-diff"><span class="plus">+'+st.plus+'</span> <span class="moins">−'+st.moins+'</span></span>'
+        +'<span class="et-chev">›</span>';
+      el.addEventListener('click',function(){voirFichier(chemin,code);});
+    }
+    enFichier=null;
+    // Nouvelle bulle de prose pour la suite du texte
+    bulle=bulleA();prose='';
+  }
+
+  function terminer(){
+    if(enFichier){enFichier.code+=tampon;tampon='';finaliserFichier();}
+    else{prose+=tampon;tampon='';majProse();}
+    if(!bulle.textContent.trim())bulle.remove();
+    return actions;
+  }
+
+  return {pousser:pousser,terminer:terminer};
+}
+
+/* ── Résumé de tour + accepter/refuser ── */
+function afficherResume(actions){
+  if(!actions.length)return;
+  var crees=actions.filter(function(a){return a.verbe==='Créé';}).length;
+  var modifs=actions.filter(function(a){return a.verbe==='Modifié';}).length;
+  var plus=0,moins=0;actions.forEach(function(a){plus+=a.plus;moins+=a.moins;});
+  var morceaux=[];
+  if(crees)morceaux.push('Création de '+crees+' fichier'+(crees>1?'s':''));
+  if(modifs)morceaux.push('édité '+modifs+' fichier'+(modifs>1?'s':''));
+  var txt=morceaux.join(', ');
+  var el=ligneEtape('<span class="et-txt">'+txt+'</span>'
+    +'<span class="et-diff"><span class="plus">+'+plus+'</span> <span class="moins">−'+moins+'</span></span>'
+    +'<span class="et-chev">›</span>');
+  el.addEventListener('click',function(){ouvrirFeuille(actions,txt);});
+}
+
+function proposerAcceptation(){
+  if(!enAttente.length)return;
+  if(!modeDemander){appliquer();return;}
+  $('accept-bar').classList.add('on');
+}
+function appliquer(){
+  var n=enAttente.length;
+  enAttente.forEach(function(a){ws[a.chemin]={contenu:a.contenu,maj:new Date().toISOString()};});
+  sauverWs();
+  enAttente=[];
+  $('accept-bar').classList.remove('on');
+  var b=bulleA();
+  b.innerHTML='✅ <b>Modifications appliquées</b> — '+n+' fichier'+(n>1?'s':'')+' dans le workspace.';
+  var actes=document.createElement('div');actes.className='actions-fichiers';
+  actes.innerHTML='<button id="ax-zip">📦 ZIP</button><button id="ax-fichiers">📁 Fichiers</button>';
+  b.appendChild(actes);
+  actes.querySelector('#ax-zip').addEventListener('click',telechargerZip);
+  actes.querySelector('#ax-fichiers').addEventListener('click',function(){
+    ouvrirFeuille(Object.keys(ws).sort().map(function(c){
+      return {verbe:'Fichier',chemin:c,contenu:ws[c].contenu,plus:ws[c].contenu.split('\n').length,moins:0};
+    }),'Workspace — '+Object.keys(ws).length+' fichiers');
+  });
+  bas();
+}
+$('btn-accepter').addEventListener('click',appliquer);
+$('btn-refuser').addEventListener('click',function(){
+  enAttente=[];$('accept-bar').classList.remove('on');
+  toast('Modifications refusées');
+});
+
+/* ── Envoi / stream ── */
+async function envoyer(){
+  if(occupe){ // bouton stop
+    if(abortCtl)abortCtl.abort();
+    return;
+  }
+  var inp=$('entree');
+  var txt=(inp.value||'').trim();
+  if(!txt)return;
+  inp.value='';inp.style.height='auto';
+  var acc=$('accueil');if(acc)acc.remove();
+  bulleU(txt);
+  conv.push({role:'user',content:txt});
+  occupe=true;
+  $('btn-envoyer').textContent='■';$('btn-envoyer').classList.add('stop');
+  thinkOn();
+
+  var headers={'Content-Type':'application/json'};
+  var tk=getToken();if(tk)headers['Authorization']='Bearer '+tk;
+  abortCtl=new AbortController();
+
+  var actions=[];
+  try{
+    var res=await fetch(window.AI_PROXY,{method:'POST',headers:headers,signal:abortCtl.signal,body:JSON.stringify({
+      kind:'chat',model:modele,max_tokens:8192,
+      system:SYSTEME+'\n\n'+contexteWs(),
+      messages:conv.slice(-16)
+    })});
+    if(!res.ok){
+      thinkOff();
+      var err='Erreur '+res.status;
+      try{var j=await res.json();err=j.error||err;}catch(e){}
+      bulleA().innerHTML='⚠️ '+esc(err);
+      occupe=false;$('btn-envoyer').textContent='⬆';$('btn-envoyer').classList.remove('stop');
+      return;
+    }
+    var bulle=bulleA();
+    var parseur=creerParseur(bulle);
+    var premierDelta=true;
+    var rd=res.body.getReader(),dc=new TextDecoder(),bf='',texteBrut='';
+    while(true){
+      var ch=await rd.read();
+      if(ch.done)break;
+      bf+=dc.decode(ch.value,{stream:true});
+      var ls=bf.split('\n');bf=ls.pop()||'';
+      for(var i=0;i<ls.length;i++){
+        var l=ls[i].trim();
+        if(l.indexOf('data:')!==0)continue;
+        var p=l.slice(5).trim();
+        if(!p||p==='[DONE]')continue;
+        var ev;try{ev=JSON.parse(p);}catch(e){continue;}
+        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.text){
+          if(premierDelta){thinkOff();premierDelta=false;}
+          texteBrut+=ev.delta.text;
+          parseur.pousser(ev.delta.text);
+        }
+      }
+    }
+    thinkOff();
+    actions=parseur.terminer();
+    // Historique : on remplace le corps des fichiers par un résumé (économise les tokens —
+    // le contenu à jour vit dans le contexte WORKSPACE de toute façon).
+    var resume=texteBrut.replace(/@@FICHIER ([^\n]+)\n```[^\n]*\n[\s\S]*?```/g,function(_,c){
+      return '[fichier '+c.trim()+' écrit au complet]';
+    });
+    conv.push({role:'assistant',content:resume||'(vide)'});
+    sauverConv();
+    if(actions.length){
+      afficherResume(actions);
+      actionsSession=actions;
+      enAttente=actions.slice();
+      proposerAcceptation();
+    }
+  }catch(e){
+    thinkOff();
+    if(e&&e.name==='AbortError'){ligneEtape('<span class="et-txt">⏹️ Arrêté</span>');}
+    else{bulleA().innerHTML='⚠️ '+esc(e&&e.message||'Erreur réseau');}
+  }
+  occupe=false;abortCtl=null;
+  $('btn-envoyer').textContent='⬆';$('btn-envoyer').classList.remove('stop');
+}
+
+$('btn-envoyer').addEventListener('click',envoyer);
+$('entree').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();envoyer();}
+});
+$('entree').addEventListener('input',function(){
+  this.style.height='auto';this.style.height=Math.min(this.scrollHeight,130)+'px';
+});
+
+/* ── Joindre des fichiers au workspace ── */
+$('chip-plus').addEventListener('click',function(){$('fichier-joint').click();});
+$('fichier-joint').addEventListener('change',function(){
+  var fs=Array.prototype.slice.call(this.files||[]);
+  if(!fs.length)return;
+  var faits=0;
+  fs.forEach(function(f){
+    if(f.size>400000){toast('⚠️ '+f.name+' trop gros (max 400 Ko)');return;}
+    var r=new FileReader();
+    r.onload=function(){
+      ws[f.name]={contenu:String(r.result||''),maj:new Date().toISOString()};
+      faits++;sauverWs();
+      toast('📎 '+faits+' fichier'+(faits>1?'s':'')+' ajouté'+(faits>1?'s':'')+' au workspace');
+    };
+    r.readAsText(f);
+  });
+  this.value='';
+});
+
+/* ── Menus ── */
+function posPop(pop,ancre){
+  var r=ancre.getBoundingClientRect();
+  pop.style.left=Math.max(8,Math.min(window.innerWidth-pop.offsetWidth-8,r.left))+'px';
+  pop.style.bottom=(window.innerHeight-r.top+8)+'px';
+  pop.style.top='auto';
+}
+function majChipModele(){$('chip-modele').textContent=MODELES[modele];}
+$('chip-modele').addEventListener('click',function(e){
+  e.stopPropagation();
+  var pop=$('pop-modele');
+  pop.querySelectorAll('.pi').forEach(function(p){p.classList.toggle('sel',p.getAttribute('data-m')===modele);});
+  pop.classList.toggle('on');posPop(pop,this);
+});
+document.querySelectorAll('#pop-modele .pi').forEach(function(p){
+  p.addEventListener('click',function(){
+    modele=this.getAttribute('data-m');localStorage.setItem(LS_MODELE,modele);
+    majChipModele();$('pop-modele').classList.remove('on');
+  });
+});
+function majChipMode(){$('chip-mode').textContent=modeDemander?'🖐 Demander':'⚡ Auto';}
+$('chip-mode').addEventListener('click',function(){
+  modeDemander=!modeDemander;
+  localStorage.setItem(LS_MODE,modeDemander?'demander':'auto');
+  majChipMode();
+  toast(modeDemander?'🖐 Mode Demander : les modifs attendent ton OK':'⚡ Mode Auto : les modifs s\'appliquent direct');
+});
+$('btn-menu').addEventListener('click',function(e){
+  e.stopPropagation();
+  var pop=$('pop-menu');pop.classList.toggle('on');
+  var r=this.getBoundingClientRect();
+  pop.style.left='auto';pop.style.right='10px';pop.style.top=(r.bottom+6)+'px';pop.style.bottom='auto';
+});
+document.addEventListener('click',function(){
+  $('pop-modele').classList.remove('on');$('pop-menu').classList.remove('on');
+});
+$('mi-session').addEventListener('click',function(){
+  conv=[];sauverConv();enAttente=[];$('accept-bar').classList.remove('on');
+  flux.innerHTML='<div class="vide-note" id="accueil">💻 Nouvelle session — le workspace est conservé ('+Object.keys(ws).length+' fichiers).</div>';
+  toast('🔄 Nouvelle session');
+});
+$('mi-fichiers').addEventListener('click',function(){
+  ouvrirFeuille(Object.keys(ws).sort().map(function(c){
+    return {verbe:'Fichier',chemin:c,contenu:ws[c].contenu,plus:ws[c].contenu.split('\n').length,moins:0};
+  }),'Workspace — '+Object.keys(ws).length+' fichiers');
+});
+$('mi-zip').addEventListener('click',telechargerZip);
+$('mi-vider').addEventListener('click',function(){
+  if(!confirm('Vider le workspace ('+Object.keys(ws).length+' fichiers)?'))return;
+  ws={};sauverWs();toast('🗑️ Workspace vidé');
+});
+
+/* ── Restaure la conversation à l'ouverture ── */
+(function(){
+  if(!conv.length)return;
+  var acc=$('accueil');if(acc)acc.remove();
+  conv.slice(-16).forEach(function(m){
+    if(m.role==='user')bulleU(m.content);
+    else{var b=bulleA();b.innerHTML=md(m.content);}
+  });
+  bas();
+})();
+
+majChipModele();majChipMode();
+
+/* Service worker (PWA) */
+if('serviceWorker' in navigator){try{navigator.serviceWorker.register('/sw.js');}catch(e){}}
+})();
+</script>
+</body>
+</html>
