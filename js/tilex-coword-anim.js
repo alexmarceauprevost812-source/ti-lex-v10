@@ -99,18 +99,21 @@ const TilexCowordAnim = (() => {
   function rendreResultat(texte, opts) {
     if (!texte) return '';
     const o = opts || {};
+    const enCours = o.statut === 'en_cours';
+    // En streaming (en_cours avec texte) : on marque comme "déjà écrit" pour
+    // pas ré-animer une révélation par-dessus le texte qui coule en direct.
+    if (enCours && o.taskId != null) _animes.add(o.taskId);
     const faireAnim = o.statut === 'fini' && o.taskId != null && !_animes.has(o.taskId);
     if (faireAnim) _animes.add(o.taskId);
 
     const parts = String(texte).split(/(```[^\n`]*\n[\s\S]*?```)/g);
-    return parts.map((seg) => {
+    let html = parts.map((seg) => {
       const m = seg.match(/^```([^\n`]*)\n([\s\S]*?)```$/);
       if (m) {
         const info = (m[1] || '').trim();
         const lang = (info.split(/\s+/)[0] || '').replace(/[^\w.-]/g, '');
         const code = m[2].replace(/\s+$/, '');
         if (faireAnim) {
-          // Durée proportionnelle au nb de lignes (effet d'écriture ligne par ligne).
           const nl = Math.min(code.split('\n').length, 40);
           const dur = Math.max(0.7, Math.min(2.6, 0.5 + nl * 0.07)).toFixed(2);
           return `<pre class="cw-code cw-fluide" style="--cwd:${dur}s">` + colorer(code, lang) + '</pre>';
@@ -119,6 +122,9 @@ const TilexCowordAnim = (() => {
       }
       return '<span class="cw-prose">' + _esc(seg) + '</span>';
     }).join('');
+    // Caret vivant pendant que ça s'écrit en temps réel.
+    if (enCours) html += '<span class="cw-livecaret"></span>';
+    return html;
   }
 
   /* ─── Avatar Marceau qui « respire » + étapes en cours à côté ─── */
@@ -262,6 +268,9 @@ const TilexCowordAnim = (() => {
       @keyframes cwEcrire{from{clip-path:inset(0 0 100% 0);}to{clip-path:inset(0 0 0 0);}}
       @media (prefers-reduced-motion: reduce){pre.cw-code.cw-fluide{animation:none;}}
       .cw-prose{white-space:pre-wrap;}
+      /* Caret vivant pendant l'écriture temps réel */
+      .cw-livecaret{display:inline-block;width:8px;height:15px;background:#ff7a00;vertical-align:text-bottom;
+        margin-left:2px;border-radius:1px;animation:cwCaret .8s steps(1) infinite;box-shadow:0 0 6px #ff7a00;}
       /* Indicateur « en train d'écrire » */
       .cw-writing{display:flex;align-items:center;gap:6px;margin:8px 0;padding:10px 12px;background:#05050a;
         border:1px solid #241400;border-radius:9px;}

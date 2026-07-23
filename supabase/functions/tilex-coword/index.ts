@@ -45,25 +45,57 @@ function cors(req: Request): Record<string, string> {
   };
 }
 
-async function appelClaude(system: string, message: string): Promise<string> {
+// Appel Claude en STREAMING : accumule le texte pis le pousse en direct
+// (onPartial) pour l'écriture temps réel. Repli non-stream si erreur.
+async function appelClaude(
+  system: string,
+  message: string,
+  onPartial?: (t: string) => Promise<void> | void,
+): Promise<string> {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY non configurée");
+
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
       max_tokens: 2400,
+      stream: true,
       system,
       messages: [{ role: "user", content: message.slice(0, 8000) }],
     }),
   });
-  if (!r.ok) {
+  if (!r.ok || !r.body) {
     const t = await r.text().catch(() => "");
     throw new Error("Anthropic " + r.status + " " + t.slice(0, 160));
   }
-  const ai = await r.json();
-  return (ai.content ?? []).map((b: { text?: string }) => b.text ?? "").join("").trim();
+
+  const reader = r.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", texte = "", lastFlush = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let idx: number;
+    while ((idx = buf.indexOf("\n")) >= 0) {
+      const ligne = buf.slice(0, idx).trim();
+      buf = buf.slice(idx + 1);
+      if (!ligne.startsWith("data:")) continue;
+      const payload = ligne.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        const ev = JSON.parse(payload);
+        if (ev.type === "content_block_delta" && ev.delta && typeof ev.delta.text === "string") {
+          texte += ev.delta.text;
+          const now = Date.now();
+          if (onPartial && now - lastFlush > 850) { lastFlush = now; try { await onPartial(texte); } catch (_e) { /* ignore */ } }
+        }
+      } catch (_e) { /* ligne SSE partielle → on ignore */ }
+    }
+  }
+  return texte.trim();
 }
 
 // deno-lint-ignore no-explicit-any
@@ -89,7 +121,11 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
         `JOB À RÉALISER : ${job.titre}\n\n` +
         (contexte ? `TRAVAIL DES AGENTS PRÉCÉDENTS :\n${contexte.slice(0, 6000)}\n\n` : "") +
         `Fais ta partie en tant que ${t.agent}.`;
-      const texte = (await appelClaude(persona, message)) || "(vide)";
+      // Streaming : on pousse le texte partiel dans la tâche → écriture temps réel.
+      const texte = (await appelClaude(persona, message, async (partiel) => {
+        await supa.from("tilex_tasks")
+          .update({ resultat: partiel, updated_at: new Date().toISOString() }).eq("id", t.id);
+      })) || "(vide)";
       contexte += `\n\n### ${String(t.agent).toUpperCase()} :\n${texte}`;
       await supa.from("tilex_tasks")
         .update({ statut: "fini", resultat: texte, updated_at: new Date().toISOString() }).eq("id", t.id);
