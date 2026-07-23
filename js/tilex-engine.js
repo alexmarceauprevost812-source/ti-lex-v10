@@ -58,6 +58,8 @@ const TilexEngine = (() => {
 
     // 3) Demander la permission de notif (geste utilisateur) au premier lancement.
     _demanderPermNotif();
+    // Abonner au Web Push → notif même app fermée (best-effort, non bloquant).
+    try { if (window.TilexPushNotif) window.TilexPushNotif.activer(true); } catch (e) {}
 
     // 4) Lancer CÔTÉ SERVEUR : l'edge function continue même si on change de
     //    page ou qu'on ferme l'app. Repli sur le pipeline navigateur si absente.
@@ -144,7 +146,7 @@ const TilexEngine = (() => {
     const titreN = ok ? '✅ Travail terminé — Coword' : '❌ Coword';
     const opts = {
       body: ok ? ('Ton code est prêt : ' + titre) : ('Une étape a échoué : ' + titre),
-      icon: '/assets/coword-marceau.jpg', badge: '/icon-192.png', tag: 'coword-' + job.id, data: { url: '/moteur' },
+      icon: '/assets/coword-tilex.png', badge: '/icon-192.png', tag: 'coword-' + job.id, data: { url: '/moteur' },
     };
     try {
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -194,8 +196,12 @@ const TilexEngine = (() => {
     const iv = setInterval(() => {
       n++;
       const sb = _sb();
-      if (sb && sb.auth) { clearInterval(iv); brancherRealtime().catch(() => {}); reprendre().catch(() => {}); }
-      else if (n > 25) clearInterval(iv);
+      if (sb && sb.auth) {
+        clearInterval(iv);
+        brancherRealtime().catch(() => {});
+        reprendre().catch(() => {});
+        try { if (window.TilexPushNotif) window.TilexPushNotif.synchroniser(); } catch (e) {}
+      } else if (n > 25) clearInterval(iv);
     }, 1000);
   })();
 

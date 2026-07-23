@@ -11,6 +11,7 @@
 // ============================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as webpush from "jsr:@negrel/webpush";
 
 const ORDRE = ["codeur", "reviseur", "testeur", "gardien"];
 
@@ -102,6 +103,42 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
 
   await supa.from("tilex_jobs")
     .update({ statut: erreur ? "erreur" : "fini", updated_at: new Date().toISOString() }).eq("id", job.id);
+
+  // Web Push : notifie l'utilisateur même si l'app est fermée (best-effort).
+  await envoyerPush(supa, !erreur, job.titre);
+}
+
+// deno-lint-ignore no-explicit-any
+async function envoyerPush(supa: any, ok: boolean, titre: string): Promise<void> {
+  try {
+    const vapidJson = Deno.env.get("VAPID_KEYS");
+    if (!vapidJson) return; // pas de clés → pas de push (l'app notifie quand même si ouverte)
+    const subject = Deno.env.get("VAPID_SUBJECT") || "mailto:alexmarceauprevost812@gmail.com";
+
+    // RLS : ne renvoie que les abonnements de CET utilisateur (token courant).
+    const { data: subs } = await supa.from("push_subscriptions").select("*");
+    if (!subs || !subs.length) return;
+
+    const vapidKeys = await webpush.importVapidKeys(JSON.parse(vapidJson), { extractable: false });
+    const appServer = await webpush.ApplicationServer.new({ contactInformation: subject, vapidKeys });
+
+    const payload = JSON.stringify({
+      title: ok ? "✅ Travail terminé — Coword" : "❌ Coword",
+      body: (ok ? "Ton code est prêt : " : "Erreur : ") + (titre || "job"),
+      url: "/moteur",
+      tag: "coword-fin",
+    });
+
+    for (const s of subs) {
+      try {
+        const subscriber = appServer.subscribe({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } });
+        await subscriber.pushTextMessage(payload, {});
+      } catch (_e) {
+        // Abonnement mort (410/404) → on le nettoie.
+        try { await supa.from("push_subscriptions").delete().eq("endpoint", s.endpoint); } catch (_e2) { /* ignore */ }
+      }
+    }
+  } catch (_e) { /* push facultatif — jamais bloquant */ }
 }
 
 Deno.serve(async (req) => {
