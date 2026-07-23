@@ -1231,23 +1231,32 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 .csd-toggle-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);margin-left:auto;transition:background .2s;}
 .csd-toggle-dot.on{background:#00a86b;box-shadow:0 0 6px rgba(0,168,107,.5);}
 .composer-spacer{flex:1;}
-/* 🔗 Pastille de lien (résultats de recherche web : trucks, etc.) — clic = ouvre,
-   bouton 📤 = partage natif en 1 clic. */
-.lien-pastille{display:inline-flex;align-items:center;gap:0;max-width:100%;vertical-align:middle;
-  border:1px solid rgba(255,122,0,.45);border-radius:20px;overflow:hidden;margin:2px 3px;
-  background:rgba(255,122,0,.08);}
-.lien-pastille .lien-a{display:inline-block;max-width:74vw;padding:6px 4px 6px 12px;color:#ff9a3c;
-  text-decoration:none;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;vertical-align:middle;}
-.lien-pastille .lien-a:hover{text-decoration:underline;}
-.lien-pastille .lien-share{flex:0 0 auto;border:none;background:rgba(255,122,0,.18);color:#ffb266;
-  cursor:pointer;font-size:13px;line-height:1;padding:7px 11px;border-left:1px solid rgba(255,122,0,.3);
-  transition:background .15s;}
-.lien-pastille .lien-share:hover{background:rgba(255,122,0,.34);}
-.lien-pastille .lien-share:active{transform:scale(.9);}
-[data-theme="day"] .lien-pastille{border-color:rgba(204,101,32,.5);background:rgba(255,122,0,.07);}
-[data-theme="day"] .lien-pastille .lien-a{color:#c85a10;}
-[data-theme="day"] .lien-pastille .lien-share{color:#c85a10;background:rgba(255,122,0,.14);}
+/* 🔗 Carte de lien enrichie (résultats de recherche web : trucks, annonces…) —
+   favicon + nom du site + titre ; clic = ouvre, 📤 = partage natif, 📋 = copie. */
+.lien-carte{display:inline-flex;align-items:stretch;max-width:100%;vertical-align:middle;margin:4px 4px;
+  border:1px solid rgba(255,122,0,.4);border-radius:14px;overflow:hidden;background:rgba(255,122,0,.06);
+  box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.lien-carte-a{display:flex;align-items:center;gap:9px;padding:8px 10px;text-decoration:none;min-width:0;max-width:72vw;}
+.lien-favi{width:26px;height:26px;border-radius:6px;flex:0 0 auto;background:#0d0d13;object-fit:contain;}
+.lien-favi-fallback{display:inline-flex;align-items:center;justify-content:center;font-size:15px;}
+.lien-carte-tx{display:flex;flex-direction:column;min-width:0;line-height:1.25;}
+.lien-carte-site{font-size:10.5px;color:#ff9a3c;font-weight:800;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;letter-spacing:.2px;}
+.lien-carte-titre{font-size:13px;color:#eaeaf0;font-weight:600;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:56vw;}
+.lien-carte-go{flex:0 0 auto;color:#ff9a3c;font-size:14px;font-weight:800;}
+.lien-carte-a:hover .lien-carte-titre{text-decoration:underline;}
+.lien-carte-act{display:flex;flex:0 0 auto;border-left:1px solid rgba(255,122,0,.28);}
+.lien-carte-act button{border:none;background:rgba(255,122,0,.15);color:#ffb266;cursor:pointer;
+  font-size:13px;line-height:1;padding:0 12px;transition:background .15s;}
+.lien-carte-act button:hover{background:rgba(255,122,0,.32);}
+.lien-carte-act button:active{transform:scale(.9);}
+.lien-carte-act button+button{border-left:1px solid rgba(255,122,0,.2);}
+[data-theme="day"] .lien-carte{border-color:rgba(204,101,32,.5);background:rgba(255,122,0,.07);}
+[data-theme="day"] .lien-carte-site{color:#c85a10;}
+[data-theme="day"] .lien-carte-titre{color:#222;}
+[data-theme="day"] .lien-carte-go{color:#c85a10;}
+[data-theme="day"] .lien-carte-act button{color:#c85a10;background:rgba(255,122,0,.14);}
 .composer-send{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:6px;}
@@ -4830,31 +4839,58 @@ function escHtml(s){const d=document.createElement("div");d.textContent=s;return
 function _estVide(s){
   return !String(s).replace(/<[^>]*>/g,"").replace(/&nbsp;/g," ").replace(/[\s ]+/g," ").trim();
 }
-/* 🔗 Transforme les liens (markdown [texte](url) ET URLs nues) en « pastilles »
-   cliquables : un clic OUVRE le lien dans un onglet ; le bouton 📤 le PARTAGE
-   en 1 clic (feuille de partage native du téléphone → SMS, courriel, réseaux…
-   ou copie en repli). Utilisé pour les résultats de recherche web (trucks, etc.).
-   On travaille sur du texte déjà échappé (escHtml) : on insère du HTML sûr. */
-function _lienPastille(url,texte){
-  var libelle=(texte&&texte.trim())?texte.trim():url.replace(/^https?:\/\//,'').replace(/\/$/,'');
-  if(libelle.length>52)libelle=libelle.slice(0,50)+'…';
+/* 🔗 Transforme les liens (markdown [texte](url) ET URLs nues) en CARTES riches :
+   favicon du site + nom du site + titre, pis 3 actions — ↗ Ouvrir (clic),
+   📤 Partager (feuille native : SMS, courriel, réseaux…), 📋 Copier.
+   Utilisé pour les résultats de recherche web (trucks, annonces, articles…).
+   On travaille sur du texte déjà échappé (escHtml) ; on re-échappe le libellé
+   dérivé de l'URL (une décodage d'URL pourrait réintroduire du HTML → anti-XSS). */
+function _lienCarte(url,texte){
+  var sansProto=url.replace(/^https?:\/\//i,'');
+  var slash=sansProto.indexOf('/');
+  var domaine=(slash>=0?sansProto.slice(0,slash):sansProto).replace(/^www\./,'').replace(/:\d+$/,'');
+  var chemin=slash>=0?sansProto.slice(slash):'';
+  // Titre : le texte du lien markdown, sinon un libellé propre tiré du chemin.
+  var titre=(texte&&texte.trim())?texte.trim():'';
+  if(!titre){
+    var brut=chemin.replace(/[?#].*$/,'').replace(/\/+$/,'');
+    try{brut=decodeURIComponent(brut);}catch(e){}
+    brut=brut.split('/').filter(Boolean).pop()||'';
+    brut=brut.replace(/\.[a-z0-9]{1,5}$/i,'').replace(/[-_+]+/g,' ').trim();
+    titre=brut||domaine;
+  }
+  if(titre.length>64)titre=titre.slice(0,62)+'…';
+  var favi='https://www.google.com/s2/favicons?domain='+encodeURIComponent(domaine)+'&sz=64';
   var uAttr=url.replace(/"/g,'%22');                    // sûr dans href="..."
   var uJs=url.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); // sûr dans onclick='...'
-  return '<span class="lien-pastille">'
-    +'<a href="'+uAttr+'" target="_blank" rel="noopener noreferrer" class="lien-a">🔗 '+libelle+'</a>'
-    +'<button type="button" class="lien-share" onclick="partagerLien(event,\''+uJs+'\')" title="Envoyer / partager le lien" aria-label="Partager le lien">📤</button>'
-    +'</span>';
+  return '<span class="lien-carte">'
+    +'<a href="'+uAttr+'" target="_blank" rel="noopener noreferrer" class="lien-carte-a">'
+      +'<img class="lien-favi" src="'+favi+'" alt="" loading="lazy" onerror="tilexFaviconErr(this)">'
+      +'<span class="lien-carte-tx"><span class="lien-carte-site">'+escHtml(domaine)+'</span>'
+      +'<span class="lien-carte-titre">'+escHtml(titre)+'</span></span>'
+      +'<span class="lien-carte-go" aria-hidden="true">↗</span>'
+    +'</a>'
+    +'<span class="lien-carte-act">'
+      +'<button type="button" onclick="partagerLien(event,\''+uJs+'\')" title="Partager le lien" aria-label="Partager le lien">📤</button>'
+      +'<button type="button" onclick="copierLien(event,\''+uJs+'\')" title="Copier le lien" aria-label="Copier le lien">📋</button>'
+    +'</span>'
+  +'</span>';
 }
 function _linkifyChat(s){
   // 1) Liens markdown : [texte](https://…)
-  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,function(m,txt,url){return _lienPastille(url,txt);});
+  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,function(m,txt,url){return _lienCarte(url,txt);});
   // 2) URLs nues — évite celles déjà dans un href="…" (précédées de " ' > = ]).
   s=s.replace(/(^|[^"'>=\]])(https?:\/\/[^\s<)]+)/g,function(m,pre,url){
     var tail='';var mt=url.match(/[.,;:!?]+$/);   // retire la ponctuation finale collée
     if(mt){tail=mt[0];url=url.slice(0,url.length-tail.length);}
-    return pre+_lienPastille(url,null)+tail;
+    return pre+_lienCarte(url,null)+tail;
   });
   return s;
+}
+// Favicon injoignable → petit globe 🌐 à la place (aucune image cassée).
+function tilexFaviconErr(img){
+  try{var s=document.createElement('span');s.className='lien-favi lien-favi-fallback';s.textContent='🌐';img.replaceWith(s);}
+  catch(e){try{img.style.visibility='hidden';}catch(_){}}
 }
 async function partagerLien(ev,url){
   if(ev){ev.preventDefault();ev.stopPropagation();}
@@ -4866,6 +4902,18 @@ async function partagerLien(ev,url){
       if(typeof showToastMsg==="function")showToastMsg("🔗 Lien copié — colle-le où tu veux");
     }
   }catch(e){ /* partage annulé par l'utilisateur → on ne fait rien */ }
+}
+async function copierLien(ev,url){
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  try{
+    await navigator.clipboard.writeText(url);
+    if(typeof showToastMsg==="function")showToastMsg("📋 Lien copié");
+  }catch(e){
+    // Repli : sélection via un champ temporaire (vieux navigateurs).
+    try{var t=document.createElement('textarea');t.value=url;t.style.position='fixed';t.style.opacity='0';
+      document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
+      if(typeof showToastMsg==="function")showToastMsg("📋 Lien copié");}catch(_){}
+  }
 }
 function renderMd(txt){
   var safe=escHtml(txt);
