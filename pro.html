@@ -4148,7 +4148,7 @@ async function initAlMemoryRecall(){
   }catch(e){console.error("[AL memory] initAlMemoryRecall:",e);}
 }
 var _webAgent=null; /* agent de la plateforme /web actuellement actif dans le chat (persona) */
-var SCHEMA_HINT="\n\n## SCHÉMAS / DIAGRAMMES\nQuand un schéma aide à comprendre (étapes, architecture, flux, pipeline, comparaison), dessine-le directement dans le chat. Mets un bloc de code ```tilex-schema contenant UNIQUEMENT du JSON valide de cette forme :\n```tilex-schema\n{\"titre\":\"Titre court\",\"noeuds\":[{\"id\":\"a\",\"titre\":\"Étape\",\"sous\":\"détail court\",\"couleur\":1}],\"liens\":[{\"de\":\"a\",\"a\":\"b\"}]}\n```\nRègles : 3 à 7 nœuds max, titres courts ; `couleur` = 1, 2, 3 ou \"neutre\" ; `liens` optionnel (sans lui, le flux est séquentiel haut→bas). N'explique jamais le JSON, ne mets rien d'autre dans ce bloc. Utilise un schéma seulement quand c'est vraiment utile.";
+var SCHEMA_HINT="\n\n## SCHÉMAS / DIAGRAMMES\nQuand un schéma aide à comprendre (étapes, architecture, flux, pipeline, comparaison), dessine-le directement dans le chat. Mets un bloc de code ```tilex-schema contenant UNIQUEMENT du JSON valide de cette forme :\n```tilex-schema\n{\"titre\":\"Titre court\",\"noeuds\":[{\"id\":\"a\",\"titre\":\"Étape\",\"sous\":\"détail court\",\"couleur\":1}],\"liens\":[{\"de\":\"a\",\"a\":\"b\"}]}\n```\nRègles : 3 à 7 nœuds max, titres courts ; `couleur` = 1, 2, 3 ou \"neutre\" ; `liens` optionnel (sans lui, le flux est séquentiel haut→bas). N'explique jamais le JSON, ne mets rien d'autre dans ce bloc. Utilise un schéma seulement quand c'est vraiment utile.\n\n### TRÈS IMPORTANT — schémas ANIMÉS\nLe bloc ```tilex-schema s'affiche DÉJÀ animé automatiquement (les boîtes apparaissent en cascade, les flèches se tracent). Donc pour un « schéma animé », « diagramme animé » ou n'importe quel schéma qui bouge : utilise EXACTEMENT le même bloc ```tilex-schema. N'écris JAMAIS de code d'animation (pas de HTML, pas de CSS, pas de SVG, pas de JavaScript, pas de Mermaid). Un seul format pour TOUS les schémas, fixes comme animés : le bloc ```tilex-schema.";
 /* ── Mémoire long-terme TilexMemory : cache injecté dans le prompt ── */
 var _tilexMemCache="";
 async function rafraichirTilexMem(){
@@ -4376,7 +4376,7 @@ function _isSchemaRequest(txt){
   for(var i=0;i<kw.length;i++){if(lc.includes(kw[i]))return true;}
   return false;
 }
-var SCHEMA_FORCE_HINT="\n\nIMPORTANT : la personne demande explicitement un schéma/diagramme dans ce message. Réponds avec un bloc ```tilex-schema (format JSON déjà décrit plus haut) en plus d'une courte explication — ne saute pas cette étape.";
+var SCHEMA_FORCE_HINT="\n\nIMPORTANT : la personne demande explicitement un schéma/diagramme dans ce message (même « animé »). Réponds avec un bloc ```tilex-schema (format JSON déjà décrit plus haut) en plus d'une courte explication — ne saute pas cette étape. Le bloc ```tilex-schema s'anime TOUT SEUL : n'écris SURTOUT PAS de code d'animation (HTML/CSS/SVG/JS/Mermaid), juste le bloc ```tilex-schema.";
 
 /* ── Filet de sécurité du streaming ──
    Si une bulle streamée reste en texte brut avec des clôtures ``` visibles
