@@ -2339,15 +2339,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
   </div>
 
-  <!-- Schéma Live (carte mentale branchée avec le chat) -->
-  <div class="sb-item" id="si-schema" onclick="window.location.href='/schema'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#4f9dff;">🗺️</span><span class="sb-label" data-txt="SCHÉMA"></span>
-  </div>
-
-  <!-- Schémas animés — moteur chat → schéma → vidéo (.webm), isolé en iframe -->
-  <div class="sb-item" id="si-schemas-video" onclick="showTab('schemas')">
-    <span class="sb-icon" style="color:#7c5cff;">🎬</span><span class="sb-label" data-txt="SCHÉMAS ANIMÉS"></span>
-  </div>
+  <!-- Schémas : retirés du menu. Le moteur de schéma ANIMÉ est intégré
+       directement dans le chat (blocs ```tilex-schema rendus animés). -->
 
   <!-- Créer agent IA -->
   <div class="sb-item" onclick="openModal()">

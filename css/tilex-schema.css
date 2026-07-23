@@ -63,37 +63,59 @@
 .tilex-arr-tete { stroke: var(--tc-arr); }
 
 /* ----------  ⚡ ANIMATION D'APPARITION (fluide, en cascade)  ----------
-   Les boîtes montent + apparaissent une après l'autre, pis chaque flèche
-   se trace juste après sa boîte de départ. Le décalage (animation-delay)
-   est posé en ligne par le JS selon l'ordre des étapes. */
+   Les boîtes montent + apparaissent une après l'autre avec un petit rebond,
+   pis chaque flèche se TRACE juste après sa boîte de départ. Le décalage
+   (animation-delay) est posé en ligne par le JS selon l'ordre des étapes.
+   Cette animation joue TOUJOURS (schéma animé demandé). */
 .tilex-noeud {
   opacity: 0;
-  transform: translateY(10px) scale(0.94);
+  transform: translateY(14px) scale(0.9);
   transform-box: fill-box;
   transform-origin: center;
-  animation: tilex-noeud-in 0.5s cubic-bezier(0.25, 0.8, 0.3, 1) both;
+  animation: tilex-noeud-in 0.62s cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
 @keyframes tilex-noeud-in {
-  to { opacity: 1; transform: none; }
+  0%   { opacity: 0; transform: translateY(14px) scale(0.9); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
+  100% { opacity: 1; transform: none; }
 }
+/* Petit halo au moment où la boîte arrive → « plus joli » */
+.tilex-noeud-rect {
+  animation: tilex-noeud-halo 0.9s ease both;
+  animation-delay: inherit;
+}
+@keyframes tilex-noeud-halo {
+  0%   { filter: drop-shadow(0 0 0 rgba(126, 160, 255, 0)); }
+  55%  { filter: drop-shadow(0 0 7px rgba(126, 160, 255, 0.55)); }
+  100% { filter: drop-shadow(0 0 0 rgba(126, 160, 255, 0)); }
+}
+/* La flèche se trace (stroke) puis reste ; l'effet donne l'impression que
+   le flux « coule » d'une boîte à l'autre. */
 .tilex-arr {
   opacity: 0;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
-  animation: tilex-arr-in 0.55s ease both;
+  animation: tilex-arr-in 0.6s ease both;
 }
 @keyframes tilex-arr-in {
-  to { opacity: 1; stroke-dashoffset: 0; }
+  0%   { opacity: 0; stroke-dashoffset: 1; }
+  20%  { opacity: 1; }
+  100% { opacity: 1; stroke-dashoffset: 0; }
 }
+.tilex-arr-tete { opacity: 0; animation: tilex-tete-in 0.3s ease both; animation-delay: inherit; }
+@keyframes tilex-tete-in { to { opacity: 1; } }
 
-/* Respecte « réduire les animations » : tout apparaît d'un coup, sans mouvement. */
+/* Même avec « réduire les animations » : on garde une apparition DOUCE
+   (fondu seulement, sans gros mouvement) — jamais complètement figé. */
 @media (prefers-reduced-motion: reduce) {
-  .tilex-noeud, .tilex-arr {
-    animation: none;
-    opacity: 1;
+  .tilex-noeud {
     transform: none;
-    stroke-dashoffset: 0;
+    animation: tilex-noeud-fade 0.5s ease both;
   }
+  @keyframes tilex-noeud-fade { from { opacity: 0; } to { opacity: 1; } }
+  .tilex-noeud-rect { animation: none; }
+  .tilex-arr { stroke-dashoffset: 0; animation: tilex-noeud-fade 0.5s ease both; }
+  .tilex-arr-tete { animation: none; opacity: 1; }
 }
 
 /* ----------  Couleur 1 — Bleu  ---------- */
