@@ -214,7 +214,7 @@ const TilexMandat = (() => {
         await marquerVerifie(email, etat.domaine, 'dns_txt');
         ok = true;
       } else {
-        const rep = await _post('/api/verifier-propriete', { domaine: etat.domaine }, sess.access_token);
+        const rep = await _post('/api/mandat', { action: 'verifier', domaine: etat.domaine }, sess.access_token);
         if (rep.ok && rep.d && rep.d.verifie) { ok = true; methode = rep.d.methode || 'dns_txt'; }
       }
 
@@ -234,7 +234,7 @@ const TilexMandat = (() => {
     try {
       let signeLe = new Date().toISOString();
       // Essai serveur (capture l'IP réelle via x-forwarded-for)…
-      const rep = await _post('/api/signer-mandat', { domaine: etat.domaine, accepte: true }, sess.access_token);
+      const rep = await _post('/api/mandat', { action: 'signer', domaine: etat.domaine, accepte: true }, sess.access_token);
       if (rep.ok && rep.d && rep.d.ok) {
         signeLe = rep.d.signe_le || signeLe;
       } else {
@@ -259,7 +259,7 @@ const TilexMandat = (() => {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Vérification de l\'autorisation…'; }
     try {
       // Gardien serveur si dispo, sinon gardien client (scanAutorise).
-      const rep = await _post('/api/verifier-autorisation-scan', { domaine: etat.domaine }, sess.access_token);
+      const rep = await _post('/api/mandat', { action: 'autoriser', domaine: etat.domaine }, sess.access_token);
       let autorise = false, d = rep.d || {};
       if (rep.ok && typeof d.autorise === 'boolean') autorise = d.autorise;
       else autorise = await scanAutorise(sessionEmail(), etat.domaine);
