@@ -1252,22 +1252,21 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:6px;}
 .composer-send:hover{filter:brightness(1.1);transform:scale(1.05);}
-/* 👿 Mascotte démon TI-LEX-AL perchée SUR le bouton Envoyer (agrippe le dessus).
-   Le parent .mascot-perch est relatif ; la mascotte est absolue, remontée sur le
-   dessus du bouton, pointer-events:none pour que le clic passe au bouton dessous. */
-.mascot-perch{position:relative;display:inline-flex;flex-shrink:0;margin-left:6px;}
-.mascot-perch .composer-send{margin-left:0;}
-.tilex-mascot{position:absolute;left:50%;bottom:22px;width:82px;height:auto;
-  transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;z-index:8;
+/* 👿 Mascotte démon TI-LEX-AL perchée sur le REBORD DU HAUT de la barre d'écriture
+   (pas sur le bouton Envoyer) : elle agrippe le dessus de la zone d'écriture, plus
+   haut, du côté droit. pointer-events:none → le clic passe aux champs dessous. */
+.composer-input-row{position:relative;}
+.tilex-mascot{position:absolute;right:52px;bottom:calc(100% - 16px);width:88px;height:auto;
+  transform-origin:50% 100%;pointer-events:none;z-index:8;
   filter:drop-shadow(0 6px 9px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(255,90,20,.25));
   transition:transform .12s ease;-webkit-user-select:none;user-select:none;}
 .tilex-mascot.nudge{animation:mascotNudge .5s ease;}
 @keyframes mascotNudge{
-  0%{transform:translateX(-50%) translateY(0) rotate(0);}
-  28%{transform:translateX(-50%) translateY(-7px) rotate(-3deg) scale(1.06);}
-  60%{transform:translateX(-50%) translateY(0) rotate(2deg) scale(1.01);}
-  100%{transform:translateX(-50%) translateY(0) rotate(0);}}
-@media (max-width:380px){.tilex-mascot{width:70px;bottom:20px;}}
+  0%{transform:translateY(0) rotate(0);}
+  28%{transform:translateY(-7px) rotate(-3deg) scale(1.06);}
+  60%{transform:translateY(0) rotate(2deg) scale(1.01);}
+  100%{transform:translateY(0) rotate(0);}}
+@media (max-width:380px){.tilex-mascot{width:74px;right:46px;}}
 @media (prefers-reduced-motion:reduce){.tilex-mascot.nudge{animation:none;}}
 /* Bouton micro — un click active, un click désactive (état rouge pulsant quand actif) */
 .composer-mic-btn{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;margin-left:auto;
@@ -3254,12 +3253,12 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="showTab('settings');closeComposerMenu()"><span class="cmi-ico">⚙️</span> Paramètres</div>
     </div>
     <div class="composer-input-row">
+      <!-- 👿 La mascotte est perchée sur le REBORD DU HAUT de la barre d'écriture
+           (pas sur le bouton) : elle agrippe le dessus de la zone d'écriture. -->
+      <img class="tilex-mascot" id="tilex-mascot" src="/assets/tilex-mascot-open.png" alt="" aria-hidden="true" draggable="false">
       <textarea class="composer-input" id="composer-input" rows="1" data-i18n="type-message" placeholder="Discuter avec Agent AL…"></textarea>
       <button class="composer-mic-btn" id="composer-mic-btn" title="Parler au micro" onclick="toggleMicro()">🎙️</button>
-      <span class="mascot-perch">
-        <button class="composer-send" id="composer-send-btn" title="Envoyer" onclick="composerSend()" style="font-size:17px;line-height:1;">⚡</button>
-        <img class="tilex-mascot" id="tilex-mascot" src="/assets/tilex-mascot-open.png" alt="" aria-hidden="true" draggable="false">
-      </span>
+      <button class="composer-send" id="composer-send-btn" title="Envoyer" onclick="composerSend()" style="font-size:17px;line-height:1;">⚡</button>
     </div>
     <div class="composer-actions-row">
       <button class="composer-plus" id="composer-plus-btn" title="Options">＋</button>
