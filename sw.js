@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-636";
+const CACHE_VERSION = "tilex-v10-637";
 const ASSETS = [
   "/",
   "/index.html",
@@ -182,6 +182,7 @@ const ASSETS = [
   "/js/tilex-sentinelle.js",
   "/css/tilex-sentinelle.css",
   "/assets/marceau-logo.png",
+  "/assets/coword-marceau.jpg",
   "/assets/intro/plate.jpg",
 ];
 
@@ -230,6 +231,23 @@ self.addEventListener("fetch", (e) => {
         return res;
       })
       .catch(() => caches.match(e.request))
+  );
+});
+
+// Clic sur une notification Coword → ouvre/focus la page /moteur.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/moteur";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if (c.url.includes("/moteur") && "focus" in c) return c.focus();
+      }
+      for (const c of list) {
+        if ("focus" in c) { try { if (c.navigate) c.navigate(url); } catch (err) {} return c.focus(); }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
   );
 });
 

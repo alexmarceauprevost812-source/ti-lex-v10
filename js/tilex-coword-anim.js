@@ -18,6 +18,15 @@ const TilexCowordAnim = (() => {
   const ICONES = { codeur: '💻', reviseur: '🔍', testeur: '🧪', gardien: '🛡️' };
   const NOMS   = { codeur: 'Codeur', reviseur: 'Réviseur', testeur: 'Testeur', gardien: 'Gardien' };
   const CLS    = { pending: 'st-pending', en_cours: 'st-run', fini: 'st-done', erreur: 'st-err' };
+  const AVATAR = '/assets/coword-marceau.jpg';
+
+  // Ce que chaque agent FAIT (verbe d'action affiché à côté de l'image)
+  const ACTIONS = {
+    codeur:   { fait: 'Écrit le code',     encours: '✍️ En train de coder…' },
+    reviseur: { fait: 'Révise & corrige',  encours: '🔍 Recherche les bugs…' },
+    testeur:  { fait: 'Teste & valide',    encours: '🧪 Teste le code…' },
+    gardien:  { fait: 'Verdict final',     encours: '🛡️ Vérifie tout…' },
+  };
 
   function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
@@ -86,6 +95,53 @@ const TilexCowordAnim = (() => {
     }).join('');
   }
 
+  /* ─── Avatar Marceau qui « respire » + étapes en cours à côté ─── */
+  function avatarHTML(tasks) {
+    const parAgent = {};
+    (tasks || []).forEach((t) => { if (t && t.agent) parAgent[String(t.agent).toLowerCase()] = t; });
+
+    const enCours = ORDRE.some((ag) => parAgent[ag] && parAgent[ag].statut === 'en_cours');
+    const tousFinis = ORDRE.every((ag) => parAgent[ag] && parAgent[ag].statut === 'fini');
+    const erreur = ORDRE.some((ag) => parAgent[ag] && parAgent[ag].statut === 'erreur');
+
+    // Étape active + son texte
+    let entete;
+    if (erreur && !enCours) entete = '⚠️ Coword a rencontré une erreur';
+    else if (tousFinis) entete = '✅ Coword a fini — ton code est prêt';
+    else if (enCours) {
+      const actif = ORDRE.map((ag) => parAgent[ag]).find((t) => t && t.statut === 'en_cours');
+      const a = actif ? ACTIONS[actif.agent] : null;
+      entete = a ? a.encours : 'Coword travaille…';
+    } else entete = 'Coword est prêt à travailler';
+
+    // Liste verticale des étapes avec ce qu'elles font
+    const lignes = ORDRE.map((ag) => {
+      const t = parAgent[ag];
+      const statut = t ? (t.statut || 'pending') : 'pending';
+      const cls = CLS[statut] || 'st-pending';
+      const act = ACTIONS[ag] || { fait: '', encours: '' };
+      let ico, txt;
+      if (statut === 'fini') { ico = '✅'; txt = act.fait + ' — fait'; }
+      else if (statut === 'en_cours') { ico = '<span class="cw-mini-spin"></span>'; txt = act.encours; }
+      else if (statut === 'erreur') { ico = '❌'; txt = 'Erreur'; }
+      else { ico = '⏳'; txt = act.fait; }
+      return `<div class="cw-actline ${cls}">
+        <span class="cw-actico">${ico}</span>
+        <span class="cw-actnom">${ICONES[ag]} ${NOMS[ag]}</span>
+        <span class="cw-acttxt">${txt}</span>
+      </div>`;
+    }).join('');
+
+    const avaCls = enCours ? 'cw-ava respire' : (tousFinis ? 'cw-ava fini' : 'cw-ava');
+    return `<div class="cw-work">
+      <div class="cw-ava-wrap">
+        <img class="${avaCls}" src="${AVATAR}" alt="Coword — Marceau" loading="lazy"/>
+        <div class="cw-ava-cap">${entete}</div>
+      </div>
+      <div class="cw-acts">${lignes}</div>
+    </div>`;
+  }
+
   /* ─── Schéma animé du pipeline ─── */
   function pipelineHTML(tasks) {
     const parAgent = {};
@@ -141,6 +197,36 @@ const TilexCowordAnim = (() => {
       .cw-link.st-err{background:#f85149;}
       @keyframes cwPulse{0%{box-shadow:0 0 0 0 rgba(255,122,0,.55);}70%{box-shadow:0 0 0 9px rgba(255,122,0,0);}100%{box-shadow:0 0 0 0 rgba(255,122,0,0);}}
       @keyframes cwFlow{to{background-position:22px 0;}}
+      /* Avatar Marceau + activités */
+      .cw-work{display:flex;gap:14px;align-items:flex-start;padding:12px;margin-bottom:10px;
+        background:#0d0d13;border:1px solid #23232e;border-radius:14px;}
+      .cw-ava-wrap{flex:0 0 auto;width:96px;text-align:center;}
+      .cw-ava{width:88px;height:88px;object-fit:cover;border-radius:16px;border:2px solid #30363d;
+        background:#101017;display:block;transition:border-color .3s;}
+      .cw-ava.respire{border-color:#ff7a00;animation:cwRespire 2.4s ease-in-out infinite;}
+      .cw-ava.fini{border-color:#3fb950;}
+      .cw-ava-cap{font-size:10px;color:#c9d1d9;margin-top:7px;line-height:1.35;min-height:26px;}
+      .cw-ava.respire + .cw-ava-cap{color:#ff7a00;font-weight:700;}
+      @keyframes cwRespire{
+        0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,122,0,.45);}
+        50%{transform:scale(1.06);box-shadow:0 0 18px 4px rgba(255,122,0,.28);}
+        100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,122,0,.45);}}
+      .cw-acts{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+      .cw-actline{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;
+        background:#101017;border:1px solid #1c1c26;font-size:12px;transition:all .3s;}
+      .cw-actline .cw-actico{width:16px;flex:0 0 auto;text-align:center;display:flex;align-items:center;justify-content:center;}
+      .cw-actline .cw-actnom{font-weight:700;flex:0 0 auto;color:#e6edf3;}
+      .cw-actline .cw-acttxt{flex:1;min-width:0;color:#8b949e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+      .cw-actline.st-run{border-color:#ff7a00;background:#241400;}
+      .cw-actline.st-run .cw-acttxt{color:#ff7a00;font-weight:700;}
+      .cw-actline.st-done{border-color:#1a4028;}
+      .cw-actline.st-done .cw-acttxt{color:#3fb950;}
+      .cw-actline.st-err{border-color:#5a1f1f;}
+      .cw-actline.st-err .cw-acttxt{color:#f85149;}
+      .cw-mini-spin{width:13px;height:13px;border:2px solid #3a2400;border-top-color:#ff7a00;border-radius:50%;
+        display:inline-block;animation:cwSpin .7s linear infinite;}
+      @keyframes cwSpin{to{transform:rotate(360deg)}}
+      @media(max-width:420px){.cw-work{flex-direction:column;align-items:center;}.cw-acts{width:100%;}}
       /* Code coloré */
       pre.cw-code{margin:8px 0;padding:11px;background:#05050a;border:1px solid #1c1c26;border-radius:9px;
         overflow-x:auto;font-family:'Share Tech Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;
@@ -154,7 +240,7 @@ const TilexCowordAnim = (() => {
     document.head.appendChild(s);
   }
 
-  return { injecterStyle, pipelineHTML, colorer, rendreResultat };
+  return { injecterStyle, avatarHTML, pipelineHTML, colorer, rendreResultat };
 
 })();
 

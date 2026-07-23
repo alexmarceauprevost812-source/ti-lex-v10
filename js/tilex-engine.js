@@ -56,9 +56,29 @@ const TilexEngine = (() => {
     const { data: taskRows } = await sb.from('tilex_tasks').insert(tasksToInsert).select();
     _emit();
 
-    // 3) Exécuter le pipeline en séquence (chaque agent reçoit le travail précédent).
-    _executerPipeline(job, (taskRows || []).sort((a, b) => a.ordre - b.ordre));
-    return { ok: true, jobId: job.id };
+    // 3) Demander la permission de notif (geste utilisateur) au premier lancement.
+    _demanderPermNotif();
+
+    // 4) Lancer CÔTÉ SERVEUR : l'edge function continue même si on change de
+    //    page ou qu'on ferme l'app. Repli sur le pipeline navigateur si absente.
+    const surServeur = await _lancerServeur(job.id);
+    if (!surServeur) {
+      _executerPipeline(job, (taskRows || []).sort((a, b) => a.ordre - b.ordre));
+    }
+    return { ok: true, jobId: job.id, serveur: surServeur };
+  }
+
+  // Lance le pipeline sur l'edge function (tâche de fond serveur).
+  async function _lancerServeur(jobId) {
+    const sb = _sb();
+    if (!sb || !sb.functions || typeof sb.functions.invoke !== 'function') return false;
+    try {
+      let headers = {};
+      try { const { data } = await sb.auth.getSession(); if (data && data.session) headers = { Authorization: 'Bearer ' + data.session.access_token }; } catch (e) {}
+      const { data, error } = await sb.functions.invoke('tilex-coword', { body: { jobId }, headers });
+      if (error) return false;
+      return !!(data && data.ok);
+    } catch (e) { return false; }
   }
 
   async function _executerPipeline(job, tasks) {
@@ -109,6 +129,34 @@ const TilexEngine = (() => {
     _emit();
   }
 
+  // ─── Notifications de fin (marche tant qu'une page est ouverte) ──────
+  function _demanderPermNotif() {
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}
+  }
+  const _notifies = new Set();
+  function _notifier(job) {
+    if (!job || !job.id || _notifies.has(job.id)) return;
+    _notifies.add(job.id);
+    const titre = job.titre || 'Coword';
+    const ok = job.statut === 'fini';
+    const msg = ok ? ('✅ Coword a fini : « ' + titre + ' »') : ('❌ Coword — erreur : « ' + titre + ' »');
+    try { if (window.showToastMsg) window.showToastMsg(msg); else if (window.showToast) window.showToast(msg); } catch (e) {}
+    const titreN = ok ? '✅ Travail terminé — Coword' : '❌ Coword';
+    const opts = {
+      body: ok ? ('Ton code est prêt : ' + titre) : ('Une étape a échoué : ' + titre),
+      icon: '/assets/coword-marceau.jpg', badge: '/icon-192.png', tag: 'coword-' + job.id, data: { url: '/moteur' },
+    };
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready
+            .then((reg) => { try { reg.showNotification(titreN, opts); } catch (e) { try { new Notification(titreN, opts); } catch (e2) {} } })
+            .catch(() => { try { new Notification(titreN, opts); } catch (e) {} });
+        } else { try { new Notification(titreN, opts); } catch (e) {} }
+      }
+    } catch (e) {}
+  }
+
   // ─── Temps réel (respecte la RLS : seulement mes lignes) ─────────────
   async function brancherRealtime() {
     const sb = _sb(); if (!sb || window.__engineRT) return;
@@ -116,13 +164,42 @@ const TilexEngine = (() => {
       const { data } = await sb.auth.getSession();
       if (data && data.session) { try { await sb.realtime.setAuth(data.session.access_token); } catch (e) {} }
       window.__engineRT = sb.channel('tilex-engine')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tilex_jobs' }, _emit)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tilex_jobs' }, (payload) => {
+          _emit();
+          try { const n = payload && payload.new; if (n && (n.statut === 'fini' || n.statut === 'erreur')) _notifier(n); } catch (e) {}
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tilex_tasks' }, _emit)
         .subscribe();
     } catch (e) {}
   }
 
-  return { lancerJob, listerJobs, listerTaches, supprimerJob, brancherRealtime, PIPELINE };
+  // ─── Reprise : relance côté serveur les jobs bloqués (> 2 min) ────────
+  async function reprendre() {
+    const sb = _sb(); if (!sb) return;
+    try {
+      const uid = await _uid(); if (!uid) return;
+      const { data } = await sb.from('tilex_jobs').select('*').eq('statut', 'en_cours');
+      const maintenant = Date.now();
+      for (const j of (data || [])) {
+        const t = j.updated_at ? Date.parse(j.updated_at) : 0;
+        if (!t || (maintenant - t) > 120000) _lancerServeur(j.id);
+      }
+    } catch (e) {}
+  }
+
+  // ─── Auto-init : branche le temps réel + reprise dès que Supabase est prêt.
+  //     Ça fait marcher les notifications sur TOUTE page qui charge ce module.
+  (function _autoInit() {
+    let n = 0;
+    const iv = setInterval(() => {
+      n++;
+      const sb = _sb();
+      if (sb && sb.auth) { clearInterval(iv); brancherRealtime().catch(() => {}); reprendre().catch(() => {}); }
+      else if (n > 25) clearInterval(iv);
+    }, 1000);
+  })();
+
+  return { lancerJob, listerJobs, listerTaches, supprimerJob, brancherRealtime, reprendre, PIPELINE };
 
 })();
 
