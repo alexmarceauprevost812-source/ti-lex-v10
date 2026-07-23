@@ -96,7 +96,7 @@ const MAX_MESSAGES = 60;
 const MAX_MSG_CHARS = 20_000_000;
 const MAX_TOOL_LOOPS = 8;
 const ALLOWED_MODELS = new Set([
-  "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5-20251001",
+  "claude-sonnet-5", "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5-20251001",
 ]);
 const ALLOWED_SIZES = new Set(["1024x1024", "1024x1536", "1536x1024", "auto"]);
 
