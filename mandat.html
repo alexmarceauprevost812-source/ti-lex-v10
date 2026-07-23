@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<!-- ============================================
+   TI-LEX-AL v10
+   Fichier : mandat.html
+   Auteur  : Alex Marceau-Prévost
+   Rôle    : Page autonome du mandat d'autorisation de scan (dark, mobile).
+             Charge Supabase + js/tilex-mandat.js pis ouvre le formulaire.
+   ============================================ -->
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🔒 Mandat d'autorisation de scan — ti-lex</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#07070b;color:#e6edf3;min-height:100vh;}
+  header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:14px;background:#0b0b10;border-bottom:1px solid #1e1e28;}
+  header a.back{color:#8b949e;text-decoration:none;font-size:20px;padding:4px 8px;border-radius:8px;}
+  header h1{font-size:15px;font-weight:800;color:#ff7a00;flex:1;}
+  .wrap{max-width:640px;margin:0 auto;padding:18px 14px 60px;}
+  .intro{font-size:13px;color:#8b949e;line-height:1.6;margin-bottom:16px;}
+  .intro b{color:#e6edf3;}
+  .ouvrir{width:100%;background:#ff7a00;border:none;color:#000;border-radius:12px;padding:14px;font-size:16px;font-weight:800;cursor:pointer;}
+  .avert{background:#101017;border:1px solid #23232e;border-radius:12px;padding:13px;margin-top:16px;font-size:12px;color:#c9d1d9;line-height:1.6;}
+  .avert b{color:#f0b429;}
+  .login{display:none;background:#2a1414;border:1px solid #5a1f1f;border-radius:12px;padding:13px;margin-top:14px;font-size:13px;color:#f8b0ab;}
+  .login a{color:#58a6ff;}
+</style>
+</head>
+<body>
+  <header>
+    <a class="back" href="/pro" title="Retour">←</a>
+    <h1>🔒 Mandat d'autorisation de scan</h1>
+  </header>
+
+  <div class="wrap">
+    <div class="intro">
+      Avant qu'on scanne un domaine, il faut <b>prouver que tu en es le propriétaire</b>
+      (ou que t'as une <b>autorisation écrite</b>) pis <b>signer le mandat</b>.
+      Scanner un site sans droit est illégal — <b>art. 342.1 du Code criminel du Canada</b>.
+    </div>
+
+    <button class="ouvrir" id="ouvrir-form">🔓 Ouvrir le formulaire de mandat</button>
+
+    <div class="login" id="login-msg">
+      ⚠️ Tu n'es pas connecté. <a href="/pro">Connecte-toi dans ti-lex</a> d'abord, pis reviens ici.
+    </div>
+
+    <div class="avert">
+      <b>Les 3 vérifications avant un scan :</b><br>
+      1 · Preuve de propriété (DNS TXT <i>silex-verify</i> ou fichier <i>/.well-known/silex-verify.txt</i>)<br>
+      2 · Mandat signé (case cochée + signature, IP + date journalisées)<br>
+      3 · Domaine vérifié <b>ET</b> mandat signé → le scan est permis. Sinon : bloqué.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+  <script>
+    // Init du client Supabase (partagé avec le reste de l'app via localStorage).
+    window.SB_URL = 'https://rnuripmfozlxenryxhdc.supabase.co';
+    window.SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudXJpcG1mb3pseGVucnl4aGRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNjE0NTEsImV4cCI6MjA4ODgzNzQ1MX0.kpF2fkUUShtCpkFGWuPBIRBaNnRVZNGIRmyuwpZZnmA';
+    try {
+      var _createClient = window.supabase.createClient;
+      window.supabase = _createClient(window.SB_URL, window.SB_ANON);
+    } catch (e) { console.error('Supabase init', e); }
+    // Toast minimal (le module l'utilise s'il est là).
+    window.showToastMsg = function (m) {
+      var t = document.createElement('div');
+      t.textContent = m;
+      t.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#161b22;border:1px solid #30363d;color:#e6edf3;padding:11px 16px;border-radius:11px;font-size:13px;z-index:99999;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,.6);';
+      document.body.appendChild(t);
+      setTimeout(function () { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 400); }, 2600);
+    };
+  </script>
+  <script src="/js/tilex-mandat.js"></script>
+  <script>
+    (async function () {
+      // Vérifie la session : si pas connecté, on montre le message de connexion.
+      try {
+        var s = await window.supabase.auth.getSession();
+        if (!s || !s.data || !s.data.session) {
+          document.getElementById('login-msg').style.display = 'block';
+        }
+      } catch (e) {}
+      document.getElementById('ouvrir-form').addEventListener('click', function () {
+        if (window.TilexMandat) window.TilexMandat.ouvrir();
+      });
+    })();
+  </script>
+</body>
+</html>
