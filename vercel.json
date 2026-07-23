@@ -15,6 +15,7 @@
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
     { "source": "/bourse", "destination": "/bourse.html" },
     { "source": "/codex", "destination": "/codex.html" },
+    { "source": "/agent-autonome", "destination": "/agent-autonome.html" },
     { "source": "/tilexcode", "destination": "/codex.html" },
     { "source": "/truck", "destination": "/truck.html" },
     { "source": "/truck-map", "destination": "/truck-map.html" },
