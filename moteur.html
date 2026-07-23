@@ -63,6 +63,7 @@
   <script src="/js/tilex-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <script src="/js/tilex-engine.js"></script>
+  <script src="/js/tilex-coword-anim.js"></script>
   <script src="/js/tilex-studio-code.js"></script>
   <script>
   (function(){
@@ -84,9 +85,11 @@
         var j=jobs[i];var st=STATUTS[j.statut]||STATUTS.pending;var tHtml='';
         if(ouverts[j.id]){
           var tasks=await TilexEngine.listerTaches(j.id);
-          tHtml='<div class="tasks">'+tasks.map(function(t){
+          var pipe=(window.TilexCowordAnim)?TilexCowordAnim.pipelineHTML(tasks):'';
+          tHtml='<div class="tasks">'+pipe+tasks.map(function(t){
             var ts=STATUTS[t.statut]||STATUTS.pending;
-            var res=t.resultat?'<div class="task-r">'+esc(t.resultat)+'</div>':'';
+            var corps=t.resultat?((window.TilexCowordAnim)?TilexCowordAnim.rendreResultat(t.resultat):esc(t.resultat)):'';
+            var res=corps?'<div class="task-r">'+corps+'</div>':'';
             return '<div class="task"><div class="task-h"><span>'+ts.ico+'</span><span class="task-t">'+esc(t.titre)+'</span><span class="badge '+ts.cls+'">'+ts.txt+'</span></div>'+res+'</div>';
           }).join('')+'</div>';
         }
@@ -125,6 +128,7 @@
       if(head){var id=head.getAttribute('data-job');ouverts[id]=!ouverts[id];rendre();}
     });
 
+    if(window.TilexCowordAnim)TilexCowordAnim.injecterStyle();
     window.addEventListener('tilex:engine:maj',rendre);
     if(window.TilexEngine){
       TilexEngine.brancherRealtime();

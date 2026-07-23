@@ -112,9 +112,11 @@ const TilexEngineUI = (() => {
       let tasksHtml = '';
       if (ouvert) {
         const tasks = await TilexEngine.listerTaches(j.id);
-        tasksHtml = '<div class="em-tasks">' + tasks.map((t) => {
+        const pipe = window.TilexCowordAnim ? TilexCowordAnim.pipelineHTML(tasks) : '';
+        tasksHtml = '<div class="em-tasks">' + pipe + tasks.map((t) => {
           const ts = STATUTS[t.statut] || STATUTS.pending;
-          const res = t.resultat ? `<div class="em-task-r">${_esc(t.resultat)}</div>` : '';
+          const corps = t.resultat ? (window.TilexCowordAnim ? TilexCowordAnim.rendreResultat(t.resultat) : _esc(t.resultat)) : '';
+          const res = corps ? `<div class="em-task-r">${corps}</div>` : '';
           return `<div class="em-task"><div class="em-task-h"><span>${ts.ico}</span>
             <span class="em-task-t">${_esc(t.titre)}</span>
             <span class="em-badge ${ts.cls}">${ts.txt}</span></div>${res}</div>`;
@@ -148,6 +150,7 @@ const TilexEngineUI = (() => {
 
   function ouvrir() {
     _construire();
+    if (window.TilexCowordAnim) TilexCowordAnim.injecterStyle();
     if (window.TilexEngine) TilexEngine.brancherRealtime();
     rafraichir();
     requestAnimationFrame(() => document.getElementById('tilex-engine-modal').classList.add('on'));
