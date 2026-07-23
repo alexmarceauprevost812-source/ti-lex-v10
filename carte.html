@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>🗺️ TILEXMAP — carte du Québec</title>
+<link rel="manifest" href="/manifest.json">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+  :root{--or:#ff7a00;--rouge:#ff2d2d;--bleu:#2a7cff;--vertf:#1f7a3d;--bg:#07070b;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);}
+  #map{position:absolute;inset:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#eee;}
+
+  /* Barre du haut */
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:8px;
+    padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;
+    background:linear-gradient(180deg,rgba(7,7,11,.92),rgba(7,7,11,0));pointer-events:none;}
+  .topbar>*{pointer-events:auto;}
+  .tb-btn{width:40px;height:40px;border-radius:12px;border:none;background:rgba(20,20,26,.9);color:#eee;
+    font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 10px rgba(0,0,0,.5);}
+  .tb-btn:active{transform:scale(.92);}
+  .tb-titre{flex:1;font-weight:800;font-size:15px;color:var(--or);text-shadow:0 1px 6px #000;letter-spacing:.3px;}
+
+  /* Boutons flottants droite */
+  .fab-col{position:absolute;right:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:10;
+    display:flex;flex-direction:column;gap:10px;}
+  .fab{width:48px;height:48px;border-radius:50%;border:none;background:rgba(20,20,26,.92);color:#eee;
+    font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 12px rgba(0,0,0,.55);transition:transform .1s;}
+  .fab:active{transform:scale(.9);}
+  .fab.on{background:var(--or);color:#000;}
+
+  /* Barre du bas : outils */
+  .toolbar{position:absolute;left:0;right:0;bottom:0;z-index:10;
+    padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(0deg,rgba(7,7,11,.94),rgba(7,7,11,0));
+    display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tool{flex:0 0 auto;background:rgba(20,20,26,.92);border:1px solid #2a2a34;color:#eee;border-radius:22px;
+    padding:10px 15px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+  .tool.on{background:var(--or);color:#000;border-color:var(--or);}
+  .tool:active{transform:scale(.96);}
+
+  /* Bandeau mode dessin */
+  .draw-bar{position:absolute;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:11;
+    background:rgba(15,15,20,.96);border:1px solid var(--or);border-radius:14px;padding:11px 13px;display:none;
+    align-items:center;gap:10px;box-shadow:0 6px 24px rgba(0,0,0,.6);}
+  .draw-bar.on{display:flex;}
+  .draw-bar .db-txt{flex:1;font-size:12.5px;color:#eee;line-height:1.35;}
+  .draw-bar .db-txt b{color:var(--or);}
+  .draw-bar button{border:none;border-radius:10px;padding:9px 13px;font-size:13px;font-weight:800;cursor:pointer;}
+  .db-annuler{background:#2a2a34;color:#bbb;}
+  .db-ok{background:var(--or);color:#000;}
+
+  /* Feuille modale (nommer un chemin, POIs…) */
+  .voile{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;display:none;}
+  .voile.on{display:block;}
+  .feuille{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#14141a;border-radius:20px 20px 0 0;
+    padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px));display:none;box-shadow:0 -8px 30px rgba(0,0,0,.6);}
+  .feuille.on{display:block;animation:up .25s ease;}
+  @keyframes up{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .feuille h3{font-size:16px;margin-bottom:12px;color:var(--or);}
+  .feuille label{display:block;font-size:11px;color:#9a9aa5;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px;}
+  .feuille input,.feuille select{width:100%;background:#0d0d13;border:1px solid #2a2a34;color:#eee;
+    border-radius:10px;padding:12px;font-size:15px;}
+  .feuille .row{display:flex;gap:10px;}
+  .feuille .row>*{flex:1;}
+  .feuille .actions{display:flex;gap:10px;margin-top:16px;}
+  .feuille .actions button{flex:1;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;}
+  .b-annul{background:#2a2a34;color:#bbb;}.b-ok{background:var(--or);color:#000;}
+
+  .toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);
+    background:rgba(20,20,26,.96);border:1px solid var(--or);color:#eee;border-radius:20px;padding:9px 16px;
+    font-size:13px;font-weight:700;z-index:30;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.5);}
+
+  .maplibregl-ctrl-attrib{font-size:9px;opacity:.5;}
+  .popup{font-size:13px;color:#111;}
+  .popup b{color:#000;}
+</style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="topbar">
+    <button class="tb-btn" onclick="location.href='/pro'" title="Retour">←</button>
+    <span class="tb-titre">🗺️ TILEXMAP</span>
+    <button class="tb-btn" id="btn-theme" title="Thème jour/nuit">🌙</button>
+    <button class="tb-btn" id="btn-recherche" title="Chercher un lieu">🔍</button>
+  </div>
+
+  <div class="fab-col">
+    <button class="fab" id="fab-loc" title="Ma position">📍</button>
+    <button class="fab" id="fab-nord" title="Recentrer nord">🧭</button>
+  </div>
+
+  <div class="draw-bar" id="draw-bar">
+    <span class="db-txt" id="db-txt">✏️ <b>Tracer</b> : touche la carte pour ajouter des points. <span id="db-km">0.0 km</span></span>
+    <button class="db-annuler" id="db-annuler">Annuler</button>
+    <button class="db-ok" id="db-ok">Terminer</button>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <button class="tool" id="t-tracer">✏️ Tracer un chemin</button>
+    <button class="tool" id="t-pont">🌉 Ajouter un pont</button>
+    <button class="tool" id="t-gaz" data-poi="fuel">⛽ Gaz</button>
+    <button class="tool" id="t-banque" data-poi="bank">🏦 Banque</button>
+    <button class="tool" id="t-dep" data-poi="convenience">🏪 Dépanneur</button>
+    <button class="tool" id="t-resto" data-poi="restaurant">🍔 Resto</button>
+  </div>
+
+  <!-- Feuille : nommer un chemin -->
+  <div class="voile" id="voile"></div>
+  <div class="feuille" id="f-chemin">
+    <h3>🌲 Nouveau chemin forestier</h3>
+    <label>Nom du chemin</label>
+    <input id="ch-nom" type="text" placeholder="Ex: Chemin R1010, Chemin du Lac Vert…">
+    <div class="row">
+      <div><label>Type</label>
+        <select id="ch-type"><option value="forestier">Forestier</option><option value="principal">Principal</option><option value="secondaire">Secondaire</option></select></div>
+      <div><label>Vitesse (km/h)</label>
+        <input id="ch-vit" type="number" inputmode="numeric" placeholder="50"></div>
+    </div>
+    <div class="actions"><button class="b-annul" id="ch-annul">Annuler</button><button class="b-ok" id="ch-ok">💾 Sauvegarder</button></div>
+  </div>
+
+  <!-- Feuille : nommer un pont/point -->
+  <div class="feuille" id="f-point">
+    <h3 id="fp-titre">🌉 Nouveau pont</h3>
+    <label>Nom (optionnel)</label>
+    <input id="pt-nom" type="text" placeholder="Ex: Pont rivière aux Castors">
+    <div class="actions"><button class="b-annul" id="pt-annul">Annuler</button><button class="b-ok" id="pt-ok">💾 Sauvegarder</button></div>
+  </div>
+
+  <script src="/js/tilex-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script>
+  (function(){
+  'use strict';
+  /* ════════════════════════════════════════════════════════════
+     TILEXMAP — carte du Québec/Canada style Google Maps, sauce ti-lex.
+     • MapLibre GL + tuiles vectorielles OpenFreeMap (GRATUIT, sans clé).
+     • Thème NUIT : fond noir, routes principales orange, chemins
+       forestiers ROUGE avec effet « courant » animé + texte blanc brillant.
+     • Thème JOUR : fond beige (style Claude), principales bleu,
+       forestiers vert foncé, texte noir.
+     • Géolocalisation live (ta position, suivi). Bornes kilométriques
+       (km 34) sur les chemins forestiers. Ponts. POIs (gaz, banque,
+       dépanneur, resto) via Overpass. Mode « tracer un chemin ».
+     • Données forestières sauvées dans Supabase (carte communautaire).
+     ════════════════════════════════════════════════════════════ */
+
+  var SB = (window.supabase && window.SB_URL) ? window.supabase.createClient(window.SB_URL, window.SB_ANON) : null;
+
+  var STYLES = {
+    nuit: 'https://tiles.openfreemap.org/styles/dark',
+    jour: 'https://tiles.openfreemap.org/styles/positron'
+  };
+  var theme = localStorage.getItem('tilexmap-theme') || 'nuit';
+
+  // Couleurs par thème
+  var C = {
+    nuit: { principal:'#ff7a00', forestier:'#ff2d2d', glow:'#ff2d2d', texte:'#ffffff', halo:'#ff6a00',
+            borne:'#ffffff', borneTxt:'#111', pont:'#ffd24a' },
+    jour: { principal:'#2a7cff', forestier:'#1f7a3d', glow:'#1f7a3d', texte:'#0b0b0b', halo:'#ffffff',
+            borne:'#1f7a3d', borneTxt:'#fff', pont:'#a05a00' }
+  };
+
+  var map = new maplibregl.Map({
+    container:'map', style:STYLES[theme],
+    center:[-71.5, 48.5], zoom:5.4,     // Québec
+    maxZoom:18, attributionControl:{compact:true}, hash:true
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:true}), 'bottom-right');
+  var geoloc = new maplibregl.GeolocateControl({
+    positionOptions:{enableHighAccuracy:true}, trackUserLocation:true, showUserHeading:true, showAccuracyCircle:true
+  });
+  map.addControl(geoloc, 'bottom-right');
+
+  // Données en mémoire (re-injectées à chaque changement de style)
+  var cheminsFC = {type:'FeatureCollection', features:[]};
+  var bornesFC  = {type:'FeatureCollection', features:[]};
+  var pointsFC  = {type:'FeatureCollection', features:[]};
+  var dashInterval = null;
+
+  function col(){ return C[theme]; }
+
+  /* ── Distance haversine (km) ── */
+  function hav(a,b){
+    var R=6371, dLat=(b[1]-a[1])*Math.PI/180, dLng=(b[0]-a[0])*Math.PI/180;
+    var la1=a[1]*Math.PI/180, la2=b[1]*Math.PI/180;
+    var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.sin(dLng/2)*Math.sin(dLng/2)*Math.cos(la1)*Math.cos(la2);
+    return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  }
+  function longueurKm(coords){ var t=0; for(var i=1;i<coords.length;i++)t+=hav(coords[i-1],coords[i]); return t; }
+
+  /* ── Bornes kilométriques : un point à chaque km le long du chemin ── */
+  function genererBornes(coords, nom){
+    var pts=[], cumul=0, prochain=1;
+    for(var i=1;i<coords.length;i++){
+      var seg=hav(coords[i-1],coords[i]);
+      while(cumul+seg>=prochain){
+        var r=(prochain-cumul)/seg;
+        var lng=coords[i-1][0]+(coords[i][0]-coords[i-1][0])*r;
+        var lat=coords[i-1][1]+(coords[i][1]-coords[i-1][1])*r;
+        pts.push({type:'Feature',geometry:{type:'Point',coordinates:[lng,lat]},properties:{km:prochain,nom:nom}});
+        prochain++;
+      }
+      cumul+=seg;
+    }
+    return pts;
+  }
+
+  /* ── Ajoute (ou ré-ajoute) nos couches par-dessus le style de base ── */
+  function ajouterCouches(){
+    var c=col();
+    // Sources
+    if(!map.getSource('chemins')) map.addSource('chemins',{type:'geojson',data:cheminsFC});
+    else map.getSource('chemins').setData(cheminsFC);
+    if(!map.getSource('bornes')) map.addSource('bornes',{type:'geojson',data:bornesFC});
+    else map.getSource('bornes').setData(bornesFC);
+    if(!map.getSource('points')) map.addSource('points',{type:'geojson',data:pointsFC});
+    else map.getSource('points').setData(pointsFC);
+
+    var forestFilter=['==',['get','type'],'forestier'];
+    var autreFilter=['!=',['get','type'],'forestier'];
+
+    // 1) Halo (large + flou) sous les chemins forestiers
+    if(!map.getLayer('ch-glow')) map.addLayer({id:'ch-glow',type:'line',source:'chemins',filter:forestFilter,
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':c.glow,'line-width':11,'line-blur':9,'line-opacity':0.55}});
+    // 2) Ligne de base des forestiers (couleur pleine)
+    if(!map.getLayer('ch-base')) map.addLayer({id:'ch-base',type:'line',source:'chemins',filter:forestFilter,
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':c.forestier,'line-width':4}});
+    // 3) Effet « courant » : trait pointillé animé qui coule (nuit surtout)
+    if(!map.getLayer('ch-flow')) map.addLayer({id:'ch-flow',type:'line',source:'chemins',filter:forestFilter,
+      layout:{'line-cap':'butt','line-join':'round'},
+      paint:{'line-color':'#ffffff','line-width':2.2,'line-opacity':theme==='nuit'?0.9:0.35,'line-dasharray':[0,4,3]}});
+    // 4) Chemins principaux/secondaires tracés (orange nuit / bleu jour)
+    if(!map.getLayer('ch-autre')) map.addLayer({id:'ch-autre',type:'line',source:'chemins',filter:autreFilter,
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':c.principal,'line-width':4}});
+    // 5) Nom des chemins le long de la ligne (texte blanc brillant la nuit)
+    if(!map.getLayer('ch-nom')) map.addLayer({id:'ch-nom',type:'symbol',source:'chemins',
+      layout:{'symbol-placement':'line','text-field':['get','nom'],'text-size':12.5,
+        'text-font':['Noto Sans Bold'],'text-letter-spacing':0.02,'symbol-spacing':240},
+      paint:{'text-color':c.texte,'text-halo-color':c.halo,'text-halo-width':2,'text-halo-blur':theme==='nuit'?2:0.3}});
+    // 6) Bornes kilométriques
+    if(!map.getLayer('bornes-pt')) map.addLayer({id:'bornes-pt',type:'circle',source:'bornes',minzoom:11,
+      paint:{'circle-radius':8,'circle-color':c.borne,'circle-stroke-color':c.forestier,'circle-stroke-width':2}});
+    if(!map.getLayer('bornes-txt')) map.addLayer({id:'bornes-txt',type:'symbol',source:'bornes',minzoom:11,
+      layout:{'text-field':['to-string',['get','km']],'text-size':10,'text-font':['Noto Sans Bold'],'text-allow-overlap':true},
+      paint:{'text-color':c.borneTxt}});
+    // 7) Ponts / points
+    if(!map.getLayer('pts-ic')) map.addLayer({id:'pts-ic',type:'symbol',source:'points',
+      layout:{'text-field':['case',['==',['get','categorie'],'pont'],'🌉',['==',['get','categorie'],'barriere'],'🚧',['==',['get','categorie'],'camp'],'🏕️','📍'],
+        'text-size':22,'text-allow-overlap':true,
+        'text-offset':[0,-0.2]},
+      paint:{}});
+    if(!map.getLayer('pts-nom')) map.addLayer({id:'pts-nom',type:'symbol',source:'points',minzoom:10,
+      layout:{'text-field':['get','nom'],'text-size':11,'text-font':['Noto Sans Bold'],'text-offset':[0,1.1],'text-anchor':'top'},
+      paint:{'text-color':c.texte,'text-halo-color':c.halo,'text-halo-width':1.6}});
+    // POIs (gaz/banque/…)
+    if(!map.getSource('pois')) map.addSource('pois',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    if(!map.getLayer('pois-ic')) map.addLayer({id:'pois-ic',type:'symbol',source:'pois',
+      layout:{'text-field':['get','emoji'],'text-size':20,'text-allow-overlap':true},paint:{}});
+
+    demarrerAnimation();
+    colorerRoutesBase();
+  }
+
+  /* ── Effet « courant qui coule » sur les chemins forestiers ── */
+  var dashSeq=[[0,4,3],[0.5,4,2.5],[1,4,2],[1.5,4,1.5],[2,4,1],[2.5,4,0.5],[3,4,0],[0,0.5,3,3.5],[0,1,3,3],[0,1.5,3,2.5],[0,2,3,2],[0,2.5,3,1.5],[0,3,3,1],[0,3.5,3,0.5]];
+  var dashIx=0;
+  function demarrerAnimation(){
+    if(dashInterval)clearInterval(dashInterval);
+    dashInterval=setInterval(function(){
+      if(!map.getLayer('ch-flow'))return;
+      dashIx=(dashIx+1)%dashSeq.length;
+      try{map.setPaintProperty('ch-flow','line-dasharray',dashSeq[dashIx]);}catch(e){}
+    },90);
+  }
+
+  /* ── Recolore les routes du fond de carte (principales orange/bleu) ── */
+  function colorerRoutesBase(){
+    var c=col();
+    try{
+      var layers=map.getStyle().layers||[];
+      for(var i=0;i<layers.length;i++){
+        var L=layers[i];
+        if(L.type!=='line')continue;
+        if((L['source-layer']||'')!=='transportation')continue;
+        var id=L.id;
+        // Grosses routes → couleur d'accent ; petites → on laisse le style.
+        if(/motorway|trunk|primary/i.test(id)){
+          map.setPaintProperty(id,'line-color',c.principal);
+        }else if(/secondary|tertiary/i.test(id)){
+          map.setPaintProperty(id,'line-color',theme==='nuit'?'#c85f10':'#5a92ff');
+        }
+      }
+    }catch(e){}
+  }
+
+  /* ── Charge les chemins + points depuis Supabase ── */
+  async function charger(){
+    if(!SB)return;
+    try{
+      var r1=await SB.from('chemins_forestiers').select('id,nom,type,geojson,longueur_km,limite_vitesse,couleur').limit(2000);
+      var chs=(r1.data||[]);
+      cheminsFC.features=chs.map(function(ch){
+        var g=ch.geojson; var coords=(g&&g.coordinates)?g.coordinates:[];
+        var etiquette=ch.nom+(ch.longueur_km?(' · '+Number(ch.longueur_km).toFixed(1)+' km'):'')+(ch.limite_vitesse?(' · '+ch.limite_vitesse):'');
+        return {type:'Feature',geometry:{type:'LineString',coordinates:coords},
+          properties:{id:ch.id,nom:etiquette,brut:ch.nom,type:ch.type||'forestier'}};
+      });
+      // Bornes km pour les forestiers
+      bornesFC.features=[];
+      chs.forEach(function(ch){
+        if((ch.type||'forestier')!=='forestier')return;
+        var coords=(ch.geojson&&ch.geojson.coordinates)?ch.geojson.coordinates:[];
+        if(coords.length>1)bornesFC.features=bornesFC.features.concat(genererBornes(coords,ch.nom));
+      });
+      var r2=await SB.from('carte_points').select('id,categorie,nom,lng,lat').limit(2000);
+      pointsFC.features=(r2.data||[]).map(function(p){
+        return {type:'Feature',geometry:{type:'Point',coordinates:[p.lng,p.lat]},properties:{id:p.id,categorie:p.categorie,nom:p.nom||''}};
+      });
+      if(map.getSource('chemins'))map.getSource('chemins').setData(cheminsFC);
+      if(map.getSource('bornes'))map.getSource('bornes').setData(bornesFC);
+      if(map.getSource('points'))map.getSource('points').setData(pointsFC);
+    }catch(e){ console.warn('[tilexmap] chargement:',e&&e.message); }
+  }
+
+  /* ════ ÉVÉNEMENTS DE STYLE (thème) ════ */
+  map.on('load', function(){ ajouterCouches(); charger(); });
+  map.on('style.load', function(){ ajouterCouches(); }); // après un changement de thème
+
+  /* ════ THÈME JOUR / NUIT ════ */
+  function majBtnTheme(){ document.getElementById('btn-theme').textContent = theme==='nuit'?'☀️':'🌙'; }
+  document.getElementById('btn-theme').addEventListener('click', function(){
+    theme = theme==='nuit'?'jour':'nuit';
+    localStorage.setItem('tilexmap-theme', theme);
+    majBtnTheme();
+    map.setStyle(STYLES[theme]); // style.load ré-ajoute nos couches
+    toast(theme==='nuit'?'🌙 Thème nuit':'☀️ Thème jour');
+  });
+  majBtnTheme();
+
+  /* ════ MA POSITION ════ */
+  document.getElementById('fab-loc').addEventListener('click', function(){ geoloc.trigger(); });
+  document.getElementById('fab-nord').addEventListener('click', function(){ map.easeTo({bearing:0,pitch:0}); });
+
+  /* ════ RECHERCHE DE LIEU (Nominatim, gratuit) ════ */
+  document.getElementById('btn-recherche').addEventListener('click', async function(){
+    var q=prompt('Chercher un lieu, une ville, une adresse :');
+    if(!q)return;
+    try{
+      var r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ca&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+      var d=await r.json();
+      if(d&&d[0]){ map.flyTo({center:[parseFloat(d[0].lon),parseFloat(d[0].lat)],zoom:12}); }
+      else toast('Lieu pas trouvé');
+    }catch(e){ toast('Recherche indisponible'); }
+  });
+
+  /* ════ MODE TRACER UN CHEMIN ════ */
+  var enTrace=false, tracePts=[];
+  function majTrace(){
+    if(map.getSource('trace')){
+      map.getSource('trace').setData({type:'Feature',geometry:{type:'LineString',coordinates:tracePts}});
+    }
+    document.getElementById('db-km').textContent=longueurKm(tracePts).toFixed(1)+' km';
+  }
+  function demarrerTrace(){
+    enTrace=true; tracePts=[];
+    document.getElementById('t-tracer').classList.add('on');
+    document.getElementById('draw-bar').classList.add('on');
+    map.getCanvas().style.cursor='crosshair';
+    if(!map.getSource('trace')){
+      map.addSource('trace',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+      map.addLayer({id:'trace-l',type:'line',source:'trace',paint:{'line-color':'#ffd24a','line-width':4,'line-dasharray':[2,2]}});
+      map.addLayer({id:'trace-p',type:'circle',source:'trace',paint:{'circle-radius':5,'circle-color':'#ffd24a','circle-stroke-color':'#000','circle-stroke-width':1}});
+    }
+    toast('✏️ Touche la carte pour tracer');
+  }
+  function arreterTrace(){
+    enTrace=false;
+    document.getElementById('t-tracer').classList.remove('on');
+    document.getElementById('draw-bar').classList.remove('on');
+    map.getCanvas().style.cursor='';
+    tracePts=[]; majTrace();
+  }
+  document.getElementById('t-tracer').addEventListener('click', function(){
+    if(enTrace)arreterTrace(); else { annulerPont(); demarrerTrace(); }
+  });
+  document.getElementById('db-annuler').addEventListener('click', arreterTrace);
+  document.getElementById('db-ok').addEventListener('click', function(){
+    if(tracePts.length<2){ toast('Ajoute au moins 2 points'); return; }
+    ouvrirFeuille('f-chemin');
+  });
+
+  /* ════ AJOUTER UN PONT ════ */
+  var enPont=false;
+  function annulerPont(){ enPont=false; document.getElementById('t-pont').classList.remove('on'); if(!enTrace)map.getCanvas().style.cursor=''; }
+  document.getElementById('t-pont').addEventListener('click', function(){
+    if(enPont){ annulerPont(); return; }
+    arreterTrace(); enPont=true;
+    document.getElementById('t-pont').classList.add('on');
+    map.getCanvas().style.cursor='crosshair';
+    toast('🌉 Touche la carte à l\'emplacement du pont');
+  });
+
+  var pontLngLat=null;
+  map.on('click', function(e){
+    if(enTrace){
+      tracePts.push([e.lngLat.lng, e.lngLat.lat]); majTrace(); return;
+    }
+    if(enPont){
+      pontLngLat=[e.lngLat.lng, e.lngLat.lat];
+      annulerPont();
+      document.getElementById('pt-nom').value='';
+      ouvrirFeuille('f-point');
+      return;
+    }
+  });
+
+  // Clic sur un chemin → popup infos
+  map.on('click','ch-base', function(e){
+    var f=e.features&&e.features[0]; if(!f)return;
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<div class="popup">🌲 <b>'+(f.properties.brut||'Chemin')+'</b></div>').addTo(map);
+  });
+
+  /* ════ FEUILLES MODALES ════ */
+  function ouvrirFeuille(id){ document.getElementById('voile').classList.add('on'); document.getElementById(id).classList.add('on'); }
+  function fermerFeuilles(){ document.getElementById('voile').classList.remove('on');
+    document.getElementById('f-chemin').classList.remove('on'); document.getElementById('f-point').classList.remove('on'); }
+  document.getElementById('voile').addEventListener('click', fermerFeuilles);
+  document.getElementById('ch-annul').addEventListener('click', fermerFeuilles);
+  document.getElementById('pt-annul').addEventListener('click', fermerFeuilles);
+
+  async function session(){ try{ var s=await SB.auth.getSession(); return s.data.session; }catch(e){ return null; } }
+
+  document.getElementById('ch-ok').addEventListener('click', async function(){
+    var nom=(document.getElementById('ch-nom').value||'').trim();
+    if(!nom){ toast('Donne un nom au chemin'); return; }
+    var type=document.getElementById('ch-type').value;
+    var vit=parseInt(document.getElementById('ch-vit').value)||null;
+    var coords=tracePts.slice();
+    var km=longueurKm(coords);
+    var sess=await session();
+    if(!sess){ toast('Connecte-toi pour sauvegarder'); return; }
+    try{
+      var ins=await SB.from('chemins_forestiers').insert({
+        nom:nom, type:type, geojson:{type:'LineString',coordinates:coords},
+        longueur_km:Number(km.toFixed(2)), limite_vitesse:vit, user_email:sess.user.email
+      });
+      if(ins.error)throw ins.error;
+      fermerFeuilles(); arreterTrace(); await charger();
+      toast('✅ '+nom+' sauvegardé ('+km.toFixed(1)+' km)');
+    }catch(e){ toast('❌ '+(e.message||'Sauvegarde refusée')); }
+  });
+
+  document.getElementById('pt-ok').addEventListener('click', async function(){
+    if(!pontLngLat){ fermerFeuilles(); return; }
+    var nom=(document.getElementById('pt-nom').value||'').trim();
+    var sess=await session();
+    if(!sess){ toast('Connecte-toi pour sauvegarder'); return; }
+    try{
+      var ins=await SB.from('carte_points').insert({categorie:'pont',nom:nom,lng:pontLngLat[0],lat:pontLngLat[1],user_email:sess.user.email});
+      if(ins.error)throw ins.error;
+      pontLngLat=null; fermerFeuilles(); await charger();
+      toast('✅ Pont ajouté');
+    }catch(e){ toast('❌ '+(e.message||'Sauvegarde refusée')); }
+  });
+
+  /* ════ POIs via Overpass (gaz, banque, dépanneur, resto) ════ */
+  var poisActifs={};
+  var POI_EMOJI={fuel:'⛽',bank:'🏦',convenience:'🏪',restaurant:'🍔'};
+  document.querySelectorAll('.tool[data-poi]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var key=btn.getAttribute('data-poi');
+      poisActifs[key]=!poisActifs[key];
+      btn.classList.toggle('on',poisActifs[key]);
+      chargerPois();
+    });
+  });
+  var poisTimer=null;
+  map.on('moveend', function(){ if(Object.keys(poisActifs).some(function(k){return poisActifs[k];})) chargerPois(); });
+  async function chargerPois(){
+    var actifs=Object.keys(poisActifs).filter(function(k){return poisActifs[k];});
+    if(!actifs.length){ if(map.getSource('pois'))map.getSource('pois').setData({type:'FeatureCollection',features:[]}); return; }
+    if(map.getZoom()<10){ toast('Zoome un peu pour voir les commerces'); return; }
+    var b=map.getBounds();
+    var bbox=b.getSouth().toFixed(4)+','+b.getWest().toFixed(4)+','+b.getNorth().toFixed(4)+','+b.getEast().toFixed(4);
+    var parts=actifs.map(function(k){
+      return 'node["amenity"="'+k+'"]('+bbox+');node["shop"="'+k+'"]('+bbox+');';
+    }).join('');
+    var query='[out:json][timeout:20];('+parts+');out center 200;';
+    clearTimeout(poisTimer);
+    poisTimer=setTimeout(async function(){
+      try{
+        var r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:query});
+        var d=await r.json();
+        var feats=(d.elements||[]).map(function(el){
+          var lng=el.lon!=null?el.lon:(el.center&&el.center.lon), lat=el.lat!=null?el.lat:(el.center&&el.center.lat);
+          if(lng==null)return null;
+          var a=el.tags||{};
+          var key=a.amenity||a.shop||'';
+          return {type:'Feature',geometry:{type:'Point',coordinates:[lng,lat]},
+            properties:{emoji:POI_EMOJI[key]||'📍',nom:a.name||''}};
+        }).filter(Boolean);
+        if(map.getSource('pois'))map.getSource('pois').setData({type:'FeatureCollection',features:feats});
+      }catch(e){ /* Overpass parfois occupé → silencieux */ }
+    },400);
+  }
+  map.on('click','pois-ic', function(e){
+    var f=e.features&&e.features[0]; if(!f||!f.properties.nom)return;
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<div class="popup"><b>'+f.properties.nom+'</b></div>').addTo(map);
+  });
+
+  /* ════ TOAST ════ */
+  var toastEl=null;
+  function toast(t){
+    if(toastEl)toastEl.remove();
+    toastEl=document.createElement('div');toastEl.className='toast';toastEl.textContent=t;
+    document.body.appendChild(toastEl);
+    setTimeout(function(){ if(toastEl){toastEl.remove();toastEl=null;} },2600);
+  }
+
+  if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('/sw.js'); }catch(e){} }
+  })();
+  </script>
+</body>
+</html>
