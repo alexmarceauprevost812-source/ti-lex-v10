@@ -4395,7 +4395,7 @@ function finaliserBulleStream(bblText,replyPlain){
     // Stream coupé au milieu d'un bloc : clôture ``` manquante → on la ferme,
     // sinon renderMd() laisse le code brut.
     if(((texte.match(/```/g)||[]).length)%2===1)texte+="\n```";
-    bblText.innerHTML=renderMd(texte);
+    bblText.innerHTML=renderMd(_wrapBareSchemas(texte));
     tiLexHighlightCode(bblText);
     if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bblText);
   }catch(e){}
@@ -4481,8 +4481,9 @@ async function envoyerViaMoteurGratuit(modele, td, msgs){
   if(window.TilexContext)TilexContext.enregistrerReponse(reply||"");
   bblText.classList.remove("stream-active");
   bblText.style.color="";
-  var _hasMd=reply&&(/```/.test(reply)||/\*\*/.test(reply)||/^#{1,3}\s/m.test(reply)||/^[-*]\s/m.test(reply)||/^\d+\.\s/m.test(reply));
-  if(_hasMd){bblText.innerHTML=renderMd(reply);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);}
+  var _replyW=_wrapBareSchemas(reply||"");
+  var _hasMd=_replyW&&(/```/.test(_replyW)||/\*\*/.test(_replyW)||/^#{1,3}\s/m.test(_replyW)||/^[-*]\s/m.test(_replyW)||/^\d+\.\s/m.test(_replyW));
+  if(_hasMd){bblText.innerHTML=renderMd(_replyW);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);}
   else{applySyntaxHL(bblText);}
   finaliserBulleStream(bblText,reply||"");
   var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
@@ -4637,7 +4638,10 @@ async function sendChat(){
       var reply=await readSSEStream(res,function(delta){
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
         _rawAcc+=delta;
-        var sani=_rawAcc.replace(_SCHEMA_FENCE,_SCHEMA_PH);
+        // Emballe d'abord un schéma JSON brut (sans balise) en ```tilex-schema,
+        // pour qu'il soit caché comme les autres pendant l'écriture.
+        var _pre=(typeof _wrapBareSchemas==="function")?_wrapBareSchemas(_rawAcc):_rawAcc;
+        var sani=_pre.replace(_SCHEMA_FENCE,_SCHEMA_PH);
         // Aussi : cacher un bloc de code JSON qui est en fait un schéma ("noeuds").
         sani=sani.replace(/```[\w-]*\n[\s\S]*?"noeuds"[\s\S]*?(?:```|$)/g,_SCHEMA_PH);
         var held=sani.match(/`{1,3}[\w-]*$/);           // retient un ouvreur de fence incomplet en toute fin
@@ -4699,7 +4703,7 @@ async function sendChat(){
       bblText.classList.remove("stream-active");
       bblText.style.color="";  // couleur gérée par la CSS (.cmsg-bbl.a) pour suivre le thème jour/nuit
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
-      var _replyPlain=reply||"";
+      var _replyPlain=_wrapBareSchemas(reply||"");
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
       if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);}
       else{applySyntaxHL(bblText);}
@@ -4894,6 +4898,41 @@ function applyPhaseReveal(container){
    Si le JSON est illisible ou le rendu échoue, on ne laisse JAMAIS le code brut
    (avec ses boutons Copier/Créer un fichier/Studio) affiché à l'utilisateur —
    on remplace par un petit message clair à la place. */
+/* ── Emballe tout schéma JSON en bloc ```tilex-schema, MÊME s'il est écrit
+   sans balise (JSON brut) ou en ```json. Comme ça le rendu final montre
+   TOUJOURS le schéma dessiné, jamais le code. Les blocs de code déjà fermés
+   sont laissés intacts (on saute par-dessus les fences existants). ── */
+function _wrapBareSchemas(txt){
+  try{
+    if(!txt||txt.indexOf('"noeuds"')<0)return txt;
+    var out="",i=0,n=txt.length;
+    while(i<n){
+      // Saute un bloc de code déjà présent (```...```), verbatim.
+      if(txt.charAt(i)==="`"&&txt.substr(i,3)==="```"){
+        var end=txt.indexOf("```",i+3);
+        if(end<0){out+=txt.slice(i);break;}
+        out+=txt.slice(i,end+3);i=end+3;continue;
+      }
+      // Détecte un objet JSON { ... } (accolades équilibrées, chaînes respectées).
+      if(txt.charAt(i)==="{"){
+        var j=i,depth=0,inStr=false,esc=false;
+        for(;j<n;j++){
+          var ch=txt.charAt(j);
+          if(inStr){ if(esc)esc=false; else if(ch==="\\")esc=true; else if(ch==='"')inStr=false; }
+          else { if(ch==='"')inStr=true; else if(ch==="{")depth++; else if(ch==="}"){depth--; if(depth===0){j++;break;}} }
+        }
+        var obj=txt.slice(i,j);
+        if(obj.indexOf('"noeuds"')>=0&&_parseTilexSchemaJSON(obj)){
+          out+="\n```tilex-schema\n"+obj+"\n```\n";i=j;continue;
+        }
+        out+=txt.charAt(i);i++;continue;
+      }
+      out+=txt.charAt(i);i++;
+    }
+    return out;
+  }catch(e){return txt;}
+}
+
 function renderSchemasInBubble(el){
   if(!el||!window.TilexSchemaManager)return;
   // On attrape les blocs étiquetés tilex-schema/schema, MAIS AUSSI n'importe
@@ -4986,7 +5025,7 @@ function tiLexHighlightCode(container){
   });
 }
 function projHtml(txt){
-  if(/```/.test(txt)||/\*\*/.test(txt)||/^#{1,3}\s/m.test(txt)||/^[-*]\s/m.test(txt)||/^\d+\.\s/m.test(txt)||/^>/m.test(txt)||/^---/m.test(txt))return renderMd(txt);
+  if(/```/.test(txt)||/\*\*/.test(txt)||/^#{1,3}\s/m.test(txt)||/^[-*]\s/m.test(txt)||/^\d+\.\s/m.test(txt)||/^>/m.test(txt)||/^---/m.test(txt)||/"noeuds"\s*:/.test(txt))return renderMd(_wrapBareSchemas(txt));
   var safe=escHtml(txt);
   var out="";var idx=0;
   var speed=Math.max(6,Math.min(15,3000/Math.max(1,safe.length)));
