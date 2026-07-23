@@ -172,7 +172,7 @@ const TilexStudioCode = (() => {
             <button class="sd-mini" onclick="TilexStudioCode.copier(${i},this)">📋 Copier</button>
             <button class="sd-mini p" onclick="TilexStudioCode.telecharger(${i})">⬇️ Fichier</button>
           </div>
-          <pre class="sd-code">${_esc(f.code)}</pre>
+          <pre class="sd-code">${(window.TilexCowordAnim && TilexCowordAnim.colorer) ? TilexCowordAnim.colorer(f.code, f.lang) : _esc(f.code)}</pre>
         </div>`).join('');
     }
 
