@@ -484,7 +484,7 @@
           conversation_id: convId,
           role: "assistant",
           content: "[" + agentNames[phases[i].agent] + " — Phase " + (i + 1) + "]\n" + phases[i].text,
-          model_used: "claude-sonnet-4-6",
+          model_used: "claude-sonnet-5",
         });
       }
 
@@ -494,7 +494,7 @@
         role: "assistant",
         content: "[NEXUS — Synthèse]\n" + synth.reponse_finale +
           "\n\nScore: " + synth.score + "/100 — " + synth.justification,
-        model_used: "claude-sonnet-4-6",
+        model_used: "claude-sonnet-5",
       });
 
       await window.supabase.from("messages").insert(msgs);

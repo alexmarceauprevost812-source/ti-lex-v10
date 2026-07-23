@@ -107,7 +107,7 @@
         var aiProxy=window.AI_PROXY||(window.SB_URL||"https://rnuripmfozlxenryxhdc.supabase.co")+"/functions/v1/ai-proxy";
 
         var res=await fetch(aiProxy,{method:"POST",headers:h,body:JSON.stringify({
-          kind:"chat",model:"claude-sonnet-4-6",max_tokens:500,
+          kind:"chat",model:"claude-sonnet-5",max_tokens:500,
           system:"Tu extrais les faits importants d'une conversation pour la mémoire IA. "+
             "Réponds UNIQUEMENT en JSON valide, format: "+
             '[{"categorie":"...","cle":"...","valeur":"...","contexte":"..."}] '+

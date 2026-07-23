@@ -62,7 +62,7 @@ const TilexMemoryCompact = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this._token(), 'apikey': (window.SB_ANON || '') },
       body: JSON.stringify({
-        kind: 'chat', model: 'claude-sonnet-4-6', max_tokens: 600,
+        kind: 'chat', model: 'claude-sonnet-5', max_tokens: 600,
         system: "Tu es un assistant de mémoire. Résume la conversation en 10 lignes max : points clés, décisions importantes, contexte technique. Précis et concis, en français québécois.",
         messages: [{ role: 'user', content: prompt }]
       })

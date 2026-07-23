@@ -572,6 +572,7 @@ const APP_NAME = "Ti-Lex";
 const DEFAULT_MODEL = "gpt-4o-mini";
 const MODELS = [
   { group:"Ti-Lex · ton backend (Claude)", items:[
+    ["tilex:claude-sonnet-5","Claude Sonnet 5 ✨ · ti-lex"],
     ["tilex:claude-opus-4-8","Claude Opus 4.8 · ti-lex"],
     ["tilex:claude-sonnet-4-6","Claude Sonnet 4.6 · ti-lex"],
     ["tilex:claude-haiku-4-5-20251001","Claude Haiku 4.5 · ti-lex"]
@@ -1150,7 +1151,7 @@ async function tilexToken(){
 /* Agents autonomes OFFICIELS ti-lex → toujours via ai-proxy (backend), avec
    recherche web + outils serveur. Marceau roule sur Opus (le meilleur),
    les autres sur Sonnet (rapide pis solide). */
-const TILEX_AGENTS={ marceau:"claude-opus-4-8", al:"claude-sonnet-4-6", silex:"claude-sonnet-4-6", indar:"claude-sonnet-4-6" };
+const TILEX_AGENTS={ marceau:"claude-opus-4-8", al:"claude-sonnet-5", silex:"claude-sonnet-5", indar:"claude-sonnet-5" };
 function isTilex(){ return !!TILEX_AGENTS[state.agent] || String(state.model).indexOf("tilex:")===0; }
 function tilexModel(){
   return TILEX_AGENTS[state.agent] || String(state.model).replace(/^tilex:/,"");

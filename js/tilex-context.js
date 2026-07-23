@@ -15,7 +15,7 @@ const TilexContext = {
   _projet: 'ti-lex-AL v10',
 
   // modèle par défaut (aligné sur l'app : Sonnet 4.6 ; surchargeable via window.TILEX_DEFAULT_MODEL)
-  _defaultModel: (typeof window !== 'undefined' && window.TILEX_DEFAULT_MODEL) || 'claude-sonnet-4-6',
+  _defaultModel: (typeof window !== 'undefined' && window.TILEX_DEFAULT_MODEL) || 'claude-sonnet-5',
 
   // ── INIT ──────────────────────────────────
   init(promptSysteme = '') {

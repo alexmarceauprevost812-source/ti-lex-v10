@@ -176,7 +176,7 @@ export default async function handler(req) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-5',
         max_tokens: 1500,
         system: INDAR_GROUND_TRUTH + "\n\n" + AGENT_PROMPTS[agentId],
         messages: [{ role: 'user', content: userContent }]
