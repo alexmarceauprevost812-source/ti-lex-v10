@@ -34,12 +34,65 @@ export default async function handler(req, res) {
     'X-GitHub-Api-Version': '2022-11-28'
   };
 
-  const { mode, path, file } = req.query;
+  const { mode, path, file, repo, branch } = req.query;
+
+  // Repo/branche demandés par le front (sélecteur du Codex) — sinon ceux de l'env.
+  // Format repo accepté : "owner/nom" (validé serré pour éviter toute injection d'URL).
+  let OWNER = GITHUB_OWNER, REPO = GITHUB_REPO, BRANCH = GITHUB_BRANCH;
+  if (repo) {
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+      return res.status(400).json({ error: 'Format de repo invalide (attendu : owner/nom)' });
+    }
+    const parts = repo.split('/');
+    OWNER = parts[0];
+    REPO = parts[1];
+  }
+  if (branch) {
+    if (!/^[A-Za-z0-9_./-]{1,120}$/.test(branch)) {
+      return res.status(400).json({ error: 'Nom de branche invalide' });
+    }
+    BRANCH = branch;
+  }
 
   try {
+    // MODE 0a : lister TOUS les repos accessibles avec le token
+    if (mode === 'repos') {
+      const reposResp = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member', { headers });
+      if (!reposResp.ok) {
+        const errText = await reposResp.text();
+        return res.status(reposResp.status).json({ error: 'Impossible de lister les repos', details: errText });
+      }
+      const reposData = await reposResp.json();
+      return res.status(200).json({
+        total: reposData.length,
+        repos: reposData.map(r => ({
+          nom: r.full_name,
+          prive: r.private,
+          branche_defaut: r.default_branch,
+          description: r.description || '',
+          maj: r.pushed_at
+        }))
+      });
+    }
+
+    // MODE 0b : lister les branches d'un repo
+    if (mode === 'branches') {
+      const brResp = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/branches?per_page=100`, { headers });
+      if (!brResp.ok) {
+        const errText = await brResp.text();
+        return res.status(brResp.status).json({ error: 'Impossible de lister les branches', details: errText });
+      }
+      const brData = await brResp.json();
+      return res.status(200).json({
+        repo: `${OWNER}/${REPO}`,
+        total: brData.length,
+        branches: brData.map(b => b.name)
+      });
+    }
+
     // MODE 1 : lister toute la structure du repo (arbre complet récursif)
     if (mode === 'tree' || (!file && !path)) {
-      const branchUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/branches/${GITHUB_BRANCH}`;
+      const branchUrl = `https://api.github.com/repos/${OWNER}/${REPO}/branches/${BRANCH}`;
       const branchResp = await fetch(branchUrl, { headers });
 
       if (!branchResp.ok) {
@@ -53,7 +106,7 @@ export default async function handler(req, res) {
       const branchData = await branchResp.json();
       const treeSha = branchData.commit.sha;
 
-      const treeUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees/${treeSha}?recursive=1`;
+      const treeUrl = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${treeSha}?recursive=1`;
       const treeResp = await fetch(treeUrl, { headers });
 
       if (!treeResp.ok) {
@@ -79,8 +132,8 @@ export default async function handler(req, res) {
         .map(item => item.path);
 
       return res.status(200).json({
-        repo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
-        branche: GITHUB_BRANCH,
+        repo: `${OWNER}/${REPO}`,
+        branche: BRANCH,
         total_fichiers: fichiers.length,
         total_dossiers: dossiers.length,
         tronque: treeData.truncated || false,
@@ -91,7 +144,7 @@ export default async function handler(req, res) {
 
     // MODE 2 : lire le contenu d'un fichier précis
     if (file) {
-      const contentUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(file).replace(/%2F/g, '/')}?ref=${GITHUB_BRANCH}`;
+      const contentUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(file).replace(/%2F/g, '/')}?ref=${BRANCH}`;
       const contentResp = await fetch(contentUrl, { headers });
 
       if (!contentResp.ok) {

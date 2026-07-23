@@ -167,6 +167,7 @@
       <div class="comp-row">
         <button class="chip" id="chip-plus" title="Joindre un fichier au workspace">＋</button>
         <input type="file" id="fichier-joint" multiple style="display:none">
+        <button class="chip" id="chip-repo" title="Changer de repo / branche">🐙</button>
         <button class="chip" id="chip-modele">Sonnet 5</button>
         <button class="chip" id="chip-mode">🖐 Demander</button>
         <div class="comp-spacer"></div>
@@ -183,6 +184,7 @@
   </div>
   <div class="pop" id="pop-menu">
     <div class="pi" id="mi-session">🔄 Nouvelle session</div>
+    <div class="pi" id="mi-repo">🐙 Changer de repo / branche</div>
     <div class="pi" id="mi-fichiers">📁 Fichiers du workspace</div>
     <div class="pi" id="mi-zip">📦 Télécharger le ZIP</div>
     <div class="pi" id="mi-vider">🗑️ Vider le workspace</div>
@@ -235,9 +237,16 @@ var enAttente=[];     // modifs pas encore acceptées [{verbe, chemin, contenu, 
 var occupe=false;
 var abortCtl=null;
 /* ── Repo GitHub (lecture via /api/github-read) ── */
+var LS_REPO='tilex-codex-repo-v1';
 var repoTree=null;    // {repo, branche, fichiers:[{chemin,taille_octets}], ...}
 var repoCache={};     // {chemin: contenu} — fichiers du repo déjà lus cette session
+var repoChoisi=null;  // {repo:'owner/nom', branche:'x'} — choisi par l'utilisateur (sinon défaut serveur)
+try{repoChoisi=JSON.parse(localStorage.getItem(LS_REPO)||'null');}catch(e){repoChoisi=null;}
 var MAX_LECTURES_PAR_TOUR=6, MAX_TOURS=4;
+function paramsRepo(){
+  if(!repoChoisi)return '';
+  return '&repo='+encodeURIComponent(repoChoisi.repo)+(repoChoisi.branche?('&branch='+encodeURIComponent(repoChoisi.branche)):'');
+}
 
 try{ws=JSON.parse(localStorage.getItem(LS_WS)||'{}')||{};}catch(e){ws={};}
 try{conv=JSON.parse(localStorage.getItem(LS_CONV)||'[]')||[];}catch(e){conv=[];}
@@ -417,26 +426,92 @@ function contexteWs(){
 /* ── Connexion au repo GitHub (arbre complet, une fois au chargement) ── */
 async function chargerRepo(){
   try{
-    var r=await fetch('/api/github-read?mode=tree');
+    var r=await fetch('/api/github-read?mode=tree'+paramsRepo());
     if(!r.ok)throw new Error('HTTP '+r.status);
     var d=await r.json();
     if(!d||!Array.isArray(d.fichiers))throw new Error('réponse invalide');
     repoTree=d;
+    repoCache={}; // nouveau repo/branche → cache des lectures remis à zéro
     var dot=$('repo-dot');
     if(dot){dot.style.background='#22c55e';dot.style.boxShadow='0 0 6px #22c55e';
       dot.title='Repo connecté : '+d.repo+' ('+d.branche+') — '+d.total_fichiers+' fichiers';}
-    toast('🐙 Repo connecté — '+d.total_fichiers+' fichiers ('+d.branche+')');
+    majChipRepo();
+    toast('🐙 '+d.repo.split('/').pop()+' ('+d.branche+') — '+d.total_fichiers+' fichiers');
   }catch(e){
     repoTree=null;
+    majChipRepo();
     console.warn('[codex] repo indisponible :',e&&e.message);
   }
 }
+function majChipRepo(){
+  var c=$('chip-repo');if(!c)return;
+  if(repoTree)c.textContent='🐙 '+repoTree.repo.split('/').pop()+' · '+repoTree.branche;
+  else c.textContent='🐙';
+}
 async function lireFichierRepo(chemin){
-  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin));
+  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin)+paramsRepo());
   if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
   var d=await r.json();
   if(d.type!=='fichier')throw new Error(chemin+' est un dossier');
   return d.contenu||'';
+}
+
+/* ── Sélecteur de repo + branche (feuille du bas) ── */
+async function ouvrirChoixRepo(){
+  $('f-titre').textContent='🐙 Choisis ton repo';
+  var l=$('f-liste');
+  l.innerHTML='<div class="vide-note">Chargement des repos…</div>';
+  $('voile').classList.add('on');$('feuille').classList.add('on');
+  try{
+    var r=await fetch('/api/github-read?mode=repos');
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+    var d=await r.json();
+    l.innerHTML='';
+    (d.repos||[]).forEach(function(rp){
+      var it=document.createElement('div');it.className='f-item';
+      var actuel=repoTree&&repoTree.repo===rp.nom;
+      it.innerHTML='<span class="f-ico">'+(rp.prive?'🔒':'📗')+'</span>'
+        +'<span class="f-nom" style="font-size:14px;color:var(--texte);font-family:inherit;font-weight:700;">'+esc(rp.nom.split('/').pop())
+        +(actuel?' <span style="color:var(--vert);font-size:11px;">✓ actuel</span>':'')
+        +'<br><span style="font-weight:400;color:var(--tresdoux);font-size:11.5px;">'+esc(rp.branche_defaut)+(rp.description?' — '+esc(rp.description.slice(0,60)):'')+'</span></span>'
+        +'<span class="et-chev" style="font-style:normal;">›</span>';
+      it.addEventListener('click',function(){ouvrirChoixBranche(rp);});
+      l.appendChild(it);
+    });
+    if(!(d.repos||[]).length)l.innerHTML='<div class="vide-note">Aucun repo accessible avec le token.</div>';
+  }catch(e){
+    l.innerHTML='<div class="vide-note">⚠️ '+esc(e&&e.message||'Erreur')+'</div>';
+  }
+}
+async function ouvrirChoixBranche(rp){
+  $('f-titre').textContent='🌿 Branche de '+rp.nom.split('/').pop();
+  var l=$('f-liste');
+  l.innerHTML='<div class="vide-note">Chargement des branches…</div>';
+  try{
+    var r=await fetch('/api/github-read?mode=branches&repo='+encodeURIComponent(rp.nom));
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+    var d=await r.json();
+    l.innerHTML='';
+    (d.branches||[]).forEach(function(br){
+      var it=document.createElement('div');it.className='f-item';
+      var actuelle=repoTree&&repoTree.repo===rp.nom&&repoTree.branche===br;
+      var defaut=br===rp.branche_defaut;
+      it.innerHTML='<span class="f-ico">🌿</span>'
+        +'<span class="f-nom" style="font-size:14px;color:var(--texte);font-family:var(--mono);">'+esc(br)
+        +(defaut?' <span style="color:var(--doux);font-size:10.5px;">(défaut)</span>':'')
+        +(actuelle?' <span style="color:var(--vert);font-size:11px;">✓</span>':'')+'</span>';
+      it.addEventListener('click',function(){
+        repoChoisi={repo:rp.nom,branche:br};
+        try{localStorage.setItem(LS_REPO,JSON.stringify(repoChoisi));}catch(e){}
+        fermerFeuille();
+        toast('🐙 Connexion à '+rp.nom.split('/').pop()+' ('+br+')…');
+        chargerRepo();
+      });
+      l.appendChild(it);
+    });
+  }catch(e){
+    l.innerHTML='<div class="vide-note">⚠️ '+esc(e&&e.message||'Erreur')+'</div>';
+  }
 }
 
 function contexteRepo(){
@@ -790,6 +865,7 @@ document.querySelectorAll('#pop-modele .pi').forEach(function(p){
     majChipModele();$('pop-modele').classList.remove('on');
   });
 });
+$('chip-repo').addEventListener('click',function(e){e.stopPropagation();ouvrirChoixRepo();});
 function majChipMode(){$('chip-mode').textContent=modeDemander?'🖐 Demander':'⚡ Auto';}
 $('chip-mode').addEventListener('click',function(){
   modeDemander=!modeDemander;
@@ -811,6 +887,7 @@ $('mi-session').addEventListener('click',function(){
   flux.innerHTML='<div class="vide-note" id="accueil">💻 Nouvelle session — le workspace est conservé ('+Object.keys(ws).length+' fichiers).</div>';
   toast('🔄 Nouvelle session');
 });
+$('mi-repo').addEventListener('click',function(){ouvrirChoixRepo();});
 $('mi-fichiers').addEventListener('click',function(){
   ouvrirFeuille(Object.keys(ws).sort().map(function(c){
     return {verbe:'Fichier',chemin:c,contenu:ws[c].contenu,plus:ws[c].contenu.split('\n').length,moins:0};
