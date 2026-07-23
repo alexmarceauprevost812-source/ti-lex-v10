@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-665";
+const CACHE_VERSION = "tilex-v10-666";
 const ASSETS = [
   "/",
   "/index.html",
@@ -191,8 +191,14 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
+  // Précache TOLÉRANT : on met en cache chaque ressource indépendamment.
+  // Si une seule 404 (ex: une route pas encore déployée), on l'ignore au lieu
+  // de faire planter toute l'installation du service worker (cache.addAll, lui,
+  // rejette tout au moindre échec → le SW resterait bloqué sur l'ancienne version).
   e.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_VERSION).then((cache) =>
+      Promise.allSettled(ASSETS.map((u) => cache.add(u).catch(() => null)))
+    )
   );
   self.skipWaiting();
 });
