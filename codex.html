@@ -74,7 +74,9 @@
   .actions-fichiers button:active{border-color:var(--orange);color:var(--orange);}
 
   /* ── Composer ── */
-  #composer{flex:0 0 auto;padding:8px 14px calc(12px + env(safe-area-inset-bottom,0px));
+  /* Remonté : marge du bas plus généreuse pour pas que la barre de navigation
+     du téléphone coupe les chips pis le bouton d'envoi. */
+  #composer{flex:0 0 auto;padding:8px 14px calc(30px + env(safe-area-inset-bottom,0px));
     max-width:760px;width:100%;margin:0 auto;}
   .comp-box{background:var(--bg2);border:1px solid var(--bordure);border-radius:24px;padding:12px 14px 10px;}
   .comp-box textarea{width:100%;background:none;border:none;outline:none;resize:none;color:var(--texte);
@@ -143,7 +145,7 @@
 <body>
   <header>
     <button class="hbtn" onclick="location.href='/pro'" title="Retour">←</button>
-    <h1>Codex <b>Ti-lex-v10</b></h1>
+    <h1>Codex <b>Ti-lex-v10</b> <span id="repo-dot" title="Repo GitHub non connecté" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#555;vertical-align:middle;margin-left:4px;"></span></h1>
     <button class="hbtn" id="btn-menu" title="Menu">⋮</button>
   </header>
 
@@ -232,6 +234,10 @@ var conv=[];          // historique [{role, content}]
 var enAttente=[];     // modifs pas encore acceptées [{verbe, chemin, contenu, plus, moins}]
 var occupe=false;
 var abortCtl=null;
+/* ── Repo GitHub (lecture via /api/github-read) ── */
+var repoTree=null;    // {repo, branche, fichiers:[{chemin,taille_octets}], ...}
+var repoCache={};     // {chemin: contenu} — fichiers du repo déjà lus cette session
+var MAX_LECTURES_PAR_TOUR=6, MAX_TOURS=4;
 
 try{ws=JSON.parse(localStorage.getItem(LS_WS)||'{}')||{};}catch(e){ws={};}
 try{conv=JSON.parse(localStorage.getItem(LS_CONV)||'[]')||[];}catch(e){conv=[];}
@@ -408,20 +414,62 @@ function contexteWs(){
   return out;
 }
 
+/* ── Connexion au repo GitHub (arbre complet, une fois au chargement) ── */
+async function chargerRepo(){
+  try{
+    var r=await fetch('/api/github-read?mode=tree');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var d=await r.json();
+    if(!d||!Array.isArray(d.fichiers))throw new Error('réponse invalide');
+    repoTree=d;
+    var dot=$('repo-dot');
+    if(dot){dot.style.background='#22c55e';dot.style.boxShadow='0 0 6px #22c55e';
+      dot.title='Repo connecté : '+d.repo+' ('+d.branche+') — '+d.total_fichiers+' fichiers';}
+    toast('🐙 Repo connecté — '+d.total_fichiers+' fichiers ('+d.branche+')');
+  }catch(e){
+    repoTree=null;
+    console.warn('[codex] repo indisponible :',e&&e.message);
+  }
+}
+async function lireFichierRepo(chemin){
+  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin));
+  if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+  var d=await r.json();
+  if(d.type!=='fichier')throw new Error(chemin+' est un dossier');
+  return d.contenu||'';
+}
+
+function contexteRepo(){
+  if(!repoTree)return 'REPO GITHUB : pas connecté (travaille avec le WORKSPACE seulement).';
+  var out='REPO GITHUB CONNECTÉ : '+repoTree.repo+' (branche '+repoTree.branche+', '
+    +repoTree.total_fichiers+' fichiers). Tu peux LIRE n\'importe quel fichier avec @@LIRE.\n'
+    +'ARBRE DU REPO (chemins) :\n';
+  var budget=15000;
+  for(var i=0;i<repoTree.fichiers.length;i++){
+    var f=repoTree.fichiers[i];
+    var ligne=f.chemin+' ('+Math.round((f.taille_octets||0)/100)/10+' Ko)\n';
+    if(budget-ligne.length<0){out+='… ['+(repoTree.fichiers.length-i)+' autres fichiers non listés]\n';break;}
+    out+=ligne;budget-=ligne.length;
+  }
+  return out;
+}
+
 var SYSTEME='Tu es CODEX TI-LEX, l\'agent de code de la plateforme ti-lex (même moteur que Claude Code). Tu parles en québécois clair et direct.\n\n'
 +'RÈGLES DE TRAVAIL :\n'
-+'1. Pour CRÉER ou MODIFIER un fichier, écris EXACTEMENT :\n@@FICHIER chemin/nom.ext\n```lang\ncontenu COMPLET du fichier (jamais un extrait)\n```\n'
-+'2. TOUJOURS le contenu complet du fichier — zéro placeholder, zéro « ... ».\n'
-+'3. Avant les fichiers : 1-2 phrases courtes qui expliquent ce que tu vas faire. Après : 1 phrase de conclusion.\n'
-+'4. Code vanilla JS/HTML/CSS (pas de React/build) sauf si demandé autrement.\n'
-+'5. Si l\'utilisateur pose juste une question, réponds normalement sans bloc @@FICHIER.\n'
-+'6. Réutilise les fichiers du WORKSPACE fournis en contexte quand tu modifies.';
++'1. Pour LIRE un fichier du repo GitHub avant de coder, écris sur sa propre ligne :\n@@LIRE chemin/nom.ext\n(jusqu\'à '+MAX_LECTURES_PAR_TOUR+' fichiers par tour ; leurs contenus te reviennent tout de suite pis tu continues). LIS TOUJOURS un fichier existant AVANT de le modifier — jamais de modification à l\'aveugle.\n'
++'2. Pour CRÉER ou MODIFIER un fichier, écris EXACTEMENT :\n@@FICHIER chemin/nom.ext\n```lang\ncontenu COMPLET du fichier (jamais un extrait)\n```\n'
++'3. TOUJOURS le contenu complet du fichier — zéro placeholder, zéro « ... ».\n'
++'4. Avant les fichiers : 1-2 phrases courtes qui expliquent ce que tu vas faire. Après : 1 phrase de conclusion.\n'
++'5. Code vanilla JS/HTML/CSS (pas de React/build) sauf si demandé autrement — c\'est le style du repo.\n'
++'6. Si l\'utilisateur pose juste une question, réponds normalement sans bloc @@FICHIER.\n'
++'7. Réutilise les fichiers du WORKSPACE et du REPO fournis en contexte quand tu modifies.';
 
 /* ── Parseur de stream : prose vs blocs @@FICHIER ── */
 function creerParseur(bulle){
   var tampon='';           // texte pas encore classé
   var prose='';            // prose affichée
   var actions=[];          // [{verbe, chemin, contenu, plus, moins}]
+  var lectures=[];         // [{chemin, etape:el}] — demandes @@LIRE du repo
   var enFichier=null;      // {chemin, code:'', etape:el}
   var attenteFence=false;  // @@FICHIER lu, on attend ```
 
@@ -454,22 +502,37 @@ function creerParseur(bulle){
         if(m){tampon=tampon.slice(m[0].length);attenteFence=false;enFichier.code='';continuer=true;}
         else if(tampon.length>80){attenteFence=false;enFichier=null;} // protocole pas suivi → prose
       }else{
-        var idx=tampon.indexOf('@@FICHIER ');
+        // Prochaine directive : @@FICHIER ou @@LIRE (la plus proche gagne)
+        var iF=tampon.indexOf('@@FICHIER ');
+        var iL=tampon.indexOf('@@LIRE ');
+        var idx=-1,estLire=false;
+        if(iF>=0&&(iL<0||iF<iL)){idx=iF;estLire=false;}
+        else if(iL>=0){idx=iL;estLire=true;}
         if(idx>=0){
           var avant=tampon.slice(0,idx);
           prose+=avant;majProse();
           tampon=tampon.slice(idx);
           var nl=tampon.indexOf('\n');
           if(nl>=0){
-            var chemin=tampon.slice(10,nl).trim();
-            tampon=tampon.slice(nl+1);
-            enFichier={chemin:chemin,code:'',etape:null};
-            attenteFence=true;
-            enFichier.etape=ligneEtape('<span class="et-spin"></span><span class="et-txt">Écrit <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b>…</span>','live');
-            continuer=true;
+            if(estLire){
+              var cheminL=tampon.slice(7,nl).trim();
+              tampon=tampon.slice(nl+1);
+              if(cheminL&&lectures.length<MAX_LECTURES_PAR_TOUR){
+                var etL=ligneEtape('<span class="et-spin"></span><span class="et-txt">🔍 Lit <b style="color:var(--texte);font-style:normal;">'+esc(cheminL)+'</b>…</span>','live');
+                lectures.push({chemin:cheminL,etape:etL});
+              }
+              continuer=true;
+            }else{
+              var chemin=tampon.slice(10,nl).trim();
+              tampon=tampon.slice(nl+1);
+              enFichier={chemin:chemin,code:'',etape:null};
+              attenteFence=true;
+              enFichier.etape=ligneEtape('<span class="et-spin"></span><span class="et-txt">Écrit <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b>…</span>','live');
+              continuer=true;
+            }
           } // sinon on attend la fin de ligne au prochain delta
         }else{
-          // garde 12 chars (au cas où '@@FICHIER' arrive coupé)
+          // garde 12 chars (au cas où '@@FICHIER'/'@@LIRE' arrive coupé)
           var garde2=Math.max(0,tampon.length-12);
           if(garde2>0){prose+=tampon.slice(0,garde2);tampon=tampon.slice(garde2);majProse();}
         }
@@ -487,8 +550,11 @@ function creerParseur(bulle){
 
   function finaliserFichier(){
     var chemin=enFichier.chemin,code=enFichier.code.replace(/\s+$/,'');
-    var existe=!!ws[chemin];
-    var st=existe?statsDiff(ws[chemin].contenu,code):{plus:code.split('\n').length,moins:0};
+    // « Ancien » contenu : workspace d'abord, sinon le fichier du repo déjà lu.
+    var ancien=ws[chemin]?ws[chemin].contenu:(repoCache[chemin]!=null?repoCache[chemin]:null);
+    var dansRepo=!!(repoTree&&repoTree.fichiers.some(function(f){return f.chemin===chemin;}));
+    var existe=(ancien!=null)||dansRepo;
+    var st=(ancien!=null)?statsDiff(ancien,code):{plus:code.split('\n').length,moins:0};
     var action={verbe:existe?'Modifié':'Créé',chemin:chemin,contenu:code,plus:st.plus,moins:st.moins};
     actions.push(action);
     // La ligne d'étape devient définitive
@@ -509,7 +575,7 @@ function creerParseur(bulle){
     if(enFichier){enFichier.code+=tampon;tampon='';finaliserFichier();}
     else{prose+=tampon;tampon='';majProse();}
     if(!bulle.textContent.trim())bulle.remove();
-    return actions;
+    return {actions:actions,lectures:lectures};
   }
 
   return {pousser:pousser,terminer:terminer};
@@ -582,52 +648,85 @@ async function envoyer(){
   var tk=getToken();if(tk)headers['Authorization']='Bearer '+tk;
   abortCtl=new AbortController();
 
+  // ── Boucle agentique : le modèle peut demander des fichiers du repo
+  //    (@@LIRE) ; on les lit via /api/github-read pis on relance — comme
+  //    les vrais tours d'outils de Claude Code. Max MAX_TOURS tours.
   var actions=[];
   try{
-    var res=await fetch(window.AI_PROXY,{method:'POST',headers:headers,signal:abortCtl.signal,body:JSON.stringify({
-      kind:'chat',model:modele,max_tokens:8192,
-      system:SYSTEME+'\n\n'+contexteWs(),
-      messages:conv.slice(-16)
-    })});
-    if(!res.ok){
-      thinkOff();
-      var err='Erreur '+res.status;
-      try{var j=await res.json();err=j.error||err;}catch(e){}
-      bulleA().innerHTML='⚠️ '+esc(err);
-      occupe=false;$('btn-envoyer').textContent='⬆';$('btn-envoyer').classList.remove('stop');
-      return;
-    }
-    var bulle=bulleA();
-    var parseur=creerParseur(bulle);
-    var premierDelta=true;
-    var rd=res.body.getReader(),dc=new TextDecoder(),bf='',texteBrut='';
-    while(true){
-      var ch=await rd.read();
-      if(ch.done)break;
-      bf+=dc.decode(ch.value,{stream:true});
-      var ls=bf.split('\n');bf=ls.pop()||'';
-      for(var i=0;i<ls.length;i++){
-        var l=ls[i].trim();
-        if(l.indexOf('data:')!==0)continue;
-        var p=l.slice(5).trim();
-        if(!p||p==='[DONE]')continue;
-        var ev;try{ev=JSON.parse(p);}catch(e){continue;}
-        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.text){
-          if(premierDelta){thinkOff();premierDelta=false;}
-          texteBrut+=ev.delta.text;
-          parseur.pousser(ev.delta.text);
+    for(var tour=0;tour<MAX_TOURS;tour++){
+      var res=await fetch(window.AI_PROXY,{method:'POST',headers:headers,signal:abortCtl.signal,body:JSON.stringify({
+        kind:'chat',model:modele,max_tokens:8192,
+        system:SYSTEME+'\n\n'+contexteRepo()+'\n\n'+contexteWs(),
+        messages:conv.slice(-16)
+      })});
+      if(!res.ok){
+        thinkOff();
+        var err='Erreur '+res.status;
+        try{var j=await res.json();err=j.error||err;}catch(e){}
+        bulleA().innerHTML='⚠️ '+esc(err);
+        break;
+      }
+      var bulle=bulleA();
+      var parseur=creerParseur(bulle);
+      var premierDelta=true;
+      var rd=res.body.getReader(),dc=new TextDecoder(),bf='',texteBrut='';
+      while(true){
+        var ch=await rd.read();
+        if(ch.done)break;
+        bf+=dc.decode(ch.value,{stream:true});
+        var ls=bf.split('\n');bf=ls.pop()||'';
+        for(var i=0;i<ls.length;i++){
+          var l=ls[i].trim();
+          if(l.indexOf('data:')!==0)continue;
+          var p=l.slice(5).trim();
+          if(!p||p==='[DONE]')continue;
+          var ev;try{ev=JSON.parse(p);}catch(e){continue;}
+          if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.text){
+            if(premierDelta){thinkOff();premierDelta=false;}
+            texteBrut+=ev.delta.text;
+            parseur.pousser(ev.delta.text);
+          }
         }
       }
+      thinkOff();
+      var fini=parseur.terminer();
+      actions=actions.concat(fini.actions);
+      // Historique : corps des fichiers remplacé par un résumé (économise les tokens).
+      var resume=texteBrut.replace(/@@FICHIER ([^\n]+)\n```[^\n]*\n[\s\S]*?```/g,function(_,c){
+        return '[fichier '+c.trim()+' écrit au complet]';
+      });
+      conv.push({role:'assistant',content:resume||'(vide)'});
+      sauverConv();
+
+      // Pas de lectures demandées → le tour est fini.
+      if(!fini.lectures.length)break;
+
+      // 🔍 Lit les fichiers demandés dans le VRAI repo pis les renvoie au modèle.
+      var blocs=[];
+      for(var li2=0;li2<fini.lectures.length;li2++){
+        var lec=fini.lectures[li2];
+        try{
+          var contenu=await lireFichierRepo(lec.chemin);
+          if(contenu.length>30000)contenu=contenu.slice(0,30000)+'\n… [tronqué à 30 Ko]';
+          repoCache[lec.chemin]=contenu;
+          blocs.push('=== '+lec.chemin+' ===\n'+contenu);
+          if(lec.etape){
+            lec.etape.classList.remove('live');
+            (function(ch2,ct2,el2){
+              el2.innerHTML='<span class="et-txt">🔍 Recherché <b style="color:var(--texte);font-style:normal;">'+esc(ch2)+'</b> <span style="font-family:var(--mono);font-size:12px;">'+ct2.split('\n').length+' lignes</span></span><span class="et-chev">›</span>';
+              el2.addEventListener('click',function(){voirFichier(ch2,ct2);});
+            })(lec.chemin,contenu,lec.etape);
+          }
+        }catch(e2){
+          blocs.push('=== '+lec.chemin+' ===\n[ERREUR DE LECTURE : '+(e2&&e2.message||'?')+']');
+          if(lec.etape){lec.etape.classList.remove('live');
+            lec.etape.innerHTML='<span class="et-txt cwcc-err">🔍 '+esc(lec.chemin)+' — introuvable</span>';}
+        }
+      }
+      conv.push({role:'user',content:'[CONTENUS DES FICHIERS DEMANDÉS — continue ton travail]\n\n'+blocs.join('\n\n')});
+      sauverConv();
+      thinkOn(); // le modèle repart avec les fichiers en main
     }
-    thinkOff();
-    actions=parseur.terminer();
-    // Historique : on remplace le corps des fichiers par un résumé (économise les tokens —
-    // le contenu à jour vit dans le contexte WORKSPACE de toute façon).
-    var resume=texteBrut.replace(/@@FICHIER ([^\n]+)\n```[^\n]*\n[\s\S]*?```/g,function(_,c){
-      return '[fichier '+c.trim()+' écrit au complet]';
-    });
-    conv.push({role:'assistant',content:resume||'(vide)'});
-    sauverConv();
     if(actions.length){
       afficherResume(actions);
       actionsSession=actions;
@@ -639,6 +738,7 @@ async function envoyer(){
     if(e&&e.name==='AbortError'){ligneEtape('<span class="et-txt">⏹️ Arrêté</span>');}
     else{bulleA().innerHTML='⚠️ '+esc(e&&e.message||'Erreur réseau');}
   }
+  thinkOff();
   occupe=false;abortCtl=null;
   $('btn-envoyer').textContent='⬆';$('btn-envoyer').classList.remove('stop');
 }
@@ -734,6 +834,7 @@ $('mi-vider').addEventListener('click',function(){
 })();
 
 majChipModele();majChipMode();
+chargerRepo(); // 🐙 connecte le vrai repo GitHub (arbre en contexte + @@LIRE)
 
 /* Service worker (PWA) */
 if('serviceWorker' in navigator){try{navigator.serviceWorker.register('/sw.js');}catch(e){}}
