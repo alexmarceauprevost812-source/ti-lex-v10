@@ -36,7 +36,7 @@ const TilexEngine = (() => {
   function _emit() { try { window.dispatchEvent(new CustomEvent('tilex:engine:maj')); } catch (e) {} }
 
   // ─── Lancer une job : découpe + exécute le pipeline ──────────────────
-  async function lancerJob(titre) {
+  async function lancerJob(titre, pieces) {
     titre = (titre || '').trim();
     if (!titre) return { ok: false, erreur: 'Décris la job d\'abord.' };
     const sb = _sb();
@@ -48,6 +48,15 @@ const TilexEngine = (() => {
       .insert({ user_id: uid, titre, statut: 'en_cours' }).select().limit(1);
     if (e1 || !jobRows || !jobRows.length) return { ok: false, erreur: 'Création du job échouée : ' + (e1 && e1.message || '?') };
     const job = jobRows[0];
+
+    // 1b) Sauvegarder les pièces jointes (images / fichiers / zip) AVANT de lancer
+    //     le serveur, pour que les agents puissent travailler avec.
+    if (pieces && pieces.length) {
+      try {
+        const rows = pieces.map((p) => ({ job_id: job.id, user_id: uid, nom: p.nom, type: p.type, mime: p.mime || '', contenu: p.contenu || '' }));
+        await sb.from('tilex_job_pieces').insert(rows);
+      } catch (e) { /* pièces facultatives */ }
+    }
 
     // 2) Créer les 4 sous-tâches (une par agent).
     const tasksToInsert = PIPELINE.map((p, i) => ({

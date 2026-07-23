@@ -47,13 +47,26 @@ function cors(req: Request): Record<string, string> {
 
 // Appel Claude en STREAMING : accumule le texte pis le pousse en direct
 // (onPartial) pour l'écriture temps réel. Repli non-stream si erreur.
+// deno-lint-ignore no-explicit-any
 async function appelClaude(
   system: string,
   message: string,
   onPartial?: (t: string) => Promise<void> | void,
+  images?: Array<{ mime: string; data: string }>,
 ): Promise<string> {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY non configurée");
+
+  // Contenu : texte seul, ou texte + images (vision) si des pièces sont fournies.
+  let contenu: any = message.slice(0, 8000);
+  if (images && images.length) {
+    contenu = [{ type: "text", text: message.slice(0, 8000) }];
+    for (const im of images.slice(0, 6)) {
+      if (im && im.data && im.mime && im.mime !== "image/svg+xml") {
+        contenu.push({ type: "image", source: { type: "base64", media_type: im.mime, data: im.data } });
+      }
+    }
+  }
 
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -63,7 +76,7 @@ async function appelClaude(
       max_tokens: 2400,
       stream: true,
       system,
-      messages: [{ role: "user", content: message.slice(0, 8000) }],
+      messages: [{ role: "user", content: contenu }],
     }),
   });
   if (!r.ok || !r.body) {
@@ -104,6 +117,18 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
     .from("tilex_tasks").select("*").eq("job_id", job.id).order("ordre", { ascending: true });
   const liste = (tasks ?? []).sort((a: any, b: any) => (a.ordre ?? 0) - (b.ordre ?? 0));
 
+  // Pièces jointes : fichiers texte (contexte) + images (vision pour le codeur).
+  let piecesTexte = "";
+  const images: Array<{ mime: string; data: string }> = [];
+  try {
+    const { data: pieces } = await supa.from("tilex_job_pieces").select("*").eq("job_id", job.id);
+    for (const p of (pieces ?? [])) {
+      if (p.type === "image") images.push({ mime: p.mime || "image/png", data: p.contenu });
+      else piecesTexte += `\n\n### FICHIER FOURNI : ${p.nom}\n\`\`\`\n${String(p.contenu).slice(0, 8000)}\n\`\`\``;
+    }
+    if (piecesTexte) piecesTexte = "\n\nFICHIERS JOINTS PAR L'UTILISATEUR :" + piecesTexte;
+  } catch (_e) { /* pas de pièces */ }
+
   // Reconstruit le contexte à partir des étapes déjà finies (reprise possible).
   let contexte = "";
   for (const t of liste) {
@@ -119,13 +144,16 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
       const persona = ROLES[t.agent] ?? "Tu es un agent de l'équipe ti-lex.";
       const message =
         `JOB À RÉALISER : ${job.titre}\n\n` +
+        (piecesTexte ? piecesTexte + "\n\n" : "") +
         (contexte ? `TRAVAIL DES AGENTS PRÉCÉDENTS :\n${contexte.slice(0, 6000)}\n\n` : "") +
         `Fais ta partie en tant que ${t.agent}.`;
+      // Les images vont au CODEUR (vision) ; les autres agents ont déjà le contexte.
+      const imgs = t.agent === "codeur" ? images : undefined;
       // Streaming : on pousse le texte partiel dans la tâche → écriture temps réel.
       const texte = (await appelClaude(persona, message, async (partiel) => {
         await supa.from("tilex_tasks")
           .update({ resultat: partiel, updated_at: new Date().toISOString() }).eq("id", t.id);
-      })) || "(vide)";
+      }, imgs)) || "(vide)";
       contexte += `\n\n### ${String(t.agent).toUpperCase()} :\n${texte}`;
       await supa.from("tilex_tasks")
         .update({ statut: "fini", resultat: texte, updated_at: new Date().toISOString() }).eq("id", t.id);
