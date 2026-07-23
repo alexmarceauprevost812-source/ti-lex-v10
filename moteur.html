@@ -90,6 +90,7 @@
       erreur:{txt:'Erreur',cls:'st-err',ico:'❌'}
     };
     var ouverts={};
+    var ouvertsT={}; // étapes (tâches) dépliées — style Claude Code
     function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
     async function rendre(){
@@ -103,14 +104,14 @@
           var tasks=await TilexEngine.listerTaches(j.id);
           var ava=(window.TilexCowordAnim)?TilexCowordAnim.avatarHTML(tasks):'';
           var pipe=(window.TilexCowordAnim)?TilexCowordAnim.pipelineHTML(tasks):'';
+          // Étapes style Claude Code : lignes repliables (chevron) + spinner
+          // « Traitement en cours… » — comme dans l'app Claude Code.
           tHtml='<div class="tasks">'+ava+pipe+tasks.map(function(t){
-            var ts=STATUTS[t.statut]||STATUTS.pending;
-            var corps='';
-            if(t.resultat){
-              corps=(window.TilexCowordAnim)?TilexCowordAnim.rendreResultat(t.resultat,{taskId:t.id,statut:t.statut}):esc(t.resultat);
-            }else if(t.statut==='en_cours'&&window.TilexCowordAnim){
-              corps=TilexCowordAnim.ecritureHTML(t.agent);
+            if(window.TilexCowordAnim&&TilexCowordAnim.etapeHTML){
+              return TilexCowordAnim.etapeHTML(t,!!ouvertsT[t.id]);
             }
+            var ts=STATUTS[t.statut]||STATUTS.pending;
+            var corps=t.resultat?esc(t.resultat):'';
             var res=corps?'<div class="task-r">'+corps+'</div>':'';
             return '<div class="task"><div class="task-h"><span>'+ts.ico+'</span><span class="task-t">'+esc(t.titre)+'</span><span class="badge '+ts.cls+'">'+ts.txt+'</span></div>'+res+'</div>';
           }).join('')+'</div>';
@@ -145,6 +146,15 @@
     document.getElementById('job-go').addEventListener('click',lancer);
     document.getElementById('job-input').addEventListener('keydown',function(e){if(e.key==='Enter')lancer();});
     document.getElementById('liste').addEventListener('click',function(e){
+      // Étape repliable style Claude Code : clic sur la ligne = déplie/replie le résultat.
+      var et=e.target.closest('[data-tache]');
+      if(et){
+        e.stopPropagation();
+        var tid=et.getAttribute('data-tache');
+        ouvertsT[tid]=!ouvertsT[tid];
+        rendre();
+        return;
+      }
       var stu=e.target.closest('[data-studio]');
       if(stu){
         e.stopPropagation();
