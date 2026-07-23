@@ -17,6 +17,8 @@ const TilexEngineUI = (() => {
   };
 
   function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  // Échappe pour insérer dans une chaîne JS entre apostrophes, dans un attribut HTML.
+  function _escAttr(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/[\r\n]+/g, ' '); }
 
   function _style() {
     if (document.getElementById('tilex-engine-style')) return;
@@ -46,6 +48,8 @@ const TilexEngineUI = (() => {
       .st-pending { background:#2a2a1a; color:#e2c04a; } .st-run { background:#1a2436; color:#58a6ff; }
       .st-done { background:#0f2a17; color:#3fb950; } .st-err { background:#2a1414; color:#f85149; }
       #tilex-engine-modal .em-del { background:none; border:none; color:#6e7681; cursor:pointer; font-size:14px; }
+      #tilex-engine-modal .em-studio { background:none; border:none; cursor:pointer; font-size:14px; filter:grayscale(.2); }
+      #tilex-engine-modal .em-studio:hover { filter:none; }
       #tilex-engine-modal .em-tasks { padding:0 12px 10px; }
       #tilex-engine-modal .em-task { border-top:1px solid #1c1c26; padding:9px 0; }
       #tilex-engine-modal .em-task-h { display:flex; align-items:center; gap:8px; }
@@ -122,6 +126,7 @@ const TilexEngineUI = (() => {
             <span>${st.ico}</span>
             <span class="em-job-titre">${_esc(j.titre)}</span>
             <span class="em-badge ${st.cls}">${st.txt}</span>
+            <button class="em-studio" title="Studio du code — voir/copier/télécharger" onclick="event.stopPropagation();TilexEngineUI.studio(${j.id},'${_escAttr(j.titre)}')">🎨</button>
             <button class="em-del" title="Supprimer" onclick="event.stopPropagation();TilexEngineUI.supprimer(${j.id})">🗑️</button>
           </div>
           ${tasksHtml}
@@ -132,6 +137,14 @@ const TilexEngineUI = (() => {
 
   function toggleJob(id) { etat.jobsOuverts[id] = !etat.jobsOuverts[id]; rafraichir(); }
   async function supprimer(id) { await TilexEngine.supprimerJob(id); delete etat.jobsOuverts[id]; rafraichir(); }
+
+  // 🎨 Studio du code : récupère les tâches de la job, extrait le code, l'affiche
+  // prêt à copier-coller ou télécharger.
+  async function studio(id, titre) {
+    if (!window.TilexStudioCode) { if (window.showToastMsg) showToastMsg('Studio pas chargé'); return; }
+    const tasks = await TilexEngine.listerTaches(id);
+    TilexStudioCode.ouvrir(tasks, titre || 'Coword');
+  }
 
   function ouvrir() {
     _construire();
@@ -150,7 +163,7 @@ const TilexEngineUI = (() => {
   // Rafraîchit tout seul quand le moteur bouge (ou le temps réel).
   window.addEventListener('tilex:engine:maj', () => { if (etat.ouvert) rafraichir(); });
 
-  return { ouvrir, fermer, basculer, lancer, rafraichir, toggleJob, supprimer };
+  return { ouvrir, fermer, basculer, lancer, rafraichir, toggleJob, supprimer, studio };
 
 })();
 

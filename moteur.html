@@ -27,6 +27,8 @@
   .st-pending{background:#2a2a1a;color:#e2c04a;}.st-run{background:#1a2436;color:#58a6ff;}
   .st-done{background:#0f2a17;color:#3fb950;}.st-err{background:#2a1414;color:#f85149;}
   .del{background:none;border:none;color:#6e7681;cursor:pointer;font-size:15px;}
+  .studio{background:none;border:none;cursor:pointer;font-size:15px;filter:grayscale(.2);}
+  .studio:hover{filter:none;}
   .tasks{padding:0 13px 12px;}
   .task{border-top:1px solid #1c1c26;padding:11px 0;}
   .task-h{display:flex;align-items:center;gap:8px;}
@@ -61,6 +63,7 @@
   <script src="/js/tilex-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.0/dist/umd/supabase.min.js"></script>
   <script src="/js/tilex-engine.js"></script>
+  <script src="/js/tilex-studio-code.js"></script>
   <script>
   (function(){
     var STATUTS={
@@ -87,7 +90,7 @@
             return '<div class="task"><div class="task-h"><span>'+ts.ico+'</span><span class="task-t">'+esc(t.titre)+'</span><span class="badge '+ts.cls+'">'+ts.txt+'</span></div>'+res+'</div>';
           }).join('')+'</div>';
         }
-        parts.push('<div class="job"><div class="job-head" data-job="'+j.id+'"><span>'+st.ico+'</span><span class="job-titre">'+esc(j.titre)+'</span><span class="badge '+st.cls+'">'+st.txt+'</span><button class="del" data-del="'+j.id+'" title="Supprimer">🗑️</button></div>'+tHtml+'</div>');
+        parts.push('<div class="job"><div class="job-head" data-job="'+j.id+'"><span>'+st.ico+'</span><span class="job-titre">'+esc(j.titre)+'</span><span class="badge '+st.cls+'">'+st.txt+'</span><button class="studio" data-studio="'+j.id+'" title="Studio du code — voir/copier/télécharger">🎨</button><button class="del" data-del="'+j.id+'" title="Supprimer">🗑️</button></div>'+tHtml+'</div>');
       }
       box.innerHTML=parts.join('');
     }
@@ -105,6 +108,17 @@
     document.getElementById('job-go').addEventListener('click',lancer);
     document.getElementById('job-input').addEventListener('keydown',function(e){if(e.key==='Enter')lancer();});
     document.getElementById('liste').addEventListener('click',function(e){
+      var stu=e.target.closest('[data-studio]');
+      if(stu){
+        e.stopPropagation();
+        var sid=parseInt(stu.getAttribute('data-studio'));
+        var jobEl=stu.closest('.job');var tEl=jobEl?jobEl.querySelector('.job-titre'):null;
+        var titre=tEl?(tEl.textContent||''):'Coword';
+        if(window.TilexStudioCode){
+          TilexEngine.listerTaches(sid).then(function(tasks){TilexStudioCode.ouvrir(tasks,titre);});
+        }
+        return;
+      }
       var del=e.target.closest('[data-del]');
       if(del){e.stopPropagation();TilexEngine.supprimerJob(parseInt(del.getAttribute('data-del'))).then(function(){delete ouverts[del.getAttribute('data-del')];rendre();});return;}
       var head=e.target.closest('[data-job]');
