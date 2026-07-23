@@ -7,15 +7,19 @@
 <link rel="manifest" href="/manifest.json">
 <style>
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#07070b;color:#e6e6ee;min-height:100vh;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#07070b;color:#e6e6ee;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:12px 14px;background:#0b0b10;border-bottom:1px solid #1e1e28;}
   header a.back{color:#8b949e;text-decoration:none;font-size:20px;padding:4px 8px;border-radius:8px;}
   header a.back:hover{background:#16161e;}
   header h1{font-size:15px;font-weight:800;color:#ff7a00;flex:1;}
   header .dot{width:9px;height:9px;border-radius:50%;background:#555;}
   header .dot.on{background:#3fb950;box-shadow:0 0 8px #3fb950;}
-  .wrap{max-width:760px;margin:0 auto;padding:16px 14px 60px;}
-  .new{display:flex;gap:8px;margin-bottom:16px;}
+  /* Zone de travail (haut) : scrollable, remplit l'espace au-dessus du composer */
+  .work{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:760px;margin:0 auto;padding:16px 14px 14px;}
+  /* Composer (bas) : barre fixée en bas de l'écran, comme un chat */
+  .composer{flex:0 0 auto;background:#0b0b10;border-top:1px solid #1e1e28;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));}
+  .composer .composer-inner{max-width:760px;margin:0 auto;}
+  .new{display:flex;gap:8px;margin-bottom:0;}
   .new input{flex:1;background:#0d0d13;border:1px solid #2a2a36;color:#eee;border-radius:11px;padding:13px;font-size:15px;}
   .new button{background:#ff7a00;border:none;color:#000;border-radius:11px;padding:13px 16px;font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;}
   .hint{font-size:12px;color:#6e7681;margin-bottom:16px;}
@@ -45,14 +49,8 @@
     <span class="dot" id="rt-dot" title="Temps réel"></span>
   </header>
 
-  <div class="wrap">
-    <div class="new">
-      <button class="cwf-btn" id="job-file-btn" title="Ajouter image / fichier / zip">📎</button>
-      <input id="job-file" type="file" multiple accept="image/*,.zip,.js,.mjs,.ts,.tsx,.jsx,.html,.css,.scss,.json,.md,.txt,.csv,.xml,.yml,.yaml,.py,.sql,.vue,.svelte,.env" style="display:none">
-      <input id="job-input" type="text" placeholder="Décris une job (ex: bouton bleu qui affiche l'heure)…"/>
-      <button id="job-go">🚀 Lancer</button>
-    </div>
-    <div class="cwf-apercu" id="job-apercu"></div>
+  <!-- HAUT : zone de travail (étapes + code qui s'écrit en couleur), scrollable -->
+  <div class="work" id="work">
     <div class="hint">Chaque job passe par l'équipe : <b>💻 Codeur → 🔍 Réviseur → 🧪 Testeur → 🛡️ Gardien</b>. Suivi en temps réel, sauvegardé sur ton compte.</div>
 
     <div id="liste"><div class="vide">Aucune job pour l'instant. Lance-en une! 🚀</div></div>
@@ -60,6 +58,19 @@
     <div class="footer-note">
       🔒 Privé : tes jobs à toi seulement (RLS).<br>
       La clé IA reste côté serveur. Ferme la page, tes jobs reviennent au retour.
+    </div>
+  </div>
+
+  <!-- BAS : composer fixé (comme un chat) -->
+  <div class="composer">
+    <div class="composer-inner">
+      <div class="cwf-apercu" id="job-apercu"></div>
+      <div class="new">
+        <button class="cwf-btn" id="job-file-btn" title="Ajouter image / fichier / zip">📎</button>
+        <input id="job-file" type="file" multiple accept="image/*,.zip,.js,.mjs,.ts,.tsx,.jsx,.html,.css,.scss,.json,.md,.txt,.csv,.xml,.yml,.yaml,.py,.sql,.vue,.svelte,.env" style="display:none">
+        <input id="job-input" type="text" placeholder="Décris une job (ex: bouton bleu qui affiche l'heure)…"/>
+        <button id="job-go">🚀 Lancer</button>
+      </div>
     </div>
   </div>
 
@@ -116,9 +127,12 @@
       inp.value='';
       var pieces=(window.TilexCowordFiles)?TilexCowordFiles.obtenir():[];
       var r=await TilexEngine.lancerJob(titre,pieces);
-      if(!r.ok)alert(r.erreur);
-      else if(window.TilexCowordFiles)TilexCowordFiles.vider();
-      rendre();
+      if(!r.ok){alert(r.erreur);return;}
+      if(window.TilexCowordFiles)TilexCowordFiles.vider();
+      // Ouvre automatiquement la nouvelle job pour voir le code s'écrire en direct.
+      if(r.jobId!=null)ouverts[r.jobId]=true;
+      await rendre();
+      var w=document.getElementById('work');if(w)w.scrollTop=0; // la nouvelle job est en haut
     }
 
     // Pièces jointes (image / fichier / zip)
