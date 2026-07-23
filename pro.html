@@ -1257,6 +1257,23 @@ body.sb-open .composer-bar{left:var(--sb-w);}
 [data-theme="day"] .lien-carte-titre{color:#222;}
 [data-theme="day"] .lien-carte-go{color:#c85a10;}
 [data-theme="day"] .lien-carte-act button{color:#c85a10;background:rgba(255,122,0,.14);}
+/* 🖼️ Carte APERÇU RICHE (photo + prix + description) — style aperçu Facebook. */
+.lien-carte.lien-carte-photo{display:flex;flex-direction:column;align-items:stretch;
+  width:min(320px,80vw);border-radius:16px;margin:6px 0;}
+.lien-carte-photo .lien-photo{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;
+  background:#0d0d13;border-bottom:1px solid rgba(255,122,0,.28);}
+.lien-carte-photo .lien-carte-a{max-width:none;align-items:flex-start;padding:10px 12px;}
+.lien-carte-photo .lien-carte-tx{gap:2px;}
+.lien-carte-photo .lien-carte-titre{white-space:normal;max-width:none;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3;}
+.lien-carte-photo .lien-carte-go{align-self:center;}
+.lien-carte-photo .lien-carte-act{border-left:none;border-top:1px solid rgba(255,122,0,.28);}
+.lien-carte-photo .lien-carte-act button{flex:1;padding:10px 0;}
+.lien-carte-prix{display:inline-block;color:#3fd07a;font-weight:800;font-size:14px;margin-top:2px;}
+.lien-carte-desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  color:#a9a9b6;font-size:11.5px;line-height:1.35;margin-top:3px;font-weight:400;white-space:normal;}
+[data-theme="day"] .lien-carte-desc{color:#666;}
+[data-theme="day"] .lien-carte-prix{color:#1a9e57;}
 .composer-send{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:linear-gradient(135deg,#cc6520,var(--orange));color:#fff;
   cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-left:6px;}
@@ -4475,6 +4492,7 @@ function finaliserBulleStream(bblText,replyPlain){
     // sinon renderMd() laisse le code brut.
     if(((texte.match(/```/g)||[]).length)%2===1)texte+="\n```";
     bblText.innerHTML=renderMd(_wrapBareSchemas(texte));
+    if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);
     tiLexHighlightCode(bblText);
     if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bblText);
   }catch(e){}
@@ -4742,7 +4760,7 @@ async function sendChat(){
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
       var _replyPlain=_wrapBareSchemas(reply||"");
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
-      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);}
+      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);}
       else{applySyntaxHL(bblText);}
       // Filet : si le reply final est vide/incomplet mais que la bulle affiche des ```
       finaliserBulleStream(bblText,_replyPlain);
@@ -4861,9 +4879,9 @@ function _lienCarte(url,texte){
   }
   if(titre.length>64)titre=titre.slice(0,62)+'…';
   var favi='https://www.google.com/s2/favicons?domain='+encodeURIComponent(domaine)+'&sz=64';
-  var uAttr=url.replace(/"/g,'%22');                    // sûr dans href="..."
+  var uAttr=url.replace(/"/g,'%22');                    // sûr dans href="..." et data-url="..."
   var uJs=url.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); // sûr dans onclick='...'
-  return '<span class="lien-carte">'
+  return '<span class="lien-carte" data-url="'+uAttr+'">'
     +'<a href="'+uAttr+'" target="_blank" rel="noopener noreferrer" class="lien-carte-a">'
       +'<img class="lien-favi" src="'+favi+'" alt="" loading="lazy" onerror="tilexFaviconErr(this)">'
       +'<span class="lien-carte-tx"><span class="lien-carte-site">'+escHtml(domaine)+'</span>'
@@ -4914,6 +4932,65 @@ async function copierLien(ev,url){
       document.body.appendChild(t);t.select();document.execCommand('copy');t.remove();
       if(typeof showToastMsg==="function")showToastMsg("📋 Lien copié");}catch(_){}
   }
+}
+
+/* 🖼️ APERÇU RICHE : après le rendu, on va chercher côté serveur (api/lien-apercu)
+   la photo + le prix + la description de chaque lien, pis on met la carte à niveau
+   (style aperçu Facebook). Cappé à quelques liens par message, avec cache mémoire. */
+var _apercuCache={};
+function tilexEnrichirCartes(root){
+  if(!root||!root.querySelectorAll)return;
+  var cartes=root.querySelectorAll('.lien-carte:not([data-enrichi])');
+  var faits=0;
+  for(var i=0;i<cartes.length;i++){
+    if(faits>=4)break;                       // au plus 4 aperçus par message
+    var carte=cartes[i];
+    var url=carte.getAttribute('data-url');
+    if(!url)continue;
+    carte.setAttribute('data-enrichi','1');
+    faits++;
+    (function(c,u){
+      var p=_apercuCache[u]
+        ? Promise.resolve(_apercuCache[u])
+        : fetch('/api/lien-apercu?url='+encodeURIComponent(u))
+            .then(function(r){return r.ok?r.json():null;})
+            .catch(function(){return null;});
+      p.then(function(d){ if(d&&d.ok){_apercuCache[u]=d;_appliquerApercu(c,d);} });
+    })(carte,url);
+  }
+}
+function _appliquerApercu(carte,d){
+  try{
+    // Photo : bascule la carte en mode « photo » (bloc vertical) + image en haut.
+    if(d.image&&!carte.querySelector('.lien-photo')){
+      var img=document.createElement('img');
+      img.className='lien-photo';img.loading='lazy';img.alt='';img.src=d.image;
+      img.onerror=function(){carte.classList.remove('lien-carte-photo');try{img.remove();}catch(e){}};
+      carte.classList.add('lien-carte-photo');
+      carte.insertBefore(img,carte.firstChild);
+    }
+    // Titre plus riche si l'aperçu en donne un meilleur.
+    if(d.titre){
+      var tt=carte.querySelector('.lien-carte-titre');
+      if(tt&&d.titre.trim().length>(tt.textContent||'').trim().length){tt.textContent=d.titre.slice(0,90);}
+    }
+    // Prix (annonces) : badge vert.
+    if(d.prix){
+      var tx=carte.querySelector('.lien-carte-tx');
+      if(tx&&!tx.querySelector('.lien-carte-prix')){
+        var pr=document.createElement('span');pr.className='lien-carte-prix';pr.textContent=d.prix;
+        tx.appendChild(pr);
+      }
+    }
+    // Description courte (seulement en mode photo pour pas surcharger l'inline).
+    if(d.description&&carte.classList.contains('lien-carte-photo')){
+      var tx2=carte.querySelector('.lien-carte-tx');
+      if(tx2&&!tx2.querySelector('.lien-carte-desc')){
+        var ds=document.createElement('span');ds.className='lien-carte-desc';ds.textContent=d.description.slice(0,140);
+        tx2.appendChild(ds);
+      }
+    }
+  }catch(e){}
 }
 function renderMd(txt){
   var safe=escHtml(txt);
