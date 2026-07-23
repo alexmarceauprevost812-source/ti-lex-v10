@@ -4638,6 +4638,8 @@ async function sendChat(){
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
         _rawAcc+=delta;
         var sani=_rawAcc.replace(_SCHEMA_FENCE,_SCHEMA_PH);
+        // Aussi : cacher un bloc de code JSON qui est en fait un schéma ("noeuds").
+        sani=sani.replace(/```[\w-]*\n[\s\S]*?"noeuds"[\s\S]*?(?:```|$)/g,_SCHEMA_PH);
         var held=sani.match(/`{1,3}[\w-]*$/);           // retient un ouvreur de fence incomplet en toute fin
         var visible=held?sani.slice(0,sani.length-held[0].length):sani;
         if(visible.length>_shownLen){
@@ -4894,7 +4896,22 @@ function applyPhaseReveal(container){
    on remplace par un petit message clair à la place. */
 function renderSchemasInBubble(el){
   if(!el||!window.TilexSchemaManager)return;
-  var blocs=el.querySelectorAll('code.language-tilex-schema, code.language-schema');
+  // On attrape les blocs étiquetés tilex-schema/schema, MAIS AUSSI n'importe
+  // quel bloc de code dont le JSON ressemble à un schéma (noeuds:[...]). Comme
+  // ça l'utilisateur voit TOUJOURS le schéma directement, jamais le code JSON.
+  var tousBlocs=el.querySelectorAll('code[class*="language-"]');
+  var blocs=[];
+  for(var b=0;b<tousBlocs.length;b++){
+    var c=tousBlocs[b];
+    var cls=c.className||"";
+    var estSchema=/language-(tilex-schema|schema)\b/.test(cls);
+    if(!estSchema){
+      // Détection par contenu : un bloc JSON avec "noeuds" est un schéma.
+      var t=(c.textContent||"").trim();
+      if(t.charAt(0)==="{"&&/"noeuds"\s*:/.test(t)&&_parseTilexSchemaJSON(t)){estSchema=true;}
+    }
+    if(estSchema)blocs.push(c);
+  }
   for(var i=0;i<blocs.length;i++){
     var code=blocs[i];
     var raw=(code.textContent||code.innerText||"").trim();
