@@ -58,6 +58,8 @@
 <link rel="stylesheet" href="css/security.css">
 <link rel="stylesheet" href="css/tilex-typewriter.css">
 <link rel="stylesheet" href="css/tilex-studio.css">
+<link rel="stylesheet" href="css/tilex-status-badge.css">
+<script src="js/tilex-status-badge.js" defer></script>
 <link rel="stylesheet" href="css/tilex-image.css">
 <link rel="stylesheet" href="css/tilex-vision.css">
 <link rel="stylesheet" href="css/tilex-schema.css">
@@ -4618,6 +4620,7 @@ async function sendChat(){
       var reply=await readSSEStream(res,function(delta){
         window._chatLastDelta=Date.now();  // suivi de progression (détection de blocage)
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
+        if(window.TilexStatusBadge)TilexStatusBadge.masquer(); // la réponse arrive → le badge s'efface
         _rawAcc+=delta;
         // Emballe d'abord un schéma JSON brut (sans balise) en ```tilex-schema,
         // pour qu'il soit caché comme les autres pendant l'écriture.
@@ -4642,6 +4645,12 @@ async function sendChat(){
         else if(status==="tool_exec"&&toolName==="recherche_media")_toolStatusEl.textContent="🖼️ Recherche de photos/vidéos…";
         else if(status==="tool_exec"&&toolName==="recherche_youtube")_toolStatusEl.textContent="🎬 Recherche de vidéos YouTube…";
         else if(status==="tool_exec")_toolStatusEl.textContent="🔧 "+toolName+"…";
+        // 🏷️ Badge temps réel à côté de l'avatar : montre sur quoi l'agent se
+        //    connecte (logo officiel + texte) — disparaît quand la réponse arrive.
+        if(window.TilexStatusBadge){
+          var _tsbAva=bbl.querySelector(".cmsg-ico");
+          TilexStatusBadge.montrer(_tsbAva,status==="tool_exec"?toolName:status);
+        }
       },function(mediaItems){
         // Galerie média en temps réel — insérée sous le texte, hors du .cmsg-bbl
         // pour survivre au innerHTML=renderMd() de fin de stream.
@@ -4675,6 +4684,7 @@ async function sendChat(){
         TilexLogAnalyst.afficher(conteneur,rapport);
         msgs.scrollTop=msgs.scrollHeight;
       });
+      if(window.TilexStatusBadge)TilexStatusBadge.masquer(); // fin du stream → badge effacé
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(document.hidden){try{EcritureFluide.skip();}catch(_e){}}if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
       EcritureFluide._terminer();
@@ -4709,6 +4719,7 @@ async function sendChat(){
     }
   }catch(e){
     td.remove();console.error("[ti-lex] sendChat error:",e);
+    if(window.TilexStatusBadge)TilexStatusBadge.masquer(); // erreur/coupure → badge effacé pareil
     // Stream coupé en chemin (réseau mobile…) : vider le buffer à l'écran,
     // arrêter le moteur d'écriture, pis re-rendre la bulle partielle
     // (sinon les ``` restent bruts).

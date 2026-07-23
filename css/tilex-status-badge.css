@@ -1,0 +1,108 @@
+/* ============================================================
+   css/tilex-status-badge.css — Badge de statut agent temps réel
+   ti-lex-AL v10 — Alex Marceau-Prévost
+   Petit badge « pilule » à côté de l'avatar de l'agent qui montre
+   EN TEMPS RÉEL sur quoi l'agent se connecte (outil/API) avant de
+   répondre : 🔍 Recherche web… → 📈 Consultation bourse… → disparaît.
+   ============================================================ */
+
+/* Ancrage : l'avatar de l'agent (.cmsg-ico) devient le repère du badge */
+.cmsg-ico.tsb-anchor{position:relative;}
+
+/* La pilule */
+.tsb-badge{
+  position:absolute;
+  left:calc(100% + 8px);
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+  padding:4px 10px 4px 7px;
+  border-radius:20px;
+  background:#101017;
+  border:1px solid #ff7a00;
+  box-shadow:0 0 10px rgba(255,122,0,.25);
+  font-family:'Share Tech Mono',ui-monospace,Menlo,monospace;
+  font-size:11px;
+  font-weight:700;
+  color:#ff7a00;
+  z-index:6;
+  pointer-events:none;
+  animation:tsbIn .22s ease-out both;
+}
+
+/* Point lumineux qui pulse (connexion active) */
+.tsb-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#ff7a00;
+  box-shadow:0 0 6px #ff7a00;
+  animation:tsbPulse 1s ease-in-out infinite;
+  flex:0 0 auto;
+}
+
+/* Icône de l'outil (emoji OU logo officiel SVG) */
+.tsb-ico{font-size:12px;line-height:1;flex:0 0 auto;font-family:inherit;display:flex;align-items:center;}
+.tsb-ico .tsb-svg{display:block;}
+
+/* Texte (« Recherche web… ») avec les 3 points animés */
+.tsb-txt{line-height:1;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
+.tsb-txt::after{
+  content:'';
+  display:inline-block;
+  width:1.1em;
+  text-align:left;
+  animation:tsbDots 1.2s steps(4,end) infinite;
+}
+
+/* Sortie en douceur quand la réponse commence */
+.tsb-badge.tsb-out{animation:tsbOut .2s ease-in both;}
+
+@keyframes tsbIn{
+  from{opacity:0;transform:translateY(-50%) translateX(-6px) scale(.92);}
+  to{opacity:1;transform:translateY(-50%) translateX(0) scale(1);}
+}
+@keyframes tsbOut{
+  from{opacity:1;transform:translateY(-50%) scale(1);}
+  to{opacity:0;transform:translateY(-50%) scale(.92);}
+}
+@keyframes tsbPulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:.45;transform:scale(.75);}
+}
+@keyframes tsbDots{
+  0%{content:'';}
+  25%{content:'.';}
+  50%{content:'..';}
+  75%{content:'...';}
+  100%{content:'';}
+}
+
+/* Thème jour */
+[data-theme="day"] .tsb-badge{
+  background:#fff7ef;
+  border-color:#e06a00;
+  color:#b35400;
+  box-shadow:0 0 8px rgba(224,106,0,.2);
+}
+[data-theme="day"] .tsb-dot{background:#e06a00;box-shadow:0 0 5px #e06a00;}
+
+/* Petit écran : le badge passe SOUS l'avatar pour pas déborder du chat */
+@media (max-width:520px){
+  .tsb-badge{
+    left:0;
+    top:calc(100% + 6px);
+    transform:none;
+    max-width:78vw;
+  }
+  .tsb-badge.tsb-out{animation:tsbOutMobile .2s ease-in both;}
+  @keyframes tsbOutMobile{from{opacity:1;}to{opacity:0;}}
+}
+
+/* Accessibilité : réduit les animations si demandé par le système */
+@media (prefers-reduced-motion:reduce){
+  .tsb-badge,.tsb-badge.tsb-out{animation:none;}
+  .tsb-dot{animation:none;}
+  .tsb-txt::after{animation:none;content:'…';}
+}
