@@ -3915,6 +3915,49 @@ document.addEventListener('click',function(e){
   if(a&&a.contains(e.target))EcritureFluide.skip();
 });
 
+/* ── Filet anti-bug quand on SORT de l'app pendant l'écriture (surtout du code) ──
+   Sur mobile, requestAnimationFrame (le typewriter) GÈLE en arrière-plan, pis le
+   stream peut rester bloqué → la bulle reste figée avec du code brut. On répare :
+   - En passant en arrière-plan : on fige proprement le texte déjà reçu (skip).
+   - Au retour : si un envoi est encore bloqué, on coupe pis on rend la bulle
+     partielle (``` fermés, markdown/schéma rendus, boutons affichés). */
+function _reparerBullesStreamCoincees(){
+  try{
+    var stuck=document.querySelectorAll('.cmsg-bbl.stream-active,.cmsg-bbl.ecriture-active');
+    for(var i=0;i<stuck.length;i++){
+      var bblText=stuck[i];
+      try{ if(EcritureFluide._element===bblText)EcritureFluide.skip(); }catch(_e){}
+      var txt=(bblText.textContent||'');
+      if(!txt.trim())continue; // rien reçu encore → on laisse le stream arriver
+      bblText.classList.remove('stream-active','ecriture-active');
+      try{ finaliserBulleStream(bblText,txt); }catch(_e){}
+      var acts=bblText.parentNode&&bblText.parentNode.querySelector('.cmsg-actions');
+      if(acts)acts.style.display='flex';
+    }
+  }catch(e){}
+}
+var _visRepairTimer=null;
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){
+    // Arrière-plan : le rAF va geler → on affiche tout de suite ce qu'on a reçu.
+    try{ if(EcritureFluide._element)EcritureFluide.skip(); }catch(e){}
+  }else{
+    // Retour : on donne une chance au stream de reprendre. On ne coupe QUE s'il
+    // est vraiment bloqué (aucun texte reçu depuis > 4 s) → évite de tuer un
+    // stream sain quand on revient vite dans l'app.
+    if(_visRepairTimer)clearTimeout(_visRepairTimer);
+    _visRepairTimer=setTimeout(function(){
+      try{
+        var bloque=(typeof chatBusy!=="undefined"&&chatBusy)&&(Date.now()-(window._chatLastDelta||0)>4000);
+        if(bloque){
+          if(window._chatAbort){try{ window._chatAbort.abort(); }catch(e){}}  // coupe → la réparation se fait dans le catch
+          _reparerBullesStreamCoincees();
+        }
+      }catch(e){}
+    },2200);
+  }
+});
+
 async function readSSE(res){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
@@ -4475,7 +4518,7 @@ async function envoyerViaMoteurGratuit(modele, td, msgs){
     }
   }
   EcritureFluide.finStream();
-  await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
+  await new Promise(function(r){var iv=setInterval(function(){if(document.hidden){try{EcritureFluide.skip();}catch(_e){}}if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
   EcritureFluide._terminer();
   chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
   if(window.TilexContext)TilexContext.enregistrerReponse(reply||"");
@@ -4591,7 +4634,9 @@ async function sendChat(){
       setTimeout(function(){td2.querySelectorAll(".tyd").forEach(function(d){d.classList.add("tyd-loop");});},300);
       var tdRef=td2;
     }
-    const res=await fetch(AI_PROXY,{method:"POST",headers:h,body:JSON.stringify({
+    window._chatAbort=new AbortController();
+    window._chatLastDelta=Date.now();
+    const res=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._chatAbort.signal,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
       system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
@@ -4636,6 +4681,7 @@ async function sendChat(){
       var _SCHEMA_FENCE=/```(?:tilex-schema|schema)\b[\s\S]*?(?:```|$)/g;
       var _SCHEMA_PH="📊 Construction du schéma…";
       var reply=await readSSEStream(res,function(delta){
+        window._chatLastDelta=Date.now();  // suivi de progression (détection de blocage)
         if(_toolStatusEl){_toolStatusEl.remove();_toolStatusEl=null;}
         _rawAcc+=delta;
         // Emballe d'abord un schéma JSON brut (sans balise) en ```tilex-schema,
@@ -4695,7 +4741,7 @@ async function sendChat(){
         msgs.scrollTop=msgs.scrollHeight;
       });
       EcritureFluide.finStream();
-      await new Promise(function(r){var iv=setInterval(function(){if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
+      await new Promise(function(r){var iv=setInterval(function(){if(document.hidden){try{EcritureFluide.skip();}catch(_e){}}if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
       EcritureFluide._terminer();
       chargerCredits();
       chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
@@ -4737,8 +4783,10 @@ async function sendChat(){
       var _acts=bblText.parentNode&&bblText.parentNode.querySelector(".cmsg-actions");
       if(_acts)_acts.style.display="flex";
     }
-    addMsg("a","⚠️ "+e.message);
+    // Coupure volontaire (retour d'arrière-plan) : pas de message d'erreur laid.
+    if(!(e&&e.name==="AbortError")){addMsg("a","⚠️ "+e.message);}
   }
+  window._chatAbort=null;
   chatBusy=false;
   syncChatToStorage();
 }
