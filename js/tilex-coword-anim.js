@@ -21,11 +21,12 @@ const TilexCowordAnim = (() => {
   const AVATAR = '/assets/coword-tilex.png';
 
   // Ce que chaque agent FAIT (verbe d'action affiché à côté de l'image)
+  // resume = phrase au passé, style Claude Code (« A utilisé 4 outils, édité un fichier »)
   const ACTIONS = {
-    codeur:   { fait: 'Écrit le code',     encours: '✍️ En train de coder…' },
-    reviseur: { fait: 'Révise & corrige',  encours: '🔍 Recherche les bugs…' },
-    testeur:  { fait: 'Teste & valide',    encours: '🧪 Teste le code…' },
-    gardien:  { fait: 'Verdict final',     encours: '🛡️ Vérifie tout…' },
+    codeur:   { fait: 'Écrit le code',     encours: '✍️ En train de coder…',   resume: 'A écrit le code' },
+    reviseur: { fait: 'Révise & corrige',  encours: '🔍 Recherche les bugs…',  resume: 'A révisé pis corrigé le code' },
+    testeur:  { fait: 'Teste & valide',    encours: '🧪 Teste le code…',       resume: 'A testé pis validé le code' },
+    gardien:  { fait: 'Verdict final',     encours: '🛡️ Vérifie tout…',        resume: 'A donné son verdict final' },
   };
 
   function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -174,6 +175,44 @@ const TilexCowordAnim = (() => {
     </div>`;
   }
 
+  /* ─── Étape style « Claude Code » : ligne repliable + chevron ───
+     Fini    : « ✅ 💻 Codeur — A écrit le code › » (clic = déplie le résultat)
+     En cours: spinner pointillé + « Traitement en cours… » (résultat visible en direct)
+     Attente : ligne tamisée « ⏳ … — en attente »
+     ouvert = true → le corps (résultat) est déplié. */
+  function etapeHTML(t, ouvert) {
+    if (!t) return '';
+    const ag = String(t.agent || '').toLowerCase();
+    const act = ACTIONS[ag] || {};
+    const nom = (ICONES[ag] || '') + ' ' + (NOMS[ag] || t.agent || '');
+    const st = t.statut || 'pending';
+
+    let corps = '';
+    if (t.resultat) corps = rendreResultat(t.resultat, { taskId: t.id, statut: st });
+    else if (st === 'en_cours') corps = ecritureHTML(ag);
+
+    // En cours : toujours déplié (on voit le code s'écrire en direct).
+    const montrerCorps = st === 'en_cours' ? !!corps : (!!ouvert && !!corps);
+
+    let head;
+    if (st === 'en_cours') {
+      head = '<span class="cwcc-spin"></span><span class="cwcc-txt cwcc-run">Traitement en cours… <b>' + nom + '</b></span>';
+    } else if (st === 'fini') {
+      head = '<span class="cwcc-txt">✅ ' + nom + ' — ' + (act.resume || 'terminé') + '</span>'
+        + '<span class="cwcc-chev' + (montrerCorps ? ' open' : '') + '">›</span>';
+    } else if (st === 'erreur') {
+      head = '<span class="cwcc-txt cwcc-err">❌ ' + nom + ' — erreur</span>'
+        + '<span class="cwcc-chev' + (montrerCorps ? ' open' : '') + '">›</span>';
+    } else {
+      head = '<span class="cwcc-txt cwcc-dim">⏳ ' + nom + ' — en attente</span>';
+    }
+
+    return '<div class="cwcc-step">'
+      + '<div class="cwcc-head" data-tache="' + t.id + '">' + head + '</div>'
+      + (montrerCorps ? '<div class="cwcc-body">' + corps + '</div>' : '')
+      + '</div>';
+  }
+
   /* ─── Schéma animé du pipeline ─── */
   function pipelineHTML(tasks) {
     const parAgent = {};
@@ -287,11 +326,31 @@ const TilexCowordAnim = (() => {
       .tk-str{color:#a5d6ff;}
       .tk-com{color:#8b949e;font-style:italic;}
       .tk-num{color:#79c0ff;}
+      /* ── Étapes style Claude Code : lignes repliables + spinner pointillé ── */
+      .cwcc-step{border-top:1px solid #1c1c26;}
+      .cwcc-step:first-of-type{border-top:none;}
+      .cwcc-head{display:flex;align-items:center;gap:9px;padding:11px 4px;cursor:pointer;
+        -webkit-user-select:none;user-select:none;}
+      .cwcc-head:active{opacity:.7;}
+      .cwcc-txt{flex:1;min-width:0;font-size:13px;color:#8b949e;font-style:italic;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+      .cwcc-txt b{color:#c9d1d9;font-style:normal;}
+      .cwcc-txt.cwcc-run{color:#c9d1d9;}
+      .cwcc-txt.cwcc-dim{opacity:.55;}
+      .cwcc-txt.cwcc-err{color:#f85149;}
+      .cwcc-chev{flex:0 0 auto;color:#6e7681;font-size:16px;font-style:normal;
+        transition:transform .2s;line-height:1;}
+      .cwcc-chev.open{transform:rotate(90deg);}
+      /* Spinner « pointillé » orange, comme le Traitement en cours… de Claude Code */
+      .cwcc-spin{flex:0 0 auto;width:16px;height:16px;border-radius:50%;
+        border:2px dotted #ff7a00;animation:cwccSpin 1.1s linear infinite;}
+      @keyframes cwccSpin{to{transform:rotate(360deg)}}
+      .cwcc-body{padding:0 4px 12px;}
     `;
     document.head.appendChild(s);
   }
 
-  return { injecterStyle, avatarHTML, pipelineHTML, colorer, rendreResultat, ecritureHTML };
+  return { injecterStyle, avatarHTML, pipelineHTML, colorer, rendreResultat, ecritureHTML, etapeHTML };
 
 })();
 

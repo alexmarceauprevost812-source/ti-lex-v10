@@ -19,9 +19,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&family=Nunito:wght@400;600;700&family=Raleway:wght@400;600;700&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
 <title>ti-lex-AL v10 — Pro</title>
-<!-- Moteurs IA GRATUITS (Puter.js) : GPT, Mistral, Gemini, DeepSeek, Grok, Llama…
-     Aucune clé API requise — les modèles Claude continuent de passer par ai-proxy. -->
-<script src="https://js.puter.com/v2/" defer></script>
 <script src="js/tilex-guardian.js"></script>
 <script src="js/tilex-autofix.js"></script>
 <script src="js/tilex-bureau.js" defer></script>
@@ -3251,25 +3248,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
             <span class="csd-ico">🧠</span> Opus 4.8</div>
           <div class="csd-item" data-model="claude-haiku-4-5" onclick="selectComposerModel('claude-haiku-4-5')">
             <span class="csd-ico">💨</span> Haiku 4.5</div>
-          <div class="csd-section">MOTEURS GRATUITS 🆓</div>
-          <div class="csd-item" data-model="gpt-5" onclick="selectComposerModel('gpt-5')">
-            <span class="csd-ico">🤖</span> GPT-5</div>
-          <div class="csd-item" data-model="gpt-4o-mini" onclick="selectComposerModel('gpt-4o-mini')">
-            <span class="csd-ico">🤖</span> GPT-4o Mini</div>
-          <div class="csd-item" data-model="o3-mini" onclick="selectComposerModel('o3-mini')">
-            <span class="csd-ico">🧩</span> o3-mini</div>
-          <div class="csd-item" data-model="mistral-large-latest" onclick="selectComposerModel('mistral-large-latest')">
-            <span class="csd-ico">🌬️</span> Mistral Large</div>
-          <div class="csd-item" data-model="gemini-2.5-flash" onclick="selectComposerModel('gemini-2.5-flash')">
-            <span class="csd-ico">✨</span> Gemini 2.5 Flash</div>
-          <div class="csd-item" data-model="deepseek-chat" onclick="selectComposerModel('deepseek-chat')">
-            <span class="csd-ico">🐋</span> DeepSeek V3</div>
-          <div class="csd-item" data-model="deepseek-reasoner" onclick="selectComposerModel('deepseek-reasoner')">
-            <span class="csd-ico">🐋</span> DeepSeek R1</div>
-          <div class="csd-item" data-model="x-ai/grok-3-beta" onclick="selectComposerModel('x-ai/grok-3-beta')">
-            <span class="csd-ico">🚀</span> Grok 3</div>
-          <div class="csd-item" data-model="meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo" onclick="selectComposerModel('meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo')">
-            <span class="csd-ico">🦙</span> Llama 3.1 70B</div>
           <div class="csd-section">MODE</div>
           <div class="csd-item csd-toggle" id="csd-reflexion-toggle" onclick="toggleReflexionMode()">
             <span class="csd-ico">🧠</span> Réflexion <span class="csd-toggle-dot" id="csd-reflexion-dot"></span></div>
@@ -4454,97 +4432,17 @@ function finaliserBulleStream(bblText,replyPlain){
   }catch(e){}
 }
 
-/* ═══ 🆓 MOTEURS IA GRATUITS (Puter.js — aucune clé API) ═══
-   GPT, Mistral, Gemini, DeepSeek, Grok, Llama… en streaming dans le chat
-   principal. Les modèles Claude continuent de passer par ai-proxy (clé
-   Anthropic côté serveur). Texte seulement : pas d'outils web/média ici. */
-window.TILEX_MOTEURS_GRATUITS={
-  "gpt-5":"GPT-5","gpt-4o-mini":"GPT-4o Mini","o3-mini":"o3-mini",
-  "mistral-large-latest":"Mistral Large","gemini-2.5-flash":"Gemini 2.5 Flash",
-  "deepseek-chat":"DeepSeek V3","deepseek-reasoner":"DeepSeek R1",
-  "x-ai/grok-3-beta":"Grok 3","meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo":"Llama 3.1 70B"
-};
-async function envoyerViaMoteurGratuit(modele, td, msgs){
-  if(typeof puter==="undefined"||!puter.ai)
-    throw new Error("Moteur gratuit pas encore chargé — attends 2 secondes pis réessaie (ou choisis un modèle Claude).");
-  td.remove();
-  var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
-  var bbl=document.createElement("div");bbl.className="cmsg a";
-  bbl.innerHTML='<div class="cmsg-ico a">'+alAvaVid()+'</div><div><div class="cmsg-bbl a stream-active"></div><div class="cmsg-actions" style="display:none;"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div><div class="cmsg-time">'+t+' · '+(TILEX_MOTEURS_GRATUITS[modele]||modele)+' 🆓</div></div>';
-  msgs.appendChild(bbl);
-  var bblText=bbl.querySelector(".cmsg-bbl");
-  EcritureFluide.demarrer(bblText,msgs);
-  var messages=[{role:"system",content:getSystemPrompt()}].concat(chatHistory.slice(-20));
-  var reply="";
-  try{
-    var resp=await puter.ai.chat(messages,{model:modele,stream:true});
-    if(resp&&typeof resp[Symbol.asyncIterator]==="function"){
-      for await (var part of resp){
-        var d=part?(typeof part.text==="string"?part.text:(typeof part==="string"?part:"")):"";
-        if(d){reply+=d;EcritureFluide.ajouterTexte(d);}
-      }
-    }else{
-      reply=(resp&&(resp.text||(resp.message&&resp.message.content)))||"";
-      if(typeof reply!=="string")reply=Array.isArray(reply)?reply.map(function(x){return (x&&x.text)||"";}).join(""):String(reply);
-      EcritureFluide.ajouterTexte(reply);
-    }
-    if(!reply||!reply.trim())throw new Error("réponse vide");
-  }catch(e){
-    // 🛟 Repli AUTOMATIQUE sur le backend ti-lex (Haiku) : Puter peut exiger un
-    // compte/popup (souvent bloqué en PWA installée) — l'agent répond pareil.
-    console.warn("[ti-lex] moteur gratuit indisponible ("+((e&&e.message)||"?")+") — repli backend Haiku");
-    reply="";
-    try{
-      var tk2=getToken();
-      var h2={"Content-Type":"application/json"};
-      if(tk2)h2["Authorization"]="Bearer "+tk2;
-      var res2=await fetch(AI_PROXY,{method:"POST",headers:h2,body:JSON.stringify({
-        kind:"chat",model:"claude-haiku-4-5-20251001",max_tokens:4096,
-        system:getSystemPrompt(),messages:chatHistory.slice(-20)
-      })});
-      if(!res2.ok)throw new Error("Backend "+res2.status);
-      var rd=res2.body.getReader(),dc=new TextDecoder(),bf="";
-      while(true){
-        var ch2=await rd.read();
-        if(ch2.done)break;
-        bf+=dc.decode(ch2.value,{stream:true});
-        var ls=bf.split("\n");bf=ls.pop()||"";
-        for(var li=0;li<ls.length;li++){
-          var tl=ls[li].trim();
-          if(tl.indexOf("data:")!==0)continue;
-          var pl=tl.slice(5).trim();
-          if(!pl||pl==="[DONE]")continue;
-          var ev2;try{ev2=JSON.parse(pl);}catch(_p){continue;}
-          if(ev2.type==="content_block_delta"&&ev2.delta&&ev2.delta.text){
-            reply+=ev2.delta.text;EcritureFluide.ajouterTexte(ev2.delta.text);
-          }
-        }
-      }
-    }catch(e2){
-      EcritureFluide.skip();EcritureFluide._terminer();
-      bblText.classList.remove("stream-active");
-      bblText.textContent="⚠️ "+((e2&&e2.message)||"Aucun moteur disponible — réessaie dans un instant.");
-      return;
-    }
-  }
-  EcritureFluide.finStream();
-  await new Promise(function(r){var iv=setInterval(function(){if(document.hidden){try{EcritureFluide.skip();}catch(_e){}}if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
-  EcritureFluide._terminer();
-  chatHistory.push({role:"assistant",content:reply||"(réponse vide)"});
-  if(window.TilexContext)TilexContext.enregistrerReponse(reply||"");
-  bblText.classList.remove("stream-active");
-  bblText.style.color="";
-  var _replyW=_wrapBareSchemas(reply||"");
-  var _hasMd=_replyW&&(/```/.test(_replyW)||/\*\*/.test(_replyW)||/^#{1,3}\s/m.test(_replyW)||/^[-*]\s/m.test(_replyW)||/^\d+\.\s/m.test(_replyW));
-  if(_hasMd){bblText.innerHTML=renderMd(_replyW);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);}
-  else{applySyntaxHL(bblText);}
-  finaliserBulleStream(bblText,reply||"");
-  var acts=bbl.querySelector(".cmsg-actions");if(acts)acts.style.display="flex";
-  sauvegarderMsgEnDB("user",chatHistory[chatHistory.length-2]?.content||"");
-  sauvegarderMsgEnDB("assistant",reply||"");
-  msgs.scrollTop=msgs.scrollHeight;
-}
-
+/* ═══ MODÈLES : 100 % Anthropic (Claude) ═══
+   Les moteurs gratuits non-Anthropic (GPT, Mistral, Gemini, DeepSeek, Grok,
+   Llama via Puter) ont été RETIRÉS du chat — tout passe par ai-proxy (clé
+   Anthropic côté serveur). La map reste vide pour que les gardes existantes
+   continuent de fonctionner sans jamais se déclencher. */
+window.TILEX_MOTEURS_GRATUITS={};
+// Si un ancien modèle non-Anthropic traîne dans localStorage → retour à Sonnet 5.
+(function(){
+  var _m=localStorage.getItem("tilex-al-model");
+  if(_m&&_m.indexOf("claude-")!==0)localStorage.setItem("tilex-al-model","claude-sonnet-5");
+})();
 async function sendChat(){
   if(chatBusy)return;
   const inp=document.getElementById("chat-in");
@@ -4607,34 +4505,60 @@ async function sendChat(){
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-5";
     if(_webAgent&&_webAgent.model)chatModel=_webAgent.model;
     if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-5";
-    // 🆓 Moteur gratuit sélectionné (et pas l'agent Marceau, qui roule toujours
-    // sur le backend avec ses outils) → streaming via Puter, zéro clé, zéro coût.
-    if(TILEX_MOTEURS_GRATUITS[chatModel]&&composerAgent!=="marceau"){
-      try{ await envoyerViaMoteurGratuit(chatModel, td, msgs); }
-      catch(e){ td.remove(); addMsg("a","⚠️ "+((e&&e.message)||"Moteur gratuit indisponible.")); }
-      chatBusy=false; return;
-    }
+    // 🧠 100 % Anthropic : si un ancien modèle non-Claude traîne encore, retour à Sonnet 5.
+    if(chatModel.indexOf("claude-")!==0)chatModel="claude-sonnet-5";
+    // 🧠 MODE RÉFLEXION AMÉLIORÉ (style Claude Code) :
+    //   • le raisonnement STREAME en direct dans le bloc repliable (mot à mot)
+    //   • chrono vivant « Réflexion… 3 s » pendant que ça pense
+    //   • la réflexion est ENSUITE INJECTÉE dans la vraie réponse (avant, elle
+    //     était jetée — maintenant elle améliore vraiment la réponse finale)
+    //   • contexte : les derniers messages de la conversation, pas juste la question
+    var _reflexionTexte="";
     if(reflexionMode){
       td.remove();
       var rBlock=appendReflexionBlock();
       var rContent=rBlock.querySelector(".reflexion-content");
       var rStatus=rBlock.querySelector(".reflexion-status");
       window._reflexionAbort=new AbortController();
+      var _rT0=Date.now();
+      var _rTimer=setInterval(function(){
+        if(rStatus)rStatus.textContent="Réflexion… "+Math.round((Date.now()-_rT0)/1000)+" s";
+      },500);
       try{
         var rRes=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._reflexionAbort.signal,body:JSON.stringify({
           kind:"chat",model:chatModel,max_tokens:2048,
-          system:"Tu es ti-lex-AL. Réfléchis étape par étape. Décris ton raisonnement interne sans donner la réponse finale.",
-          messages:[{role:"user",content:txt}]
+          system:"Tu es le mode réflexion de ti-lex-AL. Raisonne étape par étape sur la demande, en québécois clair et compact :\n1) C'est quoi le vrai besoin? 2) Les pièges/cas limites. 3) Le meilleur angle de réponse pis pourquoi.\nSois concret, pas de blabla. NE DONNE PAS la réponse finale — juste ton raisonnement.",
+          messages:chatHistory.slice(-10)
         })});
-        if(rRes.ok){
-          var rThink=await readSSE(rRes);
-          rContent.textContent=rThink;
-          rStatus.textContent="✓ Réflexion terminée";
+        if(rRes.ok&&rRes.body){
+          var rRd=rRes.body.getReader(),rDc=new TextDecoder(),rBf="";
+          while(true){
+            var rCh=await rRd.read();
+            if(rCh.done)break;
+            rBf+=rDc.decode(rCh.value,{stream:true});
+            var rLs=rBf.split("\n");rBf=rLs.pop()||"";
+            for(var rI=0;rI<rLs.length;rI++){
+              var rTl=rLs[rI].trim();
+              if(rTl.indexOf("data:")!==0)continue;
+              var rPl=rTl.slice(5).trim();
+              if(!rPl||rPl==="[DONE]")continue;
+              var rEv;try{rEv=JSON.parse(rPl);}catch(_p){continue;}
+              if(rEv.type==="content_block_delta"&&rEv.delta&&rEv.delta.text){
+                _reflexionTexte+=rEv.delta.text;
+                rContent.textContent=_reflexionTexte;
+                rContent.scrollTop=rContent.scrollHeight;
+              }
+            }
+          }
+          clearInterval(_rTimer);
+          var _rSec=Math.round((Date.now()-_rT0)/1000);
+          rStatus.textContent="✓ Réflexion terminée · "+_rSec+" s";
           rBlock.classList.remove("expanded");
-        }else{rStatus.textContent="⚠️ Échec";}
+        }else{clearInterval(_rTimer);rStatus.textContent="⚠️ Échec";}
         window._reflexionAbort=null;
       }catch(e){
-        if(e.name==="AbortError"){console.log("[ti-lex] Réflexion stoppée");}
+        clearInterval(_rTimer);
+        if(e.name==="AbortError"){console.log("[ti-lex] Réflexion stoppée");_reflexionTexte="";}
         else{rStatus.textContent="⚠️ "+e.message;}
         window._reflexionAbort=null;
       }
@@ -4649,7 +4573,8 @@ async function sendChat(){
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._chatAbort.signal,body:JSON.stringify({
       kind:"chat",
       model:chatModel,max_tokens:4096,
-      system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
+      system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:"")
+        +(_reflexionTexte?"\n\n## TA RÉFLEXION PRÉALABLE (ton propre raisonnement — sers-t'en pour répondre, sans le réciter)\n"+_reflexionTexte.slice(0,4000):""),
       messages:chatHistory.slice(-20),
       // Marceau ET TI-LEX-AL sont autonomes : la recherche web leur est TOUJOURS
       // disponible (l'outil est fourni ; le modèle décide de chercher au besoin —
@@ -8677,9 +8602,9 @@ function updateModelChip(){
   var badge=document.getElementById("composer-reflexion-badge");
   var chip=document.getElementById("composer-model-chip");
   var model=localStorage.getItem("tilex-al-model")||"claude-sonnet-5";
-  var modelNames={"claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
+  var modelNames={"claude-sonnet-5":"Sonnet 5","claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
   var agentName=AGENT_NAMES[composerAgent]||"TI-LEX-AL";
-  var modelShort=modelNames[model]||(window.TILEX_MOTEURS_GRATUITS&&TILEX_MOTEURS_GRATUITS[model]?TILEX_MOTEURS_GRATUITS[model]+" 🆓":"Sonnet 4.6");
+  var modelShort=modelNames[model]||"Sonnet 5";
   if(label)label.textContent=agentName+" · "+modelShort;
   if(badge)badge.style.display=reflexionMode?"inline":"none";
   if(chip)chip.classList.toggle("reflexion-on",reflexionMode);
