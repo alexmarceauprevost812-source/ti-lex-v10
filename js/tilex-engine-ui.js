@@ -116,7 +116,9 @@ const TilexEngineUI = (() => {
         const pipe = window.TilexCowordAnim ? TilexCowordAnim.pipelineHTML(tasks) : '';
         tasksHtml = '<div class="em-tasks">' + ava + pipe + tasks.map((t) => {
           const ts = STATUTS[t.statut] || STATUTS.pending;
-          const corps = t.resultat ? (window.TilexCowordAnim ? TilexCowordAnim.rendreResultat(t.resultat) : _esc(t.resultat)) : '';
+          let corps = '';
+          if (t.resultat) corps = window.TilexCowordAnim ? TilexCowordAnim.rendreResultat(t.resultat, { taskId: t.id, statut: t.statut }) : _esc(t.resultat);
+          else if (t.statut === 'en_cours' && window.TilexCowordAnim) corps = TilexCowordAnim.ecritureHTML(t.agent);
           const res = corps ? `<div class="em-task-r">${corps}</div>` : '';
           return `<div class="em-task"><div class="em-task-h"><span>${ts.ico}</span>
             <span class="em-task-t">${_esc(t.titre)}</span>

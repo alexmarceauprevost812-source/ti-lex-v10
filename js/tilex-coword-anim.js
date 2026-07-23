@@ -80,16 +80,42 @@ const TilexCowordAnim = (() => {
     return out;
   }
 
-  /* ─── Rend un résultat d'agent : prose échappée + code coloré ─── */
-  function rendreResultat(texte) {
+  // Tâches dont le code a déjà été « écrit » (pour pas ré-animer au refresh).
+  const _animes = new Set();
+
+  /* ─── Indicateur « en train d'écrire » (pendant qu'une étape travaille) ─── */
+  function ecritureHTML(agent) {
+    const a = ACTIONS[(agent || '').toLowerCase()] || { encours: 'Écrit…' };
+    return `<div class="cw-writing">
+      <span class="cw-wcaret"></span>
+      <span class="cw-wbar"></span><span class="cw-wbar"></span><span class="cw-wbar"></span>
+      <span class="cw-wtxt">${a.encours}</span>
+    </div>`;
+  }
+
+  /* ─── Rend un résultat d'agent : prose + code coloré, écriture fluide ───
+     opts = { taskId, statut } — anime le code (révélation) la 1re fois
+     qu'une étape finie apparaît. */
+  function rendreResultat(texte, opts) {
     if (!texte) return '';
+    const o = opts || {};
+    const faireAnim = o.statut === 'fini' && o.taskId != null && !_animes.has(o.taskId);
+    if (faireAnim) _animes.add(o.taskId);
+
     const parts = String(texte).split(/(```[^\n`]*\n[\s\S]*?```)/g);
     return parts.map((seg) => {
       const m = seg.match(/^```([^\n`]*)\n([\s\S]*?)```$/);
       if (m) {
         const info = (m[1] || '').trim();
         const lang = (info.split(/\s+/)[0] || '').replace(/[^\w.-]/g, '');
-        return '<pre class="cw-code">' + colorer(m[2].replace(/\s+$/, ''), lang) + '</pre>';
+        const code = m[2].replace(/\s+$/, '');
+        if (faireAnim) {
+          // Durée proportionnelle au nb de lignes (effet d'écriture ligne par ligne).
+          const nl = Math.min(code.split('\n').length, 40);
+          const dur = Math.max(0.7, Math.min(2.6, 0.5 + nl * 0.07)).toFixed(2);
+          return `<pre class="cw-code cw-fluide" style="--cwd:${dur}s">` + colorer(code, lang) + '</pre>';
+        }
+        return '<pre class="cw-code">' + colorer(code, lang) + '</pre>';
       }
       return '<span class="cw-prose">' + _esc(seg) + '</span>';
     }).join('');
@@ -231,7 +257,23 @@ const TilexCowordAnim = (() => {
       pre.cw-code{margin:8px 0;padding:11px;background:#05050a;border:1px solid #1c1c26;border-radius:9px;
         overflow-x:auto;font-family:'Share Tech Mono',ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;
         color:#c9d1d9;white-space:pre;}
+      /* Écriture fluide : le code se révèle du haut vers le bas, ligne par ligne */
+      pre.cw-code.cw-fluide{animation:cwEcrire var(--cwd,1.2s) steps(24,end) both;}
+      @keyframes cwEcrire{from{clip-path:inset(0 0 100% 0);}to{clip-path:inset(0 0 0 0);}}
+      @media (prefers-reduced-motion: reduce){pre.cw-code.cw-fluide{animation:none;}}
       .cw-prose{white-space:pre-wrap;}
+      /* Indicateur « en train d'écrire » */
+      .cw-writing{display:flex;align-items:center;gap:6px;margin:8px 0;padding:10px 12px;background:#05050a;
+        border:1px solid #241400;border-radius:9px;}
+      .cw-writing .cw-wcaret{width:2px;height:15px;background:#ff7a00;animation:cwCaret .8s steps(1) infinite;}
+      .cw-writing .cw-wbar{height:8px;border-radius:4px;background:linear-gradient(90deg,#ff7a00,#5a2c00);
+        animation:cwWrite 1.1s ease-in-out infinite;}
+      .cw-writing .cw-wbar:nth-child(2){width:60px;animation-delay:0s;}
+      .cw-writing .cw-wbar:nth-child(3){width:38px;animation-delay:.18s;}
+      .cw-writing .cw-wbar:nth-child(4){width:52px;animation-delay:.36s;}
+      .cw-writing .cw-wtxt{font-size:11px;color:#ff7a00;font-weight:700;margin-left:4px;}
+      @keyframes cwCaret{0%,100%{opacity:1;}50%{opacity:0;}}
+      @keyframes cwWrite{0%,100%{transform:scaleX(.5);opacity:.5;transform-origin:left;}50%{transform:scaleX(1);opacity:1;transform-origin:left;}}
       .tk-kw{color:#ff7b72;}
       .tk-str{color:#a5d6ff;}
       .tk-com{color:#8b949e;font-style:italic;}
@@ -240,7 +282,7 @@ const TilexCowordAnim = (() => {
     document.head.appendChild(s);
   }
 
-  return { injecterStyle, avatarHTML, pipelineHTML, colorer, rendreResultat };
+  return { injecterStyle, avatarHTML, pipelineHTML, colorer, rendreResultat, ecritureHTML };
 
 })();
 
