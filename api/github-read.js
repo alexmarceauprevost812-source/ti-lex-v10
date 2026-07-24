@@ -5,15 +5,17 @@
 export default async function handler(req, res) {
   // CORS de base
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-github-token');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Méthode non autorisée. Utilise GET.' });
+  // GET = lecture (arbre, fichiers, repos, branches). POST = écriture (déposer
+  // un fichier ou une image dans le repo). Rien d'autre.
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Méthode non autorisée. Utilise GET (lire) ou POST (écrire).' });
   }
 
   // Token : d'abord celui envoyé par le Codex (en-tête x-github-token), sinon
@@ -47,6 +49,82 @@ export default async function handler(req, res) {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28'
   };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // MODE ÉCRITURE (POST) — déposer un fichier OU une image dans le repo.
+  // Body JSON : { repo:"owner/nom", branch, chemin, contenu_base64, message }
+  //   • contenu_base64 : le fichier encodé base64 (images, binaires, texte…)
+  //   • crée le fichier, ou le met à jour s'il existe déjà (récupère le sha).
+  // ═══════════════════════════════════════════════════════════════════════
+  if (req.method === 'POST') {
+    let body = req.body;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = {}; } }
+    body = body || {};
+
+    const repoW = (body.repo || '').toString().trim();
+    const branchW = (body.branch || '').toString().trim() || 'main';
+    let cheminW = (body.chemin || body.path || '').toString().trim();
+    const b64 = (body.contenu_base64 || body.content || '').toString();
+    const message = (body.message || '').toString().trim() || `Ajout de ${cheminW} via Codex ti-lex`;
+
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoW)) {
+      return res.status(400).json({ error: 'Repo invalide (attendu : owner/nom)' });
+    }
+    if (!/^[A-Za-z0-9_./-]{1,120}$/.test(branchW)) {
+      return res.status(400).json({ error: 'Nom de branche invalide' });
+    }
+    // Chemin sûr : pas de "..", pas de "/" au début, pas de caractères louches.
+    cheminW = cheminW.replace(/^\/+/, '');
+    if (!cheminW || cheminW.length > 400 || /\.\.(\/|\\|$)/.test(cheminW) || !/^[A-Za-z0-9_./ +()\-]+$/.test(cheminW)) {
+      return res.status(400).json({ error: 'Chemin de fichier invalide' });
+    }
+    if (!b64 || !/^[A-Za-z0-9+/=\r\n]+$/.test(b64) || b64.length > 40 * 1024 * 1024) {
+      return res.status(400).json({ error: 'Contenu base64 manquant ou trop gros (max ~30 Mo)' });
+    }
+
+    const [ownerW, nomW] = repoW.split('/');
+    const apiPath = cheminW.split('/').map(encodeURIComponent).join('/');
+    const contentUrl = `https://api.github.com/repos/${ownerW}/${nomW}/contents/${apiPath}`;
+
+    try {
+      // Le fichier existe déjà ? → on récupère son sha pour le mettre à jour.
+      let sha;
+      const getResp = await fetch(`${contentUrl}?ref=${encodeURIComponent(branchW)}`, { headers });
+      if (getResp.ok) {
+        const g = await getResp.json();
+        if (g && !Array.isArray(g) && g.sha) sha = g.sha;
+      }
+
+      const putBody = {
+        message,
+        content: b64.replace(/[\r\n]/g, ''),
+        branch: branchW
+      };
+      if (sha) putBody.sha = sha;
+
+      const putResp = await fetch(contentUrl, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(putBody)
+      });
+
+      if (!putResp.ok) {
+        const errText = await putResp.text();
+        return res.status(putResp.status).json({ error: 'Dépôt du fichier refusé par GitHub', details: errText });
+      }
+      const done = await putResp.json();
+      return res.status(200).json({
+        ok: true,
+        action: sha ? 'mis à jour' : 'créé',
+        chemin: cheminW,
+        repo: repoW,
+        branche: branchW,
+        url: (done && done.content && done.content.html_url) || null
+      });
+    } catch (err) {
+      return res.status(500).json({ error: 'Erreur serveur (écriture)', details: err.message });
+    }
+  }
 
   const { mode, path, file, repo, branch } = req.query;
 

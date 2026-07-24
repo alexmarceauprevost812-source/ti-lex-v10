@@ -221,6 +221,8 @@
       <div class="comp-row">
         <button class="chip" id="chip-plus" title="Joindre un fichier au workspace">＋</button>
         <input type="file" id="fichier-joint" multiple style="display:none">
+        <button class="chip" id="chip-upload" title="Déposer une image / un fichier dans le repo GitHub">📤</button>
+        <input type="file" id="fichier-repo" multiple style="display:none">
         <button class="chip" id="chip-repo" title="Changer de repo / branche">🐙</button>
         <button class="chip" id="chip-modele">Sonnet 5</button>
         <button class="chip" id="chip-mode">🖐 Demander</button>
@@ -966,6 +968,55 @@ $('fichier-joint').addEventListener('change',function(){
     r.readAsText(f);
   });
   this.value='';
+});
+
+/* ── 📤 Déposer des IMAGES / FICHIERS (tout le kit) direct dans le repo GitHub ── */
+$('chip-upload').addEventListener('click',function(){
+  if(!repoChoisi||!repoChoisi.repo){ toast('Choisis d\'abord un repo (🐙)'); if(typeof ouvrirChoixRepo==='function')ouvrirChoixRepo(); return; }
+  if(!ghToken()){ toast('🔑 Connecte ton token GitHub (menu ⋮)'); return; }
+  $('fichier-repo').click();
+});
+function lireBase64(file){
+  return new Promise(function(res,rej){
+    var r=new FileReader();
+    r.onload=function(){ res(String(r.result||'').split(',')[1]||''); };
+    r.onerror=function(){ rej(new Error('lecture impossible')); };
+    r.readAsDataURL(file); // DataURL → base64 (marche pour images/binaires/texte)
+  });
+}
+async function deposerUnFichierRepo(file,dossier){
+  var chemin=(dossier?dossier+'/':'')+file.name;
+  var et=ligneEtape('<span class="et-spin"></span><span class="et-txt">📤 Dépôt de <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b>…</span>','live');
+  try{
+    var b64=await lireBase64(file);
+    var r=await fetch('/api/github-read',{method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'},ghHeaders()),
+      body:JSON.stringify({repo:repoChoisi.repo,branch:repoChoisi.branche||'',chemin:chemin,contenu_base64:b64,message:'Ajout '+chemin+' via Codex ti-lex'})});
+    var j=await r.json();
+    if(!r.ok)throw new Error(j.error||('Erreur '+r.status));
+    if(et){et.classList.remove('live');
+      et.innerHTML='<span class="et-txt">✅ <b style="color:var(--texte);font-style:normal;">'+esc(chemin)+'</b> — '+esc(j.action||'déposé')+' dans '+esc(repoChoisi.repo)+'</span>';
+      if(j.url){var u=j.url;et.style.cursor='pointer';et.addEventListener('click',function(){window.open(u,'_blank','noopener');});}}
+    return true;
+  }catch(e){
+    if(et){et.classList.remove('live');et.innerHTML='<span class="et-txt cwcc-err">❌ '+esc(chemin)+' — '+esc(e.message||'échec')+'</span>';}
+    return false;
+  }
+}
+$('fichier-repo').addEventListener('change',async function(){
+  var fs=Array.prototype.slice.call(this.files||[]); this.value='';
+  if(!fs.length)return;
+  var trop=fs.filter(function(f){return f.size>28*1024*1024;});
+  if(trop.length){ toast('⚠️ '+trop[0].name+' trop gros (max ~28 Mo par fichier)'); }
+  fs=fs.filter(function(f){return f.size<=28*1024*1024;});
+  if(!fs.length)return;
+  var dossier=prompt('Dans quel DOSSIER du repo déposer? (vide = racine)\nEx: assets, images, docs','assets');
+  if(dossier===null)return;
+  dossier=(dossier||'').trim().replace(/^\/+|\/+$/g,'');
+  var ok=0;
+  for(var i=0;i<fs.length;i++){ if(await deposerUnFichierRepo(fs[i],dossier))ok++; }
+  toast(ok?('✅ '+ok+' fichier'+(ok>1?'s':'')+' déposé'+(ok>1?'s':'')+' dans '+repoChoisi.repo):'❌ Aucun fichier déposé');
+  if(ok&&typeof chargerRepo==='function')chargerRepo(); // rafraîchit l'arbre du repo
 });
 
 /* ── Menus ── */
