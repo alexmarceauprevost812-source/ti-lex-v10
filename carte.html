@@ -78,6 +78,54 @@
   .maplibregl-ctrl-attrib{font-size:9px;opacity:.5;}
   .popup{font-size:13px;color:#111;}
   .popup b{color:#000;}
+
+  /* Légende */
+  .legende{position:absolute;left:12px;top:calc(58px + env(safe-area-inset-top,0px));z-index:12;
+    width:196px;background:rgba(15,15,20,.95);border:1px solid #2a2a34;border-radius:14px;padding:11px 13px;
+    box-shadow:0 8px 30px rgba(0,0,0,.55);font-size:12px;display:none;}
+  .legende.on{display:block;}
+  .lg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .lg-head span{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#9a9aa5;font-weight:700;}
+  .lg-head button{background:none;border:none;color:#9a9aa5;font-size:14px;cursor:pointer;}
+  .lg-row{display:flex;align-items:center;gap:9px;margin:7px 0;color:#eee;}
+  .lg-row .sw{width:22px;height:0;border-top-width:4px;border-top-style:solid;border-radius:2px;flex:0 0 auto;}
+  .lg-foot{margin-top:9px;color:#9a9aa5;font-size:10.5px;line-height:1.4;}
+
+  /* Spinner */
+  .busy{position:absolute;top:calc(60px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);
+    z-index:13;background:rgba(15,15,20,.96);border:1px solid #2a2a34;border-radius:20px;padding:8px 15px;
+    font-size:12px;color:#eee;display:none;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.5);}
+  .busy.on{display:flex;}
+  .spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:var(--or);
+    border-radius:50%;animation:sp .8s linear infinite;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+
+  /* Feuille info (bottom sheet) */
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:22;background:#14141a;
+    border-radius:20px 20px 0 0;border-top:1px solid #2a2a34;box-shadow:0 -10px 40px rgba(0,0,0,.6);
+    transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    max-height:74vh;overflow-y:auto;padding:0 16px calc(18px + env(safe-area-inset-bottom,0px));}
+  .sheet.on{transform:translateY(0);}
+  .sheet-grab{width:40px;height:4px;border-radius:3px;background:rgba(255,255,255,.25);margin:10px auto 6px;}
+  .sheet-x{position:absolute;right:12px;top:10px;background:rgba(255,255,255,.08);border:none;color:#eee;
+    width:30px;height:30px;border-radius:50%;font-size:15px;cursor:pointer;z-index:2;}
+  .sheet h2{font-size:19px;margin:4px 0 2px;color:#fff;}
+  .sheet .s-type{color:var(--or);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+  .sheet .s-row{display:flex;gap:9px;align-items:flex-start;margin:9px 0;font-size:14px;color:#eee;}
+  .sheet .s-row .k{color:#9a9aa5;min-width:22px;text-align:center;}
+  .sheet a{color:#7fd1ff;text-decoration:none;}
+  .s-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .s-chip{font-size:12px;padding:5px 10px;border-radius:999px;background:rgba(31,122,61,.22);
+    border:1px solid rgba(31,122,61,.5);color:#bff3d2;}
+  .s-chip.warn{background:rgba(255,122,0,.15);border-color:rgba(255,122,0,.45);color:#ffd9ad;}
+  .s-sect{margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:12px;}
+  .s-sect h3{margin:0 0 6px;font-size:13px;letter-spacing:.4px;color:#9a9aa5;text-transform:uppercase;}
+  .s-note{font-size:12px;color:#9a9aa5;line-height:1.45;background:rgba(255,255,255,.04);
+    border:1px dashed rgba(255,255,255,.14);border-radius:10px;padding:9px 11px;margin-top:8px;}
+  .s-actions{display:flex;gap:8px;margin-top:14px;}
+  .s-actions a{flex:1;text-align:center;border-radius:12px;padding:11px;font-weight:700;font-size:14px;
+    border:1px solid #2a2a34;background:rgba(255,255,255,.06);color:#eee;text-decoration:none;}
+  .s-actions a.go{background:linear-gradient(135deg,var(--vertf),#155a2c);border:none;color:#fff;}
 </style>
 </head>
 <body>
@@ -87,7 +135,25 @@
     <button class="tb-btn" onclick="location.href='/pro'" title="Retour">←</button>
     <span class="tb-titre">🗺️ TILEXMAP</span>
     <button class="tb-btn" id="btn-theme" title="Thème jour/nuit">🌙</button>
+    <button class="tb-btn" id="btn-legende" title="Légende">🗺️</button>
     <button class="tb-btn" id="btn-recherche" title="Chercher un lieu">🔍</button>
+  </div>
+
+  <!-- Légende des couleurs de chemins -->
+  <aside class="legende" id="legende">
+    <div class="lg-head"><span id="lg-titre">Thème nuit</span><button id="lg-fermer">✕</button></div>
+    <div id="lg-items"></div>
+    <div class="lg-foot">Chemins forestiers 🌲 + pourvoiries via OpenStreetMap. Zoome pour plus de détails.</div>
+  </aside>
+
+  <!-- Spinner de chargement (recherche POI / hors-ligne) -->
+  <div class="busy" id="busy"><span class="spin"></span><span id="busy-txt">Chargement…</span></div>
+
+  <!-- Feuille info pourvoirie / POI -->
+  <div class="sheet" id="sheet">
+    <button class="sheet-x" id="sheet-x">✕</button>
+    <div class="sheet-grab"></div>
+    <div id="sheet-body"></div>
   </div>
 
   <div class="fab-col">
@@ -103,11 +169,15 @@
 
   <div class="toolbar" id="toolbar">
     <button class="tool" id="t-tracer">✏️ Tracer un chemin</button>
+    <button class="tool" id="t-live">🔴 Tracé live</button>
     <button class="tool" id="t-pont">🌉 Ajouter un pont</button>
+    <button class="tool" id="t-pourvoirie">🎣 Pourvoiries</button>
     <button class="tool" id="t-gaz" data-poi="fuel">⛽ Gaz</button>
     <button class="tool" id="t-banque" data-poi="bank">🏦 Banque</button>
     <button class="tool" id="t-dep" data-poi="convenience">🏪 Dépanneur</button>
     <button class="tool" id="t-resto" data-poi="restaurant">🍔 Resto</button>
+    <button class="tool" id="t-partage">📤 Partager</button>
+    <button class="tool" id="t-offline">⬇️ Hors-ligne</button>
   </div>
 
   <!-- Feuille : nommer un chemin -->
@@ -344,6 +414,7 @@
     localStorage.setItem('tilexmap-theme', theme);
     majBtnTheme();
     map.setStyle(STYLES[theme]); // style.load ré-ajoute nos couches
+    if(typeof majLegende==='function') majLegende();
     toast(theme==='nuit'?'🌙 Thème nuit':'☀️ Thème jour');
   });
   majBtnTheme();
@@ -458,6 +529,8 @@
       ouvrirFeuille('f-point');
       return;
     }
+    // Tap ailleurs → ferme la feuille info si ouverte.
+    if(typeof fermerSheet==='function') fermerSheet();
   });
 
   // Clic sur un chemin → popup infos
@@ -552,6 +625,175 @@
   map.on('click','pois-ic', function(e){
     var f=e.features&&e.features[0]; if(!f||!f.properties.nom)return;
     new maplibregl.Popup().setLngLat(e.lngLat).setHTML('<div class="popup"><b>'+f.properties.nom+'</b></div>').addTo(map);
+  });
+
+  /* ════ LÉGENDE ════ */
+  function itemsLegende(){
+    if(theme==='nuit') return [['Route principale','#ff7a00'],['Chemin forestier','#ff2d2d'],['Route secondaire','#c85f10'],['Pont','#ffd24a']];
+    return [['Route principale','#2a7cff'],['Chemin forestier','#1f7a3d'],['Route secondaire','#5a92ff'],['Pont','#a05a00']];
+  }
+  function majLegende(){
+    document.getElementById('lg-titre').textContent = theme==='nuit'?'Thème nuit':'Thème jour';
+    document.getElementById('lg-items').innerHTML = itemsLegende().map(function(it){
+      return '<div class="lg-row"><span class="sw" style="border-top-color:'+it[1]+'"></span><span>'+it[0]+'</span></div>';
+    }).join('');
+  }
+  document.getElementById('btn-legende').addEventListener('click', function(){
+    var el=document.getElementById('legende'); majLegende(); el.classList.toggle('on');
+  });
+  document.getElementById('lg-fermer').addEventListener('click', function(){ document.getElementById('legende').classList.remove('on'); });
+
+  /* ════ SPINNER ════ */
+  function busy(on,txt){ document.getElementById('busy-txt').textContent=txt||'Chargement…';
+    document.getElementById('busy').classList.toggle('on',!!on); }
+
+  /* ════ FEUILLE INFO (bottom sheet) ════ */
+  function ouvrirSheet(html){ document.getElementById('sheet-body').innerHTML=html; document.getElementById('sheet').classList.add('on'); }
+  function fermerSheet(){ document.getElementById('sheet').classList.remove('on'); }
+  document.getElementById('sheet-x').addEventListener('click', fermerSheet);
+  function sRow(k,v){ return v?'<div class="s-row"><span class="k">'+k+'</span><span>'+v+'</span></div>':''; }
+  function esc(s){ return String(s||'').replace(/[<>&"]/g,function(m){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m];}); }
+
+  /* ════ POURVOIRIES / ZEC (Overpass + exemples hors-ligne) ════ */
+  var pourvOn=false, pourvMarkers=[], seedMarkers=[];
+  var SEED_POURV=[
+    {n:'Pourvoirie du Lac Blanc (ex.)',lat:46.68,lon:-73.18,r:'Mauricie'},
+    {n:'Pourvoirie Mekoos (ex.)',lat:46.93,lon:-75.28,r:'Hautes-Laurentides'},
+    {n:'Pourvoirie Kanawata (ex.)',lat:47.71,lon:-73.62,r:'Haute-Mauricie'},
+    {n:'Pourvoirie Fer à Cheval (ex.)',lat:48.10,lon:-74.20,r:'Lac-Saint-Jean'}
+  ];
+  function marqueurPourv(lat,lon,tags,exemple){
+    var el=document.createElement('div');
+    el.style.cssText='width:26px;height:26px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);background:#1f7a3d;'+
+      'border:2px solid rgba(255,255,255,.9);box-shadow:0 2px 6px rgba(0,0,0,.5);display:grid;place-items:center;cursor:pointer;'+(exemple?'opacity:.9;':'');
+    el.innerHTML='<span style="transform:rotate(-45deg);font-size:13px;">🎣</span>';
+    var m=new maplibregl.Marker({element:el}).setLngLat([lon,lat]).addTo(map);
+    el.addEventListener('click',function(ev){ ev.stopPropagation(); ficheePourvoirie(tags,lat,lon,exemple); });
+    return m;
+  }
+  function ficheePourvoirie(tags,lat,lon,exemple){
+    tags=tags||{};
+    var nom=tags.name||'Pourvoirie';
+    var site=tags.website||tags['contact:website'];
+    var tel=tags.phone||tags['contact:phone'];
+    var h='<div class="s-type">Pourvoirie / ZEC</div><h2>'+esc(nom)+'</h2>';
+    h+=sRow('🕑', tags.opening_hours?esc(tags.opening_hours.replace(/;/g,' · ')):'');
+    h+=sRow('📞', tel?'<a href="tel:'+esc(tel)+'">'+esc(tel)+'</a>':'');
+    h+=sRow('🌐', site?'<a href="'+esc(site)+'" target="_blank" rel="noopener">'+esc(site.replace(/^https?:\/\//,''))+'</a>':'');
+    h+='<div class="s-sect"><h3>Pêche &amp; lacs</h3><div class="s-chips">'+
+       '<span class="s-chip">Doré</span><span class="s-chip">Brochet</span><span class="s-chip">Touladi</span><span class="s-chip">Truite mouchetée</span></div>';
+    h+='<div class="s-note">ℹ️ Espèces par lac, quotas, hébergement pis heures : gabarit à compléter — chaque pourvoirie aura sa fiche remplie.'+(exemple?' <b>Emplacement d\'exemple (approx.)</b> — utilise 🎣 Pourvoiries pour les vraies données en ligne.':'')+'</div></div>';
+    var geo='geo:'+lat+','+lon+'?q='+lat+','+lon+'('+encodeURIComponent(nom)+')';
+    var osm='https://www.openstreetmap.org/?mlat='+lat+'&mlon='+lon+'#map=15/'+lat+'/'+lon;
+    h+='<div class="s-actions"><a class="go" href="'+geo+'">🧭 M\'y rendre</a><a href="'+osm+'" target="_blank" rel="noopener">Voir sur OSM</a></div>';
+    ouvrirSheet(h);
+  }
+  function afficherSeedPourv(){
+    seedMarkers.forEach(function(m){m.remove();}); seedMarkers=[];
+    SEED_POURV.forEach(function(s){ seedMarkers.push(marqueurPourv(s.lat,s.lon,{name:s.n},true)); });
+  }
+  async function chargerPourvoiries(){
+    if(map.getZoom()<9){ toast('Zoome un peu pour chercher les pourvoiries du secteur'); return; }
+    var b=map.getBounds();
+    var bbox=b.getSouth().toFixed(4)+','+b.getWest().toFixed(4)+','+b.getNorth().toFixed(4)+','+b.getEast().toFixed(4);
+    var query='[out:json][timeout:25];(nwr["name"~"[Pp]ourvoirie|[Zz]ec|[Oo]utfitter"]('+bbox+'););out center 150;';
+    busy(true,'Recherche des pourvoiries…');
+    try{
+      var r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query)});
+      var d=await r.json();
+      pourvMarkers.forEach(function(m){m.remove();}); pourvMarkers=[];
+      var n=0;
+      (d.elements||[]).forEach(function(el){
+        var lat=el.lat!=null?el.lat:(el.center&&el.center.lat), lon=el.lon!=null?el.lon:(el.center&&el.center.lon);
+        if(lat==null||lon==null)return;
+        pourvMarkers.push(marqueurPourv(lat,lon,el.tags||{},false)); n++;
+      });
+      toast(n?(n+' pourvoirie'+(n>1?'s':'')+' trouvée'+(n>1?'s':'')+' dans le secteur'):'Aucune pourvoirie trouvée ici (essaie un autre secteur)');
+    }catch(e){ toast('Recherche en ligne impossible — voici des exemples hors-ligne'); afficherSeedPourv(); }
+    finally{ busy(false); }
+  }
+  document.getElementById('t-pourvoirie').addEventListener('click', function(){
+    pourvOn=!pourvOn;
+    this.classList.toggle('on',pourvOn);
+    if(pourvOn){ chargerPourvoiries(); }
+    else{ pourvMarkers.forEach(function(m){m.remove();}); pourvMarkers=[];
+          seedMarkers.forEach(function(m){m.remove();}); seedMarkers=[]; }
+  });
+
+  /* ════ TRACÉ LIVE (GPS, s'enregistre en roulant) ════ */
+  var liveOn=false, liveWatch=null, liveCoords=[];
+  function majLive(){ if(map.getSource('live'))map.getSource('live').setData({type:'Feature',geometry:{type:'LineString',coordinates:liveCoords}}); }
+  function demarrerLive(){
+    if(!navigator.geolocation){ toast('📍 GPS pas disponible sur cet appareil'); return; }
+    liveOn=true; liveCoords=[];
+    document.getElementById('t-live').classList.add('on');
+    if(!map.getSource('live')){
+      map.addSource('live',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+      map.addLayer({id:'live-l',type:'line',source:'live',layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':'#ff2d55','line-width':5,'line-opacity':.95}});
+    }
+    liveWatch=navigator.geolocation.watchPosition(function(p){
+      var ll=[p.coords.longitude,p.coords.latitude];
+      liveCoords.push(ll); majLive(); majMarqueurMoi(ll); map.easeTo({center:ll,duration:600});
+    }, function(e){ toast(msgErrGeo(e&&e.code)); }, {enableHighAccuracy:true,maximumAge:1000,timeout:15000});
+    toast('🔴 Enregistrement du tracé… roule, je te suis 🛰️');
+  }
+  function arreterLive(){
+    liveOn=false; document.getElementById('t-live').classList.remove('on');
+    if(liveWatch!=null){ navigator.geolocation.clearWatch(liveWatch); liveWatch=null; }
+    toast(liveCoords.length>1?('Tracé enregistré ('+liveCoords.length+' points). « Partager » pour l\'envoyer.'):'Aucun point capté.');
+  }
+  document.getElementById('t-live').addEventListener('click', function(){ if(liveOn)arreterLive(); else demarrerLive(); });
+
+  /* ════ PARTAGER LE TRACÉ (GPX) ════ */
+  function toGPX(coords){
+    var now=new Date().toISOString();
+    var pts=coords.map(function(c){ return '   <trkpt lat="'+c[1].toFixed(6)+'" lon="'+c[0].toFixed(6)+'"></trkpt>'; }).join('\n');
+    return '<?xml version="1.0" encoding="UTF-8"?>\n'+
+      '<gpx version="1.1" creator="TILEXMAP" xmlns="http://www.topografix.com/GPX/1/1">\n'+
+      ' <metadata><name>Tracé TILEXMAP</name><time>'+now+'</time></metadata>\n'+
+      ' <trk><name>Tracé TILEXMAP</name><trkseg>\n'+pts+'\n </trkseg></trk>\n</gpx>';
+  }
+  document.getElementById('t-partage').addEventListener('click', async function(){
+    var coords = liveCoords.length>1?liveCoords:(tracePts.length>1?tracePts:null);
+    if(!coords){ toast('Pas de tracé à partager. Fais « Tracé live » ou « Tracer un chemin » d\'abord.'); return; }
+    var gpx=toGPX(coords);
+    try{
+      var file=new File([gpx],'trace-tilexmap.gpx',{type:'application/gpx+xml'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Mon tracé TILEXMAP',text:'Voici mon tracé forestier 🌲'});
+        return;
+      }
+    }catch(e){}
+    var url=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+    var a=document.createElement('a'); a.href=url; a.download='trace-tilexmap.gpx'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },4000);
+    toast('Tracé exporté en GPX 📤');
+  });
+
+  /* ════ TÉLÉCHARGER LE SECTEUR (hors-ligne) ════ */
+  function lonlat2tile(lon,lat,z){
+    var n=Math.pow(2,z), x=Math.floor((lon+180)/360*n);
+    var y=Math.floor((1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2*n);
+    return [x,y];
+  }
+  document.getElementById('t-offline').addEventListener('click', async function(){
+    var src=map.getStyle().sources, tmpl=null;
+    for(var k in src){ if(src[k].tiles && src[k].tiles[0]){ tmpl=src[k].tiles[0]; break; } }
+    if(!tmpl){ toast('Impossible de trouver la source de tuiles'); return; }
+    var b=map.getBounds(), z0=Math.max(6,Math.floor(map.getZoom())), urls={};
+    for(var z=z0; z<=Math.min(z0+3,15); z++){
+      var t0=lonlat2tile(b.getWest(),b.getNorth(),z), t1=lonlat2tile(b.getEast(),b.getSouth(),z);
+      for(var x=t0[0];x<=t1[0];x++) for(var y=t0[1];y<=t1[1];y++){
+        urls[tmpl.replace('{z}',z).replace('{x}',x).replace('{y}',y)]=1;
+        if(Object.keys(urls).length>500)break;
+      }
+    }
+    var list=Object.keys(urls).slice(0,500), ok=0;
+    busy(true,'Téléchargement hors-ligne ('+list.length+' tuiles)…');
+    await Promise.all(list.map(function(u){ return fetch(u,{mode:'cors'}).then(function(){ok++;}).catch(function(){}); }));
+    busy(false);
+    toast('Secteur en cache ('+ok+'/'+list.length+' tuiles) — visible hors réseau 🌲');
   });
 
   /* ════ TOAST ════ */
