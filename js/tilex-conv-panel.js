@@ -41,8 +41,9 @@ const TilexConvPanel = {
 
     const btnToggle = document.createElement('button');
     btnToggle.id = 'tilex-conv-toggle';
-    btnToggle.textContent = '💬';
+    btnToggle.textContent = '‹';
     btnToggle.title = 'Conversations résumées';
+    btnToggle.setAttribute('aria-label', 'Ouvrir les conversations');
     document.body.appendChild(btnToggle);
 
     // listeners (pas d'inline onclick → pas d'injection)
@@ -148,10 +149,16 @@ const TilexConvPanel = {
     if (document.getElementById('tcp-style')) return;
     const style = document.createElement('style'); style.id = 'tcp-style';
     style.textContent = `
-      #tilex-conv-toggle{position:fixed;bottom:150px;right:14px;width:46px;height:46px;border-radius:50%;
-        background:#FF6B00;color:#fff;border:none;font-size:20px;cursor:pointer;z-index:9998;
-        box-shadow:0 4px 14px rgba(255,107,0,.45);transition:transform .2s;}
-      #tilex-conv-toggle:hover{transform:scale(1.1);}
+      /* Petite flèche discrète collée au bord droit (plus de bulle flottante). */
+      #tilex-conv-toggle{position:fixed;top:50%;right:0;transform:translateY(-50%);
+        width:20px;height:52px;border-radius:10px 0 0 10px;
+        background:rgba(255,107,0,.55);color:#fff;border:none;font-size:20px;line-height:1;
+        cursor:pointer;z-index:9998;display:flex;align-items:center;justify-content:center;
+        padding:0;opacity:.7;box-shadow:-2px 0 8px rgba(0,0,0,.25);
+        transition:opacity .2s,background .2s,width .2s;}
+      #tilex-conv-toggle:hover{opacity:1;background:#FF6B00;width:24px;}
+      #tilex-conv-panel.tcp-ouvert ~ #tilex-conv-toggle{right:340px;}
+      @media(max-width:768px){#tilex-conv-panel.tcp-ouvert ~ #tilex-conv-toggle{right:0;opacity:0;pointer-events:none;}}
       #tilex-conv-panel{position:fixed;top:0;right:-360px;width:340px;max-width:92vw;height:100dvh;background:#0f0f0f;
         border-left:1px solid #2a2a2a;z-index:99999;transition:right .3s ease;display:flex;flex-direction:column;
         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}
