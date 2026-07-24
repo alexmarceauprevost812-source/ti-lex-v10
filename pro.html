@@ -1156,26 +1156,27 @@ body.mode-serious .ag-card.master::before{background:var(--or3)!important;}
    ════════════════════════════════════════════════════════════ */
 .composer-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;
   padding:12px 16px 10px;background:transparent;border-top:none;
-  display:none;transition:left .42s cubic-bezier(.22,1,.36,1);flex-direction:column;gap:0;}
+  display:none;transition:left .42s cubic-bezier(.22,1,.36,1),bottom .6s cubic-bezier(.22,1,.36,1);flex-direction:column;gap:0;}
 body.sb-open .composer-bar{left:var(--sb-w);}
 .composer-bar.visible{display:flex;}
 
 /* ── Accueil centré (façon Claude) au DÉBUT d'une conversation ──
-   Quand le chat est vierge (aucun message), la barre d'écriture + le petit
-   accueil montent au centre de l'écran. Dès qu'un message part, tout
-   redescend en bas (transition douce). */
-.composer-hero{display:none;align-items:center;justify-content:center;gap:14px;
-  margin-bottom:22px;opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease;}
+   Tant que l'utilisateur n'a rien écrit, la barre d'écriture + le petit accueil
+   sont centrés au milieu de l'écran. Dès qu'il envoie son premier message, la
+   barre GLISSE en douceur jusqu'en bas (transition sur « bottom », fluide). */
+.composer-hero{display:flex;align-items:center;justify-content:center;gap:14px;
+  max-height:0;opacity:0;margin:0;overflow:hidden;
+  transition:max-height .55s cubic-bezier(.22,1,.36,1),opacity .4s ease,margin .55s ease;}
 .composer-hero .ch-star{color:var(--orange);font-size:30px;line-height:1;}
 .composer-hero .ch-txt{font-family:Georgia,'Times New Roman',serif;font-size:34px;color:var(--txt);letter-spacing:.3px;}
 @media(max-width:680px){.composer-hero .ch-txt{font-size:26px;}.composer-hero .ch-star{font-size:24px;}}
 
-body.chat-vierge .composer-bar{top:0;bottom:0;justify-content:center;pointer-events:none;}
-body.chat-vierge .composer-bar>*{pointer-events:auto;}
-body.chat-vierge .composer-hero{display:flex;opacity:1;transform:translateY(0);}
-/* On cache le gros accueil du haut (logo + « Bonjour ») pour pas le doubler,
-   mais on GARDE le panneau GitHub accessible. On colle ce qui reste EN HAUT
-   pour pas que ça chevauche la barre d'écriture centrée. */
+/* La barre monte au centre (bottom = moitié d'écran) → animatable en douceur. */
+body.chat-vierge .composer-bar{bottom:calc(50vh - 150px);}
+body.chat-vierge .composer-hero{max-height:90px;opacity:1;margin-bottom:22px;}
+/* En mode centré : on cache la bulle d'accueil auto + le gros logo du haut
+   (l'accueil ✳ les remplace), mais on GARDE le panneau GitHub accessible. */
+body.chat-vierge .chat-msgs .cmsg{display:none;}
 body.chat-vierge .chat-welcome{min-height:auto;justify-content:flex-start;padding:12px 20px 0;gap:8px;}
 body.chat-vierge .chat-welcome-logo,
 body.chat-vierge #chat-welcome-text,
@@ -7473,7 +7474,9 @@ function majChatVierge(){
   var vue=document.getElementById("view-chat");
   var msgs=document.getElementById("chat-msgs");
   var chatActif=vue&&vue.classList.contains("active");
-  var vide=!msgs||!msgs.querySelector(".cmsg");
+  // « Vierge » = l'utilisateur n'a PAS encore écrit (la bulle d'accueil auto
+  // « Salut! Nouvelle conversation » ne compte pas → on regarde .cmsg.u).
+  var vide=!msgs||!msgs.querySelector(".cmsg.u");
   document.body.classList.toggle("chat-vierge",!!(chatActif&&vide));
   var el=document.getElementById("composer-hero-txt");
   if(el){var h=new Date().getHours();el.textContent=(h<12?"Bon matin":h<18?"Bon après-midi":"Bonsoir");}
