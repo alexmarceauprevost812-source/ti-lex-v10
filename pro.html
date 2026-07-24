@@ -11172,6 +11172,8 @@ if ('serviceWorker' in navigator) {
 
     if(mcTab === "projets"){
       var projets = mcProjets.filter(function(p){ return !q || mcNorm(p.nom).indexOf(q) !== -1; });
+      // Favoris ⭐ en premier.
+      projets = projets.slice().sort(function(a,b){ return (mcProjEstFav(b.id)?1:0) - (mcProjEstFav(a.id)?1:0); });
       if(!projets.length){ mcVide(zone, "Aucun projet. Pars-en un avec le bouton en haut !"); return; }
       projets.forEach(function(p){ zone.appendChild(mcItemProjet(p)); });
       return;
@@ -11254,9 +11256,98 @@ if ('serviceWorker' in navigator) {
       rs.className = "mc-item-resume"; rs.textContent = p.resume;
       corps.appendChild(rs);
     }
-    it.appendChild(corps);
+    var fav = document.createElement("button");
+    fav.className = "mc-mini" + (mcProjEstFav(p.id) ? " actif" : "");
+    fav.title = mcProjEstFav(p.id) ? "Retirer des favoris" : "Ajouter aux favoris";
+    fav.textContent = mcProjEstFav(p.id) ? "⭐" : "☆";
+    fav.onclick = function(ev){ ev.stopPropagation(); mcBasculerFavProjet(p); };
+    var plus = document.createElement("button");
+    plus.className = "mc-mini"; plus.title = "Options"; plus.textContent = "⋯";
+    plus.onclick = function(ev){ ev.stopPropagation(); mcCtxProjet(ev, p); };
+    it.appendChild(corps); it.appendChild(fav); it.appendChild(plus);
     it.onclick = function(){ mcOuvrirProjet(p); };
     return it;
+  }
+
+  /* ── Favoris projets (stockés sur l'appareil) ── */
+  function mcFavProjets(){ try{ return JSON.parse(localStorage.getItem("tilex-mc-proj-fav")||"{}"); }catch(e){ return {}; } }
+  function mcProjEstFav(id){ return !!mcFavProjets()[id]; }
+  function mcBasculerFavProjet(p){
+    var all = mcFavProjets();
+    if(all[p.id]) delete all[p.id]; else all[p.id] = true;
+    try{ localStorage.setItem("tilex-mc-proj-fav", JSON.stringify(all)); }catch(e){}
+    mcRendre();
+  }
+
+  /* ── Menu contextuel ⋯ d'un PROJET : Favoris / Partager / Télécharger / Supprimer ── */
+  function mcCtxProjet(ev, p){
+    mcFermerCtx();
+    var box = document.createElement("div");
+    box.className = "mc-ctx"; box.id = "mc-ctx";
+    function opt(ico, label, fn){
+      var b = document.createElement("button");
+      b.textContent = ico + " " + label;
+      b.onclick = function(){ mcFermerCtx(); fn(); };
+      box.appendChild(b);
+    }
+    opt(mcProjEstFav(p.id) ? "⭐" : "☆", mcProjEstFav(p.id) ? "Retirer des favoris" : "Ajouter aux favoris", function(){ mcBasculerFavProjet(p); });
+    opt("🔗", "Partager", function(){ mcPartagerProjet(p); });
+    opt("⬇️", "Télécharger", function(){ mcTelechargerProjet(p); });
+    opt("🗑️", "Supprimer", function(){ mcSupprimerProjet(p); });
+    document.body.appendChild(box);
+    var r = box.getBoundingClientRect();
+    var x = Math.min(ev.clientX, window.innerWidth - r.width - 10);
+    var y = Math.min(ev.clientY, window.innerHeight - r.height - 10);
+    box.style.left = x + "px"; box.style.top = y + "px";
+    setTimeout(function(){
+      document.addEventListener("click", function once(){ mcFermerCtx(); document.removeEventListener("click", once); });
+    }, 0);
+  }
+
+  async function mcPartagerProjet(p){
+    var nbC = mcMetas.filter(function(m){ return m.project_id === p.id; }).length;
+    var txt = "📁 Projet ti-lex-AL : " + (p.nom || "Sans nom")
+      + (p.langage ? "\nLangage : " + p.langage : "")
+      + "\n" + nbC + " conversation" + (nbC>1?"s":"") + " · " + (mcNbFichiers[p.id]||0) + " fichier" + ((mcNbFichiers[p.id]||0)>1?"s":"")
+      + (p.resume ? "\n\n" + p.resume : "");
+    try{
+      if(navigator.share){ await navigator.share({ title: "Projet " + (p.nom||""), text: txt }); return; }
+    }catch(e){ if(e && e.name === "AbortError") return; }
+    try{ await navigator.clipboard.writeText(txt); mcStatut("🔗 Infos du projet copiées — colle-les où tu veux."); setTimeout(function(){mcStatut("");},2500); }
+    catch(e){ mcErreur("Partage impossible sur cet appareil."); }
+  }
+
+  async function mcTelechargerProjet(p){
+    mcStatut("⬇️ Préparation du téléchargement…");
+    try{
+      var fichiers = await mcRest("/tilex_files?project_id=eq." + encodeURIComponent(p.id) + "&select=chemin,contenu,storage_path,hash,created_at");
+      var convs = mcMetas.filter(function(m){ return m.project_id === p.id; })
+        .map(function(m){ return { conv_id:m.conv_id, titre:m.titre, resume:m.resume, updated_at:m.updated_at }; });
+      var bundle = { projet: { nom:p.nom, langage:p.langage, description:p.description, resume:p.resume, created_at:p.created_at }, conversations: convs, fichiers: fichiers || [] };
+      var nomFichier = (p.nom || "projet").replace(/[^a-z0-9_\-]+/gi, "_").slice(0, 60) + "-tilex.json";
+      var blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nomFichier; a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      mcStatut("✅ Projet téléchargé (" + ((fichiers||[]).length) + " fichier(s)).");
+      setTimeout(function(){mcStatut("");},2500);
+    }catch(e){ mcErreur("Téléchargement : " + e.message); }
+  }
+
+  async function mcSupprimerProjet(p){
+    var ok = window.scnModal
+      ? await scnModal({ titre: "Supprimer le projet", message: "« " + (p.nom || "Sans nom") + " » — le projet sera retiré. Action permanente.", ok: "Supprimer", okColor: "#ff4d4d", annuler: "Annuler" })
+      : confirm("Supprimer le projet « " + (p.nom || "Sans nom") + " » pour de bon ?");
+    if(!ok) return;
+    try{
+      await mcRest("/tilex_projects?id=eq." + encodeURIComponent(p.id), { method: "DELETE", prefer: "return=minimal" });
+      // Détache les conversations de ce projet (elles restent, sans projet).
+      mcMetas.forEach(function(m){ if(m.project_id === p.id) m.project_id = null; });
+      mcProjets = mcProjets.filter(function(x){ return x.id !== p.id; });
+      var all = mcFavProjets(); if(all[p.id]){ delete all[p.id]; try{ localStorage.setItem("tilex-mc-proj-fav", JSON.stringify(all)); }catch(e){} }
+      mcRendre();
+      mcStatut("🗑️ Projet supprimé.");
+      setTimeout(function(){mcStatut("");},2500);
+    }catch(e){ mcErreur("Suppression : " + e.message); }
   }
 
   /* ── Menu contextuel ⋯ d'une conversation ── */
