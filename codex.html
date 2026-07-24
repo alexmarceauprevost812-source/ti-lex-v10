@@ -88,9 +88,34 @@
   .chip:active{border-color:var(--orange);}
   #chip-plus{width:40px;height:40px;justify-content:center;padding:0;border-radius:50%;font-size:19px;}
   .comp-spacer{flex:1;}
-  #btn-envoyer{width:44px;height:44px;border-radius:50%;border:none;background:var(--texte);color:#111;
-    font-size:17px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
-  #btn-envoyer.stop{background:#fff;color:#111;}
+  /* 👿 Le démon TI-LEX-AL EST le bouton Envoyer — PAREIL que dans le chat :
+     l'image du démon + le mot « Envoyer » collé juste en dessous, clin d'œil
+     animé au clic. En génération, la mascotte se cache pis un carré ■ apparaît
+     pour arrêter (on garde le comportement stop d'avant). */
+  #btn-envoyer{width:auto;height:auto;border:none;background:none;border-radius:12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;
+    padding:0;flex:0 0 auto;overflow:visible;cursor:pointer;position:relative;transition:transform .1s ease;}
+  #btn-envoyer .tilex-mascot{width:56px;height:auto;display:block;pointer-events:none;
+    transform-origin:50% 100%;-webkit-user-select:none;user-select:none;
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,90,20,.32));
+    transition:transform .12s ease;}
+  #btn-envoyer .send-label{font-size:10px;font-weight:800;color:#ff7a00;letter-spacing:.6px;
+    line-height:1;margin-top:-5px;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  #btn-envoyer:hover .tilex-mascot{transform:scale(1.06);}
+  #btn-envoyer:active .tilex-mascot{transform:scale(.93);}
+  #btn-envoyer .tilex-mascot.nudge{animation:cdxMascotNudge .5s ease;}
+  @keyframes cdxMascotNudge{
+    0%{transform:translateY(0) rotate(0);}
+    28%{transform:translateY(-6px) rotate(-3deg) scale(1.06);}
+    60%{transform:translateY(0) rotate(2deg) scale(1.01);}
+    100%{transform:translateY(0) rotate(0);}}
+  #btn-envoyer.stop{width:44px;height:44px;border-radius:50%;background:#fff;color:#111;
+    align-items:center;justify-content:center;}
+  #btn-envoyer.stop .tilex-mascot,#btn-envoyer.stop .send-label{visibility:hidden;}
+  #btn-envoyer.stop::after{content:'■';position:absolute;inset:0;display:flex;
+    align-items:center;justify-content:center;font-size:17px;font-weight:900;color:#111;}
+  @media (max-width:380px){#btn-envoyer .tilex-mascot{width:50px;}}
+  @media (prefers-reduced-motion:reduce){#btn-envoyer .tilex-mascot.nudge{animation:none;}}
 
   /* ── Menu modèle / menu ⋮ ── */
   .pop{position:fixed;background:var(--bg2);border:1px solid var(--bordure);border-radius:14px;
@@ -171,7 +196,10 @@
         <button class="chip" id="chip-modele">Sonnet 5</button>
         <button class="chip" id="chip-mode">🖐 Demander</button>
         <div class="comp-spacer"></div>
-        <button id="btn-envoyer" title="Envoyer">⬆</button>
+        <button id="btn-envoyer" class="send-demon" title="Envoyer">
+          <img class="tilex-mascot" id="cdx-mascot" src="/assets/tilex-mascot-open.png" alt="Envoyer" draggable="false">
+          <span class="send-label">Envoyer</span>
+        </button>
       </div>
     </div>
   </div>
@@ -765,7 +793,8 @@ async function envoyer(){
   bulleU(txt);
   conv.push({role:'user',content:txt});
   occupe=true;
-  $('btn-envoyer').textContent='■';$('btn-envoyer').classList.add('stop');
+  clignerMascotteCdx();
+  $('btn-envoyer').classList.add('stop');
   thinkOn();
 
   var headers={'Content-Type':'application/json'};
@@ -864,7 +893,23 @@ async function envoyer(){
   }
   thinkOff();
   occupe=false;abortCtl=null;
-  $('btn-envoyer').textContent='⬆';$('btn-envoyer').classList.remove('stop');
+  $('btn-envoyer').classList.remove('stop');
+}
+
+/* 👿 Mascotte du bouton Envoyer (pareil que le chat) : clin d'œil (double) +
+   petit saut quand on envoie. Précharge la version « wink » pour bascule instantanée. */
+var _cdxMascotTimers=[];
+(function(){try{var pre=new Image();pre.src='/assets/tilex-mascot-wink.png';}catch(e){}})();
+function clignerMascotteCdx(){
+  var m=$('cdx-mascot');if(!m)return;
+  var OPEN='/assets/tilex-mascot-open.png',WINK='/assets/tilex-mascot-wink.png';
+  _cdxMascotTimers.forEach(clearTimeout);_cdxMascotTimers=[];
+  m.classList.remove('nudge');void m.offsetWidth;m.classList.add('nudge');
+  m.src=WINK;
+  _cdxMascotTimers.push(setTimeout(function(){m.src=OPEN;},150));
+  _cdxMascotTimers.push(setTimeout(function(){m.src=WINK;},250));
+  _cdxMascotTimers.push(setTimeout(function(){m.src=OPEN;},400));
+  _cdxMascotTimers.push(setTimeout(function(){m.classList.remove('nudge');},520));
 }
 
 $('btn-envoyer').addEventListener('click',envoyer);
