@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TI-LEX — Agent autonome</title>
+  <style>
+    :root{color-scheme:dark;--bg:#050505;--panel:#101010;--line:#303030;--accent:#ff6a00;--text:#f4f4f4;--muted:#a4a4a4}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#211006 0,#050505 42%);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh}
+    main{max-width:980px;margin:auto;padding:32px 18px 64px}.brand{letter-spacing:.16em;color:var(--accent);font-weight:900}.card{background:rgba(16,16,16,.94);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 20px 70px #0008;margin-top:18px}
+    h1{font-size:clamp(30px,6vw,56px);margin:8px 0}.sub{color:var(--muted);max-width:760px;line-height:1.55}label{display:block;margin:18px 0 8px;font-weight:700}textarea,select,input{width:100%;background:#090909;color:var(--text);border:1px solid #363636;border-radius:12px;padding:13px;font:inherit}textarea{min-height:150px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}button{border:0;border-radius:12px;padding:13px 18px;font-weight:900;cursor:pointer;background:var(--accent);color:#111}button.secondary{background:#222;color:#eee;border:1px solid #444}button:disabled{opacity:.5;cursor:not-allowed}.status{margin-top:16px;color:var(--muted)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#070707;border:1px solid #292929;border-radius:12px;padding:16px;line-height:1.5}.step{border-left:3px solid var(--accent);padding:10px 14px;margin:10px 0;background:#0a0a0a;border-radius:0 10px 10px 0}.tag{display:inline-block;border:1px solid #484848;border-radius:99px;padding:3px 9px;font-size:12px;color:#ccc;margin-right:6px}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand">TI-LEX AUTONOME // V1</div>
+  <h1>Un objectif. Un plan. Une exécution contrôlée.</h1>
+  <p class="sub">L’agent décompose la mission, utilise uniquement les outils autorisés, conserve une trace complète et exige une validation humaine avant toute action sensible.</p>
+
+  <section class="card">
+    <label for="goal">Objectif de l’agent</label>
+    <textarea id="goal" placeholder="Exemple : Analyse la documentation publique de mon projet et propose les trois améliorations prioritaires, avec les raisons."></textarea>
+    <div class="grid">
+      <div><label for="provider">Modèle</label><select id="provider"><option value="anthropic">Claude / Anthropic</option><option value="openai">OpenAI</option></select></div>
+      <div><label for="steps">Maximum d’étapes</label><input id="steps" type="number" min="1" max="12" value="6" /></div>
+    </div>
+    <div class="actions"><button id="run">Lancer l’agent</button><button id="clear" class="secondary">Effacer</button></div>
+    <div id="status" class="status">Prêt.</div>
+  </section>
+
+  <section id="resultCard" class="card" hidden>
+    <h2>Résultat</h2><pre id="answer"></pre><h3>Trace d’exécution</h3><div id="trace"></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('run').addEventListener('click',async()=>{
+  const goal=$('goal').value.trim(); if(!goal){$('status').textContent='Entre un objectif.';return;}
+  $('run').disabled=true;$('status').textContent='Agent en exécution…';$('resultCard').hidden=true;
+  try{
+    const r=await fetch('/api/agent/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({goal,provider:$('provider').value,maxSteps:Number($('steps').value),agentId:'ti-lex-autonome'})});
+    const data=await r.json(); if(!r.ok)throw new Error(data.error||'Erreur');
+    $('answer').textContent=data.answer||'Aucune réponse.';$('trace').innerHTML='';
+    (data.trace||[]).forEach(s=>{const d=document.createElement('div');d.className='step';d.innerHTML=`<span class="tag">Étape ${s.step}</span><span class="tag">${escapeHtml(s.tool)}</span><span class="tag">${s.progress}%</span><div>${escapeHtml(s.summary||'')}</div>`;$('trace').appendChild(d)});
+    $('resultCard').hidden=false;$('status').textContent=data.status==='completed'?'Mission terminée.':'Limite d’étapes atteinte.';
+  }catch(e){$('status').textContent='Erreur : '+e.message}finally{$('run').disabled=false}
+});
+$('clear').addEventListener('click',()=>{$('goal').value='';$('resultCard').hidden=true;$('status').textContent='Prêt.'});
+function escapeHtml(v){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+</script>
+</body>
+</html>
