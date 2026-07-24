@@ -2371,14 +2371,13 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
-    <div id="connectors-hub" data-connectors-hub></div>
-    <button class="studio-hdr-btn" id="studio-hdr-btn" title="Ouvrir/Fermer Studio">⚡ STUDIO<span class="shb-dot"></span></button>
+    <!-- Retirés à la demande d'Alex : pastilles de connexion (#connectors-hub),
+         bouton ⚡ STUDIO et cloche 🔔 de notifications. -->
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
     </div>
     <button class="notif-btn" id="tlx-install-btn" onclick="tlxInstaller()" title="Installer l'application" style="display:none;">⬇️</button>
     <button class="notif-btn" id="mc-theme-btn" onclick="toggleTheme()" title="Thème jour / nuit">🌙</button>
-    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="notif-badge" style="display:none;">0</span></button>
   </div>
 </nav>
 
@@ -2406,10 +2405,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon"><img src="assets/tilex-logo.png" alt="" class="sb-ico-logo"></span><span class="sb-label" data-txt="CHAT"></span>
   </div>
 
-  <!-- Bouton « Nouvelle conversation » (style Claude/ChatGPT) -->
-  <div class="sb-item sb-newconv" id="si-newconv" onclick="showTab('chat');newConversation();if(window.innerWidth<=640&&window.toggleSidebar)toggleSidebar();">
-    <span class="sb-icon">✏️</span><span class="sb-label">NOUVELLE CONVERSATION</span>
-  </div>
+  <!-- Bouton crayon « Nouvelle conversation » retiré à la demande d'Alex. -->
 
   <!-- Liste des conversations DANS le menu de gauche (épinglées + récentes) -->
   <div class="sb-conv-wrap sb-label" id="sb-conv-wrap">
