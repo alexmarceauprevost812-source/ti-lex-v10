@@ -294,6 +294,29 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 /* Icône = logo démon TI-LEX-AL (au lieu d'un emoji) pour Chat / Codex / Coword */
 .sb-ico-logo{width:26px;height:26px;object-fit:contain;flex-shrink:0;
   filter:drop-shadow(0 0 5px rgba(255,90,20,.45));}
+
+/* ── Conversations DANS le menu de gauche (style Claude/ChatGPT) ── */
+.sb-newconv{margin:4px 8px 2px;border:1px solid rgba(255,122,0,.35);border-radius:10px;}
+.sb-newconv .sb-icon{color:var(--orange);}
+.sb-conv-wrap{padding:2px 6px 6px;overflow-y:auto;max-height:44vh;}
+.sb-conv-wrap::-webkit-scrollbar{width:4px;}
+.sb-conv-wrap::-webkit-scrollbar-thumb{background:#333;border-radius:4px;}
+.sb-conv-sec{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);
+  letter-spacing:1.5px;padding:9px 8px 3px;text-transform:uppercase;}
+.sb-conv{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:8px;cursor:pointer;
+  color:#cfcfd6;font-size:13px;position:relative;transition:background .15s;}
+.sb-conv:hover{background:rgba(255,255,255,.05);}
+.sb-conv.active{background:rgba(255,122,0,.13);color:#fff;}
+.sb-conv .scv-ico{flex:0 0 auto;font-size:12px;}
+.sb-conv .scv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sb-conv .scv-dots{flex:0 0 auto;opacity:0;background:none;border:none;color:#9a9aa5;
+  cursor:pointer;font-size:16px;padding:2px 5px;line-height:1;border-radius:6px;}
+.sb-conv:hover .scv-dots,.sb-conv.active .scv-dots{opacity:1;}
+.sb-conv .scv-dots:hover{background:rgba(255,255,255,.1);color:#fff;}
+.sb-conv-empty{color:#666;font-size:11.5px;padding:10px 8px;text-align:center;}
+.sidebar.collapsed .sb-conv-wrap,.sidebar.collapsed .sb-newconv .sb-label{display:none;}
+/* La grosse carte de conversation dans le chat est retirée (liste = menu gauche) */
+#conv-list{display:none !important;}
 /* Animation lettre par lettre */
 .sb-item .ltr{display:inline-block;}
 .sb-item:hover .ltr,.sb-item.active .ltr{animation:lsw .5s calc(var(--li) * .04s) ease-out both;}
@@ -2374,7 +2397,15 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon"><img src="assets/tilex-logo.png" alt="" class="sb-ico-logo"></span><span class="sb-label" data-txt="CHAT"></span>
   </div>
 
-  <!-- CONVERSATION + PROJET retirés du menu à la demande (on garde CHAT) -->
+  <!-- Bouton « Nouvelle conversation » (style Claude/ChatGPT) -->
+  <div class="sb-item sb-newconv" id="si-newconv" onclick="showTab('chat');newConversation();if(window.innerWidth<=640&&window.toggleSidebar)toggleSidebar();">
+    <span class="sb-icon">✏️</span><span class="sb-label">NOUVELLE CONVERSATION</span>
+  </div>
+
+  <!-- Liste des conversations DANS le menu de gauche (épinglées + récentes) -->
+  <div class="sb-conv-wrap sb-label" id="sb-conv-wrap">
+    <div class="sb-conv-list" id="sb-conv-list"></div>
+  </div>
 
   <!-- ④ CODEX — même moteur que Claude Code (ex-tilexcode) -->
   <div class="sb-item" id="si-codex" onclick="window.location.href='/codex'" style="cursor:pointer;">
@@ -5547,11 +5578,13 @@ var chatConvs=JSON.parse(localStorage.getItem("tilex-chat-convs")||"[]");
 var chatSubFilter="convos";
 var activeChatConv=-1;
 (function(){
-  if(chatConvs.length===0)return;
+  if(chatConvs.length===0){ try{document.addEventListener("DOMContentLoaded",function(){if(typeof renderConvList==="function")renderConvList();});}catch(e){} return; }
   var idx=chatConvs.findIndex(function(c){return c.active;});
   if(idx===-1){idx=chatConvs.length-1;chatConvs[idx].active=true;}
   activeChatConv=idx;
   chatHistory=chatConvs[idx].messages?chatConvs[idx].messages.slice():[];
+  // Rendu initial de la liste des conversations dans le menu de gauche.
+  try{document.addEventListener("DOMContentLoaded",function(){if(typeof renderConvList==="function")renderConvList();});}catch(e){}
 })();
 function showSub(sub){
   chatSubFilter=sub;
@@ -5568,21 +5601,50 @@ function showSub(sub){
 
 /* ── CONVERSATION LIST ── */
 function renderConvList(){
+  // Rendu PRINCIPAL : la liste des conversations dans le MENU DE GAUCHE
+  // (style Claude/ChatGPT) — groupée : Épinglées ★, Projets 📁, puis Récentes.
+  var sb=document.getElementById("sb-conv-list");
+  if(sb){
+    sb.innerHTML="";
+    if(chatConvs.length===0){
+      sb.innerHTML='<div class="sb-conv-empty">Aucune conversation.<br>Commence à jaser! 💬</div>';
+    }else{
+      var pin=[],proj=[],autres=[];
+      for(var i=0;i<chatConvs.length;i++){
+        var f=getConvFlags(i);
+        if(f.fav)pin.push(i); else if(f.proj)proj.push(i); else autres.push(i);
+      }
+      var recent=function(a,b){return (chatConvs[b].ts||0)-(chatConvs[a].ts||0);};
+      pin.sort(recent);proj.sort(recent);autres.sort(recent);
+      function ajouterGroupe(titre,arr){
+        if(!arr.length)return;
+        var sec=document.createElement("div");sec.className="sb-conv-sec";sec.textContent=titre;sb.appendChild(sec);
+        arr.forEach(function(idx){
+          var c=chatConvs[idx];var f=getConvFlags(idx);
+          var ico=f.fav?"📌":(f.proj?"📁":"💬");
+          var d=document.createElement("div");
+          d.className="sb-conv"+(idx===activeChatConv?" active":"");
+          d.innerHTML='<span class="scv-ico">'+ico+'</span><span class="scv-title">'+escHtml(c.title||"Conversation")+'</span><button class="scv-dots" title="Options">⋯</button>';
+          d.onclick=(function(k){return function(){ showTab("chat"); loadConv(k); if(window.innerWidth<=640&&window.toggleSidebar)toggleSidebar(); };})(idx);
+          d.querySelector(".scv-dots").onclick=(function(k){return function(ev){ev.stopPropagation();openConvCtxMenu(ev,k);};})(idx);
+          sb.appendChild(d);
+        });
+      }
+      ajouterGroupe("★ Épinglées",pin);
+      ajouterGroupe("📁 Projets",proj);
+      ajouterGroupe("Récentes",autres);
+    }
+  }
+  // Ancienne carte dans le chat : conservée pour compat, mais masquée en CSS.
   var list=document.getElementById("conv-list");if(!list)return;
   if(chatConvs.length===0){list.innerHTML='<div class="sub-empty">Aucune conversation sauvegardée.</div>';return;}
   list.innerHTML="";
-  for(var i=chatConvs.length-1;i>=0;i--){
-    var c=chatConvs[i];
-    var flags=getConvFlags(i);
-    var ago=timeAgo(c.ts||Date.now());
-    var msgCount=(c.messages||[]).length;
-    var d=document.createElement("div");d.className="conv-item"+(i===activeChatConv?" active":"");d.setAttribute("data-idx",i);
-    var badges="";
-    if(flags.fav)badges+='<span class="conv-badge fav">★</span>';
-    if(flags.proj)badges+='<span class="conv-badge proj">📁</span>';
-    d.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(c.title||"Conversation")+'</div><div class="conv-item-meta"><span>'+ago+'</span><span>'+msgCount+' msg</span></div></div><div class="conv-item-badges">'+badges+'</div><button class="btn-conv-dots" onclick="event.stopPropagation();openConvCtxMenu(event,'+i+')">⋯</button><button class="conv-item-del" data-idx="'+i+'" onclick="event.stopPropagation();deleteConv('+i+')">✕</button>';
-    d.onclick=(function(idx){return function(){loadConv(idx);};})(i);
-    list.appendChild(d);
+  for(var j=chatConvs.length-1;j>=0;j--){
+    var cc=chatConvs[j];
+    var d2=document.createElement("div");d2.className="conv-item"+(j===activeChatConv?" active":"");d2.setAttribute("data-idx",j);
+    d2.innerHTML='<span class="conv-item-ico">💬</span><div class="conv-item-info"><div class="conv-item-title">'+escHtml(cc.title||"Conversation")+'</div></div>';
+    d2.onclick=(function(idx){return function(){loadConv(idx);};})(j);
+    list.appendChild(d2);
   }
 }
 function timeAgo(ts){
