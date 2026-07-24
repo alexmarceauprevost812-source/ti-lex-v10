@@ -91,9 +91,16 @@
 /* Boutons : orange FONCÉ le jour, texte crème pour le contraste sur beige */
 [data-theme="day"] .btn-orange{background:linear-gradient(135deg,#A03F00,#C24E00,#E05A00);color:#fff5e8;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-tilex)!important;}
-html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;}
+/* 📱 Police + grosseur de texte du SYSTÈME (téléphone) — zéro fake :
+   --font-tilex = déjà la police système (SF Pro iPhone / Roboto Android).
+   -webkit-text-size-adjust:100% empêche le navigateur de retoucher la taille,
+   pis @supports (font:-apple-system-body) fait suivre le réglage « grosseur du
+   texte » d'iOS (Dynamic Type). */
+html{overflow-x:hidden;background:var(--bg);transition:background .25s ease;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;}
+@supports (font: -apple-system-body){ html{ font: -apple-system-body; } }
 body{background:var(--bg);color:var(--txt);font-family:var(--font-tilex);min-height:100vh;
-  overflow-x:hidden;transition:background .25s ease,color .25s ease;}
+  overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;transition:background .25s ease,color .25s ease;}
 h1,h2,h3{font-weight:700!important;}
 h4,h5,h6{font-weight:500!important;}
 pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}

@@ -17,8 +17,10 @@
     --mono:'Share Tech Mono',ui-monospace,Menlo,monospace;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
-  body{background:var(--bg);color:var(--texte);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  /* 📱 Police + grosseur de texte du SYSTÈME (téléphone), zéro fake. */
+  html,body{height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  @supports (font: -apple-system-body){ html{ font: -apple-system-body; } }
+  body{background:var(--bg);color:var(--texte);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;}
 
   /* ── Header ── */
