@@ -28,6 +28,8 @@ const MEMORY_MIN_SIMILARITY = 0.55;
 const FILE_SEARCH_MATCH_COUNT = 8;
 const FILE_SEARCH_MIN_SIMILARITY = 0.5;
 const QUOTA_WARNING_THRESHOLD = 0.8;
+// 🔌 Exécuteur générique d'agent_tools : délai max d'appel à une Edge Function.
+const GENERIC_ENDPOINT_TIMEOUT_MS = 90000;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -246,6 +248,59 @@ async function executeLireDernierScan(input: any, ctx: DispatchCtx): Promise<str
   }
 }
 
+// 🔌 [EXÉCUTEUR GÉNÉRIQUE] Tout outil agent_tools de type custom_function dont la
+// config déclare un `endpoint` (nom d'Edge Function) est appelé ici : nouveaux
+// pouvoirs branchés en DB sans AUCUNE modification de code.
+//   POST ${SUPABASE_URL}/functions/v1/${endpoint}
+//   body = { ...config.default_params, ...input }  (l'input du modèle prioritaire)
+//   Authorization = JWT de l'utilisateur, relayé tel quel (l'endpoint fait sa
+//   propre vérification d'autorisation). Timeout 90 s, jamais de stack trace.
+async function executeGenericEndpointTool(
+  name: string,
+  config: Record<string, any>,
+  input: any,
+  ctx: DispatchCtx,
+): Promise<string> {
+  if (!ctx.authHeader || !ctx.supabaseUrl) {
+    return JSON.stringify({ ok: false, erreur: `Outil « ${name} » : contexte d'appel indisponible.` });
+  }
+  // Hygiène du nom d'endpoint : nom de fonction seulement (pas de chemin/URL).
+  const endpoint = String(config.endpoint).trim();
+  if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(endpoint)) {
+    return JSON.stringify({ ok: false, erreur: `Outil « ${name} » : endpoint invalide.` });
+  }
+  const defaults = (config.default_params && typeof config.default_params === "object") ? config.default_params : {};
+  const params = (input && typeof input === "object") ? input : {};
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), GENERIC_ENDPOINT_TIMEOUT_MS);
+  try {
+    const r = await fetch(`${ctx.supabaseUrl}/functions/v1/${endpoint}`, {
+      method: "POST",
+      signal: ctrl.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": ctx.authHeader,
+        "apikey": Deno.env.get("SUPABASE_ANON_KEY") || "",
+      },
+      body: JSON.stringify({ ...defaults, ...params }),
+    });
+    const data = await r.json().catch(() => null);
+    if (!r.ok) {
+      const msg = (data && (data.error || data.message)) || `HTTP ${r.status}`;
+      return JSON.stringify({ ok: false, erreur: `Outil « ${name} » en échec : ${msg}` });
+    }
+    return JSON.stringify(data ?? { ok: true });
+  } catch (e) {
+    const msg = e instanceof Error && e.name === "AbortError"
+      ? `Outil « ${name} » : délai de ${GENERIC_ENDPOINT_TIMEOUT_MS / 1000} s dépassé.`
+      : `Outil « ${name} » injoignable : ${e instanceof Error ? e.message : String(e)}`;
+    return JSON.stringify({ ok: false, erreur: msg });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 interface ExtractedMemory {
   kind: "fact" | "preference" | "summary";
   content: string;
@@ -318,15 +373,23 @@ interface AgentToolRow {
   tool_type: string; name: string; description: string;
   config: Record<string, any>; is_enabled: boolean; sort_order: number;
 }
-interface BuiltTools { tools: any[]; memoryRecallEnabled: boolean; subAgentConsultEnabled: boolean; }
+interface BuiltTools {
+  tools: any[];
+  memoryRecallEnabled: boolean;
+  subAgentConsultEnabled: boolean;
+  // 🔌 Config des custom_function lues en DB (nom → config complète), pour
+  // l'exécuteur générique d'endpoint dans dispatchClientTool.
+  customFunctions: Map<string, Record<string, any>>;
+}
 
 function buildToolsFromConfig(rows: AgentToolRow[], fallbackAgent: { can_search: boolean; is_master: boolean }, subAgentIds: string[]): BuiltTools {
   if (rows.length === 0) {
     const tools: any[] = [];
     if (fallbackAgent.can_search) tools.push({ type: "web_search_20250305", name: "web_search", max_uses: WEB_SEARCH_MAX_USES });
-    return { tools, memoryRecallEnabled: true, subAgentConsultEnabled: fallbackAgent.is_master && subAgentIds.length > 0 };
+    return { tools, memoryRecallEnabled: true, subAgentConsultEnabled: fallbackAgent.is_master && subAgentIds.length > 0, customFunctions: new Map() };
   }
   const tools: any[] = [];
+  const customFunctions = new Map<string, Record<string, any>>();
   let memoryRecallEnabled = false;
   const enabled = rows.filter((r) => r.is_enabled).sort((a, b) => a.sort_order - b.sort_order);
   for (const row of enabled) {
@@ -356,7 +419,11 @@ function buildToolsFromConfig(rows: AgentToolRow[], fallbackAgent: { can_search:
           },
         }); break;
       case "custom_function":
-        if (row.config?.input_schema) tools.push({ name: row.name, description: row.description || row.name, input_schema: row.config.input_schema });
+        if (row.config?.input_schema) {
+          tools.push({ name: row.name, description: row.description || row.name, input_schema: row.config.input_schema });
+          // Garder la config complète (endpoint, default_params...) pour le dispatch.
+          customFunctions.set(row.name, row.config ?? {});
+        }
         break;
       case "mcp_server": break;
       case "computer_use":
@@ -368,7 +435,7 @@ function buildToolsFromConfig(rows: AgentToolRow[], fallbackAgent: { can_search:
         }); break;
     }
   }
-  return { tools, memoryRecallEnabled, subAgentConsultEnabled: fallbackAgent.is_master && subAgentIds.length > 0 };
+  return { tools, memoryRecallEnabled, subAgentConsultEnabled: fallbackAgent.is_master && subAgentIds.length > 0, customFunctions };
 }
 
 function hasClientSideTool(tools: any[]): boolean {
@@ -390,6 +457,8 @@ interface DispatchCtx {
   aggCitations?: any[];
   aggResults?: { count: number };
   extraOutputTokens?: { count: number };
+  // 🔌 Configs des custom_function (nom → config) lues depuis agent_tools.
+  customFunctions?: Map<string, Record<string, any>>;
 }
 
 async function dispatchClientTool(name: string, input: any, ctx: DispatchCtx): Promise<{ content: string; is_error?: boolean }> {
@@ -422,6 +491,13 @@ async function dispatchClientTool(name: string, input: any, ctx: DispatchCtx): P
     if (ctx.extraOutputTokens) ctx.extraOutputTokens.count += c.tokens;
     ctx.onConsulted?.({ agent: { id: sub.id, name: sub.name, emoji: sub.emoji }, tokens: c.tokens, used_search: c.queries.length > 0 });
     return { content: c.text };
+  }
+  // 🔌 Cas générique APRÈS les cas codés en dur (ceux-ci restent prioritaires) :
+  // tout custom_function dont la config déclare un `endpoint` est exécuté via
+  // l'Edge Function correspondante, JWT utilisateur relayé, timeout 90 s.
+  const cfg = ctx.customFunctions?.get(name);
+  if (cfg && typeof cfg.endpoint === "string" && cfg.endpoint.trim()) {
+    return { content: await executeGenericEndpointTool(name, cfg, input, ctx) };
   }
   return { content: `Tool inconnu: ${name}`, is_error: true };
 }
@@ -650,6 +726,7 @@ Deno.serve(async (req: Request) => {
             onConsulting: (info) => enqueue(sseEvent("consulting", info)),
             onConsulted: (info) => enqueue(sseEvent("consulted", info)),
             consultations, aggQueries, aggCitations, aggResults, extraOutputTokens,
+            customFunctions: builtTools.customFunctions,
           };
 
           try {
