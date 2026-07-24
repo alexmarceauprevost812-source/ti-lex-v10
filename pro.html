@@ -240,7 +240,7 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 [data-theme="day"] #sidebar-toggle-btn svg{color:#1A1A1A;}
 
 .sidebar{
-  position:fixed;top:var(--tb);bottom:0;left:0;z-index:200;
+  position:fixed;top:0;bottom:0;left:0;z-index:200;
   width:0;overflow:hidden;opacity:0;
   background:#000;border-right:none;backdrop-filter:none;
   display:flex;flex-direction:column;padding:0;
@@ -2195,8 +2195,10 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 @media (prefers-reduced-motion:reduce){ .sb-item.tlx-fire,.sb-item.tlx-fire::after,.sb-item.tlx-fire .sb-icon{ animation:none !important; } }
 .sidebar.sidebar-open{ border-right:1px solid rgba(255,255,255,.06); }
 
-/* En-tête : petit logo + gros titre serif aligné à gauche (comme « Claude ») */
-.sb-logo-box{ align-items:flex-start; padding:20px 20px 6px; flex-direction:row; gap:12px; }
+/* En-tête : petit logo + gros titre serif aligné à gauche (comme « Claude »).
+   Le menu monte tout en haut (sidebar top:0) → on décale l'en-tête à droite
+   du bouton ☰ (top-left) pis on respecte la barre d'état du téléphone. */
+.sb-logo-box{ align-items:center; padding:calc(12px + env(safe-area-inset-top,0px)) 16px 6px 58px; flex-direction:row; gap:12px; }
 .sb-logo-img-wrap{ max-width:40px; width:40px; }
 .sb-logo-img-wrap img{ border-radius:9px; }
 .sb-heat{ display:none !important; }
@@ -2327,12 +2329,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
 
-  <!-- Carré animé ti-démon (bleu ⇆ feu) — en haut du menu -->
-  <div class="sb-demon" aria-hidden="true">
-    <span class="g b"></span><span class="g o"></span>
-    <img class="base" src="assets/tilex-demon-bleu.png" alt="" loading="lazy">
-    <img class="fire" src="assets/tilex-demon-feu.png" alt="" loading="lazy">
-  </div>
+  <!-- Carré animé ti-démon (effet scan feu) retiré à la demande d'Alex.
+       Le menu remonte tout en haut de l'écran. -->
 
   <!-- Logo sidebar avec chaleur derrière -->
   <div class="sb-logo-box">
