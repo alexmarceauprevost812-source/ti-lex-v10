@@ -291,6 +291,9 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 .sb-item:hover{color:#ffffff;opacity:1;background:rgba(255,106,0,.05);border-left-color:rgba(255,106,0,.4);}
 .sb-item.active{color:var(--orange);opacity:1;background:rgba(255,106,0,.1);border-left-color:var(--orange);}
 .sb-icon{font-size:15px;width:var(--sb-c);text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+/* Icône = logo démon TI-LEX-AL (au lieu d'un emoji) pour Chat / Codex / Coword */
+.sb-ico-logo{width:26px;height:26px;object-fit:contain;flex-shrink:0;
+  filter:drop-shadow(0 0 5px rgba(255,90,20,.45));}
 /* Animation lettre par lettre */
 .sb-item .ltr{display:inline-block;}
 .sb-item:hover .ltr,.sb-item.active .ltr{animation:lsw .5s calc(var(--li) * .04s) ease-out both;}
@@ -2368,19 +2371,19 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- ① CHAT -->
   <div class="sb-item active" id="si-chat" onclick="showTab('chat');if(window.mcOuvrirPanneau)mcOuvrirPanneau();">
-    <span class="sb-icon">💬</span><span class="sb-label" data-txt="CHAT"></span>
+    <span class="sb-icon"><img src="assets/tilex-logo.png" alt="" class="sb-ico-logo"></span><span class="sb-label" data-txt="CHAT"></span>
   </div>
 
   <!-- CONVERSATION + PROJET retirés du menu à la demande (on garde CHAT) -->
 
   <!-- ④ CODEX — même moteur que Claude Code (ex-tilexcode) -->
   <div class="sb-item" id="si-codex" onclick="window.location.href='/codex'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff7a00;">💻</span><span class="sb-label">CODEX</span>
+    <span class="sb-icon"><img src="assets/tilex-logo.png" alt="" class="sb-ico-logo"></span><span class="sb-label">CODEX</span>
   </div>
 
   <!-- Coword — moteur multi-agents (page dediee), sous TILEXCODE -->
   <div class="sb-item" id="si-coword" onclick="window.location.href='/moteur'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff7a00;">⚙️</span><span class="sb-label">COWORD</span>
+    <span class="sb-icon"><img src="assets/tilex-logo.png" alt="" class="sb-ico-logo"></span><span class="sb-label">COWORD</span>
   </div>
 
   <!-- TILEXMAP — carte du Québec (chemins forestiers, ponts, POIs) -->
