@@ -577,7 +577,25 @@ function creerParseur(bulle){
   var enFichier=null;      // {chemin, code:'', etape:el}
   var attenteFence=false;  // @@FICHIER lu, on attend ```
 
-  function majProse(){bulle.innerHTML=md(prose);bas();}
+  // ✍️ Effet machine à écrire FLUIDE (lettre par lettre, rapide) : au lieu
+  //    d'afficher la prose par gros bouts, on révèle les caractères en douceur
+  //    via requestAnimationFrame, avec rattrapage pour suivre le stream.
+  var proseVu=0;      // nb de caractères déjà affichés dans la bulle courante
+  var rafId=null;
+  function rendreVu(){ bulle.innerHTML=md(prose.slice(0,proseVu)); bas(); }
+  function boucleTypewriter(){
+    rafId=null;
+    if(proseVu<prose.length){
+      var reste=prose.length-proseVu;
+      // rapide + fluide : révèle ~20% du retard par frame, au moins 2 lettres.
+      var pas=Math.max(2, Math.ceil(reste*0.20));
+      proseVu=Math.min(prose.length, proseVu+pas);
+      rendreVu();
+      rafId=requestAnimationFrame(boucleTypewriter);
+    }
+  }
+  function majProse(){ if(rafId==null) rafId=requestAnimationFrame(boucleTypewriter); }
+  function flushProse(){ if(rafId){cancelAnimationFrame(rafId);rafId=null;} proseVu=prose.length; rendreVu(); }
 
   function pousser(delta){
     tampon+=delta;
@@ -671,13 +689,15 @@ function creerParseur(bulle){
       el.addEventListener('click',function(){voirFichier(chemin,code);});
     }
     enFichier=null;
-    // Nouvelle bulle de prose pour la suite du texte
-    bulle=bulleA();prose='';
+    // Termine l'écriture fluide de la bulle courante (affiche tout), puis
+    // nouvelle bulle de prose pour la suite du texte.
+    flushProse();
+    bulle=bulleA();prose='';proseVu=0;
   }
 
   function terminer(){
     if(enFichier){enFichier.code+=tampon;tampon='';finaliserFichier();}
-    else{prose+=tampon;tampon='';majProse();}
+    else{prose+=tampon;tampon='';flushProse();}   // révèle tout le reste d'un coup à la fin
     if(!bulle.textContent.trim())bulle.remove();
     return {actions:actions,lectures:lectures};
   }
