@@ -184,6 +184,7 @@
   </div>
   <div class="pop" id="pop-menu">
     <div class="pi" id="mi-session">🔄 Nouvelle session</div>
+    <div class="pi" id="mi-token">🔑 Connecter GitHub (token)</div>
     <div class="pi" id="mi-repo">🐙 Changer de repo / branche</div>
     <div class="pi" id="mi-fichiers">📁 Fichiers du workspace</div>
     <div class="pi" id="mi-zip">📦 Télécharger le ZIP</div>
@@ -238,6 +239,7 @@ var occupe=false;
 var abortCtl=null;
 /* ── Repo GitHub (lecture via /api/github-read) ── */
 var LS_REPO='tilex-codex-repo-v1';
+var LS_GHTOKEN='tilex-codex-ghtoken';
 var repoTree=null;    // {repo, branche, fichiers:[{chemin,taille_octets}], ...}
 var repoCache={};     // {chemin: contenu} — fichiers du repo déjà lus cette session
 var repoChoisi=null;  // {repo:'owner/nom', branche:'x'} — choisi par l'utilisateur (sinon défaut serveur)
@@ -246,6 +248,24 @@ var MAX_LECTURES_PAR_TOUR=6, MAX_TOURS=4;
 function paramsRepo(){
   if(!repoChoisi)return '';
   return '&repo='+encodeURIComponent(repoChoisi.repo)+(repoChoisi.branche?('&branch='+encodeURIComponent(repoChoisi.branche)):'');
+}
+// Token GitHub connecté DANS le Codex (stocké sur l'appareil seulement) : envoyé
+// en en-tête x-github-token à /api/github-read. Sinon, celui de Vercel est utilisé.
+function ghToken(){ try{return localStorage.getItem(LS_GHTOKEN)||'';}catch(e){return '';} }
+function ghHeaders(){ var t=ghToken(); return t?{'x-github-token':t}:{}; }
+function connecterGitHub(){
+  var actuel=ghToken();
+  var t=prompt('🔑 Colle ton token GitHub ici.\n\nFormat : ghp_… ou github_pat_…\nBesoin du scope « repo » (ou Contents: Read pour les repos privés).\nIl reste SUR TON APPAREIL seulement.\n\n(Laisse vide pour l\'effacer.)', actuel);
+  if(t===null)return; // annulé
+  t=t.trim();
+  if(!t){ try{localStorage.removeItem(LS_GHTOKEN);}catch(e){} repoTree=null; majChipRepo(); toast('Token GitHub effacé'); return; }
+  if(!/^(gh[posur]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|[a-f0-9]{40})$/.test(t)){
+    toast('⚠️ Token invalide (attendu ghp_… ou github_pat_…)'); return;
+  }
+  try{localStorage.setItem(LS_GHTOKEN,t);}catch(e){}
+  toast('🔑 Token GitHub connecté');
+  chargerRepo();      // reconnecte le repo si un est déjà choisi
+  ouvrirChoixRepo();  // pis liste les repos tout de suite
 }
 
 try{ws=JSON.parse(localStorage.getItem(LS_WS)||'{}')||{};}catch(e){ws={};}
@@ -426,7 +446,7 @@ function contexteWs(){
 /* ── Connexion au repo GitHub (arbre complet, une fois au chargement) ── */
 async function chargerRepo(){
   try{
-    var r=await fetch('/api/github-read?mode=tree'+paramsRepo());
+    var r=await fetch('/api/github-read?mode=tree'+paramsRepo(),{headers:ghHeaders()});
     if(!r.ok)throw new Error('HTTP '+r.status);
     var d=await r.json();
     if(!d||!Array.isArray(d.fichiers))throw new Error('réponse invalide');
@@ -449,7 +469,7 @@ function majChipRepo(){
   else c.textContent='🐙';
 }
 async function lireFichierRepo(chemin){
-  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin)+paramsRepo());
+  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin)+paramsRepo(),{headers:ghHeaders()});
   if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
   var d=await r.json();
   if(d.type!=='fichier')throw new Error(chemin+' est un dossier');
@@ -463,8 +483,16 @@ async function ouvrirChoixRepo(){
   l.innerHTML='<div class="vide-note">Chargement des repos…</div>';
   $('voile').classList.add('on');$('feuille').classList.add('on');
   try{
-    var r=await fetch('/api/github-read?mode=repos');
-    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+    var r=await fetch('/api/github-read?mode=repos',{headers:ghHeaders()});
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}
+      // Token manquant → propose de le connecter direct dans le Codex.
+      if(r.status===500||r.status===401){
+        l.innerHTML='<div class="vide-note">🔑 Faut connecter ton token GitHub d\'abord.</div>'
+          +'<div class="actions-fichiers" style="justify-content:center;margin-top:10px;"><button id="btn-conn-gh">🔑 Connecter GitHub</button></div>';
+        var b=document.getElementById('btn-conn-gh');if(b)b.addEventListener('click',connecterGitHub);
+        return;
+      }
+      throw new Error((j&&j.error)||('HTTP '+r.status));}
     var d=await r.json();
     l.innerHTML='';
     (d.repos||[]).forEach(function(rp){
@@ -488,7 +516,7 @@ async function ouvrirChoixBranche(rp){
   var l=$('f-liste');
   l.innerHTML='<div class="vide-note">Chargement des branches…</div>';
   try{
-    var r=await fetch('/api/github-read?mode=branches&repo='+encodeURIComponent(rp.nom));
+    var r=await fetch('/api/github-read?mode=branches&repo='+encodeURIComponent(rp.nom),{headers:ghHeaders()});
     if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
     var d=await r.json();
     l.innerHTML='';
@@ -887,6 +915,7 @@ $('mi-session').addEventListener('click',function(){
   flux.innerHTML='<div class="vide-note" id="accueil">💻 Nouvelle session — le workspace est conservé ('+Object.keys(ws).length+' fichiers).</div>';
   toast('🔄 Nouvelle session');
 });
+$('mi-token').addEventListener('click',function(){$('pop-menu').classList.remove('on');connecterGitHub();});
 $('mi-repo').addEventListener('click',function(){ouvrirChoixRepo();});
 $('mi-fichiers').addEventListener('click',function(){
   ouvrirFeuille(Object.keys(ws).sort().map(function(c){

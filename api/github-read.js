@@ -16,10 +16,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée. Utilise GET.' });
   }
 
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  // Token : d'abord celui envoyé par le Codex (en-tête x-github-token), sinon
+  // celui configuré en variable d'environnement Vercel. Ça permet à Alex de
+  // connecter son token direct dans le Codex, sans toucher à Vercel.
+  const headerToken = (req.headers['x-github-token'] || '').toString().trim();
+  const GITHUB_TOKEN = headerToken || process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = process.env.GITHUB_OWNER;
   const GITHUB_REPO = process.env.GITHUB_REPO;
   const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
+
+  // Validation légère du format d'un token GitHub fourni par le Codex
+  // (évite d'envoyer n'importe quoi à GitHub). Formats: ghp_, github_pat_,
+  // gho_, ghu_, ghs_, ghr_ — ou un ancien token hex de 40 caractères.
+  if (headerToken && !/^(gh[posur]_[A-Za-z0-9_]{20,255}|github_pat_[A-Za-z0-9_]{20,255}|[a-f0-9]{40})$/.test(headerToken)) {
+    return res.status(400).json({ error: 'Format de token GitHub invalide' });
+  }
 
   // SEUL le token est OBLIGATOIRE. Le repo/branche peuvent venir du sélecteur du
   // Codex (?repo=&branch=) — donc pas besoin de GITHUB_OWNER/GITHUB_REPO en env
@@ -27,7 +38,7 @@ export default async function handler(req, res) {
   if (!GITHUB_TOKEN) {
     return res.status(500).json({
       error: 'GITHUB_TOKEN manquant',
-      details: 'Ajoute GITHUB_TOKEN (un token GitHub avec le scope "repo") dans les variables d\'environnement Vercel, puis redéploie.'
+      details: 'Connecte ton token GitHub dans le Codex (menu ⋮ → « Connecter GitHub »), ou ajoute GITHUB_TOKEN dans les variables d\'environnement Vercel.'
     });
   }
 
