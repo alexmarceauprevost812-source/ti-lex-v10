@@ -2441,15 +2441,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
-  <!-- Fichiers -->
-  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
-    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
-  </div>
-
-  <!-- Scanner — upload/hash/doublons/visionneuse (module scanner) -->
-  <div class="sb-item" id="si-scanner" onclick="showTab('scanner')">
-    <span class="sb-icon" style="color:#ff7a1a;">🖼️</span><span class="sb-label" data-txt="SCANNER"></span>
-  </div>
+  <!-- Fichiers + Scanner : retirés du menu de gauche (demande d'Alex) —
+       intégrés dans le chat (menu ＋ du compositeur) et dans le Codex. -->
 
   <div style="flex:1"></div>
 
@@ -3312,6 +3305,10 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
       <div class="composer-menu-item" onclick="composeAction('photo')"><span class="cmi-ico">📸</span> Prendre une photo</div>
       <div class="composer-menu-item" onclick="composeAction('web')"><span class="cmi-ico">🌐</span> Recherche Web</div>
       <div class="composer-menu-item" onclick="composeAction('schema')"><span class="cmi-ico">🗺️</span> Schéma du sujet</div>
+      <div class="composer-menu-sep"></div>
+      <!-- FICHIER + SCANNER : intégrés ici (retirés du menu de gauche) -->
+      <div class="composer-menu-item" onclick="showTab('fichiers');closeComposerMenu()"><span class="cmi-ico">📁</span> Mes fichiers</div>
+      <div class="composer-menu-item" onclick="showTab('scanner');closeComposerMenu()"><span class="cmi-ico">🖼️</span> Scanner</div>
       <div class="composer-menu-sep"></div>
       <div class="composer-menu-item" onclick="ouvrirConvCompact()"><span class="cmi-ico">📜</span> Conversations résumées</div>
       <div class="composer-menu-item" onclick="toggleTheme();closeComposerMenu()" id="menu-theme-btn"><span class="cmi-ico">🌙</span> <span id="menu-theme-label">Nuit</span></div>
