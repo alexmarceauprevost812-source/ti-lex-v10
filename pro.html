@@ -1875,6 +1875,15 @@ body.chat-vierge #chat-conn-status{display:none;}
 .code-block code .hljs-comment,.code-block code .hljs-doctag{color:#c084fc;font-style:italic;}
 .code-block code .hljs-variable,.code-block code .hljs-attr{color:#ff9a3c;}
 .code-block code .hljs-tag,.code-block code .hljs-name{color:#ff5555;}
+/* 🔑🚨 Clé API repérée dans le code : ROUGE + effet d'alarme qui pulse, pour
+   qu'on voie tout de suite que c'est une clé secrète (à pas partager/traduire). */
+.cle-api-alarme{color:#ff2d2d!important;font-weight:800;background:rgba(255,45,45,.14);
+  border:1px solid rgba(255,45,45,.55);border-radius:4px;padding:0 3px;cursor:help;
+  text-shadow:0 0 6px rgba(255,45,45,.6);animation:cleAlarme 1s ease-in-out infinite;}
+@keyframes cleAlarme{
+  0%,100%{background:rgba(255,45,45,.12);box-shadow:0 0 0 0 rgba(255,45,45,.45);}
+  50%{background:rgba(255,45,45,.30);box-shadow:0 0 9px 2px rgba(255,45,45,.6);}}
+@media (prefers-reduced-motion:reduce){.cle-api-alarme{animation:none;}}
 .code-block code .hljs-selector-class,.code-block code .hljs-selector-id{color:#ffcf4a;}
 .code-block code .hljs-meta,.code-block code .hljs-type{color:#c084fc;}
 [data-theme="day"] .code-block code .hljs-keyword,[data-theme="day"] .code-block code .hljs-built_in{color:#cc6520;}
@@ -4829,7 +4838,10 @@ async function sendChat(){
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
       var _replyPlain=_wrapBareSchemas(reply||"");
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
-      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);}
+      // ⚠️ PAS de applyPhaseReveal ici : le texte a DÉJÀ été écrit en fluide
+      // (EcritureFluide) pendant le stream. Le ré-animer = double écriture. On
+      // remplace juste par la version formatée (markdown + coloration) d'un coup.
+      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);souligneClesAPI(bblText);renderSchemasInBubble(bblText);if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);}
       else{applySyntaxHL(bblText);}
       // Filet : si le reply final est vide/incomplet mais que la bulle affiche des ```
       finaliserBulleStream(bblText,_replyPlain);
@@ -5288,6 +5300,37 @@ function tiLexHighlightCode(container){
     block.dataset.highlighted="true";
   });
 }
+/* 🔑🚨 Souligne les CLÉS API dans le code EN ROUGE avec un effet d'alarme animé,
+   pour qu'on voie TOUT DE SUITE que c'est une clé secrète (à pas partager, à pas
+   « traduire » dans le code). On marche sur les nœuds texte pour pas casser la
+   coloration hljs déjà en place. */
+var _RE_CLE_API=/(sk-proj-[A-Za-z0-9_\-]{16,}|sk-[A-Za-z0-9_\-]{20,}|github_pat_[A-Za-z0-9_]{22,}|gh[posur]_[A-Za-z0-9]{20,}|AIza[A-Za-z0-9_\-]{30,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9\-]{10,}|eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}|Bearer\s+[A-Za-z0-9_\-\.]{20,})/g;
+function souligneClesAPI(container){
+  if(!container)return;
+  try{
+    var codes=container.querySelectorAll("pre.code-block code, code.inline-code");
+    codes.forEach(function(code){
+      var w=document.createTreeWalker(code,NodeFilter.SHOW_TEXT,null);
+      var nodes=[],n;while((n=w.nextNode()))nodes.push(n);
+      nodes.forEach(function(tn){
+        if(tn.parentNode&&tn.parentNode.classList&&tn.parentNode.classList.contains("cle-api-alarme"))return;
+        var t=tn.nodeValue;_RE_CLE_API.lastIndex=0;
+        if(!_RE_CLE_API.test(t))return;_RE_CLE_API.lastIndex=0;
+        var frag=document.createDocumentFragment(),last=0,m;
+        while((m=_RE_CLE_API.exec(t))){
+          if(m.index>last)frag.appendChild(document.createTextNode(t.slice(last,m.index)));
+          var sp=document.createElement("span");
+          sp.className="cle-api-alarme";sp.textContent=m[0];
+          sp.title="🔑 Clé API secrète — NE PAS partager, NE PAS traduire";
+          frag.appendChild(sp);
+          last=m.index+m[0].length;
+        }
+        if(last<t.length)frag.appendChild(document.createTextNode(t.slice(last)));
+        if(tn.parentNode)tn.parentNode.replaceChild(frag,tn);
+      });
+    });
+  }catch(e){}
+}
 function projHtml(txt){
   if(/```/.test(txt)||/\*\*/.test(txt)||/^#{1,3}\s/m.test(txt)||/^[-*]\s/m.test(txt)||/^\d+\.\s/m.test(txt)||/^>/m.test(txt)||/^---/m.test(txt)||/"noeuds"\s*:/.test(txt))return renderMd(_wrapBareSchemas(txt));
   var safe=escHtml(txt);
@@ -5320,7 +5363,7 @@ function addMsg(role,txt){
   var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
-  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
+  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);souligneClesAPI(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
 }
 
 /* Avatar vidéo de TI-LEX-AL (réponses de l'agent) — clip muet en boucle */
