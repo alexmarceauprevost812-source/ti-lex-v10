@@ -349,7 +349,42 @@
   majBtnTheme();
 
   /* ════ MA POSITION ════ */
-  document.getElementById('fab-loc').addEventListener('click', function(){ geoloc.trigger(); });
+  // Le contrôle MapLibre (joli point bleu + suivi + cap) échoue en SILENCE si :
+  //  - on clique avant qu'il soit prêt (map pas encore chargée) → trigger()=false
+  //  - la permission est refusée / pas de signal → aucun message à l'écran
+  // On rajoute donc : (1) des messages clairs sur erreur, (2) un repli GPS direct
+  // qui vole vers ta position pis pose un marqueur, même hors-ligne (GPS pur).
+  var _monMarqueur=null;
+  function majMarqueurMoi(c){
+    if(_monMarqueur){ _monMarqueur.setLngLat(c); }
+    else { _monMarqueur=new maplibregl.Marker({color:'#2b8cff'}).setLngLat(c).addTo(map); }
+  }
+  function msgErrGeo(code){
+    if(code===1) return '📍 Permission refusée — autorise la localisation pour l\'app dans tes réglages';
+    if(code===2) return '📍 Pas de signal GPS — réessaie dehors ou proche d\'une fenêtre';
+    if(code===3) return '📍 Trop long à trouver ta position — réessaie';
+    return '📍 Position indisponible';
+  }
+  geoloc.on('error', function(e){ toast(msgErrGeo(e&&e.code)); });
+
+  function replisGPS(){
+    if(!navigator.geolocation){ toast('📍 Géoloc pas supportée sur cet appareil'); return; }
+    toast('📍 Recherche de ta position…');
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var c=[pos.coords.longitude, pos.coords.latitude];
+      map.flyTo({center:c, zoom:14});
+      majMarqueurMoi(c);
+      toast('📍 Te v\'là!');
+    }, function(err){ toast(msgErrGeo(err&&err.code)); },
+       {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+  }
+
+  document.getElementById('fab-loc').addEventListener('click', function(){
+    var ok=false;
+    try{ ok=geoloc.trigger(); }catch(e){ ok=false; }
+    // Le contrôle pas prêt (a rien lancé) → on prend le repli GPS direct.
+    if(ok===false) replisGPS();
+  });
   document.getElementById('fab-nord').addEventListener('click', function(){ map.easeTo({bearing:0,pitch:0}); });
 
   /* ════ RECHERCHE DE LIEU (Nominatim, gratuit) ════ */
