@@ -258,12 +258,13 @@ function connecterGitHub(){
   var t=prompt('🔑 Colle ton token GitHub ici.\n\nFormat : ghp_… ou github_pat_…\nBesoin du scope « repo » (ou Contents: Read pour les repos privés).\nIl reste SUR TON APPAREIL seulement.\n\n(Laisse vide pour l\'effacer.)', actuel);
   if(t===null)return; // annulé
   t=t.trim();
-  if(!t){ try{localStorage.removeItem(LS_GHTOKEN);}catch(e){} repoTree=null; majChipRepo(); toast('Token GitHub effacé'); return; }
+  if(!t){ try{localStorage.removeItem(LS_GHTOKEN);}catch(e){} repoTree=null; majChipRepo(); if(typeof majMenuToken==='function')majMenuToken(); toast('Token GitHub effacé'); return; }
   if(!/^(gh[posur]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|[a-f0-9]{40})$/.test(t)){
     toast('⚠️ Token invalide (attendu ghp_… ou github_pat_…)'); return;
   }
   try{localStorage.setItem(LS_GHTOKEN,t);}catch(e){}
-  toast('🔑 Token GitHub connecté');
+  if(typeof majMenuToken==='function')majMenuToken();
+  toast('🔑 Token connecté — il reste sur ton appareil');
   chargerRepo();      // reconnecte le repo si un est déjà choisi
   ouvrirChoixRepo();  // pis liste les repos tout de suite
 }
@@ -901,8 +902,14 @@ $('chip-mode').addEventListener('click',function(){
   majChipMode();
   toast(modeDemander?'🖐 Mode Demander : les modifs attendent ton OK':'⚡ Mode Auto : les modifs s\'appliquent direct');
 });
+// Le libellé du menu reflète l'état : token connecté (reste sur l'appareil) ou non.
+function majMenuToken(){
+  var el=$('mi-token');if(!el)return;
+  el.textContent = ghToken() ? '🔑 GitHub connecté ✓ · sur ton appareil' : '🔑 Connecter GitHub (token)';
+}
 $('btn-menu').addEventListener('click',function(e){
   e.stopPropagation();
+  majMenuToken();
   var pop=$('pop-menu');pop.classList.toggle('on');
   var r=this.getBoundingClientRect();
   pop.style.left='auto';pop.style.right='10px';pop.style.top=(r.bottom+6)+'px';pop.style.bottom='auto';
