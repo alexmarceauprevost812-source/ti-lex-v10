@@ -157,9 +157,6 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
   -webkit-text-fill-color:transparent;animation:logo-sh 4.5s ease-in-out infinite;}
 @keyframes logo-sh{0%{background-position:220% center}100%{background-position:-80% center}}
 @media(max-width:480px){.tb-logo-txt{display:none!important;}}
-/* Téléphone : on cache les pastilles de connecteurs (Supabase/Anthropic/GitHub/Vercel)
-   pour laisser la place au bouton ⚡ STUDIO et à la cloche 🔔 à droite. */
-@media(max-width:600px){#connectors-hub,[data-connectors-hub]{display:none!important;}}
 .tb-logo-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;}
 
 /* Plan badge topbar */
@@ -2146,13 +2143,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 @keyframes indarCaretHex{50%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.indar-agent-hex *{animation:none !important;transition:opacity .2s !important}}
 
-/* ── Connectors Hub ── */
-#connectors-hub{display:flex;align-items:center;gap:6px;margin-right:8px;}
-#connectors-hub .connector-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);cursor:default;transition:background .2s;}
-#connectors-hub .connector-chip:hover{background:rgba(255,255,255,0.12);}
-#connectors-hub .connector-logo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;}
-#connectors-hub .connector-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
-
 /* ════════════════════════════════════════════════════════════
    🎨 MENU DE GAUCHE — look « app Claude » (titre serif + items manuscrits)
    Bloc placé en dernier : il habille la sidebar sans toucher la structure.
@@ -2312,7 +2302,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
-    <div id="connectors-hub" data-connectors-hub></div>
     <button class="studio-hdr-btn" id="studio-hdr-btn" title="Ouvrir/Fermer Studio">⚡ STUDIO<span class="shb-dot"></span></button>
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
@@ -10016,7 +10005,6 @@ _checkDeployVersion();
 <script src="js/agent-marceau.js"></script>
 <script src="js/tilex-eyes.js"></script>
 <script src="js/tilex-hands.js"></script>
-<script src="js/connectors-hub.js"></script>
 <script src="js/theme-engine.js"></script>
 <script src="js/tilex-toast.js"></script>
 <script src="js/tilex-guard.js"></script>

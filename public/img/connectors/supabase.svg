@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
-  <!-- Database/shield icon in Supabase green -->
-  <path d="M12 2L3 7v6c0 5.25 3.83 10.15 9 11 5.17-.85 9-5.75 9-11V7l-9-5z" fill="#37e0a0" opacity="0.2"/>
-  <path d="M12 2L3 7v6c0 5.25 3.83 10.15 9 11 5.17-.85 9-5.75 9-11V7l-9-5z" stroke="#37e0a0" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-  <ellipse cx="12" cy="10" rx="5" ry="2" stroke="#37e0a0" stroke-width="1.2" fill="none"/>
-  <line x1="7" y1="10" x2="7" y2="14" stroke="#37e0a0" stroke-width="1.2"/>
-  <line x1="17" y1="10" x2="17" y2="14" stroke="#37e0a0" stroke-width="1.2"/>
-  <ellipse cx="12" cy="14" rx="5" ry="2" stroke="#37e0a0" stroke-width="1.2" fill="none"/>
-</svg>
