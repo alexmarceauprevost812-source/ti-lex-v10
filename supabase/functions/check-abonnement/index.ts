@@ -18,6 +18,32 @@ const PLANS_VALIDES = new Set([
   "cyber_recon", "cyber_guardian", "cyber_shield", "cyber_sentinel", "cyber_fortress",
 ]);
 
+// 👑 Administrateur / propriétaire de la plateforme — même verrou que ai-proxy.
+//    Le proprio de ti-lex ne doit JAMAIS être bloqué par la garde d'abonnement
+//    sur son propre projet (pas de « 10 questions gratuites épuisées », pas de
+//    quota). Configurable via le secret Supabase TILEX_ADMIN_EMAIL.
+const TILEX_ADMIN_EMAIL = (Deno.env.get("TILEX_ADMIN_EMAIL") || "alexmarceauprevost812@gmail.com").toLowerCase();
+
+// Vrai si l'utilisateur est administrateur : email admin OU rôle 'admin' dans
+// user_roles (le rôle DB prime si l'email n'est pas configuré). Fail-safe : la
+// requête user_roles est enveloppée — une erreur ne bloque jamais l'accès admin
+// déjà accordé par l'email.
+async function estAdmin(supabase: any, user: any): Promise<boolean> {
+  const email = (user?.email || "").toLowerCase();
+  if (email && email === TILEX_ADMIN_EMAIL) return true;
+  try {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    return !!data;
+  } catch (_) {
+    return false;
+  }
+}
+
 const PLAN_LIMITS: Record<string, { window: number; day: number }> = {
   ti:    { window: 40,  day: 80 },
   flux:  { window: 40,  day: 80 },
@@ -64,6 +90,16 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) return json({ allowed: false, reason: "not_connected", plan: null });
+
+    // 👑 Bypass admin : le propriétaire de la plateforme n'est jamais gaté.
+    //    On répond `allowed: true` sans consommer de quota ni de bonus, pour que
+    //    son agent réponde toujours sur son propre projet.
+    if (await estAdmin(supabase, user)) {
+      return json({
+        allowed: true, reason: null, plan: "admin", admin: true,
+        messages_used: 0, messages_remaining: null, messages_window: null,
+      });
+    }
 
     const { data: profil } = await supabase
       .from("profiles")
