@@ -20,7 +20,13 @@
 
   --tcn-bg:  #f1f0ec;  --tcn-bord: #b8bdc7;  --tcn-txt: #2d3340;  /* neutre */
 
+  /* Le viewBox du SVG fait 360 de large. Sans plafond, width:100% l'étire à
+     toute la largeur de la bulle : sur ordinateur le schéma est agrandi ~4×,
+     donc un titre de 14px s'affiche à ~54px — les boîtes deviennent énormes.
+     On plafonne près de la taille naturelle ; sur mobile (écran plus étroit
+     que le plafond) le comportement responsive 100% est conservé. */
   width: 100%;
+  max-width: 420px;
   display: block;
 }
 
@@ -104,6 +110,19 @@
 }
 .tilex-arr-tete { opacity: 0; animation: tilex-tete-in 0.3s ease both; animation-delay: inherit; }
 @keyframes tilex-tete-in { to { opacity: 1; } }
+
+/* ⏸️ L'animation ATTEND que le schéma entre dans l'écran. Sans ça, elle se
+   joue à l'instant où le SVG est inséré : si le schéma est sous la ligne de
+   flottaison, la cascade est déjà terminée quand on descend, et on ne voit
+   jamais l'animation. La classe est retirée par un IntersectionObserver
+   (js/tilex-schema.js). Sur un navigateur sans IntersectionObserver, la classe
+   n'est jamais posée → l'animation joue tout de suite, comme avant. */
+.tilex-schema--attente .tilex-noeud,
+.tilex-schema--attente .tilex-noeud-rect,
+.tilex-schema--attente .tilex-arr,
+.tilex-schema--attente .tilex-arr-tete {
+  animation-play-state: paused;
+}
 
 /* Même avec « réduire les animations » : on garde une apparition DOUCE
    (fondu seulement, sans gros mouvement) — jamais complètement figé. */

@@ -5140,7 +5140,10 @@ function renderSchemasInBubble(el){
     var holder=document.createElement("div");
     if(spec&&Array.isArray(spec.noeuds)&&spec.noeuds.length>0){
       holder.className="tilex-schema-chat";
-      holder.style.cssText="margin:10px 0;";
+      // margin auto (pas 0) : le schéma est plafonné à 420px par css/tilex-schema.css,
+      // donc il faut le centrer dans la bulle. Un style en ligne bat la feuille
+      // de style, alors le centrage doit être posé ici.
+      holder.style.cssText="margin:10px auto;";
       try{
         TilexSchemaManager.generer(holder,spec);
       }catch(e){
