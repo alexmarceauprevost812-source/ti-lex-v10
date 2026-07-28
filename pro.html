@@ -2365,11 +2365,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">OUTILS</div>
 
-  <!-- Plateforme -->
-  <div class="sb-item" onclick="window.location.href='/web'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
-  </div>
-
   <!-- Marceau -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
     <span class="sb-icon" style="color:#FF6B00;position:relative;">
@@ -2410,16 +2405,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
-  <!-- Fichiers -->
-  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
-    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
-  </div>
-
-  <!-- Scanner — upload/hash/doublons/visionneuse (module scanner) -->
-  <div class="sb-item" id="si-scanner" onclick="showTab('scanner')">
-    <span class="sb-icon" style="color:#ff7a1a;">🖼️</span><span class="sb-label" data-txt="SCANNER"></span>
-  </div>
-
   <div style="flex:1"></div>
 
   <!-- COMPTE (bas du menu) -->
@@ -2435,11 +2420,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…), au-dessus des Paramètres -->
   <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
     <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
-  </div>
-
-  <!-- Mandat de scan — preuve de propriété + autorisation avant tout scan -->
-  <div class="sb-item" id="si-mandat" onclick="if(window.TilexMandat)TilexMandat.ouvrir();" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#f0b429;">🔒</span><span class="sb-label">MANDAT SCAN</span>
   </div>
 
   <!-- Paramètres -->
