@@ -157,9 +157,6 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
   -webkit-text-fill-color:transparent;animation:logo-sh 4.5s ease-in-out infinite;}
 @keyframes logo-sh{0%{background-position:220% center}100%{background-position:-80% center}}
 @media(max-width:480px){.tb-logo-txt{display:none!important;}}
-/* Téléphone : on cache les pastilles de connecteurs (Supabase/Anthropic/GitHub/Vercel)
-   pour laisser la place au bouton ⚡ STUDIO et à la cloche 🔔 à droite. */
-@media(max-width:600px){#connectors-hub,[data-connectors-hub]{display:none!important;}}
 .tb-logo-sub{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--muted);letter-spacing:1.5px;}
 
 /* Plan badge topbar */
@@ -2146,13 +2143,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 @keyframes indarCaretHex{50%{opacity:0}}
 @media(prefers-reduced-motion:reduce){.indar-agent-hex *{animation:none !important;transition:opacity .2s !important}}
 
-/* ── Connectors Hub ── */
-#connectors-hub{display:flex;align-items:center;gap:6px;margin-right:8px;}
-#connectors-hub .connector-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);cursor:default;transition:background .2s;}
-#connectors-hub .connector-chip:hover{background:rgba(255,255,255,0.12);}
-#connectors-hub .connector-logo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;}
-#connectors-hub .connector-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
-
 /* ════════════════════════════════════════════════════════════
    🎨 MENU DE GAUCHE — look « app Claude » (titre serif + items manuscrits)
    Bloc placé en dernier : il habille la sidebar sans toucher la structure.
@@ -2312,7 +2302,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   </div>
   <div class="topbar-center"></div>
   <div class="topbar-right">
-    <div id="connectors-hub" data-connectors-hub></div>
     <button class="studio-hdr-btn" id="studio-hdr-btn" title="Ouvrir/Fermer Studio">⚡ STUDIO<span class="shb-dot"></span></button>
     <div class="credits-badge" id="credits-badge" onclick="showTab('settings')" style="display:none;" title="Crédits disponibles">
       <span class="cb-icon">⚡</span><span class="cb-val" id="credits-val">0</span>
@@ -2376,11 +2365,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <div class="sb-sep"></div>
   <div class="sb-sec sb-label">OUTILS</div>
 
-  <!-- Plateforme -->
-  <div class="sb-item" onclick="window.location.href='/web'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
-  </div>
-
   <!-- Marceau -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
     <span class="sb-icon" style="color:#FF6B00;position:relative;">
@@ -2388,12 +2372,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
         alt="M" style="width:18px;height:18px;border-radius:50%;object-fit:contain;vertical-align:middle;border:1px solid #FF6B00;background:#111;"
         onerror="this.onerror=null;this.outerHTML='🔥';" loading="lazy"/>
     </span><span class="sb-label" data-txt="MARCEAU"></span>
-  </div>
-
-  <!-- Sécurité — Cybersécurité (page dédiée /security) -->
-  <div class="sb-item silex-admin-only" id="si-security" onclick="window.location.href='/security'" style="display:none;cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITE"></span>
-    <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
   </div>
 
   <!-- Finances (accordéon : Bourse + Midas Finance regroupés) -->
@@ -2421,16 +2399,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
-  <!-- Fichiers -->
-  <div class="sb-item" id="si-fichiers" onclick="showTab('fichiers')">
-    <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
-  </div>
-
-  <!-- Scanner — upload/hash/doublons/visionneuse (module scanner) -->
-  <div class="sb-item" id="si-scanner" onclick="showTab('scanner')">
-    <span class="sb-icon" style="color:#ff7a1a;">🖼️</span><span class="sb-label" data-txt="SCANNER"></span>
-  </div>
-
   <div style="flex:1"></div>
 
   <!-- COMPTE (bas du menu) -->
@@ -2446,11 +2414,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
   <!-- Connexions — centre de connexions (GitHub, Supabase, Google/Gmail…), au-dessus des Paramètres -->
   <div class="sb-item" id="si-connexion" onclick="if(window.TilexConnexions)TilexConnexions.ouvrir();" style="cursor:pointer;">
     <span class="sb-icon" style="color:#3ECF8E;">🔌</span><span class="sb-label">CONNEXION</span>
-  </div>
-
-  <!-- Mandat de scan — preuve de propriété + autorisation avant tout scan -->
-  <div class="sb-item" id="si-mandat" onclick="if(window.TilexMandat)TilexMandat.ouvrir();" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#f0b429;">🔒</span><span class="sb-label">MANDAT SCAN</span>
   </div>
 
   <!-- Paramètres -->
@@ -3316,10 +3279,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
             <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
           <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Marceau')">
             <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
-          <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
-            <span class="csd-ico">🛡️</span> SILEX</div>
-          <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
-            <span class="csd-ico">🔍</span> INDAR</div>
           <div class="csd-section">MODÈLE</div>
           <div class="csd-item" data-model="claude-sonnet-5" onclick="selectComposerModel('claude-sonnet-5')">
             <span class="csd-ico">✨</span> Sonnet 5</div>
@@ -5171,7 +5130,10 @@ function renderSchemasInBubble(el){
     var holder=document.createElement("div");
     if(spec&&Array.isArray(spec.noeuds)&&spec.noeuds.length>0){
       holder.className="tilex-schema-chat";
-      holder.style.cssText="margin:10px 0;";
+      // margin auto (pas 0) : le schéma est plafonné à 420px par css/tilex-schema.css,
+      // donc il faut le centrer dans la bulle. Un style en ligne bat la feuille
+      // de style, alors le centrage doit être posé ici.
+      holder.style.cssText="margin:10px auto;";
       try{
         TilexSchemaManager.generer(holder,spec);
       }catch(e){
@@ -8855,8 +8817,17 @@ function copyCodeBlock(cid){
 
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
+var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau"};
+/* SILEX et INDAR ont été retirés du menu des agents. Un choix déjà enregistré
+   dans localStorage pointerait sur un agent qui n'existe plus dans la liste :
+   la personne resterait coincée avec un prompt dégradé (pas d'autonomie N3, pas
+   de recherche web) sans rien à cliquer pour l'expliquer. On ramène donc tout
+   agent inconnu sur l'agent par défaut, une seule fois, au chargement. */
 var composerAgent=localStorage.getItem("tilex-composer-agent")||"ti-lex-al";
-var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau","silex":"SILEX","indar":"INDAR"};
+if(!AGENT_NAMES[composerAgent]){
+  composerAgent="ti-lex-al";
+  try{localStorage.setItem("tilex-composer-agent",composerAgent);}catch(e){}
+}
 
 function updateModelChip(){
   var label=document.getElementById("composer-model-label");
@@ -10016,7 +9987,6 @@ _checkDeployVersion();
 <script src="js/agent-marceau.js"></script>
 <script src="js/tilex-eyes.js"></script>
 <script src="js/tilex-hands.js"></script>
-<script src="js/connectors-hub.js"></script>
 <script src="js/theme-engine.js"></script>
 <script src="js/tilex-toast.js"></script>
 <script src="js/tilex-guard.js"></script>

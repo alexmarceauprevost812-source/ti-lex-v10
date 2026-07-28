@@ -90,6 +90,31 @@ async function reserverQuota(userId: string, kind: "chat" | "image"): Promise<Re
   } catch (_) {}
   return null;
 }
+
+// 👑 Administrateur / propriétaire de la plateforme — même définition que
+//    check-abonnement : email TILEX_ADMIN_EMAIL, ou rôle 'admin' dans user_roles.
+//    L'admin est exempté du quota quotidien : sans ça, le bypass de
+//    check-abonnement mentirait (« accès illimité ») pendant qu'ai-proxy
+//    renverrait quand même 429 après LIMITS.chat appels, et l'agent du proprio
+//    se retrouverait bloqué sur son propre projet.
+//    Appelée UNIQUEMENT quand le quota est déjà épuisé (voir plus bas), donc la
+//    requête user_roles ne s'exécute pas sur le chemin normal.
+async function estAdminPlateforme(userId: string, email: string): Promise<boolean> {
+  if (!userId || userId === "anonymous") return false;
+  if (email && email === TILEX_ADMIN_EMAIL) return true;
+  try {
+    const sb = createClient(SUPABASE_URL, SERVICE_KEY);
+    const { data } = await sb
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return !!data;
+  } catch (_) {
+    return false;
+  }
+}
 const MAX_PROMPT_LEN = 4000;
 const MAX_TOKENS_CAP = 8192;
 const MAX_MESSAGES = 60;
@@ -640,12 +665,16 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     let userId = "anonymous";
+    let userEmail = "";
 
     if (token) {
       try {
         const sb = createClient(SUPABASE_URL, SERVICE_KEY);
         const { data: userData } = await sb.auth.getUser(token);
         if (userData?.user?.id) userId = userData.user.id;
+        // Email récupéré ici même : sert au verrou admin plus bas, sans requête
+        // supplémentaire.
+        userEmail = (userData?.user?.email || "").toLowerCase();
       } catch (_) {}
     }
 
@@ -675,8 +704,9 @@ Deno.serve(async (req) => {
       const size = ALLOWED_SIZES.has(body.size) ? body.size : "1024x1024";
 
       // Quota réservé ici : requête image validée, clé OpenAI présente.
+      // 👑 L'admin passe outre le quota épuisé (vérif faite seulement dans ce cas).
       const quotaResp = await reserverQuota(userId, "image");
-      if (quotaResp) return quotaResp;
+      if (quotaResp && !(await estAdminPlateforme(userId, userEmail))) return quotaResp;
 
       const r = await fetch("https://api.openai.com/v1/images/generations", {
         method: "POST",
@@ -713,8 +743,9 @@ Deno.serve(async (req) => {
 
     // Quota réservé ici : requête chat validée (messages OK, clé présente), juste
     // avant l'appel au fournisseur — une requête malformée n'a pas brûlé de jeton.
+    // 👑 L'admin passe outre le quota épuisé (vérif faite seulement dans ce cas).
     const quotaResp = await reserverQuota(userId, "chat");
-    if (quotaResp) return quotaResp;
+    if (quotaResp && !(await estAdminPlateforme(userId, userEmail))) return quotaResp;
 
     // ---- Build tools (recherche web optionnelle + bourse si clé FMP + média + sécurité) ----
     const tools: any[] = [];

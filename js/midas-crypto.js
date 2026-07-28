@@ -23,7 +23,12 @@
   C.config = {
     base: "https://api.coingecko.com/api/v3",
     cleDemo: null,          // clé Demo optionnelle (x_cg_demo_api_key)
-    devise: "usd",
+    // ⚜️ Vue canadienne : CoinGecko renvoie prix, capitalisation, volume et OHLC
+    // directement en dollars canadiens — aucune conversion maison, donc aucun
+    // taux de change à maintenir. Les seuils d'alerte sont en POURCENTAGE, ils
+    // ne sont donc pas affectés par le changement de devise.
+    devise: "cad",
+    deviseLabel: "CAD",
     nbCryptos: 10,          // top N par capitalisation
     intervalleScanMs: 60000, // re-scan chaque 60 s
     seuilChute1h: -5,       // % sur 1h qui déclenche une alerte
@@ -149,6 +154,7 @@
         symbole: (coin.symbol || "").toUpperCase(),
         nom: coin.name,
         prix: coin.current_price,
+        devise: C.config.deviseLabel,   // CAD — pour qu'un prix ne soit jamais ambigu
         capitalisation: coin.market_cap,
         rang: coin.market_cap_rank,
         var1h: coin.price_change_percentage_1h_in_currency,

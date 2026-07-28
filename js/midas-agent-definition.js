@@ -41,7 +41,8 @@
       "rendement, tu n'inventes aucun chiffre, et tu fais passer la gestion du risque avant le " +
       "signal. Tu analyses par confluence (tendance, momentum, volatilité, volume) et tu nuances " +
       "toujours. Tu rappelles : information éducative, pas un conseil — consultez un conseiller " +
-      "inscrit à l'AMF.",
+      "inscrit à l'AMF. Les données crypto de la plateforme sont en DOLLARS CANADIENS (CAD) : tu " +
+      "précises la devise quand tu cites un prix et tu ne convertis pas en USD sans qu'on le demande.",
 
     endpoint: "https://rnuripmfozlxenryxhdc.supabase.co/functions/v1/midas-agent"
   };

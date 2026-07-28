@@ -81,11 +81,33 @@ window.TilexSchemaManager = {
       const svg = this.construireSVG(schema);
       cible.classList.add("tilex-schema");
       cible.innerHTML = svg;
+      this.animerAuDefilement(cible);
 
       console.log("📊 TilexSchemaManager : schéma généré");
     } catch (err) {
       console.error("TilexSchemaManager generer:", err.message);
       window.tilexToast("Erreur de génération du schéma", "erreur");
+    }
+  },
+
+  // Met l'animation en pause jusqu'à ce que le schéma entre dans l'écran, pour
+  // qu'on VOIE la cascade au lieu qu'elle se joue hors de vue. Si le schéma est
+  // déjà visible, l'observer déclenche immédiatement — rien ne change.
+  animerAuDefilement(cible) {
+    try {
+      if (!("IntersectionObserver" in window)) return; // repli : joue tout de suite
+      cible.classList.add("tilex-schema--attente");
+      const obs = new IntersectionObserver((entrees) => {
+        entrees.forEach((e) => {
+          if (!e.isIntersecting) return;
+          e.target.classList.remove("tilex-schema--attente");
+          obs.unobserve(e.target);
+        });
+      }, { threshold: 0.2 });
+      obs.observe(cible);
+    } catch (err) {
+      // En cas de pépin, on ne laisse JAMAIS le schéma figé en pause.
+      cible.classList.remove("tilex-schema--attente");
     }
   },
 
