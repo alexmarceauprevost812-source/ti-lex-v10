@@ -3279,10 +3279,6 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
             <img src="assets/tilex-logo.png" class="csd-ico-img"> TI-LEX-AL <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
           <div class="csd-item" data-agent="marceau" onclick="selectComposerAgent('marceau','Marceau')">
             <img src="assets/marceau-logo.png" class="csd-ico-img" style="object-fit:cover;background:#000;border-radius:4px;" onerror="this.outerHTML='🔥'"> Marceau <span class="csd-n3" style="margin-left:auto;font-size:9px;font-weight:800;color:#000;background:#2ecc71;border-radius:6px;padding:1px 6px;letter-spacing:.5px;">AUTONOME N3</span></div>
-          <div class="csd-item" data-agent="silex" onclick="selectComposerAgent('silex','SILEX')">
-            <span class="csd-ico">🛡️</span> SILEX</div>
-          <div class="csd-item" data-agent="indar" onclick="selectComposerAgent('indar','INDAR')">
-            <span class="csd-ico">🔍</span> INDAR</div>
           <div class="csd-section">MODÈLE</div>
           <div class="csd-item" data-model="claude-sonnet-5" onclick="selectComposerModel('claude-sonnet-5')">
             <span class="csd-ico">✨</span> Sonnet 5</div>
@@ -8821,8 +8817,17 @@ function copyCodeBlock(cid){
 
 /* ══ #4 REFLEXION MODE ══ */
 var reflexionMode=localStorage.getItem("tilex-reflexion")==="true";
+var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau"};
+/* SILEX et INDAR ont été retirés du menu des agents. Un choix déjà enregistré
+   dans localStorage pointerait sur un agent qui n'existe plus dans la liste :
+   la personne resterait coincée avec un prompt dégradé (pas d'autonomie N3, pas
+   de recherche web) sans rien à cliquer pour l'expliquer. On ramène donc tout
+   agent inconnu sur l'agent par défaut, une seule fois, au chargement. */
 var composerAgent=localStorage.getItem("tilex-composer-agent")||"ti-lex-al";
-var AGENT_NAMES={"ti-lex-al":"TI-LEX-AL","marceau":"Marceau","silex":"SILEX","indar":"INDAR"};
+if(!AGENT_NAMES[composerAgent]){
+  composerAgent="ti-lex-al";
+  try{localStorage.setItem("tilex-composer-agent",composerAgent);}catch(e){}
+}
 
 function updateModelChip(){
   var label=document.getElementById("composer-model-label");
