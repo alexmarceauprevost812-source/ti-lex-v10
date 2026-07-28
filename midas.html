@@ -313,7 +313,22 @@ const $=s=>document.querySelector(s);
 let autoTimer=null;
 const watchlist=[]; // ids CoinGecko en mémoire (pas de localStorage)
 
-function fmtPrix(p){if(p==null)return"—";if(p>=1)return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:2});return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:6});}
+/* ⚜️ Vue canadienne : les prix, capitalisations et volumes sont demandés à
+   CoinGecko DIRECTEMENT en dollars canadiens (pas de conversion maison, donc
+   aucun taux de change à maintenir). Avant, on demandait « usd » mais on
+   affichait un « $ » formaté en fr-CA : les montants AVAIENT L'AIR canadiens
+   alors qu'ils étaient américains. La devise est maintenant explicite à
+   l'écran pour qu'il n'y ait plus d'ambiguïté. */
+const DEVISE="cad";
+const DEVISE_LABEL="CAD";
+
+function fmtPrix(p){
+  if(p==null)return"—";
+  // Sous 1 $, une crypto a besoin de plus de décimales (ex. 0,000123 $).
+  const dec=p>=1?2:6;
+  return p.toLocaleString("fr-CA",{style:"currency",currency:"CAD",maximumFractionDigits:dec})
+    +" "+DEVISE_LABEL;
+}
 function fmtPct(x){if(x==null)return"";const s=x>=0?"+":"";return s+x.toFixed(2)+"%";}
 
 function sparkline(prices,coul){
@@ -368,7 +383,7 @@ function carteHTML(c){
 
 async function chargerMarche(ids){
   const u=new URL(BASE+"/coins/markets");
-  u.searchParams.set("vs_currency","usd");
+  u.searchParams.set("vs_currency",DEVISE);
   if(ids)u.searchParams.set("ids",ids);
   else{u.searchParams.set("order","market_cap_desc");u.searchParams.set("per_page","10");u.searchParams.set("page","1");}
   u.searchParams.set("sparkline","true");
