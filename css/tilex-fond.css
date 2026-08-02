@@ -44,3 +44,70 @@ html.tilex-fond-actif body {
 @media (prefers-reduced-motion: reduce) {
   #tilex-fond { transition: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RENDRE LE FOND VISIBLE À TRAVERS L'APPLICATION
+   ---------------------------------------------------------------------------
+   Sans ces règles, les grandes surfaces de l'app (zone de chat, contenu,
+   barre du haut, menu) sont des rectangles noirs pleins : ils recouvrent
+   entièrement la couche image et on ne voit plus rien du fond.
+
+   Principe retenu : ce sont les LIGNES DE TEXTE qui portent le noir, sous
+   forme d'un halo autour des lettres, au lieu d'un grand aplat noir derrière
+   tout le panneau. Le texte reste parfaitement lisible par-dessus l'image, et
+   le fond respire partout ailleurs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Voile sombre sur la barre du haut et le menu, pour que la navigation
+     reste lisible. 0 = totalement transparent, 1 = noir plein. */
+  --tilex-fond-voile: 0.35;
+}
+
+/* ─── Surfaces de structure : on retire l'aplat noir ─────────────────────── */
+html.tilex-fond-actif :is(
+  .layout,
+  .content,
+  .view,
+  .sec-model,
+  .wrap,
+  .chat-wrap,
+  .chat-msgs,
+  .chat-hd,
+  #view-chat,
+  #view-silex,
+  main
+) {
+  background: transparent !important;
+}
+
+/* ─── Barre du haut et menu : voile léger, pas un mur noir ────────────────── */
+html.tilex-fond-actif :is(.topbar, .sidebar) {
+  background: rgba(0, 0, 0, var(--tilex-fond-voile)) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ─── Le noir passe autour des lettres ───────────────────────────────────── */
+/* Halo porté par le texte lui-même : chaque ligne écrite reste nette sur
+   l'image, sans rectangle opaque derrière elle. Non appliqué en thème jour,
+   où un halo noir sur fond clair serait illisible. */
+html.tilex-fond-actif:not([data-theme="day"]) body {
+  text-shadow:
+    0 0 3px #000,
+    0 0 7px rgba(0, 0, 0, 0.95),
+    0 1px 2px #000;
+}
+
+/* Les éléments qui gardent leur propre fond opaque (champs de saisie,
+   menus déroulants, fenêtres modales) n'ont pas besoin du halo : il les
+   alourdirait sans rien apporter. */
+html.tilex-fond-actif :is(input, textarea, select, option, code, pre, kbd) {
+  text-shadow: none;
+}
+
+/* ─── Réglage ────────────────────────────────────────────────────────────────
+   Fond plus ou moins visible :  TilexFond.opacite(0.6)
+   Voile de navigation à zéro :  document.documentElement.style
+                                   .setProperty('--tilex-fond-voile', '0')
+   ─────────────────────────────────────────────────────────────────────────── */
