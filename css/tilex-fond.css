@@ -1,0 +1,46 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ti-lex v10 — IMAGE DE FOND D'APPLICATION
+   ---------------------------------------------------------------------------
+   Couche fixe placée derrière tout le contenu, visible à 40 %.
+   Technique : la couleur de base passe sur <html>, le <body> devient
+   transparent, et la couche image se place en z-index:-1. Le texte et les
+   panneaux restent donc entièrement au-dessus, sans toucher au balisage.
+   Régler la visibilité : --tilex-fond-opacite (0 = invisible, 1 = pleine).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tilex-fond-opacite: 0.4;   /* 40 % — demandé */
+  --tilex-fond-base: #0a0a0a;
+}
+
+html.tilex-fond-actif {
+  background: var(--tilex-fond-base);
+}
+
+/* Le fond du body masquerait la couche : on le neutralise une fois la couche
+   installée (et seulement à ce moment-là, d'où la classe sur <html>). */
+html.tilex-fond-actif body {
+  background: transparent !important;
+}
+
+#tilex-fond {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  opacity: var(--tilex-fond-opacite);
+  transition: opacity 0.4s ease;
+}
+
+/* Écrans étroits : l'image reste centrée sans écraser la mise en page. */
+@media (max-width: 720px) {
+  #tilex-fond { background-size: cover; background-position: center top; }
+}
+
+/* Respect des préférences d'accessibilité : pas de transition inutile. */
+@media (prefers-reduced-motion: reduce) {
+  #tilex-fond { transition: none; }
+}

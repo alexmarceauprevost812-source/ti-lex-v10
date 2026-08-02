@@ -42,21 +42,38 @@ var SCAN_SENSITIVE_PATTERNS = [
   { pattern: /date[_-]?of[_-]?birth|dob\b/i, categorie: 'Date naissance', risque: 'MOYEN', couleur: '#ffcf4a' },
 ];
 
+/* Durées de référence par profil (secondes). Les moteurs tournent 5 à la fois :
+   quand le catalogue MoteursCyber est chargé, la durée est recalculée à partir
+   des moteurs réellement sélectionnés plutôt que de ces valeurs fixes. */
 var SCAN_DUREES = {
   'passive_recon': 45,
   'web_scan': 90,
+  'courriel_scan': 60,
+  'surface_scan': 150,
   'config_audit': 120,
   'vuln_scan': 180,
+  'actif_scan': 150,
   'dark_web_monitor': 240,
+  'personnalise': 120,
   'full_audit': 360
 };
+
+function scanDureeProfil(typeScan, moteurs) {
+  if (window.MoteursCyber) {
+    var ids = Array.isArray(moteurs) && moteurs.length
+      ? moteurs
+      : ((window.MoteursCyber.profilParId(typeScan) || {}).moteurs || []);
+    if (ids.length) return window.MoteursCyber.dureeEstimee(ids);
+  }
+  return SCAN_DUREES[typeScan] || 90;
+}
 
 var scanTimerInterval = null;
 var scanStartTime = null;
 var scanDureeTotal = 0;
 
-function scanDemarrerTimer(typeScan) {
-  var duree = SCAN_DUREES[typeScan] || 90;
+function scanDemarrerTimer(typeScan, moteurs) {
+  var duree = scanDureeProfil(typeScan, moteurs);
   scanDureeTotal = duree;
   scanStartTime = Date.now();
 

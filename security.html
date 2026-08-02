@@ -22,6 +22,8 @@
 <!-- Sentinelle 25 — scan de données sensibles Loi 25, 100 % local (navigateur) -->
 <link rel="stylesheet" href="css/tilex-sentinelle.css">
 <script src="js/tilex-sentinelle.js"></script>
+<!-- Catalogue des moteurs de cybersécurité réels (miroir de _shared/moteurs-cyber.ts) -->
+<script src="js/moteurs-cyber.js"></script>
 
 <style>
 /* ══ Palette sombre — variables custom reprises de pro.html (~30–56) ══ */
@@ -88,6 +90,29 @@ a{color:inherit;}
 .silex-scan-option:has(input:checked){border-color:#FF6B00;background:rgba(255,107,0,.08);color:#FF6B00;}
 .silex-scan-option input{display:none;}
 .silex-tab{font-family:'Share Tech Mono',monospace;}
+/* ══ Sélecteur de moteurs SILEX ══ */
+.silex-profil{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0a0a0a;border:1px solid #23232c;border-radius:8px;cursor:pointer;font-size:12px;color:#e2e2ea;transition:border-color .2s,background .2s;font-family:'Share Tech Mono',monospace;text-align:left;}
+.silex-profil:hover{border-color:#3a3a46;}
+.silex-profil.actif{border-color:#FF6B00;background:rgba(255,107,0,.08);color:#FF6B00;}
+.silex-profil small{display:block;color:#6c6c78;font-size:10px;font-weight:400;letter-spacing:0;}
+.silex-profil.actif small{color:rgba(255,107,0,.7);}
+.silex-cat{border:1px solid #23232c;border-radius:10px;margin-bottom:8px;overflow:hidden;background:#0a0a0a;}
+.silex-cat-tete{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0d0d12;font-size:11px;letter-spacing:1px;color:#FF6B00;font-family:'Share Tech Mono',monospace;font-weight:700;}
+.silex-cat-tete button{margin-left:auto;background:none;border:1px solid #23232c;color:#6c6c78;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:inherit;}
+.silex-cat-tete button:hover{color:#FF6B00;border-color:rgba(255,107,0,.4);}
+.silex-moteur{display:flex;align-items:flex-start;gap:9px;padding:8px 12px;border-top:1px solid #16161c;cursor:pointer;font-size:12px;color:#c8c8d2;font-family:'Share Tech Mono',monospace;}
+.silex-moteur:hover{background:rgba(255,107,0,.04);}
+.silex-moteur input{margin-top:3px;accent-color:#FF6B00;flex-shrink:0;}
+.silex-moteur-nom{color:#e2e2ea;font-weight:600;}
+.silex-moteur input:checked ~ .silex-moteur-txt .silex-moteur-nom{color:#FF6B00;}
+.silex-moteur-desc{color:#6c6c78;font-size:10.5px;line-height:1.45;margin-top:2px;}
+.silex-tag{display:inline-block;font-size:9px;letter-spacing:1px;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.silex-tag-actif{background:rgba(255,207,74,.12);border:1px solid rgba(255,207,74,.4);color:#ffcf4a;}
+.silex-tag-base{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.4);color:#4f8ef7;}
+.silex-journal{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.silex-journal span{font-size:10px;padding:3px 8px;border-radius:6px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;}
+.silex-journal .ok{background:rgba(55,224,160,.08);border:1px solid rgba(55,224,160,.28);color:#37e0a0;}
+.silex-journal .ko{background:rgba(255,59,59,.08);border:1px solid rgba(255,59,59,.3);color:#ff6b6b;}
 /* ══ THÈME SCAN SILEX — Noir + Orange + Statuts ══ */
 #view-silex{background:#0a0a0a;}
 #view-silex .silex-tab.active{color:#FF6B00!important;border-bottom-color:#FF6B00!important;}
@@ -279,6 +304,9 @@ a{color:inherit;}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 </style>
+<!-- Image de fond de l'application — visible a 40 % (css/tilex-fond.css) -->
+<link rel="stylesheet" href="css/tilex-fond.css">
+<script src="js/tilex-fond.js" defer></script>
 </head>
 <body>
 
@@ -347,15 +375,17 @@ a{color:inherit;}
             </select>
           </div>
           <div style="margin-bottom:16px;">
-            <label style="color:#6c6c78;font-size:11px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">TYPE DE SCAN</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="passive_recon" checked><span>🔍 Reconnaissance passive</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="web_scan"><span>🌐 Scan web</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="config_audit"><span>⚙️ Audit configuration</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="vuln_scan"><span>🛡️ Vulnérabilités</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="dark_web_monitor"><span>🌑 Dark web</span></label>
-              <label class="silex-scan-option"><input type="radio" name="scan_type" value="full_audit"><span>🔰 Audit complet</span></label>
+            <label style="color:#6c6c78;font-size:11px;letter-spacing:1px;font-family:'Share Tech Mono',monospace;">PROFIL DE SCAN</label>
+            <div id="silex-profils" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;"></div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <button type="button" id="silex-toggle-moteurs" onclick="silexBasculerMoteurs()"
+                style="background:none;border:1px solid rgba(255,107,0,.3);color:#FF6B00;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;font-family:'Share Tech Mono',monospace;">⚙️ CHOISIR LES MOTEURS</button>
+              <span id="silex-moteurs-resume" style="color:#6c6c78;font-size:11px;font-family:'Share Tech Mono',monospace;"></span>
             </div>
+            <div id="silex-moteurs-panneau" style="display:none;margin-top:12px;"></div>
           </div>
           <button id="silex-launch-btn" onclick="silexLaunchScan()" style="width:100%;background:linear-gradient(135deg,#FF6B00,#cc5500);border:none;border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:opacity .2s,transform .1s;font-family:'Share Tech Mono',monospace;">🔰 LANCER LE SCAN</button>
         </div>
@@ -742,11 +772,133 @@ function scanRetourSilex(){
   secTab('silex');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   SÉLECTEUR DE MOTEURS SILEX
+   Un profil = un ensemble de moteurs. Décocher un moteur bascule la sélection
+   en mode « personnalisé » : le scan envoie alors la liste exacte des moteurs.
+   ══════════════════════════════════════════════════════════════════════════ */
+var _silexProfil='passive_recon';
+var _silexMoteurs=[];          // sélection courante (identifiants)
+var _silexPersonnalise=false;
+
+function silexProfilActif(){
+  var p=window.MoteursCyber?MoteursCyber.profilParId(_silexProfil):null;
+  return p?p.moteurs.slice():[];
+}
+
+function silexRendreProfils(){
+  if(!window.MoteursCyber)return;
+  var box=document.getElementById('silex-profils');
+  if(!box)return;
+  box.innerHTML=MoteursCyber.PROFILS.map(function(p){
+    var duree=MoteursCyber.formaterDuree(MoteursCyber.dureeEstimee(p.moteurs));
+    return '<button type="button" class="silex-profil'+(p.id===_silexProfil&&!_silexPersonnalise?' actif':'')+'" '+
+      'data-profil="'+p.id+'" onclick="silexChoisirProfil(\''+p.id+'\')">'+
+      '<span style="font-size:15px;">'+p.icone+'</span>'+
+      '<span><span style="font-weight:700;">'+escHtml(p.nom)+'</span>'+
+      '<small>'+p.moteurs.length+' moteurs · '+duree+'</small></span></button>';
+  }).join('');
+}
+
+function silexChoisirProfil(id){
+  _silexProfil=id;
+  _silexPersonnalise=false;
+  _silexMoteurs=silexProfilActif();
+  silexRendreProfils();
+  silexRendreMoteurs();
+  silexMajResume();
+}
+
+function silexBasculerMoteurs(){
+  var panneau=document.getElementById('silex-moteurs-panneau');
+  var btn=document.getElementById('silex-toggle-moteurs');
+  var ouvert=panneau.style.display!=='none';
+  panneau.style.display=ouvert?'none':'block';
+  btn.textContent=ouvert?'⚙️ CHOISIR LES MOTEURS':'✕ MASQUER LES MOTEURS';
+  if(!ouvert)silexRendreMoteurs();
+}
+
+function silexRendreMoteurs(){
+  if(!window.MoteursCyber)return;
+  var panneau=document.getElementById('silex-moteurs-panneau');
+  if(!panneau||panneau.style.display==='none')return;
+  var html='';
+  MoteursCyber.CATEGORIES.forEach(function(cat){
+    var liste=MoteursCyber.deCategorie(cat.id);
+    if(liste.length===0)return;
+    html+='<div class="silex-cat"><div class="silex-cat-tete">'+cat.icone+' '+escHtml(cat.nom.toUpperCase())+
+      '<button type="button" onclick="silexCocherCategorie(\''+cat.id+'\',true)">TOUT</button>'+
+      '<button type="button" onclick="silexCocherCategorie(\''+cat.id+'\',false)">AUCUN</button></div>';
+    liste.forEach(function(m){
+      var coche=_silexMoteurs.indexOf(m.id)!==-1;
+      var tag='';
+      if(m.invasivite==='actif-leger')tag='<span class="silex-tag silex-tag-actif">ACTIF</span>';
+      else if(m.besoin==='base')tag='<span class="silex-tag silex-tag-base">BASE</span>';
+      html+='<label class="silex-moteur">'+
+        '<input type="checkbox" value="'+m.id+'"'+(coche?' checked':'')+' onchange="silexBasculerMoteur(this)">'+
+        '<span class="silex-moteur-txt"><span class="silex-moteur-nom">'+escHtml(m.nom)+'</span>'+tag+
+        '<span class="silex-moteur-desc">'+escHtml(m.description)+'</span></span></label>';
+    });
+    html+='</div>';
+  });
+  panneau.innerHTML=html;
+}
+
+function silexBasculerMoteur(input){
+  var id=input.value;
+  var i=_silexMoteurs.indexOf(id);
+  if(input.checked&&i===-1)_silexMoteurs.push(id);
+  else if(!input.checked&&i!==-1)_silexMoteurs.splice(i,1);
+  var attendu=silexProfilActif();
+  _silexPersonnalise=!(attendu.length===_silexMoteurs.length&&attendu.every(function(x){return _silexMoteurs.indexOf(x)!==-1;}));
+  silexRendreProfils();
+  silexMajResume();
+}
+
+function silexCocherCategorie(cat,tout){
+  if(!window.MoteursCyber)return;
+  MoteursCyber.deCategorie(cat).forEach(function(m){
+    var i=_silexMoteurs.indexOf(m.id);
+    if(tout&&i===-1)_silexMoteurs.push(m.id);
+    if(!tout&&i!==-1)_silexMoteurs.splice(i,1);
+  });
+  var attendu=silexProfilActif();
+  _silexPersonnalise=!(attendu.length===_silexMoteurs.length&&attendu.every(function(x){return _silexMoteurs.indexOf(x)!==-1;}));
+  silexRendreProfils();
+  silexRendreMoteurs();
+  silexMajResume();
+}
+
+function silexMajResume(){
+  var el=document.getElementById('silex-moteurs-resume');
+  if(!el||!window.MoteursCyber)return;
+  if(_silexMoteurs.length===0){
+    el.innerHTML='<span style="color:#ff6b6b;">Aucun moteur sélectionné</span>';
+    return;
+  }
+  var actifs=_silexMoteurs.filter(function(id){
+    var m=MoteursCyber.parId(id);return m&&m.invasivite==='actif-leger';
+  }).length;
+  el.innerHTML=_silexMoteurs.length+' moteur'+(_silexMoteurs.length>1?'s':'')+' · '+
+    MoteursCyber.formaterDuree(MoteursCyber.dureeEstimee(_silexMoteurs))+
+    (actifs>0?' · <span style="color:#ffcf4a;">'+actifs+' actif'+(actifs>1?'s':'')+'</span>':'')+
+    (_silexPersonnalise?' · <span style="color:#FF6B00;">personnalisé</span>':'');
+}
+
+function silexInitMoteurs(){
+  if(!window.MoteursCyber)return;
+  _silexMoteurs=silexProfilActif();
+  silexRendreProfils();
+  silexMajResume();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',silexInitMoteurs);
+else silexInitMoteurs();
+
 async function silexLaunchScan(){
   var btn=document.getElementById('silex-launch-btn');
   var target=document.getElementById('silex-target').value;
-  var scanTypeEl=document.querySelector('input[name="scan_type"]:checked');
-  var scanType=scanTypeEl?scanTypeEl.value:'passive_recon';
+  var scanType=_silexPersonnalise?'personnalise':_silexProfil;
+  if(_silexMoteurs.length===0){showToastMsg('Sélectionne au moins un moteur de scan.');return;}
   if(!target)return;
   // ⚖️ Barrière de mandat — aucun scan sans autorisation légale explicite.
   var _mandat=await(window.TilexMandat?window.TilexMandat.confirmer(target):Promise.resolve({ok:false,raison:'cible_invalide'}));
@@ -763,17 +915,17 @@ async function silexLaunchScan(){
   resultsEl.innerHTML='<div style="background:#0d0d12;border:1px solid rgba(255,107,0,.27);border-radius:16px;padding:24px;text-align:center;">'+
     '<div style="color:#FF6B00;font-size:32px;margin-bottom:12px;animation:silexPulse 1s ease-in-out infinite;">🔰</div>'+
     '<p style="color:#FF6B00;font-weight:700;letter-spacing:2px;margin:0;font-family:\'Share Tech Mono\',monospace;">SILEX analyse '+escHtml(target)+'...</p>'+
-    '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+'</p>'+
+    '<p style="color:#6c6c78;font-size:12px;margin:8px 0 0;">'+escHtml(scanType.replace(/_/g,' ').toUpperCase())+' · '+_silexMoteurs.length+' moteurs réels</p>'+
     '<p style="color:#6c6c78;font-size:11px;margin:12px 0 0;">Tu peux changer de page — le scan continue en arrière-plan.</p></div>';
   document.getElementById('sfi-target-name').textContent=target;
-  scanDemarrerTimer(scanType);
+  scanDemarrerTimer(scanType,_silexMoteurs);
   try{
     var session=(await supabase.auth.getSession()).data.session;
     if(!session)throw new Error('Non authentifié');
     var res=await fetch(SB_URL+'/functions/v1/security-agent',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token,'apikey':SB_ANON},
-      body:JSON.stringify({target:target,scan_type:scanType,authorization_id:(_mandat.ref||SILEX_SOW_ID),mandate_ref:_mandat.ref||null,mandate_attested_at:_mandat.at||new Date().toISOString()})
+      body:JSON.stringify({target:target,scan_type:scanType,moteurs:_silexMoteurs,authorization_id:(_mandat.ref||SILEX_SOW_ID),mandate_ref:_mandat.ref||null,mandate_attested_at:_mandat.at||new Date().toISOString()})
     });
     var rawText=await res.text();
     var data;
@@ -829,23 +981,43 @@ function silexRenderResults(data,container){
   var findingsHtml=(data.findings||[]).map(function(f){
     var statut=sevStatut[f.severity]||scanDeterminerStatut(f.title+' '+f.description);
     var c=statutColors[statut]||'#6c6c78';
+    var nomMoteur=f.moteur&&window.MoteursCyber?(MoteursCyber.parId(f.moteur)||{}).nom:null;
+    var preuve='';
+    if(f.preuve&&Object.keys(f.preuve).length>0){
+      preuve='<details style="margin-top:8px;"><summary style="cursor:pointer;font-size:10px;color:#6c6c78;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">▸ PREUVE OBSERVÉE</summary>'+
+        '<pre style="font-size:10px;color:#8a8a96;background:#050505;border:1px solid #1a1a20;border-radius:6px;padding:8px;margin:6px 0 0;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;">'+
+        escHtml(JSON.stringify(f.preuve,null,1))+'</pre></details>';
+    }
     return '<div style="border-left:3px solid '+c+';padding:12px 14px;margin-bottom:8px;background:#0a0a0a;border-radius:0 8px 8px 0;">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">'+
       '<span class="silex-badge silex-badge-'+statut+'">'+f.severity.toUpperCase()+'</span>'+
-      '<span style="color:#e2e2ea;font-size:13px;font-weight:600;">'+escHtml(f.title||'')+'</span></div>'+
+      '<span style="color:#e2e2ea;font-size:13px;font-weight:600;">'+escHtml(f.title||'')+'</span>'+
+      (f.moteur?'<span style="color:#6c6c78;font-size:10px;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">· '+escHtml(nomMoteur||f.moteur)+'</span>':'')+
+      '</div>'+
       '<p style="color:#6c6c78;font-size:12px;margin:0 0 6px;">'+escHtml(f.description||'')+'</p>'+
       (f.remediation?'<div style="color:#37e0a0;font-size:11px;margin-top:6px;">✅ '+escHtml(f.remediation)+'</div>':'')+
+      preuve+
       '</div>';
   }).join('');
+  var journalHtml='';
+  if(Array.isArray(data.moteurs_journal)&&data.moteurs_journal.length>0){
+    var ok=data.moteurs_journal.filter(function(j){return j.statut==='ok';});
+    var ko=data.moteurs_journal.filter(function(j){return j.statut!=='ok';});
+    journalHtml='<details style="margin-bottom:16px;"><summary style="cursor:pointer;color:#FF6B00;font-size:11px;font-weight:700;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">⚙️ MOTEURS EXÉCUTÉS — '+ok.length+' réussis'+(ko.length?', '+ko.length+' en échec':'')+'</summary>'+
+      '<div class="silex-journal">'+data.moteurs_journal.map(function(j){
+        return '<span class="'+(j.statut==='ok'?'ok':'ko')+'" title="'+escHtml(j.erreur||'')+'">'+escHtml(j.nom||j.moteur)+' · '+(j.statut==='ok'?j.constats+' constats · '+Math.round(j.ms/100)/10+'s':'échec')+'</span>';
+      }).join('')+'</div></details>';
+  }
   container.innerHTML='<div style="background:#0d0d12;border:1px solid rgba(255,107,0,.27);border-radius:16px;padding:20px;">'+
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">'+
     '<span style="font-size:20px;">🔰</span>'+
     '<div><div style="color:#FF6B00;font-weight:800;font-size:14px;letter-spacing:1px;font-family:\'Share Tech Mono\',monospace;">RAPPORT SILEX — '+escHtml(data.target||'')+'</div>'+
-    '<div style="color:#6c6c78;font-size:11px;">'+(data.scan_type||'').replace(/_/g,' ').toUpperCase()+' · '+(data.findings_count||0)+' findings</div></div></div>'+
+    '<div style="color:#6c6c78;font-size:11px;">'+escHtml(data.profil||(data.scan_type||'').replace(/_/g,' ').toUpperCase())+' · '+(data.findings_count||0)+' constats · moteur '+escHtml(data.engine||'')+'</div></div></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">'+countsHtml+'</div>'+
     '<div style="background:rgba(255,107,0,.06);border:1px solid rgba(255,107,0,.2);border-radius:12px;padding:14px;margin-bottom:16px;">'+
     '<div style="color:#FF6B00;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px;font-family:\'Share Tech Mono\',monospace;">📋 RÉSUMÉ EXÉCUTIF</div>'+
     '<p style="color:#e2e2ea;font-size:13px;margin:0;line-height:1.7;">'+escHtml(data.executive_summary||'').replace(/\n/g,'<br>')+'</p></div>'+
+    journalHtml+
     findingsHtml+'</div>';
 }
 

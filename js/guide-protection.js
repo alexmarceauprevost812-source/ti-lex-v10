@@ -121,6 +121,10 @@ var SCAN_TYPE_MAP = {
   "darkweb":                ["phishing", "surveillance", "mots-passe"],
   "hibp":                   ["mots-passe", "phishing", "surveillance"],
   "osint":                  ["reseau", "phishing", "surveillance", "permissions"],
+  "courriel_scan":          ["phishing", "reseau", "surveillance"],
+  "surface_scan":           ["reseau", "code", "permissions", "surveillance"],
+  "actif_scan":             ["permissions", "reseau", "code", "mises-jour"],
+  "personnalise":           ["mots-passe", "mises-jour", "sauvegarde", "reseau", "permissions", "phishing", "code", "surveillance"],
   "audit-complet":          ["mots-passe", "mises-jour", "sauvegarde", "reseau", "permissions", "phishing", "code", "surveillance"],
   "full_audit":             ["mots-passe", "mises-jour", "sauvegarde", "reseau", "permissions", "phishing", "code", "surveillance"]
 };
