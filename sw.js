@@ -1,4 +1,12 @@
-const CACHE_VERSION = "tilex-v10-671";
+const CACHE_VERSION = "tilex-v10-672";
+
+// Cache dédié aux tuiles de la carte (TILEXMAP). Séparé du cache applicatif :
+// il survit aux déploiements, sinon chaque mise en ligne effacerait les cartes
+// téléchargées pour le hors-ligne.
+const TILE_CACHE = "tilex-tuiles-v1";
+const TILE_CACHE_MAX = 4000;
+const TILE_HOSTS = /(^|\.)(basemaps\.cartocdn\.com|server\.arcgisonline\.com|tile\.openstreetmap\.org)$/;
+
 const ASSETS = [
   "/",
   "/index.html",
@@ -206,7 +214,11 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_VERSION && k !== TILE_CACHE)
+          .map((k) => caches.delete(k))
+      )
     )
   );
   self.clients.claim();
@@ -224,6 +236,25 @@ self.addEventListener("fetch", (e) => {
           JSON.stringify({ erreur: "offline", message: "Ti-lex est en mode offline — pas de connexion API disponible." }),
           { headers: { "Content-Type": "application/json" }, status: 503 }
         )
+      )
+    );
+    return;
+  }
+
+  // Tuiles de carte : cache d'abord (elles sont immuables) → la carte reste
+  // utilisable hors réseau sur les zones déjà parcourues ou téléchargées.
+  if (TILE_HOSTS.test(url.hostname)) {
+    e.respondWith(
+      caches.open(TILE_CACHE).then((cache) =>
+        cache.match(e.request).then((hit) => {
+          if (hit) return hit;
+          return fetch(e.request)
+            .then((res) => {
+              if (res.ok || res.type === "opaque") cache.put(e.request, res.clone());
+              return res;
+            })
+            .catch(() => new Response("", { status: 504, statusText: "tuile indisponible hors ligne" }));
+        })
       )
     );
     return;
@@ -277,6 +308,45 @@ self.addEventListener("notificationclick", (e) => {
   );
 });
 
+// ─── Téléchargement de tuiles demandé par la carte ──────────────────────────
+// TILEXMAP envoie {type:"CACHE_TILES", urls:[…]} et attend des messages de
+// progression {type:"TILE_PROGRESS", done, total} en retour.
+async function mettreEnCacheTuiles(urls, source) {
+  const cache = await caches.open(TILE_CACHE);
+  const total = urls.length;
+  let done = 0;
+  const LOT = 6; // on ménage le fournisseur de tuiles
+
+  for (let i = 0; i < urls.length; i += LOT) {
+    await Promise.all(
+      urls.slice(i, i + LOT).map(async (u) => {
+        try {
+          const dejaLa = await cache.match(u);
+          if (!dejaLa) {
+            const res = await fetch(u);
+            if (res.ok || res.type === "opaque") await cache.put(u, res.clone());
+          }
+        } catch (err) {
+          // Une tuile manquante ne doit pas interrompre le téléchargement.
+        }
+        done++;
+      })
+    );
+    if (source) source.postMessage({ type: "TILE_PROGRESS", done, total });
+  }
+
+  await elaguerTuiles(cache);
+  if (source) source.postMessage({ type: "TILE_PROGRESS", done: total, total });
+}
+
+// Plafonne le cache de tuiles : les plus anciennes entrées partent en premier.
+async function elaguerTuiles(cache) {
+  const keys = await cache.keys();
+  if (keys.length <= TILE_CACHE_MAX) return;
+  const aSupprimer = keys.slice(0, keys.length - TILE_CACHE_MAX);
+  await Promise.all(aSupprimer.map((k) => cache.delete(k)));
+}
+
 self.addEventListener("message", (e) => {
   if (e.data === "check-update") {
     self.registration.update();
@@ -286,5 +356,11 @@ self.addEventListener("message", (e) => {
   }
   if (e.data === "GET_VERSION") {
     e.source.postMessage({ version: CACHE_VERSION });
+  }
+  if (e.data && e.data.type === "CACHE_TILES" && Array.isArray(e.data.urls)) {
+    e.waitUntil(mettreEnCacheTuiles(e.data.urls, e.source));
+  }
+  if (e.data && e.data.type === "CLEAR_TILES") {
+    e.waitUntil(caches.delete(TILE_CACHE));
   }
 });
