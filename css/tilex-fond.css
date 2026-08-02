@@ -52,16 +52,20 @@ html.tilex-fond-actif body {
    barre du haut, menu) sont des rectangles noirs pleins : ils recouvrent
    entièrement la couche image et on ne voit plus rien du fond.
 
-   Principe retenu : ce sont les LIGNES DE TEXTE qui portent le noir, sous
-   forme d'un halo autour des lettres, au lieu d'un grand aplat noir derrière
-   tout le panneau. Le texte reste parfaitement lisible par-dessus l'image, et
-   le fond respire partout ailleurs.
+   Principe retenu : chaque PHRASE ÉCRITE porte son propre cadre noir, serré
+   autour d'elle et s'arrêtant là où le texte s'arrête. Plus de grand aplat
+   noir derrière tout le panneau : le texte reste parfaitement lisible, et le
+   fond respire partout ailleurs.
    ══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   /* Voile sombre sur la barre du haut et le menu, pour que la navigation
      reste lisible. 0 = totalement transparent, 1 = noir plein. */
   --tilex-fond-voile: 0.35;
+
+  /* Opacité du cadre noir posé derrière chaque phrase.
+     0 = aucun cadre (texte à nu sur l'image), 1 = cadre noir plein. */
+  --tilex-fond-cadre: 0.72;
 }
 
 /* ─── Surfaces de structure : on retire l'aplat noir ─────────────────────── */
@@ -88,26 +92,46 @@ html.tilex-fond-actif :is(.topbar, .sidebar) {
   -webkit-backdrop-filter: blur(6px);
 }
 
-/* ─── Le noir passe autour des lettres ───────────────────────────────────── */
-/* Halo porté par le texte lui-même : chaque ligne écrite reste nette sur
-   l'image, sans rectangle opaque derrière elle. Non appliqué en thème jour,
-   où un halo noir sur fond clair serait illisible. */
-html.tilex-fond-actif:not([data-theme="day"]) body {
-  text-shadow:
-    0 0 3px #000,
-    0 0 7px rgba(0, 0, 0, 0.95),
-    0 1px 2px #000;
+/* ─── Un cadre noir serré autour de chaque phrase ────────────────────────── */
+/* Chaque paragraphe, titre ou puce porte son propre cadre noir, qui s'arrête
+   là où le texte s'arrête (width: fit-content). Le résultat : des phrases
+   encadrées de noir posées sur l'image, au lieu d'un grand rectangle noir
+   qui couvre tout le panneau.
+   Le cadre reste block-level : la mise en page, les puces et les espacements
+   d'origine ne bougent pas. */
+html.tilex-fond-actif :is(
+  .cmsg-bbl, .chat-msgs, .view, .wrap, #view-silex, .content
+) :is(p, li, h1, h2, h3, h4, h5, h6, blockquote, dd, dt, figcaption) {
+  width: fit-content;
+  max-width: 100%;
+  background: rgba(0, 0, 0, var(--tilex-fond-cadre));
+  padding: 0.16em 0.5em;
+  border-radius: 6px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
-/* Les éléments qui gardent leur propre fond opaque (champs de saisie,
-   menus déroulants, fenêtres modales) n'ont pas besoin du halo : il les
-   alourdirait sans rien apporter. */
-html.tilex-fond-actif :is(input, textarea, select, option, code, pre, kbd) {
+/* Halo léger en complément : il rattrape les caractères qui dépassent du
+   cadre (accents, jambages) et garde le texte net. Pas en thème jour, où un
+   halo noir sur fond clair serait illisible. */
+html.tilex-fond-actif:not([data-theme="day"]) body {
+  text-shadow: 0 0 3px #000, 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Ce qui a déjà son propre fond opaque n'a besoin ni du cadre ni du halo :
+   champs de saisie, listes déroulantes, blocs de code, boutons. */
+html.tilex-fond-actif :is(input, textarea, select, option, code, pre, kbd, button) {
   text-shadow: none;
 }
+html.tilex-fond-actif :is(pre, code, kbd, button, .btn, [role="button"]) :is(p, li, h1, h2, h3, h4, h5, h6) {
+  background: none;
+  padding: 0;
+}
 
-/* ─── Réglage ────────────────────────────────────────────────────────────────
+/* ─── Réglages ───────────────────────────────────────────────────────────────
    Fond plus ou moins visible :  TilexFond.opacite(0.6)
+   Cadres plus ou moins opaques : document.documentElement.style
+                                   .setProperty('--tilex-fond-cadre', '0.5')
    Voile de navigation à zéro :  document.documentElement.style
                                    .setProperty('--tilex-fond-voile', '0')
    ─────────────────────────────────────────────────────────────────────────── */
