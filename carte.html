@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TI-LEX-AL | Map IA d'Alex - Canada & USA</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#ff6a00">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Alex GPS">
@@ -722,6 +722,53 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
 .leaflet-labels-pane.theme-lime img{filter:invert(1) brightness(2) contrast(2.5) hue-rotate(80deg)!important}
 .leaflet-labels-pane.theme-rose{filter:invert(1) brightness(2) contrast(2.5) hue-rotate(300deg) drop-shadow(0 0 3px rgba(255,100,200,.8))!important}
 .leaflet-labels-pane.theme-rose img{filter:invert(1) brightness(2) contrast(2.5) hue-rotate(300deg)!important}
+
+/* ===== THEME JOUR — BEIGE FONCE =====
+   Applique sur la tuile claire de CARTO : le sepia donne le beige, la
+   baisse de luminosite le fonce. Resultat : une carte de jour chaude et
+   peu eblouissante, ou les traces de couleur ressortent bien. */
+.leaflet-tile-pane.theme-beige{
+  filter:sepia(.62) saturate(.78) brightness(.76) contrast(1.12) hue-rotate(-6deg);
+}
+.leaflet-tile-pane.theme-beige img{filter:none}
+
+/* ===== EFFET DE COURANT SUR LES CHEMINS PRINCIPAUX =====
+   Les traces Leaflet sont des <path> SVG : on anime le decalage des
+   pointilles pour donner l'impression d'un courant qui circule. */
+@keyframes routeCourant{to{stroke-dashoffset:-40}}
+.route-courant{
+  stroke-dasharray:18 22;
+  stroke-dashoffset:0;
+  animation:routeCourant 1.4s linear infinite;
+}
+.route-halo{filter:drop-shadow(0 0 4px rgba(40,90,255,.7))}
+@media (prefers-reduced-motion:reduce){
+  .route-courant{animation:none;stroke-dasharray:none}
+}
+
+/* ===== LOGOS DE MARQUE SUR LES POI ===== */
+.poi-marque{
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:9px;
+  border:2px solid rgba(0,0,0,.55);
+  box-shadow:0 2px 8px rgba(0,0,0,.6);
+  overflow:hidden;background:#fff;
+}
+.poi-marque img{width:100%;height:100%;object-fit:contain;background:#fff}
+.poi-marque-txt{
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.5px;line-height:1;text-align:center;padding:2px;
+}
+.popup-marque{
+  display:flex;align-items:center;gap:9px;margin-bottom:6px;
+}
+.popup-marque .poi-marque{width:38px;height:38px}
+.popup-ouvert{font-size:11px;font-weight:700}
+.popup-ouvert.oui{color:#2ed573}
+.popup-ouvert.non{color:#ff4757}
+.popup-ligne{color:#bba88a;font-size:11px;display:block;margin-top:2px}
+.popup-lien{color:#ff6a00;font-size:11px;text-decoration:none;display:block;margin-top:2px}
+
 .leaflet-control-zoom{display:none!important}
 .leaflet-control-zoom.show{display:flex!important;flex-direction:column}
 .leaflet-control-zoom a{background:rgba(14,14,14,.9)!important;color:var(--orange)!important;border-color:var(--border)!important}
@@ -805,6 +852,11 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
   <div class="poi-chip" data-poi="gravel" onclick="toggleGravel(this)" style="border-color:#ff2222">&#128739; Gravel</div>
   <div class="poi-chip" data-poi="forestier" onclick="toggleForestier(this)" style="border-color:#3ea55a">&#127794; Chemins forestiers</div>
   <div class="poi-chip" data-poi="pourvoirie" onclick="togglePourvoiries(this)" style="border-color:#2a7cff">&#127957; Pourvoiries</div>
+  <div class="poi-chip" data-poi="reseau" onclick="toggleReseau(this)" style="border-color:#1030a0">&#128739; Reseau routier</div>
+  <div class="poi-chip" data-poi="depanneur" onclick="searchPOI(this,'depanneur')">&#127974; Depanneurs</div>
+  <div class="poi-chip" data-poi="supermarket" onclick="searchPOI(this,'supermarket')">&#128722; Epiceries</div>
+  <div class="poi-chip" data-poi="fuel" onclick="searchPOI(this,'fuel')">&#9981; Essence</div>
+  <div class="poi-chip" data-poi="pharmacy" onclick="searchPOI(this,'pharmacy')">&#128138; Pharmacies</div>
 </div>
 <!-- ===== LOADING ===== -->
 <div class="load-overlay" id="loadOverlay"><div class="load-spin"></div><span id="loadText">Chargement...</span></div>
@@ -941,6 +993,7 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
 <!-- ===== LAYERS ===== -->
 <div class="layers-panel" id="layersPanel">
   <div class="layer-opt active" onclick="setLayer('dark',this)"><div class="layer-radio"></div> Sombre</div>
+  <div class="layer-opt" onclick="setLayer('jour',this)"><div class="layer-radio"></div> &#9728; Jour (beige fonce)</div>
   <div class="layer-opt" onclick="setLayer('streets',this)"><div class="layer-radio"></div> Rues</div>
   <div class="layer-opt" onclick="setLayer('satellite',this)"><div class="layer-radio"></div> Satellite</div>
   <div class="layer-opt" onclick="setLayer('topo',this)"><div class="layer-radio"></div> Topographique</div>
@@ -1143,6 +1196,9 @@ const QC_CENTER = [45, -80];
 
 const tileLayers = {
   dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &bull; Map IA d\'Alex 2026',maxZoom:19}),
+  // Theme de jour : tuile claire CARTO, teintee en beige fonce par filtre CSS
+  // (voir .leaflet-tile-pane.theme-beige). Aucun fournisseur supplementaire.
+  jour: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; CARTO &bull; Map IA d\'Alex 2026',maxZoom:19}),
   streets: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OSM &bull; Map IA d\'Alex 2026',maxZoom:19}),
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'&copy; Esri &bull; Map IA d\'Alex 2026',maxZoom:18}),
   topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenTopoMap &bull; Map IA d\'Alex 2026',maxZoom:17}),
@@ -1850,41 +1906,286 @@ function hideCount(){document.getElementById('poiCount').classList.remove('show'
 // Smart fetch abort to prevent stacking
 let activePOIController=null;
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LOGOS DE MARQUE
+   ---------------------------------------------------------------------------
+   Deux sources, dans cet ordre :
+   1. Logo officiel de Wikimedia Commons, via la propriete brand:wikidata que
+      porte le commerce dans OpenStreetMap (P154 = logo de la marque). C'est le
+      vrai logo, publie par Wikimedia — rien n'est copie dans le depot.
+   2. A defaut, une pastille aux couleurs officielles de l'enseigne avec son
+      sigle. Toujours affichee immediatement, donc jamais de trou visuel.
+   Les logos recuperes sont memorises dans le navigateur pour ne pas
+   reinterroger Wikidata a chaque deplacement de la carte.
+   ══════════════════════════════════════════════════════════════════════════ */
+const MARQUES={
+  // Depanneurs et essence
+  'couche-tard':{c:'#e2231a',f:'#fff',s:'CT'},
+  'circle k':{c:'#ed1c24',f:'#fff',s:'CK'},
+  'ultramar':{c:'#003b7a',f:'#fff',s:'UL'},
+  'esso':{c:'#0f4d92',f:'#fff',s:'ESSO'},
+  'shell':{c:'#fbce07',f:'#c8102e',s:'SHELL'},
+  'petro-canada':{c:'#c8102e',f:'#fff',s:'PETRO'},
+  'irving':{c:'#00447c',f:'#fff',s:'IRV'},
+  'sonic':{c:'#e30613',f:'#fff',s:'SONIC'},
+  'crevier':{c:'#0057a8',f:'#fff',s:'CREV'},
+  'beau-soir':{c:'#e2231a',f:'#fff',s:'BS'},
+  'boni-soir':{c:'#e2231a',f:'#fff',s:'BS'},
+  'voisin':{c:'#00843d',f:'#fff',s:'VOIS'},
+  // Epiceries
+  'metro':{c:'#00539f',f:'#fff',s:'METRO'},
+  'iga':{c:'#e2231a',f:'#fff',s:'IGA'},
+  'provigo':{c:'#e2231a',f:'#fff',s:'PROV'},
+  'maxi':{c:'#00953b',f:'#fff',s:'MAXI'},
+  'super c':{c:'#e2231a',f:'#ffd200',s:'SUPER'},
+  'costco':{c:'#005daa',f:'#e31837',s:'COST'},
+  'walmart':{c:'#0071ce',f:'#ffc220',s:'WMT'},
+  'avril':{c:'#7ab800',f:'#fff',s:'AVRIL'},
+  // Restaurants et bars
+  'tim hortons':{c:'#c8102e',f:'#fff',s:'TIM'},
+  'mcdonald':{c:'#da291c',f:'#ffc72c',s:'M'},
+  'a&w':{c:'#e35205',f:'#fff',s:'A&W'},
+  'st-hubert':{c:'#e2231a',f:'#ffd200',s:'ST-H'},
+  'st-hubert express':{c:'#e2231a',f:'#ffd200',s:'ST-H'},
+  'normandin':{c:'#00843d',f:'#fff',s:'NORM'},
+  'valentine':{c:'#e2231a',f:'#fff',s:'VAL'},
+  'harvey':{c:'#e2231a',f:'#fff',s:'HARV'},
+  'subway':{c:'#008c15',f:'#ffc600',s:'SUB'},
+  'burger king':{c:'#d62300',f:'#f5ebdc',s:'BK'},
+  'wendy':{c:'#e2203d',f:'#fff',s:'WEND'},
+  'pfk':{c:'#a5122b',f:'#fff',s:'PFK'},
+  'kfc':{c:'#a5122b',f:'#fff',s:'KFC'},
+  'la belle province':{c:'#e2231a',f:'#fff',s:'LBP'},
+  'chez ashton':{c:'#e2231a',f:'#ffd200',s:'ASH'},
+  'benny':{c:'#f47b20',f:'#fff',s:'BENNY'},
+  'starbucks':{c:'#00704a',f:'#fff',s:'SBUX'},
+  'second cup':{c:'#7b2c8f',f:'#fff',s:'2CUP'},
+  'boston pizza':{c:'#c8102e',f:'#fff',s:'BP'},
+  'pizza hut':{c:'#e3120b',f:'#fff',s:'PH'},
+  'domino':{c:'#0078ae',f:'#e31837',s:'DOM'},
+  'chez cora':{c:'#f7941e',f:'#fff',s:'CORA'},
+  'mikes':{c:'#e2231a',f:'#fff',s:'MIKES'},
+  'scores':{c:'#8b1a1a',f:'#fff',s:'SCOR'},
+  'la cage':{c:'#000',f:'#ffc72c',s:'CAGE'},
+  // Banques
+  'desjardins':{c:'#00874e',f:'#fff',s:'DESJ'},
+  'caisse desjardins':{c:'#00874e',f:'#fff',s:'DESJ'},
+  'banque nationale':{c:'#e2231a',f:'#fff',s:'BNC'},
+  'national bank':{c:'#e2231a',f:'#fff',s:'BNC'},
+  'rbc':{c:'#005daa',f:'#ffd200',s:'RBC'},
+  'banque royale':{c:'#005daa',f:'#ffd200',s:'RBC'},
+  'td':{c:'#008a00',f:'#fff',s:'TD'},
+  'bmo':{c:'#0079c1',f:'#fff',s:'BMO'},
+  'scotia':{c:'#ec111a',f:'#fff',s:'SCOT'},
+  'cibc':{c:'#8b1a1a',f:'#fff',s:'CIBC'},
+  'laurentienne':{c:'#00539f',f:'#fff',s:'BLC'},
+  'tangerine':{c:'#ff6600',f:'#fff',s:'TANG'},
+  // Pharmacies et autres
+  'jean coutu':{c:'#e2231a',f:'#fff',s:'JC'},
+  'pharmaprix':{c:'#e2231a',f:'#fff',s:'PPX'},
+  'uniprix':{c:'#0057a8',f:'#fff',s:'UNI'},
+  'familiprix':{c:'#00843d',f:'#fff',s:'FAM'},
+  'brunet':{c:'#00843d',f:'#fff',s:'BRUN'},
+  'saq':{c:'#7b1d3d',f:'#fff',s:'SAQ'},
+  'canadian tire':{c:'#e2231a',f:'#fff',s:'CT'},
+  'rona':{c:'#0057a8',f:'#fff',s:'RONA'},
+  'home depot':{c:'#f96302',f:'#fff',s:'HD'},
+  'dollarama':{c:'#00843d',f:'#fff',s:'DOLL'}
+};
+
+function marqueConnue(tags){
+  const candidats=[tags.brand,tags.operator,tags.name].filter(Boolean).map(s=>s.toLowerCase());
+  for(const cand of candidats){
+    for(const cle in MARQUES){
+      if(cand.includes(cle))return MARQUES[cle];
+    }
+  }
+  return null;
+}
+
+const _logosWikidata={};
+function logoWikidataCache(qid){
+  if(_logosWikidata[qid]!==undefined)return _logosWikidata[qid];
+  try{
+    const v=localStorage.getItem('tilex_logo_'+qid);
+    if(v!==null){_logosWikidata[qid]=v||null;return _logosWikidata[qid]}
+  }catch(e){}
+  return undefined;
+}
+
+// Recupere le logo officiel (P154) et remplace la pastille par l'image reelle.
+async function chargerLogoWikidata(qid,cibleId){
+  if(!/^Q\d+$/.test(qid))return;
+  let url=logoWikidataCache(qid);
+  if(url===undefined){
+    try{
+      const r=await fetch(`https://www.wikidata.org/w/api.php?action=wbgetclaims&entity=${qid}&property=P154&format=json&origin=*`);
+      const d=await r.json();
+      const fichier=d?.claims?.P154?.[0]?.mainsnak?.datavalue?.value;
+      url=fichier?`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fichier)}?width=72`:null;
+    }catch(e){url=null}
+    _logosWikidata[qid]=url;
+    try{localStorage.setItem('tilex_logo_'+qid,url||'')}catch(e){}
+  }
+  if(!url)return;
+  document.querySelectorAll(`[data-logo="${cibleId}"]`).forEach(el=>{
+    el.innerHTML=`<img src="${url}" alt="" loading="lazy">`;
+  });
+}
+
+let _logoSeq=0;
+/* Pastille de marque prete a inserer. Si la marque a un identifiant Wikidata,
+   le vrai logo vient le remplacer des qu'il est charge. */
+function badgeMarque(tags,secours){
+  const m=marqueConnue(tags);
+  const qid=tags['brand:wikidata']||tags['operator:wikidata']||'';
+  const id='lg'+(++_logoSeq);
+  let html;
+  if(m){
+    html=`<div class="poi-marque" data-logo="${id}" style="background:${m.c}">`+
+         `<span class="poi-marque-txt" style="color:${m.f}">${m.s}</span></div>`;
+  }else{
+    html=`<div class="poi-marque" data-logo="${id}" style="background:#1a1a1a">`+
+         `<span class="poi-marque-txt" style="color:#ff9000;font-size:16px">${secours||'&#128205;'}</span></div>`;
+  }
+  if(qid)setTimeout(()=>chargerLogoWikidata(qid,id),50);
+  return html;
+}
+
+/* ─── Heures d'ouverture : « ouvert / ferme maintenant » ─────────────────────
+   Lit les formats courants d'OSM (Mo-Fr 09:00-17:00; Sa 10:00-16:00, 24/7).
+   Retourne null si la syntaxe sort de ce que l'on sait lire — on prefere ne
+   rien affirmer plutot que d'annoncer une mauvaise information. */
+const JOURS_OSM=['Su','Mo','Tu','We','Th','Fr','Sa'];
+function ouvertMaintenant(oh){
+  if(!oh)return null;
+  const s=oh.trim();
+  if(/^24\/7$/i.test(s))return{ouvert:true,detail:'Ouvert 24 h sur 24'};
+  if(/(PH|SH|easter|sunrise|sunset|week|\|\|)/i.test(s))return null;
+
+  const maintenant=new Date();
+  const jour=JOURS_OSM[maintenant.getDay()];
+  const minutes=maintenant.getHours()*60+maintenant.getMinutes();
+
+  for(const bloc of s.split(';')){
+    const b=bloc.trim();
+    if(!b)continue;
+    const m=b.match(/^([A-Za-z,\-]+)?\s*(.*)$/);
+    if(!m)continue;
+    const spec=(m[1]||'Mo-Su').trim();
+    const plages=m[2].trim();
+    if(/^off|closed$/i.test(plages))continue;
+
+    let jourOk=false;
+    for(const part of spec.split(',')){
+      const p=part.trim();
+      if(!p)continue;
+      if(p.includes('-')){
+        const[a,z]=p.split('-').map(x=>JOURS_OSM.indexOf(x.trim()));
+        if(a<0||z<0)continue;
+        const j=JOURS_OSM.indexOf(jour);
+        if(a<=z?(j>=a&&j<=z):(j>=a||j<=z))jourOk=true;
+      }else if(JOURS_OSM.indexOf(p)===JOURS_OSM.indexOf(jour))jourOk=true;
+    }
+    if(!jourOk)continue;
+
+    for(const plage of plages.split(',')){
+      const pm=plage.trim().match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/);
+      if(!pm)return null;
+      const debut=+pm[1]*60+ +pm[2];
+      let fin=+pm[3]*60+ +pm[4];
+      if(fin<=debut)fin+=1440; // plage qui passe minuit
+      if(minutes>=debut&&minutes<fin)return{ouvert:true,detail:`Ouvert jusqu'a ${pm[3]}:${pm[4]}`};
+      if(minutes+1440>=debut&&minutes+1440<fin)return{ouvert:true,detail:`Ouvert jusqu'a ${pm[3]}:${pm[4]}`};
+    }
+    return{ouvert:false,detail:'Ferme en ce moment'};
+  }
+  return{ouvert:false,detail:'Ferme aujourd\'hui'};
+}
+
+/* ─── Fiche complete d'un commerce ──────────────────────────────────────────
+   Tout ce qu'OpenStreetMap publie sur le lieu, rassemble en un clic :
+   coordonnees, heures, services, paiement, accessibilite, plus un lien de
+   recherche web pour ce qui n'est pas dans OSM. */
+function ficheCommerce(t,lat,lon,secours,libelle){
+  const nom=t.name||libelle||'Commerce';
+  const safeName=nom.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  const tel=t.phone||t['contact:phone']||t['contact:mobile']||'';
+  const web=t.website||t['contact:website']||t.url||'';
+  const courriel=t.email||t['contact:email']||'';
+  const fb=t['contact:facebook']||'';
+  const adresse=[t['addr:housenumber'],t['addr:street'],t['addr:city'],t['addr:postcode']].filter(Boolean).join(', ');
+  const oh=t.opening_hours||'';
+  const etat=ouvertMaintenant(oh);
+
+  let h=`<div class="popup-marque">${badgeMarque(t,secours)}<div>`+
+        `<b style="color:#ff9000;font-size:14px">${nom}</b>`+
+        (t.brand&&t.brand!==nom?`<span class="popup-ligne">${t.brand}</span>`:'')+
+        `</div></div>`;
+
+  if(etat)h+=`<div class="popup-ouvert ${etat.ouvert?'oui':'non'}">${etat.ouvert?'&#9679; ':'&#9675; '}${etat.detail}</div>`;
+  if(adresse)h+=`<span class="popup-ligne">&#128205; ${adresse}</span>`;
+  if(oh)h+=`<span class="popup-ligne">&#128336; ${oh.replace(/;/g,' · ')}</span>`;
+  if(t.cuisine)h+=`<span class="popup-ligne">&#127860; ${t.cuisine.replace(/;/g,', ')}</span>`;
+  if(t.diet_vegetarian==='yes'||t['diet:vegetarian']==='yes')h+=`<span class="popup-ligne">&#127807; Options vegetariennes</span>`;
+  if(t.takeaway==='yes')h+=`<span class="popup-ligne">&#129379; Pour emporter</span>`;
+  if(t.delivery==='yes')h+=`<span class="popup-ligne">&#128663; Livraison</span>`;
+  if(t.drive_through==='yes')h+=`<span class="popup-ligne">&#128664; Service au volant</span>`;
+  if(t.outdoor_seating==='yes')h+=`<span class="popup-ligne">&#9925; Terrasse</span>`;
+  if(t.wheelchair)h+=`<span class="popup-ligne">&#9855; Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='limited'?'partiel':'non'}</span>`;
+  if(t.internet_access==='wlan'||t['internet_access']==='yes')h+=`<span class="popup-ligne">&#128246; Wi-Fi</span>`;
+  const paiements=Object.keys(t).filter(k=>k.startsWith('payment:')&&t[k]==='yes').map(k=>k.replace('payment:',''));
+  if(paiements.length)h+=`<span class="popup-ligne">&#128179; ${paiements.slice(0,5).join(', ')}</span>`;
+  if(t.atm==='yes')h+=`<span class="popup-ligne">&#128179; Guichet automatique sur place</span>`;
+  if(t.fuel_diesel==='yes'||t['fuel:diesel']==='yes')h+=`<span class="popup-ligne">&#9981; Diesel</span>`;
+  if(t.self_service==='yes')h+=`<span class="popup-ligne">Libre-service</span>`;
+  if(t.description)h+=`<span class="popup-ligne">${t.description.slice(0,160)}</span>`;
+
+  if(tel)h+=`<a class="popup-lien" href="tel:${tel.replace(/\s/g,'')}">&#128222; ${tel}</a>`;
+  if(courriel)h+=`<a class="popup-lien" href="mailto:${courriel}">&#9993; ${courriel}</a>`;
+  if(web)h+=`<a class="popup-lien" href="${web}" target="_blank" rel="noopener">&#127760; Site officiel</a>`;
+  if(fb)h+=`<a class="popup-lien" href="https://facebook.com/${fb}" target="_blank" rel="noopener">Facebook</a>`;
+  // Ce qu'OSM ne contient pas (menu, avis, promotions) reste a un clic.
+  h+=`<a class="popup-lien" href="https://www.google.com/search?q=${encodeURIComponent(nom+' '+(t['addr:city']||''))}" target="_blank" rel="noopener">&#128269; Chercher sur le web</a>`;
+  h+=`<button onclick="routeTo(${lat},${lon},'${safeName}')" style="margin-top:8px;background:#ff6a00;color:#000;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-family:Rajdhani;font-weight:700">&#128668; Y aller</button>`;
+  return h;
+}
+
 async function searchPOI(el,type){
   if(activePOIController){activePOIController.abort();activePOIController=null}
   const ctrl=new AbortController();activePOIController=ctrl;
-  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"])').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"]):not([data-poi="reseau"])').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');clearPOI();hideCount();
   const poi=POI_DB[type];if(!poi){hideLoading();return}
   if(map.getZoom()<11){alert('Zoome au niveau 11+ pour chercher!');return}
   const b=map.getBounds(),bbox=`${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
   showLoading('Recherche '+poi.label+'...');
   try{
-    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(`[out:json][timeout:15];(${poi.q}(${bbox}););out body 200;`),signal:ctrl.signal});
+    // `nwr` + `out center` : beaucoup de commerces sont cartographies comme
+    // batiments (way) et non comme simples points — sans ca, ils manquaient.
+    const requete=`[out:json][timeout:20];(${poi.q.replace(/^node/,'nwr')}(${bbox}););out center 250;`;
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(requete),signal:ctrl.signal});
     if(ctrl.signal.aborted)return;
     const data=await res.json();
     if(!data.elements){hideLoading();return}
+    let n=0;
     data.elements.forEach(item=>{
-      if(!item.lat||!item.lon)return;
-      const n=item.tags?.name||poi.label;
-      const safeName=n.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-      const addr=[item.tags?.['addr:housenumber'],item.tags?.['addr:street'],item.tags?.['addr:city']].filter(Boolean).join(', ');
-      const phone=item.tags?.phone||item.tags?.['contact:phone']||'';
-      const web=item.tags?.website||item.tags?.['contact:website']||'';
-      const hours=item.tags?.opening_hours||'';
-      const cuisine=item.tags?.cuisine||'';
-      let popup=`<b>${n}</b>`;
-      if(addr)popup+=`<br><span style="color:#bba88a;font-size:12px">${addr}</span>`;
-      if(cuisine)popup+=`<br><span style="color:#ff9000;font-size:11px">${cuisine}</span>`;
-      if(phone)popup+=`<br><span style="font-size:11px">&#128222; ${phone}</span>`;
-      if(hours)popup+=`<br><span style="color:#8a7a60;font-size:10px">&#128336; ${hours}</span>`;
-      if(web)popup+=`<br><a href="${web}" target="_blank" style="color:#ff6a00;font-size:11px">&#127760; Site web</a>`;
-      popup+=`<br><button onclick="routeTo(${item.lat},${item.lon},'${safeName}')" style="margin-top:6px;background:#ff6a00;color:#000;border:none;padding:4px 12px;border-radius:8px;cursor:pointer;font-family:Rajdhani;font-weight:600">&#128668; Y aller</button>`;
-      const m=L.marker([item.lat,item.lon],{icon:poiIcon(poi.e)}).addTo(map).bindPopup(popup);
+      const lat=item.lat!=null?item.lat:item.center&&item.center.lat;
+      const lon=item.lon!=null?item.lon:item.center&&item.center.lon;
+      if(lat==null||lon==null)return;
+      const t=item.tags||{};
+      const popup=ficheCommerce(t,lat,lon,poi.e,poi.label);
+      // Le marqueur porte le logo de l'enseigne quand elle est reconnue.
+      const marque=marqueConnue(t);
+      const icone=marque
+        ? L.divIcon({html:badgeMarque(t,poi.e),iconSize:[34,34],iconAnchor:[17,17],className:''})
+        : poiIcon(poi.e);
+      const m=L.marker([lat,lon],{icon:icone}).addTo(map).bindPopup(popup,{maxWidth:300});
       poiMarkers.push(m);
+      n++;
     });
     hideLoading();
-    if(data.elements.length)showCount(data.elements.length);
+    if(n)showCount(n);
     else{hideLoading();alert('Aucun resultat ici. Deplace la carte ou zoome au niveau 12+.')}
   }catch(e){
     hideLoading();
@@ -2733,6 +3034,109 @@ async function loadPourvoiries(){
   pourvoirieLoading=false;
 }
 
+// ============ RESEAU ROUTIER COLORE ============
+// Trois familles, trois couleurs :
+//   gravel / non revetu ........ rouge
+//   chemin principal ........... bleu fonce + effet de courant anime
+//   chemin secondaire .......... bleu pale
+const RESEAU_STYLES={
+  gravel:     {col:'#ff2222',w:2.6,lbl:'Chemin de gravel',vit:'30-60'},
+  principal:  {col:'#1030a0',w:5,  lbl:'Chemin principal',vit:'80-100'},
+  secondaire: {col:'#8fd0ff',w:3.4,lbl:'Chemin secondaire',vit:'50-80'}
+};
+
+function familleRoute(t){
+  const surf=t.surface||'';
+  if(/gravel|unpaved|dirt|ground|compacted|fine_gravel|earth|mud|sand/.test(surf))return'gravel';
+  const h=t.highway||'';
+  if(h==='track'||h==='path')return'gravel';
+  if(/^(motorway|trunk|primary)(_link)?$/.test(h))return'principal';
+  if(/^(secondary|tertiary)(_link)?$/.test(h))return'secondaire';
+  return null;
+}
+
+let reseauLayers=[];
+let reseauActive=false;
+let reseauLoading=false;
+
+function toggleReseau(el){
+  if(reseauActive){
+    reseauActive=false;el.classList.remove('active');el.style.borderColor='#1030a0';
+    reseauLayers.forEach(l=>map.removeLayer(l));reseauLayers=[];
+    map.off('moveend',onReseauMove);
+    hideCount();
+    return;
+  }
+  reseauActive=true;el.classList.add('active');el.style.borderColor='';
+  loadReseau();
+  map.on('moveend',onReseauMove);
+}
+
+function onReseauMove(){if(reseauActive&&!reseauLoading)loadReseau()}
+
+async function loadReseau(){
+  if(reseauLoading)return;
+  if(map.getZoom()<11){showLoading('Zoome au niveau 11+ pour le reseau routier');setTimeout(hideLoading,1500);return}
+  reseauLoading=true;
+  const b=map.getBounds();
+  const bbox=`${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
+  const query=`[out:json][timeout:30];`+
+    `(way["highway"~"^(motorway|trunk|primary)(_link)?$"](${bbox});`+
+    `way["highway"~"^(secondary|tertiary)(_link)?$"](${bbox});`+
+    `way["surface"~"gravel|unpaved|dirt|ground|compacted|fine_gravel|earth"](${bbox}););`+
+    `out body geom 2500;`;
+  showLoading('Chargement du reseau routier...');
+  try{
+    reseauLayers.forEach(l=>map.removeLayer(l));reseauLayers=[];
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query)});
+    const data=await res.json();
+    if(!data.elements){hideLoading();reseauLoading=false;return}
+
+    let n=0;
+    data.elements.forEach(item=>{
+      if(!item.geometry||item.geometry.length<2)return;
+      const t=item.tags||{};
+      const famille=familleRoute(t);
+      if(!famille)return;
+      const st=RESEAU_STYLES[famille];
+      const coords=item.geometry.map(g=>[g.lat,g.lon]);
+      const ref=t.ref||'';
+      const nom=t.name||'';
+      const titre=ref?(nom?`${ref} — ${nom}`:ref):(nom||st.lbl);
+
+      // Trace de base
+      const base=L.polyline(coords,{
+        color:st.col,weight:st.w,opacity:famille==='principal'?.95:.85,
+        className:famille==='principal'?'route-halo':''
+      }).addTo(map);
+      reseauLayers.push(base);
+
+      // Effet de courant : surcouche pointillee animee sur les axes principaux.
+      if(famille==='principal'){
+        const courant=L.polyline(coords,{
+          color:'#7fd4ff',weight:Math.max(1.6,st.w-2.4),opacity:.95,
+          className:'route-courant',interactive:false
+        }).addTo(map);
+        reseauLayers.push(courant);
+      }
+
+      const vitesse=t.maxspeed?`${t.maxspeed}`:`~${st.vit} km/h`;
+      let popup=`<b style="color:${st.col==='#1030a0'?'#5b8cff':st.col};font-size:14px">${titre}</b>`;
+      popup+=`<br><span class="popup-ligne">${st.lbl}</span>`;
+      if(t.surface)popup+=`<span class="popup-ligne">Surface : ${t.surface}</span>`;
+      popup+=`<span class="popup-ligne">Vitesse : ${vitesse}</span>`;
+      if(t.lanes)popup+=`<span class="popup-ligne">Voies : ${t.lanes}</span>`;
+      if(t.toll==='yes')popup+=`<span class="popup-ligne" style="color:#ffcf4a">Peage</span>`;
+      base.bindPopup(popup);
+      n++;
+    });
+    hideLoading();
+    if(n)showCount(n,'segments');
+    else alert('Aucune route cartographiee dans cette zone.');
+  }catch(e){hideLoading();console.warn('Reseau error:',e)}
+  reseauLoading=false;
+}
+
 // ============ ROUTING ============
 async function calcRoute(){
   const fQ=document.getElementById('routeFrom').value.trim(),tQ=document.getElementById('routeTo').value.trim();
@@ -2769,7 +3173,11 @@ function setLayer(name,el){
   document.querySelectorAll('.layer-opt').forEach(o=>o.classList.remove('active'));
   el.classList.add('active');
   if(name==='dark'||name==='satellite'){if(!map.hasLayer(labelsLayer))labelsLayer.addTo(map)}
-  else if(name==='cyclosm'||name==='streets'||name==='topo'){if(map.hasLayer(labelsLayer))map.removeLayer(labelsLayer)}
+  else if(name==='cyclosm'||name==='streets'||name==='topo'||name==='jour'){if(map.hasLayer(labelsLayer))map.removeLayer(labelsLayer)}
+  // Teinte beige foncee reservee au theme de jour.
+  const pane=map.getPane('tilePane');
+  if(pane)pane.classList.toggle('theme-beige',name==='jour');
+  try{localStorage.setItem('tilex_map_layer',name)}catch(e){}
 }
 function toggleLayers(){document.getElementById('layersPanel').classList.toggle('show')}
 function setLabelTheme(theme){

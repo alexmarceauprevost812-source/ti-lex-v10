@@ -12,6 +12,7 @@
     "codex:listen": "node scripts/codex-listener.js",
     "scan": "bash scripts/scan-avant-deploy.sh",
     "verifier:moteurs": "node scripts/verifier-moteurs-cyber.mjs",
+    "test:heures": "node scripts/test-heures-ouverture.mjs",
     "push": "bash scripts/push-securise.sh",
     "deploy": "npm run scan && bash scripts/push-securise.sh"
   },
