@@ -1,7 +1,8 @@
 // api/agent.js
 // ============================================================
 // ⚙️ Moteur multi-agents — route serverless Vercel → Claude.
-// Reçoit { role, job, contexte } et fait parler l'agent spécialisé.
+// Reçoit { role, job, contexte, consigne } et fait parler l'agent spécialisé.
+// `consigne` = chantier propre à un équipier quand le renfort est actif.
 // La clé ANTHROPIC_API_KEY reste CÔTÉ SERVEUR. Repli auto sur l'edge
 // function Supabase « tilex-agent » si la clé n'est pas dans Vercel.
 // ============================================================
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
   }
   if (req.method !== 'POST') return res.status(405).json({ erreur: 'POST seulement' });
 
-  const { role, job, contexte } = req.body || {};
+  const { role, job, contexte, consigne } = req.body || {};
   const persona = ROLES[role];
   if (!persona) return res.status(400).json({ erreur: 'Rôle inconnu' });
   if (!job || typeof job !== 'string') return res.status(400).json({ erreur: 'Job manquant' });
@@ -45,6 +46,9 @@ export default async function handler(req, res) {
   const message =
     `JOB À RÉALISER : ${job}\n\n` +
     (contexte ? `TRAVAIL DES AGENTS PRÉCÉDENTS :\n${String(contexte).slice(0, 6000)}\n\n` : '') +
+    // Renfort multi-agents : chaque équipier reçoit SON chantier. Sans cette
+    // consigne, les cinq équipiers referaient exactement le même travail.
+    (consigne ? `TON CHANTIER PRÉCIS (ne fais que celui-là) :\n${String(consigne).slice(0, 2000)}\n\n` : '') +
     `Fais ta partie en tant que ${role}.`;
 
   try {

@@ -17,6 +17,79 @@ const TilexEngine = (() => {
     { agent: 'gardien',  titre: '🛡️ Gardien — verdict final' },
   ];
 
+  // ─── RENFORT MULTI-AGENTS ────────────────────────────────────────────
+  // Sur un gros projet, un seul codeur devient le goulot d'étranglement. Le
+  // renfort découpe le travail en chantiers indépendants et met jusqu'à cinq
+  // équipiers dessus, puis le pipeline habituel reprend la main pour réviser,
+  // tester et rendre le verdict sur l'ensemble.
+  const RENFORT_MAX = 5;
+
+  // Détecte un gros projet à partir de la demande elle-même : plusieurs
+  // livrables énumérés, plusieurs fichiers joints, ou une description longue.
+  function estGrosProjet(titre, pieces) {
+    const t = String(titre || '');
+    const indices =
+      (t.length > 220 ? 1 : 0) +
+      ((t.match(/\bet\b|,|;|\+/g) || []).length >= 4 ? 1 : 0) +
+      ((t.match(/\n\s*[-*\d]/g) || []).length >= 3 ? 1 : 0) +
+      (/\b(page|module|écran|ecran|composant|fonctionnalit|section|api|table)\w*\b.*\b(et|,)\b/i.test(t) ? 1 : 0) +
+      ((pieces && pieces.length >= 3) ? 1 : 0) +
+      (/\b(gros|complet|entier|toute? l[ae]|refonte|migration|plateforme)\b/i.test(t) ? 1 : 0);
+    return indices >= 2;
+  }
+
+  // Combien d'équipiers pour cette demande ? 'auto' décide tout seul.
+  function nbAgentsPour(titre, pieces, demande) {
+    if (demande === 'auto' || demande == null) {
+      return estGrosProjet(titre, pieces) ? RENFORT_MAX : 1;
+    }
+    const n = parseInt(demande, 10);
+    if (isNaN(n)) return 1;
+    return Math.min(RENFORT_MAX, Math.max(1, n));
+  }
+
+  // Découpe la demande en N chantiers. On demande d'abord au répartiteur ;
+  // s'il ne répond pas, on retombe sur un découpage par couches, qui reste
+  // un vrai partage du travail plutôt que N fois la même tâche.
+  async function _decouper(titre, n) {
+    const secours = [
+      'Structure et balisage : la base HTML/structure du livrable.',
+      'Style et mise en page : CSS, disposition, responsive.',
+      'Logique et interactions : le JavaScript et les comportements.',
+      'Données et intégrations : appels API, stockage, état.',
+      'Robustesse : cas limites, erreurs, accessibilité, performance.',
+    ].slice(0, n);
+
+    try {
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: 'codeur',
+          job: titre,
+          contexte:
+            'Tu es le RÉPARTITEUR. Découpe ce travail en exactement ' + n +
+            ' chantiers indépendants, réalisables en parallèle sans se marcher dessus. ' +
+            'Réponds UNIQUEMENT par un tableau JSON de ' + n +
+            ' chaînes, une phrase par chantier, sans texte autour.',
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      const brut = String(d.texte || '');
+      const m = brut.match(/\[[\s\S]*\]/);
+      if (m) {
+        const arr = JSON.parse(m[0]);
+        if (Array.isArray(arr) && arr.length) {
+          const propres = arr.map((x) => String(x).trim()).filter(Boolean).slice(0, n);
+          if (propres.length) return propres;
+        }
+      }
+    } catch (e) {
+      console.warn('[coword] répartiteur indisponible, découpage par couches :', e.message);
+    }
+    return secours;
+  }
+
   // ─── Client Supabase (réutilise celui de la page, sinon en crée un) ──
   function _sb() {
     if (window.__engineSb) return window.__engineSb;
@@ -36,16 +109,18 @@ const TilexEngine = (() => {
   function _emit() { try { window.dispatchEvent(new CustomEvent('tilex:engine:maj')); } catch (e) {} }
 
   // ─── Lancer une job : découpe + exécute le pipeline ──────────────────
-  async function lancerJob(titre, pieces) {
+  async function lancerJob(titre, pieces, options) {
     titre = (titre || '').trim();
     if (!titre) return { ok: false, erreur: 'Décris la job d\'abord.' };
+    options = options || {};
+    const nbAgents = nbAgentsPour(titre, pieces, options.agents);
     const sb = _sb();
     const uid = await _uid();
     if (!sb || !uid) return { ok: false, erreur: 'Connecte-toi d\'abord (compte ti-lex).' };
 
     // 1) Créer le job.
     const { data: jobRows, error: e1 } = await sb.from('tilex_jobs')
-      .insert({ user_id: uid, titre, statut: 'en_cours' }).select().limit(1);
+      .insert({ user_id: uid, titre, statut: 'en_cours', nb_agents: nbAgents }).select().limit(1);
     if (e1 || !jobRows || !jobRows.length) return { ok: false, erreur: 'Création du job échouée : ' + (e1 && e1.message || '?') };
     const job = jobRows[0];
 
@@ -58,10 +133,30 @@ const TilexEngine = (() => {
       } catch (e) { /* pièces facultatives */ }
     }
 
-    // 2) Créer les 4 sous-tâches (une par agent).
-    const tasksToInsert = PIPELINE.map((p, i) => ({
-      job_id: job.id, user_id: uid, agent: p.agent, titre: p.titre, ordre: i, statut: 'pending',
-    }));
+    // 2) Créer les sous-tâches.
+    //    Sans renfort : le pipeline habituel (codeur → réviseur → testeur → gardien).
+    //    Avec renfort : N équipiers sur des chantiers distincts, puis les trois
+    //    agents de contrôle qui reprennent l'ensemble.
+    let tasksToInsert;
+    if (nbAgents > 1) {
+      const chantiers = await _decouper(titre, nbAgents);
+      tasksToInsert = chantiers.map((c, k) => ({
+        job_id: job.id, user_id: uid, agent: 'codeur',
+        titre: '👷 Équipier ' + (k + 1) + ' — ' + c.slice(0, 70),
+        consigne: c, ordre: k, lot: 1, statut: 'pending',
+      }));
+      PIPELINE.slice(1).forEach((p, i) => {
+        tasksToInsert.push({
+          job_id: job.id, user_id: uid, agent: p.agent, titre: p.titre,
+          ordre: nbAgents + i, lot: 0, statut: 'pending',
+        });
+      });
+    } else {
+      tasksToInsert = PIPELINE.map((p, i) => ({
+        job_id: job.id, user_id: uid, agent: p.agent, titre: p.titre,
+        ordre: i, lot: 0, statut: 'pending',
+      }));
+    }
     const { data: taskRows } = await sb.from('tilex_tasks').insert(tasksToInsert).select();
     _emit();
 
@@ -76,7 +171,7 @@ const TilexEngine = (() => {
     if (!surServeur) {
       _executerPipeline(job, (taskRows || []).sort((a, b) => a.ordre - b.ordre));
     }
-    return { ok: true, jobId: job.id, serveur: surServeur };
+    return { ok: true, jobId: job.id, serveur: surServeur, agents: nbAgents };
   }
 
   // Lance le pipeline sur l'edge function (tâche de fond serveur).
@@ -92,10 +187,48 @@ const TilexEngine = (() => {
     } catch (e) { return false; }
   }
 
+  // Exécute une tâche et renvoie son texte (ou lève).
+  async function _executerTache(job, t, contexte) {
+    const sb = _sb();
+    await sb.from('tilex_tasks').update({ statut: 'en_cours', updated_at: new Date().toISOString() }).eq('id', t.id);
+    _emit();
+    const r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: t.agent, job: job.titre, contexte, consigne: t.consigne || '' }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || data.erreur) throw new Error(data.erreur || ('HTTP ' + r.status));
+    const texte = data.texte || '(vide)';
+    await sb.from('tilex_tasks').update({ statut: 'fini', resultat: texte, updated_at: new Date().toISOString() }).eq('id', t.id);
+    _emit();
+    return texte;
+  }
+
   async function _executerPipeline(job, tasks) {
     const sb = _sb();
     let contexte = '';
     let erreurGlobale = false;
+
+    // Les équipiers (lot 1) travaillent EN MÊME TEMPS : c'est tout l'intérêt
+    // du renfort. Les agents de contrôle reprennent ensuite, en séquence.
+    const equipiers = tasks.filter((t) => t.lot === 1);
+    if (equipiers.length > 1) {
+      const resultats = await Promise.all(equipiers.map(async (t) => {
+        try {
+          return { t, texte: await _executerTache(job, t, contexte) };
+        } catch (e) {
+          erreurGlobale = true;
+          await sb.from('tilex_tasks').update({ statut: 'erreur', resultat: '❌ ' + e.message, updated_at: new Date().toISOString() }).eq('id', t.id);
+          _emit();
+          return { t, texte: null };
+        }
+      }));
+      for (const r of resultats) {
+        if (r.texte) contexte += '\n\n### ÉQUIPIER (' + (r.t.consigne || r.t.agent) + ') :\n' + r.texte;
+      }
+      tasks = tasks.filter((t) => t.lot !== 1);
+    }
 
     for (const t of tasks) {
       await sb.from('tilex_tasks').update({ statut: 'en_cours', updated_at: new Date().toISOString() }).eq('id', t.id);
@@ -214,7 +347,8 @@ const TilexEngine = (() => {
     }, 1000);
   })();
 
-  return { lancerJob, listerJobs, listerTaches, supprimerJob, brancherRealtime, reprendre, PIPELINE };
+  return { lancerJob, listerJobs, listerTaches, supprimerJob, brancherRealtime, reprendre,
+           PIPELINE, RENFORT_MAX, estGrosProjet, nbAgentsPour };
 
 })();
 

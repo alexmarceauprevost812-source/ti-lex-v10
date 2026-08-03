@@ -146,6 +146,11 @@ async function executerPipeline(supa: any, job: any): Promise<void> {
         `JOB À RÉALISER : ${job.titre}\n\n` +
         (piecesTexte ? piecesTexte + "\n\n" : "") +
         (contexte ? `TRAVAIL DES AGENTS PRÉCÉDENTS :\n${contexte.slice(0, 6000)}\n\n` : "") +
+        // Renfort multi-agents : chaque équipier reçoit SON chantier. Sans
+        // cette consigne, les cinq referaient exactement le même travail.
+        (t.consigne
+          ? `TON CHANTIER PRÉCIS (ne fais que celui-là) :\n${String(t.consigne).slice(0, 2000)}\n\n`
+          : "") +
         `Fais ta partie en tant que ${t.agent}.`;
       // Les images vont au CODEUR (vision) ; les autres agents ont déjà le contexte.
       const imgs = t.agent === "codeur" ? images : undefined;
