@@ -52,10 +52,10 @@ html.tilex-fond-actif body {
    barre du haut, menu) sont des rectangles noirs pleins : ils recouvrent
    entièrement la couche image et on ne voit plus rien du fond.
 
-   Principe retenu : chaque PHRASE ÉCRITE porte son propre cadre noir, serré
-   autour d'elle et s'arrêtant là où le texte s'arrête. Plus de grand aplat
-   noir derrière tout le panneau : le texte reste parfaitement lisible, et le
-   fond respire partout ailleurs.
+   Principe retenu : chaque PHRASE ÉCRITE porte son propre cadre, serré autour
+   d'elle et s'arrêtant là où le texte s'arrête — noir en thème nuit, blanc
+   cassé en thème jour. Plus de grand aplat derrière tout le panneau : le
+   texte reste parfaitement lisible, et le fond respire partout ailleurs.
    ══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -112,10 +112,48 @@ html.tilex-fond-actif :is(
 }
 
 /* Halo léger en complément : il rattrape les caractères qui dépassent du
-   cadre (accents, jambages) et garde le texte net. Pas en thème jour, où un
-   halo noir sur fond clair serait illisible. */
+   cadre (accents, jambages) et garde le texte net. */
 html.tilex-fond-actif:not([data-theme="day"]) body {
   text-shadow: 0 0 3px #000, 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THÈME JOUR — même principe, en clair
+   ---------------------------------------------------------------------------
+   En thème jour, le texte est noir : un cadre noir le rendrait illisible.
+   Le cadre passe donc en blanc cassé, et le halo en blanc. Résultat
+   identique à la nuit : chaque phrase est encadrée, l'image reste visible
+   tout autour et entre les lignes.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* La couleur de base est passée sur <html> (voir plus haut) : en thème jour
+   elle doit être claire, sinon toute la page vire au noir sous l'image. */
+html.tilex-fond-actif[data-theme="day"] {
+  background: #f2efe9;
+}
+
+/* Les bulles du chat portent un aplat clair en thème jour : c'est lui qui
+   masquait l'image. On le retire, le cadre par phrase prend le relais. */
+html.tilex-fond-actif[data-theme="day"] :is(.cmsg-bbl, .cmsg-bbl.a, .cmsg-bbl.u) {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+html.tilex-fond-actif[data-theme="day"] :is(
+  .cmsg-bbl, .chat-msgs, .view, .wrap, #view-silex, .content
+) :is(p, li, h1, h2, h3, h4, h5, h6, blockquote, dd, dt, figcaption) {
+  background: rgba(252, 250, 246, var(--tilex-fond-cadre));
+  color: #14140f;
+}
+
+html.tilex-fond-actif[data-theme="day"] body {
+  text-shadow: 0 0 3px #fff, 0 1px 2px rgba(255, 255, 255, 0.92);
+}
+
+/* Barre du haut et menu : voile clair plutôt que sombre, sinon la navigation
+   jure avec le reste de l'interface de jour. */
+html.tilex-fond-actif[data-theme="day"] :is(.topbar, .sidebar) {
+  background: rgba(255, 255, 255, var(--tilex-fond-voile)) !important;
 }
 
 /* Ce qui a déjà son propre fond opaque n'a besoin ni du cadre ni du halo :
