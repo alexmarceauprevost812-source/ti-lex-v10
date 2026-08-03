@@ -25,6 +25,7 @@
 <script src="js/tilex-midas.js" defer></script>
 <script src="js/tilex-meteo-panel.js" defer></script>
 <script src="js/tilex-schema-panel.js" defer></script>
+<script src="js/tilex-lieu.js" defer></script>
 <script src="js/tilex-truck-panel.js" defer></script>
 <script src="js/tilex-translate.js" defer></script>
 <script src="js/tilex-translate-panel.js" defer></script>
@@ -4260,6 +4261,7 @@ async function initAlMemoryRecall(){
   }catch(e){console.error("[AL memory] initAlMemoryRecall:",e);}
 }
 var _webAgent=null; /* agent de la plateforme /web actuellement actif dans le chat (persona) */
+var LIEU_HINT="\n\n## LIEUX ET ADRESSES\nQuand la personne demande OÙ se trouve quelque chose, une adresse, un commerce, une ville, un point d'intérêt ou un itinéraire, ajoute à ta réponse un bloc ```tilex-lieu contenant UNIQUEMENT du JSON :\n```tilex-lieu\n{\"recherche\":\"Château Frontenac, Québec\"}\n```\nPour plusieurs endroits d'un coup : {\"lieux\":[{\"recherche\":\"Tim Hortons Chicoutimi\"},{\"recherche\":\"IGA Jonquière\"}]} (6 maximum).\nLe bloc se transforme tout seul en fiche avec l'adresse réelle et un bouton vers TILEXMAP — n'écris jamais le JSON en clair, n'invente jamais de coordonnées, et ne donne pas d'adresse de mémoire : mets la recherche dans le bloc et laisse la carte répondre. Continue d'écrire ta réponse normalement autour du bloc.";
 var SCHEMA_HINT="\n\n## SCHÉMAS / DIAGRAMMES\nQuand un schéma aide à comprendre (étapes, architecture, flux, pipeline, comparaison), dessine-le directement dans le chat. Mets un bloc de code ```tilex-schema contenant UNIQUEMENT du JSON valide de cette forme :\n```tilex-schema\n{\"titre\":\"Titre court\",\"noeuds\":[{\"id\":\"a\",\"titre\":\"Étape\",\"sous\":\"détail court\",\"couleur\":1}],\"liens\":[{\"de\":\"a\",\"a\":\"b\"}]}\n```\nRègles : 3 à 7 nœuds max, titres courts ; `couleur` = 1, 2, 3 ou \"neutre\" ; `liens` optionnel (sans lui, le flux est séquentiel haut→bas). N'explique jamais le JSON, ne mets rien d'autre dans ce bloc. Utilise un schéma seulement quand c'est vraiment utile.\n\n### TRÈS IMPORTANT — schémas ANIMÉS\nLe bloc ```tilex-schema s'affiche DÉJÀ animé automatiquement (les boîtes apparaissent en cascade, les flèches se tracent). Donc pour un « schéma animé », « diagramme animé » ou n'importe quel schéma qui bouge : utilise EXACTEMENT le même bloc ```tilex-schema. N'écris JAMAIS de code d'animation (pas de HTML, pas de CSS, pas de SVG, pas de JavaScript, pas de Mermaid). Un seul format pour TOUS les schémas, fixes comme animés : le bloc ```tilex-schema.";
 /* ── Mémoire long-terme TilexMemory : cache injecté dans le prompt ── */
 var _tilexMemCache="";
@@ -4369,6 +4371,7 @@ function getSystemPrompt(){
     base+="\n\nProjet GitHub connecté: "+TilexConfig.githubUser+"/"+TilexConfig.githubRepo+" (branche: "+TilexConfig.githubBranch+"). L'utilisateur peut demander de lire des fichiers du projet.";
   }
   base+=SCHEMA_HINT;
+  base+=LIEU_HINT;
   return base;
 }
 var SYSTEM_PROMPT=SYSTEM_PROMPT_STANDARD;
@@ -4511,6 +4514,7 @@ function finaliserBulleStream(bblText,replyPlain){
     if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);
     tiLexHighlightCode(bblText);
     if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bblText);
+    if(typeof renderLieuxInBubble==="function")renderLieuxInBubble(bblText);
   }catch(e){}
 }
 
@@ -4696,6 +4700,8 @@ async function sendChat(){
       var _rawAcc="";
       var _shownLen=0;
       var _SCHEMA_FENCE=/```(?:tilex-schema|schema)\b[\s\S]*?(?:```|$)/g;
+      var _LIEU_FENCE=/```(?:tilex-lieu|lieu|carte)\b[\s\S]*?(?:```|$)/g;
+      var _LIEU_PH="\ud83d\udccd Recherche du lieu\u2026";
       var _SCHEMA_PH="📊 Construction du schéma…";
       var reply=await readSSEStream(res,function(delta){
         window._chatLastDelta=Date.now();  // suivi de progression (détection de blocage)
@@ -4708,6 +4714,8 @@ async function sendChat(){
         var sani=_pre.replace(_SCHEMA_FENCE,_SCHEMA_PH);
         // Aussi : cacher un bloc de code JSON qui est en fait un schéma ("noeuds").
         sani=sani.replace(/```[\w-]*\n[\s\S]*?"noeuds"[\s\S]*?(?:```|$)/g,_SCHEMA_PH);
+        // Même traitement pour les fiches de lieu : on ne montre jamais le JSON.
+        sani=sani.replace(_LIEU_FENCE,_LIEU_PH);
         var held=sani.match(/`{1,3}[\w-]*$/);           // retient un ouvreur de fence incomplet en toute fin
         var visible=held?sani.slice(0,sani.length-held[0].length):sani;
         if(visible.length>_shownLen){
@@ -4776,7 +4784,7 @@ async function sendChat(){
       // halo géré par la CSS (coupé pendant l'écriture pour la fluidité — voir .ecriture-active)
       var _replyPlain=_wrapBareSchemas(reply||"");
       var _hasMd=_replyPlain&&(/```/.test(_replyPlain)||/\*\*/.test(_replyPlain)||/^#{1,3}\s/m.test(_replyPlain)||/^[-*]\s/m.test(_replyPlain)||/^\d+\.\s/m.test(_replyPlain)||/^>/m.test(_replyPlain)||/^---/m.test(_replyPlain));
-      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);applyPhaseReveal(bblText);if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);}
+      if(_hasMd){bblText.innerHTML=renderMd(_replyPlain);tiLexHighlightCode(bblText);renderSchemasInBubble(bblText);if(typeof renderLieuxInBubble==="function")renderLieuxInBubble(bblText);applyPhaseReveal(bblText);if(typeof tilexEnrichirCartes==="function")tilexEnrichirCartes(bblText);}
       else{applySyntaxHL(bblText);}
       // Filet : si le reply final est vide/incomplet mais que la bulle affiche des ```
       finaliserBulleStream(bblText,_replyPlain);
@@ -5267,7 +5275,7 @@ function addMsg(role,txt){
   var actionsHtml=role==="a"?'<div class="cmsg-actions"><button class="cmsg-act-btn" onclick="saveToCerveau(this)" title="Sauvegarder au Cerveau">🧠</button><button class="cmsg-act-btn" onclick="speakMsg(this)" title="Écouter">▶</button><button class="cmsg-act-btn" onclick="compacterChat()" title="Résumer la conversation">📝</button><button class="cmsg-act-btn" onclick="sendMsgToCodex(this)" title="Envoyer au Codex">💻</button></div>':"";
   d.innerHTML=`<div class="cmsg-ico ${role}">${icoHtml}</div><div><div class="cmsg-bbl ${role}">${content}</div>${actionsHtml}<div class="cmsg-time">${t}</div></div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
-  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);}}
+  if(role==="a"){var bbl=d.querySelector(".cmsg-bbl");if(bbl){if(typeof applySyntaxHL==="function")applySyntaxHL(bbl);tiLexHighlightCode(bbl);if(typeof renderSchemasInBubble==="function")renderSchemasInBubble(bbl);if(typeof renderLieuxInBubble==="function")renderLieuxInBubble(bbl);}}
 }
 
 /* Avatar vidéo de TI-LEX-AL (réponses de l'agent) — clip muet en boucle */

@@ -23,7 +23,7 @@
   C.config = {
     base: "https://api.coingecko.com/api/v3",
     cleDemo: null,          // clé Demo optionnelle (x_cg_demo_api_key)
-    devise: "usd",
+    devise: "cad",         // 🇨🇦 dollars canadiens (CoinGecko: vs_currency)
     nbCryptos: 10,          // top N par capitalisation
     intervalleScanMs: 60000, // re-scan chaque 60 s
     seuilChute1h: -5,       // % sur 1h qui déclenche une alerte

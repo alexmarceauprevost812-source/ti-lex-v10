@@ -73,6 +73,23 @@
     .midas-refresh:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(201,164,0,0.3); }
     .midas-refresh:disabled { opacity:0.5; cursor:not-allowed; }
 
+    /* ── Sélecteur de vue : top 50 par défaut, puis 250 et tout ── */
+    .midas-vues {
+      max-width:1400px; margin:0 auto;
+      padding:14px 28px 0;
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    }
+    .midas-vue {
+      background:#141420; border:1px solid #2a2a3a; color:#8a8a9a;
+      border-radius:9px; padding:7px 15px; font-size:13px; font-weight:600;
+      cursor:pointer; transition:border-color .18s, color .18s, background .18s;
+    }
+    .midas-vue:hover { border-color:#c9a400; color:#c9a400; }
+    .midas-vue.actif {
+      background:rgba(201,164,0,.12); border-color:#c9a400; color:#FFD700;
+    }
+    .midas-vues-note { color:#555; font-size:11px; margin-left:4px; }
+
     /* ===== STATS ===== */
     .midas-stats {
       display:flex; gap:12px; flex-wrap:wrap;
@@ -199,6 +216,14 @@
   <button class="midas-refresh" id="midas-btn" onclick="Midas.charger()">🔄 Actualiser</button>
 </div>
 
+<!-- ===== VUES : TOP 50 / 250 / TOUT ===== -->
+<div class="midas-vues">
+  <button class="midas-vue actif" id="vue-50"   onclick="Midas.changerVue(50)">🏆 Top 50</button>
+  <button class="midas-vue"       id="vue-250"  onclick="Midas.changerVue(250)">Top 250</button>
+  <button class="midas-vue"       id="vue-tout" onclick="Midas.changerVue('tout')">Toutes (500)</button>
+  <span class="midas-vues-note">classement par capitalisation · logos officiels CoinGecko</span>
+</div>
+
 <!-- ===== STATS RAPIDES ===== -->
 <div class="midas-stats">
   <div class="midas-stat">
@@ -239,6 +264,15 @@ const Midas = {
 
   // 💾 Données en mémoire
   data: [],
+
+  // 👁️ Vue courante : 50 (les plus populaires), 250, ou 'tout' (500).
+  // Le top 50 par capitalisation, c'est ce qu'on veut voir en arrivant —
+  // et ça évite de tirer 500 cartes à chaque rafraîchissement.
+  vue: 50,
+
+  // Page 2 (rangs 251-500) : chargée seulement si on demande « Toutes ».
+  // CoinGecko limite le débit sur le forfait gratuit, chaque appel compte.
+  page2Chargee: false,
 
   // 🥩 Cryptos stakables sur Wealthsimple Canada (ids CoinGecko)
   stakables: ['ethereum','solana','cardano','polkadot'],
@@ -313,13 +347,16 @@ const Midas = {
     </div>`;
 
     try {
-      // Fetche 2 pages en parallèle = 500 cryptos d'un coup
+      // La page 1 couvre les rangs 1 à 250 : elle suffit pour le top 50 et le
+      // top 250. La page 2 n'est demandée que si la vue « Toutes » est active.
+      const besoinPage2 = this.vue === 'tout';
       const [page1, page2] = await Promise.all([
         this.fetchCoinGecko(1),
-        this.fetchCoinGecko(2)
+        besoinPage2 ? this.fetchCoinGecko(2) : Promise.resolve([])
       ]);
 
       this.data = [...page1, ...page2];
+      this.page2Chargee = besoinPage2;
       this.afficher(this.data);
       this.mettreAJourStats();
 
@@ -365,8 +402,9 @@ const Midas = {
         <div class="midas-card-top">
           <img class="midas-card-logo"
                src="${img}"
-               alt="${sym}"
-               onerror="this.src='https://via.placeholder.com/38/1e1e2e/555?text=${encodeURIComponent(sym)}'">
+               alt="Logo ${nom}"
+               loading="lazy"
+               onerror="Midas.logoSecours(this,'${sym}')">
           <div class="midas-card-info">
             <div class="midas-card-nom">${nom}</div>
             <div class="midas-card-sym">${sym}</div>
@@ -389,14 +427,57 @@ const Midas = {
   /**
    * 🖥️ Affiche toutes les cartes dans la grille
    */
-  afficher(liste) {
+  afficher(liste, ignorerVue) {
     const grid = document.getElementById('midas-grid');
-    if (!liste.length) {
+    // Les cryptos arrivent déjà triées par capitalisation : couper la liste
+    // suffit à obtenir « les N plus populaires ».
+    const vues = (ignorerVue || this.vue === 'tout') ? liste : liste.slice(0, this.vue);
+
+    if (!vues.length) {
       grid.innerHTML = `<div class="midas-loading">Aucun résultat 🤷</div>`;
+      document.getElementById('stat-total').textContent = '0 crypto';
       return;
     }
-    grid.innerHTML = liste.map(c => this.carte(c)).join('');
-    document.getElementById('stat-total').textContent = `${liste.length} cryptos`;
+    grid.innerHTML = vues.map(c => this.carte(c)).join('');
+    document.getElementById('stat-total').textContent =
+      `${vues.length} crypto${vues.length > 1 ? 's' : ''}`;
+  },
+
+  /**
+   * 👁️ Change la vue. Passer à « Toutes » déclenche le chargement de la
+   * page 2 si elle n'est pas encore en mémoire.
+   */
+  async changerVue(v) {
+    this.vue = v;
+    ['50', '250', 'tout'].forEach(id => {
+      const el = document.getElementById('vue-' + id);
+      if (el) el.classList.toggle('actif', String(v) === id);
+    });
+
+    if (v === 'tout' && !this.page2Chargee) {
+      await this.charger();
+      return;
+    }
+    // Une recherche en cours reste prioritaire sur la vue.
+    const terme = (document.getElementById('midas-search') || {}).value || '';
+    if (terme.trim()) this.filtrer(terme);
+    else this.afficher(this.data);
+  },
+
+  /**
+   * 🖼️ Logo de secours quand l'image officielle ne charge pas : pastille SVG
+   * générée sur place, avec le sigle. Aucun service tiers appelé.
+   */
+  logoSecours(img, sym) {
+    img.onerror = null;
+    const sigle = String(sym || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 5) || '?';
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="38" height="38">' +
+      '<rect width="38" height="38" rx="9" fill="#1e1e2e"/>' +
+      '<text x="19" y="24" font-family="Arial,Helvetica,sans-serif" font-size="' +
+      (sigle.length > 3 ? 9 : 12) +
+      '" font-weight="700" fill="#c9a400" text-anchor="middle">' + sigle + '</text></svg>';
+    img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
   },
 
   /**
@@ -427,7 +508,9 @@ const Midas = {
       c.symbol.toLowerCase().includes(t) ||
       c.id.toLowerCase().includes(t)
     );
-    this.afficher(res);
+    // Une recherche cherche dans tout ce qui est chargé : la limite de vue
+    // ne doit pas cacher un résultat trouvé.
+    this.afficher(res, true);
   },
 
   /**

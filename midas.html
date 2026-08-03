@@ -313,7 +313,15 @@ const $=s=>document.querySelector(s);
 let autoTimer=null;
 const watchlist=[]; // ids CoinGecko en mémoire (pas de localStorage)
 
-function fmtPrix(p){if(p==null)return"—";if(p>=1)return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:2});return"$"+p.toLocaleString("fr-CA",{maximumFractionDigits:6});}
+/* Prix en dollars canadiens. Le format fr-CA place le symbole apres le
+   montant (« 12 345,67 $ »), et le suffixe CAD leve toute ambiguite : les
+   cryptos sont habituellement cotees en USD ailleurs. */
+function fmtPrix(p){
+  if(p==null)return"—";
+  const n=new Intl.NumberFormat("fr-CA",{style:"currency",currency:"CAD",
+    maximumFractionDigits:p>=1?2:6}).format(p);
+  return n+" CAD";
+}
 function fmtPct(x){if(x==null)return"";const s=x>=0?"+":"";return s+x.toFixed(2)+"%";}
 
 function sparkline(prices,coul){
@@ -368,7 +376,7 @@ function carteHTML(c){
 
 async function chargerMarche(ids){
   const u=new URL(BASE+"/coins/markets");
-  u.searchParams.set("vs_currency","usd");
+  u.searchParams.set("vs_currency","cad");   // 🇨🇦 dollars canadiens
   if(ids)u.searchParams.set("ids",ids);
   else{u.searchParams.set("order","market_cap_desc");u.searchParams.set("per_page","10");u.searchParams.set("page","1");}
   u.searchParams.set("sparkline","true");
