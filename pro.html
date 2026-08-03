@@ -293,6 +293,24 @@ pre,code,pre code,kbd,samp{font-family:var(--font-mono)!important;}
 .sb-item:hover{color:#ffffff;opacity:1;background:rgba(255,106,0,.05);border-left-color:rgba(255,106,0,.4);}
 .sb-item.active{color:var(--orange);opacity:1;background:rgba(255,106,0,.1);border-left-color:var(--orange);}
 .sb-icon{font-size:15px;width:var(--sb-c);text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+
+/* ── Icônes animées du menu de gauche ──
+   Paramètres : l'engrenage tourne pis respire en même temps (rotate et scale
+   sont des propriétés de transform individuelles, elles se combinent sans
+   conflit de keyframes). Section OUTILS : petit flottement en boucle,
+   décalé par icône (--io-delai) pour un effet vivant plutôt que synchronisé.
+   Coupé en mode sérieux et si le système demande de réduire les animations. */
+@keyframes sbGearSpin{to{rotate:360deg;}}
+@keyframes sbGearBreathe{0%,100%{scale:1;}50%{scale:1.12;}}
+.sb-icon-settings-anim{transform-origin:50% 50%;animation:sbGearSpin 5s linear infinite,sbGearBreathe 2.4s ease-in-out infinite;}
+
+@keyframes sbIconFloat{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-2px) scale(1.07);}}
+.sb-icon-outil{animation:sbIconFloat 3.1s ease-in-out infinite;animation-delay:var(--io-delai,0s);}
+
+body.mode-serious .sb-icon-outil,body.mode-serious .sb-icon-settings-anim,
+[data-interface="serious"] .sb-icon-outil,[data-interface="serious"] .sb-icon-settings-anim{animation:none!important;}
+@media (prefers-reduced-motion:reduce){.sb-icon-outil,.sb-icon-settings-anim{animation:none!important;}}
+
 /* Animation lettre par lettre */
 .sb-item .ltr{display:inline-block;}
 .sb-item:hover .ltr,.sb-item.active .ltr{animation:lsw .5s calc(var(--li) * .04s) ease-out both;}
@@ -2386,12 +2404,12 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- Plateforme -->
   <div class="sb-item" onclick="window.location.href='/web'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
+    <span class="sb-icon sb-icon-outil" style="color:#FF6B00;--io-delai:0s">🌐</span><span class="sb-label" data-txt="PLATEFORME"></span>
   </div>
 
   <!-- Marceau -->
   <div class="sb-item" id="si-marceau" onclick="showTab('marceau')">
-    <span class="sb-icon" style="color:#FF6B00;position:relative;">
+    <span class="sb-icon sb-icon-outil" style="color:#FF6B00;position:relative;--io-delai:.3s">
       <img src="assets/agents/marceau-logo.png"
         alt="M" style="width:18px;height:18px;border-radius:50%;object-fit:contain;vertical-align:middle;border:1px solid #FF6B00;background:#111;"
         onerror="this.onerror=null;this.outerHTML='🔥';" loading="lazy"/>
@@ -2400,13 +2418,13 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- Sécurité — Cybersécurité (page dédiée /security) -->
   <div class="sb-item silex-admin-only" id="si-security" onclick="window.location.href='/security'" style="display:none;cursor:pointer;">
-    <span class="sb-icon" style="color:#FF6B00;">🛡</span><span class="sb-label" data-txt="SECURITE"></span>
+    <span class="sb-icon sb-icon-outil" style="color:#FF6B00;--io-delai:.6s">🛡</span><span class="sb-label" data-txt="SECURITE"></span>
     <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
   </div>
 
   <!-- Finances (accordéon : Bourse + Midas Finance regroupés) -->
   <div class="sb-item" id="si-finances" data-toggle="sm-finances" aria-expanded="false">
-    <span class="sb-icon" style="color:#37e0a0;">💲</span><span class="sb-label" data-txt="FINANCES"></span>
+    <span class="sb-icon sb-icon-outil" style="color:#37e0a0;--io-delai:.9s">💲</span><span class="sb-label" data-txt="FINANCES"></span>
     <span class="chev sb-label">▶</span>
   </div>
   <div class="sb-submenu" id="sm-finances">
@@ -2418,7 +2436,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- Mon système -->
   <div class="sb-item" id="si-systeme" onclick="window.location.href='/systeme'" style="cursor:pointer;">
-    <span class="sb-icon" style="color:#ff3b3b;">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
+    <span class="sb-icon sb-icon-outil" style="color:#ff3b3b;--io-delai:1.2s">🚛</span><span class="sb-label" data-txt="MON SYSTEME"></span>
   </div>
 
   <!-- Schémas : retirés du menu. Le moteur de schéma ANIMÉ est intégré
@@ -2426,7 +2444,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- Créer agent IA -->
   <div class="sb-item" onclick="openModal()">
-    <span class="sb-icon">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
+    <span class="sb-icon sb-icon-outil" style="--io-delai:1.5s">✦</span><span class="sb-label" data-txt="CRÉER AGENT IA"></span>
   </div>
 
   <!-- Fichier et Scanner retirés du menu de gauche. Les deux modules
@@ -2456,7 +2474,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 
   <!-- Paramètres -->
   <div class="sb-item" id="si-settings" onclick="showTab('settings')">
-    <span class="sb-icon">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
+    <span class="sb-icon sb-icon-settings-anim">⚙</span><span class="sb-label" data-txt="PARAMÈTRES"></span>
   </div>
 
   <!-- Compte -->
