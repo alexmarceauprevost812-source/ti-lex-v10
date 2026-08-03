@@ -2240,7 +2240,7 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 .sb-item:hover .ltr, .sb-item.active .ltr{ animation:none !important; text-shadow:none !important; color:inherit !important; }
 .sb-item .ltr{ color:inherit; }
 
-/* Sous-menu (Finances → Bourse + Midas) propre, sans les ├ └ */
+/* Sous-menu accordéon (ex: conversations du Chat) propre, sans les ├ └ */
 .sb-submenu{ margin:0 0 4px 30px; border-left:none; }
 .sb-sub-item{ font-family:'Patrick Hand',cursive !important; font-size:16px !important; letter-spacing:.2px !important;
   color:rgba(236,236,236,.75) !important; padding:9px 14px; border-radius:11px; }
@@ -2422,16 +2422,10 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span style="width:5px;height:5px;border-radius:50%;background:#FF6B00;box-shadow:0 0 6px #FF6B00;animation:silexPulse 2s ease-in-out infinite;flex-shrink:0;"></span>
   </div>
 
-  <!-- Finances (accordéon : Bourse + Midas Finance regroupés) -->
-  <div class="sb-item" id="si-finances" data-toggle="sm-finances" aria-expanded="false">
-    <span class="sb-icon sb-icon-outil" style="color:#37e0a0;--io-delai:.9s">💲</span><span class="sb-label" data-txt="FINANCES"></span>
-    <span class="chev sb-label">▶</span>
-  </div>
-  <div class="sb-submenu" id="sm-finances">
-    <div class="sb-sub-inner">
-      <div class="sb-sub-item" onclick="window.location.href='/bourse'">📈 Bourse</div>
-      <div class="sb-sub-item" onclick="window.location.href='/midas'">🔱 Midas Finance</div>
-    </div>
+  <!-- Finances : lien direct vers Midas (crypto). Le moteur de bourse a été
+       retiré — plus besoin d'accordéon pour une seule destination. -->
+  <div class="sb-item" id="si-finances" onclick="window.location.href='/midas'" style="cursor:pointer;">
+    <span class="sb-icon sb-icon-outil" style="color:#37e0a0;--io-delai:.9s">🔱</span><span class="sb-label" data-txt="FINANCES"></span>
   </div>
 
   <!-- Mon système -->

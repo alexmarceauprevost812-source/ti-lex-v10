@@ -17,7 +17,6 @@
     { "source": "/forfaits", "destination": "/forfaits.html" },
     { "source": "/forfaits-cyber", "destination": "/forfaits-cyber.html" },
     { "source": "/centre-indar", "destination": "/centre-indar.html" },
-    { "source": "/bourse", "destination": "/bourse.html" },
     { "source": "/carte", "destination": "/carte.html" },
     { "source": "/tilexmap", "destination": "/carte.html" },
     { "source": "/map", "destination": "/carte.html" },

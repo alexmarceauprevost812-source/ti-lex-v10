@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-672";
+const CACHE_VERSION = "tilex-v10-673";
 
 // Cache dédié aux tuiles de la carte (TILEXMAP). Séparé du cache applicatif :
 // il survit aux déploiements, sinon chaque mise en ligne effacerait les cartes
@@ -31,7 +31,6 @@ const ASSETS = [
   "/assets/forfaits-bg.mp4",
   "/assets/creer-agent-icon.mp4",
   "/forfaits.html",
-  "/bourse.html",
   "/codex",
   "/codex.html",
   "/carte.html",
