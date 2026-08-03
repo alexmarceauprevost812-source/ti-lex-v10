@@ -2235,6 +2235,9 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
 <!-- Image de fond de l'application — visible a 40 % (css/tilex-fond.css) -->
 <link rel="stylesheet" href="css/tilex-fond.css">
 <script src="js/tilex-fond.js" defer></script>
+<!-- Taille du texte de conversation (+20 %) — reglable via TilexTexte -->
+<link rel="stylesheet" href="css/tilex-texte.css">
+<script src="js/tilex-texte.js"></script>
 </head>
 <body>
 
@@ -2429,10 +2432,8 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <span class="sb-icon" style="color:var(--or2);">📁</span><span class="sb-label" data-txt="FICHIER"></span>
   </div>
 
-  <!-- Scanner — upload/hash/doublons/visionneuse (module scanner) -->
-  <div class="sb-item" id="si-scanner" onclick="showTab('scanner')">
-    <span class="sb-icon" style="color:#ff7a1a;">🖼️</span><span class="sb-label" data-txt="SCANNER"></span>
-  </div>
+  <!-- Scanner retiré du menu de gauche. Le module (#view-scanner) reste en
+       place : showTab('scanner') fonctionne toujours si on veut le rebrancher. -->
 
   <div style="flex:1"></div>
 

@@ -1,0 +1,50 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ti-lex v10 — TAILLE DU TEXTE DE CONVERSATION
+   ---------------------------------------------------------------------------
+   Un seul réglage, --tilex-texte-echelle, agrandit tout le texte du chat en
+   gardant les proportions : corps, titres, code et champ de saisie montent
+   ensemble. Les tailles d'origine sont conservées comme base du calcul, donc
+   revenir au réglage d'usine se fait en remettant l'échelle à 1.
+
+     1     = taille d'origine
+     1.2   = +20 % (réglage actuel)
+     1.4   = +40 %
+
+   À chaud :  TilexTexte.echelle(1.35)   — mémorisé dans le navigateur
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tilex-texte-echelle: 1.2;   /* +20 % — demandé */
+}
+
+/* ─── Corps des messages ─────────────────────────────────────────────────── */
+.cmsg-bbl {
+  font-size: calc(14px * var(--tilex-texte-echelle));
+}
+
+/* ─── Titres du markdown ─────────────────────────────────────────────────── */
+.cmsg-bbl h1 { font-size: calc(20px * var(--tilex-texte-echelle)); }
+.cmsg-bbl h2 { font-size: calc(17px * var(--tilex-texte-echelle)); }
+.cmsg-bbl h3 { font-size: calc(15px * var(--tilex-texte-echelle)); }
+
+/* ─── Code : même agrandissement, sinon il paraît minuscule à côté ───────── */
+.cmsg-bbl code { font-size: calc(13px * var(--tilex-texte-echelle)); }
+.cmsg-bbl pre  { font-size: calc(13px * var(--tilex-texte-echelle)); }
+.cmsg-bbl pre code { font-size: 1em; }
+.cmsg-bbl .tool-status { font-size: calc(12px * var(--tilex-texte-echelle)); }
+
+/* ─── Champ de saisie : on écrit aussi gros qu'on lit ────────────────────── */
+.composer-input {
+  font-size: calc(15px * var(--tilex-texte-echelle));
+}
+
+/* ─── Mobile ─────────────────────────────────────────────────────────────────
+   Les règles d'origine passent le corps à 15px sous 640px et le champ à 16px
+   sous 768px (anti-zoom iOS au focus). On reprend exactement ces seuils pour
+   ne pas créer de palier de taille entre les deux. */
+@media (max-width: 640px) {
+  .cmsg-bbl { font-size: calc(15px * var(--tilex-texte-echelle)); }
+}
+@media (max-width: 768px) {
+  .composer-input { font-size: max(16px, calc(16px * var(--tilex-texte-echelle))); }
+}
