@@ -4054,7 +4054,7 @@ async function readSSE(res){
   return full;
 }
 
-async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube,onLogReport){
+async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube,onLogReport,onThinking){
   var reader=res.body.getReader();
   var decoder=new TextDecoder();
   var full="";var buf="";var wsUsed=false;
@@ -4074,6 +4074,11 @@ async function readSSEStream(res,onDelta,onStatus,onMedia,onYoutube,onLogReport)
         if(evt.type==="content_block_delta"&&evt.delta&&evt.delta.text){
           full+=evt.delta.text;
           if(onDelta)onDelta(evt.delta.text,full);
+        }
+        // Réflexion réelle du modèle (extended thinking) : elle arrive sur un
+        // canal distinct du texte de réponse et n'entre jamais dans `full`.
+        if(evt.type==="content_block_delta"&&evt.delta&&evt.delta.type==="thinking_delta"&&evt.delta.thinking){
+          if(onThinking)onThinking(evt.delta.thinking);
         }
         if(evt.type==="content_block_start"&&evt.content_block){
           if(evt.content_block.type==="tool_use"&&evt.content_block.name==="web_search"){
@@ -4599,68 +4604,52 @@ async function sendChat(){
     //   • la réflexion est ENSUITE INJECTÉE dans la vraie réponse (avant, elle
     //     était jetée — maintenant elle améliore vraiment la réponse finale)
     //   • contexte : les derniers messages de la conversation, pas juste la question
+    // ── RÉFLEXION RÉELLE ──────────────────────────────────────────────────
+    // Avant, le mode réflexion faisait un DEUXIÈME appel qui demandait au
+    // modèle de « raisonner », puis injectait ce texte dans le vrai prompt.
+    // C'était une imitation : deux appels, deux fois le coût, et un
+    // raisonnement écrit pour être lu plutôt que le vrai.
+    // Maintenant on active l'extended thinking d'Anthropic : un seul appel,
+    // et ce qui s'affiche est le raisonnement interne réel du modèle, diffusé
+    // au fur et à mesure qu'il se produit.
     var _reflexionTexte="";
+    var rBlock=null,rContent=null,rStatus=null,_rTimer=null,_rT0=0;
     if(reflexionMode){
       td.remove();
-      var rBlock=appendReflexionBlock();
-      var rContent=rBlock.querySelector(".reflexion-content");
-      var rStatus=rBlock.querySelector(".reflexion-status");
-      window._reflexionAbort=new AbortController();
-      var _rT0=Date.now();
-      var _rTimer=setInterval(function(){
+      rBlock=appendReflexionBlock();
+      rContent=rBlock.querySelector(".reflexion-content");
+      rStatus=rBlock.querySelector(".reflexion-status");
+      _rT0=Date.now();
+      _rTimer=setInterval(function(){
         if(rStatus)rStatus.textContent="Réflexion… "+Math.round((Date.now()-_rT0)/1000)+" s";
       },500);
-      try{
-        var rRes=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._reflexionAbort.signal,body:JSON.stringify({
-          kind:"chat",model:chatModel,max_tokens:2048,
-          system:"Tu es le mode réflexion de ti-lex-AL. Raisonne étape par étape sur la demande, en québécois clair et compact :\n1) C'est quoi le vrai besoin? 2) Les pièges/cas limites. 3) Le meilleur angle de réponse pis pourquoi.\nSois concret, pas de blabla. NE DONNE PAS la réponse finale — juste ton raisonnement.",
-          messages:chatHistory.slice(-10)
-        })});
-        if(rRes.ok&&rRes.body){
-          var rRd=rRes.body.getReader(),rDc=new TextDecoder(),rBf="";
-          while(true){
-            var rCh=await rRd.read();
-            if(rCh.done)break;
-            rBf+=rDc.decode(rCh.value,{stream:true});
-            var rLs=rBf.split("\n");rBf=rLs.pop()||"";
-            for(var rI=0;rI<rLs.length;rI++){
-              var rTl=rLs[rI].trim();
-              if(rTl.indexOf("data:")!==0)continue;
-              var rPl=rTl.slice(5).trim();
-              if(!rPl||rPl==="[DONE]")continue;
-              var rEv;try{rEv=JSON.parse(rPl);}catch(_p){continue;}
-              if(rEv.type==="content_block_delta"&&rEv.delta&&rEv.delta.text){
-                _reflexionTexte+=rEv.delta.text;
-                rContent.textContent=_reflexionTexte;
-                rContent.scrollTop=rContent.scrollHeight;
-              }
-            }
-          }
-          clearInterval(_rTimer);
-          var _rSec=Math.round((Date.now()-_rT0)/1000);
-          rStatus.textContent="✓ Réflexion terminée · "+_rSec+" s";
-          rBlock.classList.remove("expanded");
-        }else{clearInterval(_rTimer);rStatus.textContent="⚠️ Échec";}
-        window._reflexionAbort=null;
-      }catch(e){
-        clearInterval(_rTimer);
-        if(e.name==="AbortError"){console.log("[ti-lex] Réflexion stoppée");_reflexionTexte="";}
-        else{rStatus.textContent="⚠️ "+e.message;}
-        window._reflexionAbort=null;
-      }
       var td2=document.createElement("div");td2.className="cmsg a";td2.id="tyd";
       td2.innerHTML='<div class="cmsg-typing"><div class="cmsg-ty-avatar">'+alAvaVid()+'</div><div class="tydots"><div class="tyd"></div><div class="tyd"></div><div class="tyd"></div></div></div>';
       msgs.appendChild(td2);msgs.scrollTop=msgs.scrollHeight;
       setTimeout(function(){td2.querySelectorAll(".tyd").forEach(function(d){d.classList.add("tyd-loop");});},300);
       var tdRef=td2;
     }
+    // Referme proprement le bloc de réflexion, quel que soit le dénouement.
+    function _finirReflexion(ok,note){
+      if(!reflexionMode||!rBlock)return;
+      if(_rTimer){clearInterval(_rTimer);_rTimer=null;}
+      var sec=Math.round((Date.now()-_rT0)/1000);
+      if(rStatus){
+        rStatus.textContent=ok
+          ? ("✓ Réflexion terminée · "+sec+" s")
+          : ("⚠️ "+(note||"Réflexion interrompue"));
+      }
+      rBlock.classList.remove("expanded");
+    }
     window._chatAbort=new AbortController();
     window._chatLastDelta=Date.now();
     const res=await fetch(AI_PROXY,{method:"POST",headers:h,signal:window._chatAbort.signal,body:JSON.stringify({
       kind:"chat",
-      model:chatModel,max_tokens:4096,
-      system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:"")
-        +(_reflexionTexte?"\n\n## TA RÉFLEXION PRÉALABLE (ton propre raisonnement — sers-t'en pour répondre, sans le réciter)\n"+_reflexionTexte.slice(0,4000):""),
+      model:chatModel,max_tokens:reflexionMode?8192:4096,
+      system:getSystemPrompt()+(_isSchemaRequest(txt)?SCHEMA_FORCE_HINT:""),
+      // Réflexion réelle : le modèle raisonne pour vrai, et on voit ce
+      // raisonnement arriver en direct dans le bloc au-dessus de la réponse.
+      ...(reflexionMode?{thinking:{type:"enabled",budget_tokens:4000}}:{}),
       messages:chatHistory.slice(-20),
       // Marceau ET TI-LEX-AL sont autonomes : la recherche web leur est TOUJOURS
       // disponible (l'outil est fourni ; le modèle décide de chercher au besoin —
@@ -4681,6 +4670,7 @@ async function sendChat(){
         else{var errTxt=await res.text();errMsg=errTxt.slice(0,200)||("HTTP "+res.status);}
       }catch(e){errMsg="HTTP "+res.status;}
       console.error("[ti-lex] Chat error:",res.status,errMsg);
+      _finirReflexion(false,errMsg.slice(0,60));
       addMsg("a","⚠️ "+errMsg);
     }else{
       var t=new Date().toLocaleTimeString("fr-CA",{hour:"2-digit",minute:"2-digit"});
@@ -4771,7 +4761,17 @@ async function sendChat(){
         wrap.insertBefore(conteneur,acts2||null);
         TilexLogAnalyst.afficher(conteneur,rapport);
         msgs.scrollTop=msgs.scrollHeight;
+      },function(pensee){
+        // Réflexion réelle : le raisonnement du modèle s'écrit en direct dans
+        // le bloc, au-dessus de la réponse. Il n'est jamais mêlé au texte final.
+        if(!reflexionMode||!rContent)return;
+        if(typeof tdRef!=="undefined"&&tdRef&&tdRef.parentNode){tdRef.remove();}
+        _reflexionTexte+=pensee;
+        rContent.textContent=_reflexionTexte;
+        rContent.scrollTop=rContent.scrollHeight;
+        if(rBlock&&!rBlock.classList.contains("expanded"))rBlock.classList.add("expanded");
       });
+      _finirReflexion(true);
       if(window.TilexStatusBadge)TilexStatusBadge.masquer(); // fin du stream → badge effacé
       EcritureFluide.finStream();
       await new Promise(function(r){var iv=setInterval(function(){if(document.hidden){try{EcritureFluide.skip();}catch(_e){}}if(!EcritureFluide._raf||EcritureFluide._buffer.length===0){clearInterval(iv);r();}},50);});
@@ -4807,6 +4807,8 @@ async function sendChat(){
     }
   }catch(e){
     td.remove();console.error("[ti-lex] sendChat error:",e);
+    // Le bloc de réflexion ne doit jamais rester bloqué sur son chrono.
+    try{if(typeof _finirReflexion==="function")_finirReflexion(false,e&&e.name==="AbortError"?"Arrêtée":"Coupure");}catch(_r){}
     if(window.TilexStatusBadge)TilexStatusBadge.masquer(); // erreur/coupure → badge effacé pareil
     // Stream coupé en chemin (réseau mobile…) : vider le buffer à l'écran,
     // arrêter le moteur d'écriture, pis re-rendre la bulle partielle

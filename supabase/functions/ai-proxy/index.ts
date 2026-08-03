@@ -705,7 +705,20 @@ Deno.serve(async (req) => {
     if (totalChars > MAX_MSG_CHARS)
       return json({ error: `Contenu trop volumineux (${(totalChars / 1_000_000).toFixed(1)} Mo, max ${(MAX_MSG_CHARS / 1_000_000).toFixed(0)} Mo)` }, 400);
 
-    const maxTokens = Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS_CAP);
+    let maxTokens = Math.min(Number(body.max_tokens) || 4096, MAX_TOKENS_CAP);
+
+    // ── RÉFLEXION RÉELLE (extended thinking) ────────────────────────────────
+    // Le mode réflexion n'est plus un deuxième appel qui « fait semblant » de
+    // raisonner : c'est le vrai raisonnement interne du modèle, diffusé en
+    // direct. Contraintes de l'API : budget >= 1024 jetons et strictement
+    // inférieur à max_tokens — on ajuste plutôt que de laisser l'appel échouer.
+    let thinkingParam: any = null;
+    if (body.thinking && body.thinking.type === "enabled") {
+      let budget = Math.max(1024, Number(body.thinking.budget_tokens) || 4000);
+      if (budget >= MAX_TOKENS_CAP - 1024) budget = MAX_TOKENS_CAP - 1024;
+      if (maxTokens <= budget) maxTokens = Math.min(MAX_TOKENS_CAP, budget + 2048);
+      thinkingParam = { type: "enabled", budget_tokens: budget };
+    }
 
     const userKey = req.headers.get("x-anthropic-key");
     const apiKey = (userKey && userKey.startsWith("sk-ant-")) ? userKey : ANTHROPIC_KEY;
@@ -765,7 +778,7 @@ Deno.serve(async (req) => {
     // Outils custom (bourse, média, youtube, sécurité) → boucle d'outils en streaming temps réel.
     const hasCustomTools = tools.some((t: any) => t.type !== "web_search_20250305");
     if (hasCustomTools) {
-      return handleToolLoop(marquerDernierMessageCache(body.messages), tools, model, maxTokens, systemParam, anthropicHeaders, { authHeader, userId });
+      return handleToolLoop(marquerDernierMessageCache(body.messages), tools, model, maxTokens, systemParam, anthropicHeaders, { authHeader, userId }, thinkingParam);
     }
 
     // Sinon : streaming passthrough (avec web_search optionnel exécuté par Anthropic).
@@ -779,6 +792,7 @@ Deno.serve(async (req) => {
         stream: true,
         messages: marquerDernierMessageCache(body.messages),
         ...(tools.length > 0 ? { tools } : {}),
+        ...(thinkingParam ? { thinking: thinkingParam } : {}),
       }),
     });
     if (!r.ok) {
@@ -840,6 +854,7 @@ function handleToolLoop(
   system: any, // tableau de blocs cacheables (ou undefined)
   headers: Record<string, string>,
   ctx: ToolCtx,
+  thinking: any = null,
 ) {
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -854,7 +869,10 @@ function handleToolLoop(
           const r = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers,
-            body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: msgs, tools, stream: true }),
+            body: JSON.stringify({
+              model, max_tokens: maxTokens, system, messages: msgs, tools, stream: true,
+              ...(thinking ? { thinking } : {}),
+            }),
           });
 
           if (!r.ok || !r.body) {
@@ -891,6 +909,13 @@ function handleToolLoop(
                   blocks[ev.index] = { type: "tool_use", id: cb.id, name: cb.name, _json: "" };
                 } else if (cb.type === "text") {
                   blocks[ev.index] = { type: "text", text: "" };
+                } else if (cb.type === "thinking") {
+                  // Le bloc de pensée doit être conservé TEL QUEL (signature
+                  // comprise) pour être renvoyé au tour suivant de la boucle
+                  // d'outils — sinon l'API rejette la continuation.
+                  blocks[ev.index] = { type: "thinking", thinking: "", signature: "" };
+                } else if (cb.type === "redacted_thinking") {
+                  blocks[ev.index] = { ...cb };
                 } else {
                   blocks[ev.index] = { ...cb };
                   if (cb.type === "server_tool_use" && cb.name === "web_search") {
@@ -903,6 +928,13 @@ function handleToolLoop(
                 if (ev.delta?.type === "text_delta") {
                   if (b && b.type === "text") b.text += ev.delta.text;
                   send(JSON.stringify({ type: "content_block_delta", delta: { type: "text_delta", text: ev.delta.text } }));
+                } else if (ev.delta?.type === "thinking_delta") {
+                  // Réflexion réelle : on la relaie au front pour l'afficher en
+                  // direct, exactement comme elle est produite.
+                  if (b && b.type === "thinking") b.thinking += ev.delta.thinking || "";
+                  send(JSON.stringify({ type: "content_block_delta", delta: { type: "thinking_delta", thinking: ev.delta.thinking || "" } }));
+                } else if (ev.delta?.type === "signature_delta") {
+                  if (b && b.type === "thinking") b.signature += ev.delta.signature || "";
                 } else if (ev.delta?.type === "input_json_delta") {
                   if (b) b._json += ev.delta.partial_json || "";
                 }
@@ -921,6 +953,10 @@ function handleToolLoop(
               content.push({ type: "tool_use", id: b.id, name: b.name, input });
             } else if (b.type === "text") {
               content.push({ type: "text", text: b.text });
+            } else if (b.type === "thinking") {
+              // Renvoyé intact (texte + signature) : l'API vérifie la signature
+              // quand la conversation continue après un appel d'outil.
+              content.push({ type: "thinking", thinking: b.thinking, signature: b.signature });
             } else {
               content.push(b);
             }
