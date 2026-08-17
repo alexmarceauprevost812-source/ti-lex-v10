@@ -2193,32 +2193,39 @@ function ficheCommerce(t,lat,lon,secours,libelle){
   const etat=ouvertMaintenant(oh);
 
   let h=`<div class="popup-marque">${badgeMarque(t,secours)}<div>`+
-        `<b style="color:#ff9000;font-size:14px">${nom}</b>`+
-        (t.brand&&t.brand!==nom?`<span class="popup-ligne">${t.brand}</span>`:'')+
+        `<b style="color:#ff9000;font-size:14px">${escHtml(nom)}</b>`+
+        (t.brand&&t.brand!==nom?`<span class="popup-ligne">${escHtml(t.brand)}</span>`:'')+
         `</div></div>`;
 
   if(etat)h+=`<div class="popup-ouvert ${etat.ouvert?'oui':'non'}">${etat.ouvert?'&#9679; ':'&#9675; '}${etat.detail}</div>`;
-  if(adresse)h+=`<span class="popup-ligne">&#128205; ${adresse}</span>`;
-  if(oh)h+=`<span class="popup-ligne">&#128336; ${oh.replace(/;/g,' · ')}</span>`;
-  if(t.cuisine)h+=`<span class="popup-ligne">&#127860; ${t.cuisine.replace(/;/g,', ')}</span>`;
+  if(adresse)h+=`<span class="popup-ligne">&#128205; ${escHtml(adresse)}</span>`;
+  if(oh)h+=`<span class="popup-ligne">&#128336; ${escHtml(oh.replace(/;/g,' · '))}</span>`;
+  if(t.cuisine)h+=`<span class="popup-ligne">&#127860; ${escHtml(t.cuisine.replace(/;/g,', '))}</span>`;
   if(t.diet_vegetarian==='yes'||t['diet:vegetarian']==='yes')h+=`<span class="popup-ligne">&#127807; Options vegetariennes</span>`;
   if(t.takeaway==='yes')h+=`<span class="popup-ligne">&#129379; Pour emporter</span>`;
   if(t.delivery==='yes')h+=`<span class="popup-ligne">&#128663; Livraison</span>`;
   if(t.drive_through==='yes')h+=`<span class="popup-ligne">&#128664; Service au volant</span>`;
   if(t.outdoor_seating==='yes')h+=`<span class="popup-ligne">&#9925; Terrasse</span>`;
-  if(t.wheelchair)h+=`<span class="popup-ligne">&#9855; Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='limited'?'partiel':'non'}</span>`;
+  // wheelchair=designated veut dire "amenage expres". Le ranger dans le "non"
+  // du ternaire affirmait le contraire de la donnee OSM.
+  if(t.wheelchair)h+=`<span class="popup-ligne">&#9855; Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='designated'?'oui, amenage':t.wheelchair==='limited'?'partiel':t.wheelchair==='no'?'non':escHtml(t.wheelchair)}</span>`;
   if(t.internet_access==='wlan'||t['internet_access']==='yes')h+=`<span class="popup-ligne">&#128246; Wi-Fi</span>`;
   const paiements=Object.keys(t).filter(k=>k.startsWith('payment:')&&t[k]==='yes').map(k=>k.replace('payment:',''));
   if(paiements.length)h+=`<span class="popup-ligne">&#128179; ${paiements.slice(0,5).join(', ')}</span>`;
   if(t.atm==='yes')h+=`<span class="popup-ligne">&#128179; Guichet automatique sur place</span>`;
   if(t.fuel_diesel==='yes'||t['fuel:diesel']==='yes')h+=`<span class="popup-ligne">&#9981; Diesel</span>`;
   if(t.self_service==='yes')h+=`<span class="popup-ligne">Libre-service</span>`;
-  if(t.description)h+=`<span class="popup-ligne">${t.description.slice(0,160)}</span>`;
+  if(t.description)h+=`<span class="popup-ligne">${escHtml(t.description.slice(0,160))}</span>`;
 
-  if(tel)h+=`<a class="popup-lien" href="tel:${tel.replace(/\s/g,'')}">&#128222; ${tel}</a>`;
-  if(courriel)h+=`<a class="popup-lien" href="mailto:${courriel}">&#9993; ${courriel}</a>`;
-  if(web)h+=`<a class="popup-lien" href="${web}" target="_blank" rel="noopener">&#127760; Site officiel</a>`;
-  if(fb)h+=`<a class="popup-lien" href="https://facebook.com/${fb}" target="_blank" rel="noopener">Facebook</a>`;
+  // Les valeurs OSM sont du texte libre contribue par n'importe qui. Un tag
+  // website="javascript:..." donnait ici un lien executable : on n'accepte
+  // donc que ce qui a vraiment la forme attendue, et le reste est echappe.
+  if(tel)h+=`<a class="popup-lien" href="tel:${encodeURIComponent(tel.replace(/[^\d+]/g,''))}">&#128222; ${escHtml(tel)}</a>`;
+  if(/^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i.test(courriel))h+=`<a class="popup-lien" href="mailto:${escHtml(courriel)}">&#9993; ${escHtml(courriel)}</a>`;
+  else if(courriel)h+=`<span class="popup-ligne">&#9993; ${escHtml(courriel)}</span>`;
+  if(/^https?:\/\//i.test(web))h+=`<a class="popup-lien" href="${escHtml(web)}" target="_blank" rel="noopener">&#127760; Site officiel</a>`;
+  if(fb&&/^[A-Za-z0-9._-]+$/.test(fb))h+=`<a class="popup-lien" href="https://facebook.com/${escHtml(fb)}" target="_blank" rel="noopener">Facebook</a>`;
+  else if(/^https?:\/\//i.test(fb))h+=`<a class="popup-lien" href="${escHtml(fb)}" target="_blank" rel="noopener">Facebook</a>`;
   // Ce qu'OSM ne contient pas (menu, avis, promotions) reste a un clic.
   h+=`<a class="popup-lien" href="https://www.google.com/search?q=${encodeURIComponent(nom+' '+(t['addr:city']||''))}" target="_blank" rel="noopener">&#128269; Chercher sur le web</a>`;
   h+=`<button onclick="routeTo(${lat},${lon},'${safeName}')" style="margin-top:8px;background:#ff6a00;color:#000;border:none;padding:5px 14px;border-radius:8px;cursor:pointer;font-family:Rajdhani;font-weight:700">&#128668; Y aller</button>`;
@@ -2907,7 +2914,22 @@ function toggleForestier(el){
   map.on('moveend',onForestierMove);
 }
 
-function onForestierMove(){if(forestierActive&&!forestierLoading)loadForestier()}
+// Anti-rebond + seuil de distance. Sans ca, le suivi GPS (watchPosition fait
+// map.setView a chaque fix) declenchait une requete Overpass complete par
+// seconde en roulant — bannissement 429 assure, et la couche pourvoiries
+// tombait avec. Le seuil evite aussi de requeter sur la gigue du GPS a l'arret.
+let forestierMoveTimer=null,forestierDernierCentre=null;
+function onForestierMove(){
+  if(!forestierActive)return;
+  if(forestierMoveTimer)clearTimeout(forestierMoveTimer);
+  forestierMoveTimer=setTimeout(()=>{
+    if(!forestierActive||forestierLoading)return;
+    const c=map.getCenter();
+    if(forestierDernierCentre&&map.distance(forestierDernierCentre,c)<800)return;
+    forestierDernierCentre=c;
+    loadForestier();
+  },700);
+}
 
 async function loadForestier(){
   if(forestierLoading)return;
@@ -2998,7 +3020,10 @@ async function loadForestier(){
     });
     hideLoading();
     if(nbChemins)showCount(nbChemins,'chemins');
-    else alert('Aucun chemin forestier cartographie dans cette zone. Deplace la carte vers un secteur boise.');
+    // Bandeau, pas alert() : cette branche se declenche a chaque deplacement
+    // de carte sur un secteur sans chemin cartographie. En roulant, un modal
+    // a taper du doigt toutes les quelques secondes est dangereux.
+    else pvNote('Aucun chemin forestier cartographie dans cette zone. Deplace la carte vers un secteur boise.',7000);
   }catch(e){hideLoading();console.warn('Forestier error:',e)}
   forestierLoading=false;
 }
@@ -3026,33 +3051,47 @@ const PV_COUL={peche:'#4fc3f7',chasse:'#c98a3a',hebergement:'#ffcf4a',camping:'#
   motoneige:'#9fd0ff',vtt:'#ff9000',canot:'#7bc043',eau:'#4fc3f7',pourvoirie:'#2a7cff',
   zec:'#3ea55a',reserve:'#7bc043',refuge:'#ff9000',territoire:'#7bc043'};
 
-// Table des specialites. `tag` = preuve dans les donnees OSM (affiche comme un
-// fait). `nom` = simple indice dans le libelle (affiche a part, en pointille).
-// Attention aux valeurs negatives : hunting=no et fishing=no sont des
-// INTERDICTIONS, frequentes sur les aires protegees. On teste donc la valeur
-// exacte 'yes', jamais la simple presence de la cle.
+// Table des specialites. Trois predicats, trois statuts distincts :
+//   `neg` = OSM dit explicitement que l'activite est INTERDITE ici. Prioritaire
+//           sur tout le reste : hunting=no sur une aire protegee est une
+//           donnee connue et contraire, pas une donnee manquante. Sans cette
+//           branche, une "Reserve ... chasse et peche" avec hunting=no
+//           recoltait un badge "Chasse ?" tire de son nom — l'app suggerait
+//           une activite qu'OSM declare interdite.
+//   `tag` = preuve dans les donnees OSM (affiche comme un fait).
+//   `nom` = simple indice dans le libelle (affiche a part, en pointille).
+// On teste toujours la valeur exacte ('yes' / 'no'), jamais la presence de cle.
+//
+// Les regex de nom sont ancrees sur des frontieres de mot : pvNorm remplace la
+// ponctuation par des espaces, donc \b est fiable. Sans ancrage, "ours"
+// matchait "parcours"/"toujours" et "dore" matchait "Saint-Isidore" — du bruit
+// qui usait la credibilite du badge plein juste a cote.
 const PV_SPECIALITES=[
   {cle:'peche',lbl:'Peche',ico:'&#128031;',col:PV_COUL.peche,
+   neg:t=>t.fishing==='no',
    tag:t=>t.leisure==='fishing'||t.fishing==='yes'||/fishing/.test(t.sport||'')||t.shop==='fishing'||t.club==='fishing'||t['fishing:species']!=null,
-   nom:/peche|truite|omble|ouananiche|dore|brochet|achigan|saumon|maskinong|touladi|coregone/},
+   nom:/\b(peche|truite|omble|ouananiche|dore|brochet|achigan|saumon|maskinong\w*|touladi|coregone)\b/},
   {cle:'chasse',lbl:'Chasse',ico:'&#127993;',col:PV_COUL.chasse,
+   neg:t=>t.hunting==='no',
    tag:t=>t.hunting==='yes'||/hunting/.test(t.sport||'')||t.amenity==='hunting_stand'||t.club==='hunting'||t.shop==='hunting',
-   nom:/chasse|orignal|gibier|chevreuil|cerf|caribou|ours|perdrix|gelinotte|outarde|bernache|sauvagine|trappe/},
+   nom:/\b(chasse|orignal|gibier|chevreuil|cerf|caribou|ours|perdrix|gelinotte|outarde|bernache|sauvagine|trappe)\b/},
   {cle:'hebergement',lbl:'Hebergement',ico:'&#127976;',col:PV_COUL.hebergement,
    tag:t=>/^(chalet|wilderness_hut|alpine_hut|motel|hotel|guest_house)$/.test(t.tourism||'')||t.leisure==='resort'||t.tourism==='resort'||t.rooms!=null||t.beds!=null||t.cabins!=null,
-   nom:/chalet|auberge|hebergement/},
+   nom:/\b(chalet|chalets|auberge|hebergement)\b/},
   {cle:'camping',lbl:'Camping',ico:'&#9978;',col:PV_COUL.camping,
    tag:t=>t.tourism==='camp_site'||t.tourism==='caravan_site',
-   nom:/camping/},
-  {cle:'motoneige',lbl:'Motoneige',ico:'&#127938;',col:PV_COUL.motoneige,
+   nom:/\bcamping\b/},
+  {cle:'motoneige',lbl:'Motoneige',ico:'&#128759;',col:PV_COUL.motoneige,
+   neg:t=>t.snowmobile==='no',
    tag:t=>t.snowmobile==='yes'||t.snowmobile==='designated',
-   nom:/motoneige|ski-?doo/},
-  {cle:'vtt',lbl:'VTT / quad',ico:'&#127950;',col:PV_COUL.vtt,
+   nom:/\b(motoneige|ski ?doo|skidoo)\b/},
+  {cle:'vtt',lbl:'VTT / quad',ico:'&#127949;',col:PV_COUL.vtt,
+   neg:t=>t.atv==='no',
    tag:t=>t.atv==='yes'||t.atv==='designated',
-   nom:/vtt|quad/},
+   nom:/\b(vtt|quad)\b/},
   {cle:'canot',lbl:'Canot / kayak',ico:'&#128675;',col:PV_COUL.canot,
    tag:t=>t.canoe==='yes'||/canoe|kayak/.test(t.sport||'')||t.amenity==='boat_rental'||t.leisure==='slipway',
-   nom:/canot|kayak|portage|rabaska/}
+   nom:/\b(canot|kayak|portage|rabaska)\b/}
 ];
 
 // Clauses Overpass. Le filet est volontairement large : les 5 clauses de la
@@ -3103,6 +3142,17 @@ let pvController=null;           // annule la requete precedente quand la carte 
 let pvMoveTimer=null;            // anti-rebond sur moveend
 let pvQcAnnule=false;            // demande d'arret du balayage provincial
 let pvNoteTimer=null;
+// Jeton de generation. Toute extinction ou tout changement de mode l'incremente.
+// Sans lui, l'epilogue du balayage provincial (qui reprend APRES la microtache
+// du await, donc apres que togglePourvoiries a deja installe son propre
+// controleur) remettait pvController a null et faisait jeter en silence la
+// reponse de la requete viewport : zero marqueur, spinner fige, et un bandeau
+// de bilan provincial affiche par-dessus le mode viewport.
+let pvRun=0;
+let pvAllerJeton=0;              // idem pour la verification d'acces differee
+let pvZoomTimer=null;            // minuterie du garde de zoom, a annuler
+let pvVueAvantQc=null;           // vue a restaurer si le balayage est annule
+let pvMoveCentre=null;           // dernier centre reellement requete
 
 /* ─── Utilitaires ─────────────────────────────────────────────────────────── */
 
@@ -3144,7 +3194,9 @@ function typePourvoirie(t){
   const n=pvNorm(t.name)+' '+pvNorm(t.operator);
   if(/serve faunique/.test(n))return{lbl:'Reserve faunique',ico:'&#129417;',col:PV_COUL.reserve};
   if(/\bzec\b/.test(n))return{lbl:'ZEC',ico:'&#127795;',col:PV_COUL.zec};
-  if(t.boundary==='national_park')return{lbl:'Parc',ico:'&#127796;',col:PV_COUL.territoire};
+  // 127966 = paysage de parc. L'ancien 127796 etait un palmier — sur une carte
+  // du Quebec, ca ne represente rien.
+  if(t.boundary==='national_park')return{lbl:'Parc',ico:'&#127966;',col:PV_COUL.territoire};
   if(t.boundary==='protected_area'||t.leisure==='nature_reserve')return{lbl:'Aire protegee',ico:'&#127795;',col:PV_COUL.territoire};
   if(/pourvoiri/.test(n))return{lbl:'Pourvoirie',ico:'&#127957;',col:PV_COUL.pourvoirie};
   if(/club de chasse|chasse et p/.test(n))return{lbl:'Club de chasse et peche',ico:'&#127993;',col:PV_COUL.chasse};
@@ -3156,39 +3208,66 @@ function typePourvoirie(t){
   if(t.shop==='fishing')return{lbl:'Boutique de peche',ico:'&#128031;',col:PV_COUL.peche};
   if(t.shop==='hunting')return{lbl:'Boutique de chasse',ico:'&#127993;',col:PV_COUL.chasse};
   if(t.leisure==='fishing')return{lbl:'Site de peche',ico:'&#128031;',col:PV_COUL.peche};
-  if(t.leisure==='resort'||t.tourism==='resort')return{lbl:'Villegiature',ico:'&#127957;',col:PV_COUL.pourvoirie};
-  return{lbl:'Site faunique',ico:'&#127957;',col:PV_COUL.pourvoirie};
+  if(t.leisure==='resort'||t.tourism==='resort')return{lbl:'Centre de villegiature',ico:'&#127957;',col:PV_COUL.pourvoirie};
+  // Libelle de repli honnete : "Site faunique" sonnait comme une categorie
+  // officielle alors que c'est juste l'absence d'information.
+  return{lbl:'Type non precise dans OSM',ico:'&#127957;',col:PV_COUL.pourvoirie};
 }
 
-// Renvoie {tags:[...], indices:[...]}.
-//   tags    = prouve par un tag OSM, affichable comme un fait
-//   indices = seulement suggere par le nom, jamais presente comme certain
+// Renvoie {tags:[...], indices:[...], interdits:[...]}.
+//   tags      = prouve par un tag OSM, affichable comme un fait
+//   indices   = seulement suggere par le nom, jamais presente comme certain
+//   interdits = OSM dit que c'est interdit ici. Testes EN PREMIER : une donnee
+//               connue et contraire ne doit jamais retomber dans "indice".
 function pvSpecialites(t){
   const n=pvNorm(t.name)+' '+pvNorm(t.description)+' '+pvNorm(t['description:fr'])+' '+pvNorm(t.operator);
-  const tags=[],indices=[];
+  const tags=[],indices=[],interdits=[];
   for(const s of PV_SPECIALITES){
     const e={cle:s.cle,lbl:s.lbl,ico:s.ico,col:s.col};
+    if(s.neg&&s.neg(t)){interdits.push(e);continue}
     if(s.tag(t))tags.push(e);
     else if(s.nom.test(n))indices.push(e);
   }
-  return{tags:tags,indices:indices};
+  return{tags:tags,indices:indices,interdits:interdits};
 }
 
-// Icone de carte. Elle ne suit QUE les specialites prouvees par un tag : une
-// icone ne peut pas porter la mention "non confirme", donc elle ne doit rien
-// affirmer qu'on ne puisse verifier. Sans tag, on retombe sur la categorie.
-function pvIcone(spec,ty,territoire){
-  if(territoire)return{ico:ty.ico,col:ty.col};
-  const c=spec.tags.map(s=>s.cle);
+// Choisit un glyphe d'activite a partir d'une liste de specialites.
+// 128031+127993 (poisson + arc) plutot que 127907 : ce dernier est une CANNE A
+// PECHE. Un site tague chasse ET peche affichait donc une icone de peche,
+// indistinguable d'un site de peche seule — c'etait un bogue, pas un choix.
+function pvGlyphe(liste){
+  const c=liste.map(s=>s.cle);
   const p=c.indexOf('peche')>=0,h=c.indexOf('chasse')>=0;
-  if(p&&h)return{ico:'&#127907;',col:'#8fd0ff'};        // trophee : les deux
-  if(p)return{ico:'&#128031;',col:PV_COUL.peche};
-  if(h)return{ico:'&#127993;',col:PV_COUL.chasse};
-  if(c.indexOf('camping')>=0)return{ico:'&#9978;',col:PV_COUL.camping};
-  if(c.indexOf('canot')>=0)return{ico:'&#128675;',col:PV_COUL.canot};
-  if(c.indexOf('motoneige')>=0)return{ico:'&#127938;',col:PV_COUL.motoneige};
-  if(c.indexOf('hebergement')>=0)return{ico:'&#127968;',col:PV_COUL.hebergement};
-  return{ico:ty.ico,col:ty.col};
+  if(p&&h)return{ico:'&#128031;&#127993;',col:'#8fd0ff',lbl:'Peche et chasse'};
+  if(p)return{ico:'&#128031;',col:PV_COUL.peche,lbl:'Peche'};
+  if(h)return{ico:'&#127993;',col:PV_COUL.chasse,lbl:'Chasse'};
+  if(c.indexOf('camping')>=0)return{ico:'&#9978;',col:PV_COUL.camping,lbl:'Camping'};
+  if(c.indexOf('canot')>=0)return{ico:'&#128675;',col:PV_COUL.canot,lbl:'Canot'};
+  if(c.indexOf('motoneige')>=0)return{ico:'&#128759;',col:PV_COUL.motoneige,lbl:'Motoneige'};
+  if(c.indexOf('hebergement')>=0)return{ico:'&#127968;',col:PV_COUL.hebergement,lbl:'Hebergement'};
+  return null;
+}
+
+// Icone de carte. L'utilisateur a demande de voir sur la carte si c'est plutot
+// peche ou plutot chasse — mais la specialite est rarement taguee, alors une
+// icone qui n'obeirait qu'aux tags laisserait la quasi-totalite des sites sous
+// le meme pictogramme neutre : la carte ne repondrait jamais a la question.
+//
+// On garde donc la distinction, mais on la rend VISIBLE au lieu de la cacher :
+//   confirme = true  -> glyphe plein, halo colore  (prouve par un tag OSM)
+//   confirme = false -> glyphe pali, anneau pointille (devine d'apres le nom)
+// C'est exactement la convention deja utilisee par les badges de la fiche
+// (.pv-badge.indice), et la legende du bandeau l'enonce a l'allumage. Le
+// marqueur pointille n'affirme donc rien de plus que le badge pointille.
+function pvIcone(spec,ty,territoire){
+  if(territoire)return{ico:ty.ico,col:ty.col,confirme:true,activite:null};
+  const prouve=pvGlyphe(spec.tags);
+  if(prouve)return{ico:prouve.ico,col:prouve.col,confirme:true,activite:prouve.lbl};
+  const indice=pvGlyphe(spec.indices);
+  if(indice)return{ico:indice.ico,col:indice.col,confirme:false,activite:indice.lbl};
+  // Ni tag ni indice : on retombe sur la categorie, qui ne pretend rien sur
+  // l'activite pratiquee.
+  return{ico:ty.ico,col:ty.col,confirme:true,activite:null};
 }
 
 /* ─── Activation de la couche ─────────────────────────────────────────────── */
@@ -3216,8 +3295,15 @@ function togglePourvoiriesQc(el){
 
 function pvEteindre(){
   pourvoirieActive=false;pvQcAnnule=true;
+  pvRun++;pvAllerJeton++;        // tout ce qui etait en vol devient perime
   if(pvController){pvController.abort();pvController=null}
   if(pvMoveTimer){clearTimeout(pvMoveTimer);pvMoveTimer=null}
+  if(pvZoomTimer){clearTimeout(pvZoomTimer);pvZoomTimer=null}
+  pvMoveCentre=null;
+  // Sans ca, eteindre la couche pendant une requete laissait la boite
+  // "Recherche des pourvoiries..." (z-index 3000, sans pointer-events:none) au
+  // milieu de l'ecran pour toujours : la branche AbortError sort sans nettoyer.
+  hideLoading();
   document.querySelectorAll('.poi-chip[data-poi="pourvoirie"],.poi-chip[data-poi="pourvoirieqc"]').forEach(c=>{
     c.classList.remove('active');c.style.borderColor='#2a7cff';
   });
