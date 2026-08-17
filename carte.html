@@ -818,9 +818,15 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
 .pv-source{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);color:#8a7a60;font-size:10px;line-height:1.45}
 
 /* Bandeau non bloquant : remplace les alert() qui se declenchaient a chaque
-   deplacement de carte sur une zone vide. */
-.pv-note{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(14px);z-index:2960;width:min(400px,92vw);background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border:1px solid #2a7cff;border-radius:14px;padding:11px 14px;color:#bba88a;font-size:12px;line-height:1.45;opacity:0;pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 32px rgba(0,0,0,.6)}
+   deplacement de carte sur une zone vide.
+   Certains bandeaux sont permanents (duree 0 : bilan du balayage, consignes de
+   securite du "Y aller"). Sans bouton de fermeture ils restaient colles au bas
+   de l'ecran pour tout le trajet, par-dessus la carte. Le bandeau garde
+   pointer-events:none pour ne pas voler les taps de la carte ; seul le bouton
+   de fermeture les reactive. */
+.pv-note{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(14px);z-index:2960;width:min(400px,92vw);background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border:1px solid #2a7cff;border-radius:14px;padding:11px 34px 11px 14px;color:#bba88a;font-size:12px;line-height:1.45;opacity:0;pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 32px rgba(0,0,0,.6)}
 .pv-note.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.pv-note-x{position:absolute;top:3px;right:4px;background:none;border:none;color:var(--text3);font-size:19px;line-height:1;cursor:pointer;padding:4px 9px;pointer-events:auto}
 
 @media(max-width:600px){
   .pv-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:62vh}
@@ -828,10 +834,19 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
   .pv-btn{min-height:48px;font-size:15px}
   .pv-close{font-size:26px;min-height:44px;min-width:44px}
   .pv-note{bottom:96px}
+  .pv-note-x{font-size:24px;min-height:44px;min-width:44px}
+  /* Le bandeau et la fiche occupaient le MEME bas d'ecran, et le bandeau
+     (2960) passe par-dessus la fiche (2950) : ouvrir une fiche pendant un
+     bandeau permanent la rendait illisible. .pv-note suit .pv-panel dans le
+     DOM, donc le selecteur de voisin suffit. */
+  .pv-panel.show ~ .pv-note{bottom:auto;top:10px}
 }
 @media (orientation:landscape) and (max-height:500px){
   .pv-panel{bottom:8px;top:8px;max-height:none;width:min(320px,60vw)}
   .pv-note{bottom:8px}
+  /* Meme media que le telephone couche dans un support de tableau de bord :
+     les pastilles doivent rester attrapables avec des gants. */
+  .poi-chip{min-height:44px;display:flex;align-items:center}
 }
 /* Le panneau apparait sans rebond si l'utilisateur a demande moins d'animation. */
 @media (prefers-reduced-motion:reduce){
@@ -3150,6 +3165,7 @@ let pvNoteTimer=null;
 // de bilan provincial affiche par-dessus le mode viewport.
 let pvRun=0;
 let pvAllerJeton=0;              // idem pour la verification d'acces differee
+let pvAccesCtrl=null;            // annule la verification d'acces en vol
 let pvZoomTimer=null;            // minuterie du garde de zoom, a annuler
 let pvVueAvantQc=null;           // vue a restaurer si le balayage est annule
 let pvMoveCentre=null;           // dernier centre reellement requete
@@ -3170,7 +3186,7 @@ function pvNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/
 function pvNote(msg,duree){
   const el=document.getElementById('pvNote');
   if(!el)return;
-  el.innerHTML=msg;
+  el.innerHTML='<button class="pv-note-x" onclick="pvCacherNote()" aria-label="Fermer le message">&times;</button>'+msg;
   el.classList.add('show');
   if(pvNoteTimer)clearTimeout(pvNoteTimer);
   if(duree!==0)pvNoteTimer=setTimeout(()=>el.classList.remove('show'),duree||7000);
@@ -3313,6 +3329,7 @@ function pvEteindre(){
   pourvoirieActive=false;pvQcAnnule=true;
   pvRun++;pvAllerJeton++;        // tout ce qui etait en vol devient perime
   if(pvController){pvController.abort();pvController=null}
+  if(pvAccesCtrl){pvAccesCtrl.abort();pvAccesCtrl=null}
   if(pvMoveTimer){clearTimeout(pvMoveTimer);pvMoveTimer=null}
   if(pvZoomTimer){clearTimeout(pvZoomTimer);pvZoomTimer=null}
   pvMoveCentre=null;
@@ -3324,9 +3341,13 @@ function pvEteindre(){
     c.classList.remove('active');c.style.borderColor='#2a7cff';
   });
   pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
+  pourvoirieLabels.forEach(l=>map.removeLayer(l));pourvoirieLabels=[];
   pvSites=[];
   map.off('moveend',onPourvoirieMove);
   map.off('zoomend',pvMajLabels);
+  // Le mode province branche aussi pvMajLabels sur moveend : sans ce off,
+  // le handler survivait a l'extinction de la couche.
+  map.off('moveend',pvMajLabels);
   hideCount();pvCacherNote();fermerFichePourvoirie();
 }
 
@@ -3345,11 +3366,19 @@ function onPourvoirieMove(){
   },700);
 }
 
-// Dit d'entree de jeu ce que la couche est, et ce qu'elle n'est pas.
+// Dit d'entree de jeu ce que la couche est, ce qu'elle n'est pas, et comment
+// lire les pictogrammes. Sans cle de lecture, huit emojis sur la carte ne
+// repondent a rien — surtout pas a "peche ou chasse ?", qui est la question
+// posee au depart.
 function pvBandeauCouverture(){
   pvNote('<b style="color:#5b8cff">Donnees OpenStreetMap</b>, contribuees par des benevoles. '+
     'La couverture est partielle : si une pourvoirie n\'apparait pas, ca ne veut pas dire '+
-    'qu\'elle n\'existe pas. Verifie toujours avant de partir.',9000);
+    'qu\'elle n\'existe pas. Verifie toujours avant de partir.'+
+    '<br><br><b>Sur la carte :</b> &#128031; peche &middot; &#127993; chasse &middot; '+
+    '&#128031;&#127993; les deux &middot; &#9978; camping &middot; &#128675; canot &middot; '+
+    '&#127968; hebergement &middot; &#127795; territoire (ZEC, reserve).'+
+    '<br>Pictogramme <b>plein</b> = confirme par les tags OSM. '+
+    'Pictogramme <b>pali dans un cercle pointille</b> = devine d\'apres le nom, <b>pas confirme</b>.',14000);
 }
 
 /* ─── Requetes ────────────────────────────────────────────────────────────── */
@@ -3468,32 +3497,56 @@ function pvTuilesQc(){
 
 async function loadPourvoiriesQc(){
   const tuiles=pvTuilesQc();
+  // Jeton de generation, comme dans loadPourvoiries. pvEteindre() abort de
+  // facon SYNCHRONE, mais la reprise du await est une microtache : elle
+  // s'executait apres que togglePourvoiries avait deja installe son propre
+  // controleur. L'epilogue remettait alors pvController a null et appelait
+  // hideLoading(), ce qui faisait jeter en silence la reponse de la requete
+  // viewport (zero marqueur, spinner fige) et affichait par-dessus un bandeau
+  // de bilan provincial alors que l'utilisateur etait revenu en mode secteur.
+  const run=++pvRun;
   pvQcAnnule=false;pourvoirieLoading=true;
   pvVider();
   map.setView([48.5,-70],5);
   pvNote('Balayage du Quebec en cours — <b>plusieurs minutes</b>. Les zones se remplissent au fur et a mesure. Reclique la pastille pour arreter.',0);
   const vus=new Set();
-  let total=0,echecs=0,plafonds=0;
+  let total=0,echecs=0,plafonds=0,consec429=0,arret429=false;
   for(let i=0;i<tuiles.length;i++){
-    if(pvQcAnnule||!pourvoirieActive)break;
+    if(run!==pvRun||pvQcAnnule||!pourvoirieActive)break;
     const[s,w,n,e]=tuiles[i];
     showLoading(`Quebec : zone ${i+1}/${tuiles.length} — ${total} sites`);
     try{
       const ctrl=new AbortController();pvController=ctrl;
       const data=await pvFetch(pvRequete(s,w,n,e,180,600),ctrl.signal);
-      if(pvQcAnnule||!pourvoirieActive)break;
+      if(run!==pvRun||pvQcAnnule||!pourvoirieActive)break;
       const el=data.elements||[];
       if(el.length>=600)plafonds++;
       total+=pvRendre(el,vus);
     }catch(err){
       if(err.name==='AbortError'&&pvQcAnnule)break;
-      echecs++;
       console.warn('Pourvoiries QC tuile',i,err);
+      // Overpass compte des creneaux par IP et repond 429 quand ils sont
+      // epuises. Repartir 1,2 s plus tard faisait echouer toutes les zones
+      // restantes en cascade — bilan honnete mais resultat inutilisable, et
+      // l'IP risquait le bannissement. On recule au lieu d'insister.
+      if(err.statusOverpass===429){
+        consec429++;
+        if(consec429>=3){arret429=true;echecs+=tuiles.length-i;break}
+        const attente=30000*consec429;
+        showLoading(`Serveur sature — pause de ${attente/1000} s avant de reprendre la zone ${i+1}`);
+        await new Promise(r=>setTimeout(r,attente));
+        if(run!==pvRun||pvQcAnnule||!pourvoirieActive)break;
+        i--;continue;                 // on reessaie la meme zone
+      }
+      consec429=0;echecs++;
     }
     // Pause entre les tuiles : Overpass est un service benevole gratuit,
     // le marteler ferait bannir l'app (429) et serait un abus de ressource.
     if(i<tuiles.length-1&&!pvQcAnnule)await new Promise(r=>setTimeout(r,1200));
   }
+  // Avant de toucher a quoi que ce soit : si une autre activation a pris le
+  // relais, ce balayage n'a plus rien a dire ni a nettoyer.
+  if(run!==pvRun)return;
   pvController=null;pourvoirieLoading=false;
   hideLoading();
   if(!pourvoirieActive)return;
@@ -3503,6 +3556,7 @@ async function loadPourvoiriesQc(){
   // croirait avoir une image complete de la province.
   let msg=`<b style="color:#5b8cff">${total} sites</b> trouves dans OpenStreetMap`+
     (pvQcAnnule?' (balayage arrete avant la fin)':'')+'. ';
+  if(arret429)msg+=`<b style="color:#ff4757">Balayage interrompu : le serveur OpenStreetMap a refuse le service (trop de requetes).</b> Reessaye dans quelques minutes. `;
   if(echecs)msg+=`<b style="color:#ffcf4a">${echecs} zone${echecs>1?'s':''} sur ${tuiles.length} n'${echecs>1?'ont':'a'} pas repondu</b> — il en manque forcement. `;
   if(plafonds)msg+=`${plafonds} zone${plafonds>1?'s ont':' a'} atteint le plafond de chargement. `;
   if(pvSites.length>=PV_MAX_MARQUEURS)msg+=`<b style="color:#ffcf4a">Affichage limite a ${PV_MAX_MARQUEURS} marqueurs</b> — il y en a d'autres qui ne sont pas montres. `;
@@ -3517,8 +3571,39 @@ async function loadPourvoiriesQc(){
 // laisser croire que la province est couverte.
 const PV_MAX_MARQUEURS=2500;
 
+// Etiquettes de nom, tenues a part des marqueurs pour pouvoir les recalculer
+// au zoom sans relancer de requete.
+let pourvoirieLabels=[];
+const PV_ZOOM_LABELS=10;
+const PV_MAX_LABELS=300;
+
+// Affiche ou retire les noms selon le zoom, sans rien redemander au serveur.
+// Cette fonction etait referencee par les deux modes (zoomend, moveend) mais
+// n'existait pas : chaque appel levait un ReferenceError. Concretement la
+// pastille "tout le Quebec" mourait des le clic (avant meme la premiere
+// requete) et le mode viewport plantait des que la carte bougeait de moins de
+// 800 m. En mode province c'est aussi ce qui rend le resultat lisible : sans
+// elle, cinq minutes de balayage donnaient un champ de pastilles muettes qu'on
+// ne pouvait nommer qu'en rebasculant sur l'autre pastille, ce qui effacait
+// tout et recommencait.
+function pvMajLabels(){
+  pourvoirieLabels.forEach(l=>map.removeLayer(l));pourvoirieLabels=[];
+  if(!pourvoirieActive||map.getZoom()<PV_ZOOM_LABELS)return;
+  const b=map.getBounds();
+  for(const s of pvSites){
+    if(pourvoirieLabels.length>=PV_MAX_LABELS)break;
+    if(!b.contains([s.lat,s.lon]))continue;   // on n'etiquette que le visible
+    const lbl=L.marker([s.lat,s.lon],{icon:L.divIcon({
+      html:`<div style="font-size:10px;color:${s.col};font-family:Rajdhani;font-weight:700;text-shadow:0 1px 4px #000;white-space:nowrap;pointer-events:none">${escHtml(s.nom)}</div>`,
+      iconAnchor:[-14,0],className:''
+    })}).addTo(map);
+    pourvoirieLabels.push(lbl);
+  }
+}
+
 function pvVider(){
   pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
+  pourvoirieLabels.forEach(l=>map.removeLayer(l));pourvoirieLabels=[];
   pvSites=[];
   // Les boutons de la fiche ouverte pointent vers un index de pvSites. Si on
   // reconstruit le tableau sans fermer la fiche, "Y aller" tracerait vers un
@@ -3530,12 +3615,22 @@ function pvVider(){
 // entre plusieurs tuiles. Retourne le nombre de sites reellement ajoutes.
 function pvRendre(elements,vus){
   const dedup=vus||new Set();
-  const zoomLabels=map.getZoom()>=10&&pourvoirieMode==='vue';
   let n=0;
-  elements.forEach(item=>{
+  // Les noeuds d'abord. Un meme site est souvent cartographie deux fois : un
+  // NOEUD pose sur l'accueil (position relevee) et un WAY autour du terrain
+  // (dont `out center` ne donne que le centre de la boite englobante). Le
+  // dedoublonnage garde le premier arrive ; sans ce tri, l'ordre `qt` decidait
+  // au hasard et pouvait jeter le point releve pour garder le point calcule.
+  // On ne veut jamais remplacer une bonne coordonnee par une approximation.
+  const tries=elements.slice().sort((a,b)=>(a.type==='node'?0:1)-(b.type==='node'?0:1));
+  tries.forEach(item=>{
     const t=item.tags||{};
-    // `out center` place le centroide des ways/relations dans item.center.
-    const lat=item.lat!=null?item.lat:item.center&&item.center.lat;
+    // `out center` place le centre de la BOITE ENGLOBANTE des ways/relations
+    // dans item.center — ce n'est pas un centroide, et pour une forme en L ou
+    // un lac en croissant le point peut tomber hors de l'objet. On retient
+    // donc d'ou vient la coordonnee (`estPoint`) pour le dire dans la fiche.
+    const estPoint=item.lat!=null;
+    const lat=estPoint?item.lat:item.center&&item.center.lat;
     const lon=item.lon!=null?item.lon:item.center&&item.center.lon;
     if(lat==null||lon==null)return;
     // Sans nom, le filet elargi produirait des dizaines de marqueurs anonymes
@@ -3555,26 +3650,29 @@ function pvRendre(elements,vus){
     const territoire=pvEstTerritoire(t);
     const ic=pvIcone(spec,ty,territoire);
     const idx=pvSites.length;
-    pvSites.push({nom:t.name,lat:lat,lon:lon,t:t,ty:ty,spec:spec,territoire:territoire,col:ic.col});
+    pvSites.push({nom:t.name,lat:lat,lon:lon,t:t,ty:ty,spec:spec,territoire:territoire,
+      col:ic.col,estPoint:estPoint});
 
+    // Glyphe plein = l'activite est prouvee par un tag OSM.
+    // Glyphe pali dans un anneau pointille = elle n'est que devinee d'apres le
+    // nom. C'est la meme convention que les badges de la fiche
+    // (.pv-badge.indice), et la legende du bandeau l'enonce a l'allumage : le
+    // marqueur pointille n'affirme donc rien de plus que le badge pointille.
+    // Sans ca, le champ `confirme` etait calcule puis jete, et une supposition
+    // s'affichait exactement comme un fait.
+    const html=ic.confirme
+      ? `<div style="font-size:20px;line-height:1;text-shadow:0 0 6px #000,0 0 12px ${ic.col}">${ic.ico}</div>`
+      : `<div style="font-size:15px;line-height:22px;width:24px;height:24px;box-sizing:border-box;text-align:center;opacity:.7;border:1px dashed ${ic.col};border-radius:50%;text-shadow:0 0 5px #000">${ic.ico}</div>`;
     const m=L.marker([lat,lon],{icon:L.divIcon({
-      html:`<div style="font-size:20px;line-height:1;text-shadow:0 0 6px #000,0 0 12px ${ic.col}">${ic.ico}</div>`,
-      iconSize:[26,26],iconAnchor:[13,13],className:''
+      html:html,iconSize:[26,26],iconAnchor:[13,13],className:''
     })}).addTo(map);
     // Index en closure plutot qu'un nom dans un onclick : les noms quebecois
     // sont pleins d'apostrophes (Pourvoirie de l'Ours) et cassaient l'attribut.
     m.on('click',()=>ouvrirFichePourvoirie(idx));
     pourvoirieMarkers.push(m);
-
-    if(zoomLabels){
-      const lbl=L.marker([lat,lon],{icon:L.divIcon({
-        html:`<div style="font-size:10px;color:${ic.col};font-family:Rajdhani;font-weight:700;text-shadow:0 1px 4px #000;white-space:nowrap;pointer-events:none">${escHtml(t.name)}</div>`,
-        iconAnchor:[-14,0],className:''
-      })}).addTo(map);
-      pourvoirieMarkers.push(lbl);
-    }
     n++;
   });
+  pvMajLabels();
   return n;
 }
 
@@ -3638,38 +3736,76 @@ function ouvrirFichePourvoirie(i){
   if(t.operator)serv.push(`Gestionnaire : ${escHtml(t.operator)}`);
   if(t.opening_hours)serv.push(`Heures : ${escHtml(t.opening_hours.replace(/;/g,' · '))}`);
   if(t.seasonal==='yes')serv.push(`Site saisonnier — ferme une partie de l'annee`);
-  if(t.access)serv.push(`Acces : ${escHtml(t.access)}`);
   if(t.fee==='yes')serv.push(`Acces payant`);else if(t.fee==='no')serv.push(`Acces gratuit`);
   if(t.reservation)serv.push(`Reservation : ${escHtml(t.reservation)}`);
-  if(t.capacity||t['capacity:persons'])serv.push(`Capacite : ${escHtml(t.capacity||t['capacity:persons'])} personnes`);
+  // `capacity` ne compte pas la meme chose selon l'objet : sur un camping
+  // c'est un nombre d'EMPLACEMENTS, pas de personnes. Seul `capacity:persons`
+  // parle de personnes. On n'ajoute donc l'unite que quand le tag la porte.
+  if(t['capacity:persons'])serv.push(`Capacite : ${escHtml(t['capacity:persons'])} personnes`);
+  else if(t.capacity)serv.push(`Capacite : ${escHtml(t.capacity)}`+
+    (t.tourism==='camp_site'||t.tourism==='caravan_site'?' emplacements':''));
   if(t.rooms)serv.push(`Chambres : ${escHtml(t.rooms)}`);
   if(t.beds)serv.push(`Lits : ${escHtml(t.beds)}`);
   if(t.cabins)serv.push(`Chalets : ${escHtml(t.cabins)}`);
   if(t.internet_access&&t.internet_access!=='no')serv.push(`Internet : ${escHtml(t.internet_access)}`);
   else if(t.internet_access==='no')serv.push(`Pas d'internet sur place`);
-  if(t.wheelchair)serv.push(`Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='limited'?'partiel':'non'}`);
+  // `designated` = amenage expres pour les fauteuils. Il tombait dans le
+  // "sinon" et s'affichait "Accessible : non" — l'inverse exact de la donnee.
+  if(t.wheelchair)serv.push(`Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='designated'?'oui, amenage':t.wheelchair==='limited'?'partiel':t.wheelchair==='no'?'non':escHtml(t.wheelchair)}`);
   if(t.drinking_water==='yes')serv.push(`Eau potable`);
+  else if(t.drinking_water==='no')serv.push(`Pas d'eau potable sur place`);
   if(t.shower==='yes')serv.push(`Douches`);
-  if(t.electricity||t.power_supply==='yes')serv.push(`Electricite`);
+  // Piege du meme genre que hunting=no : la chaine "no" est truthy. Un camp
+  // tague electricity=no — c'est-a-dire "il n'y a PAS d'electricite ici" —
+  // affichait le service "Electricite". Quelqu'un qui part sans generatrice
+  // sur la foi de cette ligne se retrouve dans le bois sans courant.
+  if(t.electricity==='yes'||t.power_supply==='yes')serv.push(`Electricite`);
+  else if(t.electricity==='no'||t.power_supply==='no')serv.push(`Pas d'electricite sur place`);
+  else if(t.electricity)serv.push(`Electricite : ${escHtml(t.electricity)}`);
   if(t['payment:credit_cards']==='yes')serv.push(`Cartes de credit acceptees`);
   if(t['payment:cash']==='yes')serv.push(`Argent comptant`);
   if(serv.length)h+=`<span class="pv-titre-sect">SERVICES</span>`+serv.map(x=>`<span class="pv-ligne">${x}</span>`).join('');
 
   // ── Aller sur place
   h+=`<span class="pv-titre-sect">SE RENDRE</span>`;
+
+  // Restriction d'acces : c'est la ligne la plus importante de la fiche, elle
+  // etait enterree en douzieme position d'une liste de services en petit brun
+  // pendant que le gros bouton bleu "Y aller" restait offert au-dessus.
+  const acc=t.access||'';
+  const ACC_LBL={private:'Terrain prive',no:'Acces interdit',permit:'Permis obligatoire',
+    customers:'Clients seulement',members:'Membres seulement'};
+  if(ACC_LBL[acc])
+    h+=`<div class="pv-avert">&#9888; <b>${ACC_LBL[acc]}</b> selon OpenStreetMap (access=${escHtml(acc)}). Le chemin peut etre barre, et t'y engager sans autorisation peut etre interdit. Appelle avant de partir.</div>`;
+  else if(acc)h+=`<span class="pv-ligne">Acces OSM : ${escHtml(acc)}</span>`;
+
   if(s.territoire){
     // Refus assume : le centroide d'un territoire n'est pas une destination.
     h+=`<div class="pv-avert">&#9888; Territoire de grande superficie. Le point marque le centre approximatif, <b>pas l'accueil</b>. Tracer un chemin vers ce point t'enverrait au milieu du bois. Contacte le poste d'accueil avant de t'engager.</div>`;
   }else{
+    // Le point vient-il d'un noeud releve, ou du centre d'une boite
+    // englobante ? Pour un batiment cartographie ca change peu ; pour un
+    // terrain ou un lac ca peut tomber a des kilometres, et hors de l'objet.
+    // On le dit AVANT le bouton, pas dans la petite ligne de provenance.
+    if(!s.estPoint)
+      h+=`<div class="pv-avert">&#9888; Ce site est cartographie comme une <b>zone</b>, pas comme un point. La position affichee est le <b>centre calcule</b> de cette zone : ca peut etre un batiment (donc juste) comme un terrain complet (donc a des kilometres de l'entree). Ce n'est pas une coordonnee relevee sur le terrain.</div>`;
     h+=`<button class="pv-btn" onclick="pvAller(${i})">&#128668; Y aller + chemins forestiers</button>`;
   }
   h+=`<button class="pv-btn secondaire" onclick="pvCentrer(${i})">&#128269; Centrer la carte ici</button>`;
+  // Les coordonnees sont la seule donnee qui fonctionne encore sans reseau :
+  // elles se rentrent dans un GPS de chasse. Elles etaient affichees en 10 px
+  // au bas de la fiche, sans moyen de les copier.
+  h+=`<button class="pv-btn secondaire" onclick="pvCopierCoord(${i})">&#128203; Copier les coordonnees pour ton GPS</button>`;
 
   // ── Ce qu'OSM ne contient pas (forfaits, tarifs, disponibilites)
   h+=`<a class="pv-lien" href="https://www.google.com/search?q=${encodeURIComponent(s.nom+' pourvoirie '+(t['addr:city']||'Quebec'))}" target="_blank" rel="noopener">&#128269; Chercher forfaits et tarifs sur le web</a>`;
 
   // ── Provenance. Un site de navigation doit dire d'ou sortent ses chiffres.
-  h+=`<div class="pv-source">Position OpenStreetMap &middot; ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`;
+  // On nomme la nature du chiffre. Afficher 5 decimales (~1 m) sur le centre
+  // d'une boite englobante donnait a un calcul l'allure d'un releve.
+  h+=`<div class="pv-source">`+(s.estPoint
+    ? `Point OpenStreetMap &middot; ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`
+    : `Centre calcule de la zone cartographiee &middot; ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)} <br>(centre de la boite englobante de l'objet OSM, pas un point releve)`);
   const verif=t['check_date']||t['survey:date'];
   if(verif)h+=`<br>Derniere verification terrain : ${escHtml(verif)}`;
   h+=`<br>Fiche batie uniquement avec les tags presents dans OSM. Les champs absents ne sont pas devines.</div>`;
@@ -3684,6 +3820,19 @@ function pvCentrer(i){
   map.setView([s.lat,s.lon],13);
 }
 
+// Les coordonnees sont la seule chose qui marche encore quand le reseau lache.
+// On les copie telles quelles, sans rien recalculer.
+function pvCopierCoord(i){
+  const s=pvSites[i];if(!s)return;
+  const txt=`${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`;
+  const aLaMain=()=>pvNote(`Copie impossible sur ce navigateur. Note-les a la main : <b>${txt}</b> (${escHtml(s.nom)}).`,0);
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(
+      ()=>pvNote(`Coordonnees copiees : <b>${txt}</b> — ${escHtml(s.nom)}. Ecris-les aussi sur papier : le presse-papier se perd, pas le papier.`,9000),
+      aLaMain);
+  else aLaMain();
+}
+
 /* ─── "Pour pas se perdre dans le bois" ───────────────────────────────────── */
 
 // Active la couche Chemins forestiers sans desynchroniser sa pastille.
@@ -3696,19 +3845,39 @@ function pvActiverForestier(){
   return true;
 }
 
-// Cherche une route revetue autour du site. Sert a avertir quand les derniers
-// kilometres se font sur du chemin de terre — ou quand OSM ne connait
-// carrement aucune route dans le secteur.
-async function pvVerifierAcces(lat,lon){
+// Regarde ce qu'OSM connait comme routes autour du site.
+//
+// L'ancienne version filtrait cote serveur avec ["surface"!~"gravel|..."].
+// En Overpass, `!~` matche AUSSI les objets qui n'ont pas la cle du tout — or
+// dans le bois quebecois l'ecrasante majorite des `highway=unclassified` n'a
+// aucun tag `surface`. La fonction repondait donc "revetue" a peu pres partout,
+// et l'avertissement "acces final sur chemin de terre" ne sortait jamais, la
+// exactement ou il servait. C'etait une affirmation tiree d'une ABSENCE de
+// donnee — la chose que ce projet s'interdit.
+//
+// On ramene donc les tags et on tranche ici, avec quatre etats distincts dont
+// un qui dit franchement "OSM ne le sait pas".
+async function pvVerifierAcces(lat,lon,signal){
   const q=`[out:json][timeout:25];`+
-    `way(around:3000,${lat},${lon})["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]["surface"!~"gravel|unpaved|dirt|ground|compacted|fine_gravel|earth|sand"];`+
-    `out ids 1;`;
+    `way(around:3000,${lat},${lon})["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"];`+
+    `out tags 200;`;
   try{
-    const data=await pvFetch(q,null);
-    return (data.elements||[]).length>0?'revetue':'terre';
+    const data=await pvFetch(q,signal,30000);
+    const el=data.elements||[];
+    if(!el.length)return'aucune_route';
+    let revetu=false,nonRevetu=false;
+    for(const w of el){
+      const surf=(w.tags&&w.tags.surface)||'';
+      if(!surf)continue;                       // absence = on ne sait pas
+      if(/^(asphalt|paved|concrete|concrete:plates|chipseal|paving_stones|sett)$/.test(surf))revetu=true;
+      else nonRevetu=true;
+    }
+    if(revetu)return'revetue';                 // preuve positive de revetement
+    if(nonRevetu)return'terre';                // preuve positive du contraire
+    return'surface_inconnue';                  // des routes, aucun tag surface
   }catch(e){
     console.warn('Pourvoiries acces error:',e);
-    return 'inconnu';   // on ne devine pas : on dira qu'on n'a pas pu verifier
+    return'inconnu';   // on ne devine pas : on dira qu'on n'a pas pu verifier
   }
 }
 
@@ -3717,35 +3886,91 @@ async function pvVerifierAcces(lat,lon){
 // visibles, et dit honnetement ce que le routage ne sait pas faire.
 async function pvAller(i){
   const s=pvSites[i];if(!s)return;
+  // Jeton de contexte. Deux "Y aller" successifs, ou une extinction de couche
+  // pendant l'attente, faisaient revenir la reponse de la PREMIERE destination
+  // par-dessus le bandeau de la seconde : une affirmation sur l'acces de A
+  // affichee sous le nom de B. Dans un truck, c'est trompeur sur la mauvaise
+  // destination.
+  const jeton=++pvAllerJeton;
 
   if(!myLat){
-    // Repli honnete : sans GPS, routeTo() ne fait qu'alerter. On prepare au
-    // moins la destination pour que le geste ne soit pas perdu.
-    document.getElementById('routeTo').value=s.nom;
+    // Repli sans GPS. On depose les COORDONNEES dans le champ destination,
+    // jamais le nom : calcRoute() envoie le contenu de ce champ a Nominatim
+    // (limit=1, tout le Canada+US). "Pourvoirie du Lac Blanc" a des homonymes
+    // au Quebec — l'app aurait trace vers un autre lac alors qu'elle avait la
+    // bonne coordonnee OSM sous la main. Le texte reste verifiable a l'oeil.
+    const champ=document.getElementById('routeTo');
+    if(champ)champ.value=`${s.lat.toFixed(6)}, ${s.lon.toFixed(6)}`;
     document.getElementById('sidebar').classList.add('open');
-    pvNote('GPS pas encore actif. Destination copiee dans le panneau navigation — active le GPS, puis reappuie sur "Y aller".',9000);
+    pvNote(`GPS pas encore actif. Les coordonnees de <b>${escHtml(s.nom)}</b> (${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}) sont dans le panneau navigation. Active le GPS, puis reappuie sur "Y aller".`,9000);
     locateMe();
     return;
   }
 
   routeTo(s.lat,s.lon,s.nom);
+  // routeTo() ecrit le NOM dans le champ destination. Meme piege que ci-dessus
+  // si l'utilisateur relance ensuite le calcul depuis le panneau navigation.
+  const champ=document.getElementById('routeTo');
+  if(champ)champ.value=`${s.lat.toFixed(6)}, ${s.lon.toFixed(6)}`;
+  const rc=routeControl;
   const forestierOk=pvActiverForestier();
   fermerFichePourvoirie();
 
-  let msg='<b style="color:#5b8cff">Chemin trace.</b> ';
-  if(forestierOk)msg+=map.getZoom()>=10
-    ? 'Chemins forestiers allumes : etat des chemins, barrieres et gues sont affiches. '
-    : 'Chemins forestiers allumes — <b>zoome au niveau 10+</b> pres de la destination pour voir leur etat, les barrieres et les gues. ';
-  msg+='<br><br>&#9888; L\'itineraire suit les routes connues d\'OpenStreetMap. Les derniers kilometres de chemin forestier peuvent etre absents de la carte, barres ou impraticables. Ne pars pas sans carte papier, GPS charge et un plan de match laisse a quelqu\'un.';
-  pvNote(msg,0);
+  // Le corps du message ne depend pas du routeur. On n'affirme plus que les
+  // chemins forestiers "sont affiches" : leur affichage depend du zoom, et
+  // leaflet-routing-machine recule la carte pour cadrer tout l'itineraire des
+  // que la route arrive — l'affirmation devenait fausse deux secondes apres
+  // avoir ete lue.
+  const corps=(forestierOk?'Chemins forestiers allumes : <b>zoome au niveau 10+</b> pres de la destination pour voir leur etat, les barrieres et les gues. ':'')+
+    '<br><br>&#9888; L\'itineraire suit les routes connues d\'OpenStreetMap. Les derniers kilometres de chemin forestier peuvent etre absents de la carte, barres ou impraticables. Ne pars pas sans carte papier, GPS charge et un plan de match laisse a quelqu\'un.';
+  let entete=`<b style="color:#5b8cff">Calcul de l'itineraire vers ${escHtml(s.nom)}...</b> `;
+  let acces='';
+  const rendre=()=>{if(jeton===pvAllerJeton&&pourvoirieActive)pvNote(entete+corps+acces,0)};
+  rendre();
 
-  // Verification reelle de l'acces, en arriere-plan : le message se precise
-  // quand la reponse arrive, ou dit qu'on n'a pas pu verifier.
-  const acces=await pvVerifierAcces(s.lat,s.lon);
-  if(acces==='terre')
-    pvNote(msg+'<br><br><b style="color:#ffcf4a">Aucune route revetue connue dans un rayon de 3 km.</b> L\'acces final se fait sur chemin de terre — vehicule adapte fortement recommande.',0);
-  else if(acces==='inconnu')
-    pvNote(msg+'<br><br><b style="color:#ffcf4a">Verification de l\'acces routier impossible</b> (serveur injoignable). Ne suppose rien sur l\'etat du dernier troncon.',0);
+  // On n'annonce plus "Chemin trace" avant que le routeur ait repondu : le
+  // calcul est asynchrone et n'avait aucun gestionnaire d'erreur. Quand OSRM
+  // ne repondait pas — cas courant a deux barres de signal — l'app affichait
+  // "Chemin trace" sur une carte sans ligne.
+  if(rc&&rc.once){
+    rc.once('routesfound',e=>{
+      if(jeton!==pvAllerJeton)return;
+      const co=(e.routes&&e.routes[0]&&e.routes[0].coordinates)||[];
+      const fin=co.length?co[co.length-1]:null;
+      // OSRM accroche l'arrivee a la route routable la plus proche. Pour un
+      // camp a 40 km du dernier chemin cartographie, la ligne s'arrete a 40 km
+      // et la distance affichee ne mene pas au site. C'est le chiffre qui
+      // compte vraiment quand on part dans le bois, alors on le mesure.
+      const ecart=fin?map.distance(fin,[s.lat,s.lon]):0;
+      entete=ecart>1000
+        ? `<b style="color:#ffcf4a">L'itineraire s'arrete a ${(ecart/1000).toFixed(1)} km de ${escHtml(s.nom)}.</b> Aucune route cartographiee ne va plus loin : la distance et la duree affichees ne couvrent PAS ce dernier bout. `
+        : `<b style="color:#5b8cff">Chemin trace vers ${escHtml(s.nom)}.</b> `;
+      rendre();
+    });
+    rc.once('routingerror',()=>{
+      if(jeton!==pvAllerJeton)return;
+      entete=`<b style="color:#ff4757">Aucun itineraire calcule.</b> Le serveur de routage est injoignable, ou aucune route connue ne mene la. Note les coordonnees : <b>${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}</b>. `;
+      rendre();
+    });
+  }
+
+  // Verification reelle de l'acces, en arriere-plan. Annulable : sans ca, la
+  // reponse ressuscitait un bandeau permanent apres l'extinction de la couche.
+  if(pvAccesCtrl)pvAccesCtrl.abort();
+  pvAccesCtrl=new AbortController();
+  const etat=await pvVerifierAcces(s.lat,s.lon,pvAccesCtrl.signal);
+  if(jeton!==pvAllerJeton||!pourvoirieActive)return;
+  if(etat==='terre')
+    acces='<br><br><b style="color:#ffcf4a">Les routes cartographiees dans un rayon de 3 km sont non revetues</b> (gravelle, terre) selon OSM. Vehicule adapte fortement recommande.';
+  else if(etat==='surface_inconnue')
+    acces='<br><br><b style="color:#ffcf4a">Des routes existent dans le secteur, mais leur revetement n\'est pas renseigne dans OSM.</b> Ne suppose pas qu\'elles sont carrossables en auto — au Quebec, un chemin sans tag est souvent de la gravelle.';
+  else if(etat==='aucune_route')
+    acces='<br><br><b style="color:#ff4757">Aucune route cartographiee dans un rayon de 3 km de ce point.</b> Soit l\'acces n\'est pas dans OSM, soit le point tombe loin de tout chemin. N\'y va pas sans avoir confirme le chemin d\'acces avec la pourvoirie.';
+  else if(etat==='inconnu')
+    acces='<br><br><b style="color:#ffcf4a">Verification de l\'acces routier impossible</b> (serveur injoignable). Ne suppose rien sur l\'etat du dernier troncon.';
+  else if(etat==='revetue')
+    acces='<br><br>Une route revetue est cartographiee a moins de 3 km. Ca ne dit rien de l\'etat du dernier chemin jusqu\'au camp.';
+  rendre();
 }
 
 // ============ RESEAU ROUTIER COLORE ============
@@ -3852,13 +4077,33 @@ async function loadReseau(){
 }
 
 // ============ ROUTING ============
+// Une saisie de la forme "46.83521, -73.02110" est deja une position exacte :
+// la renvoyer a Nominatim serait remplacer une coordonnee connue par le premier
+// resultat d'une recherche de texte. Les fiches pourvoirie remplissent ce champ
+// avec les coordonnees OSM du site precisement pour ne pas dependre du nom.
+function pvLireCoord(txt){
+  const m=/^\s*(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/.exec(txt);
+  if(!m)return null;
+  const la=+m[1],lo=+m[2];
+  if(!isFinite(la)||!isFinite(lo)||la<-90||la>90||lo<-180||lo>180)return null;
+  return L.latLng(la,lo);
+}
+
+async function geocoderOuCoord(q){
+  const c=pvLireCoord(q);
+  if(c)return c;
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1&countrycodes=ca,us`).then(r=>r.json());
+  if(!r.length)return null;
+  return L.latLng(+r[0].lat,+r[0].lon);
+}
+
 async function calcRoute(){
   const fQ=document.getElementById('routeFrom').value.trim(),tQ=document.getElementById('routeTo').value.trim();
   if(!fQ||!tQ){alert('Depart et destination requis');return}
   try{
-    const[fR,tR]=await Promise.all([fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fQ)}&limit=1&countrycodes=ca,us`).then(r=>r.json()),fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(tQ)}&limit=1&countrycodes=ca,us`).then(r=>r.json())]);
-    if(!fR.length||!tR.length){alert('Lieu introuvable');return}
-    createRoute(L.latLng(+fR[0].lat,+fR[0].lon),L.latLng(+tR[0].lat,+tR[0].lon));
+    const[fR,tR]=await Promise.all([geocoderOuCoord(fQ),geocoderOuCoord(tQ)]);
+    if(!fR||!tR){alert('Lieu introuvable');return}
+    createRoute(fR,tR);
   }catch(e){alert('Erreur geocodage')}
 }
 
@@ -3875,6 +4120,15 @@ function createRoute(from,to){
   }).addTo(map);
   routeControl.on('routesfound',e=>{const r=e.routes[0],km=(r.summary.totalDistance/1000).toFixed(1),min=Math.round(r.summary.totalTime/60),h=Math.floor(min/60),m=min%60;
     document.getElementById('routeDist').textContent=km+' km';document.getElementById('routeTime').textContent=h>0?`${h}h ${m}min`:`${m} min`;document.getElementById('routeInfo').classList.add('show')});
+  // Il n'y avait aucun gestionnaire d'erreur de routage dans tout le fichier.
+  // Le routeur par defaut est le serveur de demo public d'OSRM, qui refuse le
+  // service sans avertir : l'echec etait totalement silencieux, et l'appelant
+  // pouvait annoncer un chemin qui n'existait pas.
+  routeControl.on('routingerror',err=>{
+    console.warn('Routing error:',err);
+    document.getElementById('routeInfo').classList.remove('show');
+    pvNote('<b style="color:#ff4757">Itineraire impossible a calculer.</b> Le serveur de routage n\'a pas repondu, ou il ne connait aucune route jusqu\'a ce point. <b>Rien n\'est trace sur la carte</b> — ne pars pas en te fiant a une ligne qui n\'y est pas.',0);
+  });
 }
 function clearRoute(){if(routeControl){map.removeControl(routeControl);routeControl=null}document.getElementById('routeInfo').classList.remove('show')}
 function useMyLocAsStart(){if(!myLat){alert('Active le GPS');locateMe();return}document.getElementById('routeFrom').value='Ma position'}
