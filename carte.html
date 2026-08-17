@@ -3286,10 +3286,26 @@ function togglePourvoiries(el){
 // l'utilisateur promene la carte. Volontairement sequentiel — Overpass est un
 // service benevole, on ne le martele pas en parallele.
 function togglePourvoiriesQc(el){
-  if(pourvoirieActive&&pourvoirieMode==='qc'){pvQcAnnule=true;pvEteindre();return}
+  if(pourvoirieActive&&pourvoirieMode==='qc'){
+    pvQcAnnule=true;pvEteindre();
+    // La pastille avait vole la vue de l'utilisateur en sautant a zoom 5.
+    // Annuler doit lui rendre son secteur, pas le laisser perdu.
+    if(pvVueAvantQc){map.setView(pvVueAvantQc.c,pvVueAvantQc.z);pvVueAvantQc=null}
+    return;
+  }
+  // Les deux pastilles sont collees dans une barre a defilement horizontal et
+  // deviennent minuscules en paysage. Un doigt gante qui vise "Pourvoiries"
+  // accrochait celle-ci, ce qui sautait a zoom 5 et lancait 5 minutes de
+  // requetes. On demande confirmation : c'est un geste unique et volontaire,
+  // pas un modal qui revient en boucle en conduisant.
+  if(!confirm('Balayer TOUT le Quebec ?\n\nCa prend plusieurs minutes, ca telecharge beaucoup de donnees, et la carte va reculer sur la province au complet.\n\nPour ton secteur seulement, utilise plutot la pastille "Pourvoiries".'))return;
   if(pourvoirieActive)pvEteindre();
+  pvVueAvantQc={c:map.getCenter(),z:map.getZoom()};
   pourvoirieMode='qc';
   pourvoirieActive=true;el.classList.add('active');el.style.borderColor='';
+  // Meme en mode province, les noms doivent apparaitre quand on zoome.
+  map.on('zoomend',pvMajLabels);
+  map.on('moveend',pvMajLabels);
   loadPourvoiriesQc();
 }
 
@@ -3310,14 +3326,23 @@ function pvEteindre(){
   pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
   pvSites=[];
   map.off('moveend',onPourvoirieMove);
+  map.off('zoomend',pvMajLabels);
   hideCount();pvCacherNote();fermerFichePourvoirie();
 }
 
-// Anti-rebond : sans ca chaque micro-deplacement declenchait une requete.
+// Anti-rebond + seuil de distance. Le suivi GPS recentre la carte a chaque fix
+// (watchPosition fait map.setView), donc sans seuil on relancait une requete de
+// 26 clauses en continu en roulant.
 function onPourvoirieMove(){
   if(!pourvoirieActive||pourvoirieMode!=='vue')return;
   if(pvMoveTimer)clearTimeout(pvMoveTimer);
-  pvMoveTimer=setTimeout(loadPourvoiries,700);
+  pvMoveTimer=setTimeout(()=>{
+    if(!pourvoirieActive||pourvoirieMode!=='vue')return;
+    const c=map.getCenter();
+    if(pvMoveCentre&&map.distance(pvMoveCentre,c)<800){pvMajLabels();return}
+    pvMoveCentre=c;
+    loadPourvoiries();
+  },700);
 }
 
 // Dit d'entree de jeu ce que la couche est, et ce qu'elle n'est pas.
@@ -3342,25 +3367,51 @@ function pvRequete(s,w,n,e,timeout,limite){
 // Overpass repond en HTML (pas en JSON) quand la requete ne compile pas ou
 // quand le service est sature. Sans ce garde-fou, l'echec etait invisible :
 // la carte restait vide et l'utilisateur croyait qu'il n'y a rien la.
-async function pvFetch(query,signal){
-  const res=await fetch('https://overpass-api.de/api/interpreter',
-    {method:'POST',body:'data='+encodeURIComponent(query),signal:signal});
-  if(!res.ok){
-    const e=new Error('overpass '+res.status);
-    e.statusOverpass=res.status;
-    throw e;
+// `[timeout:...]` est un reglage SERVEUR : il ne protege de rien si la requete
+// n'atteint jamais le serveur. En zone a une barre, le socket peut caler sans
+// jamais rejeter — et l'overlay de chargement restait alors a l'ecran
+// indefiniment, en interceptant les taps. On coupe donc nous-memes.
+const PV_TIMEOUT_MS=45000;
+async function pvFetch(query,signal,timeoutMs){
+  const ctrl=new AbortController();
+  let expire=false;
+  const to=setTimeout(()=>{expire=true;ctrl.abort()},timeoutMs||PV_TIMEOUT_MS);
+  const relais=()=>ctrl.abort();
+  if(signal){
+    if(signal.aborted)ctrl.abort();
+    else signal.addEventListener('abort',relais);
   }
-  const txt=await res.text();
-  let data;
-  try{data=JSON.parse(txt)}catch(err){throw new Error('reponse Overpass illisible')}
-  if(data.remark&&!data.elements)throw new Error('overpass remark: '+data.remark);
-  return data;
+  try{
+    const res=await fetch('https://overpass-api.de/api/interpreter',
+      {method:'POST',body:'data='+encodeURIComponent(query),signal:ctrl.signal});
+    if(!res.ok){
+      const e=new Error('overpass '+res.status);
+      e.statusOverpass=res.status;
+      throw e;
+    }
+    const txt=await res.text();
+    let data;
+    try{data=JSON.parse(txt)}catch(err){throw new Error('reponse Overpass illisible')}
+    if(data.remark&&!data.elements)throw new Error('overpass remark: '+data.remark);
+    return data;
+  }catch(e){
+    // On distingue "j'ai coupe apres 45 s" de "une requete plus recente m'a
+    // remplace" : le premier merite un message honnete a l'utilisateur, le
+    // second doit rester silencieux.
+    if(expire&&e.name==='AbortError'){const t=new Error('delai depasse');t.pvTimeout=true;throw t}
+    throw e;
+  }finally{
+    clearTimeout(to);
+    if(signal)signal.removeEventListener('abort',relais);
+  }
 }
 
 async function loadPourvoiries(){
   if(!pourvoirieActive||pourvoirieMode!=='vue')return;
-  if(map.getZoom()<8){showLoading('Zoome au niveau 8+ pour les pourvoiries');setTimeout(hideLoading,1500);return}
+  if(pvZoomTimer){clearTimeout(pvZoomTimer);pvZoomTimer=null}
+  if(map.getZoom()<8){showLoading('Zoome au niveau 8+ pour les pourvoiries');pvZoomTimer=setTimeout(hideLoading,1500);return}
   if(pvController)pvController.abort();
+  const run=++pvRun;
   const ctrl=new AbortController();pvController=ctrl;
   pourvoirieLoading=true;
   const b=map.getBounds();
@@ -3368,7 +3419,7 @@ async function loadPourvoiries(){
   showLoading('Recherche des pourvoiries...');
   try{
     const data=await pvFetch(query,ctrl.signal);
-    if(ctrl!==pvController)return;             // une requete plus recente a pris le relais
+    if(run!==pvRun||ctrl!==pvController)return; // une requete plus recente a pris le relais
     pvVider();
     const n=pvRendre(data.elements||[]);
     hideLoading();
@@ -3383,10 +3434,15 @@ async function loadPourvoiries(){
       pvNote('Aucun site cartographie dans OpenStreetMap pour ce secteur. Ca ne veut pas dire qu\'il n\'y en a pas — juste que personne ne les a encore ajoutes a la carte.');
     }
   }catch(e){
+    // Un abort provoque par une requete plus recente est normal : elle a deja
+    // rallume son propre overlay, on ne touche a rien.
     if(e.name==='AbortError')return;
+    if(run!==pvRun)return;
     hideLoading();
     console.warn('Pourvoiries error:',e);
-    pvNote(e.statusOverpass===429
+    pvNote(e.pvTimeout
+      ? 'Pas de reponse d\'OpenStreetMap apres 45 secondes. Ton signal est peut-etre trop faible. Rien n\'a ete charge — ce que tu vois a l\'ecran peut dater.'
+      : e.statusOverpass===429
       ? 'Le serveur OpenStreetMap est sature (trop de requetes). Attends une minute et reessaye.'
       : 'Impossible de joindre OpenStreetMap. La carte peut etre incomplete — ne te fie pas a ce qui est affiche.',9000);
   }finally{
