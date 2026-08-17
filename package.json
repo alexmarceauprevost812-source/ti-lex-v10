@@ -15,7 +15,8 @@
     "test:heures": "node scripts/test-heures-ouverture.mjs",
     "push": "bash scripts/push-securise.sh",
     "deploy": "npm run scan && bash scripts/push-securise.sh",
-    "tfs": "node scripts/tfs-vers-geojson.mjs"
+    "tfs": "node scripts/tfs-vers-geojson.mjs",
+    "pourvoiries": "node scripts/pourvoiries-vers-carte.mjs"
   },
   "keywords": [
     "ti-lex",
