@@ -788,6 +788,56 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
 .leaflet-popup-close-button{color:var(--text3)!important}
 .leaflet-routing-container{background:rgba(14,14,14,.95)!important;color:var(--text)!important;border:1px solid var(--border)!important;border-radius:12px!important;max-height:200px;overflow-y:auto;font-family:'Rajdhani',sans-serif}
 .leaflet-bar{border:1px solid var(--border)!important;border-radius:10px!important;overflow:hidden}
+
+/* ===== FICHE POURVOIRIE =====
+   Panneau dedie, calque sur .friends-panel. On ne reutilise PAS .sidebar :
+   cinq fonctions de navigation (calcRoute, routeTo, useMyLocAsStart,
+   renderSaved, renderHistory) vont chercher leurs champs par id dans
+   .sidebar-body — y injecter une fiche casserait le calcul d'itineraire.
+   z-index 2950 : au-dessus de la carte et de la sidebar (1500), mais sous
+   .load-overlay (3000) pour que le message de chargement reste lisible. */
+.pv-panel{position:fixed;bottom:90px;right:16px;z-index:2950;width:min(340px,92vw);max-height:68vh;background:rgba(10,10,10,.97);backdrop-filter:blur(20px);border:1px solid #2a7cff;border-radius:20px;display:none;flex-direction:column;box-shadow:0 12px 48px rgba(42,124,255,.22);overflow:hidden}
+.pv-panel.show{display:flex;animation:dropIn .35s cubic-bezier(.34,1.56,.64,1)}
+.pv-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pv-header h3{font-family:'Orbitron',sans-serif;font-size:13px;color:#5b8cff;flex:1;letter-spacing:1px;line-height:1.3}
+.pv-close{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1}
+.pv-body{flex:1;overflow-y:auto;padding:12px}
+.pv-ligne{color:#bba88a;font-size:12px;display:block;margin-top:5px;line-height:1.45}
+.pv-meta{color:#8a7a60;font-size:11px;display:block;margin-top:5px;line-height:1.4}
+.pv-lien{color:#ff6a00;font-size:12px;text-decoration:none;display:block;margin-top:6px}
+.pv-titre-sect{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--text3);letter-spacing:1px;margin:14px 0 4px;display:block}
+
+/* Badge de specialite. Plein = prouve par un tag OSM. Pointille = simple
+   indice trouve dans le nom, donc jamais presente comme un fait. */
+.pv-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pv-badge{font-size:11px;font-weight:700;font-family:Rajdhani,sans-serif;padding:3px 9px;border-radius:12px;color:#000;white-space:nowrap}
+.pv-badge.indice{background:none!important;border:1px dashed currentColor;font-weight:600}
+.pv-btn{margin-top:12px;width:100%;background:#2a7cff;color:#000;border:none;padding:11px 14px;border-radius:10px;cursor:pointer;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;min-height:44px}
+.pv-btn.secondaire{background:none;border:1px solid var(--border);color:var(--text2);margin-top:7px;font-weight:600}
+.pv-avert{margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(255,207,74,.08);border:1px solid rgba(255,207,74,.3);color:#ffcf4a;font-size:11px;line-height:1.45}
+.pv-source{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);color:#8a7a60;font-size:10px;line-height:1.45}
+
+/* Bandeau non bloquant : remplace les alert() qui se declenchaient a chaque
+   deplacement de carte sur une zone vide. */
+.pv-note{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(14px);z-index:2960;width:min(400px,92vw);background:rgba(10,10,10,.97);backdrop-filter:blur(16px);border:1px solid #2a7cff;border-radius:14px;padding:11px 14px;color:#bba88a;font-size:12px;line-height:1.45;opacity:0;pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .3s cubic-bezier(.4,0,.2,1);box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.pv-note.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media(max-width:600px){
+  .pv-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:62vh}
+  .pv-ligne,.pv-lien{font-size:13px}
+  .pv-btn{min-height:48px;font-size:15px}
+  .pv-close{font-size:26px;min-height:44px;min-width:44px}
+  .pv-note{bottom:96px}
+}
+@media (orientation:landscape) and (max-height:500px){
+  .pv-panel{bottom:8px;top:8px;max-height:none;width:min(320px,60vw)}
+  .pv-note{bottom:8px}
+}
+/* Le panneau apparait sans rebond si l'utilisateur a demande moins d'animation. */
+@media (prefers-reduced-motion:reduce){
+  .pv-panel.show{animation:none}
+  .pv-note{transition:none}
+}
 </style>
 </head>
 <body>
@@ -862,6 +912,7 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
   <div class="poi-chip" data-poi="gravel" onclick="toggleGravel(this)" style="border-color:#ff2222">&#128739; Gravel</div>
   <div class="poi-chip" data-poi="forestier" onclick="toggleForestier(this)" style="border-color:#3ea55a">&#127794; Chemins forestiers</div>
   <div class="poi-chip" data-poi="pourvoirie" onclick="togglePourvoiries(this)" style="border-color:#2a7cff">&#127957; Pourvoiries</div>
+  <div class="poi-chip" data-poi="pourvoirieqc" onclick="togglePourvoiriesQc(this)" style="border-color:#2a7cff">&#127758; Pourvoiries — tout le Quebec</div>
   <div class="poi-chip" data-poi="reseau" onclick="toggleReseau(this)" style="border-color:#1030a0">&#128739; Reseau routier</div>
   <div class="poi-chip" data-poi="depanneur" onclick="searchPOI(this,'depanneur')">&#127974; Depanneurs</div>
   <div class="poi-chip" data-poi="supermarket" onclick="searchPOI(this,'supermarket')">&#128722; Epiceries</div>
@@ -1048,6 +1099,16 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
     </div>
   </div>
 </div>
+
+<!-- ===== FICHE POURVOIRIE ===== -->
+<div class="pv-panel" id="pvPanel">
+  <div class="pv-header">
+    <h3 id="pvTitre">Site</h3>
+    <button class="pv-close" onclick="fermerFichePourvoirie()" aria-label="Fermer">&times;</button>
+  </div>
+  <div class="pv-body" id="pvBody"></div>
+</div>
+<div class="pv-note" id="pvNote"></div>
 
 <!-- ===== EVENT NOTIFICATION ===== -->
 <div class="event-toast" id="eventToast">
@@ -2167,7 +2228,7 @@ function ficheCommerce(t,lat,lon,secours,libelle){
 async function searchPOI(el,type){
   if(activePOIController){activePOIController.abort();activePOIController=null}
   const ctrl=new AbortController();activePOIController=ctrl;
-  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"]):not([data-poi="reseau"])').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"]):not([data-poi="reseau"]):not([data-poi="pourvoirieqc"])').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');clearPOI();hideCount();
   const poi=POI_DB[type];if(!poi){hideLoading();return}
   if(map.getZoom()<11){alert('Zoome au niveau 11+ pour chercher!');return}
@@ -2943,108 +3004,606 @@ async function loadForestier(){
 }
 
 // ============ POURVOIRIES ============
-// Pourvoiries, ZEC et reserves fauniques cartographiees dans OpenStreetMap.
-// La recherche combine le nom (les pourvoiries du Quebec sont nommees ainsi)
-// et les tags de refuge/peche, puis dedoublonne par nom.
+// Pourvoiries, ZEC, reserves fauniques, camps et sites de peche/chasse tels
+// que cartographies dans OpenStreetMap.
+//
+// Trois choses a savoir avant de toucher a ce bloc :
+//
+// 1. Il n'existe AUCUN tag OSM pour "pourvoirie" — c'est un statut juridique
+//    quebecois sans equivalent dans le schema international. Le nom reste donc
+//    le signal le plus productif, et le filet ratisse le nom autant que les
+//    tags d'hebergement, de peche et de chasse.
+// 2. La specialite (peche ? chasse ?) est presque toujours ABSENTE des tags.
+//    On separe donc ce qui est prouve par un tag de ce qui n'est qu'un indice
+//    dans le nom, et on ne laisse jamais l'un passer pour l'autre. L'icone sur
+//    la carte, elle, n'obeit qu'aux tags : une icone ne peut pas porter de
+//    nuance, donc elle ne doit rien affirmer qui ne soit verifiable.
+// 3. C'est une app de navigation en foret. Une coordonnee vient d'OSM ou de
+//    nulle part. Un champ absent n'est jamais devine ni comble.
+
+// Couleurs partagees fiche / badges / icones.
+const PV_COUL={peche:'#4fc3f7',chasse:'#c98a3a',hebergement:'#ffcf4a',camping:'#ffcf4a',
+  motoneige:'#9fd0ff',vtt:'#ff9000',canot:'#7bc043',eau:'#4fc3f7',pourvoirie:'#2a7cff',
+  zec:'#3ea55a',reserve:'#7bc043',refuge:'#ff9000',territoire:'#7bc043'};
+
+// Table des specialites. `tag` = preuve dans les donnees OSM (affiche comme un
+// fait). `nom` = simple indice dans le libelle (affiche a part, en pointille).
+// Attention aux valeurs negatives : hunting=no et fishing=no sont des
+// INTERDICTIONS, frequentes sur les aires protegees. On teste donc la valeur
+// exacte 'yes', jamais la simple presence de la cle.
+const PV_SPECIALITES=[
+  {cle:'peche',lbl:'Peche',ico:'&#128031;',col:PV_COUL.peche,
+   tag:t=>t.leisure==='fishing'||t.fishing==='yes'||/fishing/.test(t.sport||'')||t.shop==='fishing'||t.club==='fishing'||t['fishing:species']!=null,
+   nom:/peche|truite|omble|ouananiche|dore|brochet|achigan|saumon|maskinong|touladi|coregone/},
+  {cle:'chasse',lbl:'Chasse',ico:'&#127993;',col:PV_COUL.chasse,
+   tag:t=>t.hunting==='yes'||/hunting/.test(t.sport||'')||t.amenity==='hunting_stand'||t.club==='hunting'||t.shop==='hunting',
+   nom:/chasse|orignal|gibier|chevreuil|cerf|caribou|ours|perdrix|gelinotte|outarde|bernache|sauvagine|trappe/},
+  {cle:'hebergement',lbl:'Hebergement',ico:'&#127976;',col:PV_COUL.hebergement,
+   tag:t=>/^(chalet|wilderness_hut|alpine_hut|motel|hotel|guest_house)$/.test(t.tourism||'')||t.leisure==='resort'||t.tourism==='resort'||t.rooms!=null||t.beds!=null||t.cabins!=null,
+   nom:/chalet|auberge|hebergement/},
+  {cle:'camping',lbl:'Camping',ico:'&#9978;',col:PV_COUL.camping,
+   tag:t=>t.tourism==='camp_site'||t.tourism==='caravan_site',
+   nom:/camping/},
+  {cle:'motoneige',lbl:'Motoneige',ico:'&#127938;',col:PV_COUL.motoneige,
+   tag:t=>t.snowmobile==='yes'||t.snowmobile==='designated',
+   nom:/motoneige|ski-?doo/},
+  {cle:'vtt',lbl:'VTT / quad',ico:'&#127950;',col:PV_COUL.vtt,
+   tag:t=>t.atv==='yes'||t.atv==='designated',
+   nom:/vtt|quad/},
+  {cle:'canot',lbl:'Canot / kayak',ico:'&#128675;',col:PV_COUL.canot,
+   tag:t=>t.canoe==='yes'||/canoe|kayak/.test(t.sport||'')||t.amenity==='boat_rental'||t.leisure==='slipway',
+   nom:/canot|kayak|portage|rabaska/}
+];
+
+// Clauses Overpass. Le filet est volontairement large : les 5 clauses de la
+// version precedente laissaient passer la majorite des sites (chalets, camps,
+// clubs, campings de pourvoirie n'etaient jamais demandes).
+// `nwr` car beaucoup de sites sont des ways (batiment, terrain) ou des
+// relations (territoire), pas de simples points.
+const PV_CLAUSES=[
+  `nwr["name"~"pourvoiri",i];`,
+  `nwr["operator"~"pourvoiri",i];`,
+  `nwr["name"~"outfitter",i];`,
+  `nwr["name"~"^zec[ .'-]",i];`,
+  `nwr["name"~"[ ('-]zec[ .'-]",i];`,
+  // "serve faunique" attrape Reserve ET Réserve : le repli de casse d'Overpass
+  // est ASCII seulement, alors on evite tout caractere accentue dans la regex.
+  `nwr["name"~"serve faunique",i];`,
+  `nwr["name"~"club de chasse",i];`,
+  `nwr["name"~"chasse et p",i];`,
+  `nwr["name"~"camp de chasse",i];`,
+  `nwr["tourism"="chalet"];`,
+  `nwr["tourism"="wilderness_hut"];`,
+  `nwr["tourism"="alpine_hut"];`,
+  `nwr["tourism"="camp_site"];`,
+  `nwr["tourism"="caravan_site"];`,
+  `nwr["leisure"="resort"];`,
+  `nwr["tourism"="resort"];`,
+  `nwr["leisure"="fishing"];`,
+  `nwr["fishing"="yes"];`,
+  // sport peut valoir une liste ("fishing;hunting") : regex, pas egalite.
+  `nwr["sport"~"fishing"];`,
+  `nwr["hunting"="yes"];`,
+  `nwr["sport"~"hunting"];`,
+  `nwr["club"~"hunting|fishing"];`,
+  `nwr["shop"~"fishing|hunting"];`,
+  `node["amenity"="hunting_stand"];`,
+  // Territoires : ZEC et reserves fauniques sont des aires protegees.
+  // On exige un nom pour ecarter les fragments anonymes.
+  `nwr["boundary"="protected_area"]["name"];`,
+  `nwr["leisure"="nature_reserve"]["name"];`
+];
+
 let pourvoirieMarkers=[];
 let pourvoirieActive=false;
 let pourvoirieLoading=false;
+let pourvoirieMode='vue';        // 'vue' = viewport courant, 'qc' = toute la province
+let pvSites=[];                  // sites affiches, indexes — evite de passer des noms dans onclick
+let pvController=null;           // annule la requete precedente quand la carte bouge
+let pvMoveTimer=null;            // anti-rebond sur moveend
+let pvQcAnnule=false;            // demande d'arret du balayage provincial
+let pvNoteTimer=null;
+
+/* ─── Utilitaires ─────────────────────────────────────────────────────────── */
+
+// Tout texte venant d'OSM passe par ici avant d'entrer dans du HTML.
+// Les noms OSM sont du contenu arbitraire : sans ca, un nom contenant du
+// balisage casse la fiche (ou pire).
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+
+// Minuscule sans accents ni ponctuation : sert au dedoublonnage et aux regex
+// d'indices, qui restent ainsi purement ASCII.
+function pvNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}
+
+// Bandeau non bloquant. Remplace les alert() qui se declenchaient a repetition
+// a chaque deplacement de carte sur un secteur vide.
+function pvNote(msg,duree){
+  const el=document.getElementById('pvNote');
+  if(!el)return;
+  el.innerHTML=msg;
+  el.classList.add('show');
+  if(pvNoteTimer)clearTimeout(pvNoteTimer);
+  if(duree!==0)pvNoteTimer=setTimeout(()=>el.classList.remove('show'),duree||7000);
+}
+function pvCacherNote(){const el=document.getElementById('pvNote');if(el)el.classList.remove('show');if(pvNoteTimer)clearTimeout(pvNoteTimer)}
+
+/* ─── Lecture des tags ────────────────────────────────────────────────────── */
+
+// Un territoire (ZEC, reserve faunique, parc) couvre des centaines de km2.
+// Son centroide n'est PAS son accueil — souvent un lac ou une tourbiere a des
+// dizaines de km du premier chemin. On le distingue pour lui refuser le bouton
+// "Y aller", qui enverrait quelqu'un litteralement nulle part.
+function pvEstTerritoire(t){
+  const n=pvNorm(t.name);
+  return t.boundary==='protected_area'||t.boundary==='national_park'||t.leisure==='nature_reserve'
+    ||t.protect_class!=null||/^zec\b/.test(n)||/\bzec\b/.test(n)||/serve faunique/.test(n);
+}
+
+// Categorie du site : ce que c'est. Distinct de la specialite (ce qu'on y fait).
+function typePourvoirie(t){
+  const n=pvNorm(t.name)+' '+pvNorm(t.operator);
+  if(/serve faunique/.test(n))return{lbl:'Reserve faunique',ico:'&#129417;',col:PV_COUL.reserve};
+  if(/\bzec\b/.test(n))return{lbl:'ZEC',ico:'&#127795;',col:PV_COUL.zec};
+  if(t.boundary==='national_park')return{lbl:'Parc',ico:'&#127796;',col:PV_COUL.territoire};
+  if(t.boundary==='protected_area'||t.leisure==='nature_reserve')return{lbl:'Aire protegee',ico:'&#127795;',col:PV_COUL.territoire};
+  if(/pourvoiri/.test(n))return{lbl:'Pourvoirie',ico:'&#127957;',col:PV_COUL.pourvoirie};
+  if(/club de chasse|chasse et p/.test(n))return{lbl:'Club de chasse et peche',ico:'&#127993;',col:PV_COUL.chasse};
+  if(t.tourism==='wilderness_hut'||t.tourism==='alpine_hut')return{lbl:'Refuge en foret',ico:'&#127968;',col:PV_COUL.refuge};
+  if(t.tourism==='chalet')return{lbl:'Chalet locatif',ico:'&#127968;',col:PV_COUL.hebergement};
+  if(t.tourism==='camp_site')return{lbl:'Camping',ico:'&#9978;',col:PV_COUL.camping};
+  if(t.tourism==='caravan_site')return{lbl:'Camping VR',ico:'&#9978;',col:PV_COUL.camping};
+  if(t.amenity==='hunting_stand')return{lbl:'Mirador de chasse',ico:'&#127993;',col:PV_COUL.chasse};
+  if(t.shop==='fishing')return{lbl:'Boutique de peche',ico:'&#128031;',col:PV_COUL.peche};
+  if(t.shop==='hunting')return{lbl:'Boutique de chasse',ico:'&#127993;',col:PV_COUL.chasse};
+  if(t.leisure==='fishing')return{lbl:'Site de peche',ico:'&#128031;',col:PV_COUL.peche};
+  if(t.leisure==='resort'||t.tourism==='resort')return{lbl:'Villegiature',ico:'&#127957;',col:PV_COUL.pourvoirie};
+  return{lbl:'Site faunique',ico:'&#127957;',col:PV_COUL.pourvoirie};
+}
+
+// Renvoie {tags:[...], indices:[...]}.
+//   tags    = prouve par un tag OSM, affichable comme un fait
+//   indices = seulement suggere par le nom, jamais presente comme certain
+function pvSpecialites(t){
+  const n=pvNorm(t.name)+' '+pvNorm(t.description)+' '+pvNorm(t['description:fr'])+' '+pvNorm(t.operator);
+  const tags=[],indices=[];
+  for(const s of PV_SPECIALITES){
+    const e={cle:s.cle,lbl:s.lbl,ico:s.ico,col:s.col};
+    if(s.tag(t))tags.push(e);
+    else if(s.nom.test(n))indices.push(e);
+  }
+  return{tags:tags,indices:indices};
+}
+
+// Icone de carte. Elle ne suit QUE les specialites prouvees par un tag : une
+// icone ne peut pas porter la mention "non confirme", donc elle ne doit rien
+// affirmer qu'on ne puisse verifier. Sans tag, on retombe sur la categorie.
+function pvIcone(spec,ty,territoire){
+  if(territoire)return{ico:ty.ico,col:ty.col};
+  const c=spec.tags.map(s=>s.cle);
+  const p=c.indexOf('peche')>=0,h=c.indexOf('chasse')>=0;
+  if(p&&h)return{ico:'&#127907;',col:'#8fd0ff'};        // trophee : les deux
+  if(p)return{ico:'&#128031;',col:PV_COUL.peche};
+  if(h)return{ico:'&#127993;',col:PV_COUL.chasse};
+  if(c.indexOf('camping')>=0)return{ico:'&#9978;',col:PV_COUL.camping};
+  if(c.indexOf('canot')>=0)return{ico:'&#128675;',col:PV_COUL.canot};
+  if(c.indexOf('motoneige')>=0)return{ico:'&#127938;',col:PV_COUL.motoneige};
+  if(c.indexOf('hebergement')>=0)return{ico:'&#127968;',col:PV_COUL.hebergement};
+  return{ico:ty.ico,col:ty.col};
+}
+
+/* ─── Activation de la couche ─────────────────────────────────────────────── */
 
 function togglePourvoiries(el){
-  if(pourvoirieActive){
-    pourvoirieActive=false;el.classList.remove('active');el.style.borderColor='#2a7cff';
-    pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
-    map.off('moveend',onPourvoirieMove);
-    hideCount();
-    return;
-  }
+  if(pourvoirieActive&&pourvoirieMode==='vue'){pvEteindre();return}
+  if(pourvoirieActive)pvEteindre();          // on passait du mode province
+  pourvoirieMode='vue';
   pourvoirieActive=true;el.classList.add('active');el.style.borderColor='';
+  pvBandeauCouverture();
   loadPourvoiries();
   map.on('moveend',onPourvoirieMove);
 }
 
-function onPourvoirieMove(){if(pourvoirieActive&&!pourvoirieLoading)loadPourvoiries()}
+// Mode "tout le Quebec" : balaye la province par tuiles au lieu d'attendre que
+// l'utilisateur promene la carte. Volontairement sequentiel — Overpass est un
+// service benevole, on ne le martele pas en parallele.
+function togglePourvoiriesQc(el){
+  if(pourvoirieActive&&pourvoirieMode==='qc'){pvQcAnnule=true;pvEteindre();return}
+  if(pourvoirieActive)pvEteindre();
+  pourvoirieMode='qc';
+  pourvoirieActive=true;el.classList.add('active');el.style.borderColor='';
+  loadPourvoiriesQc();
+}
 
-function typePourvoirie(t){
-  const n=(t.name||'').toLowerCase();
-  if(n.includes('pourvoirie'))return{lbl:'Pourvoirie',ico:'&#127957;',col:'#2a7cff'};
-  if(n.includes('zec'))return{lbl:'ZEC',ico:'&#127795;',col:'#3ea55a'};
-  if(n.includes('reserve faunique')||n.includes('réserve faunique'))return{lbl:'Reserve faunique',ico:'&#129417;',col:'#7bc043'};
-  if(t.tourism==='wilderness_hut')return{lbl:'Refuge en foret',ico:'&#127968;',col:'#ff9000'};
-  if(t.leisure==='fishing')return{lbl:'Site de peche',ico:'&#128031;',col:'#4fc3f7'};
-  if(t.tourism==='camp_site')return{lbl:'Camping',ico:'&#9978;',col:'#ffcf4a'};
-  return{lbl:'Site faunique',ico:'&#127957;',col:'#2a7cff'};
+function pvEteindre(){
+  pourvoirieActive=false;pvQcAnnule=true;
+  if(pvController){pvController.abort();pvController=null}
+  if(pvMoveTimer){clearTimeout(pvMoveTimer);pvMoveTimer=null}
+  document.querySelectorAll('.poi-chip[data-poi="pourvoirie"],.poi-chip[data-poi="pourvoirieqc"]').forEach(c=>{
+    c.classList.remove('active');c.style.borderColor='#2a7cff';
+  });
+  pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
+  pvSites=[];
+  map.off('moveend',onPourvoirieMove);
+  hideCount();pvCacherNote();fermerFichePourvoirie();
+}
+
+// Anti-rebond : sans ca chaque micro-deplacement declenchait une requete.
+function onPourvoirieMove(){
+  if(!pourvoirieActive||pourvoirieMode!=='vue')return;
+  if(pvMoveTimer)clearTimeout(pvMoveTimer);
+  pvMoveTimer=setTimeout(loadPourvoiries,700);
+}
+
+// Dit d'entree de jeu ce que la couche est, et ce qu'elle n'est pas.
+function pvBandeauCouverture(){
+  pvNote('<b style="color:#5b8cff">Donnees OpenStreetMap</b>, contribuees par des benevoles. '+
+    'La couverture est partielle : si une pourvoirie n\'apparait pas, ca ne veut pas dire '+
+    'qu\'elle n\'existe pas. Verifie toujours avant de partir.',9000);
+}
+
+/* ─── Requetes ────────────────────────────────────────────────────────────── */
+
+// Le reglage global [bbox:...] evite de repeter la bbox sur 26 clauses.
+function pvRequete(s,w,n,e,timeout,limite){
+  return `[out:json][timeout:${timeout}][bbox:${s},${w},${n},${e}];`+
+    `(`+PV_CLAUSES.join('')+`);`+
+    // Ordre des modificateurs de `out` : verbosite, geometrie, tri, limite.
+    // `body` et non `tags` : `tags` supprimerait les coordonnees des noeuds.
+    // `center` place le centroide des ways/relations dans item.center.
+    `out body center qt ${limite};`;
+}
+
+// Overpass repond en HTML (pas en JSON) quand la requete ne compile pas ou
+// quand le service est sature. Sans ce garde-fou, l'echec etait invisible :
+// la carte restait vide et l'utilisateur croyait qu'il n'y a rien la.
+async function pvFetch(query,signal){
+  const res=await fetch('https://overpass-api.de/api/interpreter',
+    {method:'POST',body:'data='+encodeURIComponent(query),signal:signal});
+  if(!res.ok){
+    const e=new Error('overpass '+res.status);
+    e.statusOverpass=res.status;
+    throw e;
+  }
+  const txt=await res.text();
+  let data;
+  try{data=JSON.parse(txt)}catch(err){throw new Error('reponse Overpass illisible')}
+  if(data.remark&&!data.elements)throw new Error('overpass remark: '+data.remark);
+  return data;
 }
 
 async function loadPourvoiries(){
-  if(pourvoirieLoading)return;
+  if(!pourvoirieActive||pourvoirieMode!=='vue')return;
   if(map.getZoom()<8){showLoading('Zoome au niveau 8+ pour les pourvoiries');setTimeout(hideLoading,1500);return}
+  if(pvController)pvController.abort();
+  const ctrl=new AbortController();pvController=ctrl;
   pourvoirieLoading=true;
   const b=map.getBounds();
-  const bbox=`${b.getSouth()},${b.getWest()},${b.getNorth()},${b.getEast()}`;
-  const query=`[out:json][timeout:30];`+
-    `(nwr["name"~"pourvoiri",i](${bbox});`+
-    `nwr["name"~"^zec[ .-]",i](${bbox});`+
-    `nwr["name"~"r[ée]serve faunique",i](${bbox});`+
-    `nwr["tourism"="wilderness_hut"](${bbox});`+
-    `nwr["leisure"="fishing"](${bbox}););`+
-    `out center 400;`;
+  const query=pvRequete(b.getSouth().toFixed(5),b.getWest().toFixed(5),b.getNorth().toFixed(5),b.getEast().toFixed(5),60,800);
   showLoading('Recherche des pourvoiries...');
   try{
-    pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
-    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(query)});
-    const data=await res.json();
-    if(!data.elements){hideLoading();pourvoirieLoading=false;return}
-
-    const vus=new Set();
-    let n=0;
-    data.elements.forEach(item=>{
-      const t=item.tags||{};
-      // `out center` place le centroide dans item.center pour les ways/relations.
-      const lat=item.lat!=null?item.lat:item.center&&item.center.lat;
-      const lon=item.lon!=null?item.lon:item.center&&item.center.lon;
-      if(lat==null||lon==null)return;
-      const nom=t.name||'Site faunique';
-      const cle=nom.toLowerCase()+'|'+lat.toFixed(3)+'|'+lon.toFixed(3);
-      if(vus.has(cle))return;
-      vus.add(cle);
-
-      const ty=typePourvoirie(t);
-      const tel=t.phone||t['contact:phone']||'';
-      const web=t.website||t['contact:website']||'';
-      const courriel=t.email||t['contact:email']||'';
-      const adresse=[t['addr:housenumber'],t['addr:street'],t['addr:city']].filter(Boolean).join(', ');
-      const safeName=nom.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-
-      let popup=`<b style="color:${ty.col};font-size:14px">${nom}</b>`;
-      popup+=`<br><span style="color:#bba88a;font-size:11px">${ty.lbl}</span>`;
-      if(adresse)popup+=`<br><span style="color:#bba88a;font-size:11px">${adresse}</span>`;
-      if(t.description)popup+=`<br><span style="color:#8a7a60;font-size:11px">${t.description.slice(0,140)}</span>`;
-      if(tel)popup+=`<br><a href="tel:${tel}" style="color:#ff6a00;font-size:11px">&#128222; ${tel}</a>`;
-      if(courriel)popup+=`<br><a href="mailto:${courriel}" style="color:#ff6a00;font-size:11px">&#9993; ${courriel}</a>`;
-      if(web)popup+=`<br><a href="${web}" target="_blank" rel="noopener" style="color:#ff6a00;font-size:11px">&#127760; Site web</a>`;
-      popup+=`<br><button onclick="routeTo(${lat},${lon},'${safeName}')" style="margin-top:6px;background:${ty.col};color:#000;border:none;padding:4px 12px;border-radius:8px;cursor:pointer;font-family:Rajdhani;font-weight:600">&#128668; Y aller</button>`;
-
-      const m=L.marker([lat,lon],{icon:L.divIcon({
-        html:`<div style="font-size:20px;line-height:1;text-shadow:0 0 6px #000,0 0 12px ${ty.col}">${ty.ico}</div>`,
-        iconSize:[26,26],iconAnchor:[13,13],className:''
-      })}).addTo(map).bindPopup(popup);
-      pourvoirieMarkers.push(m);
-
-      if(map.getZoom()>=10){
-        const lbl=L.marker([lat,lon],{icon:L.divIcon({
-          html:`<div style="font-size:10px;color:${ty.col};font-family:Rajdhani;font-weight:700;text-shadow:0 1px 4px #000;white-space:nowrap;pointer-events:none">${nom}</div>`,
-          iconAnchor:[-14,0],className:''
-        })}).addTo(map);
-        pourvoirieMarkers.push(lbl);
-      }
-      n++;
-    });
+    const data=await pvFetch(query,ctrl.signal);
+    if(ctrl!==pvController)return;             // une requete plus recente a pris le relais
+    pvVider();
+    const n=pvRendre(data.elements||[]);
     hideLoading();
-    if(n)showCount(n,'pourvoiries');
-    else alert('Aucune pourvoirie cartographiee ici. Elargis la zone ou deplace la carte vers un secteur de villegiature.');
-  }catch(e){hideLoading();console.warn('Pourvoiries error:',e)}
-  pourvoirieLoading=false;
+    if(n){
+      showCount(n,'sites OSM');
+      // 800 = plafond de la requete. Au-dela, Overpass tronque en silence :
+      // on prefere le dire que laisser croire que la zone est couverte.
+      if((data.elements||[]).length>=800)
+        pvNote('Plafond atteint : il y a plus de sites que ce que la carte peut charger d\'un coup. Zoome pour voir le reste du secteur.',9000);
+    }else{
+      hideCount();
+      pvNote('Aucun site cartographie dans OpenStreetMap pour ce secteur. Ca ne veut pas dire qu\'il n\'y en a pas — juste que personne ne les a encore ajoutes a la carte.');
+    }
+  }catch(e){
+    if(e.name==='AbortError')return;
+    hideLoading();
+    console.warn('Pourvoiries error:',e);
+    pvNote(e.statusOverpass===429
+      ? 'Le serveur OpenStreetMap est sature (trop de requetes). Attends une minute et reessaye.'
+      : 'Impossible de joindre OpenStreetMap. La carte peut etre incomplete — ne te fie pas a ce qui est affiche.',9000);
+  }finally{
+    if(ctrl===pvController){pourvoirieLoading=false;pvController=null}
+  }
+}
+
+// Decoupage de la province en tuiles. Une requete unique sur 1,5 million de
+// km2 depasse le timeout d'Overpass : les regex sur `name` ne sont pas
+// indexees, il faut parcourir tous les objets nommes de la bbox.
+// Tuiles fines au sud (45-51), ou se trouve la quasi-totalite des sites ;
+// tuiles larges au nord, presque vides.
+function pvTuilesQc(){
+  const t=[];
+  for(let lat=45;lat<51;lat+=2)
+    for(let lon=-80;lon<-57;lon+=4)
+      t.push([lat,lon,Math.min(lat+2,62.6),Math.min(lon+4,-56.93)]);
+  for(let lat=51;lat<62.6;lat+=6)
+    for(let lon=-80;lon<-57;lon+=8)
+      t.push([lat,Math.max(lon,-79.77),Math.min(lat+6,62.6),Math.min(lon+8,-56.93)]);
+  return t;
+}
+
+async function loadPourvoiriesQc(){
+  const tuiles=pvTuilesQc();
+  pvQcAnnule=false;pourvoirieLoading=true;
+  pvVider();
+  map.setView([48.5,-70],5);
+  pvNote('Balayage du Quebec en cours — <b>plusieurs minutes</b>. Les zones se remplissent au fur et a mesure. Reclique la pastille pour arreter.',0);
+  const vus=new Set();
+  let total=0,echecs=0,plafonds=0;
+  for(let i=0;i<tuiles.length;i++){
+    if(pvQcAnnule||!pourvoirieActive)break;
+    const[s,w,n,e]=tuiles[i];
+    showLoading(`Quebec : zone ${i+1}/${tuiles.length} — ${total} sites`);
+    try{
+      const ctrl=new AbortController();pvController=ctrl;
+      const data=await pvFetch(pvRequete(s,w,n,e,180,600),ctrl.signal);
+      if(pvQcAnnule||!pourvoirieActive)break;
+      const el=data.elements||[];
+      if(el.length>=600)plafonds++;
+      total+=pvRendre(el,vus);
+    }catch(err){
+      if(err.name==='AbortError'&&pvQcAnnule)break;
+      echecs++;
+      console.warn('Pourvoiries QC tuile',i,err);
+    }
+    // Pause entre les tuiles : Overpass est un service benevole gratuit,
+    // le marteler ferait bannir l'app (429) et serait un abus de ressource.
+    if(i<tuiles.length-1&&!pvQcAnnule)await new Promise(r=>setTimeout(r,1200));
+  }
+  pvController=null;pourvoirieLoading=false;
+  hideLoading();
+  if(!pourvoirieActive)return;
+  if(total)showCount(total,'sites OSM');else hideCount();
+
+  // Bilan honnete : on dit combien de zones ont echoue, sinon l'utilisateur
+  // croirait avoir une image complete de la province.
+  let msg=`<b style="color:#5b8cff">${total} sites</b> trouves dans OpenStreetMap`+
+    (pvQcAnnule?' (balayage arrete avant la fin)':'')+'. ';
+  if(echecs)msg+=`<b style="color:#ffcf4a">${echecs} zone${echecs>1?'s':''} sur ${tuiles.length} n'${echecs>1?'ont':'a'} pas repondu</b> — il en manque forcement. `;
+  if(plafonds)msg+=`${plafonds} zone${plafonds>1?'s ont':' a'} atteint le plafond de chargement. `;
+  if(pvSites.length>=PV_MAX_MARQUEURS)msg+=`<b style="color:#ffcf4a">Affichage limite a ${PV_MAX_MARQUEURS} marqueurs</b> — il y en a d'autres qui ne sont pas montres. `;
+  msg+='La couverture communautaire est partielle : toutes les pourvoiries du Quebec n\'y sont pas encore.';
+  pvNote(msg,0);
+}
+
+/* ─── Rendu ───────────────────────────────────────────────────────────────── */
+
+// Plafond de marqueurs. Le mode province peut ramener plusieurs milliers de
+// sites : au-dela, Leaflet s'effondre. On coupe et on le DIT, plutot que de
+// laisser croire que la province est couverte.
+const PV_MAX_MARQUEURS=2500;
+
+function pvVider(){
+  pourvoirieMarkers.forEach(m=>map.removeLayer(m));pourvoirieMarkers=[];
+  pvSites=[];
+  // Les boutons de la fiche ouverte pointent vers un index de pvSites. Si on
+  // reconstruit le tableau sans fermer la fiche, "Y aller" tracerait vers un
+  // AUTRE site que celui affiche — donc vers de mauvaises coordonnees en foret.
+  fermerFichePourvoirie();
+}
+
+// Ajoute les elements a la carte. `vus` peut etre fourni pour dedoublonner
+// entre plusieurs tuiles. Retourne le nombre de sites reellement ajoutes.
+function pvRendre(elements,vus){
+  const dedup=vus||new Set();
+  const zoomLabels=map.getZoom()>=10&&pourvoirieMode==='vue';
+  let n=0;
+  elements.forEach(item=>{
+    const t=item.tags||{};
+    // `out center` place le centroide des ways/relations dans item.center.
+    const lat=item.lat!=null?item.lat:item.center&&item.center.lat;
+    const lon=item.lon!=null?item.lon:item.center&&item.center.lon;
+    if(lat==null||lon==null)return;
+    // Sans nom, le filet elargi produirait des dizaines de marqueurs anonymes
+    // (chalets, campings sans libelle) impossibles a verifier.
+    if(!t.name)return;
+    if(pvSites.length>=PV_MAX_MARQUEURS)return;
+
+    // Dedoublonnage : nom normalise + case d'environ 500 m. Un meme site
+    // cartographie a la fois comme point et comme batiment a deux centroides
+    // distincts et passait en double avec l'ancienne cle.
+    const cle=pvNorm(t.name)+'|'+(lat*200|0)+'|'+(lon*200|0);
+    if(dedup.has(cle))return;
+    dedup.add(cle);
+
+    const ty=typePourvoirie(t);
+    const spec=pvSpecialites(t);
+    const territoire=pvEstTerritoire(t);
+    const ic=pvIcone(spec,ty,territoire);
+    const idx=pvSites.length;
+    pvSites.push({nom:t.name,lat:lat,lon:lon,t:t,ty:ty,spec:spec,territoire:territoire,col:ic.col});
+
+    const m=L.marker([lat,lon],{icon:L.divIcon({
+      html:`<div style="font-size:20px;line-height:1;text-shadow:0 0 6px #000,0 0 12px ${ic.col}">${ic.ico}</div>`,
+      iconSize:[26,26],iconAnchor:[13,13],className:''
+    })}).addTo(map);
+    // Index en closure plutot qu'un nom dans un onclick : les noms quebecois
+    // sont pleins d'apostrophes (Pourvoirie de l'Ours) et cassaient l'attribut.
+    m.on('click',()=>ouvrirFichePourvoirie(idx));
+    pourvoirieMarkers.push(m);
+
+    if(zoomLabels){
+      const lbl=L.marker([lat,lon],{icon:L.divIcon({
+        html:`<div style="font-size:10px;color:${ic.col};font-family:Rajdhani;font-weight:700;text-shadow:0 1px 4px #000;white-space:nowrap;pointer-events:none">${escHtml(t.name)}</div>`,
+        iconAnchor:[-14,0],className:''
+      })}).addTo(map);
+      pourvoirieMarkers.push(lbl);
+    }
+    n++;
+  });
+  return n;
+}
+
+/* ─── Fiche detaillee ─────────────────────────────────────────────────────── */
+
+function fermerFichePourvoirie(){const p=document.getElementById('pvPanel');if(p)p.classList.remove('show')}
+
+function ouvrirFichePourvoirie(i){
+  const s=pvSites[i];if(!s)return;
+  const t=s.t;
+  document.getElementById('pvTitre').textContent=s.nom;
+
+  let h=`<span class="pv-ligne" style="color:${s.col};font-weight:700">${s.ty.ico} ${s.ty.lbl}</span>`;
+
+  // ── Specialites : le coeur de la demande. Trois cas nettement distincts.
+  h+=`<span class="pv-titre-sect">QUOI FAIRE ICI</span>`;
+  if(s.spec.tags.length){
+    h+=`<div class="pv-badges">`+s.spec.tags.map(x=>
+      `<span class="pv-badge" style="background:${x.col}">${x.ico} ${x.lbl}</span>`).join('')+`</div>`;
+    h+=`<span class="pv-meta">Confirme par les tags OpenStreetMap.</span>`;
+  }
+  if(s.spec.indices.length){
+    h+=`<div class="pv-badges">`+s.spec.indices.map(x=>
+      `<span class="pv-badge indice" style="color:${x.col}">${x.ico} ${x.lbl} ?</span>`).join('')+`</div>`;
+    h+=`<span class="pv-meta">Devine d'apres le nom seulement — <b>pas confirme</b>. A verifier aupres de la pourvoirie.</span>`;
+  }
+  if(!s.spec.tags.length&&!s.spec.indices.length)
+    h+=`<span class="pv-ligne">Specialite non renseignee dans OpenStreetMap.</span>`;
+
+  // ── Description
+  const desc=t['description:fr']||t.description;
+  if(desc){h+=`<span class="pv-titre-sect">DESCRIPTION</span><span class="pv-ligne">${escHtml(desc)}</span>`}
+
+  // ── Contact. Chaque champ est conditionnel : ce qu'OSM n'a pas ne
+  //    s'affiche pas, et surtout ne se devine pas.
+  const tel=t['contact:phone']||t.phone||t['contact:mobile']||'';
+  const courriel=t['contact:email']||t.email||'';
+  const web=t['contact:website']||t.website||'';
+  const fb=t['contact:facebook']||t.facebook||'';
+  const adresse=[t['addr:housenumber'],t['addr:street'],t['addr:city'],t['addr:postcode']].filter(Boolean).join(', ');
+  h+=`<span class="pv-titre-sect">CONTACT</span>`;
+  if(adresse){
+    h+=`<span class="pv-ligne">&#128205; ${escHtml(adresse)}</span>`;
+    // L'adresse postale d'une pourvoirie est souvent le bureau au village,
+    // pas le site en foret. On ne s'en sert jamais pour positionner.
+    h+=`<span class="pv-meta">Adresse postale — pas forcement l'entree du site.</span>`;
+  }
+  // tel: doit rester une URL valide meme si OSM contient n'importe quoi.
+  if(tel)h+=`<a class="pv-lien" href="tel:${encodeURIComponent(tel.replace(/[^\d+]/g,''))}">&#128222; ${escHtml(tel)}</a>`;
+  // On n'accepte que ce qui a vraiment la forme d'un courriel : le champ OSM
+  // est libre et sert autrement de vecteur d'injection dans le href.
+  if(/^[^\s@<>"']+@[^\s@<>"']+\.[a-z]{2,}$/i.test(courriel))
+    h+=`<a class="pv-lien" href="mailto:${escHtml(courriel)}">&#9993; ${escHtml(courriel)}</a>`;
+  else if(courriel)h+=`<span class="pv-ligne">&#9993; ${escHtml(courriel)}</span>`;
+  if(/^https?:\/\//i.test(web))h+=`<a class="pv-lien" href="${escHtml(web)}" target="_blank" rel="noopener">&#127760; Site officiel</a>`;
+  if(fb&&/^https?:\/\//i.test(fb))h+=`<a class="pv-lien" href="${escHtml(fb)}" target="_blank" rel="noopener">&#128172; Facebook</a>`;
+  if(!tel&&!courriel&&!web&&!fb)h+=`<span class="pv-ligne">Aucun contact dans OpenStreetMap.</span>`;
+
+  // ── Services et infos pratiques
+  const serv=[];
+  if(t.operator)serv.push(`Gestionnaire : ${escHtml(t.operator)}`);
+  if(t.opening_hours)serv.push(`Heures : ${escHtml(t.opening_hours.replace(/;/g,' · '))}`);
+  if(t.seasonal==='yes')serv.push(`Site saisonnier — ferme une partie de l'annee`);
+  if(t.access)serv.push(`Acces : ${escHtml(t.access)}`);
+  if(t.fee==='yes')serv.push(`Acces payant`);else if(t.fee==='no')serv.push(`Acces gratuit`);
+  if(t.reservation)serv.push(`Reservation : ${escHtml(t.reservation)}`);
+  if(t.capacity||t['capacity:persons'])serv.push(`Capacite : ${escHtml(t.capacity||t['capacity:persons'])} personnes`);
+  if(t.rooms)serv.push(`Chambres : ${escHtml(t.rooms)}`);
+  if(t.beds)serv.push(`Lits : ${escHtml(t.beds)}`);
+  if(t.cabins)serv.push(`Chalets : ${escHtml(t.cabins)}`);
+  if(t.internet_access&&t.internet_access!=='no')serv.push(`Internet : ${escHtml(t.internet_access)}`);
+  else if(t.internet_access==='no')serv.push(`Pas d'internet sur place`);
+  if(t.wheelchair)serv.push(`Accessible : ${t.wheelchair==='yes'?'oui':t.wheelchair==='limited'?'partiel':'non'}`);
+  if(t.drinking_water==='yes')serv.push(`Eau potable`);
+  if(t.shower==='yes')serv.push(`Douches`);
+  if(t.electricity||t.power_supply==='yes')serv.push(`Electricite`);
+  if(t['payment:credit_cards']==='yes')serv.push(`Cartes de credit acceptees`);
+  if(t['payment:cash']==='yes')serv.push(`Argent comptant`);
+  if(serv.length)h+=`<span class="pv-titre-sect">SERVICES</span>`+serv.map(x=>`<span class="pv-ligne">${x}</span>`).join('');
+
+  // ── Aller sur place
+  h+=`<span class="pv-titre-sect">SE RENDRE</span>`;
+  if(s.territoire){
+    // Refus assume : le centroide d'un territoire n'est pas une destination.
+    h+=`<div class="pv-avert">&#9888; Territoire de grande superficie. Le point marque le centre approximatif, <b>pas l'accueil</b>. Tracer un chemin vers ce point t'enverrait au milieu du bois. Contacte le poste d'accueil avant de t'engager.</div>`;
+  }else{
+    h+=`<button class="pv-btn" onclick="pvAller(${i})">&#128668; Y aller + chemins forestiers</button>`;
+  }
+  h+=`<button class="pv-btn secondaire" onclick="pvCentrer(${i})">&#128269; Centrer la carte ici</button>`;
+
+  // ── Ce qu'OSM ne contient pas (forfaits, tarifs, disponibilites)
+  h+=`<a class="pv-lien" href="https://www.google.com/search?q=${encodeURIComponent(s.nom+' pourvoirie '+(t['addr:city']||'Quebec'))}" target="_blank" rel="noopener">&#128269; Chercher forfaits et tarifs sur le web</a>`;
+
+  // ── Provenance. Un site de navigation doit dire d'ou sortent ses chiffres.
+  h+=`<div class="pv-source">Position OpenStreetMap &middot; ${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`;
+  const verif=t['check_date']||t['survey:date'];
+  if(verif)h+=`<br>Derniere verification terrain : ${escHtml(verif)}`;
+  h+=`<br>Fiche batie uniquement avec les tags presents dans OSM. Les champs absents ne sont pas devines.</div>`;
+
+  document.getElementById('pvBody').innerHTML=h;
+  document.getElementById('pvBody').scrollTop=0;
+  document.getElementById('pvPanel').classList.add('show');
+}
+
+function pvCentrer(i){
+  const s=pvSites[i];if(!s)return;
+  map.setView([s.lat,s.lon],13);
+}
+
+/* ─── "Pour pas se perdre dans le bois" ───────────────────────────────────── */
+
+// Active la couche Chemins forestiers sans desynchroniser sa pastille.
+// Piege : appeler toggleForestier() alors qu'elle est deja allumee l'ETEINDRAIT.
+function pvActiverForestier(){
+  if(forestierActive)return true;
+  const chip=document.querySelector('.poi-chip[data-poi="forestier"]');
+  if(!chip)return false;
+  toggleForestier(chip);
+  return true;
+}
+
+// Cherche une route revetue autour du site. Sert a avertir quand les derniers
+// kilometres se font sur du chemin de terre — ou quand OSM ne connait
+// carrement aucune route dans le secteur.
+async function pvVerifierAcces(lat,lon){
+  const q=`[out:json][timeout:25];`+
+    `way(around:3000,${lat},${lon})["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"]["surface"!~"gravel|unpaved|dirt|ground|compacted|fine_gravel|earth|sand"];`+
+    `out ids 1;`;
+  try{
+    const data=await pvFetch(q,null);
+    return (data.elements||[]).length>0?'revetue':'terre';
+  }catch(e){
+    console.warn('Pourvoiries acces error:',e);
+    return 'inconnu';   // on ne devine pas : on dira qu'on n'a pas pu verifier
+  }
+}
+
+// Le "Y aller" complet : trace la route, allume les chemins forestiers pour que
+// les derniers kilometres (etat de carrossabilite, barrieres, gues) soient
+// visibles, et dit honnetement ce que le routage ne sait pas faire.
+async function pvAller(i){
+  const s=pvSites[i];if(!s)return;
+
+  if(!myLat){
+    // Repli honnete : sans GPS, routeTo() ne fait qu'alerter. On prepare au
+    // moins la destination pour que le geste ne soit pas perdu.
+    document.getElementById('routeTo').value=s.nom;
+    document.getElementById('sidebar').classList.add('open');
+    pvNote('GPS pas encore actif. Destination copiee dans le panneau navigation — active le GPS, puis reappuie sur "Y aller".',9000);
+    locateMe();
+    return;
+  }
+
+  routeTo(s.lat,s.lon,s.nom);
+  const forestierOk=pvActiverForestier();
+  fermerFichePourvoirie();
+
+  let msg='<b style="color:#5b8cff">Chemin trace.</b> ';
+  if(forestierOk)msg+=map.getZoom()>=10
+    ? 'Chemins forestiers allumes : etat des chemins, barrieres et gues sont affiches. '
+    : 'Chemins forestiers allumes — <b>zoome au niveau 10+</b> pres de la destination pour voir leur etat, les barrieres et les gues. ';
+  msg+='<br><br>&#9888; L\'itineraire suit les routes connues d\'OpenStreetMap. Les derniers kilometres de chemin forestier peuvent etre absents de la carte, barres ou impraticables. Ne pars pas sans carte papier, GPS charge et un plan de match laisse a quelqu\'un.';
+  pvNote(msg,0);
+
+  // Verification reelle de l'acces, en arriere-plan : le message se precise
+  // quand la reponse arrive, ou dit qu'on n'a pas pu verifier.
+  const acces=await pvVerifierAcces(s.lat,s.lon);
+  if(acces==='terre')
+    pvNote(msg+'<br><br><b style="color:#ffcf4a">Aucune route revetue connue dans un rayon de 3 km.</b> L\'acces final se fait sur chemin de terre — vehicule adapte fortement recommande.',0);
+  else if(acces==='inconnu')
+    pvNote(msg+'<br><br><b style="color:#ffcf4a">Verification de l\'acces routier impossible</b> (serveur injoignable). Ne suppose rien sur l\'etat du dernier troncon.',0);
 }
 
 // ============ RESEAU ROUTIER COLORE ============
