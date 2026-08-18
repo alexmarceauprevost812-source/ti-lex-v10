@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-674";
+const CACHE_VERSION = "tilex-v10-675";
 
 // Cache dédié aux tuiles de la carte (TILEXMAP). Séparé du cache applicatif :
 // il survit aux déploiements, sinon chaque mise en ligne effacerait les cartes
@@ -34,6 +34,9 @@ const ASSETS = [
   "/codex",
   "/codex.html",
   "/carte.html",
+  // Repertoire officiel FPQ (310 pourvoiries, coordonnees WGS 84) : precache
+  // pour que la couche marche meme sans reseau, en foret.
+  "/assets/pourvoiries-quebec.json",
   "/carte",
   "/tilexmap",
   "/tilexcode",

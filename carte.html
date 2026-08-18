@@ -817,6 +817,33 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
 .pv-avert{margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(255,207,74,.08);border:1px solid rgba(255,207,74,.3);color:#ffcf4a;font-size:11px;line-height:1.45}
 .pv-source{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);color:#8a7a60;font-size:10px;line-height:1.45}
 
+/* ===== FILTRES DU REPERTOIRE FPQ =====
+   Sous la barre de pastilles, a gauche : la colonne de droite est deja prise
+   par la fiche (.pv-panel) et le bas par le bandeau (.pv-note). */
+.fpq-filtres{position:fixed;top:104px;left:16px;z-index:640;display:none;flex-direction:column;gap:7px;
+  background:rgba(14,14,14,.95);backdrop-filter:blur(12px);border:1px solid #ffb703;border-radius:14px;
+  padding:10px;width:min(268px,86vw);box-shadow:0 8px 32px rgba(0,0,0,.55)}
+.fpq-filtres.show{display:flex}
+.fpq-f-ligne{display:flex;flex-wrap:wrap;gap:5px}
+.fpq-f{background:rgba(20,20,20,.9);border:1px solid var(--border);color:var(--text2);
+  padding:6px 10px;border-radius:16px;cursor:pointer;font-size:11px;font-weight:600;
+  font-family:Rajdhani,sans-serif;white-space:nowrap;min-height:32px}
+.fpq-f.on{background:#ffb703;color:#000;border-color:#ffb703}
+.fpq-sel{width:100%;background:#0e0e0e;border:1px solid var(--border);color:var(--text2);
+  border-radius:9px;padding:7px 9px;font-size:12px;font-family:Rajdhani,sans-serif;min-height:36px}
+.fpq-compte{color:#8a7a60;font-size:11px;line-height:1.4}
+.fpq-compte b{color:#ffb703}
+
+@media(max-width:600px){
+  /* Sur telephone la barre de pastilles deborde sur deux lignes : on descend
+     les filtres pour ne pas les recouvrir. */
+  .fpq-filtres{top:auto;bottom:96px;left:8px;right:8px;width:auto}
+  .fpq-f{min-height:40px;font-size:13px;padding:8px 13px}
+  .fpq-sel{min-height:44px;font-size:14px}
+  /* La fiche et les filtres se disputeraient le meme bas d'ecran. */
+  .pv-panel.show ~ .fpq-filtres{display:none}
+}
+
 /* Bandeau non bloquant : remplace les alert() qui se declenchaient a chaque
    deplacement de carte sur une zone vide.
    Certains bandeaux sont permanents (duree 0 : bilan du balayage, consignes de
@@ -926,6 +953,7 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
   <div class="poi-chip" data-poi="saq" onclick="searchPOI(this,'saq')">&#127863; SAQ</div>
   <div class="poi-chip" data-poi="gravel" onclick="toggleGravel(this)" style="border-color:#ff2222">&#128739; Gravel</div>
   <div class="poi-chip" data-poi="forestier" onclick="toggleForestier(this)" style="border-color:#3ea55a">&#127794; Chemins forestiers</div>
+  <div class="poi-chip" data-poi="pourvoiriefpq" onclick="togglePourvoiriesFpq(this)" style="border-color:#ffb703">&#127964; Pourvoiries officielles (FPQ)</div>
   <div class="poi-chip" data-poi="pourvoirie" onclick="togglePourvoiries(this)" style="border-color:#2a7cff">&#127957; Pourvoiries</div>
   <div class="poi-chip" data-poi="pourvoirieqc" onclick="togglePourvoiriesQc(this)" style="border-color:#2a7cff">&#127758; Pourvoiries — tout le Quebec</div>
   <div class="poi-chip" data-poi="reseau" onclick="toggleReseau(this)" style="border-color:#1030a0">&#128739; Reseau routier</div>
@@ -1124,6 +1152,26 @@ html,body{height:100%;font-family:'Rajdhani',sans-serif;background:var(--bg);col
   <div class="pv-body" id="pvBody"></div>
 </div>
 <div class="pv-note" id="pvNote"></div>
+
+<!-- ===== FILTRES DU REPERTOIRE FPQ =====
+     Barre de filtres du repertoire officiel : la question posee au depart
+     etait « peche ou chasse ? », et ce repertoire porte l'espece site par
+     site — c'est la seule source qui permet de repondre « orignal » ou
+     « doré » plutot que juste « chasse ». Masquee tant que la couche est
+     eteinte. -->
+<div class="fpq-filtres" id="fpqFiltres">
+  <div class="fpq-f-ligne">
+    <button class="fpq-f on" data-act="tout" onclick="fpqActivite('tout',this)">Tout</button>
+    <button class="fpq-f" data-act="peche" onclick="fpqActivite('peche',this)">&#128031; Peche</button>
+    <button class="fpq-f" data-act="chasse" onclick="fpqActivite('chasse',this)">&#127993; Chasse</button>
+    <button class="fpq-f" data-act="villegiature" onclick="fpqActivite('villegiature',this)">&#127968; Villegiature</button>
+    <button class="fpq-f" data-act="dx" onclick="fpqActivite('dx',this)" title="Territoire a droits exclusifs">&#128273; Droits excl.</button>
+  </div>
+  <select class="fpq-sel" id="fpqEspece" onchange="fpqFiltrerEspece(this.value)">
+    <option value="">Toutes les especes</option>
+  </select>
+  <div class="fpq-compte" id="fpqCompte"></div>
+</div>
 
 <!-- ===== EVENT NOTIFICATION ===== -->
 <div class="event-toast" id="eventToast">
@@ -2250,7 +2298,7 @@ function ficheCommerce(t,lat,lon,secours,libelle){
 async function searchPOI(el,type){
   if(activePOIController){activePOIController.abort();activePOIController=null}
   const ctrl=new AbortController();activePOIController=ctrl;
-  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"]):not([data-poi="reseau"]):not([data-poi="pourvoirieqc"])').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.poi-chip:not([data-poi="gravel"]):not([data-poi="forestier"]):not([data-poi="pourvoirie"]):not([data-poi="reseau"]):not([data-poi="pourvoirieqc"]):not([data-poi="pourvoiriefpq"])').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');clearPOI();hideCount();
   const poi=POI_DB[type];if(!poi){hideLoading();return}
   if(map.getZoom()<11){alert('Zoome au niveau 11+ pour chercher!');return}
@@ -3831,6 +3879,346 @@ function pvCopierCoord(i){
       ()=>pvNote(`Coordonnees copiees : <b>${txt}</b> — ${escHtml(s.nom)}. Ecris-les aussi sur papier : le presse-papier se perd, pas le papier.`,9000),
       aLaMain);
   else aLaMain();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REPERTOIRE OFFICIEL FPQ — 310 pourvoiries membres
+   ---------------------------------------------------------------------------
+   Couche distincte de la couche OpenStreetMap, et c'est voulu : les deux ne
+   valent pas la meme chose.
+     · OSM        = contribue par des benevoles, couverture partielle et
+                    inegale, mais couvre AUSSI les non-membres, les ZEC, les
+                    reserves fauniques et les campings.
+     · Repertoire = 310 membres de la Federation des pourvoiries du Quebec,
+                    coordonnees sur 100 % des fiches, et surtout l'ESPECE site
+                    par site — ce qu'OSM n'a a peu pres jamais.
+   Les melanger effacerait la difference de fiabilite. On les garde separees et
+   on dit d'ou vient chaque marqueur.
+
+   Le fichier est embarque dans l'app (assets/) plutot que telecharge a la
+   volee : c'est une carte qu'on ouvre en foret, souvent sans reseau.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+let fpqData=null;                // paquet JSON, charge une seule fois
+let fpqMarkers=[];
+let fpqLabels=[];
+let fpqActif=false;
+let fpqChargement=false;
+let fpqSites=[];                 // sites affiches, indexes (meme raison que pvSites)
+let fpqFiltreAct='tout';         // tout | peche | chasse | villegiature | dx
+let fpqFiltreEsp='';             // "chasse:3" ou "peche:12", vide = toutes
+const FPQ_COUL={peche:'#4fc3f7',chasse:'#c98a3a',mixte:'#8fd0ff',autre:'#ffb703'};
+const FPQ_ZOOM_LABELS=9;
+
+// Charge le repertoire une seule fois par session.
+async function fpqCharger(){
+  if(fpqData)return fpqData;
+  const res=await fetch('assets/pourvoiries-quebec.json');
+  if(!res.ok)throw new Error('repertoire introuvable ('+res.status+')');
+  fpqData=await res.json();
+  return fpqData;
+}
+
+function togglePourvoiriesFpq(el){
+  if(fpqActif){fpqEteindre();return}
+  fpqActif=true;el.classList.add('active');el.style.borderColor='';
+  fpqAllumer();
+}
+
+function fpqEteindre(){
+  fpqActif=false;
+  fpqVider();
+  document.querySelectorAll('.poi-chip[data-poi="pourvoiriefpq"]').forEach(c=>{
+    c.classList.remove('active');c.style.borderColor='#ffb703';
+  });
+  const f=document.getElementById('fpqFiltres');if(f)f.classList.remove('show');
+  map.off('zoomend',fpqMajLabels);
+  map.off('moveend',fpqMajLabels);
+  hideCount();fermerFichePourvoirie();
+}
+
+function fpqVider(){
+  fpqMarkers.forEach(m=>map.removeLayer(m));fpqMarkers=[];
+  fpqLabels.forEach(l=>map.removeLayer(l));fpqLabels=[];
+  fpqSites=[];
+  // Meme piege que pvVider : les boutons de la fiche portent un index de
+  // fpqSites. Reconstruire le tableau sans fermer la fiche ferait tracer un
+  // itineraire vers un AUTRE site que celui affiche.
+  fermerFichePourvoirie();
+}
+
+async function fpqAllumer(){
+  if(fpqChargement)return;
+  fpqChargement=true;
+  showLoading('Chargement du repertoire des pourvoiries...');
+  try{
+    const d=await fpqCharger();
+    if(!fpqActif)return;                  // eteint pendant le chargement
+    fpqRemplirEspeces(d);
+    document.getElementById('fpqFiltres').classList.add('show');
+    fpqRendre();
+    map.on('zoomend',fpqMajLabels);
+    map.on('moveend',fpqMajLabels);
+    pvNote(`<b style="color:#ffb703">${d.n} pourvoiries membres de la FPQ</b> — repertoire officiel, `+
+      `coordonnees sur toutes les fiches. Filtre par activite ou par espece a gauche.`+
+      `<br><br>Ce sont les <b>membres de la Federation</b> : des pourvoiries non membres existent et `+
+      `ne sont dans aucun repertoire centralise. Ni prix ni disponibilites ici — ca change chaque saison.`,12000);
+  }catch(e){
+    console.warn('FPQ:',e);
+    pvNote('<b style="color:#ff4757">Repertoire des pourvoiries introuvable.</b> '+
+      'Le fichier assets/pourvoiries-quebec.json n\'a pas pu etre charge. La couche OpenStreetMap reste disponible.',9000);
+    fpqEteindre();
+  }finally{
+    fpqChargement=false;hideLoading();
+  }
+}
+
+// Remplit la liste deroulante des especes, prefixee par activite pour qu'on
+// puisse chercher "orignal" (chasse) comme "doré" (peche) au meme endroit.
+function fpqRemplirEspeces(d){
+  const sel=document.getElementById('fpqEspece');
+  if(!sel||sel.dataset.pret)return;
+  const opt=(v,txt)=>{const o=document.createElement('option');o.value=v;o.textContent=txt;return o};
+  const gc=document.createElement('optgroup');gc.label='Chasse';
+  (d.especes_chasse||[]).forEach((e,i)=>gc.appendChild(opt('chasse:'+i,e)));
+  const gp=document.createElement('optgroup');gp.label='Peche';
+  (d.especes_peche||[]).forEach((e,i)=>gp.appendChild(opt('peche:'+i,e)));
+  sel.appendChild(gc);sel.appendChild(gp);
+  sel.dataset.pret='1';
+}
+
+function fpqActivite(a,el){
+  fpqFiltreAct=a;
+  document.querySelectorAll('.fpq-f').forEach(b=>b.classList.toggle('on',b===el));
+  fpqRendre();
+}
+
+function fpqFiltrerEspece(v){
+  fpqFiltreEsp=v||'';
+  // Choisir une espece implique son activite : selectionner « orignal » tout
+  // en gardant le filtre « peche » ne donnerait jamais rien, ce qui ressemble
+  // a un bogue. On aligne l'activite au lieu de rendre une liste vide.
+  if(v){
+    const act=v.split(':')[0];
+    fpqFiltreAct=act;
+    document.querySelectorAll('.fpq-f').forEach(b=>b.classList.toggle('on',b.dataset.act===act));
+  }
+  fpqRendre();
+}
+
+// Un site passe-t-il les filtres courants ?
+function fpqGarde(p){
+  if(fpqFiltreAct==='peche'&&!p.pe)return false;
+  if(fpqFiltreAct==='chasse'&&!p.c)return false;
+  if(fpqFiltreAct==='villegiature'&&!p.vi)return false;
+  if(fpqFiltreAct==='dx'&&!p.dx)return false;
+  if(fpqFiltreEsp){
+    const[act,i]=fpqFiltreEsp.split(':');
+    const idx=+i;
+    const liste=act==='chasse'?p.ec:p.ep;
+    if(!liste||liste.indexOf(idx)<0)return false;
+  }
+  return true;
+}
+
+// Couleur et glyphe selon ce que le site offre reellement. Contrairement a la
+// couche OSM, il n'y a pas de « devine » ici : le repertoire donne l'activite
+// site par site, alors le marqueur peut l'affirmer.
+function fpqIcone(p){
+  if(p.pe&&p.c)return{ico:'&#128031;&#127993;',col:FPQ_COUL.mixte};
+  if(p.pe)return{ico:'&#128031;',col:FPQ_COUL.peche};
+  if(p.c)return{ico:'&#127993;',col:FPQ_COUL.chasse};
+  return{ico:'&#127968;',col:FPQ_COUL.autre};
+}
+
+function fpqRendre(){
+  if(!fpqActif||!fpqData)return;
+  fpqVider();
+  const liste=(fpqData.pourvoiries||[]).filter(fpqGarde);
+  liste.forEach(p=>{
+    const idx=fpqSites.length;
+    fpqSites.push(p);
+    const ic=fpqIcone(p);
+    // Losange plein : marque visuellement que le site vient du repertoire
+    // officiel, pas d'OSM. Les deux couches peuvent etre allumees ensemble.
+    const m=L.marker([p.la,p.lo],{icon:L.divIcon({
+      html:`<div style="font-size:17px;line-height:26px;width:26px;height:26px;text-align:center;`+
+           `background:rgba(10,10,10,.85);border:2px solid ${ic.col};border-radius:7px;`+
+           `transform:rotate(45deg);box-shadow:0 0 8px rgba(0,0,0,.7)">`+
+           `<span style="display:inline-block;transform:rotate(-45deg)">${ic.ico}</span></div>`,
+      iconSize:[28,28],iconAnchor:[14,14],className:''
+    })}).addTo(map);
+    m.on('click',()=>fpqOuvrirFiche(idx));
+    fpqMarkers.push(m);
+  });
+  fpqMajLabels();
+  fpqMajCompte(liste.length);
+}
+
+function fpqMajCompte(n){
+  const el=document.getElementById('fpqCompte');
+  if(!el||!fpqData)return;
+  const total=fpqData.n||(fpqData.pourvoiries||[]).length;
+  el.innerHTML=n===total
+    ? `<b>${n}</b> pourvoiries FPQ`
+    : `<b>${n}</b> sur ${total} pourvoiries FPQ`;
+}
+
+// Etiquettes de nom au zoom, recalculees sans rien recharger.
+function fpqMajLabels(){
+  fpqLabels.forEach(l=>map.removeLayer(l));fpqLabels=[];
+  if(!fpqActif||map.getZoom()<FPQ_ZOOM_LABELS)return;
+  const b=map.getBounds();
+  for(const p of fpqSites){
+    if(fpqLabels.length>=300)break;
+    if(!b.contains([p.la,p.lo]))continue;
+    const lbl=L.marker([p.la,p.lo],{icon:L.divIcon({
+      html:`<div style="font-size:10px;color:#ffb703;font-family:Rajdhani;font-weight:700;`+
+           `text-shadow:0 1px 4px #000;white-space:nowrap;pointer-events:none">${escHtml(p.n)}</div>`,
+      iconAnchor:[-16,0],className:''
+    })}).addTo(map);
+    fpqLabels.push(lbl);
+  }
+}
+
+// Fiche du repertoire. Reutilise le panneau de la couche OSM : meme place a
+// l'ecran, meme facon de fermer — mais la provenance est nommee clairement.
+function fpqOuvrirFiche(i){
+  const p=fpqSites[i];if(!p)return;
+  const d=fpqData;
+  document.getElementById('pvTitre').textContent=p.n;
+  const ic=fpqIcone(p);
+  let h=`<span class="pv-ligne" style="color:${ic.col};font-weight:700">${ic.ico} Pourvoirie membre FPQ`+
+    (p.dx?` &middot; droits exclusifs`:``)+`</span>`;
+  if(p.r)h+=`<span class="pv-meta">${escHtml(p.r)}${p.v?' &middot; '+escHtml(p.v):''}</span>`;
+
+  // ── Activites
+  h+=`<span class="pv-titre-sect">QUOI FAIRE ICI</span><div class="pv-badges">`;
+  if(p.pe)h+=`<span class="pv-badge" style="background:${FPQ_COUL.peche}">&#128031; Peche</span>`;
+  if(p.c)h+=`<span class="pv-badge" style="background:${FPQ_COUL.chasse}">&#127993; Chasse</span>`;
+  if(p.vi)h+=`<span class="pv-badge" style="background:#ffcf4a">&#127968; Villegiature</span>`;
+  if(p.pa)h+=`<span class="pv-badge" style="background:#7bc043">&#127794; Plein air</span>`;
+  h+=`</div><span class="pv-meta">Declare au repertoire officiel de la FPQ.</span>`;
+
+  // ── Especes : c'est ce que la couche OSM ne peut pas donner.
+  if(p.ec&&p.ec.length){
+    h+=`<span class="pv-titre-sect">GIBIER</span><span class="pv-ligne">`+
+      p.ec.map(k=>escHtml(d.especes_chasse[k])).filter(Boolean).join(' &middot; ')+`</span>`;
+  }
+  if(p.ep&&p.ep.length){
+    h+=`<span class="pv-titre-sect">POISSON</span><span class="pv-ligne">`+
+      p.ep.map(k=>escHtml(d.especes_peche[k])).filter(Boolean).join(' &middot; ')+`</span>`;
+  }
+
+  if(p.d)h+=`<span class="pv-titre-sect">DESCRIPTION</span><span class="pv-ligne">${escHtml(p.d)}</span>`;
+
+  // ── Contact
+  h+=`<span class="pv-titre-sect">CONTACT</span>`;
+  if(p.ad)h+=`<span class="pv-ligne">&#128205; ${escHtml(p.ad)}</span>`;
+  if(p.t)h+=`<a class="pv-lien" href="tel:${encodeURIComponent(String(p.t).replace(/[^\d+]/g,''))}">&#128222; ${escHtml(p.t)}</a>`;
+  if(p.sf)h+=`<a class="pv-lien" href="tel:${encodeURIComponent(String(p.sf).replace(/[^\d+]/g,''))}">&#128222; ${escHtml(p.sf)} (sans frais)</a>`;
+  if(p.w&&/^https?:\/\//i.test(p.w))h+=`<a class="pv-lien" href="${escHtml(p.w)}" target="_blank" rel="noopener">&#127760; Site officiel</a>`;
+  if(p.u&&/^https?:\/\//i.test(p.u))h+=`<a class="pv-lien" href="${escHtml(p.u)}" target="_blank" rel="noopener">&#128203; Fiche FPQ</a>`;
+  if(!p.t&&!p.sf&&!p.w)h+=`<span class="pv-ligne">Aucun contact au repertoire.</span>`;
+
+  // ── Hebergement
+  const serv=[];
+  if(p.he)serv.push(`Hebergement : ${escHtml(p.he)}`);
+  if(p.ca)serv.push(`Capacite : ${escHtml(p.ca)} personnes`);
+  if(p.cl)serv.push(`Classification : ${escHtml(p.cl)}`);
+  if(p.p)serv.push(`Permis : ${escHtml(p.p)}`);
+  if(serv.length){
+    h+=`<span class="pv-titre-sect">HEBERGEMENT</span>`+serv.map(x=>`<span class="pv-ligne">${x}</span>`).join('');
+    // Le fournisseur du repertoire signale lui-meme cet ecart : la source
+    // liste les chalets un par un sans toujours donner de total.
+    if(p.ca)h+=`<span class="pv-meta">La capacite est indicative — a confirmer avec la pourvoirie.</span>`;
+  }
+
+  // ── Se rendre
+  h+=`<span class="pv-titre-sect">SE RENDRE</span>`;
+  h+=`<button class="pv-btn" style="background:#ffb703" onclick="fpqAller(${i})">&#128668; Y aller + chemins forestiers</button>`;
+  h+=`<button class="pv-btn secondaire" onclick="fpqCentrer(${i})">&#128269; Centrer la carte ici</button>`;
+  h+=`<button class="pv-btn secondaire" onclick="fpqCopierCoord(${i})">&#128203; Copier les coordonnees pour ton GPS</button>`;
+
+  h+=`<a class="pv-lien" href="https://www.google.com/search?q=${encodeURIComponent(p.n+' pourvoirie forfaits')}" target="_blank" rel="noopener">&#128269; Chercher forfaits et tarifs sur le web</a>`;
+
+  // ── Provenance et limites, portees par le fichier lui-meme.
+  h+=`<div class="pv-source">${escHtml(d.source||'Repertoire FPQ')}`+
+    (d.extrait_le?` &middot; extrait le ${escHtml(d.extrait_le)}`:'')+
+    `<br>Coordonnees ${p.la.toFixed(5)}, ${p.lo.toFixed(5)} (WGS 84)`;
+  (d.limites||[]).forEach(l=>{h+=`<br>&middot; ${escHtml(l)}`});
+  h+=`</div>`;
+
+  document.getElementById('pvBody').innerHTML=h;
+  document.getElementById('pvBody').scrollTop=0;
+  document.getElementById('pvPanel').classList.add('show');
+}
+
+function fpqCentrer(i){const p=fpqSites[i];if(p)map.setView([p.la,p.lo],13)}
+
+function fpqCopierCoord(i){
+  const p=fpqSites[i];if(!p)return;
+  const txt=`${p.la.toFixed(5)}, ${p.lo.toFixed(5)}`;
+  const aLaMain=()=>pvNote(`Copie impossible sur ce navigateur. Note-les a la main : <b>${txt}</b> (${escHtml(p.n)}).`,0);
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(txt).then(
+      ()=>pvNote(`Coordonnees copiees : <b>${txt}</b> — ${escHtml(p.n)}. Ecris-les aussi sur papier : le presse-papier se perd, pas le papier.`,9000),
+      aLaMain);
+  else aLaMain();
+}
+
+// Meme comportement que pvAller : on trace, on allume les chemins forestiers,
+// et on dit franchement ou l'itineraire s'arrete par rapport au site.
+async function fpqAller(i){
+  const p=fpqSites[i];if(!p)return;
+  const jeton=++pvAllerJeton;
+
+  if(!myLat){
+    // Les COORDONNEES dans le champ destination, jamais le nom : calcRoute()
+    // enverrait le nom a Nominatim et « Pourvoirie du Lac Blanc » a des
+    // homonymes au Quebec, alors qu'on a la bonne coordonnee sous la main.
+    const champ=document.getElementById('routeTo');
+    if(champ)champ.value=`${p.la.toFixed(6)}, ${p.lo.toFixed(6)}`;
+    document.getElementById('sidebar').classList.add('open');
+    pvNote(`GPS pas encore actif. Les coordonnees de <b>${escHtml(p.n)}</b> (${p.la.toFixed(5)}, ${p.lo.toFixed(5)}) sont dans le panneau navigation. Active le GPS, puis reappuie sur "Y aller".`,9000);
+    locateMe();
+    return;
+  }
+
+  routeTo(p.la,p.lo,p.n);
+  const champ=document.getElementById('routeTo');
+  if(champ)champ.value=`${p.la.toFixed(6)}, ${p.lo.toFixed(6)}`;
+  const rc=routeControl;
+  const forestierOk=pvActiverForestier();
+  fermerFichePourvoirie();
+
+  const corps=(forestierOk?'Chemins forestiers allumes : <b>zoome au niveau 10+</b> pres de la destination pour voir leur etat, les barrieres et les gues. ':'')+
+    '<br><br>&#9888; L\'itineraire suit les routes connues d\'OpenStreetMap. Les derniers kilometres de chemin forestier peuvent etre absents de la carte, barres ou impraticables. Ne pars pas sans carte papier, GPS charge et un plan de match laisse a quelqu\'un.'+
+    (p.t?`<br><br>Appelle avant de partir : <b>${escHtml(p.t)}</b>.`:'');
+  let entete=`<b style="color:#ffb703">Calcul de l'itineraire vers ${escHtml(p.n)}...</b> `;
+  const rendre=()=>{if(jeton===pvAllerJeton)pvNote(entete+corps,0)};
+  rendre();
+
+  if(rc&&rc.once){
+    rc.once('routesfound',e=>{
+      if(jeton!==pvAllerJeton)return;
+      const co=(e.routes&&e.routes[0]&&e.routes[0].coordinates)||[];
+      const fin=co.length?co[co.length-1]:null;
+      // OSRM accroche l'arrivee a la route routable la plus proche : pour un
+      // camp loin du dernier chemin cartographie, la distance affichee ne mene
+      // pas jusqu'au site. C'est le chiffre qui compte avant de partir.
+      const ecart=fin?map.distance(fin,[p.la,p.lo]):0;
+      entete=ecart>1000
+        ? `<b style="color:#ffcf4a">L'itineraire s'arrete a ${(ecart/1000).toFixed(1)} km de ${escHtml(p.n)}.</b> Aucune route cartographiee ne va plus loin : la distance et la duree affichees ne couvrent PAS ce dernier bout. `
+        : `<b style="color:#ffb703">Chemin trace vers ${escHtml(p.n)}.</b> `;
+      rendre();
+    });
+    rc.once('routingerror',()=>{
+      if(jeton!==pvAllerJeton)return;
+      entete=`<b style="color:#ff4757">Aucun itineraire calcule.</b> Le serveur de routage est injoignable, ou aucune route connue ne mene la. Note les coordonnees : <b>${p.la.toFixed(5)}, ${p.lo.toFixed(5)}</b>. `;
+      rendre();
+    });
+  }
 }
 
 /* ─── "Pour pas se perdre dans le bois" ───────────────────────────────────── */
