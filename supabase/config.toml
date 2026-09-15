@@ -1,7 +1,18 @@
 [project]
 id = "rnuripmfozlxenryxhdc"
 
+# ⚠️ ai-proxy roule avec verify_jwt = FALSE en prod (accès anonyme au chat).
+#    Ce fichier disait « true » — un `supabase functions deploy` par la CLI
+#    aurait cassé l'accès anonyme. Corrigé le 2026-09-15.
 [functions.ai-proxy]
+verify_jwt = false
+
+# agent-al : owner-only par son propre code (403 si callerId != OWNER_USER_ID),
+# donc pas de verrou JWT au niveau de la plateforme.
+[functions.agent-al]
+verify_jwt = false
+
+[functions.github-proxy]
 verify_jwt = true
 
 [functions.stripe-webhook]

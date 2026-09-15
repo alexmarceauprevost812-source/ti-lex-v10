@@ -1,6 +1,6 @@
 # ⚠️ ai-proxy — état du déploiement en production
 
-## Nouveaux modèles Claude — 2026-09-15 (PAS ENCORE DÉPLOYÉ)
+## Nouveaux modèles Claude — 2026-09-15 ✅ DÉPLOYÉ (v64)
 `ALLOWED_MODELS` dans `index.ts` accepte maintenant la génération courante :
 `claude-fable-5-1`, `claude-opus-5` pis `claude-sonnet-5`, en plus de
 `claude-haiku-4-5` (l'ID officiel — l'ancien ID daté `claude-haiku-4-5-20251001`
@@ -8,12 +8,23 @@ reste accepté parce que `pro.html`, `codex.html` pis `console-web` l'envoient
 encore). Les pickers de `pro.html`, `codex.html`, `web.html`, `tilex-chat.html`
 pis `console-web/index.html` offrent ces modèles.
 
-**`index.prod-deployed.ts.txt` n'a PAS été touché** : il reste le portrait de ce
-qui roule vraiment en prod. Tant que `supabase functions deploy ai-proxy` est pas
-lancé, la prod refuse `claude-fable-5-1` / `claude-opus-5` / `claude-sonnet-5` pis
-retombe sur `claude-opus-4-8` (ligne `ALLOWED_MODELS.has(body.model) ? … : …`).
-Après le déploiement, recopier `index.ts` par-dessus `index.prod-deployed.ts.txt`
-pour que les deux redeviennent identiques.
+Déployé le 2026-09-15 (v64) via l'API Management, avec la structure
+`_shared/` conservée : l'entrypoint est `source/ai-proxy/index.ts`, donc
+`../_shared/rate-limit.ts` résout. La version d'avant avait ce fichier aplati
+en `./rate-limit.ts` — c'est corrigé, les deux arbres sont pareils astheure.
+`index.prod-deployed.ts.txt` est resynchronisé : identique à `index.ts`.
+
+⚠️ **verify_jwt** : la prod roule à `false` (accès anonyme au chat), mais
+`supabase/config.toml` disait `true`. Un `supabase functions deploy` par la CLI
+aurait cassé l'accès anonyme. Le `config.toml` est corrigé.
+
+⚠️ **Le rate-limiting Upstash est INERTE en prod.** Les logs montrent, à chaque
+appel : `[rate-limit] Redis indisponible, fail-open: TypeError: Invalid URL:
+'/pipeline'` — autrement dit `UPSTASH_REDIS_REST_URL` est vide ou pas configurée.
+`checkRateLimit` tombe en fail-open, donc rien bloque, mais la protection
+anti-abus réseau protège rien pantoute. Pour l'activer :
+`supabase secrets set UPSTASH_REDIS_REST_URL=… UPSTASH_REDIS_REST_TOKEN=…`
+(C'était déjà comme ça AVANT ce déploiement — pas une régression.)
 
 Rien d'autre a changé dans la requête : le proxy envoie pas `temperature`,
 `thinking`, `tool_choice` forcé ni de prefill — les trois affaires que Fable 5.1

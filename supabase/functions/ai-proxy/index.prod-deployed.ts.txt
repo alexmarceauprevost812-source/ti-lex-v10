@@ -96,7 +96,13 @@ const MAX_MESSAGES = 60;
 const MAX_MSG_CHARS = 20_000_000;
 const MAX_TOOL_LOOPS = 8;
 const ALLOWED_MODELS = new Set([
-  "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6", "claude-haiku-4-5-20251001",
+  // Génération courante (la plus récente en premier).
+  "claude-fable-5-1", "claude-opus-5", "claude-sonnet-5",
+  // Génération précédente, encore servie.
+  "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6",
+  // Haiku 4.5 : l'ID officiel c'est "claude-haiku-4-5" — l'ancien ID daté
+  // reste accepté parce que des pages du dépôt l'envoient encore.
+  "claude-haiku-4-5", "claude-haiku-4-5-20251001",
 ]);
 const ALLOWED_SIZES = new Set(["1024x1024", "1024x1536", "1536x1024", "auto"]);
 

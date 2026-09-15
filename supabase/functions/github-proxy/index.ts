@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
     }
 
     case "status": {
-      return json({ connected: true });
+      return json({ connected: true, source: jeton.source });
     }
 
     default:
