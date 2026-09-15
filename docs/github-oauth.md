@@ -112,14 +112,36 @@ token (avancé)*). Rien casse pendant la transition.
 
 ---
 
-## ⚠️ Reste à faire (pas dans ce lot)
+## 🔒 L'ancien PAT est barré au navigateur (migration 0064)
 
-La RLS de `user_connections` laisse l'usager faire `select *` sur sa propre
-ligne — ça inclut l'ancien `github_access_token` pis `supabase_anon_key`. Un
-XSS dans une page peut les lire. Pour barrer ça :
+`user_connections.github_access_token` (le vieux PAT collé à la main) est plus
+lisible par le client. Prouvé dans le rôle `authenticated` :
 
-1. changer `pro.html:6134` (`select("*")`) pour une liste de colonnes explicite
-2. `revoke select (github_access_token, supabase_anon_key) on public.user_connections from authenticated;`
+| Requête | Résultat |
+|---|---|
+| `select *` | **bloquée** |
+| `select github_access_token` | **bloquée** |
+| les colonnes que `pro.html` utilise | passe |
 
-Faut faire les deux dans le même coup : Postgres refuse un `select *` complet
-dès qu'une colonne est barrée.
+### Le piège Postgres
+
+Un `revoke select (colonne)` fait **rien** tant que le `GRANT` au niveau
+**table** existe — le privilège de table couvre toutes les colonnes. Faut :
+
+```sql
+revoke select on public.user_connections from anon, authenticated;
+grant  select (…toutes les colonnes sauf le jeton…) on public.user_connections
+  to anon, authenticated;
+```
+
+### Deux affaires à retenir
+
+1. **`select *` sur `user_connections` plante côté client.** Toute nouvelle
+   requête doit lister ses colonnes. `pro.html:chargerConnexions()` a été
+   changé pour ça.
+2. **Une colonne ajoutée plus tard aura pas le grant** tant que le bloc de la
+   migration 0064 est pas rejoué. C'est fail-closed — c'est voulu.
+
+`supabase_anon_key` reste lisible **exprès** : une clé anon est publique par
+design (protégée par la RLS du projet visé), pis `pro.html` s'en sert côté
+client pour parler au projet Supabase de l'usager.

@@ -6131,7 +6131,11 @@ async function chargerConnexions(){
     var authRes=await supabase.auth.getUser();
     if(!authRes.data||!authRes.data.user)return;
     var uid=authRes.data.user.id;
-    var res=await supabase.from("user_connections").select("*").eq("user_id",uid).maybeSingle();
+    // Colonnes explicites, JAMAIS "*" : github_access_token est barré au client
+    // (voir migration 0064) pis un select("*") planterait sur le privilège manquant.
+    var res=await supabase.from("user_connections")
+      .select("github_connected,github_username,github_avatar_url,supabase_connected,supabase_project_name,supabase_project_id")
+      .eq("user_id",uid).maybeSingle();
     if(res.error){console.error("[UC] chargerConnexions:",res.error);return;}
     var d=res.data;
     if(d&&d.github_connected){
