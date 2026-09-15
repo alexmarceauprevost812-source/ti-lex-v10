@@ -45,3 +45,6 @@ verify_jwt = false
 
 [functions.tilex-image]
 verify_jwt = false
+
+[functions.github-oauth]
+verify_jwt = true

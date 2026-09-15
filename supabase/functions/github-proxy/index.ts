@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { obtenirJetonGitHub } from "../_shared/github-token.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -49,19 +50,15 @@ Deno.serve(async (req) => {
   } = await sb.auth.getUser(token);
   if (!user) return json({ error: "Session invalide" }, 401);
 
-  const { data: connData, error: connErr } = await sb
-    .from("user_connections")
-    .select("github_access_token")
-    .eq("user_id", user.id)
-    .single();
-
-  if (connErr || !connData?.github_access_token) {
+  // Jeton OAuth (rafraîchi tout seul au besoin), sinon l'ancien PAT.
+  const jeton = await obtenirJetonGitHub(sb, user.id);
+  if (!jeton) {
     return json(
-      { error: "Aucun PAT GitHub. Connecte ton compte dans Paramètres." },
+      { error: "Aucune connexion GitHub. Clique « Connecter GitHub » — ça passe par github.com, y'a pas de token à coller." },
       404,
     );
   }
-  const pat = connData.github_access_token;
+  const pat = jeton.token;
 
   let body: Record<string, unknown>;
   try {

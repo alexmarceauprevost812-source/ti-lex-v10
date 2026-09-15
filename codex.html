@@ -186,7 +186,8 @@
   </div>
   <div class="pop" id="pop-menu">
     <div class="pi" id="mi-session">🔄 Nouvelle session</div>
-    <div class="pi" id="mi-token">🔑 Connecter GitHub (token)</div>
+    <div class="pi" id="mi-github">🔗 Connecter GitHub</div>
+    <div class="pi" id="mi-token">🔑 …plutôt par token (avancé)</div>
     <div class="pi" id="mi-repo">🐙 Changer de repo / branche</div>
     <div class="pi" id="mi-fichiers">📁 Fichiers du workspace</div>
     <div class="pi" id="mi-zip">📦 Télécharger le ZIP</div>
@@ -255,6 +256,113 @@ function paramsRepo(){
 // en en-tête x-github-token à /api/github-read. Sinon, celui de Vercel est utilisé.
 function ghToken(){ try{return localStorage.getItem(LS_GHTOKEN)||'';}catch(e){return '';} }
 function ghHeaders(){ var t=ghToken(); return t?{'x-github-token':t}:{}; }
+
+/* ══ Connexion GitHub par github.com (OAuth) ══════════════════════════
+   ghSrv.connected = un jeton est rangé CÔTÉ SERVEUR (OAuth, ou l'ancien PAT
+   sauvegardé dans user_connections). Dans ce cas-là on passe par l'edge
+   function github-proxy : le jeton reste au serveur, le navigateur le voit
+   jamais. Sinon on retombe sur /api/github-read avec le PAT de l'appareil. */
+var ghSrv={connected:false,source:null,username:null};
+
+async function ghFn(nom,corps){
+  var t=getToken();
+  if(!t)throw new Error('Session ti-lex expirée — reconnecte-toi');
+  var r=await fetch(window.SB_URL+'/functions/v1/'+nom,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,'apikey':window.SB_ANON},
+    body:JSON.stringify(corps||{})
+  });
+  var d=null;try{d=await r.json();}catch(e){}
+  if(!r.ok)throw new Error((d&&(d.details||d.error))||('HTTP '+r.status));
+  return d||{};
+}
+async function ghStatut(){
+  try{
+    if(!getToken())return ghSrv;
+    var d=await ghFn('github-oauth',{action:'status'});
+    ghSrv={connected:!!d.connected,source:d.source||null,username:d.username||null};
+  }catch(e){ console.warn('[codex] statut GitHub :',e&&e.message); }
+  if(typeof majMenuToken==='function')majMenuToken();
+  return ghSrv;
+}
+async function connecterGitHubOAuth(){
+  if(!getToken()){ toast('🔒 Connecte-toi à ti-lex en premier'); return; }
+  if(ghSrv.connected&&ghSrv.source==='oauth'){
+    if(!confirm('GitHub est déjà connecté (@'+(ghSrv.username||'?')+').\n\nLe déconnecter? Le jeton sera révoqué chez GitHub.'))return;
+    try{
+      await ghFn('github-oauth',{action:'disconnect'});
+      ghSrv={connected:false,source:null,username:null};
+      repoTree=null;majChipRepo();majMenuToken();
+      toast('🐙 GitHub déconnecté');
+    }catch(e){ toast('⚠️ '+(e&&e.message||'Erreur')); }
+    return;
+  }
+  try{
+    toast('🐙 Ouverture de GitHub…');
+    var d=await ghFn('github-oauth',{action:'start',redirect_to:'/codex'});
+    if(!d.url)throw new Error('URL d\'autorisation manquante');
+    location.href=d.url;  // → github.com, pis retour par /github-retour
+  }catch(e){ toast('⚠️ '+(e&&e.message||'Erreur')); }
+}
+
+/* ── Adaptateurs : les deux chemins rendent la MÊME forme de réponse, donc
+      le reste du Codex a pas à savoir lequel a servi. ── */
+function ghViaServeur(){ return !!ghSrv.connected; }
+function b64utf8(b64){
+  var bin=atob(String(b64||'').replace(/\s/g,''));
+  var oct=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)oct[i]=bin.charCodeAt(i);
+  return new TextDecoder('utf-8').decode(oct);
+}
+async function ghArbre(){
+  if(!ghViaServeur()){
+    var r=await fetch('/api/github-read?mode=tree'+paramsRepo(),{headers:ghHeaders()});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }
+  if(!repoChoisi)throw new Error('Choisis un repo en premier');
+  var d=await ghFn('github-proxy',{action:'listFiles',repo:repoChoisi.repo,branch:repoChoisi.branche});
+  return {
+    repo:repoChoisi.repo, branche:repoChoisi.branche, tronque:!!d.truncated,
+    total_fichiers:(d.tree||[]).length,
+    fichiers:(d.tree||[]).map(function(f){return {chemin:f.path,taille_octets:f.size||0};})
+  };
+}
+async function ghFichier(chemin){
+  if(!ghViaServeur()){
+    var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin)+paramsRepo(),{headers:ghHeaders()});
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+    var d=await r.json();
+    if(d.type!=='fichier')throw new Error(chemin+' est un dossier');
+    return d.contenu||'';
+  }
+  if(!repoChoisi)throw new Error('Choisis un repo en premier');
+  var f=await ghFn('github-proxy',{action:'readFile',repo:repoChoisi.repo,branch:repoChoisi.branche,path:chemin});
+  return b64utf8(f.content);
+}
+async function ghRepos(){
+  if(!ghViaServeur()){
+    var r=await fetch('/api/github-read?mode=repos',{headers:ghHeaders()});
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}
+      var err=new Error((j&&j.error)||('HTTP '+r.status));err.statut=r.status;throw err;}
+    return (await r.json()).repos||[];
+  }
+  var d=await ghFn('github-proxy',{action:'listRepos'});
+  // GitHub renvoie ses objets bruts — on les ramène à la forme du Codex.
+  return (d.repos||[]).map(function(rp){
+    return {nom:rp.full_name,prive:!!rp.private,
+            branche_defaut:rp.default_branch||'main',description:rp.description||''};
+  });
+}
+async function ghBranches(nomRepo){
+  if(!ghViaServeur()){
+    var r=await fetch('/api/github-read?mode=branches&repo='+encodeURIComponent(nomRepo),{headers:ghHeaders()});
+    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
+    return (await r.json()).branches||[];
+  }
+  var d=await ghFn('github-proxy',{action:'listBranches',repo:nomRepo});
+  return d.branches||[];
+}
 function connecterGitHub(){
   var actuel=ghToken();
   var t=prompt('🔑 Colle ton token GitHub ici.\n\nFormat : ghp_… ou github_pat_…\nBesoin du scope « repo » (ou Contents: Read pour les repos privés).\nIl reste SUR TON APPAREIL seulement.\n\n(Laisse vide pour l\'effacer.)', actuel);
@@ -449,9 +557,7 @@ function contexteWs(){
 /* ── Connexion au repo GitHub (arbre complet, une fois au chargement) ── */
 async function chargerRepo(){
   try{
-    var r=await fetch('/api/github-read?mode=tree'+paramsRepo(),{headers:ghHeaders()});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    var d=await r.json();
+    var d=await ghArbre();
     if(!d||!Array.isArray(d.fichiers))throw new Error('réponse invalide');
     repoTree=d;
     repoCache={}; // nouveau repo/branche → cache des lectures remis à zéro
@@ -472,11 +578,7 @@ function majChipRepo(){
   else c.textContent='🐙';
 }
 async function lireFichierRepo(chemin){
-  var r=await fetch('/api/github-read?file='+encodeURIComponent(chemin)+paramsRepo(),{headers:ghHeaders()});
-  if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
-  var d=await r.json();
-  if(d.type!=='fichier')throw new Error(chemin+' est un dossier');
-  return d.contenu||'';
+  return await ghFichier(chemin);
 }
 
 /* ── Sélecteur de repo + branche (feuille du bas) ── */
@@ -485,20 +587,23 @@ async function ouvrirChoixRepo(){
   var l=$('f-liste');
   l.innerHTML='<div class="vide-note">Chargement des repos…</div>';
   $('voile').classList.add('on');$('feuille').classList.add('on');
+  // Aucune connexion (ni serveur, ni token sur l'appareil) → on offre le
+  // bouton tout de suite au lieu d'aller manger un 401.
+  function offrirConnexion(note){
+    l.innerHTML='<div class="vide-note">'+note+'</div>'
+      +'<div class="actions-fichiers" style="justify-content:center;margin-top:10px;">'
+      +'<button id="btn-conn-gh">🔗 Connecter GitHub</button></div>';
+    var b=document.getElementById('btn-conn-gh');
+    if(b)b.addEventListener('click',connecterGitHubOAuth);
+  }
+  if(!ghViaServeur()&&!ghToken()){
+    offrirConnexion('🐙 Connecte ton GitHub — ça passe par github.com, y\'a pas de token à coller.');
+    return;
+  }
   try{
-    var r=await fetch('/api/github-read?mode=repos',{headers:ghHeaders()});
-    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}
-      // Token manquant → propose de le connecter direct dans le Codex.
-      if(r.status===500||r.status===401){
-        l.innerHTML='<div class="vide-note">🔑 Faut connecter ton token GitHub d\'abord.</div>'
-          +'<div class="actions-fichiers" style="justify-content:center;margin-top:10px;"><button id="btn-conn-gh">🔑 Connecter GitHub</button></div>';
-        var b=document.getElementById('btn-conn-gh');if(b)b.addEventListener('click',connecterGitHub);
-        return;
-      }
-      throw new Error((j&&j.error)||('HTTP '+r.status));}
-    var d=await r.json();
+    var repos=await ghRepos();
     l.innerHTML='';
-    (d.repos||[]).forEach(function(rp){
+    (repos||[]).forEach(function(rp){
       var it=document.createElement('div');it.className='f-item';
       var actuel=repoTree&&repoTree.repo===rp.nom;
       it.innerHTML='<span class="f-ico">'+(rp.prive?'🔒':'📗')+'</span>'
@@ -509,8 +614,17 @@ async function ouvrirChoixRepo(){
       it.addEventListener('click',function(){ouvrirChoixBranche(rp);});
       l.appendChild(it);
     });
-    if(!(d.repos||[]).length)l.innerHTML='<div class="vide-note">Aucun repo accessible avec le token.</div>';
+    if(!(repos||[]).length){
+      l.innerHTML='<div class="vide-note">Aucun repo accessible avec cette connexion.'
+        +(ghSrv.source==='oauth'?'<br>Vérifie quels repos t\'as donnés à l\'app sur github.com.':'')
+        +'</div>';
+    }
   }catch(e){
+    // Jeton absent ou refusé des deux bords → on repropose la connexion.
+    if(e&&(e.statut===500||e.statut===401)){
+      offrirConnexion('🔑 Faut connecter GitHub d\'abord.');
+      return;
+    }
     l.innerHTML='<div class="vide-note">⚠️ '+esc(e&&e.message||'Erreur')+'</div>';
   }
 }
@@ -519,11 +633,9 @@ async function ouvrirChoixBranche(rp){
   var l=$('f-liste');
   l.innerHTML='<div class="vide-note">Chargement des branches…</div>';
   try{
-    var r=await fetch('/api/github-read?mode=branches&repo='+encodeURIComponent(rp.nom),{headers:ghHeaders()});
-    if(!r.ok){var j=null;try{j=await r.json();}catch(e){}throw new Error((j&&j.error)||('HTTP '+r.status));}
-    var d=await r.json();
+    var branches=await ghBranches(rp.nom);
     l.innerHTML='';
-    (d.branches||[]).forEach(function(br){
+    (branches||[]).forEach(function(br){
       var it=document.createElement('div');it.className='f-item';
       var actuelle=repoTree&&repoTree.repo===rp.nom&&repoTree.branche===br;
       var defaut=br===rp.branche_defaut;
@@ -924,10 +1036,16 @@ $('chip-mode').addEventListener('click',function(){
   majChipMode();
   toast(modeDemander?'🖐 Mode Demander : les modifs attendent ton OK':'⚡ Mode Auto : les modifs s\'appliquent direct');
 });
-// Le libellé du menu reflète l'état : token connecté (reste sur l'appareil) ou non.
+// Les libellés du menu reflètent l'état réel des deux chemins de connexion.
 function majMenuToken(){
+  var g=$('mi-github');
+  if(g){
+    g.textContent = (ghSrv.connected && ghSrv.source==='oauth')
+      ? '🔗 GitHub ✓ @'+(ghSrv.username||'')+' · déconnecter'
+      : '🔗 Connecter GitHub';
+  }
   var el=$('mi-token');if(!el)return;
-  el.textContent = ghToken() ? '🔑 GitHub connecté ✓ · sur ton appareil' : '🔑 Connecter GitHub (token)';
+  el.textContent = ghToken() ? '🔑 Token sur ton appareil ✓' : '🔑 …plutôt par token (avancé)';
 }
 $('btn-menu').addEventListener('click',function(e){
   e.stopPropagation();
@@ -944,6 +1062,7 @@ $('mi-session').addEventListener('click',function(){
   flux.innerHTML='<div class="vide-note" id="accueil">💻 Nouvelle session — le workspace est conservé ('+Object.keys(ws).length+' fichiers).</div>';
   toast('🔄 Nouvelle session');
 });
+$('mi-github').addEventListener('click',function(){$('pop-menu').classList.remove('on');connecterGitHubOAuth();});
 $('mi-token').addEventListener('click',function(){$('pop-menu').classList.remove('on');connecterGitHub();});
 $('mi-repo').addEventListener('click',function(){ouvrirChoixRepo();});
 $('mi-fichiers').addEventListener('click',function(){
@@ -969,7 +1088,21 @@ $('mi-vider').addEventListener('click',function(){
 })();
 
 majChipModele();majChipMode();
-chargerRepo(); // 🐙 connecte le vrai repo GitHub (arbre en contexte + @@LIRE)
+/* 🐙 On demande d'abord au serveur si un jeton GitHub est déjà rangé (OAuth ou
+   vieux PAT) — ça décide par quel chemin le repo se charge. Pis au retour de
+   github.com (?github=ok) on confirme à l'usager pis on nettoie l'adresse. */
+(async function(){
+  await ghStatut();
+  try{
+    var q=new URLSearchParams(location.search);
+    if(q.get('github')==='ok'){
+      toast('🐙 GitHub connecté'+(ghSrv.username?' — @'+ghSrv.username:''));
+      q.delete('github');
+      history.replaceState(null,'',location.pathname+(q.toString()?('?'+q.toString()):''));
+    }
+  }catch(e){}
+  chargerRepo(); // arbre du repo en contexte + @@LIRE
+})();
 
 /* Service worker (PWA) */
 if('serviceWorker' in navigator){try{navigator.serviceWorker.register('/sw.js');}catch(e){}}

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Connexion GitHub — ti-lex</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --bg:#161614; --bg2:#1f1f1d; --bordure:#33322f;
+    --texte:#e8e6e1; --doux:#9b988f;
+    --orange:#ff7a00; --vert:#22c55e; --rouge:#ef4444;
+    --mono:'Share Tech Mono',ui-monospace,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--texte);display:flex;align-items:center;justify-content:center;
+    padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .carte{background:var(--bg2);border:1px solid var(--bordure);border-radius:16px;
+    padding:28px 24px;max-width:420px;width:100%;text-align:center;}
+  .ico{font-size:40px;line-height:1;margin-bottom:14px;}
+  h1{font-size:18px;font-weight:700;margin-bottom:8px;}
+  p{font-size:13.5px;color:var(--doux);line-height:1.5;}
+  .detail{font-family:var(--mono);font-size:11.5px;color:var(--doux);margin-top:12px;
+    word-break:break-word;background:var(--bg);border:1px solid var(--bordure);
+    border-radius:8px;padding:8px 10px;text-align:left;}
+  a.btn{display:inline-block;margin-top:16px;background:var(--orange);color:#000;
+    text-decoration:none;font-weight:700;font-size:13px;padding:9px 18px;border-radius:9px;}
+  .ok{color:var(--vert);} .err{color:var(--rouge);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .attente{animation:pulse 1.2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+  <div class="carte">
+    <div class="ico" id="ico">🐙</div>
+    <h1 id="titre">Connexion à GitHub…</h1>
+    <p id="msg" class="attente">Une seconde, on finit la poignée de main.</p>
+    <div class="detail" id="detail" style="display:none;"></div>
+    <a class="btn" id="retour" href="/codex" style="display:none;">← Retour au Codex</a>
+  </div>
+
+<script src="/js/tilex-config.js"></script>
+<script>
+/* Page de retour OAuth GitHub.
+   GitHub nous renvoie ici avec ?code=&state= (ou ?error= si l'usager a annulé).
+   On relaie le code à l'edge function github-oauth, qui détient le secret pis
+   fait l'échange. Le jeton passe JAMAIS par cette page. */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var p=new URLSearchParams(location.search);
+
+  function fini(ico,titre,msg,detail,classe){
+    $('ico').textContent=ico;
+    $('titre').textContent=titre;
+    var m=$('msg'); m.textContent=msg; m.classList.remove('attente');
+    if(classe)m.className=classe;
+    if(detail){ $('detail').textContent=detail; $('detail').style.display='block'; }
+    $('retour').style.display='inline-block';
+  }
+
+  // L'usager a cliqué « Cancel » sur github.com.
+  if(p.get('error')){
+    fini('🚫','Connexion annulée',
+      'T\'as refusé l\'autorisation sur GitHub. Rien a été changé.',
+      p.get('error_description')||p.get('error'),'err');
+    return;
+  }
+
+  var code=p.get('code'), state=p.get('state');
+  if(!code||!state){
+    fini('⚠️','Lien incomplet',
+      'Il manque le code ou le state dans l\'adresse. Repars la connexion depuis le Codex.',
+      null,'err');
+    return;
+  }
+
+  // Le JWT Supabase de la session en cours — même clé que le Codex.
+  function jwt(){
+    try{
+      var raw=localStorage.getItem('sb-rnuripmfozlxenryxhdc-auth-token');
+      if(!raw)return null;
+      var j=JSON.parse(raw);
+      return (j&&(j.access_token||(j.currentSession&&j.currentSession.access_token)))||null;
+    }catch(e){ return null; }
+  }
+
+  var t=jwt();
+  if(!t){
+    fini('🔒','Session ti-lex expirée',
+      'Reconnecte-toi à ti-lex, pis repars la connexion GitHub depuis le Codex.',
+      null,'err');
+    return;
+  }
+
+  fetch(window.SB_URL+'/functions/v1/github-oauth',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+t,'apikey':window.SB_ANON},
+    body:JSON.stringify({
+      action:'callback', code:code, state:state,
+      installation_id:p.get('installation_id')||null
+    })
+  }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+   .then(function(res){
+     if(!res.ok||!res.d.ok){
+       fini('⚠️','Ça a pas passé',
+         'GitHub ou ti-lex a refusé l\'échange. Repars la connexion depuis le Codex.',
+         res.d.details||res.d.error||'Erreur inconnue','err');
+       return;
+     }
+     fini('✅','GitHub connecté',
+       'Compte @'+res.d.username+' relié à ti-lex. On te ramène au Codex…',null,'ok');
+     var dest=res.d.redirect_to||'/codex';
+     $('retour').setAttribute('href',dest);
+     setTimeout(function(){ location.replace(dest+(dest.indexOf('?')===-1?'?':'&')+'github=ok'); },1600);
+   })
+   .catch(function(e){
+     fini('⚠️','Erreur réseau','On a pas réussi à joindre ti-lex.',e&&e.message,'err');
+   });
+})();
+</script>
+</body>
+</html>
