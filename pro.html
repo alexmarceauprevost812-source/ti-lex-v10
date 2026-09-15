@@ -1225,6 +1225,8 @@ body.sb-open .composer-bar{left:var(--sb-w);}
   letter-spacing:.3px;transition:background .15s;}
 .csd-item:hover{background:rgba(255,107,0,.1);color:#ffffff;}
 .csd-item.selected{background:rgba(255,107,0,.12);color:var(--orange);}
+.csd-item.csd-locked{opacity:.45;}
+.csd-item.csd-locked::after{content:"🔒";margin-left:auto;font-size:11px;}
 .csd-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
 .csd-ico-img{width:18px;height:18px;border-radius:50%;flex-shrink:0;}
 .csd-toggle{justify-content:flex-start;}
@@ -2979,12 +2981,14 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
           <div class="settings-label">MODÈLE PAR DÉFAUT</div>
           <select class="settings-input" id="set-model" style="cursor:pointer;" onchange="saveSettingModel()">
             <option value="claude-sonnet-5" selected>Claude Sonnet 5 ✨</option>
+            <option value="claude-fable-5-1" data-premium="1" data-label="Claude Fable 5.1 🐉">Claude Fable 5.1 🐉</option>
+            <option value="claude-opus-5" data-premium="1" data-label="Claude Opus 5 🧠">Claude Opus 5 🧠</option>
+            <option value="claude-opus-4-8" id="opt-opus" data-premium="1" data-label="Claude Opus 4.8">Claude Opus 4.8</option>
             <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-            <option value="claude-opus-4-8" id="opt-opus">Claude Opus 4.8</option>
             <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
           </select>
           <div class="settings-hint">Le modèle utilisé pour le chat et le Codex.</div>
-          <div class="opus-lock-notice" id="opus-lock-notice" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,106,0,.06);border:1px solid rgba(255,106,0,.2);border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--orange);">🔒 Claude Opus 4.8 requiert le forfait <strong>Apex</strong> ou un forfait <strong>Cybersécurité</strong>. <span style="cursor:pointer;text-decoration:underline;" onclick="openPlanSel()">Changer de forfait</span></div>
+          <div class="opus-lock-notice" id="opus-lock-notice" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,106,0,.06);border:1px solid rgba(255,106,0,.2);border-radius:8px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--orange);">🔒 Les modèles Fable 5.1 pis Opus (5, 4.8) requièrent le forfait <strong>Apex</strong> ou un forfait <strong>Cybersécurité</strong>. <span style="cursor:pointer;text-decoration:underline;" onclick="openPlanSel()">Changer de forfait</span></div>
         </div>
       </div>
     </div>
@@ -3323,6 +3327,10 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
           <div class="csd-section">MODÈLE</div>
           <div class="csd-item" data-model="claude-sonnet-5" onclick="selectComposerModel('claude-sonnet-5')">
             <span class="csd-ico">✨</span> Sonnet 5</div>
+          <div class="csd-item" data-model="claude-fable-5-1" onclick="selectComposerModel('claude-fable-5-1')">
+            <span class="csd-ico">🐉</span> Fable 5.1</div>
+          <div class="csd-item" data-model="claude-opus-5" onclick="selectComposerModel('claude-opus-5')">
+            <span class="csd-ico">🧠</span> Opus 5</div>
           <div class="csd-item" data-model="claude-sonnet-4-6" onclick="selectComposerModel('claude-sonnet-4-6')">
             <span class="csd-ico">⚡</span> Sonnet 4.6</div>
           <div class="csd-item" data-model="claude-opus-4-8" onclick="selectComposerModel('claude-opus-4-8')">
@@ -3364,7 +3372,9 @@ body[data-theme="jour"]{background:#E8DCC8;color:#1a1208;}
     <label class="flbl">MODÈLE IA</label>
     <select class="fselect" id="a-model">
       <option value="claude-sonnet-5" selected>claude-sonnet-5 (Recommandé ✨)</option>
-      <option value="claude-opus-4-8" id="opt-opus-agent">claude-opus-4-8 (Apex / Cyber)</option>
+      <option value="claude-fable-5-1" data-premium="1" data-label="claude-fable-5-1 (Le plus capable 🐉)">claude-fable-5-1 (Le plus capable 🐉)</option>
+      <option value="claude-opus-5" data-premium="1" data-label="claude-opus-5 (Haute performance 🧠)">claude-opus-5 (Haute performance 🧠)</option>
+      <option value="claude-opus-4-8" id="opt-opus-agent" data-premium="1" data-label="claude-opus-4-8 (Haute performance)">claude-opus-4-8 (Apex / Cyber)</option>
       <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
       <option value="claude-haiku-4-5">claude-haiku-4-5 (Rapide)</option>
     </select>
@@ -4586,7 +4596,7 @@ async function sendChat(){
     if(tk)h["Authorization"]="Bearer "+tk;
     var chatModel=localStorage.getItem("tilex-al-model")||"claude-sonnet-5";
     if(_webAgent&&_webAgent.model)chatModel=_webAgent.model;
-    if(chatModel==="claude-opus-4-8"&&!canUseOpus())chatModel="claude-sonnet-5";
+    if(typeof estModelePremium==="function"&&estModelePremium(chatModel)&&!canUseOpus())chatModel="claude-sonnet-5";
     // 🧠 100 % Anthropic : si un ancien modèle non-Claude traîne encore, retour à Sonnet 5.
     if(chatModel.indexOf("claude-")!==0)chatModel="claude-sonnet-5";
     // 🧠 MODE RÉFLEXION AMÉLIORÉ (style Claude Code) :
@@ -6886,36 +6896,53 @@ async function studioFixAllDeploy(){
 }
 
 /* ── SETTINGS FUNCTIONS ── */
+/* 🧠 Modèles premium : Fable pis Opus (toutes les générations) sont réservés aux
+   forfaits Apex / Cybersécurité. Sonnet pis Haiku restent ouverts à tout le monde. */
+var MODELE_DE_REPLI="claude-sonnet-5";
+function estModelePremium(m){
+  m=String(m||"");
+  return m.indexOf("opus")!==-1||m.indexOf("fable")!==-1;
+}
 function canUseOpus(){
   if(_planCache&&_planCache.allowedModels){
-    return _planCache.allowedModels.some(function(m){return m.indexOf("opus")!==-1;});
+    return _planCache.allowedModels.some(function(m){return estModelePremium(m);});
   }
   var p=getPlan();
   return p==="apex"||p.indexOf("cyber")===0;
 }
+/* Barre (ou débarre) les <option data-premium> d'un <select> donné. */
+function verrouillerOptionsPremium(sel,allowed){
+  if(!sel)return;
+  Array.prototype.forEach.call(sel.querySelectorAll("option[data-premium]"),function(opt){
+    var base=opt.getAttribute("data-label")||opt.value;
+    opt.disabled=!allowed;
+    opt.textContent=allowed?base:base+" 🔒 Apex / Cyber";
+  });
+}
 function enforceModelGating(){
   var allowed=canUseOpus();
-  var opt=document.getElementById("opt-opus");
   var notice=document.getElementById("opus-lock-notice");
   var sel=document.getElementById("set-model");
-  if(opt){
-    opt.disabled=!allowed;
-    opt.textContent=allowed?"Claude Opus 4.8":"Claude Opus 4.8 🔒 Apex / Cyber";
-  }
+  verrouillerOptionsPremium(sel,allowed);
+  verrouillerOptionsPremium(document.getElementById("a-model"),allowed);
   if(notice)notice.style.display=allowed?"none":"block";
-  if(!allowed&&sel&&sel.value==="claude-opus-4-8"){
-    sel.value="claude-sonnet-4-6";localStorage.setItem("tilex-al-model","claude-sonnet-4-6");
-  }
-  var optA=document.getElementById("opt-opus-agent");
-  if(optA){
-    optA.disabled=!allowed;
-    optA.textContent=allowed?"claude-opus-4-8 (Haute performance)":"claude-opus-4-8 🔒 Apex / Cyber";
+  // Sélecteur rapide du composer : on grise les modèles premium pas permis.
+  Array.prototype.forEach.call(document.querySelectorAll(".csd-item[data-model]"),function(el){
+    el.classList.toggle("csd-locked",!allowed&&estModelePremium(el.getAttribute("data-model")));
+  });
+  // Un modèle premium déjà choisi retombe sur Sonnet 5 si le forfait le permet plus.
+  if(!allowed){
+    if(sel&&estModelePremium(sel.value))sel.value=MODELE_DE_REPLI;
+    if(estModelePremium(localStorage.getItem("tilex-al-model"))){
+      localStorage.setItem("tilex-al-model",MODELE_DE_REPLI);
+      if(typeof updateModelChip==="function")updateModelChip();
+    }
   }
 }
 function saveSettingModel(){
   var v=document.getElementById("set-model").value;
-  if(v==="claude-opus-4-8"&&!canUseOpus()){
-    v="claude-sonnet-4-6";document.getElementById("set-model").value=v;
+  if(estModelePremium(v)&&!canUseOpus()){
+    v=MODELE_DE_REPLI;document.getElementById("set-model").value=v;
     enforceModelGating();return;
   }
   localStorage.setItem("tilex-al-model",v);
@@ -8863,7 +8890,7 @@ function updateModelChip(){
   var badge=document.getElementById("composer-reflexion-badge");
   var chip=document.getElementById("composer-model-chip");
   var model=localStorage.getItem("tilex-al-model")||"claude-sonnet-5";
-  var modelNames={"claude-sonnet-5":"Sonnet 5","claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5"};
+  var modelNames={"claude-fable-5-1":"Fable 5.1","claude-opus-5":"Opus 5","claude-sonnet-5":"Sonnet 5","claude-sonnet-4-6":"Sonnet 4.6","claude-opus-4-8":"Opus 4.8","claude-haiku-4-5":"Haiku 4.5","claude-haiku-4-5-20251001":"Haiku 4.5"};
   var agentName=AGENT_NAMES[composerAgent]||"TI-LEX-AL";
   var modelShort=modelNames[model]||"Sonnet 5";
   if(label)label.textContent=agentName+" · "+modelShort;
@@ -8915,6 +8942,11 @@ window.tilexBureauEnvoyerIA=function(texte,agent){
   }catch(e){console.error("[bureau->IA]",e);}
 };
 function selectComposerModel(model){
+  if(estModelePremium(model)&&!canUseOpus()){
+    showToastMsg("🔒 "+model+" demande le forfait Apex ou Cybersécurité");
+    if(typeof openPlanSel==="function")openPlanSel();
+    closeComposerSelector();return;
+  }
   localStorage.setItem("tilex-al-model",model);
   var sel=document.getElementById("model-select");if(sel)sel.value=model;
   updateModelChip();

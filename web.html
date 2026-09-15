@@ -693,7 +693,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
           <input class="input" id="agent-search" placeholder="🔍  Chercher un agent…" style="max-width:280px" oninput="filterAgents()">
           <select class="select" style="width:160px" id="agent-filter-model" onchange="filterAgents()">
             <option value="">Tous les modèles</option>
-            <option>claude-sonnet-4-6</option><option>claude-opus-4-8</option><option>claude-haiku-4-5</option>
+            <option>claude-fable-5-1</option><option>claude-opus-5</option><option>claude-sonnet-5</option><option>claude-opus-4-8</option><option>claude-sonnet-4-6</option><option>claude-haiku-4-5</option>
           </select>
           <select class="select" style="width:130px" id="agent-filter-status" onchange="filterAgents()">
             <option value="">Tous statuts</option><option value="active">Actif</option><option value="paused">En pause</option>
@@ -756,8 +756,11 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             <div class="form-row">
               <div class="form-group"><label class="label">Modèle Claude *</label>
                 <select class="select" id="c-model" onchange="updatePreview()">
-                  <option value="claude-sonnet-4-6">claude-sonnet-4-6 (Recommandé)</option>
-                  <option value="claude-opus-4-8">claude-opus-4-8 (Plus puissant)</option>
+                  <option value="claude-sonnet-5" selected>claude-sonnet-5 (Recommandé)</option>
+                  <option value="claude-fable-5-1">claude-fable-5-1 (Le plus capable)</option>
+                  <option value="claude-opus-5">claude-opus-5 (Plus puissant)</option>
+                  <option value="claude-opus-4-8">claude-opus-4-8</option>
+                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
                   <option value="claude-haiku-4-5">claude-haiku-4-5 (Plus rapide)</option>
                 </select>
               </div>
@@ -783,7 +786,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             <div class="preview-title">Aperçu</div>
             <div style="display:flex;align-items:center;gap:12px">
               <div class="prev-av" id="prev-emoji">🤖</div>
-              <div><div style="font-size:17px;font-weight:700" id="prev-name">Nom de l'agent</div><div style="font-size:11px;color:var(--grey);font-family:var(--mono);margin-top:2px" id="prev-model">claude-sonnet-4-6</div></div>
+              <div><div style="font-size:17px;font-weight:700" id="prev-name">Nom de l'agent</div><div style="font-size:11px;color:var(--grey);font-family:var(--mono);margin-top:2px" id="prev-model">claude-sonnet-5</div></div>
             </div>
             <div style="font-size:13px;color:var(--grey);line-height:1.6" id="prev-desc">La description apparaîtra ici…</div>
             <div class="divider"></div>
@@ -798,7 +801,7 @@ body.mode-light .mode-btn.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
             </div>
             <div class="divider"></div>
             <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
-              <div style="display:flex;justify-content:space-between;color:var(--grey)"><span>Modèle</span><span style="color:var(--orange);font-family:var(--mono)" id="prev-model-info">claude-sonnet-4-6</span></div>
+              <div style="display:flex;justify-content:space-between;color:var(--grey)"><span>Modèle</span><span style="color:var(--orange);font-family:var(--mono)" id="prev-model-info">claude-sonnet-5</span></div>
               <div style="display:flex;justify-content:space-between;color:var(--grey)"><span>Propriétaire</span><span style="color:var(--white)" id="prev-owner">Vous</span></div>
             </div>
           </div>
