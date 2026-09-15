@@ -166,7 +166,7 @@
       <select id="model" title="Modèle" style="width:auto;">
         <option value="claude-fable-5-1">Fable 5.1</option>
         <option value="claude-opus-5">Opus 5</option>
-        <option value="claude-sonnet-5">Sonnet 5</option>
+        <option value="claude-sonnet-5" selected>Sonnet 5</option>
         <option value="claude-opus-4-8">Opus 4.8</option>
         <option value="claude-sonnet-4-6">Sonnet 4.6</option>
         <option value="claude-haiku-4-5">Haiku 4.5</option>
@@ -406,6 +406,19 @@ async function loadScans(){
     row.append(d);
   });
 }
+/* 🤖 Sélecteur de modèle : le choix est envoyé à agent-al (qui l'honore si le
+   modèle est dans sa liste permise) pis il se souvient d'une visite à l'autre. */
+const LS_MODELE="tilex-console-modele";
+const NOMS_MODELES={"claude-fable-5-1":"Fable 5.1","claude-opus-5":"Opus 5","claude-sonnet-5":"Sonnet 5",
+  "claude-opus-4-8":"Opus 4.8","claude-sonnet-4-6":"Sonnet 4.6","claude-haiku-4-5":"Haiku 4.5",
+  "claude-haiku-4-5-20251001":"Haiku 4.5"};
+(function(){
+  try{
+    const garde=localStorage.getItem(LS_MODELE);
+    if(garde&&$("model").querySelector(`option[value="${garde}"]`))$("model").value=garde;
+  }catch{}
+  $("model").addEventListener("change",()=>{ try{localStorage.setItem(LS_MODELE,$("model").value);}catch{} });
+})();
 $("newConv").addEventListener("click", newConversation);
 function newConversation(){ convs.unshift({id:Date.now(),title:"Nouvelle conversation",history:[]}); current=0; renderConvs(); renderMessages(); }
 function renderConvs(){ const el=$("convs"); el.innerHTML="";
@@ -469,6 +482,11 @@ async function send(){
           try{ const ev=JSON.parse(d);
             if(ev.type==="token"){ answer+=ev.text; body.innerHTML=renderMarkdown(answer); messages.scrollTop=messages.scrollHeight; }
             else if(ev.type==="status"){ statusLine.textContent=ev.text||""; }
+            else if(ev.type==="modele"){
+              role.textContent="⚡ ti-lex AL · "+(NOMS_MODELES[ev.modele]||ev.modele);
+              // Modèle demandé refusé par le serveur → on le dit au lieu de le cacher.
+              if(ev.demande&&ev.demande!==ev.modele)role.textContent+=` (« ${ev.demande} » refusé)`;
+            }
           }catch{}
         }
       }

@@ -26,7 +26,22 @@ const INJECT_PIN = Deno.env.get("AL_INJECT_PIN") || "";
 const GH_OWNER  = "alexmarceauprevost812-source";
 const GH_REPO   = "ti-lex-v10";
 const GH_BRANCH = "supabase";
+// Modèle par défaut : utilisé si le front en demande pas, ou en demande un inconnu.
 const MODEL     = "claude-sonnet-4-6";
+// Modèles que le front (console web) a le droit de demander — même liste que ai-proxy.
+const MODELES_PERMIS = new Set([
+  // Génération courante (la plus récente en premier).
+  "claude-fable-5-1", "claude-opus-5", "claude-sonnet-5",
+  // Génération précédente, encore servie.
+  "claude-opus-4-8", "claude-opus-4-7", "claude-sonnet-4-6",
+  // Haiku 4.5 : l'ID officiel, pis le vieil ID daté que des pages envoient encore.
+  "claude-haiku-4-5", "claude-haiku-4-5-20251001",
+]);
+/** Renvoie le modèle demandé s'il est dans la liste permise, sinon le défaut. */
+function choisirModele(demande: unknown): string {
+  const m = typeof demande === "string" ? demande.trim() : "";
+  return MODELES_PERMIS.has(m) ? m : MODEL;
+}
 
 // [WEB] Recherche web OPTIONNELLE — activée seulement si une clé est fournie.
 //   SEARCH_API_KEY     : clé Brave Search (https://brave.com/search/api/) OU clé Google API
@@ -256,13 +271,13 @@ function marquerDernierMessageCache(messages: any[]): any[] {
   return copie;
 }
 
-async function callAnthropic(messages: any[], system: any) {
+async function callAnthropic(messages: any[], system: any, model: string = MODEL) {
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     // system = tableau de blocs (stable caché + contexte variable) ; le breakpoint
     // sur le bloc stable met AUSSI les outils (TOOLS) en cache (ordre tools → system).
-    body: JSON.stringify({ model: MODEL, max_tokens: 4000, system, tools: TOOLS, messages: marquerDernierMessageCache(messages) }),
+    body: JSON.stringify({ model, max_tokens: 4000, system, tools: TOOLS, messages: marquerDernierMessageCache(messages) }),
   });
   return await r.json();
 }
@@ -399,6 +414,12 @@ Deno.serve(async (req) => {
         threat_tags: threat.threats,
       }, 403, CORS);
     }
+    // 🤖 Modèle demandé par le front (sélecteur de la console web). Un modèle
+    //    inconnu retombe sur le défaut au lieu de planter l'appel Anthropic.
+    const modele = choisirModele(payload.model);
+    if (payload.model && modele !== payload.model) {
+      console.log("[agent-al] modèle refusé:", JSON.stringify(payload.model), "→", modele);
+    }
     const system = buildSystem(payload.projectContext || {});
     const history = (payload.history || []).map((m: any) => ({
       role: m.role === "assistant" ? "assistant" : "user", content: m.text ?? m.content ?? "",
@@ -411,13 +432,15 @@ Deno.serve(async (req) => {
         const send = (o: any) => controller.enqueue(enc.encode(`data: ${JSON.stringify(o)}\n\n`));
         try {
           // [SOURCES] 1) Estimation immédiate -> le front affiche un logo tout de suite.
+          // Le front affiche quel modèle répond (pis voit si sa demande a été refusée).
+          send({ type: "modele", modele, demande: payload.model ?? null });
           const usedSources = new Set<string>();
           const initial = detectSources(question);
           if (initial.length) send({ type: "sources", sources: initial, confirmed: false });
 
           let guard = 0;
           while (guard++ < 6) {
-            const resp = await callAnthropic(messages, system);
+            const resp = await callAnthropic(messages, system, modele);
             if (resp.error) { send({ type: "token", text: "⚠️ " + (resp.error.message || "Erreur API") }); break; }
             if (resp.stop_reason === "tool_use") {
               messages.push({ role: "assistant", content: resp.content });
