@@ -216,6 +216,9 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
   if (e.request.method !== "GET") return;
+  // Never cache authenticated requests, APIs, or private routes.
+  if (e.request.headers.has("authorization") || url.pathname.startsWith("/api/") ||
+      ["/systeme", "/truck", "/maison", "/suivi", "/truck-map", "/agenda", "/rapport"].includes(url.pathname)) return;
 
   if (url.hostname.includes("supabase.co") || url.hostname.includes("anthropic.com")) {
     e.respondWith(
@@ -234,7 +237,9 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        if (res.status === 200) {
+        if (res.status === 200 && res.type === "basic" &&
+            !/(?:^|,)\s*(?:private|no-store)(?:\s|,|$)/i.test(res.headers.get("Cache-Control") || "") &&
+            !res.headers.has("set-cookie")) {
           const clone = res.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
         }
