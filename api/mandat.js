@@ -17,6 +17,7 @@
 
 import crypto from 'crypto';
 import dns from 'dns';
+import net from 'node:net';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rnuripmfozlxenryxhdc.supabase.co';
 const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY ||
@@ -60,6 +61,31 @@ function headersSb(bearer, extra) {
   };
 }
 
+
+function adressePrivee(ip) {
+  if (!net.isIP(ip)) return true;
+  if (net.isIP(ip) === 6) {
+    const v = ip.toLowerCase();
+    if (v.startsWith('::ffff:')) return adressePrivee(v.slice(7));
+    return v === '::' || v === '::1' || v.startsWith('fc') || v.startsWith('fd') ||
+      /^fe[89ab]/.test(v) || v.startsWith('ff') || v.startsWith('2001:db8:');
+  }
+  const [a, b] = ip.split('.').map(Number);
+  return a === 0 || a === 10 || a === 127 || a >= 224 || a === 169 && b === 254 ||
+    a === 172 && b >= 16 && b <= 31 || a === 192 && b === 168 ||
+    a === 100 && b >= 64 && b <= 127 || a === 192 && b === 0 ||
+    a === 198 && (b === 18 || b === 19) || a === 198 && b === 51 ||
+    a === 203 && b === 0;
+}
+
+async function verifierDestination(url) {
+  const u = new URL(url);
+  if (u.protocol !== 'https:' || u.username || u.password || u.port) throw Error('Destination interdite');
+  if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(u.hostname) || net.isIP(u.hostname)) throw Error('Domaine invalide');
+  const addresses = await dns.promises.lookup(u.hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some(v => adressePrivee(v.address))) throw Error('Réseau privé interdit');
+}
+
 // --- Cherche le code dans les TXT du domaine (@ et _silex-verify.domaine). ---
 async function chercherDNS(domaine, code) {
   const cibles = [domaine, '_silex-verify.' + domaine];
@@ -81,7 +107,8 @@ async function chercherFichier(domaine, code) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(url, { signal: ctrl.signal, redirect: 'follow' });
+    await verifierDestination(url);
+    const r = await fetch(url, { signal: ctrl.signal, redirect: 'error' });
     clearTimeout(t);
     if (!r.ok) return false;
     const txt = (await r.text()).slice(0, 2000);
@@ -223,8 +250,8 @@ export default async function handler(req, res) {
   }
 
   const auth = req.headers.authorization || '';
-  const email = emailDuJWT(auth);
-  if (!email) {
+  const emailNonVerifie = emailDuJWT(auth);
+  if (!emailNonVerifie) {
     const corps = action === 'autoriser' ? { autorise: false, erreur: 'Connexion requise.' } : { erreur: 'Connexion requise (aucun courriel dans la session).' };
     return res.status(401).json(corps);
   }
