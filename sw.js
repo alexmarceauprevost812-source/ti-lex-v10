@@ -1,4 +1,4 @@
-const CACHE_VERSION = "tilex-v10-671";
+const CACHE_VERSION = "tilex-v10-672";
 const ASSETS = [
   "/",
   "/index.html",
@@ -30,19 +30,19 @@ const ASSETS = [
   "/carte",
   "/tilexmap",
   "/tilexcode",
-  "/truck.html",
-  "/truck",
-  "/truck-map.html",
-  "/truck-map",
-  "/suivi",
-  "/maison.html",
-  "/maison",
-  "/rapport.html",
-  "/rapport",
-  "/systeme.html",
-  "/systeme",
-  "/agenda.html",
-  "/agenda",
+
+
+
+
+
+
+
+
+
+
+
+
+
   "/comm",
   "/comm/index.html",
   "/communications",
@@ -197,7 +197,12 @@ self.addEventListener("install", (e) => {
   // rejette tout au moindre échec → le SW resterait bloqué sur l'ancienne version).
   e.waitUntil(
     caches.open(CACHE_VERSION).then((cache) =>
-      Promise.allSettled(ASSETS.map((u) => cache.add(u).catch(() => null)))
+      Promise.allSettled(ASSETS.map((u) => fetch(u, { cache: "no-store" }).then((res) => {
+        if (!res.ok || res.type !== "basic") return;
+        const directive = res.headers.get("Cache-Control") || "";
+        if (/\b(?:private|no-store)\b/i.test(directive) || res.headers.has("set-cookie")) return;
+        return cache.put(u, res);
+      }).catch(() => null)))
     )
   );
   self.skipWaiting();
@@ -218,7 +223,7 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   // Never cache authenticated requests, APIs, or private routes.
   if (e.request.headers.has("authorization") || url.pathname.startsWith("/api/") ||
-      ["/systeme", "/truck", "/maison", "/suivi", "/truck-map", "/agenda", "/rapport"].includes(url.pathname)) return;
+      /^\/(?:systeme|truck|maison|suivi|truck-map|agenda|rapport)(?:\.html)?$/.test(url.pathname)) return;
 
   if (url.hostname.includes("supabase.co") || url.hostname.includes("anthropic.com")) {
     e.respondWith(
@@ -238,7 +243,7 @@ self.addEventListener("fetch", (e) => {
     fetch(e.request)
       .then((res) => {
         if (res.status === 200 && res.type === "basic" &&
-            !/(?:^|,)\s*(?:private|no-store)(?:\s|,|$)/i.test(res.headers.get("Cache-Control") || "") &&
+            !/\b(?:private|no-store)\b/i.test(res.headers.get("Cache-Control") || "") &&
             !res.headers.has("set-cookie")) {
           const clone = res.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
